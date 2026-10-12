@@ -1,0 +1,91 @@
+<g:ui_form>
+    <style>
+        .checkboxAttributes {
+            width: 22px;
+            height: 16px;
+        }
+    </style>
+  <input type="hidden" id="cancelled" name="cancelled" value="false"/>
+  <input type="hidden" id="tol_sys_id" name="tol_sys_id" value="${sysparm_sys_id}"/>
+  <input type="hidden" id="quantity_received" name="quantity_received" value="${sysparm_quantity_received}"/>
+  <input type="hidden" id="quantity_returned" name="quantity_returned" value="${sysparm_quantity_returned}"/>
+  <j2:if test="$[!empty(sysparm_domain)]">
+	<input type="hidden" id="sysparm_domain" name="sysparm_domain" value="${sysparm_domain}"/>
+  </j2:if>
+  <j2:if test="$[!empty(sysparm_domain_scope)]">
+	<input type="hidden" id="sysparm_domain_scope" name="sysparm_domain_scope" value="${sysparm_domain_scope}" />
+  </j2:if>
+
+  <table width="100%">
+    <tr>
+      <td rowspan="5" nowrap="true" width="110px" style="vertical-align:top;">
+         <img src="images/plugin_activate.gifx" alt="${gs.getMessage('Activate/Upgrade')}" style="vertical-align:top;" />
+      </td>
+    </tr>
+    <tr>
+		<td>
+<div class="form-group form-horizontal">
+	<div class="col-md-4 text-right">
+		<g:form_label for="return_quantity_requested">
+			${gs.getMessage('Quantity')}
+		</g:form_label>
+	</div>
+	<div class="col-md-8">
+		<input class="form-control" id="return_quantity_requested" name="return_quantity_requested" value="1" type="text" aria-required="true" role="textbox" />
+	</div>
+</div>
+		</td>
+    </tr>
+    <tr>
+		<td>
+<div class="form-group is-required form-horizontal">
+	<div class="col-md-4 text-right">
+		<g:form_label for="return_reason">
+			${gs.getMessage('Reason')}
+		</g:form_label>
+	</div>
+	<div class="col-md-8">
+		<input class="form-control" id="return_reason" name="return_reason" value="" type="text" aria-required="true" role="textbox" />
+	</div>
+</div>	
+      </td>
+    </tr>
+
+ <g:evaluate>
+    var isPreAlocated = false;
+    var asset = new GlideRecord('alm_asset');
+    asset.addQuery('sys_id', '${sysparm_asset}');
+    asset.query();
+    if (asset.next()) {
+        isPreAlocated = (asset.substatus == 'pre_allocated') ? true : false;
+    }
+ </g:evaluate>
+
+<j:if test="${!isPreAlocated}">
+    <tr>
+		<td>
+<div class="form-group form-horizontal">
+	<div class="col-md-4 text-right">
+		<g:form_label for="defective">
+			${gs.getMessage('Defective')}
+		</g:form_label>
+	</div>
+	<div class="col-md-8 form-field"  >
+		<span class="input-group-checkbox">
+                  <input type="checkbox" class="checkboxAttributes" name="defective" id="defective" style="margin-top: 8px" role="note" aria-label="${gs.getMessage('Defective')}" />
+                  <label class="checkbox-label" style="margin-left: 0px"></label>
+        </span>
+
+	</div>
+</div>
+      </td>
+    </tr>
+</j:if>
+
+    <tr id="dialogbuttons">
+        <td colspan="3" align="right">
+            <g:dialog_buttons_ok_cancel ok="return actionOK();" cancel="return cancel();"/>
+        </td>
+    </tr>
+  </table>
+</g:ui_form>

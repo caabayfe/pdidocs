@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:requires name="styles/snATFAddTestStepModal.css"/>
+	<g:evaluate var="jvar_session_id" expression="new GlideChecksum(gs.getSessionID()).getMD5();"/>
+    <g:evaluate>
+        var REUSABLE_STEP_TABLE = "sys_atf_step_callable";
+		var SET_OUTPUT_CONFIG_ID = "26302752a33012100df567d1361e61ef";
+    </g:evaluate>
+
+	<g2:evaluate jelly="true">
+		var can_create_step = new GlideRecord('sys_atf_step').canCreate();
+		if(!can_create_step) {
+			gs.info(gs.getMessage('Insufficient privileges to create test steps'));
+		}
+	</g2:evaluate>
+
+	<g2:evaluate object="true"  jelly="true">
+		var testGR = new GlideRecordSecure('sys_atf_test_callable');
+		var isReusableTest = testGR.get(jelly.sysparm_test)
+	</g2:evaluate>
+
+	<g2:evaluate object="true" expression="
+		var gr = new GlideRecordSecure('sys_atf_step_config');
+		gr.addQuery('active', '1');
+		gr.addQuery('deprecated', '!=', '1').addOrCondition('deprecated', '');
+		if (!isReusableTest)
+			gr.addQuery('sys_id', '!=', '26302752a33012100df567d1361e61ef');
+		gr.orderBy('order');
+		gr.orderBy('name');
+		gr.query();"/>
+
+	<g2:evaluate jelly="true">
+		var previousSteps = new GlideRecordSecure('sys_atf_step');
+		previousSteps.addQuery('test', jelly.sysparm_test);
+		previousSteps.orderBy('order');
+		previousSteps.query();
+	</g2:evaluate>
+
+    <g2:evaluate object="true" jelly="true">
+        var reusableTestGR = new GlideRecordSecure('sys_atf_test_callable');
+        reusableTestGR.addActiveQuery();
+        reusableTestGR.orderBy('name');
+        reusableTestGR.query();
+    </g2:evaluate>
+
+	<j2:choose>
+		<j2:when test="$[can_create_step == false]">
+			<div class="outputmsg outputmsg_warning notification notification-warning">
+				<div class="outputmsg_text">
+					<g2:no_escape>$[gs.getMessage("Insufficient privileges to create test steps")]</g2:no_escape>
+				</div>
+			</div>
+		</j2:when>
+	</j2:choose>
+
+	<g2:evaluate jelly="true">
+		var thereArePreviousSteps = previousSteps.hasNext();
+	</g2:evaluate>
+
+	<g2:evaluate jelly="true">
+		var stepGR = new GlideRecord('sys_atf_step');
+		stepGR.addQuery('test', jelly.sysparm_test);
+		stepGR.addNotNullQuery('snapshot');
+		stepGR.query();
+		var testNeedsSnapshot = !stepGR.next();
+	</g2:evaluate>
+
+	<g2:evaluate jelly="true">
+		var categoryGr = new GlideRecord('sys_atf_step_config_category');
+		var categories = [];
+		if (!isReusableTest)
+			categoryGr.addQuery("sys_id", "!=", "843222a5ff48a6100df5ffffffffff89")
+		categoryGr.query();
+		while (categoryGr.next()) {
+			var records = {};
+			records.displayNameTranslated = gs.getMessage(categoryGr.getValue("display_name"));
+			records.ids = categoryGr.getValue("name");
+			categories.push(records);
+		}
+
+		categories.sort(function(a, b) {
+				var x = a['displayNameTranslated'].toLowerCase();
+				var y = b['displayNameTranslated'].toLowerCase();
+				return ((y >= x) ? -1 : ((x > y) ? 1 : 0));
+			});
+	</g2:evaluate>
+
+	<div class="row" id="atf-step-config-navigator"  style="height: 462px">
+		<!-- Add an input element to filter steps -->
+		<div id="filterSteps" style="padding: 15px">
+			<div class="input-group-transparent">
+				<span class="input-group-addon-transparent icon-search" style="top: 2px"/>
+				<input type="text" id="new-step-filter" class="form-control form-control-search" placeholder="$[gs.getMessage('Filter...')]" title="$[gs.getMessage('Filter steps here')]" aria-label="$[gs.getMessage('Filter steps here')]"/>
+			</div>
+		</div>
+		<div class="col-md-3 col-sm-3 col-xs-3 " id="atf-category-selector">
+			<ul class="list-unstyled" role="region" aria-label="$[gs.getMessage('Categories')]">
+				<!-- Add a filter results category to show the filtered steps -->
+				<li id="filter-results" data-name="Filter_Results" class="hidden" tabindex="0" aria-expanded="false">$[gs.getMessage('Filter Results')]</li>
+
+				<!-- Add an All Steps category that shows active step configurations -->
+				<li data-name="All_Steps" tabindex="0" aria-expanded="true" role="button" id="all-steps">$[gs.getMessage('All Steps')]</li>
+
+                <!-- Add a default category for reusable tests -->
+                <li data-name="Reusable_Test" tabindex="0" aria-expanded="true" role="button" id="reusable-test">$[gs.getMessage('Reusable Test')]</li>
+
+				<g2:evaluate object="true" expression="var categoryIndex = 0;" />
+				<j2:while test="$[categoryIndex &lt; categories.length]">
+					<g2:evaluate object="true" expression="var nextCategory = categories[categoryIndex++]" />
+					<li id="category_$[nextCategory.ids]" data-name="$[nextCategory.ids]" role="button" tabindex="0" aria-expanded="false">$[nextCategory.displayNameTranslated]</li>
+
+				</j2:while>
+			</ul>
+		</div>
+		<div class="col-md-5 col-sm-5 col-xs-5 " id="atf-step-configs">
+			<h4>${gs.getMessage('All Test Step Configurations')}</h4>
+			<ul class="list-unstyled" id="atf-step-configs" aria-label="$[gs.getMessage('Available Steps')]" role="region">
+				<j2:while test="$[gr.next()]">
+					<li data-sys-id="$[gr.sys_id]" data-name="$[gr.name]" data-redirect="$[gr.wizard_redirect]" data-table-name="sys_atf_step" data-category="$[gr.category.name]" data-description="$[gr.html_description]" tabindex="0" role="button" aria-pressed="false">$[gs.getMessage(gr.name)]</li>
+				</j2:while>
+                <j2:while test="$[reusableTestGR.next()]">
+					<g2:evaluate>
+						<!-- Use the reusable test's category for grouping if given; otherwise put them in the "Reusable Test" category -->
+						var reusableTestCategory = gs.nil(reusableTestGR.category) ? "Reusable_Test" : reusableTestGR.category.name;
+					</g2:evaluate>
+					<!-- List reusable tests as pseudo-step-configs; the step form will have no step config, but will use the callable_test field (retrieved from data-sys-id here) to get the requisite reusable variable fields-->
+                    <li data-sys-id="$[reusableTestGR.sys_id]" data-name="$[reusableTestGR.name]" data-redirect="" data-table-name="${REUSABLE_STEP_TABLE}" data-category="$[reusableTestCategory]" data-description="$[reusableTestGR.description]" tabindex="0" role="button" aria-pressed="false">$[reusableTestGR.name]</li>
+                </j2:while>
+			</ul>
+		</div>
+		<div class="col-md-4 col-sm-4 col-xs-4 " id="atf-description" role="region" aria-label="$[gs.getMessage('Step Description')]">
+			<h4 id="categoryLabel" class="hidden">${gs.getMessage('ATF:Category_uppercase')}</h4>
+			<p id="categoryText" class="hidden">${gs.getMessage('No category selected')}</p>
+			<hr/>
+			<h4 id="stepLabel" class="hidden">${gs.getMessage('No Step Selected')}</h4>
+			<p id="stepText" class="hidden">${gs.getMessage('No step selected')}</p>
+		</div>
+	</div>
+	<div id="atf-step-config-footer">
+		<div class="form-inline" id="atf-test-step-control">
+			<j2:if test="$[thereArePreviousSteps]">
+				<div class="form-group" id="atf-previous-step-selector">
+					<label class="control-label" for="atf-previous-step">$[gs.getMessage("Insert after")]</label>
+					<select id="atf-previous-step" class="form-control select2">
+						<g2:evaluate object="true" expression="var stepNumber = 0;" />
+						<j2:while test="$[previousSteps.next()]">
+							<g2:evaluate object="true" expression="stepNumber++;" />
+							<j2:if test="$[stepNumber == 1]">
+								<option value="$[previousSteps.order - 1]" selected="true">
+									$[gs.getMessage("At the beginning")]
+								</option>
+							</j2:if>
+							<j2:choose>
+								<g2:evaluate>
+									// pre-translate previous step label
+									var translatedStepDisplayValue = gs.getMessage(previousSteps.getDisplayValue());
+									// cast number to String to prevent decimal formatting
+									var stepByNumberAndDisplayValue = gs.getMessage("Step {0} - {1}", ["" +stepNumber, translatedStepDisplayValue]);
+									stepByNumberAndDisplayValue;
+								</g2:evaluate>
+								<j2:when test="$[!previousSteps.hasNext()]">
+									<option value="$[previousSteps.order]" selected="true" data-test="$[previousSteps.step_config]" data-title="$[previousSteps.description.replace(/\n/g, '\\n')]"  data-id = "$[previousSteps.getUniqueValue()]" >
+										$[stepByNumberAndDisplayValue]
+									</option>
+								</j2:when>
+								<j2:otherwise>
+									<option value="$[previousSteps.order]" data-test="$[previousSteps.step_config]" data-title="$[previousSteps.description.replace(/\n/g, '\\n')]"   data-id = "$[previousSteps.getUniqueValue()]">
+										$[stepByNumberAndDisplayValue]
+									</option>
+								</j2:otherwise>
+							</j2:choose>
+						</j2:while>
+					</select>
+				</div>
+			</j2:if>
+
+			<button class="btn btn-primary" style="" id="nextButton">$[gs.getMessage('Next')]</button>
+		</div>
+	</div>
+	<script>
+		var testNeedsSnapshot = $[testNeedsSnapshot];
+		var customUIStepConfigIds = ["b4758c7453370300c792ddeeff7b128d", "def25c4b73730300c79260bdfaf6a700", "e5dd168473330300c79260bdfaf6a794", "38907e937322130007d738682bf6a742", "33bb3cb343810210285ffa73cbb8f245"];
+
+		// Focus the Filter on load
+		var e = $('new-step-filter');
+		if (e)
+			e.focus();
+
+		(function initPreviousStepSelector() {
+			var ALL_STEPS_CATEGORY_NAME = "All_Steps";
+			var FILTER_RESULTS_CATEGORY_NAME = "Filter_Results";
+            var REUSABLE_TEST_CATEGORY_NAME = "Reusable_Test";
+			var ENTER_KEY_CODE = 13;
+			var LEFT_KEY_CODE = 37;
+			var RIGHT_KEY_CODE = 39;
+			var UP_KEY_CODE = 38;
+			var DOWN_KEY_CODE = 40;
+
+			$j('#atf-previous-step-selector select').select2({
+				dropdownCssClass: 'atf-test-step-control',
+				formatResult: function (step, option) {
+					var title = $j(step.element).data('title');
+					if(title){
+						option.tooltip({
+							title: '- ' + title.replace(/\\n/g, '\n- '),
+							placement: 'auto left',
+							container: '#sys_atf_step_creator'
+						});
+						// prevent the tooltips from hiding the options since we are cohabitating with PrototypeJS
+						if ($j.fn.hideFix) {
+							option.on('hide.bs.tooltip', function(evt) {
+								$j(evt.target).hideFix();
+							});
+						}
+					}
+					return step.text;
+				}
+			});
+			initNavigator();
+			// Enter key to move from filter to categories
+			$j('#new-step-filter').keydown(function(event){
+				// move to first or focused category on enter key (after search)
+				if (event.keyCode == ENTER_KEY_CODE) {
+					// focus on active category, default to first
+					$j('#atf-category-selector li.active').focus();
+				}
+            });
+			// Next button creates step of selected step config
+			$j('#atf-step-config-footer button.btn-primary').on('click', createSelectedStepConfig)
+			// double-click creates step of selected step config
+			$j('#atf-step-configs li').dblclick(createSelectedStepConfig);
+			// Enter key creates step of selected step config
+			$j('#atf-step-configs li').keydown(function(event){
+				// create selected step on enter key
+				if (event.keyCode == ENTER_KEY_CODE) {
+					createSelectedStepConfig();
+				}
+            });
+			// Filter steps when input is changed
+			$j('#new-step-filter').on('input', filterSteps)
+
+			function createSelectedStepConfig() {
+				var $selectedStepConfig = $j('#atf-step-configs li.active');
+				if ($selectedStepConfig.length > 0) {
+					if ($selectedStepConfig.data("redirect") != '') {
+						var order = (parseInt($j('#atf-previous-step').val(), 10) || 0) + 1;
+						var paramChar = "?";
+						if ($selectedStepConfig.data("redirect").indexOf("?") >= 0) {
+							paramChar = "$[AMP]";
+						}
+						window.location.href = $selectedStepConfig.data("redirect") + paramChar + "test_id=${sysparm_test}$[AMP]test_order=" + order;
+					} else {
+						var stepConfigId = $selectedStepConfig.data("sysId");
+						var isCustomUIStep = customUIStepConfigIds.indexOf(stepConfigId) != -1;
+						if (isCustomUIStep) {
+							var stepOrder = (parseInt($j('#atf-previous-step').val(), 10) || 0) + 1;
+							var newStepFormTitle = formatMessage("$[gs.getMessage('Add Test Step: {0}')]", $selectedStepConfig.data('name'));
+							var stepQuery = "test=${sysparm_test}^order=" + stepOrder + "^step_config=" + $selectedStepConfig.data("sysId");
+							var prevStepConfigId = getDataFromPreviousStep('test');
+							var prevStepID = getDataFromPreviousStep('id');
+							// used if returning from retrieve components modal
+							var ranTest = GlideModal.prototype.get("sys_atf_step_creator").getPreference("sysparm_ran_test");
+							GlideDialogWindow.get().destroy();
+							var $selectedStepConfigCategory = $j('#atf-step-config-category li.active');
+							if (stepConfigId == "33bb3cb343810210285ffa73cbb8f245") {
+								openCWSNavigator($selectedStepConfig.data("tableName"), $selectedStepConfig.data("sysId"), $selectedStepConfig.data('name'), $selectedStepConfigCategory, stepOrder, prevStepConfigId, prevStepID);
+							} else {
+								openRefreshComponents($selectedStepConfig.data("tableName"), $selectedStepConfig.data("sysId"), $selectedStepConfig.data('name'), $selectedStepConfigCategory, testNeedsSnapshot, stepOrder, prevStepConfigId, prevStepID, ranTest);
+							}
+						} else
+							openNewStepForm($selectedStepConfig.data("tableName"), $selectedStepConfig.data("sysId"), $selectedStepConfig.data('name'));
+					}
+				}
+			}
+
+			function initNavigator() {
+				var $stepConfigs = $j('#atf-step-configs');
+				var $stepConfigsList = $stepConfigs.find('li');
+				var $description = $j('#atf-description');
+
+				// If a step config was specified in the preferences use that
+				// Otherwise default to the config from the previous step
+				var stepConfigOverride = GlideModal.prototype.get("sys_atf_step_creator").getPreference("sysparm_step_config_id");
+				if (typeof stepConfigOverride !== 'undefined') {
+					selectCategory(getCategoryFromStepConfig($stepConfigs, stepConfigOverride), true);
+					showTestConfigsWithinSelectedCategory($stepConfigs);
+					selectStepConfig($stepConfigsList, get$TestStepConfig(stepConfigOverride).data("name"), true);
+				} else {
+					selectCategory(getCategoryFromStepConfig($stepConfigs, getDataFromPreviousStep('test')), true);
+					showTestConfigsWithinSelectedCategory($stepConfigs);
+					selectStepConfig($stepConfigsList, $stepConfigsList.not('.hidden').first().data('name'), true);
+				}
+				$description.children().removeClass('hidden');
+				showDescriptionForStepConfig($description, $stepConfigsList.filter('.active'));
+				$j('#atf-category-selector li').on('click keydown', userSelectCategory.bind(null, $stepConfigs, $stepConfigsList, $description));
+				$stepConfigsList.on('click keydown', userSelectStepConfig.bind(null, $stepConfigsList, $description));
+			}
+
+			function userSelectCategory($stepConfigs, $stepConfigsList, $description, event) {
+				var category = $j(event.target).data('name');
+				// Current Category
+				var currCatElement = $j(event.target);
+				// Reactivate next button on category selection
+				$j('#nextButton').attr('disabled', false);
+				// Key Event
+				if (event.type === "keydown") {
+					// Key navigation
+					switch (event.which) {
+						case DOWN_KEY_CODE:
+							category = upDownNavigation(currCatElement, "down");
+							event.preventDefault(); // prevent scrolling down the list while selecting next item
+							break;
+						case UP_KEY_CODE:
+							category = upDownNavigation(currCatElement, "up");
+							event.preventDefault(); // prevent scrolling up the list while selecting next item
+							break;
+						case LEFT_KEY_CODE:
+							$('new-step-filter').focus();
+							break;
+						case RIGHT_KEY_CODE:
+						case ENTER_KEY_CODE:
+							// Remove focus from the category
+							currCatElement.blur();
+							// Focus on the active step
+							$j('#atf-step-configs li.active').focus();
+							return;
+					}
+				}
+
+				// Get the filtered steps on the click of Filter Results category
+				if (category === FILTER_RESULTS_CATEGORY_NAME) {
+					filterSteps();
+					return;
+				}
+				// If category is not filter results then remove it from the category list, also clear filter input
+				$j('#filter-results').addClass('hidden');
+				gel('new-step-filter').value = '';
+
+				// Categories other than Filter Results
+				if (category.length > 0) {
+					selectCategory(category);
+					showTestConfigsWithinSelectedCategory($stepConfigs);
+					event.target = null;
+					userSelectStepConfig($stepConfigsList, $description, event);
+				}
+			}
+
+			function userSelectStepConfig($stepConfigsList, $description, event) {
+				var stepConfig = $j(event.target).data('name');
+				// Current Step
+				var currStepElement = $j(event.target);
+
+				if (!stepConfig) {
+					stepConfig = $stepConfigsList.not('.hidden').first().data('name');
+				}
+
+				// Key Event
+				if (event.type === "keydown") {
+					if (event.target !== null) {
+						// Key Navigation
+						switch (event.which) {
+							case DOWN_KEY_CODE:
+								stepConfig = upDownNavigation(currStepElement,"down");
+								event.preventDefault(); // prevent scrolling down the list while selecting next item
+								break;
+							case UP_KEY_CODE:
+								stepConfig = upDownNavigation(currStepElement,"up");
+								event.preventDefault(); // prevent scrolling up the list while selecting next item
+								break;
+							case LEFT_KEY_CODE:
+								currStepElement.blur();
+								$j('#atf-category-selector li.active').focus();
+								return;
+						}
+					}
+				}
+
+				// Next step selected
+				if (stepConfig $[AMP]$[AMP] stepConfig.length > 0) {
+					selectStepConfig($stepConfigsList, stepConfig);
+					showDescriptionForStepConfig($description, $stepConfigsList.filter('.active'));
+				}
+			}
+
+			function showTestConfigsWithinSelectedCategory($stepConfigs) {
+				showTestConfigsWithinCategory($stepConfigs, getSelectedCategory());
+			}
+
+			function getSelectedCategory() {
+				return $j('#atf-category-selector li.active');
+			}
+
+			function showTestConfigsWithinCategory($stepConfigs, $category) {
+				if ($category.length === 0) return;
+
+				// Set header name
+				$stepConfigs.find('h4').text($category.text());
+
+				// un-hide all active Step Configurations
+				var $allActiveStepConfigs = $stepConfigs.find('li').removeClass('hidden');
+
+				// do not hide any step configs when All Steps entry is selected
+				if ($category.data('name') === ALL_STEPS_CATEGORY_NAME)
+					return;
+
+				// populate collection of step configs that do not match the selected Category
+ 				var $stepConfigsToHide = $allActiveStepConfigs
+						.filter(function getTestStepsThatArentInCategory(index, testStepConfig) {
+							var testStepConfigCategoryPath = $j(testStepConfig).data('category');
+							if (testStepConfigCategoryPath) {
+								testStepConfigCategoryPath = testStepConfigCategoryPath.toLocaleLowerCase();
+							} else {
+								testStepConfigCategoryPath = "";
+							}
+							return testStepConfigCategoryPath !== $category.data('name').toLocaleLowerCase();
+						});
+				// hide step configs that do not match the selected category
+				$stepConfigsToHide.addClass('hidden');
+			}
+
+			function get$TestStepConfig(sysId) {
+				return $j('#atf-step-configs li[data-sys-id="' + sysId + '"]');
+			}
+
+			function getCategoryFromStepConfig($stepConfigs, configSysId) {
+				var category = $stepConfigs.find('li[data-sys-id="' + configSysId + '"]').data('category');
+
+				// If config isn't associated with a category return the All Steps category
+				if (!category) {
+					return ALL_STEPS_CATEGORY_NAME;
+				}
+				return category;
+			}
+
+			function selectCategory(category, justLoaded) {
+				var categories = $j('#atf-category-selector li');
+				$j('ul#atf-step-configs')
+					.attr('aria-label', category)
+					.children('ul')
+					.children('span.sr-only')
+					.text(category);
+
+				if (!justLoaded)
+					removeTabIndexFromSiblings(categories, category);
+
+				categories
+						.removeClass('active')
+						.attr('aria-expanded', 'false')
+						.filter(isLowerCaseName.bind(null, category))
+						.addClass('active')
+						.attr('aria-expanded', 'true')
+						.on('focus', returnTabIndexToSiblings);
+			}
+
+			function removeTabIndexFromSiblings($elementList, name) {
+				$elementList
+					.attr('tabindex', '-1')
+					.filter(isLowerCaseName.bind(null, name))
+					.attr('tabindex', 0);
+			}
+
+			function returnTabIndexToSiblings() {
+				$j(this).siblings('li').attr('tabindex', '0');
+				$j(this).off('focus', returnTabIndexToSiblings);
+			}
+
+			function getDataFromPreviousStep(data) {
+				var ret = $j($j('#atf-previous-step-selector select').select2('data').element).data(data);
+				if (!ret)
+					return "";
+				return ret;
+			}
+
+			function selectStepConfig($stepConfigsList, stepConfig, justLoaded) {
+				if (!justLoaded)
+					removeTabIndexFromSiblings($stepConfigsList, stepConfig);
+
+				$stepConfigsList
+						.removeClass('active')
+						.attr('aria-pressed', 'false')
+						.filter(isLowerCaseName.bind(null, stepConfig))
+						.addClass('active')
+						.attr('aria-pressed', 'true')
+						.on('focus', returnTabIndexToSiblings);
+			}
+
+			function isLowerCaseName(text, index, element) {
+				return ($j(element).data('name') + '').toLocaleLowerCase() === (text + '').toLocaleLowerCase();
+			}
+
+			function showDescriptionForStepConfig($description, $selectedStepConfigs) {
+				$description
+						.find('#stepLabel')
+						.text($selectedStepConfigs.text())
+						.parent()
+						.find('#stepText')
+						.html($selectedStepConfigs.data('description'));
+
+				// get selected step config's category label, stored in left pane
+				var categoryName = $selectedStepConfigs.data('category');
+				var categoryLabel = (categoryName == REUSABLE_TEST_CATEGORY_NAME) ? $j("[id='reusable-test']").text() : $j("[id='category_" + categoryName + "']").text();
+				$description
+						.find('#categoryText')
+						.html(categoryLabel);
+			}
+
+			function openNewStepForm(tableName, sysId, stepName) {
+				function onClose() {
+					// support list v2 and v3
+					var listObj = (typeof g_list !== 'undefined') ? g_list : GlideList.get('sys_atf_test.sys_atf_step.test');
+					listObj.refresh();
+				}
+
+				var order = (parseInt($j('#atf-previous-step').val(), 10) || 0) + 1;
+				GlideDialogWindow.get().destroy();
+				var newStepFormHeader = formatMessage("$[gs.getMessage('Add Test Step: {0}')]", stepName);
+				var dialogWindow = new GlideModalForm(newStepFormHeader, tableName);
+                var query = "test=${sysparm_test}^order=" + order;
+                if (tableName == "${REUSABLE_STEP_TABLE}") {
+                    // step_config field is empty on the reusable step table
+                    query += "^callable_test=" + sysId;
+                } else {
+                    query += "^step_config=" + sysId;
+					if (sysId == "${SET_OUTPUT_CONFIG_ID}")
+						dialogWindow.addParm("sysparm_view", "Reusable_output_view");
+                }
+                dialogWindow.addParm("sysparm_query", query);
+				dialogWindow.setPreference("focusTrap", true);
+				dialogWindow.setCompletionCallback(onClose);
+				dialogWindow.render();
+			}
+
+			function openRefreshComponents(tableName, stepConfigId, stepName, category, testNeedsSnapshot, order, prevStepConfigId, prevStepID, ranTest) {
+				var dialog = new GlideModal("retrieve_components_hierarchical_progress_viewer");
+				dialog.setWidth("900");
+				dialog.setTitle(new GwtMessage().getMessage("Retrieve Page Components"));
+				dialog.setPreference("focusTrap", true);
+				dialog.setPreference("table_name", tableName);
+				dialog.setPreference("step_config_id", stepConfigId);
+				dialog.setPreference("step_name", stepName);
+				dialog.setPreference("step_order", order);
+				dialog.setPreference("step_config_category", category);
+				dialog.setPreference("test_id", '${sysparm_test}');
+				dialog.setPreference("test_needs_snapshot", testNeedsSnapshot);
+				dialog.setPreference("prev_step_config_id", prevStepConfigId);
+				dialog.setPreference("ran_test", ranTest);
+				dialog.setPreference("is_new_step", true);
+
+				// hierarchical progress viewer preferences
+				dialog.setPreference('sysparm_ajax_processor', 'TestExecutorAjax');
+				dialog.setPreference('sysparm_ajax_processor_ut_test_id', '${sysparm_test}');
+				dialog.setPreference('sysparm_renderer_bubble_up_messages', true);
+				dialog.setPreference('sysparm_renderer_allow_shrink', true);
+				dialog.setPreference('sysparm_renderer_expanded_levels', '0');
+				dialog.setPreference('sysparm_delay_progress_renderer_start', true);
+				dialog.setPreference('sysparm_ajax_processor_page_data_capture', true);
+				dialog.setPreference('sysparm_ajax_processor_retrieve_components_step', prevStepID);
+				dialog.setPreference('sysparm_ajax_processor_test_runner_session_id', '${jvar_session_id}');
+				dialog.render();
+			}
+
+			function openCWSNavigator(tableName, stepConfigId, stepName, category, order, prevStepConfigId, prevStepID) {
+				var dialog = new GlideModal("configurable_workspace_test_navigator");
+				dialog.setWidth("900");
+				dialog.setTitle(new GwtMessage().getMessage("Configurable Workspace Test Authoring"));
+				dialog.setPreference("focusTrap", true);
+				dialog.setPreference("table_name", tableName);
+				dialog.setPreference("step_config_id", stepConfigId);
+				dialog.setPreference("step_name", stepName);
+				dialog.setPreference("step_order", order);
+				dialog.setPreference("step_config_category", category);
+				dialog.setPreference("test_id", '${sysparm_test}');
+				dialog.setPreference("prev_step_config_id", prevStepConfigId);
+				dialog.setPreference("prev_step_id", prevStepID);
+				dialog.setPreference("is_new_step", true);
+
+				dialog.render();
+			}
+
+		function upDownNavigation(current, direction) {
+			var next = "";
+			var name = "";
+			// Get the next element which is not hidden according to the direction
+			if (direction === "down")
+				next = current.nextAll().not('.hidden').first();
+			else if (direction === "up")
+				next = current.prevAll().not('.hidden').first();
+
+			// Get the name of the next element
+			if (next.length > 0) {
+				name = next.data("name");
+				next.focus();
+			}
+
+			return name;
+		}
+
+		function filterSteps(event) {
+			var filterResultsCategory = $j('#filter-results');
+			var currentCategory = $j('#atf-category-selector li.active');
+			var $stepConfigs = $j('#atf-step-configs');
+			var $stepConfigsList = $stepConfigs.find('li');
+			var $description = $j('#atf-description');
+			// Input from filter
+			var filterString = gel('new-step-filter').value.toUpperCase().trim();
+			// Default when the filter input is null. Selects the All Steps category
+			if (filterString.length === 0) {
+				filterResultsCategory.addClass('hidden');
+				selectCategory(ALL_STEPS_CATEGORY_NAME);
+				showTestConfigsWithinSelectedCategory($stepConfigs);
+				event.target = null;
+				userSelectStepConfig($stepConfigsList, $description, event);
+			} else {
+				// Activate the filter results category
+				filterResultsCategory.removeClass('hidden');
+				selectCategory(FILTER_RESULTS_CATEGORY_NAME);
+				// Set the heading
+				$stepConfigs.find('h4').text("$[gs.getMessage('Filter Results')]");
+				// Hide all the steps
+				$stepConfigsList.addClass('hidden');
+				// Get the steps to be shown
+				var stepsToShow = $stepConfigsList.filter(function (index, step) {
+					var stepName = step.innerText;
+					var inputIndex = stepName.toUpperCase().indexOf(filterString);
+					if (inputIndex > -1)
+						return step;
+				});
+				// Show the Steps
+				stepsToShow.removeClass('hidden');
+				// Validate that there are valid steps to show
+				if (stepsToShow.length !== 0) {
+					// Activate Button
+					$j('#nextButton').attr("disabled", false);
+					var activeSteps = $stepConfigsList.not('.hidden');
+					$stepConfigsList.removeClass('active');
+					if (activeSteps.length > 0) {
+						// Select the first step
+						activeSteps[0].addClassName('active');
+						removeTabIndexFromSiblings($stepConfigsList, activeSteps[0].innerText);
+					}
+
+					// Update the description
+					showDescriptionForStepConfig($description, $stepConfigsList.filter('.active'));
+				} else {
+					// Remove all the text and disable the button if no valid filter results
+					removeAllText();
+				}
+			}
+		}
+
+		function removeAllText() {
+			$j('#atf-description')
+				.find('#stepLabel')
+				.text("")
+				.parent()
+				.find('#stepText')
+				.html("");
+			$j('#atf-description')
+				.find('#categoryText')
+				.html("");
+			$j('#atf-description')
+				.find('#categoryLabel')
+				.text("");
+			$j('#nextButton').attr("disabled",true);
+		}
+
+})();
+		//# sourceURL=createNewTestStep.js
+	</script>
+</j:jelly>

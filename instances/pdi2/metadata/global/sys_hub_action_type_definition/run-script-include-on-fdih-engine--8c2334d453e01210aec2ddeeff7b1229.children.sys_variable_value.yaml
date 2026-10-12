@@ -1,0 +1,109 @@
+- document: sys_hub_action_type_definition
+  document_key: 8c2334d453e01210aec2ddeeff7b1229
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-05 20:14:47
+  sys_id: 61ecf09053241210aec2ddeeff7b123e
+  sys_mod_count: '5'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-03-15 13:57:00
+  value: '{"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"794bc342-9c9d-444b-a3f2-dd4b6a5a0173\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON","version":"1.0"}'
+  variable: 69ecf09053241210aec2ddeeff7b1215
+- document: sys_hub_step_instance
+  document_key: 51ecf09053241210aec2ddeeff7b1202
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-05 20:14:46
+  sys_id: adecf09053241210aec2ddeeff7b1211
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-05 20:14:46
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: 8c2334d453e01210aec2ddeeff7b1229
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-05 20:14:47
+  sys_id: adecf09053241210aec2ddeeff7b123d
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-05 20:14:47
+  value: '0'
+  variable: 25ecf09053241210aec2ddeeff7b121b
+- document: sys_hub_step_instance
+  document_key: 51ecf09053241210aec2ddeeff7b1202
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-05 20:14:46
+  sys_id: e5ecf09053241210aec2ddeeff7b1212
+  sys_mod_count: '25'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-08-21 17:28:40
+  value: |-
+    (function execute(inputs, outputs) {
+
+    var input = inputs['input'];
+
+    if (!input._meta || !input._meta.definition) {
+        gs.error('Missing _meta property in the request.');
+        outputs['status'] = 'error';
+        outputs['message'] = 'Error executing Missing _meta property in the request.';
+        return outputs;
+    }
+
+    var capabilityDefinitionGr = new GlideRecord('sys_one_extend_capability_definition');
+    if (!capabilityDefinitionGr.get(input._meta.definition)) {
+        gs.error("No record found for definition: " + input._meta.definition);
+        return;
+    }
+
+    var scriptSysId = capabilityDefinitionGr.getValue('api');
+
+    var scriptIncludeGr = new GlideRecord('sys_script_include');
+    if (!scriptIncludeGr.get(scriptSysId)) {
+        gs.error("Script include not found: " + scriptSysId);
+        return;
+    }
+
+    try {
+        var impl = new GlideScopedEvaluator().evaluateScript(scriptIncludeGr, 'script', {});
+
+        if (!impl || typeof impl.execute !== 'function') {
+            gs.error("Script include does not expose execute(): " + scriptIncludeGr.api_name);
+            outputs['status'] = 'error';
+            outputs['message'] = 'Script include does not expose execute()';
+            outputs['details'] = '' + scriptIncludeGr.api_name;
+            return outputs;
+        }
+
+        if (typeof impl.initialize === 'function')
+            impl.initialize();
+
+        outputs = impl.execute(input);
+
+        if (!outputs || typeof outputs !== 'object' || !('output' in outputs)) {
+            outputs = { output: outputs };
+        }
+
+        outputs['status'] = 'success';
+
+    } catch (e) {
+        gs.error("Error while evaluating script: " + e.message);
+        outputs['status'] = 'error';
+        outputs['message'] = 'Error executing script';
+        outputs['details'] = e.message;
+    }
+
+    return outputs;
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b

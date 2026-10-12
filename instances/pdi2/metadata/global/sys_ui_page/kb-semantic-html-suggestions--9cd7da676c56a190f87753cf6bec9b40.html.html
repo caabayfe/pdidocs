@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<link href="/scripts/icon-fonts/font-awesome/css/font-awesome.css" rel="stylesheet"></link>
+	<g:evaluate jelly="true" object="true">
+		var result = {};
+		var articleSysId = gs.action.getGlideURI().getMap().get('sysparm_article_id');
+		var semanticHTMLChecker = new global.KBSemanticHTMLCheckerUtil();
+		var response = semanticHTMLChecker.getSEOIssuesFromArticle('', false, articleSysId);
+		if(response['can_access']){
+			result['can_access'] = response['can_access'];
+			result['article_number_msg'] = gs.getMessage('Article No.: {0}', [response['kb_number']]);
+			result['kb_short_description'] = response['kb_short_description'];
+			result['total_count'] = response['seo_issues_info']['total_count'];
+			result['issue_count_msg'] = response['issue_count_msg'];
+			result['issues_info'] = [];
+			var seoIssues = response['seo_issues_info']['fields'];
+			var issueCountMsg = response['issue_count_msg'];
+			var issueCount = response['seo_issues_info']['total_count'];
+			var fieldNames = Object.keys(seoIssues);
+			var count = 0;
+			for(var i = 0; i &lt; fieldNames.length; i++){
+				var fieldName = fieldNames[i];
+				var tagNames = Object.keys(seoIssues[fieldName]);
+				for(var j = 0; j &lt; tagNames.length; j++){
+					var tagName =  tagNames[j];
+					var nodeIdList = Object.keys(seoIssues[fieldName][tagName]['issue_list']);
+					for (var k = 0; k &lt; nodeIdList.length; k++){
+						var tagLocation = seoIssues[fieldName][tagName]['issue_list'][nodeIdList[k]]['tag_location'];
+						var issuesList = seoIssues[fieldName][tagName]['issue_list'][nodeIdList[k]]['issues'];
+						var tempIdx = fieldName.indexOf(' - ');
+						if(tempIdx > 0){
+							var fieldOrKBBInfo = [ fieldName.substring(0,tempIdx), fieldName.substring(tempIdx+3,fieldName.length)];
+						}
+						else{
+							var fieldOrKBBInfo = [fieldName];
+						}
+						count += 1;
+						result['issues_info'].push([String(count), fieldOrKBBInfo, tagName, tagLocation, issuesList]);
+					}
+				}	
+			}	
+		}
+		else{
+			result['can_access'] = false;
+		}
+		result;
+	</g:evaluate>
+
+	<j:if test="${result['can_access'] != true}">
+		<div id='no_permissions_div'>
+			<div class="container">
+				<div class='loading-center-div'>
+					<img class="page-info-img" src="/images/polarisberg/flavin/permissions-md.svg" alt="${gs.getMessage('Access denied')}"/>
+					<div class="page-info-title">${gs.getMessage('Access denied')}</div>
+						<div class="page-info-subtitle">${gs.getMessage("You don't have sufficient privilege to access this article. Contact your admin for permission.")}</div>
+				</div>
+				
+			</div>
+		</div>
+	</j:if>
+	<j:if test="${result['can_access'] == true &amp;&amp;  result['total_count'] == 0}">
+		<div id='no_issues_found_div'>
+			<div class="container">
+				<div>
+					<div class="seo-suggestion-msg">${gs.getMessage('SEO suggestions for')}</div>
+					<div class="kb-short-description-info">${result['kb_short_description']}</div>
+					<div class="kb-number-info">${result['article_number_msg']}</div>
+					<div class="no-improvements-found-div">
+						<img class="page-info-img" src="kb_semantic_check_no_issues_found.svg" alt="${gs.getMessage('No SEO suggestions found')}"/>
+						<div class="page-info-title">${gs.getMessage('No SEO suggestion found')}</div>
+						<div class="page-info-subtitle">${gs.getMessage("Your article is already optimized for SEO.")}</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</j:if>
+	<j:if test="${result['can_access'] == true &amp;&amp;  result['total_count'] > 0}">
+		<div id='issues_found_div'>
+			<div class="container">
+				<div>
+					<div  class="seo-suggestion-msg">${gs.getMessage('SEO suggestions for')}</div>
+					<div class="kb-short-description-info">${result['kb_short_description']}</div>
+					<div class="kb-number-info">${result['article_number_msg']}</div>
+					<div class="improvements-found-div">
+						<i class="fa fa-lightbulb-o"></i>
+						<div id="suggestion_count_msg">${result['issue_count_msg']}</div>
+					</div>
+				</div>
+				<div>
+					<table id="seo_issues_table">
+						<tbody id="seo_issues_table_body">
+							<tr>
+								<th style="width: 7%;"><div>${gs.getMessage('No.')}</div></th>
+								<th style="width: 15%;"><div>${gs.getMessage('Field / KB Block')}</div></th>
+								<th style="width: 8%"><div>${gs.getMessage('Tag')}</div></th>
+								<th style="width: 40%;">
+									<div class="issue-location">
+										<div>${gs.getMessage('Where in article')}</div>
+										<i class="fa fa-info-circle" 
+											aria-hidden="true"
+											role="tooltip"
+											title="${gs.getMessage('Locate the identical text in the article. To locate the source code tags, open the source code of the article.')}">
+										</i>
+									</div>
+								</th>
+								<th style="width: 30%;"><div>${gs.getMessage('Suggestions')}</div></th>
+							</tr>
+							
+							<j:forEach begin="0" var="jvar_issue_row_list" items="${result['issues_info']}">   
+								<tr>
+									<td>
+										${jvar_issue_row_list[0]}
+									</td>
+									
+									<td>
+										<div>
+											${jvar_issue_row_list[1][0]}
+										</div>
+										<j:if test="${jvar_issue_row_list[1].length == 2}">
+											<div>
+												${jvar_issue_row_list[1][1]}
+											</div>
+										</j:if>
+									</td>
+									<j:forEach begin="2" end="4" var="jvar_issue_row_item" items="${jvar_issue_row_list}">   
+										<td>
+											${jvar_issue_row_item}
+										</td>
+									</j:forEach>
+									<td>	  
+										<j:if test="${jvar_issue_row_list[4].length > 1}">
+											<ul>
+												<j:forEach begin="0" var="jvar_issue_type_item" items="${jvar_issue_row_list[4]}">   
+													<li>
+														${jvar_issue_type_item}
+													</li>
+												</j:forEach>
+											</ul>
+										</j:if>
+										<j:if test="${jvar_issue_row_list[4].length == 1}">
+											${jvar_issue_row_list[4][0]}
+										</j:if>
+									</td>
+								</tr>
+							</j:forEach>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</j:if>
+
+	<style>
+		html, body {
+    		height: 100% !important;
+		}
+		body{
+			padding-bottom: 100px;
+		}
+		.container{
+			text-align: -webkit-center;
+			text-align:-moz-center;
+		}
+		.hidden-div{
+			display: none;
+		}
+
+		#seo_issues_table {
+			margin-top: 43px;
+			margin-bottom: 50px;
+		}
+
+		#seo_issues_table td, th {
+  			padding: 8px;
+  			vertical-align: middle;
+			padding-right: 20px;
+			min-height: 40px;
+		}
+
+		#seo_issues_table th,td:hover  {
+			   background: RGB(var(--now-color--primary-1,30,133,109),var(--now-opacity--least,0.1));
+			   background: RGBA(var(--now-color--secondary-0,217,235,238),0.65);
+		}
+		#seo_issues_table th:hover  {
+			   background: RGB(var(--now-color--primary-1,30,133,109),var(--now-opacity--least,0.1));
+			   background: RGBA(var(--now-color--secondary-0,217,235,238),0.65);
+		}
+
+		#seo_issues_table th {
+			text-align: left;
+			font-style: normal;
+			font-weight: 700;
+			font-size: 16px;
+			line-height: 19px;
+			color: RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28)));
+			background-color: RGB(var(--now-color_background--primary,var(--now-color--neutral-0,255,255,255)));
+			border-color: RGB(var(--now-color_border--secondary,var(--now-color--neutral-5,172,180,181)));
+		}
+		#seo_issues_table td{
+			color: RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28)));
+			font-style: normal;
+			font-weight: 400;
+			font-size: 16px;
+			line-height: 150%;
+			
+		}
+		#seo_issues_table tr:nth-child(2n) {
+    		background: RGB(var(--now-color_background--primary,var(--now-color--neutral-0,255,255,255)));
+		}
+		#seo_issues_table tr:nth-child(2n+1) {
+    		background: RGB(var(--now-color_background--secondary,var(--now-color--neutral-1,246,247,247)));
+		}
+
+		#seo_issues_table ul{
+			padding-left: 12px;
+		}
+
+		.table-heading-info {
+			font-size: 12px;
+			line-height: 14px;
+			margin-top: 8px;
+		}
+		.issue-location{
+			display: flex;
+			gap: 14px;
+		}
+		.kb-number-info {
+			font-style: normal;
+			font-weight: 400;
+			font-size: 16px;
+			line-height: 19px;
+			text-align: center;
+			color: RGB(var(--now-color_text--secondary, var(--now-color--neutral-15, 44, 53, 55)));
+			margin-bottom: 10px;
+		}
+		.kb-short-description-info {
+			font-style: normal;
+			font-weight: 700;
+			font-size: 32px;
+			line-height: 39px;
+			text-align: center;
+			color: RGB(var(--now-color_text--secondary, var(--now-color--neutral-15, 44, 53, 55)));
+			max-width: 55%;
+			margin-bottom: 10px;
+		}
+		.page-info-title {
+			font-style: normal;
+			font-weight: 600;
+			font-size: 32px;
+			line-height: 38px;
+			text-align: center;
+			color: RGB(var(--now-color_text--secondary, var(--now-color--neutral-15, 44, 53, 55)));
+			max-width: 55%;
+			margin-bottom: 12px;
+		}
+		.seo-suggestion-msg {
+			font-style: normal;
+			font-weight: 700;
+			font-size: 24px;
+			line-height: 29px;
+			text-align: center;
+			color: RGB(var(--now-color_text--secondary, var(--now-color--neutral-15, 44, 53, 55)));
+			max-width: 55%;
+			margin-top: 10px;
+			margin-bottom: 10px;
+		} 
+		.page-info-img {
+			margin-bottom: 16px;
+		}
+		.page-info-subtitle {
+			font-style: normal;
+			font-weight: 400;
+			font-size: 16px;
+			line-height: 19px;
+			width: 408px;
+		}
+		.improvements-found-div {
+			background-color: RGB(var(--now-color_alert--moderate-0, 212, 213, 243));
+    		height: 48px;
+    		border: 1px solid RGB(var(--now-color_alert--moderate-1, 148, 149, 225));
+    		border-radius: 4px;
+    		display: flex;
+    		align-items: center;
+			margin-top: 48px;
+		}
+		.improvements-found-div div{
+			color: RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28)));
+    		font-style: normal;
+    		font-weight: 400;
+    		font-size: 16px;
+    		line-height: 19px;
+		}
+		.improvements-found-div img{
+			height: 15px;
+			padding-right: 10px;
+		}
+		#issues_found_div, #no_issues_found_div {
+			margin-top: 50px;
+		}
+		
+		.loading-center-div {
+				margin-top: 238px;
+		}
+		.no-improvements-found-div{
+			margin-top: 148px;
+		}
+
+		.fa{
+			color: RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28)));
+		}
+		.fa-lightbulb-o{
+			font-size: large;
+			padding-right: 16px;
+			padding-left: 20px;
+		}
+
+</style>
+</j:jelly>

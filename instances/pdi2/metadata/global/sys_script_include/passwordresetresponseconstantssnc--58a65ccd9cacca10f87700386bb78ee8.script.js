@@ -1,0 +1,53 @@
+var PasswordResetResponseConstantsSNC = Class.create();
+PasswordResetResponseConstantsSNC.prototype = {
+    initialize: function() {},
+    BLOCK_ERROR: 'block',
+    USER_BLOCKED_ERROR: 'User is blocked',
+    USER_DOESNT_EXIST_ERROR: 'User does not exist',
+    USER_NOT_ENROLLED_ERROR: 'User is not enrolled',
+    PROCESS_NOT_APPLICABLE_ERROR: 'Not in process',
+    NOTIFICATION_NOT_ENABLED_ERROR: 'User cannot receive email',
+    QA_PARAM_ERROR: 'num_reset or num_enroll parameter not found',
+    QA_INSUFFICIENT_QUESTIONS_ERROR: 'User has insufficient questions in his enrollment',
+    SECURITY_VIOLATION_ERROR: gs.getMessage("Security violation"),
+    USER_LOCKED_ERROR: 'locked',
+    LDAP_ERROR: 'ldap error',
+    ERROR_CODE_FOR_NOT_ENROLLED: 1000,
+    PROCESS_LOAD_ERROR: 1001,
+    POST_PROCESSOR_EXECUTION_ERROR: 1002,
+    ERROR_CODE_FOR_BLOCK: 1003,
+    SECURITY_VIOLATION_ERROR_CODE: 1004,
+    RESET_URL_EMAIL_SENT_ERROR_CODE: 1005,
+    PER_DAY_LIMIT_ERROR: 1006,
+    PAUSE_WINDOW_ERROR: 1007,
+    INVALID_REQUEST_ERROR: 1008,
+    INVALID_PHONE_NUMBER_ERROR: 1009,
+    CODE_GENERATE_ERROR: 1010,
+    UNKNOWN_MODE_ERROR: 1011,
+    DEFAULT_ERROR_CODE: 1999,
+    POST_PROCESSOR_SCRIPT_SUCCESS: 2001,
+    RESET_URL_EMAIL_SENT_SUCCESS_CODE: 2002,
+    VERIFICATION_CODE_SENT: 2003,
+
+    ERROR: {
+        1000: gs.getMessage("User is eligible for {0} process, but must enroll for the process."),
+        1001: gs.getMessage("{0} Cannot load the process: {1}"),
+        1002: gs.getMessage("{0} Error while executing post-processor script {1}. Error: {2}"),
+        1003: gs.getMessage("Maximum verify attempts over for this process! Ask the user to try again after {0} hour(s) or try using a different process."),
+        1004: gs.getMessage("Security violation"),
+        1005: gs.getMessage("Error occured while sending the reset URL over email/SMS."),
+        1006: gs.getMessage("You can't send the verification code more than {0} times per day."),
+        1007: gs.getMessage('You can send a new verification code after {0} minute(s)'),
+        1008: gs.getMessage('Your password reset request is no longer valid. Submit another request.'),
+        1009: gs.getMessage('Could not deliver the code via SMS text. The number is not a valid phone number (not E.164 compliant).'),
+        1010: gs.getMessage('Could not generate a verification code'),
+        1011: gs.getMessage('{0} Unknown mode!'),
+        1999: gs.getMessage("Unknown error occurred. Please contact the service desk or the password reset administrator.")
+    },
+    SUCCESS: {
+        2001: gs.getMessage("{0} Completed post-processor script: {1}"),
+        2002: gs.getMessage("The reset URL over email/SMS successfully sent."),
+        2003: gs.getMessage("* The verification code has been sent and is valid for {0} minute(s). If you don't receive the code within the next few minutes, resend and try again.")
+    },
+    type: 'PasswordResetResponseConstantsSNC'
+};

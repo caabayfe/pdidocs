@@ -1,0 +1,76 @@
+_meta:
+  hash: 3fbfabc261ceb3eb41f648ed2094a290950a0e372d7c67b239033ab0967f2dc5
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2007-11-09 21:04:07
+  sys_id: 263987170a0a0327002e52a2c0d673ce
+  sys_mod_count: '19'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_263987170a0a0327002e52a2c0d673ce
+  sys_updated_by: srikanth.nelapudi
+  sys_updated_on: 2020-05-18 07:22:20
+active: 'true'
+name: ps.sh
+probe: e71cd26fa9fe156100b4b355bf835b9c
+sys_name: ps.sh
+sys_policy: ''
+value: |-
+  #!/bin/sh
+  #
+  # Only get our processes, not our child zone processes
+  # NOTE: this takes one arguments:  zone name in $1
+  # Core of this script is very similar to MID Server Script File solaris_ps_command.sh.
+  #
+  ZONENAME=$1
+  IFS="
+  "
+  ZONECMD=/usr/bin/zonename
+  PSCMD="/usr/bin/ps"
+  PSARGS="-o pid,ppid"
+  AWKCMD="awk"
+
+  # Solaris 10 and older have ucb/ps installed; Solaris 11 does not by default.
+  # But Solaris 11 /usr/bin/ps generates /usr/ucb/ps compatible output for when -
+  # is not at the front of the first command argument.
+  #
+  SOLVERSION=`uname -r`
+
+  # First output just the heading for ps's output, tacking on a COMMAND column
+  echo PID PPID COMMAND
+
+  # Check for existence of zonename command
+  if [ ! -z "$ZONENAME" ]; then
+          ZONEPARAM="-z ${ZONENAME}"
+  elif [ -f $ZONECMD ]; then
+  	# exists: limit ps to display processes for this zone
+          ZONEPARAM="-z `$ZONECMD`"
+  else
+  	# doesn't exist: ps to display all processes 
+          ZONEPARAM="-e"
+  fi
+
+  # Replace awk command with nawk if it is available 
+  # awk has a byte limit of 2559 bytes on older solaris machines
+  if hash nawk 2>/dev/null; then
+    AWKCMD="nawk"
+  fi
+
+  # Iterate through each line of ps output...
+  for LINE in `$PSCMD $ZONEPARAM $PSARGS`; do
+  	PID=`echo $LINE | $AWKCMD '{print $1}'`
+  	# Check that this line isn't the header, and it's valid in /proc
+  	if [ "$PID" != "PID" -a -f "/proc/$PID/status" ]; then
+          # run ucb/ps as root get full, non-truncated command+args even for processes we don't own.
+          # Check if Solaris 11, which may not have /usr/ucb/ps installed.
+          # SNC runtime script preprocessor requires ${sudo:...} contain literal string, not a $myvar.
+          case $SOLVERSION in
+              "5.11") CMD=`${sudo:/usr/bin/ps} awwx $PID | tail +2 | $AWKCMD '{$1="";$2="";$3="";$4="";print $0}'`;;
+              *) CMD=`${sudo:/usr/ucb/ps} -awwx $PID | tail +2 | $AWKCMD '{$1="";$2="";$3="";$4="";print $0}'`;;
+          esac        # tack on the command+args to the output        
+          echo $LINE $CMD
+          fi
+  done
+value_script: ''

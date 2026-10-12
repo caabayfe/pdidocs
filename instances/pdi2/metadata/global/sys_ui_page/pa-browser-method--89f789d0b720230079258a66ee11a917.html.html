@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">	
+	<g:requires name="scripts/classes/GwtDateTimePicker.js" position="last" />
+	<style>
+		#pa_browser_method:focus {
+			outline: none;
+		}
+	</style>
+	<g:ui_form>  
+		<j:set var="jvar_methods" value="${SNC.PAFormulaUtil.documents()}"/>
+		<g:evaluate var="jvar_methods_json" jelly="true" object="true">
+			JSON.parse(jelly.jvar_methods)
+		</g:evaluate>
+		<j:set var="jvar_date_msg" value="${gs.getMessage('The following values are possible:')}"/>
+		<g:evaluate var="jvar_date_values">
+			gs.getMessage("An absolute date in format yyyy-mm-dd; the variable score_start or score_end; or a date parameter you have coded yourself");
+		</g:evaluate>
+
+		<script>
+			var methods = ${NOESC:jvar_methods};
+			var methodLabel = '${gs.getMessage('The method is')}';
+			var nonNumericWarning = '${gs.getMessage('This method on its own is not a valid formula, because the method returns a non-numeric value.')}';
+			var singleDateLabel = '${gs.getMessage('On Date')}';
+			var multiDateLabel = '${gs.getMessage('From Date')}';
+			var exampleLabel = '${gs.getMessage('Example')}';
+			(function enableSelect2() {
+				$j('#methodBrowser_method').select2();
+			})();
+		</script>
+
+		<div class="row">
+			<div id="element_methodBrowser_method" class="col-xs-12 form-group">
+			<div>
+				<label class="col-xs-2 url">
+					<a target="blank" href="api/now/v1/context_doc_url/PAFormulaUtils" style="text-decoration: underline;">
+						<span class="label-text">${gs.getMessage('Method')}</span>
+					</a>
+				</label>
+			</div>
+			<div class="col-xs-10 col-md-9 col-lg-8 form-field input_controls">
+				<select id="methodBrowser_method" class="form-control select2" onChange="methodBrowser.changeMethod(this)">
+					<j:forEach items="${jvar_methods_json}" var="jvar_method">
+						<option>${jvar_method.displayvalue}</option>
+					</j:forEach>
+				</select>
+				<div class="fieldmsg-container">
+					<div id="methodBrowser_description" class="fieldmsg notification notification-info" style="padding-left: 10px;"/>
+				</div>
+			</div>
+			</div>
+			
+			<div id="element_methodBrowser_date1" class="col-xs-12 form-group" style="display:none">
+			<div>
+				<label class="col-xs-2 url">
+					<span id="element_methodBrowser_date1_label" class="label-text"/>
+				</label>
+			</div>
+			<div class="col-xs-10 col-md-9 col-lg-8 form-field input_controls">
+				<div class="element date-calendar">
+					<span class="input-group">
+						<input type="text" id="methodBrowser_date1" data-type="glide_element_date" class="form-control element_reference_input" />
+						<span class="input-group-btn">
+							<!-- user / system date format -->
+							<a class="btn btn-default btn-ref" data-type="element_date" aria-label="${gs.getMessage('Select date')}" onclick="new GwtDateTimePicker('methodBrowser_date1', 'yyyy-MM-dd', false);">
+								<span class="icon icon-calendar" aria-hidden="true"></span>
+								<span class="sr-only">${gs.getMessage('Select date')}</span>
+							</a>
+						</span>
+					</span>
+				</div>
+				<div class="fieldmsg-container">
+					<div id="methodBrowser_date1_msg" class="fieldmsg notification notification-info" style="padding-left: 10px;">
+						<p>${jvar_date_msg}</p><p>${jvar_date_values}</p>
+					</div>
+				</div>
+			</div>
+			</div>
+
+			<div id="element_methodBrowser_date2" class="col-xs-12 form-group" style="display:none">
+			<div>
+				<label class="col-xs-2 url">
+					<span id="element_methodBrowser_date2_label" class="label-text">${gs.getMessage('To Date')}</span>
+				</label>
+			</div>
+			<div class="col-xs-10 col-md-9 col-lg-8 form-field input_controls">
+				<div class="element date-calendar">
+					<span class="input-group">
+						<input type="text" id="methodBrowser_date2" data-type="glide_element_date" class="form-control element_reference_input" />
+						<span class="input-group-btn">
+							<!-- user / system date format -->
+							<a class="btn btn-default btn-ref" data-type="element_date" aria-label="${gs.getMessage('Select date')}" onclick="new GwtDateTimePicker('methodBrowser_date2', 'yyyy-MM-dd', false);">
+								<span class="icon icon-calendar" aria-hidden="true"></span>
+								<span class="sr-only">${gs.getMessage('Select date')}</span>
+							</a>
+						</span>
+					</span>
+				</div>
+				<div class="fieldmsg-container">
+					<div id="methodBrowser_date2_msg" class="fieldmsg notification notification-info" style="padding-left: 10px;">
+						<p>${jvar_date_msg}</p><p>${jvar_date_values}</p>
+					</div>
+				</div>
+			</div>
+			</div>
+
+			<div id="element_methodBrowser_ULB" class="col-xs-12 form-group" style="display:none">
+				<div>
+					<label class="col-xs-2"></label>
+				</div>
+			<div class="col-xs-10 col-md-9 col-lg-8 form-field input_controls">
+				<div>
+					 <div class="fieldmsg-container">
+          			  	<div id="" class="fieldmsg notification notification-info" style="padding-left: 10px;">
+                		  <p>${gs.getMessage('If you use this method in the formula, this formula indicator will support no more than 2 levels of breakdowns.')}</p>
+            			</div>
+        			</div>
+				</div>
+			</div>
+			</div>
+		</div>
+		
+		<div class="form_action_button_container">
+			<button id="button_methodBrowser_select" class="form_action_button action_context btn btn-default btn-primary" style="padding:6px 25px;" type="submit" onclick="SNC.PA.insertMethodIntoFormula(methodBrowser.getMethodString());return false;">${gs.getMessage('Select')}</button>
+		</div>
+	</g:ui_form>
+</j:jelly>

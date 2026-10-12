@@ -1,0 +1,129 @@
+<div ng-if="data.canRead && data.headless && data.urLink" class="alert alert-info" ng-class="{'none': c.hide}">
+    <span class="notification-icon icon-info"><span class="sr-only">${Info Message}</span></span>
+    ${Some of these comments were hidden during ticket routing to protect your privacy. Refer to the originating ticket for current status and updates - }
+    <a href={{data.urLink}} class="alert-link alert-text">{{data.number.display_value}}</a>
+    <button type="button" class="close btn-icon icon-cross" aria-label="Close" ng-click="hideMessage()"></button>
+</div>
+<div ng-if="data.canRead && !data.headless">
+    <div ng-if="data.primary_ticket_link" class="alert alert-warning">
+        <span class="notification-icon icon-alert"><span class="sr-only">${Info Message}</span></span>
+        ${The information shown below may have additional updates. To view the latest record, <a href={{data.primary_ticket_link}} class="alert-link alert-text">click here</a>}
+    </div>
+    <div class="panel b">
+        <div class="panel-heading bg-primary panel-la-jolla-default clearfix">
+            <div class="flex-display title-padding">
+                <h2 class="m-n sd" tabindex="-1" id="short-desc">{{data.title}}</h2>
+                <div class="dropdown" ng-if="c.data.isSummaryEnabled && c.data.popoverWidget">
+                <button ng-click="summarizeTicket()"
+                        ng-disabled="c.showPopover"
+                        class="btn btn-default pull-right summarize-btn"
+                        data-toggle="dropdown"
+                        data-placement="bottom">
+                <svg class="servicenow-otto-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M4.88882e-05 6.98633C0.00180209 6.19083 0.595612 5.53021 1.37896 5.3916C2.34688 5.22022 3.27211 4.76212 4.01763 4.0166C4.76284 3.27124 5.22025 2.34658 5.39165 1.37891C5.53025 0.595633 6.19096 0.0018473 6.98638 1.3606e-09L7.01763 0C7.81302 0.00185963 8.47374 0.595569 8.61235 1.37891C8.78377 2.34674 9.2418 3.27106 9.98735 4.0166C10.7328 4.76205 11.6572 5.22019 12.625 5.3916C13.4084 5.53021 14.0022 6.19083 14.004 6.98633C14.0041 6.99671 14.004 7.00731 14.004 7.01758C14.002 7.81288 13.4083 8.47371 12.625 8.6123C11.6575 8.78359 10.7328 9.241 9.98735 9.98633C9.24184 10.7318 8.78374 11.6571 8.61235 12.625C8.47374 13.4083 7.81313 14.0022 7.01763 14.0039C7.00723 14.004 6.99665 14.0039 6.98638 14.0039C6.19096 14.0021 5.53025 13.4083 5.39165 12.625C5.22037 11.6572 4.76322 10.7319 4.01763 9.98633C3.27212 9.24084 2.34686 8.78369 1.37896 8.6123C0.595682 8.47371 0.00190752 7.81299 4.88882e-05 7.01758C-6.08276e-05 7.00721 4.8324e-05 6.99661 4.88882e-05 6.98633ZM4.50005 7.00391C4.50005 8.38445 5.61956 9.50364 7.00005 9.50391C8.38076 9.50391 9.50005 8.38462 9.50005 7.00391C9.50005 5.62336 8.38151 4.50417 7.00103 4.50391C5.62031 4.50391 4.50005 5.62319 4.50005 7.00391Z" fill="#006F8E"/>
+                </svg>
+                <span>${Summarize}</span>
+                </button>
+                <div id="popoverContainer" ng-if="c.renderWidget" ng-show="c.showPopover" class="popover-box">
+                                        <sp-widget widget="c.data.popoverWidget" />
+                                        </div>
+                </div>
+                <div ng-if="!data.primary_ticket_link && c.data.currentActionWidget" class="action-btn">
+                    <sp-widget widget="c.data.currentActionWidget" page="{table:data.table, sys_id: data.sys_id}"></sp-widget>
+                </div>
+            </div>
+            <div class="header-fields">
+                <div class="fields-left" role="group" aria-label="${Request details}">
+                    <div class="ticket-id" ng-if="!data.SDIsEmpty" id="data.number.name">
+                        {{data.number.display_value}}
+                    </div>
+                    <div class="ticket-status" ng-if="data.headerFields.state && data.headerFields.state.display_value">{{data.headerFields.state.display_value}}</div>
+                    <div class="ticket-meta" ng-if="data.headerFields.created && data.headerFields.created.value">
+                        <span>${Created} <sn-time-ago timestamp="data.headerFields.created.value"></sn-time-ago></span>
+                    </div>
+                    <div class="ticket-meta" ng-if="data.headerFields.updated && data.headerFields.updated.value">
+                        <span>${Last updated} <sn-time-ago timestamp="data.headerFields.updated.value"></sn-time-ago></span>
+                    </div>
+                </div>
+                    
+                <div class="hide-details" ng-if="c.data.description || data.show_info_widget || (data.fields && data.fields.length > 0)">
+					<a href="#" ng-if="c.showInfoFields" ng-click="toggleInfoFields('show')">
+                        ${Hide details} <span class="glyphicon glyphicon-chevron-up"></span>
+                    </a>
+                    <a href="#" ng-if="!c.showInfoFields" ng-click="toggleInfoFields('hide')">
+                        ${Show details} <span class="glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </div>
+            </div>
+            <hr/>
+            <div class="header-info-panel">
+                <div ng-if="c.data.description && c.showInfoFields" ng-init="c.description_toggle = false" class="content-flex">
+                    <button class="options-btn btn pull-left" id="wrapper" ng-click="c.description_toggle = !c.description_toggle" aria-expanded="{{c.description_toggle}}" aria-controls="description-toggle">
+                        <div ng-show="!c.description_toggle">${Show more}</div>
+                        <div ng-show="c.description_toggle">${Show less}</div>
+                        <span style="font-size: 10px; padding-left:10px" class="glyphicon" ng-class="c.description_toggle ? 'glyphicon-chevron-up' : 'glyphicon-chevron-down'"></span>
+                    </button>
+                    <div ng-if="c.description_toggle" id="description-toggle" aria-hidden="{{!c.description_toggle}}">
+                        <p class="title-padding break-word" ng-bind-html="description" ng-if="c.data.description.type=='html'" tabindex="-1"></p>
+                        <p class="title-padding break-word pre-wrap" ng-if="c.data.description.type!='html'" tabindex="-1">{{description}}</p>
+                    </div>
+                </div>
+            <div ng-if="!data.show_info_widget && data.fields.length > 0 && c.showInfoFields">
+                <div class="panel-body">
+                    <div class="ticket-fields text-whitespace" ng-class="{'show-less': c.showMore}" ng-if="data.fields.length > 0" id="std-tkt-fields">
+                        <div class="col-md-2 col-sm-3 col-xs-12 break-word adjust-height" ng-if="(field.type != 'decimal' || field.type == 'decimal' && field.value != 0)" ng-repeat="field in data.fields| filter: {type:'!workflow'}">
+                            <div ng-switch="field.type">
+                                <div ng-switch-when="glide_date_time" title="{{field.display_value}}">
+                                    <p class="label-color size text-xs header-text">{{field.label}}</p>
+                                    <span class="padding-sm" ng-if="field.name == 'due_date' || field.name == 'estimated_delivery'" data-toggle="tooltip" title="{{field.display_value}}">{{field.display_value}}</span>
+                                    <span ng-if="field.name != 'due_date' && field.name != 'estimated_delivery'">
+                                        <sn-time-ago class="padding-sm" timestamp="field.value" /></span>
+                                </div>
+                                <div ng-switch-when="glide_list">
+                                    <p class="label-color size header-text text-xs">{{field.label}}</p>
+                                    <sn-avatar ng-if="field.reference == 'sys_user' && field.value" ng-repeat="user in field.user" data-toggle="tooltip" title="{{user.name}}" tabindex="0" ng-click="!data.isExternalUser ? openProfile(user.userID) : null" primary="user" enable-tooltip="false" enable-context-menu="true" show-presence="true" ng-style="{'cursor':data.isExternalUser?'default':'pointer'}" ng-attr-role="{{!data.isExternalUser ? 'link' : ''}}"></sn-avatar>
+                                    <span ng-if="field.reference != 'sys_user' && field.value">
+                                        <span ng-repeat="item in field.display_value" class="header-text">
+                                            <span data-toggle="tooltip" title="{{item}}">{{item}}</span>
+                                            <span ng-if="!$last">,</span>
+                                        </span>
+                                    </span>
+                                </div>
+                                <div ng-switch-default ng-if="field.type != 'glide_list'">
+                                    <sn-avatar ng-if="field.reference == 'sys_user' && field.value" class="pull-left" data-toggle="tooltip" title="{{field.user.name}}" tabindex="0" ng-click="!data.isExternalUser ? openProfile(field.user.userID) : null" primary=field.user enable-tooltip="false" enable-context-menu="true" show-presence="true" ng-style="{'cursor':data.isExternalUser?'default':'pointer'}" ng-attr-role="{{!data.isExternalUser ? 'link' : ''}}"></sn-avatar>
+                                    <p class="label-color size header-text text-xs">{{field.label}}</p>
+                                    <span ng-if="field.reference != 'sys_user' && field.value" class="header-text"><span data-toggle="tooltip" title="{{field.display_value}}">{{field.display_value}}</span></span>
+                                    <span ng-if="field.reference == 'sys_user' && field.value" ng-class="!data.isExternalUser ? 'btn-link' : null" ng-click="!data.isExternalUser ? openProfile(field.user.userID) : null" ng-attr-role="{{!data.isExternalUser ? 'link' : ''}}" ng-style="{'cursor' : data.isExternalUser ? 'default' : 'pointer'}" aria-label="{{field.label}} {{field.display_value}}" class="header-text align-tooltip" data-toggle="tooltip" title="{{field.display_value}}" tabindex="0">{{field.display_value}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="options-btn btn show-more-controls visible-xs adjust-height" ng-click="c.showMore = !c.showMore" aria-expanded="{{!c.showMore}}" aria-controls="std-tkt-fields" ng-if="c.showControls">
+                    <span>{{c.showMore? '${Show more}' : '${Show less}' }}</span>
+                    <span style="font-size: 10px; padding-left:5px; padding-right:5px" class="glyphicon" ng-class="!c.showMore ? 'glyphicon-chevron-up' : 'glyphicon-chevron-down'"></span>
+                </button>
+                <div ng-repeat="field in data.fields|filter: {type:'workflow'}">
+                    <div class="panel-body padder-t-none">
+                        <p class="label-color size header-text header-text-stage text-xs">{{field.label}}</p>
+                        <div class="no-padding-sm">
+                            <sp-widget widget="field.stageWidget"></sp-widget>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div ng-if="data.show_info_widget && c.showInfoFields">
+                <hr>
+                <div class="panel-body">
+                    <sp-widget widget="c.data.info_widget" page="{table:data.table, sys_id: data.sys_id}"></sp-widget>
+                </div>
+              </div>
+          </div>
+        </div>
+    </div>
+</div>
+<div ng-if="!data.canRead || !data.canReadConfig" class="panel">
+    <h3>
+        ${Sorry, either the data doesn't exist or you don't have access}
+    </h3>
+</div>

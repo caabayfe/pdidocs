@@ -1,0 +1,218 @@
+_meta:
+  hash: ee19ceafdbed085f6b17cd292d33dc2f21b2547a63db40c58ebe07ac56b6f630
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_topic
+  sys_created_by: admin
+  sys_created_on: 2021-03-20 13:46:10
+  sys_domain: global
+  sys_id: 43c0c9895347201033cdddeeff7b127a
+  sys_mod_count: '28'
+  sys_package: aeddf2bf8c5d03100a22deb6dd2b4eb7
+  sys_scope: global
+  sys_update_name: sys_cb_topic_43c0c9895347201033cdddeeff7b127a
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-16 09:36:17
+applicability: ''
+applicability_mode: query
+autopilot_topic: 'false'
+category: ''
+channels: ''
+connect_queue: ''
+context_profiles: ''
+description: ''
+dialog_acts_enabled: 'false'
+expose_on_palette: 'true'
+flexible_conversation_switching: 'true'
+foundational: 'false'
+graph: |-
+  {
+    "graph_api_version": "1.0.39",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "15c39eaf9abc4b2d8e6aeea0b8b3eeb4": {
+            "id": "15c39eaf9abc4b2d8e6aeea0b8b3eeb4",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "Reference",
+                "value": "93d2f7645383201033cdddeeff7b1208",
+                "id": "e9d620c83fe5416d8acc3f181c816ba7",
+                "name": "Deflection Configuration",
+                "required": true,
+                "table": "ssa_deflection_configuration",
+                "hint": "Choose a pre-defined Deflection Configuration",
+                "referenced": true,
+                "disabled": true,
+                "query": "activity_context=7b43fb645383201033cdddeeff7b1246"
+              },
+              {
+                "type": "Reference",
+                "value": null,
+                "id": "c9fdc198eaaf449e86a2ec28cc010431",
+                "name": "Deflection Pattern",
+                "required": true,
+                "table": "ssa_deflection_pattern",
+                "referenced": true,
+                "disabled": true,
+                "hint": "Choose a deflection pattern. Note: The list is not filtered by the Deflection Configuration. Make sure to select a pattern that is tied to the chosen Deflection Configuration. ",
+                "query": "deflection_configuration.activity_context=7b43fb645383201033cdddeeff7b1246"
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "13de6646ab214dcaafc640a6abc15be6",
+                "name": "Activity Table",
+                "required": false,
+                "referenced": true,
+                "disabled": true,
+                "hint": "Optional field: Table name that the deflection activity occurred or would have occurred. Recommend adding incident or task tables related to the deflection "
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "125c894468914d149d8f3c23a19e8990",
+                "name": "Activity Ids",
+                "hint": "Optional field: List of comma-separated Activity SysIds. Recommend adding AI-search results or related tasks in the deflection occurrence",
+                "referenced": true,
+                "disabled": true
+              }
+            ],
+            "variableIds": [
+              "e9d620c83fe5416d8acc3f181c816ba7",
+              "c9fdc198eaaf449e86a2ec28cc010431",
+              "13de6646ab214dcaafc640a6abc15be6",
+              "125c894468914d149d8f3c23a19e8990"
+            ]
+          },
+          "7fdd8bf925bb487397ee19e566d1f221": {
+            "id": "7fdd8bf925bb487397ee19e566d1f221",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "9292738bed6c4164862d638e6e44d25b": {
+            "id": "9292738bed6c4164862d638e6e44d25b",
+            "name": "Deflection tracking script",
+            "script": "(function execute() {\n    // Check if VA Deflection tracking is enabled\n    var enableVaDfTracking = gs.getProperty(\"com.glide.cs.va.deflection_tracking.enable\",\"false\");\n    if (enableVaDfTracking !== \"true\") \n        return;\n\n    try {\n        var metricInfo = {\n            config_id: new String(vaInputs.deflection_configuration),\n            pattern_id: new String(vaInputs.deflection_pattern),\n            conversation_task_id: vaVars._topic_calling_task\n        };\n\n        var activitiesInfo = {\n            activity_table: new String(vaInputs.activity_table),\n            activity_ids: new String(vaInputs.activity_ids), // comma separated sys_ids\n        };\n\n        // \"va.deflection_metric.insert\" event script action handles metric inserts\n        gs.eventQueue(\n            \"va.deflection_metric.insert\",\n            null,\n            JSON.stringify(metricInfo),\n            JSON.stringify(activitiesInfo)\n        );\n    } catch (e) {\n        gs.warn(\"VA Deflection: Metric-event insert failed \" + e);\n    }\n})();\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "69495313dc30434d9138cce0ca2a17ac",
+            "edgeType": "Edge",
+            "source": "15c39eaf9abc4b2d8e6aeea0b8b3eeb4",
+            "target": "9292738bed6c4164862d638e6e44d25b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "5475d9c52bf4457bb24a232a5aa95e7a",
+            "edgeType": "Edge",
+            "source": "9292738bed6c4164862d638e6e44d25b",
+            "target": "7fdd8bf925bb487397ee19e566d1f221",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "e9d620c83fe5416d8acc3f181c816ba7": {
+        "id": "e9d620c83fe5416d8acc3f181c816ba7",
+        "name": "deflection_configuration",
+        "label": "Deflection Configuration",
+        "defaultValue": "93d2f7645383201033cdddeeff7b1208",
+        "varType": "reference",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "table": "ssa_deflection_configuration"
+      },
+      "c9fdc198eaaf449e86a2ec28cc010431": {
+        "id": "c9fdc198eaaf449e86a2ec28cc010431",
+        "name": "deflection_pattern",
+        "label": "Deflection Pattern",
+        "defaultValue": null,
+        "varType": "reference",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "table": "ssa_deflection_pattern"
+      },
+      "13de6646ab214dcaafc640a6abc15be6": {
+        "id": "13de6646ab214dcaafc640a6abc15be6",
+        "name": "activity_table",
+        "label": "Activity Table",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        }
+      },
+      "125c894468914d149d8f3c23a19e8990": {
+        "id": "125c894468914d149d8f3c23a19e8990",
+        "name": "activity_ids",
+        "label": "Activity Ids",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        }
+      }
+    }
+  }
+key_phrases: ''
+library: 'true'
+live_agent: 'false'
+model_type: ''
+modify_confirmation_enabled: 'false'
+name: Deflection
+nlu_intent: ''
+nlu_intent_label: ''
+nlu_model: ''
+nlu_model_label: ''
+nlu_provider: ''
+palette_label: Deflection
+roles: ''
+root_topic_id: ''
+secure_custom_input_control: 'false'
+source_topic_id: ''
+sys_name: Deflection
+sys_policy: read
+title: ''
+triggerable_by_notification: 'false'
+type: TOPIC_BLOCK

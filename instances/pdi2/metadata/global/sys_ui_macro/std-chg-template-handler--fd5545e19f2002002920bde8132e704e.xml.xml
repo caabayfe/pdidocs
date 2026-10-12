@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="classes/GlideFilterDescription.js" position="last" />
+    <g:requires name="classes/GlideFilterHandlers.js" position="last" />
+    <g:requires name="classes/GlideDuration.js" position="last" />
+    <g:requires name="classes/GlideFilterReference.js" position="last" />
+    <g:requires name="classes/GlideFilterReferenceMulti.js" position="last" />
+    <g:requires name="classes/GlideFilterDate.js" position="last" />
+    <g:requires name="doctype/GlideFilter14.js" position="last" />
+    <g:requires name="doctype/GlideTemplateFilter14.js" position="last" />
+    <g:requires name="script/StdChgTemplateFilter.jsdbx" position="last" />
+
+    <table class="wide" cellspacing="0" border="0" role='presentation'>
+        <tr>
+            <td class="wide" width="100%">
+                <input id="sys_template.template" type="hidden" name="sys_template.template" value="" />
+                <input id="sys_template.dependent_table" type="hidden" name="sys_template.dependent_table" value="${jvar_templ_on_table}" />
+                <table id="sys_template.templatefilters_table" class="form-field" width="100%" cellspacing="0" border="0" gsft_template="true" cellpadding="1" role='presentation'>
+                    <tbody id="sys_template.templategcond_filters">
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <g:evaluate var="jvar_stdChgRestrictedValues" jelly="true">
+        var jvar_stdChgRestrictedValues = '';
+        var stdChangeUtils = new StdChangeUtils();
+        var gr = new GlideRecord(stdChangeUtils.TABLE_NAME_PROPERTIES);
+        gr.addQuery(stdChangeUtils.ATTR_INTERNAL_NAME, stdChangeUtils.PROP_ROW_KEY);
+        gr.query();
+        if (gr.next())
+        jvar_stdChgRestrictedValues = gr.getValue(stdChangeUtils.PROP_UNMODIFIABLE_FIELDS);
+        jvar_stdChgRestrictedValues;
+    </g:evaluate>
+    <script language="javascript">
+        var TEMP_VAL_FIELD = 'sys_template.template';
+        var TEMPL_ON_TABLE_FIELD = 'sys_template.dependent_table';
+
+        function interpretQuery() {
+            return getFilter(TEMP_VAL_FIELD, false);
+        }
+
+        /* Template Value Field Renderer code */
+
+        // function to start bringing up the template as per query provided
+        function processFields(encodedQuery) {
+            var fname = TEMP_VAL_FIELD;
+            var hinput = gel(fname);
+            hinput.value = encodedQuery;
+            var depTabFName = TEMPL_ON_TABLE_FIELD;
+            var depTableInp = gel(depTabFName);
+            var table = depTableInp.value;
+            var xfilter = unescape(encodedQuery);
+            if (table != null)
+                createTemplateFilter(table + "." + fname, fname, xfilter);
+        }
+
+        /* Start functions replicated from element_template_value.xml */
+
+        function createTemplateFilter(tname, fname, query) {
+            gtf_show_ops = interpretBooleanAttribute("null");
+            gtf_exclusive_dynamics = "null";
+            var stdChgfilterObj = new StdChgTemplateFilter(tname, query);
+            stdChgfilterObj.setAllowJournal(true);
+            stdChgfilterObj.setFieldName(fname);
+            stdChgfilterObj.setOperations("null");
+            stdChgfilterObj.setMaintainPlaceHolder(true);
+            stdChgfilterObj.addIgnoreFields("${JS_STRING:jvar_stdChgRestrictedValues}");
+            stdChgfilterObj.setQueryAsync(query);
+            if ('${NOESC:jvar_template_value_readonly}' == 'true')
+                stdChgfilterObj.setFilterReadOnly('${NOESC:jvar_template_value_readonly}');
+
+            stdChgfilterObj._disableClass = function(parentElement, className, disabled) {
+                var wrappedParent = $(parentElement);
+                var elements = wrappedParent.select("." + className);
+                if (!elements)
+                    return;
+                var disableControlField = function(element) {
+                    g_form.setDisabledControl(element, disabled);
+                };
+                elements.forEach(disableControlField, this);
+                elements = wrappedParent.select(".filter-reference-input");
+                if (!elements)
+                    return;
+                elements.forEach(disableControlField, this);
+            };
+
+            /********
+             * Start PRB: Template value readonly
+             * Once the PRB is fixed we can remove the below code
+             ********/
+            stdChgfilterObj.origSetReadOnly = stdChgfilterObj.setReadOnly;
+
+            stdChgfilterObj._hideClass = function(parentElement, className, hideIt) {
+                var elements = $(parentElement).select("." + className);
+                if (!elements)
+                    return;
+
+                elements.each(function(elem) {
+                    if (hideIt)
+                        hideObject(elem);
+                    else
+                        showObjectInline(elem);
+                });
+            };
+
+            stdChgfilterObj.setReadOnly = function(disabled) {
+                stdChgfilterObj.origSetReadOnly(disabled);
+                var parentElement = this.fDiv.parentNode;
+                stdChgfilterObj._hideClass(parentElement, "icon-calendar", disabled);
+                stdChgfilterObj._hideClass(parentElement, "filerTableAction", disabled);
+                stdChgfilterObj._disableClass(parentElement, "filerTableSelect", disabled);
+                stdChgfilterObj._disableClass(parentElement, "filerTableInput", disabled);
+                stdChgfilterObj._disableClass(parentElement, "filter-reference-input", disabled);
+                stdChgfilterObj.setFilterReadOnly(disabled);
+                stdChgfilterObj.disabledFilter = disabled;
+
+                var placeholderRows = $(parentElement).select('tr.filter_row_condition[type="placeholder"]');
+                if (placeholderRows $[AMP]$[AMP] placeholderRows[0])
+                    placeholderRows[0].setStyle("display:none");
+
+            };
+            // End PRB
+
+            //override allowConditionsForJournal from condition14_new.js to add filter type of StdChgTemplateFilter
+            allowConditionsForJournal = function(type, filter) {
+                if (type != "journal" $[AND] type != "journal_input")
+                    return false;
+
+                if (filter $[AND](filter.type == "GlideTemplateFilter" || filter.type == "StdChgTemplateFilter") $[AND] filter.allowJournal)
+                    return true;
+
+                if (!filter || filter.getUsageContext() != "element_conditions")
+                    return false;
+
+                var ie = filter.getIncludeExtended();
+
+                return !!ie["VALCHANGES"];
+            };
+
+            //override addOperators from condition14_new.js to add filter type of StdChgTemplateFilter
+            addOperators = function(td, type, dValue, isChoice, includeExtended, showDynamicReferenceOperator, filterClass, restrictI18NOpers, associatedField, elementDef, tableDef, isExcludedRole, usageContext) {
+                var canSort = elementDef $[AMP]$[AMP] elementDef.canSort();
+                var s = _createFilterSelect("150"); // The numeric value is the default size of element "choose operator"
+                var defaultLabel = NOW.msg.getMessage('Choose operator');
+                s.classList.add("condOperator"); //differentiate between table field select and operator select
+
+                s.title = defaultLabel;
+                if (associatedField)
+                    s.setAttribute('aria-label', NOW.msg.getMessage('Choose operator for field: {0}', associatedField));
+                else
+                    s.setAttribute('aria-label', defaultLabel)
+
+                if (td.parentNode.conditionObject)
+                    if (td.parentNode.conditionObject.isPlaceHolder())
+                        s.disabled = true;
+
+                var opers;
+                if (isChoice)
+                    opers = sysopers[type + "_choice"];
+
+                var translated = type == 'translated_field' || type == 'translated_html' || type == 'translated_text';
+                if (!opers $[AMP]$[AMP] translated $[AMP]$[AMP] restrictI18NOpers)
+                    opers = sysopers['translated_basic'];
+                if (elementDef $[AMP]$[AMP](elementDef.isEdgeEncrypted() || elementDef.isEncrypted())) {
+                    if (canSort)
+                        opers = edge_order_Types[type];
+                    else
+                        opers = edge_equality_Types[type];
+                }
+                if (!opers $[AMP]$[AMP] sysopers[type])
+                    opers = sysopers[type];
+
+                // check complex type
+                // the only complex type for now is day_part:xxx
+                if (type $[AMP]$[AMP] type.indexOf(':') > 0) {
+                    var complexTypeArray = type.split(':');
+                    if (null != complexTypeArray[0])
+                        opers = sysopers[complexTypeArray[0]];
+                }
+
+                if (!opers)
+                    opers = sysopers['default'];
+
+                if (noOps)
+                    dValue = '=';
+
+                if (filterClass == "GlideTemplateFilter" || filterClass == "StdChgTemplateFilter") {
+                    if (typeof gtfOperators != 'undefined'
+                        $[AMP]$[AMP] gtfOperators.length != 0)
+                        opers = gtfOperators;
+                    else
+                        opers = sysopers_template['default'];
+                }
+
+                if (isExcludedRole === 'false'
+                    $[AMP]$[AMP] usageContext !== "element_conditions"
+                    $[AMP]$[AMP] type !== "variables"
+                    $[AMP]$[AMP] type !== "questions") {
+                    var excludedOperators = [];
+                    var excludedTableOperators = [];
+                    var excludedFieldOperators = [];
+                    if (tableDef) {
+                        var excludedOperatorsAtTableLevelStr = tableDef.getExcludeTableOperators();
+                        if (excludedOperatorsAtTableLevelStr) {
+                            excludedTableOperators = excludedOperatorsAtTableLevelStr.split(';');
+                        }
+                    }
+                    if (elementDef) {
+                        var excludedOperatorsAtFieldLevelStr = elementDef.getNamedAttribute('exclude_operators_field');
+                        if (excludedOperatorsAtFieldLevelStr) {
+                            excludedFieldOperators = excludedOperatorsAtFieldLevelStr.split(';');
+                        }
+                    }
+
+
+                    opers = getFilteredOperators(opers, excludedTableOperators.concat(excludedFieldOperators));
+
+                }
+                var showHierarchyOperator = NOW.c14.shouldShowHierarchyOperator(type, elementDef);
+                var showDynamicHierarchyOperator = false;
+                if (tableDef) {
+                    showDynamicHierarchyOperator = NOW.c14.shouldShowDynamicHierarchyOperator(type, elementDef, tableDef.tableName);
+                }
+
+                var keys = buildMap(opers, 1);
+                map = NOW.msg.getMessages(keys);
+                for (var ii = 0; ii != opers.length; ii++) {
+                    var opInfo = opers[ii];
+                    if (opInfo[0] == 'SINCE') {
+                        var base = new GlideRecord('cmdb_baseline');
+                        base.query();
+                        if (!base.hasNext())
+                            continue;
+                    }
+                    // Compare a list of known extended operators against list of extended
+                    // operators specified
+                    // to be included for this GlideFilter
+                    if (extopers[opInfo[0]] $[AMP]$[AMP] !includeExtended[opInfo[0]])
+                        continue;
+
+                    // dynamic reference operands for SNExpress, e.g., replacing
+                    // "javascript:gs.getUserID()" with "Me"
+                    // TODO: enhance performance for SNEnterprise instances by caching on
+                    // server/client
+                    if (opInfo[0] == "DYNAMIC" $[AMP]$[AMP] !showDynamicReferenceOperator)
+                        continue;
+
+                    if (opInfo[0] == "IN_HIERARCHY" $[AMP]$[AMP] !showHierarchyOperator)
+                        continue;
+
+                    if (opInfo[0] == "IN_HIERARCHY_DYNAMIC" $[AMP]$[AMP] !showDynamicHierarchyOperator)
+                        continue;
+
+                    addOption(s, opInfo[0], map[opInfo[1]], dValue $[AMP]$[AMP] opInfo[0] == dValue);
+                }
+
+                var so = getSelectedOption(s);
+                if (dValue $[AMP]$[AMP] (!so || so.value != dValue)) {
+                    addOption(s, dValue, getOperatorLabel(dValue));
+                    s.selectedIndex = s.length - 1;
+                }
+
+                td.fieldType = "select";
+                if (so)
+                    td.currentOper = getSelectedOption(s).value;
+
+                td.subType = type;
+                td.appendChild(s);
+                return s;
+            }
+        }
+
+        function interpretBooleanAttribute(value) {
+            if (value == "true")
+                return true;
+            return false;
+        }
+
+        /* End functions replicated from element_template_value.xml */
+
+        /* End template Value Field Renderer code */
+    </script>
+</j:jelly>

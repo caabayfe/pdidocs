@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) { if (!current.isNewRecord()) { return current.getValue('name'); } var name = current.getValue('label'); if (!name) { return ''; } return name.trim().toLowerCase().replaceAll(' ', '_'); })(current);

@@ -1,0 +1,103 @@
+<g2:evaluate var="jvar_refresh" expression="$[gs.getProperty('diagnostics.autorefresh.page','0')]" />
+<j2:if test="$[jvar_refresh > 0]">
+   <meta http-equiv="refresh" content="$[jvar_refresh]" />
+</j2:if>
+
+<g2:evaluate var="jvar_diag" object="true">
+   var diag = new Diagnostics();
+   diag;
+</g2:evaluate>
+
+<g2:evaluate var="jvar_diagnostics" jelly="true">
+   function addValueToJSON(j, label, value, condition) {
+      var val = new Packages.org.json.JSONObject();
+      val.put("label", label);
+      val.put("value", value);
+      var flag = false;
+      if (condition) {
+         try {
+            s = '"' + value.replace(/\n/g, "").replace(/\"/g, "") + '"' + condition;
+            if (eval(s))
+               flag = true;
+         } catch (ex) {
+         }
+      }
+      val.put("flag", flag);
+      j.put(val);
+   }
+   
+   var json = new Packages.org.json.JSONArray();
+   addValueToJSON(json, "Emails (recv) last 60 minutes", jelly.jvar_diag.emailReceivedCount, jelly.jvar_diag.conditions['emailsRecv']);
+   addValueToJSON(json, "Emails (sent) last 60 minutes", jelly.jvar_diag.emailSentCount, jelly.jvar_diag.conditions['emailsSent']);
+   addValueToJSON(json, "Events pending", jelly.jvar_diag.eventCount, jelly.jvar_diag.conditions['events']);   
+   addValueToJSON(json, "Log entries last 60 minutes", jelly.jvar_diag.logCount, jelly.jvar_diag.conditions['logEntries']);
+   addValueToJSON(json, "POP3 Status", jelly.jvar_diag.pop3Status, jelly.jvar_diag.conditions['pop3Status']);
+   addValueToJSON(json, "SMTP Status", jelly.jvar_diag.smtpStatus, jelly.jvar_diag.conditions['smtpStatus']);
+
+   json.toString(3);
+</g2:evaluate>
+
+<g2:evaluate var="jvar_nodes" jelly="true">
+   var json = new Packages.org.json.JSONArray();
+
+   while (jelly.jvar_diag.nextNode()) {
+      var diagNode = jelly.jvar_diag.getNode();
+
+      var jsonNode = new Packages.org.json.JSONObject();
+      jsonNode.put("name", diagNode.name);
+      var vals = new Packages.org.json.JSONArray();
+      jsonNode.put("values", vals);
+  
+      addValueToJSON(vals, "Status", diagNode.status, jelly.jvar_diag.conditions['node.status']);  
+      addValueToJSON(vals, "Last reported", diagNode.lastDate);
+      addValueToJSON(vals, "Last reported (seconds ago)", diagNode.lastDateDiff, jelly.jvar_diag.conditions['node.reportedAgo']);
+      addValueToJSON(vals, "Scheduler running", diagNode.stats['scheduler.is.running'], jelly.jvar_diag.conditions['node.scheduler.is.running']);
+      addValueToJSON(vals, "Scheduler queue length", diagNode.stats['scheduler.queue.length'], jelly.jvar_diag.conditions['node.scheduler.queue.length']);
+      addValueToJSON(vals, "Memory in use (MB)", diagNode.stats['system.memory.in.use']);
+      addValueToJSON(vals, "Memory % free", diagNode.stats['system.memory.pct.free']);
+      addValueToJSON(vals, "Transactions", diagNode.stats['servlet.transactions']);
+      addValueToJSON(vals, "Errors", diagNode.stats['servlet.errors.handled']);
+      var ss = diagNode.stats.sessionsummary;
+      if (ss)
+         addValueToJSON(vals, "Logged in users", diagNode.stats.sessionsummary["@logged_in"]);
+      else
+         addValueToJSON(vals, "Logged in users", "Not available");
+      
+      json.put(jsonNode);
+   }
+
+   json.toString(3);
+</g2:evaluate>
+
+<script>
+   var g_diagnostics = $[jvar_diagnostics];
+   var g_nodes = $[jvar_nodes];
+   var g_nodesAcross = "${gs.getProperty('diagnostics.nodes.across', '3')}";
+</script>
+
+<table class="wide" cellspacing="0">
+   <tr class="header">
+      <td class="column_head" align="left" nowrap="true">${gs.getMessage('System Diagnostics')}$[SP]@$[SP]${gs.nowDateTime()}</td>
+      <td class="column_head" align="right">
+         <button id="refresh_me" class="header" name="not_important" onclick="self.location = self.location.href;return false;">${gs.getMessage('Refresh')}</button>
+      </td>
+   </tr>
+   
+   <j2:if test="$[jvar_refresh > 0]">
+      <tr><td align="right" colspan="2">This page will auto-refresh every $[jvar_refresh] seconds</td></tr>
+   </j2:if>
+   <tr><td colspan="2">See$[SP]<a href="http://docs.servicenow.com/?context=Running_System_Diagnostics" style="color:blue;" target="_blank">the Wiki</a>$[SP]for details on why this information is interesting</td></tr>
+   <tr><td colspan="2">$[SP]</td></tr>
+</table>
+
+<div id="diag_table" />
+
+<table class="wide" cellspacing="0">
+   <tr><td>$[SP]</td></tr>
+   <tr class="header">
+      <td class="column_head" align="left" nowrap="true">${gs.getMessage('Cluster Nodes')}</td>
+   </tr>
+   <tr><td>$[SP]</td></tr>
+</table>
+
+<div id="nodes_table" />

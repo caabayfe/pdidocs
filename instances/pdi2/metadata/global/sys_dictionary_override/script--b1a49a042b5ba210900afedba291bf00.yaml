@@ -1,0 +1,53 @@
+_meta:
+  hash: 38108dbb490038f848c8deb9c0e354380100206348665761d90e14b030265b3c
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_dictionary_override
+  sys_created_by: system
+  sys_created_on: 2026-06-12 21:04:01
+  sys_id: b1a49a042b5ba210900afedba291bf00
+  sys_mod_count: '0'
+  sys_package: de913a738c9103100a22deb6dd2b4e86
+  sys_scope: global
+  sys_update_name: sys_dictionary_override_b1a49a042b5ba210900afedba291bf00
+  sys_updated_by: system
+  sys_updated_on: 2026-06-12 21:04:01
+attributes: ''
+attributes_override: 'false'
+base_table: sysauto_script
+calculation: ''
+calculation_override: 'false'
+default_value: |-
+  /*** Do not modify ***/
+  /* Ensuring that schedulers run in domain context in a domain separated instance */
+  if (GlidePluginManager.isActive("com.glide.domain") == true && !current.can_iterate) {
+      current.setValue('can_iterate', true);
+      current.setValue('source_table', 'sys_error');
+  }
+  current.setValue('state', 'running');
+  current.update();
+
+  var application = current.getValue('source_application');
+  var result = global.ErrorManager.aggregateCounts(application, null, current.sys_id);
+
+  current.setValue('state', result.success ? 'completed' : 'failed');
+  current.update();
+
+  if (!result.success)
+      gs.error('Error Aggregation Schedule failed for ' + application + ' with error: ' + result.message);
+default_value_override: 'true'
+dependent: ''
+dependent_override: 'false'
+display_override: 'false'
+element: script
+mandatory: 'false'
+mandatory_override: 'false'
+name: sys_error_agg_schedule
+read_only: 'true'
+read_only_option: instance_configured
+read_only_option_override: 'false'
+read_only_override: 'true'
+reference_qual: ''
+reference_qual_override: 'false'
+sys_name: script
+sys_policy: ''

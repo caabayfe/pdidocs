@@ -1,0 +1,59 @@
+{
+  "idField": "tableOrViewName",
+  "icon": "table-outline",
+  "timeZone": "SESSION",
+  "order": 100,
+  "isReadOnly": false,
+  "useSeriesLabels": false,
+  "dataApiEndpoint": "/api/now/par/pardata",
+  "retrieveSourcesOnInit": true,
+  "retrieveSourcesQuery": "query($start: Int, $count: Int, $searchQuery: String) {\n\t\t\tAppPARConfig_Query {\n\t\t\t\tresults: tables(start: $start, count: $count, nameContains: $searchQuery) {\n\t\t\t\t\tvalues {\n\t\t\t\t\t\tid: name\n\t\t\t\t\t\tlabel\n\t\t\t\t\t}\n\t\t\t\t\tresult\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+  "sourceDetailsPath": "data.AppPARConfig_Query.tableDetails",
+  "retrieveSourcesResultPath": "payload.data.AppPARConfig_Query.results.values",
+  "getRetrieveSourcesSearchArgument": "(searchQuery) => {return { searchQuery }}",
+  "getSourceSelectedPayload": "(id, type) => ({sourceType: type,tableOrViewName: id,})",
+  "recentSourceMutationName": "recentDynamic",
+  "recentSourceMutationArgument": "id",
+  "configurationComponent": "sn-par-table-configuration",
+  "groupByOptions": {
+    "numeric": true,
+    "fetchAPI": {
+      "query": "AppPARConfig_Query {\n\t\t\t\t\t\t\t\tfieldDefinitions(fields: $fields) {\n\t\t\t\t\t\t\t\t\tvalue {\n\t\t\t\t\t\t\t\t\t\ttableName\n\t\t\t\t\t\t\t\t\t\tfield {\n\t\t\t\t\t\t\t\t\t\t\tlabel\n\t\t\t\t\t\t\t\t\t\t\tid: fullName\n\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t\tresult\n\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\tresult\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t}",
+      "requestVariables": {
+        "fields": {
+          "graphQLType": "String!",
+          "getValue": "({ groupBys, dataSource }) => {const fields = groupBys.map((groupBy) => ({tableName:groupBy.dataSource?.tableOrViewName ||dataSource.tableOrViewName,fieldName: groupBy.field,}));return JSON.stringify(fields);}"
+        }
+      },
+      "valuesPath": "data.AppPARConfig_Query.fieldDefinitions.value",
+      "individualValuePath": "field",
+      "customPaths": [
+        "tableName"
+      ]
+    }
+  },
+  "geoMapOptions": {
+    "numeric": true
+  },
+  "getDefaultConfigurationProps": "({tableOrViewName,sourceType,filterQuery,reportSourceSysId,}) => {return {sourceType,tableOrViewName,filterQuery,reportSourceSysId,previewFilterQuery: filterQuery,previewReportSourceSysId: reportSourceSysId,isExpanded: true,isEditMode: !reportSourceSysId && !filterQuery,showCustomConditions: !!filterQuery,};}",
+  "temporaryConfigurationProps": [
+    "previewFilterQuery",
+    "previewReportSourceSysId",
+    "isExpanded",
+    "isEditMode",
+    "showCustomConditions"
+  ],
+  "dataCategories": [
+    "trend",
+    "group",
+    "simple"
+  ],
+  "preferredVisualizations": [
+    "d24d53f60350de7a652caf3188a46ed2"
+  ],
+  "sourceType": "java",
+  "requestProviderClassName": "com.snc.par.data.service.table.providers.TableRequestProvider",
+  "dataProviderClassName": "com.snc.par.data.service.PARDataProvider",
+  "requestBucketProviderClassName": "com.snc.par.data.service.table.providers.TableRequestBucketProvider",
+  "additionalGroupByLabelProviderClassName": "com.snc.par.multivis.service.contextdata.additionalgroupby.TableAdditionalGroupByLabelProvider"
+}

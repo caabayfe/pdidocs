@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <style>
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #spinContainer {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #spinner {
+            animation: spin 3s linear infinite;
+        }
+
+        .donot-store-info-msg {
+            padding: 0;
+            margin-top: 8px;
+        }
+
+        #donot-store-attachment {
+            margin-top: 16px;
+        }
+
+        #delete-file {
+            width: 24px;
+        }
+
+        #file-card {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #file-card-name {
+            color: RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28)));
+            max-width: 300px;
+            display: block;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        a.disabled {
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        #file-card a:before {
+            font-size: 16px;
+            margin-right: 2px;
+        }
+
+        .upload_default_version_radio,
+        .upload_local_file_radio {
+            display: flex;
+            align-items: center;
+        }
+
+        .upload_local_file_radio {
+            margin-top: 12px;
+        }
+
+        .upload_default_version_radio input,
+        .upload_local_file_radio input {
+            margin: 0;
+        }
+
+        .upload_default_version_radio label,
+        .upload_local_file_radio label {
+            margin: 0 0 0 4px;
+        }
+
+        .under-radio #fileUploadLabel {
+            display: none
+        }
+
+        .under-radio #uploadLocalFile {
+            margin-top: 8px;
+        }
+
+        #uploadLocalFile {
+            display: block;
+        }
+    </style>
+
+    <p id="err_message" class="notification notification-error" style="display:none"></p>
+    <g:evaluate var="jvar_documentSysID" expression="RP.getParameterValue('sysparm_document_id')" />
+    <g2:evaluate jelly="true">
+        var gr = new GlideRecordSecure('ds_document');
+        gr.get(jelly.sysparm_document_id);
+        var externalProviderAttrs = gr.external_provider_attrs;
+        externalProviderAttrs
+    </g2:evaluate>
+    <g2:evaluate jelly="true">
+        var gr = new GlideRecordSecure('ds_document');
+        gr.get(jelly.sysparm_document_id);
+        var defaultVersion = gr.default_version;
+        var mpDocumentFileName = gr.mp_document.document_name;
+        var grVer = new GlideRecordSecure('ds_document_version');
+        grVer.get(defaultVersion);
+        var mp_version = grVer.mp_document_version;
+        var grAttachment = new GlideRecord('sys_attachment');
+        grAttachment.addQuery("table_name", "ds_document_version");
+        grAttachment.addQuery("table_sys_id", defaultVersion);
+        grAttachment.query();
+        if(grAttachment.next())
+        var defaultVersionFileName = grAttachment.file_name;
+        defaultVersionObj = {defaultVersion: defaultVersion.version, default_mp_version: mp_version, externalFileName: mpDocumentFileName, defaultVersionFileName: defaultVersionFileName, versionType: defaultVersion.type}
+    </g2:evaluate>
+    <div id="mainContainer">
+        <div class="provider" id="fillProviderDetails">
+            <div>
+                <label for="target_mp_provider_detail">${gs.getMessage('External cloud')}</label>
+            </div>
+            <div>
+                <g:ui_reference name="target_mp_provider_detail" table="mp_provider_detail" completer="AJAXTableCompleter" onchange="providerChange()" columns="name,sys_scope,description" order_by="name" query="sys_id!=40a74750873520106e337f9719cb0bbc" />
+            </div>
+            <br />
+            <input type="hidden" id="selectedProviderName" name="selectedProviderName" value="$[externalProviderAttrs.providerName]" />
+            <input type="hidden" id="selectedProviderSysId" name="selectedProviderSysId" value="$[externalProviderAttrs.providerDetailSysId]" />
+            <input type="hidden" id="documentSysID" name="documentSysID" value="${jvar_documentSysID}" />
+            <input type="hidden" id="defaultVersion" name="defaultVersion" value="$[defaultVersionObj.defaultVersion]" />
+            <input type="hidden" id="versionType" name="versionType" value="$[defaultVersionObj.versionType]" />
+            <input type="hidden" id="defaultMPVersion" name="defaultMPVersion" value="$[defaultVersionObj.default_mp_version]" />
+            <input type="hidden" id="externalFileName" name="externalFileName" value="$[defaultVersionObj.externalFileName]" />
+            <input type="hidden" id="defaultVersionFileName" name="defaultVersionFileName" value="$[defaultVersionObj.defaultVersionFileName]" />
+            <div id="onedrive" class="hidden">
+                <label for="folderPath">${gs.getMessage('Folder Path')}</label><br />
+                <input type="text" id="folderPath" name="folderPath" class="form-field form-control" /><br />
+            </div>
+            <div id="googledrive" class="hidden">
+                <label for="folderURL">${gs.getMessage('Folder URL')}*</label><br />
+                <input type="url" id="folderURL" name="folderURL" class="form-field form-control" /><br />
+            </div>
+        </div>
+
+        <div id="uploadToProviderWrapper" class="hidden">
+            <div class="upload_default_version_radio input-group-radio">
+                <input class="radio" type="radio" id="upload_default_version_radio" name="upload_type" value="upload_default_version" />
+                <label class="radio-label" for="upload_default_version_radio">${gs.getMessage('Upload default version')} (v$[defaultVersionObj.defaultVersion])</label>
+            </div>
+            <div id="uploadDefaultVersionBlock" class="hidden">
+                <span class="input-group-checkbox" style="padding-top: 12px;">
+                    <input id="remove-attachment" name="remove-attachment" type="checkbox" class="checkbox ng-valid" aria-invalid="false" />
+                    <label for="remove-attachment" class="checkbox-label">${gs.getMessage('Remove from instance')}</label>
+                </span>
+                <div role="alert" class="outputmsg outputmsg_info notification notification-info donot-store-info-msg">
+                    <span class="notification-icon icon-info">
+                        <span class="sr-only">Info Message</span>
+                    </span>
+                    <span class="outputmsg_text">${gs.getMessage('Selecting this will remove the attachment of the version from database, but the version will still appear for tracking.')}</span>
+                </div>
+            </div>
+            <div class="upload_local_file_radio input-group-radio">
+                <input class="radio" type="radio" id="upload_local_file_radio" name="upload_type" value="upload_local_file" />
+                <label class="radio-label" for="upload_local_file_radio">${gs.getMessage('Upload local file')}</label>
+            </div>
+            <div id="uploadLocalFileBlock" class="hidden">
+                <div>
+                    <input id="fileUpload" type="file" style="display:none" />
+                    <label id="fileUploadLabel" for="uploadLocalFile">${gs.getMessage('Upload Local File')}</label>
+
+                    <a href="" id="uploadLocalFile" name="uploadLocalFile" class="btn-link icon-paperclip navigation_link">${gs.getMessage('Attach')}</a>
+                </div>
+                <div id="file-card" class="hidden">
+                    <a tabindex="0" href="" id="file-card-name" name="file-card-name" class="btn-link icon-document-multiple" data-original-title="" aria-label="" role="button"></a>
+                    <a tabindex="0" id="delete-file" class="btn btn-default btn-sm icon-trash" title="" aria-label="${gs.getMessage('Delete File')}" data-original-title="Delete File" role="button" onclick="deleteFile()"></a>
+                </div>
+                <div id="delete-attachment-local">
+                    <span class="input-group-checkbox" style="padding-top: 12px;">
+                        <input id="donot-store-attachment" name="donot-store-attachment" type="checkbox" class="checkbox ng-valid" aria-invalid="false" />
+                        <label for="donot-store-attachment" class="checkbox-label">${gs.getMessage('Do not store on instance')}</label>
+                    </span>
+                    <div role="alert" class="outputmsg outputmsg_info notification notification-info donot-store-info-msg">
+                        <span class="notification-icon icon-info">
+                            <span class="sr-only">Info Message</span>
+                        </span>
+                        <span class="outputmsg_text">${gs.getMessage("Selecting this won't store the attachment in the database, but a new version will be created for tracking.")}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="spinContainer" class="hidden">
+        <label id="spinnerLabel" for="spinner">${gs.getMessage('Upload in Progress...')}</label>
+        <svg id="spinner" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M26 16C26 21.5228 21.5228 26 16 26C10.4772 26 6 21.5228 6 16C6 10.4772 10.4772 6 16 6C18.0151 6 19.8911 6.59605 21.4611 7.62147C21.6658 7.75519 21.9377 7.73389 22.1106 7.56097L24.2694 5.4022C24.481 5.19055 24.4609 4.84099 24.2188 4.66509C21.9107 2.98868 19.0708 2 16 2C8.26801 2 2 8.26801 2 16C2 23.732 8.26801 30 16 30C23.732 30 30 23.732 30 16C30 13.1959 29.1756 10.5844 27.756 8.39457C27.5876 8.13482 27.2239 8.10449 27.005 8.32338L24.8161 10.5123C24.6528 10.6756 24.6238 10.929 24.7364 11.1306C25.5413 12.5716 26 14.2322 26 16Z" fill="#151920" />
+        </svg>
+    </div>
+    <div id="confirmationMessage" class="hidden">
+        <p></p>
+        <p>${gs.getMessage("It is recommended to download the document to avoid losing any recent changes. Would you like to proceed?")}</p>
+    </div>
+
+    <div class="modal-footer">
+        <div id="upload-to-cloud-buttons">
+            <g:dialog_buttons_ok_cancel ok="return onUpload();" ok_type="button" ok_text="${gs.getMessage('Upload')}" />
+        </div>
+    </div>
+    <div id="tab-helper" tabindex="0"></div>
+</j:jelly>

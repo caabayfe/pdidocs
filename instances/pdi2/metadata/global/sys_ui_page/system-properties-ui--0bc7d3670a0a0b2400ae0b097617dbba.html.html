@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:inline template="output_messages2.xml"/>
+	<j:set var="jvar_can_read_category_properties" value="true"/>
+	<g:inline template="system_properties_category_access.xml" /> <!-- sets jvar_can_read_category_properties -->
+	<j:if test="${!jvar_can_read_category_properties}">
+		<div>${gs.getMessage("Requested resource not found")}</div>
+	</j:if>
+	<j:if test="${jvar_can_read_category_properties}">
+		<form id="system_properties_ui.do" name="system_properties" style="DISPLAY: inline" action="system_properties_update.do" method="POST">
+			<j:if test="${!empty(sysparm_transaction_scope)}">
+				<input type="HIDDEN" id="sysparm_transaction_scope" name="sysparm_transaction_scope" value="${sysparm_transaction_scope}"/>
+			</j:if>
+			<j:if test="${!empty(sysparm_record_scope)}">
+				<input type="HIDDEN" id="sysparm_record_scope" name="sysparm_record_scope" value="${sysparm_record_scope}"/>
+			</j:if>
+			<input name="sys_action" type="HIDDEN" value="hello"/>
+			<input name="referer" id="referer" type="HIDDEN" value=""/>
+			<input id="section_form_id" type="HIDDEN" value="system_properties_ui.do"/>
+			<div class="navbar navbar-default" role="navigation">
+				<div class="container-fluid">
+					<div class="navbar-header">
+						<g:evaluate jelly="true" var="jvar_title">
+							var cat = new GlideRecord("sys_app_module");
+							var title;
+							cat.addQuery("sys_name", jelly.sysparm_title);
+							cat.query();
+							if (cat.next())
+							  title = cat.getDisplayValue("title");
+							else
+							  title = gs.getMessage(jelly.sysparm_title);
+							title;
+
+						</g:evaluate>
+						<h1 class="navbar-title properties_page_title">
+							<span class="caption">${jvar_title}</span>
+						</h1>
+					</div>
+					<div class="nav navbar-right">
+						<button class="btn btn-primary" id="saveBtn" type="submit" name="action">${gs.getMessage("Save")}</button>
+					</div>
+				</div>
+			</div>
+			<div class="container-fluid">
+				<j2:if test="$[sysparm_category == 'MultiSSO']">
+					<j2:if test="$[SNC.SSOUtils.isSAML2PluginCustomized()]">
+						<font style="font-style: bold; font-size: 150%; color: red;"><g2:no_escape>$[SNC.SSOUtils.getMultiSSOUpgradeFromSAML2WarningMessage()]</g2:no_escape></font>
+						<hr/>
+					</j2:if>
+				</j2:if>
+
+				<table role="presentation" class="table-properties">
+					<g2:system_properties_categorized category="${sysparm_category}"/>
+				</table>
+
+				<button class="btn btn-primary" type="submit" name="action">${gs.getMessage("Save")}</button>
+			</div>
+		</form>
+	</j:if>
+
+	<!-- output session messages -->
+    <g2:evaluate var="jvar_messages" expression="gs.getAccessMessages()" object="true"/>
+    <j2:forEach var="jvar_message" items="$[jvar_messages]">
+        <script>
+            var alertMsg = { msg: '$[JS:jvar_message]', id: 'scope_alert_msg', type: 'warning' };
+            GlideUI.get().addOutputMessage(alertMsg);
+        </script>
+    </j2:forEach>
+    <!-- Let's remove these messages from session
+    so the subsequent pages that user navigates to does not display these messages if not applicable. -->
+    <g2:evaluate expression="gs.flushAccessMessages()"/>
+</j:jelly>

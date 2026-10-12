@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:evaluate var="jvar_can_access" jelly="true">
+   gs.hasRole('ts_admin');
+</g:evaluate>
+
+<j:if test="${jvar_can_access=='false'}">
+   <div class="alert alert-danger" role="alert">
+      ${gs.getMessage('Access denied due to security constraints')}
+   </div>
+</j:if>
+
+<j:if test="${jvar_can_access=='true'}">
+<style>
+   .ts-dashboard { padding: 15px; }
+   .ts-dashboard h2 { font-size: 20px; margin: 0 0 4px; }
+   .ts-dashboard .ts-tile-value { font-size: 22px; font-weight: 600; line-height: 1.2; }
+   .ts-dashboard .ts-tile-label { color: #666; text-transform: uppercase; font-size: 11px; letter-spacing: .04em; }
+   .ts-dashboard .panel { margin-bottom: 24px; }
+   .ts-dashboard table { margin-bottom: 0; }
+   .ts-dashboard table th { white-space: nowrap; }
+   .ts-dashboard table td, .ts-dashboard table th { vertical-align: middle; }
+   .ts-dashboard .ts-num-col { text-align: right; width: 100px; white-space: nowrap; }
+   .ts-dashboard .ts-recency-col { width: 150px; white-space: nowrap; }
+   .ts-dashboard .ts-action-col { width: 96px; }
+   .ts-dashboard .ts-caption { color: #666; margin-bottom: 15px; }
+   .ts-dashboard .ts-guideline { color: #666; margin-bottom: 18px; padding: 8px 12px;
+      border-left: 3px solid #bfbc45; background: #fafafa; border-radius: 3px; }
+   .ts-dashboard .ts-guideline .icon-info { color: #bfbc45; margin-right: 7px; }
+</style>
+
+<div class="ts-dashboard">
+
+   <h2>${gs.getMessage('Zing Text Indexing - Usage Dashboard')}</h2>
+   <p class="ts-caption">${gs.getMessage('Review per-table search and index-churn activity, and disable text indexing for low-value tables. All figures are computed live when this page loads.')}</p>
+
+   <!-- Placeholder wording; final copy pending PM (per Shoujing, STRY63944929). -->
+   <div class="ts-guideline" role="note">
+      <i class="icon-info" aria-hidden="true"></i>
+      <span>${gs.getMessage('Recommended: disable Zing text search on tables with little or no search usage to reduce indexing cost.')}</span>
+   </div>
+
+   <div id="ts_message" role="alert" style="display:none;"></div>
+
+   <g:evaluate jelly="true">
+      var dashboard = new GlideTSTextSearchDashboard();
+      var enabledRows = dashboard.getEnabledTables();
+      var disabledRows = dashboard.getDisabledTables();
+      var enabledCount = dashboard.getEnabledCount();
+      var disabledCount = dashboard.getDisabledCount();
+      var churnHeader = gs.getMessage('Index updates (last {0} days)', '' + dashboard.getChurnWindowDays());
+   </g:evaluate>
+
+   <g:evaluate var="jvar_enabled_count" expression="enabledCount" />
+   <g:evaluate var="jvar_disabled_count" expression="disabledCount" />
+   <g:evaluate var="jvar_churn_header" expression="churnHeader" />
+
+   <div class="row">
+      <div class="col-md-3 col-sm-6">
+         <div class="panel panel-default">
+            <div class="panel-body text-center">
+               <div class="ts-tile-value" id="ts_tile_enabled">${jvar_enabled_count}</div>
+               <div class="ts-tile-label">${gs.getMessage('Tables enabled')}</div>
+            </div>
+         </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+         <div class="panel panel-default">
+            <div class="panel-body text-center">
+               <div class="ts-tile-value" id="ts_tile_disabled">${jvar_disabled_count}</div>
+               <div class="ts-tile-label">${gs.getMessage('Tables disabled')}</div>
+            </div>
+         </div>
+      </div>
+   </div>
+
+   <div class="panel panel-default">
+      <div class="panel-heading"><h3 class="panel-title">${gs.getMessage('Tables with text indexing enabled')}</h3></div>
+      <table class="table table-striped table-hover table-bordered" id="ts_enabled_table">
+         <thead>
+            <tr>
+               <th>${gs.getMessage('Table')}</th>
+               <th class="ts-num-col">${gs.getMessage('Searches (last 24 hours)')}</th>
+               <th class="ts-num-col">${gs.getMessage('Searches (last 7 days)')}</th>
+               <th class="ts-num-col">${jvar_churn_header}</th>
+               <th class="ts-num-col">${gs.getMessage('Records indexed')}</th>
+               <th class="ts-recency-col">${gs.getMessage('Last searched')}</th>
+               <th class="ts-action-col">${gs.getMessage('Action')}</th>
+            </tr>
+         </thead>
+         <tbody>
+            <j:forEach var="jvar_row" items="${enabledRows}">
+               <g:evaluate var="jvar_label" jelly="true">
+                  new GlideMetaData().getTableLabel(jelly.jvar_row.get(0) + '');
+               </g:evaluate>
+               <tr class="ts-data-row">
+                  <td>${jvar_label} [${jvar_row[0]}]</td>
+                  <td class="ts-num-col">${jvar_row[1]}</td>
+                  <td class="ts-num-col">${jvar_row[2]}</td>
+                  <td class="ts-num-col">${jvar_row[3]}</td>
+                  <td class="ts-num-col">${jvar_row[4]}</td>
+                  <td class="ts-recency-col">${jvar_row[5]}</td>
+                  <td class="ts-action-col">
+                     <button type="button" class="btn btn-default btn-sm ts-disable-btn" data-table="${jvar_row[0]}">${gs.getMessage('Disable')}</button>
+                  </td>
+               </tr>
+            </j:forEach>
+            <tr class="ts-empty-row">
+               <td colspan="7">${gs.getMessage('No tables have text indexing enabled.')}</td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
+
+   <div class="panel panel-default">
+      <div class="panel-heading"><h3 class="panel-title">${gs.getMessage('Disabled tables')}</h3></div>
+      <table class="table table-striped table-hover table-bordered" id="ts_disabled_table">
+         <thead>
+            <tr>
+               <th>${gs.getMessage('Table')}</th>
+               <th class="ts-action-col">${gs.getMessage('Action')}</th>
+            </tr>
+         </thead>
+         <tbody>
+            <j:forEach var="jvar_drow" items="${disabledRows}">
+               <g:evaluate var="jvar_dlabel" jelly="true">
+                  new GlideMetaData().getTableLabel(jelly.jvar_drow.get(0) + '');
+               </g:evaluate>
+               <tr class="ts-data-row">
+                  <td>${jvar_dlabel} [${jvar_drow[0]}]</td>
+                  <td class="ts-action-col">
+                     <button type="button" class="btn btn-default btn-sm ts-enable-btn" data-table="${jvar_drow[0]}">${gs.getMessage('Enable')}</button>
+                  </td>
+               </tr>
+            </j:forEach>
+            <tr class="ts-empty-row">
+               <td colspan="2">${gs.getMessage('No disabled tables.')}</td>
+            </tr>
+         </tbody>
+      </table>
+   </div>
+
+</div>
+</j:if>
+
+</j:jelly>

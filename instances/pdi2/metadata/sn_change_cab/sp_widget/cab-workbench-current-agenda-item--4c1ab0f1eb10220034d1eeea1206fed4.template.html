@@ -1,0 +1,131 @@
+<div tabindex="0" ng-if="item" id="current-agenda-item-widget" class="panel panel-default" role="region" aria-label="${Current Agenda Item Widget}">
+    <div class="panel-heading heading widget-heading" ng-class="{'heading-inactive': !agendaCtrl.current.following()}">
+        <span aria-hidden="true">${Current Agenda Item}</span>
+        <button id="cab-cai-end-meeting-btn" ng-if="meeting.end.available()" ng-click="meeting.end.onClick()" class="pull-right btn btn-sm btn-primary" focus-this="meeting.end.hasFocus">${End meeting}</button>
+    </div>
+    <div class="panel-body current-item">
+        <div class="row info-row">
+            <div ng-class="{'agenda-item-halo': agendaCtrl.current.following()}">
+                <div id="current_agenda_item"
+                     role="group"
+                     tabindex="0"
+                     ng-attr-aria-label="{{aria.currentAgendaItem()}}"
+                     ng-if="item.task.record"
+                     class="agenda-item agenda-item-big"
+                     ng-mousedown="agendaCtrl.current.onClick()"
+                     ng-keypress="agendaCtrl.current.onKeypress($event)"
+                     focus-this="agendaCtrl.current.hasFocus">
+                    <div ng-if="item.task.record" class="col-xs-9 agenda-item-detail flex column">
+                        <div class="task-summary">
+                            <div class="tasknumber">{{item.task.display_value}}</div>
+                            <div class="description"><sn-cab-line-clamp text="{{item.task.record.short_description.display_value}}" max-lines="2" /></div>
+                            <table class="agenda-task-detail">
+                                <tr>
+                                    <td>${Assignment group}</td>
+                                    <td class="single-line-clamp">{{item.task.record.assignment_group.display_value}}</td>
+                                </tr>
+                                <tr>
+                                    <td>${Assigned to}</td>
+                                    <td class="single-line-clamp">{{item.task.record.assigned_to.display_value}}</td>
+                                </tr>
+                                <tr>
+                                    <td>${State}</td>
+                                    <td>{{item.task.record.state.display_value}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="cab-agenda-control" class="agenda-control flex" ng-if="meeting.host()" role="navigation" aria-label="${Agenda control}">
+							<div class="btn-group expand">
+                            <button id="current_agenda_action_pause"
+                               		class="btn-default btn-sm"
+                               		tabindex="0"
+                               		ng-if="agendaCtrl.pause.available()"
+                               		ng-click="agendaCtrl.pause.onClick($event)"
+                               		ng-disabled="!agendaCtrl.enabled"
+                                    focus-this="agendaCtrl.pause.hasFocus">${Pause}</button>
+                            <button id="current_agenda_action_resume"
+                               		class="btn-default btn-sm"
+                               		tabindex="0"
+                               		ng-if="agendaCtrl.resume.available()"
+                               		ng-click="agendaCtrl.resume.onClick($event)"
+                               		ng-disabled="!agendaCtrl.enabled"
+                                    focus-this="agendaCtrl.resume.hasFocus">${Resume}</button>
+                            <button id="current_agenda_action_next"
+                               		class="btn-default btn-sm"
+                              		tabindex="0"
+                               		ng-if="agendaCtrl.next.available()"
+                               		ng-click="agendaCtrl.next.onClick($event)"
+                               		ng-disabled="!agendaCtrl.enabled"
+                                    focus-this="agendaCtrl.next.hasFocus">${Next}</button>
+                            <button id="current_agenda_action_finish"
+                               		class="btn-default btn-sm"
+                               		tabindex="0"
+                               		ng-if="agendaCtrl.finish.available()"
+                               		ng-click="agendaCtrl.finish.onClick($event)"
+                               		ng-disabled="!agendaCtrl.enabled">${Finish}</button>
+                          </div><div class="btn-group">
+                          	<button id="current_agenda_action_demote"
+                               		class="btn-default btn-sm"
+                               		tabindex="0"
+                               		ng-if="agendaCtrl.demote.available()"
+                               		ng-click="agendaCtrl.demote.onClick($event)"
+                               		ng-disabled="!agendaCtrl.enabled">${Demote}</button></div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3 donutprogress">
+                        <div ng-if="item.state.value != 'paused'" class="agenda-item-current-timer">
+                            <div style="width: 46px; margin: 0 auto;">
+                                <sn-donut-timer x-aria-parent-label="${Current Agenda item}" name="{{item.sys_id.value}}" duration="{{item.alotted_time.value_ms}}" elapsed="{{item.elapsed_time.value_ms}}" size="46px"></sn-donut-timer>
+                            </div>
+                            <div class="scheduled-time" role="group" ng-attr-aria-label="{{aria.scheduledTime()}}">{{aria.scheduledTime()}}</div>
+                        </div>
+                        <div ng-if="item.state.value == 'paused'" class="agenda-item-current-timer">
+                            <div style="position: relative; width: 46px; height: 46px; margin: 0 auto;">
+                                <div class="timer-paused-centered">
+                                	<div class="paused-timer-scaled-text">${Paused}</div>
+                                </div>
+                                <div class="timer-paused">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="agenda-approval-control">
+                            <div ng-if="approval.requiresUserApproval || lastApproval.requiredUserApproval">
+                                <button id = 'current_agenda_action_approve' ng-class="['btn', 'btn-sm', 'btn-agenda', {
+                                                  'btn-primary': approval.requiresUserApproval,
+                                                  'agenda-btn-previous-click': (!approval.requiresUserApproval && lastApproval.approved)
+                                                  }]"
+                                    	ng-disabled="!approval.requiresUserApproval || !approvalCtrl.enabled" style="display: block;"
+                                    	ng-click="approvalCtrl.approve.onClick()"
+                                        focus-this="approvalCtrl.approve.hasFocus">${Approve}</button>
+                              
+                                <button id = 'current_agenda_action_reject' ng-class="['btn', 'btn-sm', 'btn-agenda', {
+                                                  'btn-default': approval.requiresUserApproval,
+                                                  'agenda-btn-previous-click': (!approval.requiresUserApproval && lastApproval.rejected)
+                                                  }]"
+                                    	ng-disabled="!approval.requiresUserApproval || !approvalCtrl.enabled" style="display: block; margin-top: 5px;"
+                                        ng-click="approvalCtrl.reject.onClick()"
+                                        focus-this="approvalCtrl.reject.hasFocus">${Reject}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-if="!item.task.record"
+                     id="current_agenda_item"
+                     role="group"
+                     aria-label="${Current Agenda Change not accessible}"
+                     class="agenda-item agenda-item-small">
+                    <div class="col-xs-9 agenda-task-detail">
+                        <span>
+                            <div style="padding-top: 22px;">${You do not have permission to view}</div>
+                        </span>
+                    </div>
+                    <div class="col-xs-3"  class="mindonutprogress">
+                        <div style="height: 100%; width: 46px; margin: 0 auto;">
+                            <sn-donut-timer name="{{item.sys_id.value}}" duration="{{item.alotted_time.value_ms}}" size="46px"></sn-donut-timer>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

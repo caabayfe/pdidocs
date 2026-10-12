@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <style>
+        .warn {
+            color: #b61b2d
+        }
+    </style>
+    <g:evaluate var="jvar_password_deprecation" jelly="true">
+        var deprecationEnabled = false;
+        var legacyCode = gs.getProperty('glide.password2.legacycode.disabled');
+        var honorAttribute = gs.getProperty('glide.password2.honor.attributes');
+        if (legacyCode == 'true' ${AND} honorAttribute == 'false') {
+            deprecationEnabled = true;
+        }
+        deprecationEnabled;
+    </g:evaluate>
+    <g:evaluate var="jvar_ge_aes" jelly="true">
+        var allowGE = gs.getProperty('glide.security.glideencrypter.allow');
+        var allowAES = gs.getProperty('glide.security.glideencrypter.aes.encryption.allow', 'true');
+        var allowAESUsage = true;
+
+        if(allowGE == 'true' ${AND} allowAES == 'false'){
+            allowAESUsage = false;
+        }
+        allowAESUsage;
+    </g:evaluate>
+    <g:evaluate var="jvar_password2_migration" jelly="true">
+        var isMigrated = false;
+        var migrated = gs.getProperty('glide_encryption.password2_migration.executed');
+        var skippedScope = gs.getProperty('glide_encryption.scopes_skipped_on_password2_migration');
+        var failureFields = gs.getProperty('glide_encryption.table_fields_with_failures_on_password2_migration');
+
+        if(migrated == 'true' ${AND} JSUtil.nil(skippedScope) ${AND} JSUtil.nil(failureFields)){
+            isMigrated = true;
+        }
+        isMigrated;
+    </g:evaluate>
+    <g:evaluate var="jvar_protectedscript" jelly="true">
+        var scriptMigrated = false;
+        var tdesScriptPresent = false;
+        var legacyScriptPresent = false;
+        var migrationCompleted = true;
+        var totalScripts = 0;
+        var totalScriptsLegacy = 0;
+        var aesProtectedModule = '12ab4b354f3121103bcb2894c8c7141f';
+        var encryptionStartTag = '\uFDDE\uFDDF';
+        var header = 'PROTECTEDSCRIPT:';
+        var moduleKey = new GlideRecord('sys_kmf_module_key');
+        moduleKey.addQuery('crypto_module', aesProtectedModule);
+        moduleKey.query();
+        if (moduleKey.hasNext()) {
+            var scriptGA = new GlideAggregate('sys_script_include');
+            scriptGA.addAggregate("count", "sys_id");
+            scriptGA.addQuery('sys_policy', 'protected');
+            scriptGA.addQuery('script', 'STARTSWITH', encryptionStartTag);
+            while (moduleKey.next()) {
+                scriptGA.addQuery('script', 'DOES NOT CONTAIN', moduleKey.getUniqueValue());
+            }
+            scriptGA.query();
+            if (scriptGA.next()) {
+            totalScripts = scriptInclude.getIntAggregate("COUNT", "sys_id");
+            }
+
+            if (totalScripts > 0) {
+                tdesScriptPresent = true;
+            }
+        }
+
+        var scriptLegacyGA = new GlideAggregate('sys_script_include');
+        scriptLegacyGA.addAggregate("count", "sys_id");
+        scriptLegacyGA.addQuery('sys_policy', 'protected');
+        scriptLegacyGA.addQuery('script', 'STARTSWITH', header);
+        scriptLegacyGA.query();
+        if (scriptLegacyGA.next()) {
+            totalScriptsLegacy = scriptLegacyGA.getIntAggregate("COUNT", "sys_id");
+        }
+
+        if (totalScriptsLegacy > 0) {
+            legacyScriptPresent = true;
+        }
+        if (tdesScriptPresent || legacyScriptPresent) {
+            scriptMigrated = false;
+        } else {
+            scriptMigrated = true;
+        }
+        scriptMigrated;
+    </g:evaluate>
+    <g:evaluate var="jvar_kmfenabled" jelly="true">
+        var moduleSysId = '401fa53c5b6220106cdba88ddc81c754';
+        var kmfEnabled = false;
+        var kmfPlugin = pm.isActive('com.glide.kmf');
+        var kmfGlobalPlugin = pm.isActive('com.glide.kmf.global');
+        var kmfProp = gs.getProperty('glide.kmf.encrypter.enabled');
+        var ILGProp = gs.getProperty('glide.kmf.instance_level_encrypter.enabled');
+        var moduleGR = new GlideRecord('sys_kmf_crypto_module');
+        var isMapTrack = false;
+        if (moduleGR.get(moduleSysId)) {
+            var mapPolicy = moduleGR.getValue("actual_module_access_policy_result");
+            if (mapPolicy == "track") {
+                isMapTrack = true;
+            }
+        }
+        if (kmfPlugin ${AND} kmfGlobalPlugin ${AND} kmfProp == 'true' ${AND} ILGProp == 'true' ${AND} isMapTrack) {
+            kmfEnabled = true;
+        }
+        kmfEnabled;
+    </g:evaluate>
+    <g:evaluate var="jvar_keyremoval" jelly="true">
+        var suspensionDate = gs.getProperty('glide.security.3des.suspension_date');
+        var keyRemovalDate = '';
+        var rententionDuration = gs.getProperty('glide.security.3des.key_retention_duration');
+        if (JSUtil.notNil(rententionDuration) ${AND} JSUtil.notNil(suspensionDate)) {
+            keyRemovalDate = new GlideDateTime(suspensionDate);
+            keyRemovalDate.addDays(parseInt(rententionDuration));
+        }
+        keyRemovalDate;
+    </g:evaluate>
+    <div class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <h5>
+                    <span class="caption">${gs.getMessage('Removal of Triple DES Usage')}</span>
+                </h5>
+            </div>
+        </div>
+    </div>
+    <table role="presentation" class="table-properties">
+        <tbody>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <h5>${gs.getMessage('Note: If any triple DES migrations below are not complete or any of the system configurations are false, please review')}
+                        <a rel="nofollow" href="https://support.servicenow.com/kb?id=kb_article_view&amp;sysparm_article=KB1704481">$[AMP]nbsp;${gs.getMessage('KB1704481')}</a>.
+                    </h5>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h2 class="h4">
+                        <p><strong>${gs.getMessage('Triple DES migrations')}</strong></p>
+                        <hr style="width: 100%; height: 2px;" />
+                    </h2>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Password2 data migration" title="" aria-expanded="false">${gs.getMessage('Password2 data migration')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${jvar_password2_migration}">
+                        <label for="password2_migration"><strong>${gs.getMessage('Complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${!jvar_password2_migration}">
+                        <label class="warn" for="password2_migration"><strong>${gs.getMessage('Not complete')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Migration of triple DES data in tables with string fields" title="">${gs.getMessage('Migration of triple DES data in tables with string fields')}</label>
+                    </span>
+
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${gs.getProperty('glide_encryption.nonpassword2_migration.executed') == 'true'}">
+                        <label for="nonpassword2_migration"><strong>${gs.getMessage('Complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${gs.getProperty('glide_encryption.nonpassword2_migration.executed') == 'false' || gs.getProperty('glide_encryption.nonpassword2_migration.executed') == null}">
+                        <label class="warn" for="nonpassword2_migration"><strong>${gs.getMessage('Not complete')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Protected script data migration" title="">${gs.getMessage('Protected script data migration')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${jvar_protectedscript}">
+                        <label for="script_migration"><strong>${gs.getMessage('Complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${!jvar_protectedscript}">
+                        <label class="warn" for="script_migration"><strong>${gs.getMessage('Not complete')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="SSH private key data migration" title="">${gs.getMessage('SSH private key data migration')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${gs.getProperty('glide_encryption.ssh_private_key_migration.success') == 'true'}">
+                        <label for="ssh_migration"><strong>${gs.getMessage('Complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${gs.getProperty('glide_encryption.ssh_private_key_migration.success') == 'false' || gs.getProperty('glide_encryption.ssh_private_key_migration.success') == null}">
+                        <label class="warn" for="ssh_migration"><strong>${gs.getMessage('Not complete')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Sys attachments zip data migration" title="">${gs.getMessage('Sys attachments zip data migration')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${gs.getProperty('glide.sys_attachment_zip.migration_status') == 'true'}">
+                        <label for="attachment_migration"><strong>${gs.getMessage('Complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${gs.getProperty('glide.sys_attachment_zip.migration_status') == 'false' || gs.getProperty('glide.sys_attachment_zip.migration_status') == null}">
+                        <label class="warn" for="attachment_migration"><strong>${gs.getMessage('Not complete')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Column level encryption data migration" title="">${gs.getMessage('Column level encryption data migration')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${!pm.isActive('com.glide.encryption')}">
+                        <label for="cle_migration"><strong>${gs.getMessage('No CLE data available for migration')}</strong></label>
+                    </j:if>
+                    <j:if test="${pm.isActive('com.glide.encryption')}">
+                        <j:if test="${gs.getProperty('com.glide.cle.allow_ec_key_deletion') == 'true'}">
+                            <label for="cle_migration"><strong>${gs.getMessage('Complete')}</strong></label>
+                        </j:if>
+                        <j:if test="${gs.getProperty('com.glide.cle.allow_ec_key_deletion') == 'false' || gs.getProperty('com.glide.cle.allow_ec_key_deletion') == null}">
+                            <label class="warn" for="cle_migration"><strong>${gs.getMessage('Not complete')}</strong></label>
+                        </j:if>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Service Catalog masked data migration" title="">${gs.getMessage('Service Catalog masked data migration')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${gs.getProperty('glide.sc.masked_migration_success') == 'true'}">
+                        <label for="sc_migration"><strong>${gs.getMessage('Complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${gs.getProperty('glide.sc.masked_migration_success') == 'false' || gs.getProperty('glide.sc.masked_migration_success') == null}">
+                        <label class="warn" for="sc_migration"><strong>${gs.getMessage('Not complete')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px"></td>
+            </tr>
+            <tr>
+                <td>
+                    <h2 class="h4">
+                        <p><strong>${gs.getMessage('System configurations')}</strong></p>
+                        <hr style="width: 100%; height: 2px;" />
+                    </h2>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Key management framework (KMF) enabled" title="" aria-expanded="false">${gs.getMessage('Key management framework (KMF) enabled')}</label>
+                    </span>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <span class="input-group-checkbox">
+                        <j:if test="${jvar_kmfenabled}">
+                            <label for="kmf_enabled"><strong>${gs.getMessage('True')}</strong></label>
+                        </j:if>
+                        <j:if test="${!jvar_kmfenabled}">
+                            <label class="warn" for="kmf_enabled"><strong>${gs.getMessage('False')}</strong></label>
+                        </j:if>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Triple DES encryption disabled" title="">${gs.getMessage('Triple DES encryption disabled')}</label>
+                    </span>
+
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${gs.getProperty('glide.security.3des.encryption.allow') == 'false' || gs.getProperty('glide.security.3des.encryption.allow') == null}">
+                        <label for="tdes_allow"><strong>${gs.getMessage('True')}</strong></label>
+                    </j:if>
+                    <j:if test="${gs.getProperty('glide.security.3des.encryption.allow') == 'true'}">
+                        <label class="warn" for="tdes_allow"><strong>${gs.getMessage('False')}</strong></label>
+                    </j:if>
+
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Password2 triple DES deprecation enabled" title="">${gs.getMessage('Password2 triple DES deprecation enabled')}</label>
+                    </span>
+
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${jvar_password_deprecation}">
+                        <label for="pw2_enabled"><strong>${gs.getMessage('True')}</strong></label>
+                    </j:if>
+                    <j:if test="${!jvar_password_deprecation}">
+                        <label class="warn" for="pw2_enabled"><strong>${gs.getMessage('False')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="Glide encrypter AES usage enabled" title="">${gs.getMessage('Glide encrypter AES usage enabled')}</label>
+                    </span>
+
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <span class="input-group-checkbox">
+                        <j:if test="${jvar_ge_aes}">
+                            <label for="ge_allow"><strong>${gs.getMessage('True')}</strong></label>
+                        </j:if>
+                        <j:if test="${!jvar_ge_aes}">
+                            <label class="warn" for="ge_allow"><strong>${gs.getMessage('False')}</strong></label>
+                        </j:if>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px"></td>
+            </tr>
+            <tr>
+                <td>
+                    <h2 class="h4">
+                        <p><strong>${gs.getMessage('Triple DES key removal')}</strong></p>
+                        <hr style="width: 100%; height: 2px;" />
+                    </h2>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="TDES suspension date" title="" aria-expanded="false">${gs.getMessage('Triple DES keys in instance will be suspended after below date')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${gs.getProperty('glide.security.3des.suspension_date') == null}">
+                        <label class="warn" for="suspension_date"><strong>${gs.getMessage('The date will be populated once triple des key removal job is complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${gs.getProperty('glide.security.3des.suspension_date') != null}">
+                        <label for="suspension_date"><strong>${gs.getProperty('glide.security.3des.suspension_date')}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px"></td>
+            </tr>
+            <tr>
+                <td class="tdwrap label_left">
+                    <span>
+                        <label class="label-inline" aria-label="TDES removal date" title="" aria-expanded="false">${gs.getMessage('Triple DES keys in instance will be removed after below date')}</label>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-bottom: 20px">
+                    <j:if test="${jvar_keyremoval == ''}">
+                        <label class="warn" for="removal_date"><strong>${gs.getMessage('The date will be populated once triple des key removal job is complete')}</strong></label>
+                    </j:if>
+                    <j:if test="${jvar_keyremoval != ''}">
+                        <label for="removal_date"><strong>${jvar_keyremoval}</strong></label>
+                    </j:if>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</j:jelly>

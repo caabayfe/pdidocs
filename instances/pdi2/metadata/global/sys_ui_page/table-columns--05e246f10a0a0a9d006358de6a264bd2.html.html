@@ -1,0 +1,115 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<div style="padding: 6px">
+<g2:inline template="output_messages.xml"/>
+<div style="padding: 4px;" class="list_title">${HTML:gs.getMessage('table_columns')}</div>
+<div style="padding: 4px">
+	${gs.getMessage('Click a button to create a new table or application, or browse all applications.')}
+</div>
+
+<table class="widelist" border="0">
+	<j2:if test="$[gs.hasRole('admin')]">
+		<tr valign="top">
+			<td colspan="3" style="padding-bottom: 4px">
+				<j2:if test="$[pm.isRegistered('com.snc.apps')]">
+				<button id="create_table_button" onclick="self.location='sys_db_object.do?sys_id=-1'"
+				        title="${gs.getMessage('Click to create a new table using the table editor')}">
+					${gs.getMessage('Create Table')}
+				</button>
+				</j2:if>
+
+				<button id="create_application_button" onclick="self.location='sys_app.do?sys_id=-1'"
+				        title="${gs.getMessage('Click to create a new custom application')}">
+					${gs.getMessage('Create Application')}
+				</button>
+
+				<button id="browse_applications_button" onclick="self.location='sys_app_list.do'"
+				        title="${gs.getMessage('Click to browse a list of all existing applications')}">
+					${gs.getMessage('Browse Applications')}
+				</button>
+			</td>
+		</tr>
+	</j2:if>
+	<tr valign="top">
+		<td colspan="3" style="padding-bottom: 4px">
+			<hr/>
+			<div>
+				${gs.getMessage('Or, select a table to browse its columns and indices.')}
+			</div>
+		</td>
+	</tr>
+	<tr>
+		<td width="15%" style="padding: 4px 6px 4px 6px" class="label_left">${gs.getMessage('Table Names')}</td>
+		<td width="25%" style="padding: 4px 6px 4px 6px" class="label_left">${gs.getMessage('Column Names')}</td>
+		<td width="60%" style="padding: 4px 6px 4px 6px" class="label_left">${gs.getMessage('Column Attributes')}</td>
+	</tr>
+	<tr>
+		<td>$[SP]</td>
+	</tr>
+	<tr valign="top">
+		<td style="border: 1px solid #ededed; border-width: 0px 0px 1px 1px;">
+			<SELECT style="border: 0px;" id="tables" size="25" onchange="tcColumnRequest(event);" title="Tables">
+				<g2:table_options all="true"/>
+			</SELECT>
+		</td>
+		<td style="border: 1px solid #ededed; border-width: 0px 0px 1px 1px;">
+			<div id="columns" style="margin-left: 2px; overflow: auto; height: 100%;"></div>
+		</td>
+		<td style="border: 1px solid #ededed; border-width: 0px 1px 1px 1px;">
+			<div id="column_details" style="margin-left: 2px; overflow: auto; height: 100%;"></div>
+		</td>
+	</tr>
+
+	<j2:if test="$[gs.hasRole('admin')]">
+		<tr>
+			<td>$[SP]</td>
+		</tr>
+		<tr valign="top">
+			<td colspan="3">
+
+				<j2:if test="$[pm.isRegistered('com.snc.apps')]">
+				<button id="edit_table_button" style="display: none" onclick="editSelectedTable()"
+				        title="${gs.getMessage('Click to edit the selected table in table editor')}">
+					${gs.getMessage('Edit Table')}
+				</button>
+				</j2:if>
+
+				<j2:if test="$[pm.isRegistered('com.glide.erd')]">
+					<g2:inline template="schema_includes_erd.xml"/>
+				</j2:if>
+
+				<j2:if test="$[!pm.isRegistered('com.glide.erd')]">
+					<j2:if test="$[pm.isRegistered('com.glideapp.schema_map2')]">
+						<g2:inline template="schema2_includes.xml"/>
+					</j2:if>
+				</j2:if>
+
+				<j2:if test="$[!pm.isRegistered('com.glide.erd')]">
+					<j2:if test="$[!pm.isRegistered('com.glideapp.schema_map2')]">
+						<j2:if test="$[pm.isRegistered('com.glideapp.schema_map')]">
+							<g2:inline template="schema_includes.xml"/>
+						</j2:if>
+					</j2:if>
+				</j2:if>
+
+				<g:inline template="delete_rows_includes.xml"/>
+			</td>
+		</tr>
+	</j2:if>
+</table>
+<script>
+	addLoadEvent(tableColumnSizer);
+
+	function tableColumnSizer() {
+		var e = gel('tables');
+		if (e) {
+			gel('columns').style.height = e.offsetHeight;
+			gel('column_details').style.height = e.offsetHeight;
+		}
+	}
+</script>
+
+<g:macro_invoke macro="index_creator_information" />
+
+</div>
+</j:jelly>
+			

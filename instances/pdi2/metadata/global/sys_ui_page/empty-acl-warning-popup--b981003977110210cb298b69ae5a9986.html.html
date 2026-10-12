@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<p id="err_message" class="notification notification-error" style="display:none"></p>
+	<div id="empty_acl_warning_popup" style="display:block; padding: 5px 10px">
+		<div class="control-label col-sm-12">
+			<label id="popup_ref_label"></label>
+		</div>
+		<div class="col-sm-12">
+			<br/>
+			<label id="role_lookup_label">placeholderUntilTranslation</label>
+			<g:ui_reference name="target_role_pick" table="sys_user_role" completer="AJAXTableCompleter" onchange="clearErr()" 
+                            columns="name,sys_scope,description" order_by="name"/>
+		</div>
+		<div class="col-sm-12">
+			<br/>
+			<h4 style ="text-align:center;">OR</h4>
+		</div>
+		<div class="col-sm-12">
+			<label id="sa_lookup_label">placeholderUntilTranslation</label>
+			<g:ui_reference name="target_security_attribute_pick" query="type=compound" table="sys_security_attribute" completer="AJAXTableCompleter" onchange="clearErr()" 
+                            columns="name,sys_scope,description" order_by="name"/>
+		</div>
+		<div class="modal-footer">
+            <g:dialog_buttons_ok_cancel ok="return onOK();" cancel="return onCancel();" ok_type="button" cancel_type="button"/>
+        </div>
+		<input type="HIDDEN" name="empty_deny_property" id="empty_deny_property" value="${gs.getProperty('glide.security.enable.deny_empty_or_invalid_acl_validation')}"/>
+	</div>
+	<script>
+		$j("#role_lookup_label").html(getMessage('<b>Role</b>'));
+		$j("#sa_lookup_label").html(getMessage('<b>Security Attribute</b>'));
+
+		$j(function() {
+			var denyEmptyAllowTrueAllowACLMessage = getMessage('An empty or invalid Allow If ACL will completely deny access to this resource. To properly secure it, select a Role, Security Attribute or configure related records to allow access to it conditionally.');
+			var denyEmptyAllowFalseAllowACLMessage = getMessage('An empty or invalid Allow If ACL will allow access to this resource unconditionally. To properly secure it, select a Role, Security Attribute or configure related records to allow access to it conditionally.');
+			var denyUnlessMessage = getMessage('An empty or invalid Deny Unless ACL will completely deny access to this resource. To properly secure it, select a Role, Security Attribute or configure related records to allow access to it conditionally.');
+			var decisionType = g_form.getValue('decision_type');
+			var isDenyEmptyAllowPropertyEnabled = gel('empty_deny_property').value;
+
+			var modalMessage = denyUnlessMessage;
+			if (decisionType == 'allow') {
+				if (isDenyEmptyAllowPropertyEnabled == 'true')
+					modalMessage = denyEmptyAllowTrueAllowACLMessage;
+				else 
+					modalMessage = denyEmptyAllowFalseAllowACLMessage;
+			}
+		
+			document.getElementById("popup_ref_label").innerText = modalMessage;
+		});
+
+		$j(function() {
+			var e = gel("sys_display.target_role_pick");
+			if (e)
+				e.focus();
+		}); 
+	</script>
+</j:jelly>

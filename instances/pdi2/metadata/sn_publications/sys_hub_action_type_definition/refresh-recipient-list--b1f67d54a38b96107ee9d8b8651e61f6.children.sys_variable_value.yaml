@@ -1,0 +1,94 @@
+- document: sys_hub_action_type_definition
+  document_key: b1f67d54a38b96107ee9d8b8651e61f6
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-08 07:09:19
+  sys_id: 6ad7b5d4a38b96107ee9d8b8651e61a3
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-08 07:09:19
+  value: '{"version":"1.0","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON"}'
+  variable: a6d7b5d4a38b96107ee9d8b8651e6194
+- document: sys_hub_step_instance
+  document_key: e2d7b5d4a38b96107ee9d8b8651e6168
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-08 07:09:19
+  sys_id: a6d7b5d4a38b96107ee9d8b8651e6191
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-08 07:09:19
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: b1f67d54a38b96107ee9d8b8651e61f6
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-08 07:09:19
+  sys_id: a6d7b5d4a38b96107ee9d8b8651e61a3
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-08 07:09:19
+  value: '0'
+  variable: a2d7b5d4a38b96107ee9d8b8651e6199
+- document: sys_hub_step_instance
+  document_key: e2d7b5d4a38b96107ee9d8b8651e6168
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-08 07:09:19
+  sys_id: eed7b5d4a38b96107ee9d8b8651e6191
+  sys_mod_count: '5'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-02-13 21:37:23
+  value: |-
+    (function execute(inputs, outputs) {
+      // ... code ...
+     
+        var totalCount = 0;
+        var minCount = 2000;
+        var recipientsList = inputs.publication_record.recipient_lists;
+        recipientsList = recipientsList.split(",");
+        for (var i = 0; i < recipientsList.length; ++i) {
+          var user_m2m = new GlideRecord("sn_publications_recipientslist_user_m2m");
+          user_m2m.addQuery("recipients_list", recipientsList[i]);
+          user_m2m.query();
+          if (user_m2m.getRowCount() > 0) totalCount += user_m2m.getRowCount();
+          else {
+            if (GlidePluginManager.isActive("com.snc.cs_base")) {
+              var consumer_m2m = new GlideRecord("sn_publications_recipientslist_consumer_m2m");
+              consumer_m2m.addQuery("recipients_list", recipientsList[i])
+              consumer_m2m.query();
+              totalCount += consumer_m2m.getRowCount();;
+          }
+           
+          }
+        }
+        inputs.publication_record.state = 1;
+        inputs.publication_record.percentage = 0;
+        inputs.publication_record.update();
+
+        if (totalCount > minCount)
+          gs.eventQueue(
+            "sn_publications.build_rl_publication",
+            inputs.publication_record,
+            totalCount
+          );
+        else {
+          new RecipientsListApi().buildRecipientsListForPublication(
+            inputs.publication_record.getUniqueValue()
+          );
+          inputs.publication_record.state = 2;
+          inputs.publication_record.percentage = 100;
+          inputs.publication_record.update();
+        }
+      
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b

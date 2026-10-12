@@ -1,0 +1,98 @@
+<link href="84f0346b87120300cfab6dd207cb0b72.cssdbx?" rel="stylesheet" type="text/css"/>
+<div ng-if="data.authPolicyEnabled && data.preauthAllowTrustedDevice">
+   <div class="notification notification-success" id="divNotificationMain" style="display:none;">
+      <button data-dismiss="alert" class="btn-icon close icon-cross">
+      <span class="sr-only">${Close}</span>
+      </button>
+   </div>
+	   <div style="padding-left: 1%;">
+
+		  <div>
+			 <div>
+				<h2> ${Register Trusted Devices} </h2>
+			 </div>
+			  <hr></hr>
+			 <div>
+				 <h4>
+					 <p>
+				 <g:no_escape>${device_registration_profile_section_message}</g:no_escape>
+					 </p>
+				 </h4>
+			 </div>
+		  </div>
+		  <div>
+			  <h4 style="margin-top:20px"><b>${Registered Devices}</b></h4>
+			 <div>
+				<div class="flex">
+					  <div >
+						 <div id="deviceRegistration" role="tabpanel" aria-labelledby="deviceRegistrationHeader">
+							<div class="container-fluid">
+								  <div ng-if="!data.device_available">
+									 <p style="font-size: medium;">${No devices are registered with this instance.}</p>
+								  </div>
+							</div>
+							<div ng-repeat="a in data.device">
+							   <div class="col-sm-12 col-md-12 col-lg-12" style="padding: 16px; box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12); margin: 5px;">
+								   <div class="col-sm-2 col-md-2 col-lg-2 img square">
+												 <img
+													src="DeviceTrust.svg" alt="Trusted device"
+													/>
+											  </div>
+								  <div class="col-sm-10 col-md-10 col-lg-10">
+									 <div class="col-sm-4 col-md-4 col-lg-4">
+										<p>{{::a.device_name}}</p>
+										<p>${Registration time:} {{::a.sys_created_on}} </p>
+										 <p>${Last Login time:} {{::a.last_login_time}} </p>
+									 </div>
+									 <div class="col-sm-8 col-md-8 col-lg-8">
+										<a href="#delete">
+											<h4><span id="{{::a.sys_id}}" class="fa fa-trash-o" style="float:right;" aria-label="manage" ng-click="deleteDeviceRegistrationModal(a.sys_id)"></span></h4>
+										</a>
+									 </div>
+								  </div>
+							   </div>
+						 </div>
+							  <div ng-if="!data.isImpersonating">
+								  <a ng-click="openDeviceRegistrationSetupDialog()" role="button">
+									  <h6 style="display: inline-block; padding: 5px;">${Add a new trusted mobile device} </h6>
+								  </a>
+							  </div>
+					  </div>
+				</div>
+			 </div>
+		  </div>
+	 </div>
+</div>
+
+<script type="text/ng-template" id="deviceRegisterModalTemplate">
+         <div>
+           <div class="modal-header">
+             <h1 class="h4 modal-title" id="deviceModal" style="display: inline-block">${Register Trusted Device}</h1>
+             <i class="fa fa-close pull-right text-base" autofocus="true" tabindex="0" ng-click="dismissDeviceRegisterModal(this.deviceRegisterModalInstance)" aria-label="${Close dialog}" role="button"></i>
+           </div>
+           <div class="modal-body">
+           	<iframe id="trusted-device-register" src="/qrcode_setup_dialog_mobile" width="100%" height="500px" frameBorder="0"></iframe>
+           </div>
+         </div>
+      </script>
+
+<script type="text/ng-template" id="manageDeviceModalTemplate">
+         <div class="modal-header">
+                <h1 class="h4 modal-title" style="display: inline-block">${Confirmation}</h1>
+                <i class="fa fa-close pull-right text-base" autofocus="true" tabindex="0" ng-click="dismissDeviceConfigurationModal(this.manageDeviceModalInstance)" aria-label="${Close dialog}" role="button"></i>
+         </div>
+         <div id="manageAuthentication-config-window" class="container-fluid modal-body">
+                <div class="flex col-sm-12">
+                   <p style="font-size: large;"><b>${Are you sure you want to remove} {{device_name}} ?</b></p>
+                </div>
+                      <div class="flex col-sm-12">
+                         <p>${You will no longer be able to access ServiceNow from this device.}</p>
+                	  </div>
+              
+               <div class="modal-footer no-border flex float-right">
+               	<button class="btn btn-secondary"   id="btnClose" style="margin-right:16px;" ng-click="dismissDeviceConfigurationModal(this.manageDeviceModalInstance)">${Cancel}</button>
+                <button class="btn btn-danger" id="btnRemove"ng-click="deleteDeviceRegistration()">${Delete}</button>
+            </div>
+          </div>
+          
+      </script>

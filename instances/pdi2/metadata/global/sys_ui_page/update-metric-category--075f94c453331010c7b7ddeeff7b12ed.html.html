@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_cat_type"
+    expression="RP.getWindowProperties().get('category_type')" />
+	<input type="hidden" id="catId" value="${jvar_cat_type}" />
+	<g:evaluate jelly="true" var="jvar_has_role">
+		var hasRole = false;
+		var metricCategory = new GlideRecord("asmt_metric_category");
+		if (metricCategory.get(jelly.jvar_cat_type))
+			hasRole = new global.AssessmentUtils().canViewScoreCardPage(metricCategory.metric_type);
+		hasRole;
+	</g:evaluate>
+	<j:if test="${!jvar_has_role}">
+		${gs.getMessage("You do not have permission to update the metric category")}
+	</j:if>
+	<j:if test="${jvar_has_role}">
+    <g:ui_form>
+		<table width="100%">
+			<tr id="description_row" valign="top">
+        		<td colspan="2">
+           <!-- Short description value used as a label -->
+        			<p>${gs.getMessage('Changing category will remove its dependency, are you sure ?')}</p>
+        		</td>
+     		</tr>
+     		<tr>
+     			<td colspan="2">
+				</td>
+			</tr>
+			<tr id="dialog_buttons">
+				<td colspan="2" align="right">
+        			 <g:dialog_buttons_ok_cancel ok="return okHandler();" cancel="cancel();"/>
+        		</td>
+     		</tr>
+  		</table>
+    </g:ui_form>
+	</j:if>
+</j:jelly>

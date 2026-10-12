@@ -1,0 +1,91 @@
+<div id="ahc_info_tabs">
+    <div class="text-right" class="ahc-task-tabs tabs">
+		<ul id="ahc-task-tabs" class="nav nav-tabs" style="width : 100%" role="tablist">
+      <li ng-repeat="tab in tabs | filter: !tab.display" class="header-sub-components tab" role="presentation" ng-class="{ active: selectedTab == tab.value }" ng-if="tab.value != 'chat'">
+        <a ng-click="selectTab(tab.value)" href="javascript:void(0)" data-toggle="dropdown" id="{{tab.value}}_popup" aria-label="{{ ::tabs[$index].aria }}" ng-bind-html="tab.name" role="tab"
+           aria-selected="{{(selectedTab === tab.value)}}" tabindex="{{selectedTab == tab.value ? '0' : '-1'}}"></a>
+			</li>
+			<li class="pull-right header-sub-components ask-question"  ng-if="tab.value == 'chat' && data.showConnect" ng-repeat="tab in tabs | filter: !tab.display">
+				<div class="question-tab">
+					<a aria-haspopup="true" tabindex="0" href="javascript:void(0)" ng-click="scrollChat()" data-toggle="dropdown" id="{{tab.value}}_popup" aria-label="{{tab.name}}" class="tab-list pull-right" role="button">
+						<i class="fa fa-comments-o"></i>
+						<span  ng-bind-html="tab.name" aria-hidden="true"></span>
+					</a>
+					<div id="ask_a_question" class="dropdown-menu {{tab.value}}_popup" ng-class="{'hide-heading':tab.widget!='attachmentWidget'}" ng-if="data.isConnectConfigured == true">
+						<div class="arrow"></div>
+            <div ng-class="tab.value" id="item_{{data.taskNumber}}_{{tab.value}}" ng-if="data.widgets[tab.widget] && tab.value == 'chat' && data.isConnectConfigured == true">
+							<div class="panel-body">
+								<sp-widget widget="data.widgets[tab.widget]"></sp-widget>
+							</div>
+						</div>
+					</div>
+				</div>
+			</li>
+		</ul>
+	</div>
+	<!-- Mobile view for Right side elements -->
+	<div class="tabs-collapse">
+		<div id="mobile_task_info" class="dropdown block todo-border" ng-class="{ 'row':mobileDevice, 'info-button': data.isChildCase }">
+			<a id="more_information" name="more_information" href="javascript:void(0)" class="col-xs-10" aria-expanded="false" ng-click="toggleMoreInfo()" data-toggle="collapse" data-target="#moreInfoCollapse" aria-controls="moreInfoCollapse">
+        ${More Information}
+				<i class="fa collapse-margin" ng-class="{'fa-caret-down' : moreInfoCollapsed, 'fa-caret-up': !moreInfoCollapsed}" aria-hidden="true"></i>
+			</a>
+      <a id="mobile_chat" name="mobile_chat" href="javascript:void(0)" class="col-xs-2" data-toggle="collapse" data-target="#{{getWidgetId('chat')}}" aria-label="{{c.tabsList.chat.aria}}" aria-controls="{{getWidgetId('chat')}}"
+         data-tooltip="true" data-placement="top" title="${Ask a question}" ng-if="data.isConnectConfigured == true">
+        <i class="fa fa-comments-o"></i>
+      </a> 
+      <ul id="moreInfoCollapse" class="todo-more-info collapse col-xs-12">
+      	<li ng-if="data.widgets[tab.widget] && tab.value != 'chat'" ng-repeat="tab in mobileTabs" class="info-list">
+          <div data-toggle="collapse" data-target="#{{getWidgetId(tab.value)}}" aria-label="{{tab.aria}}" aria-controls="{{getWidgetId(tab.value)}}">
+	    			<a href="javascript:void(0)" id="mobile_task_dropdown_menu_item_{{tab.value}}">
+             	<span aria-hidden="true">{{tab.name}}</span>
+						</a>
+      		</div>
+			 	</li> 
+      	<li class="info-list" ng-if="data.showAttachmentGallery">
+          <div data-toggle="collapse" data-target="#task_popup_menuitem_attachment_{{data.taskNumber}}" aria-label="{{c.tabsList.attachment.aria}}" aria-controls="task_popup_menuitem_attachment_{{data.taskNumber}}">
+	    			<a href="javascript:void(0)" id="mobile_task_dropdown_menu_item">
+             	<span aria-hidden="true">${Attachments}</span>
+						</a>
+      		</div>
+			 	</li> 
+      </ul>
+			<div ng-repeat="tab in mobileTabs | filter: !tab.display">
+				<div ng-if="data.widgets[tab.widget] && tab.value != 'attachment'" class="popup-task-menu-items popover bottom" id="task_popup_menuitem_{{tab.value}}_{{data.taskNumber}}">
+					<a ng-click="closePopup()" href="javascript:void(0);" class="back-to-case"  id="task_popup_item_{{tab.value}}" data-toggle="collapse" data-target="#task_popup_menuitem_{{tab.value}}_{{data.taskNumber}}">
+						<i class="fa fa-chevron-left" aria-hidden="true"></i>
+						${back}
+          </a>
+					<div id="mobile_popup_item_{{tab.value}}">
+						<sp-widget widget="data.widgets[tab.widget]"></sp-widget>
+					</div>
+				</div>
+      </div>
+      <div>
+        <div class="popup-task-menu-items popover bottom" id="task_popup_menuitem_attachment_{{data.taskNumber}}" ng-if="data.showAttachmentGallery">
+					<a ng-click="closePopup()" href="javascript:void(0);" class="back-to-case" id="task_popup_item_attachment" data-toggle="collapse" data-target="#task_popup_menuitem_attachment_{{data.taskNumber}}">
+					  <i class="fa fa-chevron-left" aria-hidden="true"></i>
+            ${back}
+					</a>
+					<div class="panel-body"  id="attachments_popup">
+						<sp-widget widget="data.ticketAttachmentGalleryWidget"></sp-widget>
+					</div>
+				</div>
+			</div>
+
+    </div>
+	</div>
+</div>
+
+<now-message key="Case Information" value="${Case Information}"/>
+<now-message key="Toggle Dropdown" value="${Toggle Dropdown}"/>
+<now-message key="Open chat tab" value="${Open chat tab}"/>
+<now-message key="Attachments" value="${Attachments}"/>
+<now-message key="Details" value="${Details}"/>
+<now-message key="Open details tab" value="${Open details tab}"/>
+<now-message key="Activity" value="${Activity}"/>
+<now-message key="Open activity tab" value="${Open activity tab, view conversation history or type new message}"/>
+<now-message key="Open attachment tab, add attachments" value="${Open attachment tab, add attachments}"/>
+<now-message key="History" value="${History}"/>
+<now-message key="Open history tab, view conversation history or type new message" value="${Open history tab, view conversation history or type new message}"/>
+<now-message key="Ask a Question" value="${Ask a Question}"/>

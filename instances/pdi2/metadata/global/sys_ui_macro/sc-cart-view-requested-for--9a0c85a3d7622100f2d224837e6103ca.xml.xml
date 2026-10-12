@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:if test="${jvar_cart.isEmpty() != 'true' &amp;&amp; jvar_has_item == 'true'}">
+        <j:if test="${jvar_sc_requested_for == 'true' || jvar_sc_shipping_address == 'true' || jvar_sc_shipping_location == 'true'}">
+			<g:include_script src="CartCheckoutFunctionsV2.jsdbx" />
+			<g:evaluate var="jvar_request_for" jelly="true" >
+				var parentID = jelly.RP.getParameterValue('sysparm_parent_sys_id');
+				var parentTable = jelly.RP.getParameterValue('sysparm_parent_table');
+				var requestForSysID = new global.GlobalServiceCatalogUtil().getRequestForSysID(parentTable, parentID)  || jelly.RP.getParameterValue('sysparm_requested_for');
+				requestForSysID;
+			</g:evaluate>
+			<script>
+				addLoadEvent(function() {
+					if ('${jvar_request_for}') {
+						catLocation('sc_cart.requested_for', 'requestor_location');
+					}
+				});
+			</script>
+            <j:set var="jvar_skip_attachment_footer" value="true" />
+			<g:evaluate var="jvar_req_for" jelly="true" expression="JSUtil.notNil(jelly.jvar_request_for) ? jelly.jvar_request_for : jelly.jvar_cart.getRequestedFor();" />
+			<g:evaluate var="jvar_req_for_display" jelly="true">
+			if (JSUtil.notNil(jelly.jvar_request_for)) {
+				var jvar_request_for_user = GlideUser.getUserByID(jelly.jvar_request_for);
+				jvar_request_for_user.getDisplayName();
+			}
+			else
+				jelly.jvar_cart.getRequestedForDisplayName();
+			</g:evaluate>
+            <j:set var="jvar_ref_cart_id" value="${jvar_cart.getCartID()}" />
+            <g:evaluate var="jvar_ref_delivery_address" jelly="true" expression="GlideStringUtil.escapeHTML(jelly.jvar_cart.getDeliveryAddress());" />
+			<g2:evaluate var="jvar_can_delta_rf" expression="var helper = new GlideappCalculationHelper(); helper.canViewRF();" />
+            <j:if test="${RP.isPopup()}">
+				<g:requires inline="true" name="scripts/elements/textarea_sizer.js" />
+				<g:requires inline="true" name="scripts/elements/textarea_autosizer.js" />
+			</j:if>
+			<j:if test="${!RP.isPopup()}">
+				<g:requires position="last" inline="true" name="scripts/elements/textarea_sizer.js" />
+				<g:requires position="last" inline="true" name="scripts/elements/textarea_autosizer.js" />
+			</j:if>
+            <j2:choose>
+                <j2:when test="${jvar_sc_shipping_location == 'true'}">
+                    <j2:set var="jvar_width" value="35%" />
+                </j2:when>
+                <j2:otherwise>
+                    <j2:set var="jvar_width" value="70%" />
+                </j2:otherwise>
+            </j2:choose>
+
+			<!-- requestor_location always available in the cart checkout screen -->
+			<j2:set var="jvar_update_req_for" value="catReqFor('sc_cart.requested_for', 'requestor_location', '${jvar_cart.getName()}')" />
+
+            <j2:choose>
+                <j2:when test="${jvar_sc_shipping_address == 'true'}">
+                    <j2:set var="jvar_store_delivery_address" value="storeCartDeliveryAddress('${jvar_ref_cart_id}', 'requestor_location', 'set_delivery_address', '${jvar_cart.getName()}')" />
+                </j2:when>
+                <j2:otherwise>
+					<j2:set var="jvar_store_delivery_address" value="storeCartDeliveryAddress('${jvar_ref_cart_id}', 'location_ref_field', 'set_location', '${jvar_cart.getName()}')" />
+                </j2:otherwise>
+            </j2:choose>
+           	<div class="container">
+           		<j:if test="${jvar_sc_requested_for == 'true'}">
+	            	<div class="row col-xs-12 sc_cv_info_row">
+	            		<label class="col-xs-2 sc_requested_label" for="sys_display.sc_cart.requested_for">
+	            			${gs.getMessage('Requested for')}
+	            		</label>
+						<j2:if test="$[jvar_can_delta_rf == false]">
+                            <div class="col-xs-8" style="padding-top:7px; margin-bottom:5px">   
+							   ${jvar_req_for_display}
+							</div>
+						</j2:if>
+						<j2:if test="$[jvar_can_delta_rf != false]">
+                            <div class="col-xs-8">    
+								<g:ui_reference table="sys_user" name="sc_cart.requested_for" value="${jvar_req_for}" displayvalue="${jvar_req_for_display}" completer="AJAXTableCompleter" columns="${gs.getProperty('glide.sc.request_for.columns')}" order_by="${gs.getProperty('glide.sc.request_for.order_by')}" query="${gs.getProperty('glide.sc.request_for.query')}" onchange="$[jvar_update_req_for];onChange('sc_cart.requested_for')" />
+							</div>
+                         </j2:if>
+	            	</div>
+            	</j:if>
+                <j:if test="${jvar_sc_shipping_address == 'true'}">
+                    <div class="row col-xs-12 sc_cv_info_row">
+                        <label class="col-xs-2 sc_requested_label" for="requestor_location">
+	            			${gs.getMessage('Shipping address')}
+	            			<script language="javascript">
+                        		addLoadEvent(
+									function() {
+										if (window["textareaResize"])
+											textareaResize("requestor_location");
+									}
+								);
+							</script>
+	            		</label>
+	            		<div class="col-xs-8">
+	            			<textarea id="requestor_location" class="question_textarea_input cat_item_option form-control" rows="5" name="requestor_location" wrap="soft" onChange="$[jvar_store_delivery_address]">
+		                    	<g:no_escape>${jvar_ref_delivery_address}</g:no_escape>
+		                    </textarea>
+	            		</div>
+                    </div>
+                </j:if>
+				<j:if test="${jvar_sc_shipping_address == 'false'}">
+                    <div class="row col-xs-12 sc_cv_info_row">
+                        <label class="col-xs-2 sc_requested_label" for="requestor_location">
+	            			${gs.getMessage('Shipping address')}
+	            			<script language="javascript">
+                        		addLoadEvent(
+									function() {
+										if (window["textareaResize"])
+											textareaResize("requestor_location");
+									}
+								);
+							</script>
+	            		</label>
+	            		<div class="col-xs-8">
+	            			<textarea id="requestor_location" class="question_textarea_input cat_item_option form-control" rows="5" name="requestor_location" wrap="soft" readonly='true'>
+		                    	<g:no_escape>${jvar_ref_delivery_address}</g:no_escape>
+		                    </textarea>
+	            		</div>
+                    </div>
+                </j:if>
+                <j:if test="${jvar_sc_shipping_location == 'true'}">
+                    <div class="row col-xs-12 sc_cv_info_row">
+                        <label class="col-xs-2 sc_requested_label" for="sys_display.location_ref_field">
+                            ${gs.getMessage('Shipping location')}
+                        </label>
+                        <div class="col-xs-8">
+	                        <g:ui_reference name="location_ref_field" table="cmn_location" columns="name,zip" query="active=true" order_by="name"   completer="AJAXTableCompleter" onchange="onChange('location_ref_field');$[jvar_store_delivery_address]" />
+	                    </div>
+                    </div>
+                </j:if>
+            </div>
+        </j:if>
+    </j:if>
+</j:jelly>

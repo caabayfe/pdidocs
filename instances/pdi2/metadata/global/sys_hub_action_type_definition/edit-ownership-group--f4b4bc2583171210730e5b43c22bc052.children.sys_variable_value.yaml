@@ -1,0 +1,126 @@
+- document: sys_hub_action_type_definition
+  document_key: f4b4bc2583171210730e5b43c22bc052
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 10:56:36
+  sys_id: 3f4509e583571210730e5b43c22bc09b
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-03-08 03:54:19
+  value: '{"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"version":"1.0"}'
+  variable: f34509e583571210730e5b43c22bc08d
+- document: sys_hub_step_instance
+  document_key: 28d5412983571210730e5b43c22bc0ef
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 10:58:51
+  sys_id: 7cd5812983571210730e5b43c22bc016
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-03-08 03:54:19
+  value: |-
+    (function execute(inputs, outputs) {
+        if(inputs.ownership_group){
+            var grp = new GlideRecord('sys_user_group');
+            grp.addQuery("type","458de4f067671300dbfdbb2d07415ad6"); //knowledge type
+            grp.addQuery("sys_id",inputs.ownership_group);
+            grp.query();
+            var oldManager = "";
+            if(grp.next()){
+                oldManager=grp.getValue("manager");
+                grp.name = inputs.name;
+                grp.manager = inputs.manager;
+                grp.description = inputs.description;
+                grp.email = inputs.group_email;
+                grp.update();
+            }
+            var groupId = inputs.ownership_group;
+            if(oldManager!=inputs.manager){
+                //deleting knowledge group manager role from old ownership group manager
+                
+                var userHasRole = new GlideRecord("sys_user_has_role");
+                userHasRole.addQuery("user",oldManager);
+                userHasRole.addQuery("role","616c46d453302300cc376512a2dc34a0"); //knowledge group manager role
+                userHasRole.addQuery("granted_by",groupId);
+                userHasRole.deleteMultiple();
+                var msgArray = [];
+                msgArray.push(userHasRole.role.name + "");
+                msgArray.push(userHasRole.user.user_name + "");
+                gs.log(gs.getMessage('Removing role {0} from {1}', msgArray));
+                
+                //adding knowledge manager role to new ownership group manager
+                if(inputs.manager != ""){
+                    var role = new GlideRecord('sys_user_has_role'); 
+                    role.initialize();
+                    role.role = "616c46d453302300cc376512a2dc34a0"; //knowledge group manager role
+                    role.user = inputs.manager;
+                    role.granted_by = groupId; 
+                    role.insert();
+                    var msgArray2 = [];
+                    msgArray2.push(role.role.name + "");
+                    msgArray2.push(role.user.user_name + "");
+                    gs.log(gs.getMessage('Adding role {0} to {1}', msgArray2));
+                }
+            }
+            var groupMemerStr = inputs.group_members+"";
+            var newGrpMemebersList = groupMemerStr.split(",");
+            var grpMembers = new GlideRecord('sys_user_grmember');
+            grpMembers.addQuery('group',groupId);
+            grpMembers.query();
+            while(grpMembers.next()){
+                var usr =grpMembers.getValue('user');
+                var index = newGrpMemebersList.indexOf(usr);
+                if(index >= 0){
+                    newGrpMemebersList.splice(index,1);
+                }else{
+                    grpMembers.deleteRecord(); //delete unmatched member
+                }
+            }
+
+            //code for add the new group members which are not part in old group
+            if(newGrpMemebersList.length>0){
+                var grmem = new GlideRecord('sys_user_grmember');
+                var usr = new GlideRecord('sys_user');
+                usr.addQuery("sys_id","IN",newGrpMemebersList.join()+"");
+                usr.query();
+                while(usr.next()){
+                    grmem.initialize();
+                    grmem.group = groupId;
+                    grmem.user = usr.sys_id;
+                    grmem.insert();
+                }
+            }
+        }
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 28d5412983571210730e5b43c22bc0ef
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 10:58:51
+  sys_id: b8d5812983571210730e5b43c22bc016
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-24 10:58:51
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: f4b4bc2583171210730e5b43c22bc052
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 10:56:36
+  sys_id: f34509e583571210730e5b43c22bc09b
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-24 10:56:36
+  value: '0'
+  variable: bf4509e583571210730e5b43c22bc091

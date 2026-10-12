@@ -1,0 +1,89 @@
+<g:ui_form>
+<g:evaluate>
+  var table = "${RP.getWindowProperties().get('index_table')}";
+  var access_method = "${RP.getWindowProperties().get('access_method')}";
+  var unique = "${RP.getWindowProperties().get('unique')}";
+  var index_name = "${RP.getWindowProperties().get('index_name')}";
+  var field_list = "${RP.getWindowProperties().get('index_fields')}";
+  var fields = field_list.split(',');
+  var updateSetGR = new GlideRecord('sys_update_set');
+  updateSetGR.get(GlideUpdateSet.get());
+  var currUpdateSetName = updateSetGR.name;
+  var gr = new GlideRecord(table);
+  gr.initialize();
+</g:evaluate>
+
+<g:messages>
+  Index creation successfully scheduled. If it completes successfully, the index will be added to your current update set "{0}".
+  Please specify an email address
+  An email will be sent to {0} upon completion. 
+</g:messages>
+
+<table width="100%">
+  <input type="HIDDEN" name="table" id="table" value="${table}"/>
+  <input type="HIDDEN" name="access_method" id="access_method" value="${access_method}"/>
+  <input type="HIDDEN" name="unique" id="unique" value="${unique}"/>
+  <input type="HIDDEN" name="fields" id="fields" value="${field_list}"/>
+  <input type="HIDDEN" name="index_name" id="index_name" value="${index_name}" />
+  <input type="HIDDEN" name="currUpdateSetName" id="currUpdateSetName" value="${currUpdateSetName}" />
+  <tr>
+    <td colspan="99">
+      ${gs.getMessage('index_generation_email_confirmation')}
+    </td>
+  </tr>
+  <tr class="header">
+    <td colspan="99">${gs.getMessage('Upon completion')}</td>
+  </tr>
+  <tr>
+    <td>
+      <input type="radio" checked="true" name="notify" id="notify" value="email" onclick="gel('email').style.visibility=''" title="${gs.getMessage('Email me')}">
+        ${gs.getMessage('Email me')}
+      </input>
+      <br/>
+      <input type="radio" name="notify" id="notify" value="none" onclick="gel('email').style.visibility='hidden'" title="${gs.getMessage('Do not notify me')}">
+        ${gs.getMessage('Do not notify me')}
+      </input>
+    </td>
+    <td valign="top">
+      <input name="email" id="email" title="${gs.getMessage('Enter email address')}">${gs.getUser().getEmail()}</input>
+    </td>
+  </tr>
+
+  <tr class="header">
+    <td>${gs.getMessage('Table Name')}</td>
+    <td>${gs.getMessage('Access Method')}</td>
+    <td>${gs.getMessage('Field Name(s)')}
+      <j:if test="${unique}">$[SP](unique) </j:if>
+    </td>
+  </tr>
+  
+  <j:forEach var="jvar_this_field" items="${fields}" indexVar="jvar_index">
+    <tr>
+      <g:evaluate>
+        var this_label = gr['${jvar_this_field}'].sys_meta.label;
+      </g:evaluate>
+
+      <j:if test="${jvar_index == 0}">
+        <td>
+          ${gr.sys_meta.label}
+        </td>
+        <td>
+          ${access_method}
+        </td>
+      </j:if>
+      <j:if test="${jvar_index != 0}">
+      <td/>
+      <td/>
+      </j:if>
+      <td>${this_label}</td>
+    </tr>
+  </j:forEach>
+     
+  <tr>
+    <td colspan="2" align="right">
+      <g:dialog_buttons_ok_cancel ok="return validateAndSubmit();" />
+    </td>
+  </tr>
+
+</table>
+</g:ui_form>

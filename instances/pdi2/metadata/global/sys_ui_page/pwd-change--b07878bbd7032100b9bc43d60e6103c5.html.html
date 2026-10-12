@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:macro_invoke macro="$pwd_error_message" error_message="" />
+    <g:include_script src="pwd_csrf_common_ui_script.jsdbx" />
+    <g:include_script src="$pwd_util.jsdbx" />
+    <!-- ACTUAL PAGE STARTS HERE -->
+	<g:if_polaris>
+		<g:then>
+			<g:inline template="polarisberg_output.xml"/>
+		</g:then>
+		<g:else>
+			<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+		</g:else>
+	</g:if_polaris>
+	<g:requires name="styles/retina_icons/retina_icons.css" includes="true" />
+    <g:macro_invoke macro="$pwd_reset_stylesheet" />
+    <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+    <nav class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button id="back_btn" class="btn btn-default icon-chevron-left navbar-btn" aria-label="${gs.getMessage('Back')}" title="${gs.getMessage('Back')}" onclick="backButtonHandler();" aria-disabled="true"></button>
+                <h1 style="display: inline-block;" class="navbar-title">${gs.getMessage('Change Password')}</h1>
+            </div>
+        </div>
+    </nav>
+    <div class="pwd-change-box">
+        <form id="passwordChangeFormId" style="display: none;">
+            <input type="hidden" id="password_reset.wf.refresh_rate" value="${gs.getProperty('password_reset.wf.refresh_rate');}" />
+            <input type="hidden" id="password_reset.wf.timeout" value="${gs.getProperty('password_reset.wf.timeout');}" />
+			<div class="row is-required" id="indicates-required">
+				<span class="required-marker" role="img" 
+				style="display: inline-block; padding-bottom: 25px;" aria-hidden="true">
+				${gs.getMessage("Indicates required")}</span>
+			</div>
+            <div class="form-group is-required" id="process_select_pass_form_group">
+                <label for="processSelectId" class="control-label change-label col-sm-4 text-right">
+                    <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Required process')}"></span>
+                    ${gs.getMessage("Change password for")}
+                </label>
+                <span class="col-sm-8">
+                    <select
+                        name="processSelect"
+                        id="processSelectId"
+                        class="form-control pwd-form-control"
+                        required="true"
+                        aria-required="true"
+                        onchange="showHidePasswordChangeFormFields(); clearFormFields(); updatePwdRuleHint(); updatePwdStrengthVisibility(); updateMandatoryMarker(this, 'process_select_pass_form_group')"
+                        aria-label="${gs.getMessage('Select process for change password')}"
+						aria-describedby="error_msg_select"
+                    />
+                </span>
+                <!-- These are just to store the process info. They will never be displayed -->
+                <select name="processRule" id="processRuleId" style="display: none;" />
+                <select name="processIdentification" id="processIdentificationId" style="display: none;" />
+                <select name="pwdStrengthVisibility" id="pwdStrengthVisibilityId" style="display: none;" />
+                <select name="enablePasswordPolicy" id="enablePasswordPolicyId" style="display: none;" />
+                <select name="pwdPolicyRuleHint" id="pwdPolicyRuleHintId" style="display: none;" />
+                <span class="help-block col-sm-4" /><span id="error_msg_select" class="help-block col-sm-8" />
+            </div>
+            <span id="process_details">
+                <div class="form-group is-required" id="old_pass_form_group">
+                    <label for="sysparm_old_pass" id="sysparm_old_pass_label" class="control-label change-label col-sm-4 text-right">
+                        <span class="required-marker sn-tooltip-basic" id="required_field_old" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('required')}"></span>
+                        ${gs.getMessage("Old password")}
+                    </label>
+		    <div class="col-sm-8">
+			<div class="pwd-change-textbox-container"> 
+			<input
+                            id="sysparm_old_pass"
+                            placeholder=""
+                            name="sysparm_old_pass"
+                            value=""
+                            autocomplete="off"
+                            class="form-control pwd-form-control"
+                            type="password"
+                            maxlength="100"
+                            aria-describedby="error_msg_old_pass"
+                            aria-required="true"
+                            aria-label="${gs.getMessage('Old password')}"
+                            oninput="updateMandatoryMarker(this, 'old_pass_form_group'); checkPasswordsEquality();"
+                        />
+			<button
+                            id="mask_icon_old"
+                            type="button"
+                            class="btn btn-default icon-preview input-group-append mask_btn pwd-change-mask-btn sn-tooltip-basic"
+                            onClick="renderMaskIcon(this, 'sysparm_old_pass')"
+                            aria-label="${gs.getMessage('Show old password')}"
+                            data-original-title="${gs.getMessage('Show password')}"
+                        />
+			</div>
+			<span id="error_msg_old_pass" class="help-block" role="alert" aria-live="polite" style="padding: 0px;"></span>
+		    </div>
+                </div>
+                <div class="form-group is-required" id="new_pass_form_group" style="margin-bottom: 0px;">
+                    <label for="sysparm_new_password" id="sysparm_new_password_label" class="control-label change-label col-sm-4 text-right">
+                        <span class="required-marker sn-tooltip-basic" id="required_field_new" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('required')}"></span>
+                        ${gs.getMessage("New password")}
+                    </label>
+		    <div class="col-sm-8">
+			<div class="pwd-change-textbox-container"> 
+                        <input
+                            id="sysparm_new_password"
+                            placeholder=""
+                            name="sysparm_new_password"
+                            value=""
+                            autocomplete="off"
+                            class="form-control pwd-form-control"
+                            type="password"
+                            maxlength="100"
+                            oninput="clearNewPasswordErrors(); updateRulesState(); checkPasswordStrength(); checkPasswordsEquality(); updatePasswordMatchRule(); updateMandatoryMarker(this, 'new_pass_form_group')"
+                            aria-required="true"
+                            aria-label="${gs.getMessage('New password')}"
+                            aria-describedby="error_msg_new_pass pwdRuleHintId newPasswordPolicy"
+                            aria-controls="password_strength_container"
+                        />
+                        <button
+                            id="mask_icon_new"
+                            type="button"
+                            class="btn btn-default icon-preview input-group-append mask_btn pwd-change-mask-btn sn-tooltip-basic"
+                            onClick="renderMaskIcon(this, 'sysparm_new_password')"
+                            aria-label="${gs.getMessage('Show new password')}"
+                            data-original-title="${gs.getMessage('Show password')}"
+                        />
+			</div>
+			<span id="error_msg_new_pass" class="help-block" style="padding: 0px;" role="alert" aria-live="polite"></span>
+		    </div>
+					
+                </div>
+
+                <div id="password_strength_container" class="pwd-reset-sub-body-new" style="display: flex;">
+                    <div class="col-sm-4"></div>
+                    <div class="progress strength-bar change-pwd-strength-bar">
+                        <div class="progress-bar progress-bar-danger" id="strength-meter" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="${gs.getMessage('Password strength bar')}" style="width: 0%;"></div>
+                    </div>
+                    <div id="pwd_strength_text" aria-live="polite" aria-atomic="true" style="">
+                        ${gs.getMessage('Strength')}
+                    </div>
+                </div>
+                <div class="form-group pwd-reset-sub-body-new" style="margin-bottom: 0px;">
+                    <span class="col-sm-4" />
+                    <span id="pwdRuleHintId" class="col-sm-8" />
+                </div>
+                <div class="pwd-reset-sub-body-new">
+                    <span class="col-sm-4" />
+                    <span id="newPasswordPolicy" class="col-sm-8" />
+                </div>
+                <div class="form-group is-required password-retype" id="confirm_pass_form_group" style="padding-top: 15px;">
+                    <label for="sysparm_confirm_pass" id="sysparm_confirm_pass_label" class="control-label change-label col-sm-4 text-right">
+                        <span class="required-marker sn-tooltip-basic" id="required_field_retype" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('required')}"></span>
+                        ${gs.getMessage("Retype password")}
+                    </label>
+		    <div class="col-sm-8">
+			<div class="pwd-change-textbox-container"> 
+                        <input
+                            id="sysparm_confirm_pass"
+                            placeholder=""
+                            name="sysparm_confirm_pass"
+                            value=""
+                            autocomplete="off"
+                            class="form-control pwd-form-control"
+                            type="password"
+                            maxlength="100"
+                            aria-required="true"
+                            aria-label="${gs.getMessage('Retype password')}"
+                            aria-describedby="error_msg_confirm_pass"
+                            oninput="clearNewPasswordErrors(); checkPasswordsEquality(); enablePasswordMatchHtml(); updatePasswordMatchRule(); updateMandatoryMarker(this, 'confirm_pass_form_group')"
+                        />
+                        <button
+                            id="mask_icon_retype"
+                            type="button"
+                            class="btn btn-default icon-preview input-group-append mask_btn pwd-change-mask-btn sn-tooltip-basic"
+                            onClick="renderMaskIcon(this, 'sysparm_confirm_pass')"
+                            aria-label="${gs.getMessage('Show retype password')}"
+                            data-original-title="${gs.getMessage('Show password')}"
+                        />
+			<span id="error_msg_confirm_pass" class="help-block" style="padding: 0px;" role="alert" aria-live="polite"></span>
+		        </div>
+		    </div>
+                </div>
+		    <div class="pwd-reset-sub-body-new">
+                    <span class="col-sm-4" />
+                    <div id="pwd_match" class="col-sm-8" style="display: none;">
+                        <i id="pwd_match_icon" class="icon-cross-circle pwd-cross-icon" aria-hidden="true"/>
+                        <span id="pwd_match_rule" aria-live="polite">${gs.getMessage('Passwords must match')}</span>
+                    </div>
+                </div>
+               
+                <input type="hidden" name="sysparm_action" id="sysparm_action" value="password_change_form" />
+                <button name="pwd_change" id="sysverb_pwd_change" class="btn btn-primary btn-pwd-submit change-pwd-submit-btn" onClick="return changePassword('${gs.getUserID()}');" aria-disabled="true">
+                    ${gs.getMessage('Change Password')}
+                </button>
+            </span>
+        </form>
+        <form id="pwd_master_form" name="pwd_master_form" method="post">
+            <input type="hidden" id="sysparm_error" name="sysparm_error" value="" />
+            <input type="hidden" id="sysparm_success" name="sysparm_success" value="" />
+            <input type="hidden" id="sysparm_page_text" name="sysparm_page_text" value="" />
+            <input type="hidden" id="sysparm_process_id" name="sysparm_process_id" value="${sysparm_process_id}" />
+            <input type="hidden" id="sysparm_request_id" name="sysparm_request_id" value="${sysparm_request_id}" />
+            <input type="hidden" id="sysparm_sys_user_id" name="sysparm_sys_user_id" value="${sysparm_sys_user_id}" />
+        </form>
+    </div>
+</j:jelly>

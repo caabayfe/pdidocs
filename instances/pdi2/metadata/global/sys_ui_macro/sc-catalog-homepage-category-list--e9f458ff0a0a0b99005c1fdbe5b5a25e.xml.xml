@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <div style="padding: 5px;" data-sn-macro-sys-id="${jvar_macro_sys_id}">
+        <j:set var="jvar_limit_reached" value="false" />
+        <j:set var="jvar_limit" value="${gs.getProperty('glide.sc.max_items')}" />
+        <j:set var="jvar_count" value="0" />
+
+		<!-- when the mouse pointer moves over the catalogItem or category icon, based on the property control the popup behavior -->
+		<g:evaluate var="jvar_use_popup_desc" jelly="true">
+			var jvar_use_popup_desc = gs.getProperty('glide.sc.cat_view_use_popup_for_details') == 'true';
+			jvar_use_popup_desc;
+		</g:evaluate>
+
+        <g:sc_catalog_homepage_subcat_list />
+        <j:forEach items="${jvar_category.getItemsNoDuplicates()}" var="jvar_item">
+            <j:if test="${jvar_count == jvar_limit}">
+                <j:set var="jvar_limit_reached" value="true" />
+                <j:break />
+            </j:if>
+            <j:if test="${jvar_count != jvar_limit}">
+                <j:if test="${jvar_item.isVisibleStandalone() &amp;&amp; jvar_item.canView()}">
+                    <j:set var="jvar_count" value="${jvar_count + 1}" />
+                    <j:set var="jvar_iconsrc" value="${jvar_item.getIconSRC()}" />
+                    <g:evaluate var="jvar_item_url" jelly="true">
+                        var jvar_item_url = "";
+                        if (jelly.jvar_item.getType() == 'external')
+                            jvar_item_url = GlideappCatalogURLGenerator.getItemBaseURL(jelly.jvar_item);
+                        else
+                            jvar_item_url = GlideappCatalogURLGenerator.getItemURL(jelly.jvar_item, jelly.jvar_catalog, jelly.jvar_catalog_view, jelly.jvar_category.getID(), jelly.jvar_hint, jelly.RP);
+                        jvar_item_url;
+                    </g:evaluate>
+                    <j:set var="jvar_href" value="${jvar_item_url}" />
+                    <g:sc_catalog_homepage_item />
+                </j:if>
+            </j:if>
+        </j:forEach>
+        <j:if test="${jvar_limit_reached}">
+            <g:evaluate var="jvar_view_all_url" jelly="true">
+                var params = {"sysparm_parent_sys_id":jelly.RP.getParameterValue("sysparm_parent_sys_id"), "sysparm_processing_hint":jelly.RP.getParameterValue("sysparm_processing_hint"), "sysparm_parent_table":jelly.RP.getParameterValue("sysparm_parent_table"), "sysparm_view":jelly.RP.getParameterValue("sysparm_view")};
+                var jvar_view_all_url = GlideappCatalogURLGenerator.getHomepageCategoryLinkWithParams(jelly.jvar_catalog, jelly.jvar_catalog_view, jelly.jvar_category.getID(), params);
+                jvar_view_all_url;
+            </g:evaluate>
+			<g:evaluate var="jvar_category_aria_label" jelly="true">
+                var jvar_category_aria_label = gs.getMessage('View all items: {0}', jelly.jvar_category.getTitle());
+                jvar_category_aria_label;
+            </g:evaluate>
+            <div style="white-space:nowrap; text-align: center;">
+                <a target="_self" class="sc_bottom_link" href="${jvar_view_all_url}" aria-label="${jvar_category_aria_label}">${gs.getMessage("View all items")}</a>
+            </div>
+        </j:if>
+    </div>
+</j:jelly>

@@ -1,0 +1,13 @@
+var uri = action.getGlideURI();
+var path = uri.getFileFromPath();
+uri.set('sysparm_m2m_ref', current.getTableName());
+uri.set('sysparm_stack', 'no');
+uri.set('sysparm_collection_related_field', 'preserver');
+uri.set('sysparm_form_type', 'm2m');
+uri.set('sysparm_collection_relationship', '');
+uri.set('sysparm_collection_key', 'profile');
+uri.set('sysparm_collection_label', 'Preserver');
+uri.set('sysparm_query', 'default=false^include_in_system_clone=true');
+uri.set('sysparm_collection_related_file', 'clone_data_preserver');
+uri.set('jvar_no_filter', 'true');
+action.setRedirectURL(uri.toString('sys_m2m_template.do'));

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_stockroomid" jelly="true" expression="RP.getParameterValue('sysparm_current_stockroom')"/>
+	<g:evaluate var="jvar_stockroom_display" object="true" jelly="true">
+		if (jelly.jvar_stockroomid != '') {
+			var stockroomDisplayValue = '';
+			var stockroomGr = new GlideRecord('alm_stockroom');
+			stockroomGr.addQuery('sys_id', jelly.jvar_stockroomid);
+			stockroomGr.query();
+			if (stockroomGr.next()) {
+				stockroomDisplayValue = stockroomGr.getValue('name');
+			}
+			stockroomDisplayValue;
+		}
+	</g:evaluate>
+	<g:ui_form>
+	<input type="hidden" id="cancelled" name="cancelled" value="false"/>
+	<input type="hidden" id="consumable" name="consumable" value="${sysparm_sys_id}"/>
+	<input type="hidden" id="current_stockroom" name="current_stockroom" value="${sysparm_current_stockroom}"/>
+	<input type="hidden" id="status" name="status" value="${sysparm_status}"/>
+
+	<table width="100%" style="border-spacing:10px; height:100px;">
+		<tr>
+			<td rowspan="5" nowrap="true" width="110px" style="vertical-align:top;">
+				<img src="images/plugin_activate.gifx" alt="${gs.getMessage('Cancel consumable from disposal')}" style="vertical-align:top;" />
+			</td>
+		</tr>
+		<tr>
+			<j:if test = "${sysparm_current_stockroom != ''}">
+				<td style="text-align:right;">
+					<label>${gs.getMessage('Stockroom:')}$[SP]</label>
+				</td>
+				<td style="padding:10px;">
+					<label>${jvar_stockroom_display}</label>
+				</td>
+			</j:if>
+			<j:if test = "${sysparm_current_stockroom == ''}">
+				<td style="text-align:right;">
+					<label style="color:red">*</label><label>${gs.getMessage('Stockroom:')}$[SP]</label>
+				</td>
+				<td>
+					<g:ui_reference name="alm_stockroom" table="alm_stockroom"/>
+				</td> 
+			</j:if>
+		</tr>
+		<tr>
+			<td style="width:150px; text-align:right;">
+				<label>${gs.getMessage('Status:')}$[SP]</label>
+			</td>
+			<td style="padding:10px;">
+				<label>${sysparm_status_label}</label>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2" style="padding-left:7px;">
+				<g:ui_choice_input_field id="substatus" name="substatus" for="substatus" label="${gs.getMessage('Substate:')}">
+				<g:evaluate var="jvar_choices" object="true">
+					var choices = [];
+					var gr = new GlideRecord('sys_choice');
+					var current_language = gs.getSession().getLanguage();
+					gr.addQuery('name', 'alm_asset');
+					gr.addQuery('element', 'substatus');
+					gr.addQuery('dependent_value', ${sysparm_status});
+					gr.addQuery('value', 'NOT IN', ['pending_transfer', 'pre_allocated', 'pending_install']);
+					gr.addQuery('language', current_language);
+					gr.addQuery('inactive', false);
+					gr.query();
+					while (gr.next()) {
+						choices.push({
+						'value' : gr.value.toString(),
+						'label' : gr.label.toString()
+						});
+					}
+					choices;
+				</g:evaluate>
+				<j:forEach items="${jvar_choices}" var="jvar_choice">
+					<option value="${jvar_choice.value}">${jvar_choice.label}</option>
+				</j:forEach>
+				</g:ui_choice_input_field>
+			</td>
+		</tr>
+
+		<tr id="dialogbuttons">
+			<td colspan="3" align="right" style="padding:10px">
+				<g:dialog_buttons_ok_cancel ok="return okHandler();" cancel="cancel();"/>
+			</td>
+		</tr>
+	</table>
+	</g:ui_form>
+</j:jelly>

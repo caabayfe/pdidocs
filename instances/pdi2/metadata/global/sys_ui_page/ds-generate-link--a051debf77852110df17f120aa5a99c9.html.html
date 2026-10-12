@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<style>
+		.field-block{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 0px;
+		}
+		.permalink-form span.icon {
+			width: 32px;
+			height: 32px;
+			display: flex;
+    		align-items: center;
+    		justify-content: center;
+		}
+		.permalink-form span.icon::before {
+    		font-size: 22px;
+		}
+		.permalink-form label {
+			display: flex;
+			align-items: center;
+			padding: 0px;
+			gap: 10px;
+			width: 189px;
+			height: 32px;
+		}
+		.field-block .form-control, .expiry-date {
+			width: 200px;
+		}
+		.expiry-date {
+			margin-left: auto;
+		}
+		.generated-link {
+			margin-top: 20px;
+			position: relative;
+		}
+		.generated-link .input-group{
+			width: calc(100% - 36px);
+		}
+		.permalink-input-group {
+		    display: flex;
+		}
+		.link-buttons {
+			position: absolute;
+			display: flex;
+			padding: 4px;
+			gap: 4px;
+			top: 0;
+			right: 0;
+			border-radius: 0 4px 4px 0;
+			background-color: RGB(var(--now-form-field--background-color--readonly,var(--now-form-field--background-color,var(--now-color_background--primary,var(--now-color--neutral-0,255,255,255)))));
+		}
+		.link-buttons a.btn[role="button"] {
+			width: 24px;
+			height: 24px;
+		}
+		.permalink-form .icon-trash {
+			margin-left: 4px;
+		}
+		.footer-buttons {
+			float: right;
+    		padding: 25px 0 10px 0;
+		}
+		.notify-permalink {
+			position: absolute;
+    		width: 95%;
+			top: -5px;
+		}
+		.notify-permalink .outputmsg_error{
+			top: -6px;
+		}
+		.generated-link .publicly-accessible {
+			margin-top: 10px;
+		}
+	</style>
+	<div id="output_messages" class="outputmsg_container notify-permalink hidden">
+		<div class="outputmsg_div" aria-live="polite" role="region" data-server-messages="false">
+			<div role="alert" class="outputmsg outputmsg_info notification notification-info hidden">
+				<span class="notification-icon icon-info">
+					<span class="sr-only">Info Message</span>
+				</span>
+				<span class="outputmsg_text"></span>
+			</div>
+			<div role="alert" class="outputmsg outputmsg_error notification notification-error hidden">
+				<span class="notification-icon icon-cross-circle">
+					<span class="sr-only">Error Message</span>
+				</span>
+				<span class="outputmsg_text"></span>
+			</div>
+		</div>
+	</div>
+	<div class="permalink-form">
+		<div class="link-type-block field-block form-group ">
+			<label for="link-type">
+				<span class="icon icon-user-group" aria-hidden="true"></span>
+				${gs.getMessage('Anyone with link can')}
+			</label>
+		
+			<select class="form-control" id="link-type" disabled="true">
+				<option value="download" selected="SELECTED">${gs.getMessage('Download')}</option>
+				<option value="view online" disabled="true">${gs.getMessage('View online')}</option>
+			</select>
+		</div>
+		<g2:evaluate jelly="true">
+			var userDateFormat = gs.getSession().getDateFormat();
+		</g2:evaluate>
+		<p class="date-format hidden">$[userDateFormat]</p>
+		<p class="date-value hidden">${gs.now()}</p>
+		<g2:evaluate jelly="true">
+			var documentPermalinks =new DocumentPermalinks();
+			var permalinkJson = documentPermalinks.getLinks(jelly.sysparm_document_id);
+			var permalinkObj = JSON.parse(permalinkJson);
+			if(!permalinkObj.link){
+				permalinkJson = documentPermalinks.create(jelly.sysparm_document_id, 'public', 'download', '', 'true');
+				permalinkObj = JSON.parse(permalinkJson);
+			}
+			if(permalinkObj.expiration == '')
+				permalinkObj.expiration = undefined;
+			permalinkObj;
+		</g2:evaluate>
+		<div class="expiry-type-block field-block form-group ">
+			<label for="expiry-type">
+				<span class="icon icon-date-time" aria-hidden="true"></span>
+				${gs.getMessage('Link Validity')}
+			</label>
+		     
+			<select class="form-control" id="expiry-type" onchange="onExpiryChange(this)">
+				<option value="permanent" selected="$[!permalinkObj.expiration]">${gs.getMessage('Permanent')}</option>
+				<option value="expire_link_on" selected="$[permalinkObj.expiration]">${gs.getMessage('Expire Link On')}</option>
+			</select>
+		</div>
+		<div class="expiry-date $[permalinkObj.expiration ? '' : 'hidden']">
+			<span class="input-group">
+				<input id="date" type="text" name="date" value="$[permalinkObj.expiration]" sn-atf-data-type="glide_date" class="form-control" aria-labelledby="date_label"/>
+				<span sn-atf-blacklist="true"/>
+				<span class="input-group-btn">
+				  	<!-- user / system date time format -->
+					<a tabindex="0" onclick="new GwtDateTimePicker('date', '$[gs.getDateFormat()]', false);" sn-atf-blacklist="true" class="btn btn-default icon-calendar" role="button" aria-label="${gs.getMessage('Choose date...')}" data-original-title="${gs.getMessage('Select date')}" title=""></a>
+				</span>
+			 </span>
+			<div class="fieldmsg-container hidden" id="ds_document.u_expiry_fieldmsg" aria-live="polite" >
+				<div class="fieldmsg notification notification-error">${gs.getMessage('Invalid Date')}</div>
+			</div>
+		</div>
+		<div class="generated-link"> 
+			<label for="permalink">
+				<span class="icon icon-link" aria-hidden="true"></span>
+				${gs.getMessage('Document Link')}
+			</label>
+			<div class="permalink-input-group">
+				<span class="input-group">
+					<input class="form-control" id="permalink" value="$[permalinkObj.link]" disabled="true"/>
+					<span class="input-group-btn">
+						<a tabindex="0" class="btn btn-default icon-copy" onclick="copyLink(this)" title="" aria-label="${gs.getMessage('Copy Link')}" role="button" data-original-title="Copy Link"></a>
+					</span>
+				</span>
+				<a tabindex="0" class="btn btn-default icon-trash" title="" aria-label="${gs.getMessage('Delete Link')}" data-original-title="Delete Link" role="button" onclick="deleteLink()"></a>
+			</div>
+			<div role="alert" class="outputmsg outputmsg_info notification notification-info donot-store-info-msg publicly-accessible">
+				<span class="notification-icon icon-info">
+					<span class="sr-only">Info Message</span>
+				</span>
+				<span class="outputmsg_text">${gs.getMessage('This link is publicly accessible. Avoid sharing private or sensitive content.')}</span>
+			</div>
+		</div>
+		<div class="footer-buttons">
+			<g:dialog_buttons_ok_cancel cancel_text="${gs.getMessage('Cancel')}" ok_text="${gs.getMessage('Done')}" ok_type="button" ok="onClickOk()"/>
+		</div>
+	</div>
+</j:jelly>

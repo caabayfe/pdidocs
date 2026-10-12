@@ -1,0 +1,1 @@
+answer = CIPlugin.TopicRecommender().isActive();

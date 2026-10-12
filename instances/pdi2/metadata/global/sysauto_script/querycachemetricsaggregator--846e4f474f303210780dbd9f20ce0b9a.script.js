@@ -1,0 +1,1 @@
+new SNC.QueryMetricsAggregator().process();

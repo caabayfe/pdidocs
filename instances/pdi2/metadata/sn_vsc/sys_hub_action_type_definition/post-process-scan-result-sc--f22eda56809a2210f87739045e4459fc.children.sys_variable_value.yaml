@@ -1,0 +1,94 @@
+- document: sys_hub_action_type_definition
+  document_key: f22eda56809a2210f87739045e4459fc
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-25 04:30:49
+  sys_id: 22aed696809a2210f87739045e4459f9
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-25 04:30:49
+  value: '{"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON","version":"1.0"}'
+  variable: 6eaed696809a2210f87739045e4459df
+- document: sys_hub_action_type_definition
+  document_key: f22eda56809a2210f87739045e4459fc
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-25 04:30:49
+  sys_id: 6eaed696809a2210f87739045e4459f8
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-25 04:30:49
+  value: '0'
+  variable: 6aaed696809a2210f87739045e4459e4
+- document: sys_hub_step_instance
+  document_key: 6eaed696809a2210f87739045e4459cc
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-25 04:30:48
+  sys_id: a2aed696809a2210f87739045e4459dc
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-25 04:30:48
+  value: |-
+    (function execute(inputs, outputs) {
+        var findingMap = {};
+        if (!inputs.findings || !inputs.scan_check_executions) {
+          return;
+        }
+      	var findings = inputs.findings;
+      	var checkExecutions = inputs.scan_check_executions;
+
+    	  while(findings.next()) {
+        	findingMap[findings.check] = true;
+        }
+        var checkSysIds = [];
+        var baselineMap = {};
+        var checkToExecution = {};
+
+        while (checkExecutions.next()) {
+            checkSysIds.push(checkExecutions.check.sys_id);
+            checkToExecution[checkExecutions.check] = checkExecutions.sys_id.toString();
+        }
+        if (checkSysIds.length > 0) {
+            var baselineGr = new GlideRecord('sn_vsc_hardening_baseline_configuration');
+            baselineGr.addQuery('check', 'IN', checkSysIds.join(','));
+            baselineGr.query();
+            while (baselineGr.next()) {
+                baselineMap[baselineGr.check] = {
+                    aconf: baselineGr.aconf.toString(),
+                    vconf: baselineGr.vconf.toString(),
+                    sys_id: baselineGr.sys_id.toString(),
+                    exec_sys_id: checkToExecution[baselineGr.check]
+                };
+            }
+        }
+        for (var check in baselineMap) {
+          var gr = new GlideRecord("sn_vsc_hardening_baseline_result");
+          gr.scan_check_execution = baselineMap[check].exec_sys_id;
+          gr.configuration_number = baselineMap[check].aconf;
+          gr.u_vconf_number = baselineMap[check].vconf;
+          gr.vconf_number = baselineMap[check].vconf;
+          gr.passed = !findingMap[check];
+          gr.insert();
+        }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 6eaed696809a2210f87739045e4459cc
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-25 04:30:48
+  sys_id: aaaed696809a2210f87739045e4459db
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-25 04:30:48
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4

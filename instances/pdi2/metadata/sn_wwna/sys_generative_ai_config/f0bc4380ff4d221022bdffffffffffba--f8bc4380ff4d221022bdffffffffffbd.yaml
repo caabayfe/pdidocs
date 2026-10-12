@@ -1,0 +1,135 @@
+_meta:
+  hash: daddde4fc6757ef3078256eb3c4f928cec0da410bda48b5492bc700a53baed45
+  hash_version: 1
+  scope: sn_wwna
+  sys_class_name: sys_generative_ai_config
+  sys_created_by: admin
+  sys_created_on: 2025-04-17 04:47:08
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: f8bc4380ff4d221022bdffffffffffbd
+  sys_mod_count: '8'
+  sys_package: 757c34719bf7f10c4a1f9fe81ba8bba3
+  sys_scope: 757c34719bf7f10c4a1f9fe81ba8bba3
+  sys_update_name: sys_generative_ai_config_f8bc4380ff4d221022bdffffffffffbd
+  sys_updated_by: admin
+  sys_updated_on: 2025-10-23 04:27:13
+active: 'true'
+additional_configurations: '{"json_format_supported":"true"}'
+ai_suggested: 'false'
+definition: f0bc4380ff4d221022bdffffffffffba
+definition_table: sys_one_extend_capability_definition
+documentation: ''
+max_tokens: '32768'
+min_word_count: '-1'
+model: gpt_small
+name: Elaborate
+parent: ''
+prompt: |-
+  You are an expert in text editing. There is a draft, either human or machine-generated, related to a specific conversation skill. The customer support professional has highlighted a particular section of the text that needs to be expanded and detailed further.
+
+  Your task is to lengthen/elaborate on the user-selected portion of the drafted/machine-generated text using ONLY the provided context. Blindly follow the RULES and CITATION RULES below.
+
+  RULES:
+  - Ensure the elaborated text can be seamlessly integrated back into the original draft by replacing the user-selected text.
+  - DO elaborate using ONLY the information from the provided context, ensuring the core meaning remains unchanged.
+  - DO NOT exceed more than twice the length of the original selected text.
+  - DO preserve the original format and tone of the drafted text. Possible formats include email, chat, comments, knowledge articles, etc.
+  - DO NOT add unnecessary or redundant white lines (e.g., `<br>`), only include them when contextually or structurally required.
+  - Determine whether the content is in HTML or plain text mode by checking if the USER_SELECTED_TEXT contains any HTML tags such as `<div>`, `<span>`, etc.
+
+  ---
+
+  CITATION RULES (applies to both HTML and Text modes):
+
+  General:
+
+  * Anchors are unique text tokens such as [1], [doc_2], [article_5], etc. — they must exactly match the `anchor` field in the citations list.
+  * You must not invent new anchors or metadata. Only use anchors that are explicitly present in <USER_SELECTED_TEXT> AND have a corresponding entry in the provided <CITATIONS> list. Any anchor-like text found in the <CONTEXT> but not meeting these two criteria must be ignored for citation purposes.
+  * If no anchors are present in <USER_SELECTED_TEXT>, do not add any in your response.
+  * Do not remove any anchor unless its associated content has been fully eliminated during rewriting.
+  * If you move or split sentences, ensure anchors are preserved and correctly positioned.
+  * All anchors appearing in your response must be included in the "citations" array output — no extra or unused citations should be added.
+  * If the <CITATIONS> list is empty or not provided, you must not include any citation anchors in your elaborated text, and the `citations` array in your final JSON output MUST be an empty array `[]`. Do not infer or create citations from any other part of the context if they are not explicitly listed in <CITATIONS> and present in <USER_SELECTED_TEXT>.
+
+  HTML Mode:
+
+  * If the selected text contains HTML tags, treat it as HTML mode.
+  * Anchors appear as inline elements like `<span class="citation">[1]</span>` or `<span data-citation-id="doc_2">[doc_2]</span>`.
+  * If multiple anchors apply after a sentence, wrap each one individually:
+    ✅ Correct: `<span class="citation">[1]</span><span class="citation">[2]</span>`
+    ❌ Incorrect: `<span class="citation">[1][2]</span>`
+  * Do not modify the class name or wrapping structure unless necessary for clarity.
+
+  Text Mode:
+
+  * If no HTML tags are found, treat the content as plain text mode.
+  * Anchors appear as plain text wrapped in zero-width space (`\u200B`) characters.
+  * If multiple anchors apply, wrap each one separately:
+    ✅ Correct: `\u200B[1]\u200B\u200B[2]\u200B`
+    ❌ Incorrect: `\u200B[1][2]\u200B`
+
+  ---
+
+  Below is the related skill you are providing editing assistance for:
+  SKILL_NAME: {{skill_name}}  
+  SKILL_DESCRIPTION: {{skill_description}}
+
+  The user has selected a portion of the drafted text for elaboration. The selected portion is highlighted and wrapped in triple hashes (###) within DRAFTED_TEXT.
+
+  <DRAFTED_TEXT>
+  {{drafted_text}}
+  </DRAFTED_TEXT>
+
+  <USER_SELECTED_TEXT>  
+  {{selected_text}}  
+  </USER_SELECTED_TEXT>
+
+  Here is additional context that may help with elaboration:
+  <CONTEXT>
+  {{additional_context}}
+  </CONTEXT>
+
+  These are the available citation anchors and their metadata:
+  <CITATIONS>  
+  The citations are provided as a **JSON string**. You must **parse this string into a list** before using.
+  {{citations}}  
+  </CITATIONS>
+
+  ---
+
+  FINAL TASK: 
+  Elaborate the content inside `<USER_SELECTED_TEXT>`, following all formatting and citation rules strictly.
+
+  When adding anchors:
+  - In HTML mode, use span-wrapped anchors like <span class="citation">[1]</span> or <span data-citation-id="citation">[doc_2]</span>
+  - In Text mode, wrap each anchor with zero-width spaces: \u200B[1]\u200B.
+  - Do not include a citation anchor unless it already exists in <USER_SELECTED_TEXT> and matches an entry in the <CITATIONS> list.
+  - Do not invent or introduce new anchors or citation metadata under any condition.
+  - If <CITATIONS> is empty or not provided, you must not include any anchors in your output.
+  - All anchors included in your elaborated text must be reflected in the "citations" array of your JSON output.
+
+  ❗️IMPORTANT: You are not allowed to invent or guess citation anchors. Use only what exists in the provided <CITATIONS> and <USER_SELECTED_TEXT>. Do not hallucinate metadata or fabricate references.
+
+  ---
+
+  OUTPUT FORMAT (Strict):
+
+  Return **only** a valid JSON object in the following format and do not give me any explanations:
+  {
+    "response": "<elaborated_text_with_properly_wrapped_anchors>",
+    "citations": [<ordered_subset_of_citations_matching_anchors>]
+  }
+prompt_template_role: user
+provider_company: ''
+request_tokens: '4000'
+show_in_prompt_library: 'true'
+state: draft
+structured_output_enabled: 'false'
+structured_output_schema: ''
+sys_name: f0bc4380ff4d221022bdffffffffffba
+sys_overrides: ''
+sys_policy: ''
+temperature: '0'
+thinking_tokens: ''
+version: '1'

@@ -1,0 +1,69 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate>
+		var usSysId = "${RP.getWindowProperties().get('update_set_sys_id')}";
+		var updateSet = new GlideRecord("sys_update_set");
+		if(updateSet.get(usSysId)){
+			var hasParent = GlideStringUtil.notNil(updateSet.getValue("parent"));
+			var children = new GlideRecord("sys_update_set");
+			children.addQuery("parent", usSysId);
+			children.setLimit(1);
+			children.query();
+			var hasChildren = children.getRowCount() > 0;
+
+			var showRollbackOption = true;
+			var rollbackAvailable = false;
+			if (!updateSet.batch_install_plan)
+				showRollbackOption = false
+			else {
+				var ctx = GlideUpdateSet.getRollbackContext(updateSet);
+				rollbackAvailable = ctx != null &amp;&amp; ctx.isRollbackable();
+			}	
+		}
+		var msgRemoveParent = gs.getMessage("Remove the parent reference and make this update set a batch base");
+		if(!hasChildren)
+			msgRemoveParent = gs.getMessage("Remove the parent reference and make this an independent update set");
+	</g2:evaluate>
+	<div class="row">
+		<div class="col-sm-12" role="alert">
+			<p>${gs.getMessage("The back out process can undo a large amount of work and cannot be undone.");}</p>
+			<p>${gs.getMessage("The back out process will:");}</p>
+			<ul style="padding-bottom: 0px; padding-left: 20px;">
+				<j2:if test="$[hasParent]">
+					<li>$[msgRemoveParent]</li>
+				</j2:if>
+				<li>${gs.getMessage("Validate the back out target for each update");}</li>
+				<li>${gs.getMessage("Check for potential problems");}</li>
+				<j2:if test="$[!hasChildren]">
+					<li>${gs.getMessage("If no problems are found, back out this update set, including all update records that belong to it and the update set record itself");}</li>
+				</j2:if>
+				<j2:if test="$[hasChildren]">
+					<li>${gs.getMessage("If no problems are found, back out this batch update set, including all update records that belong to it and all the update set records in the batch");}</li>
+				</j2:if>
+			</ul>
+			<j2:if test="$[showRollbackOption]">
+				<p>${gs.getMessage("The back out process will NOT rollback app installs that were part of this update set unless specified below")}</p>
+				<span class="input-group-checkbox">
+					<j2:if test="$[rollbackAvailable]">
+						<input id="cb" class="checkbox" type="checkbox" name="cb"/>
+					</j2:if>
+					<j2:if test="$[!rollbackAvailable]">
+						<input id="cb" class="checkbox" type="checkbox" disabled="disabled" name="cb"/>
+					</j2:if>
+					<label for="cb" class="checkbox-label">${gs.getMessage("Rollback app installs")}</label>
+				</span>
+				<j2:if test="$[!rollbackAvailable]">
+					<p>${gs.getMessage("Rollback not available due to rollback context being invalid or expired")}</p>
+				</j2:if>
+			</j2:if>
+		</div>
+	</div>
+	<div class="modal-footer" id="to_move_up">
+		<div class="row">
+			<div class="col-sm-12">
+				<g:dialog_buttons_ok_cancel ok="invokePromptCallBack('ok');" ok_type="button"
+								 ok_text="${gs.getMessage('Proceed with Back Out');}" ok_style_class="btn btn-destructive"
+								 cancel="invokePromptCallBack('cancel')" cancel_type="button"/>
+			</div>
+		</div>
+	</div>
+</j:jelly>

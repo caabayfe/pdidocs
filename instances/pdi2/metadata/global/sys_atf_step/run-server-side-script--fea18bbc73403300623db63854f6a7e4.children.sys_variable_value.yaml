@@ -1,0 +1,74 @@
+- document: sys_atf_step
+  document_key: fea18bbc73403300623db63854f6a7e4
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:49:16
+  sys_id: 14c18bbc73403300623db63854f6a7ec
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-03-05 12:49:16
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777
+- document: sys_atf_step
+  document_key: fea18bbc73403300623db63854f6a7e4
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:49:16
+  sys_id: d4c18bbc73403300623db63854f6a7ec
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-03-11 06:51:31
+  value: |-
+    // 1) Query active solutions
+    // 2) Get their corresponding model artifacts
+    // 3) For each model artifact check weather its model is stored in artifacts table
+    (function(outputs, steps, stepResult, assertEqual) {
+    	var status = true;
+    	var modelNames = "";
+    	var activeSolDef;
+    	var activeSol;
+    	activeSolDef = new GlideRecord("ml_solution_definition");
+    	activeSolDef.addQuery("active","true");
+    	activeSolDef.query();
+    	
+    	while (activeSolDef.next()) {
+    		activeSol = new GlideRecord("ml_solution");
+    		activeSol.addQuery("solution_definition",activeSolDef.getUniqueValue());
+    		activeSol.addQuery("active","true");
+    		activeSol.query();
+    		if (activeSol.next()) {
+    			var missingModelFlag = false;
+    			var modelArtifact = new GlideRecord("ml_model_artifact");
+    			modelArtifact.addQuery("solution",activeSol.getUniqueValue());
+    			modelArtifact.query();
+    			if (modelArtifact.getRowCount() == 0)
+    				missingModelFlag = true;
+    			while (modelArtifact.next()) {
+    				var attachment = new GlideRecord("sys_attachment");
+    				attachment.addQuery("table_sys_id",modelArtifact.getUniqueValue());
+    				attachment.query();
+    				if(attachment.getRowCount() == 0)
+    					missingModelFlag = true;
+    			}
+    			if (missingModelFlag) {
+    				status = false;
+    				if(modelNames === "")
+    					modelNames = activeSolDef.solution_label.toString();
+    				else
+    					modelNames += ", " + activeSolDef.solution_label.toString();
+    				gs.info("missing model(s) for " + activeSolDef.solution_label + " solution");
+    			}
+    		}
+    	}
+    	
+    	if(modelNames !== "")
+    		stepResult.setOutputMessage("ML Model Artifacts are missing in sys_attachment table for " + modelNames + " solution(s). Please re-train the model in the cloned instance OR raise a request with ServiceNow Technical support team to copy all ML model artifacts residing in sys_attachment table to the cloned instance");
+    	else
+    		stepResult.setOutputMessage("All active ML Models should work as expected");
+    	return status;
+    })(outputs, steps, stepResult, assertEqual);
+  variable: 989d9e235324220002c6435723dc3484

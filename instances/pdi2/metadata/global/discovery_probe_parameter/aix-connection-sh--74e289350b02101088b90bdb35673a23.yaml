@@ -1,0 +1,47 @@
+_meta:
+  hash: fa2f903fe3874c8e85b66f03be40d5a71823e8ec4e935476378c848c153525e1
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: moiz.alibhayani
+  sys_created_on: 2020-07-17 08:37:10
+  sys_id: 74e289350b02101088b90bdb35673a23
+  sys_mod_count: '1'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_74e289350b02101088b90bdb35673a23
+  sys_updated_by: now.discovery.content
+  sys_updated_on: 2023-07-17 12:01:15
+active: 'true'
+name: aix_connection.sh
+probe: 53d141350b02101088b90bdb35673a20
+sys_name: aix_connection.sh
+sys_policy: ''
+value: |-
+  #!/bin/sh
+  exists()
+  {
+  	command -v "$1" >/dev/null 2>&1
+  }
+
+  if exists lsof; then
+  	connectionInfo=`sudo lsof -iTCP -n -P -F pcnfT 2> /dev/null`
+  	echo "lsof output"
+  	echo "$connectionInfo"
+  	exit 0
+  fi
+  connectionInfo=`sudo netstat -Aan | grep tcp | tr -s ' ' | grep -v CLOSED | sort | 
+  while read pcb proto tqr tqs la fa state; do
+  	printf "$proto $tqr $tqs $la $fa $state ";
+  	rmsock $(echo $pcb | cut -d ' ' -f1) tcpcb | cut -d ' ' -f9,10
+  done | awk '{
+  	print $1 " " $2 " " $3 " " $4 " " $5 " " $6 " " $7 "/" $8;
+  }' | grep -v "before" | sed 's/\(.*\)::1/\1127.0.0.1/' 2> /dev/null`
+  if [ "$?" -eq "0" ]; then
+  	echo "netstat output"
+  	echo "$connectionInfo"
+  	exit 0
+  fi
+  echo "both lsof and netstat commands failed"
+  exit 1
+value_script: ''

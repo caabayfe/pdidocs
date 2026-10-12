@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<!-- Add a theme changer -->
+	<script language="javascript" src="scripts/theme_change_support.jsx?v=${gs.getProperty('glide.builddate')}"/>
+	<g2:evaluate>
+	  var tz_style = "";
+	  if (!gs.getUser().hasRoles())
+		  tz_style = "display:none";
+
+	  var cl = new GlideChoiceList();
+	  cl.addNone();
+	  var themes = new GlideRecord('sys_ui_theme');
+	  var qc1 = themes.addQuery('sys_id', gs.getSession().getProperty('glide.css.theme'));
+	  if (GlideMobileExtensions.getDeviceType() == 'doctype')
+		  qc1.addOrCondition('device', 'doctype');
+	  else
+		  qc1.addOrCondition('device', 'browser');
+	  themes.addActiveQuery();
+	  themes.orderBy('name');
+	  themes.query();
+	  while (themes.next())
+		 cl.add(themes.sys_id + '', themes.name + '');
+
+	  if (1 >= cl.getSize())
+		 tz_style = "display:none";
+	</g2:evaluate>
+
+	<legend>${gs.getMessage("Theme")}</legend><ul>
+    <li id="theme_changer" class="row form-control-row one-control">
+        <select id="theme_changer_select" class="form-control pull-left" name="theme_changer_select" width="120" onchange="theme_change.changeTheme();">
+			<g2:options choiceList="$[cl]" choiceValue="$[gs.getSession().getProperty('glide.css.theme')]" />
+		</select>
+		<a title="${gs.getMessage('Reset to default Theme')}" class="icon-clear-cache btn btn-icon" onclick="theme_change.setDefaultTheme();return false;">
+			<span class="sr-only">${gs.getMessage('Reset to default Theme')}</span>
+		</a>
+        <script language="javascript">
+			var theme_changer;
+			addLoadEvent(function() { theme_change = new ThemeChanger("theme_changer") } );
+		</script>
+    </li>
+		</ul>
+</j:jelly>

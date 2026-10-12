@@ -1,0 +1,543 @@
+[
+    {
+        "definition": {
+            "id": "d8473c849f141210afb85c1eca0a1c43",
+            "type": "TRANSFORM"
+        },
+        "elementId": "get_trustbuilder_status_1",
+        "elementLabel": "Get TrustBuilder Status ",
+        "eventMappings": [
+            {
+                "eventMappingId": "cmaagguiiqcraabbwhhddbiiddahhweaajjzgg",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "container": {
+                                    "propName": {
+                                        "type": "JSON_LITERAL",
+                                        "value": "trustBuilderEnabled"
+                                    },
+                                    "value": {
+                                        "binding": {
+                                            "address": [
+                                                "get_trustbuilder_status_1",
+                                                "output"
+                                            ]
+                                        },
+                                        "type": "DATA_OUTPUT_BINDING"
+                                    }
+                                },
+                                "type": "MAP_CONTAINER"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "cmaagguiiqcraabbwiiddbiiddriyggvfst",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {},
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "c450ae1d9f28921050df2e5af90a1c58",
+            "type": "TRANSFORM"
+        },
+        "elementId": "configure_prompt_injection_for_skills",
+        "elementLabel": "Configure Prompt injection for Skills ",
+        "eventMappings": [
+            {
+                "eventMappingId": "cmaaulxfggaaaaccbbeeddbiiddeekbieecwl",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_INITIATED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_INITIATED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#SET_LOADING_STATE",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "action": null,
+                                    "label": null,
+                                    "loading": true,
+                                    "nonBlocking": false
+                                }
+                            },
+                            "sysId": "0404f68486f1baab1dc7ef2a27a3de50"
+                        },
+                        "operation": null,
+                        "targetId": "cmaaulxfggaaaaccbbffddbiiddqggayonggn",
+                        "type": "EVENT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "cmaaulxzhuaaccbbmddbiiddaabbsjaaeedi",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#SET_LOADING_STATE",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "action": null,
+                                    "label": null,
+                                    "loading": false,
+                                    "nonBlocking": false
+                                }
+                            },
+                            "sysId": "0404f68486f1baab1dc7ef2a27a3de50"
+                        },
+                        "operation": null,
+                        "targetId": "cmaaulxzhuaaccbbnddbiiddrinfolyp",
+                        "type": "EVENT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "clientTransformScript": "javascript(/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    const eventPayload = event.payload || {}\n    const isUpdated = eventPayload?.data?.output;\n    if (isUpdated == true) {\n        return {\n            items: [{\n                id: 'success_alert',\n                status: 'info',\n                icon: 'circle-info-outline',\n                content: api?.state?.turnOffLabel,\n                action: {\n                    type: 'dismiss'\n                }\n            }]\n        };\n    } else {\n        return{\n        items: [{\n            id: 'failure_alert',\n            status: 'critical',\n            icon: 'circle-info-outline',\n            content: api?.state?.errorLabel,\n            action: {\n                type: 'dismiss'\n            }\n        }]\n    }\n    }\n})",
+                        "conditional": {
+                            "transform": {
+                                "operands": {
+                                    "container": [
+                                        {
+                                            "operation": {
+                                                "left": {
+                                                    "binding": {
+                                                        "address": [
+                                                            "isPromptInjectionEnabled"
+                                                        ]
+                                                    },
+                                                    "type": "STATE_BINDING"
+                                                },
+                                                "operator": "EQUAL",
+                                                "right": {
+                                                    "type": "JSON_LITERAL",
+                                                    "value": false
+                                                }
+                                            },
+                                            "type": "BINARY"
+                                        },
+                                        {
+                                            "type": "JSON_LITERAL",
+                                            "value": true
+                                        },
+                                        {
+                                            "type": "JSON_LITERAL",
+                                            "value": false
+                                        }
+                                    ],
+                                    "type": "LIST_CONTAINER"
+                                },
+                                "operator": "IF"
+                            },
+                            "type": "CLIENT_TRANSFORM"
+                        },
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    const eventPayload = event.payload || {}\n    const isUpdated = eventPayload?.data?.output;\n    if (isUpdated == true) {\n        return {\n            items: [{\n                id: 'success_alert',\n                status: 'info',\n                icon: 'circle-info-outline',\n                content: api?.state?.turnOffLabel,\n                action: {\n                    type: 'dismiss'\n                }\n            }]\n        };\n    } else {\n        return{\n        items: [{\n            id: 'failure_alert',\n            status: 'critical',\n            icon: 'circle-info-outline',\n            content: api?.state?.errorLabel,\n            action: {\n                type: 'dismiss'\n            }\n        }]\n    }\n    }\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "cmaauyiimeeddaaccaacddbiiddcnhheooaak",
+                        "type": "EVENT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "clientTransformScript": "javascript(/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    const eventPayload = event.payload || {}\n    const isUpdated = eventPayload?.data?.output;\n    if (isUpdated == false) {\n        return {\n            items: [{\n                id: 'failure_alert',\n                status: 'critical',\n                icon: 'circle-info-outline',\n                content: api?.state?.errorLabel,\n                action: {\n                    type: 'dismiss'\n                }\n            }]\n        };\n    }\n    else{\n        return {\n            items: [{\n                id: 'success_alert',\n                status: 'info',\n                icon: 'circle-info-outline',\n                content: api?.state?.turnOnLabel,\n                action: {\n                    type: 'dismiss'\n                }\n            }]\n        };\n    }\n\n})",
+                        "conditional": {
+                            "transform": {
+                                "operands": {
+                                    "container": [
+                                        {
+                                            "operation": {
+                                                "left": {
+                                                    "binding": {
+                                                        "address": [
+                                                            "isPromptInjectionEnabled"
+                                                        ]
+                                                    },
+                                                    "type": "STATE_BINDING"
+                                                },
+                                                "operator": "EQUAL",
+                                                "right": {
+                                                    "type": "JSON_LITERAL",
+                                                    "value": true
+                                                }
+                                            },
+                                            "type": "BINARY"
+                                        },
+                                        {
+                                            "type": "JSON_LITERAL",
+                                            "value": true
+                                        },
+                                        {
+                                            "type": "JSON_LITERAL",
+                                            "value": false
+                                        }
+                                    ],
+                                    "type": "LIST_CONTAINER"
+                                },
+                                "operator": "IF"
+                            },
+                            "type": "CLIENT_TRANSFORM"
+                        },
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    const eventPayload = event.payload || {}\n    const isUpdated = eventPayload?.data?.output;\n    if (isUpdated == false) {\n        return {\n            items: [{\n                id: 'failure_alert',\n                status: 'critical',\n                icon: 'circle-info-outline',\n                content: api?.state?.errorLabel,\n                action: {\n                    type: 'dismiss'\n                }\n            }]\n        };\n    }\n    else{\n        return {\n            items: [{\n                id: 'success_alert',\n                status: 'info',\n                icon: 'circle-info-outline',\n                content: api?.state?.turnOnLabel,\n                action: {\n                    type: 'dismiss'\n                }\n            }]\n        };\n    }\n\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "cmbbfhhwcjcaabbyqddbiidduiiraaccokd",
+                        "type": "EVENT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    const eventPayload = event.payload || {}\n    const isUpdated = eventPayload?.data?.output;\n    if (isUpdated == false) {\n        return {\n            propName: 'isPromptInjectionEnabled',\n            value: false\n        };\n    }\n\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "cmbbfiiddseehaaccaaoddbiiddnpajegjjg",
+                        "type": "EVENT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "cmbbfhhrwleaabbxaddbiiddeiiddfggwiii",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    return {\n        items: [{\n            id: 'failure_alert',\n            status: 'info',\n            icon: 'circle-info-outline',\n            content: \"Failed to update detection impact\",\n            action: {\n                type: 'dismiss'\n            }\n        }]\n    };\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "cmbbfhhrwleaabbxbddbiiddggeddxwfqm",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "detectionImpact": {
+                "type": "JSON_LITERAL",
+                "value": false
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "f2214b9d9f24d21050df2e5af90a1c56",
+            "type": "TRANSFORM"
+        },
+        "elementId": "is_prompt_injection_enabled",
+        "elementLabel": "Is Prompt Injection Enabled ",
+        "eventMappings": [
+            {
+                "eventMappingId": "cmaauqwcwkaabbwrddbiiddyddffueencl",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_INITIATED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_INITIATED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#SET_LOADING_STATE",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "action": null,
+                                    "label": null,
+                                    "loading": true,
+                                    "nonBlocking": false
+                                }
+                            },
+                            "sysId": "0404f68486f1baab1dc7ef2a27a3de50"
+                        },
+                        "operation": null,
+                        "targetId": "cmaauqwcwkaabbwsddbiiddmctzlffis",
+                        "type": "EVENT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "cmaauqwjbbbaabbxeeddbiiddgysweohhg",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#SET_LOADING_STATE",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "action": null,
+                                    "label": null,
+                                    "loading": false,
+                                    "nonBlocking": false
+                                }
+                            },
+                            "sysId": "0404f68486f1baab1dc7ef2a27a3de50"
+                        },
+                        "operation": null,
+                        "targetId": "cmaauqwjbbbaabbxffddbiiddvlilygls",
+                        "type": "EVENT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n* @param {params} params\n* @param {api} params.api\n* @param {any} params.event\n*/\nfunction evaluateEvent({api, event}) {\n\tconst value = api?.data?.is_prompt_injection_enabled?.output;\n\treturn {\n\t\tpropName: 'isPromptInjectionEnabled',\n\t\tvalue: value?.isPromptInjectionEnabled\n\t};\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "cmaausyccccfaaccaamddbiiddehhsxcbvv",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "detectionImpact": {
+                "type": "JSON_LITERAL",
+                "value": false
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "031b17199fecd21050df2e5af90a1c96",
+            "type": "TRANSFORM"
+        },
+        "elementId": "prompt_injection_detection_impact",
+        "elementLabel": "Prompt Injection Detection Impact ",
+        "eventMappings": [
+            {
+                "eventMappingId": "cmaauvvdehaaddrffddbiiddgtpqsbahh",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "7029dbd99facd21050df2e5af90a1c2a"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cmaauvvdehaaddrggddbiiddyaaxuccjnee",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {},
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "f4d1ab6e9fa01210bc1d5c1eca0a1c4e",
+            "type": "TRANSFORM"
+        },
+        "elementId": "fetch_encoded_log_query_for_prompt_injection_1",
+        "elementLabel": "Fetch encoded log query for Prompt Injection 1",
+        "eventMappings": [
+            {
+                "eventMappingId": "cmbbaafytrnaabbyeeddbiidduggwzcczcs",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "2ca36f229fe01210bc1d5c1eca0a1c85"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cmbbaafytrnaabbyffddbiiddzbbbggyqhb",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {},
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "c5189d5b9f720210afb85c1eca0a1c01",
+            "type": "TRANSFORM"
+        },
+        "elementId": "nowassistadminuser_1",
+        "elementLabel": "NowAssistAdminUser 1",
+        "eventMappings": [],
+        "inputValues": {},
+        "readEvaluationMode": "EAGER"
+    }
+]

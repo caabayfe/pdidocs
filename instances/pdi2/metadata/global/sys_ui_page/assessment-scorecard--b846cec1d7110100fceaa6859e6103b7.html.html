@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_metric_type_id" value="${sysparm_metric_type}" />
+	<g:evaluate jelly="true" var="jvar_have_permission">
+		var asmtUtils = new AssessmentUtils();
+		var havePermission = asmtUtils.canViewScoreCardPage(jelly.jvar_metric_type_id);
+		havePermission;
+	</g:evaluate>
+	<j:if test="${!jvar_have_permission}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage("You don't have permission to view this page.");
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+	<j:if test="${jvar_have_permission}">
+		<div data-form-title="${JS,SAFE:sysparm_title}" class="scorecard">
+		<j:set var="jvar_base" value="${sysparm_base}" />
+			<g:inline template="asmt_scorecard.xml" record="${sysparm_record_sysid}" table="${sysparm_assessable_table}" metric_type="${sysparm_metric_type}" group_id="${sysparm_group}" title="${sysparm_title}" redirect_matrix="${sysparm_redirect_matrix}"  base="${sysparm_base}" uipage="true" />
+		</div>
+	</j:if>
+</j:jelly>

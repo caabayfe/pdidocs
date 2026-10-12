@@ -1,0 +1,49 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate jelly="true">
+        var noLoadMessage = gs.getMessage("Unable to load the selected Suggested Edit");
+        var results = jelly.jvar_results;
+    </g:evaluate>
+    <j:if test="${results.length != 0}">
+        <div id="suggested_edit_no_content" style="display: none;">
+            <div class="no-content">
+                <span>${noLoadMessage}</span>
+            </div>
+        </div>
+        <j:forEach items="${results}" var="jvar_result" indexVar="jvar_index">
+            <tr>
+                <g:evaluate jelly="true">
+                    var id = jelly.jvar_result.sys_id;
+                    var link = jelly.jvar_result.link;
+                    var number = jelly.jvar_result.number;
+                    var commentTruncated = jelly.jvar_result.comments.truncated;
+                    var commentComplete = jelly.jvar_result.comments.complete;
+                    var created = jelly.jvar_result.sys_created_on;
+                    var user = jelly.jvar_result.user;
+                </g:evaluate>
+                <td class="my-knowledge-cell shrink">
+                    <a class="my-knowledge-link" href="${link}">${number}</a>
+                </td>
+                <td class="my-knowledge-cell expand">
+                    <script>
+                        function openSuggestForm${jvar_index}(elem) {
+                            var suggestionId = elem.readAttribute("data-id");
+                            var dialogClass = window.GlideModalForm ? GlideModalForm : GlideDialogForm
+                            var dialog = new dialogClass("${gs.getMessage('Suggested edit')}", "kb_feedback");
+                            dialog.setPreference("sys_id", suggestionId);
+                            dialog.addParm("sysparm_view", "suggested_edit");
+                            dialog.render();
+                        }
+                    </script>
+                    <span class="my-knowledge-link" onclick="openSuggestForm${jvar_index}(this)" data-id="${id}">
+                        ${commentTruncated}
+                        <span class="suggestion_detail" style="display: none;">
+                            <span style="white-space: pre-wrap">${HTML:commentComplete}</span>
+                        </span>
+                    </span>
+                </td>
+                <td class="my-knowledge-cell nowrap" title="${gs.getMessage('Created by')}">${user}</td>
+                <td class="my-knowledge-cell nowrap" title="${gs.getMessage('Created on')}">${created}</td>
+            </tr>
+        </j:forEach>
+    </j:if>
+</j:jelly>

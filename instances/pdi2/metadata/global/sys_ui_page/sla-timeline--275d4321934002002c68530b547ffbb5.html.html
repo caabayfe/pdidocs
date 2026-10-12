@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate var="jvar_sysId" expression="RP.getWindowProperties().get('sysId')" />
+    <g:evaluate var="jvar_user" expression="gs.getUserID()" />
+    <g:evaluate var="jvar_task_table" jelly="true">
+		var task_table;
+		var slaGR = new GlideRecord('contract_sla');
+		if(slaGR.get(jelly.sysparm_timeline_sla)){
+			task_table=slaGR.collection;
+			task_display = new GlideTableDescriptor.get(task_table).getLabel() + "";
+		}
+		else{
+			task_table="task";
+			task_display = new GlideTableDescriptor.get("task").getLabel() + "";
+		}
+		var slaName = slaGR.name;
+
+		task_table;
+    </g:evaluate>
+	<g:evaluate var="jvar_task_name" jelly="true">
+		var taskName="";
+		var taskGR = new GlideRecord('task');
+		if(taskGR.get(jelly.sysparm_timeline_task))
+			taskName = taskGR.number;
+		taskName;
+    </g:evaluate>
+	<g:evaluate var="jvar_engines">
+		var tables = new GlideDBObjectManager.get().getAllExtensions('task');
+		var engines = [];
+		for (var i = 0; i != tables.size(); i++) {
+			var td = new GlideTableDescriptor.get(tables.get(i));
+			engines[tables.get(i)]=td.getLabel() + '';
+		}
+		var json = new JSON();
+		json.encodeObject(engines);
+	</g:evaluate>
+	<script>
+		g_engines=${jvar_engines};
+	</script>
+	<form>
+
+		<input type="HIDDEN" name="sys_action" value="none" />
+	<nav class="navbar navbar-default" role="navigation">
+	   <div class="container-fluid">
+
+<!--		   <div class="navbar-header">
+			   <input type="HIDDEN" id="sysverb_back" />
+			   <button class="btn btn-default icon-chevron-left navbar-btn" onclick="return gsftSubmit(document.getElementById('sysverb_back'));"></button>
+			   <h1 style="display:inline-block;" class="navbar-title">${gs.getMessage("SLA Timeline")}</h1>
+		   </div> -->
+		   <div class="is-required">
+		   <div class="nav navitem navbar-right" style="width:200px;">
+				  <g:ui_reference id="task_list" name="task_list"
+								  order_by="number"
+								  show_popup="true"
+								  table="${jvar_task_table}"
+								   required="required"
+								  onchange="getUrl();"
+								  completer="AJAXReferenceCompleter"
+								  value="${sysparm_timeline_task}"
+								  displayvalue="${jvar_task_name}"/>
+
+		   </div>
+
+		   <label id="task" style="margin-right:10px;" class="navbar-text navbar-right control-label navitem"><span class="required-marker"></span>
+			${task_display}
+			   </label>
+		   </div>
+		<div class="is-required">
+		   <div class="nav navitem navbar-right" style="width:200px;">
+				 <g:ui_reference id="sla_list" name="sla_list"
+								  order_by="name"
+								  show_popup="true"
+								  table="contract_sla"
+								 required="required"
+								  completer="AJAXReferenceCompleter"
+								  value="${sysparm_timeline_sla}"
+								  displayvalue="${slaName}"
+								  onchange="setTaskTable();"/>
+		   </div>
+		   <label id="sla" style="margin-right:10px;" class="navbar-text navbar-right control-label navitem"><span class="required-marker"></span>${gs.getMessage("SLA Definition")}</label>
+		   </div>
+	   </div>
+	</nav>
+	</form>
+
+	<iframe id="show_schedule" style="width:100%;height:100%;" scrolling="no" />
+</j:jelly>

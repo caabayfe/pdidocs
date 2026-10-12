@@ -1,0 +1,1 @@
+GlideSessions.lockOutSessionsInAllNodes(current.user_name);

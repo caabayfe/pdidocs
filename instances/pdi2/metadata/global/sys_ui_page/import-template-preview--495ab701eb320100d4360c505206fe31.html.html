@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+  <g:evaluate jelly="true">
+         if (jelly.sysparm_info_message)
+                 gs.addInfoMessage(jelly.sysparm_info_message);
+  </g:evaluate>
+
+  <g:evaluate var="jvar_import_table_name" jelly="true">
+     var gr = new GlideRecord("sys_import_set");
+     gr.addQuery("sys_id", jelly.sysparm_import_set_id);
+     gr.query();
+
+     var import_table_name = "";
+     if (gr.next())
+       import_table_name = gr.table_name;
+     import_table_name;
+   </g:evaluate>
+
+   <g:evaluate var="jvar_number_of_error_rows" jelly="true">
+     var gr = new GlideRecordSecure(jelly.jvar_import_table_name);
+     gr.addQuery("sys_import_set", jelly.sysparm_import_set_id);
+     gr.addNotNullQuery("template_import_log");
+     gr.query();
+     gr.getRowCount();
+   </g:evaluate>
+
+   <g:evaluate var="jvar_are_errors" jelly="true">
+     jelly.jvar_number_of_error_rows > 0;
+   </g:evaluate>
+
+   <g:evaluate var="jvar_displaying_error_rows" jelly="true">
+     var displaying_error_rows = false;
+     if (typeof jelly.sysparm_list_view !== "undefined") {
+       if (jelly.sysparm_list_view == "errors")
+         displaying_error_rows = true;
+     } else {
+       if (jelly.jvar_are_errors == "true")
+         displaying_error_rows = true;
+     }
+
+     displaying_error_rows;
+   </g:evaluate>
+
+   <g:evaluate var="jvar_enable_show_all_button" jelly="true">
+     jelly.jvar_displaying_error_rows;
+   </g:evaluate>
+
+   <g:evaluate var="jvar_enable_show_errors_button" jelly="true">
+     (jelly.jvar_displaying_error_rows == "false") &amp;&amp; (jelly.jvar_are_errors == "true");
+   </g:evaluate>
+
+   <g:evaluate var="jvar_list_query" jelly="true">
+     var queryGen = new GlideCollectionQueryCalculator();
+     var list_query = queryGen.buildQueryClause(jelly.sysparm_import_set_id, "sys_import_set");
+     list_query += "^ORDERBYsys_import_row";
+     list_query;
+   </g:evaluate>
+
+   <g:evaluate var="jvar_list_errors_query" jelly="true">
+     var queryGen = new GlideCollectionQueryCalculator();
+     var list_query = queryGen.buildQueryClause(jelly.sysparm_import_set_id, "sys_import_set");
+     list_query += "^template_import_logISNOTEMPTY^ORDERBYsys_import_row";
+     list_query;
+   </g:evaluate>
+
+   <g:evaluate var="jvar_list_query_selected" jelly="true">
+     var list_query_selected = jelly.jvar_list_query;
+     if (jelly.jvar_displaying_error_rows == "true")
+       list_query_selected = jelly.jvar_list_errors_query;
+     if (typeof jelly.sysparm_list_query !== "undefined")
+       list_query_selected = jelly.sysparm_list_query;
+     list_query_selected;
+   </g:evaluate>
+
+   <g:evaluate var="jvar_query" jelly="true">
+     var currentTime = gs.nowNoTZ(); // datetime queries should be in UTC format
+     var currentUser = gs.getUserName();
+     if (jelly.sysparm_template_type == "update")
+       var query = "sys_updated_on>=" + currentTime + "^sys_updated_by=" + currentUser;
+     else
+       var query = "sys_created_on>=" + currentTime + "^sys_created_by=" + currentUser;
+     query;
+   </g:evaluate>
+
+  <!-- information text -->
+  <j:if test="${jvar_are_errors == 'true'}">
+      <g:evaluate jelly="true">
+        var message = gs.getMessage(' row(s) with errors in import set!');
+          gs.addErrorMessage(jelly.jvar_number_of_error_rows + message);
+      </g:evaluate>
+      <g:evaluate jelly="true">
+          gs.addInfoMessage(gs.getMessage("Click 'Show All Rows' to see all rows in your import set."));
+      </g:evaluate>
+      <g:evaluate jelly="true">
+          gs.addInfoMessage(gs.getMessage('Ignore Row Errors Description'));
+      </g:evaluate>
+  </j:if>
+
+  <j:if test="${jvar_are_errors == 'false'}">
+      <g:evaluate jelly="true">
+          gs.addInfoMessage(gs.getMessage('Import Template Preview Description'));
+      </g:evaluate>
+      <g:evaluate jelly="true">
+          gs.addInfoMessage(gs.getMessage('Complete Import Description'));
+      </g:evaluate>
+  </j:if>
+  <g:evaluate jelly="true">
+      gs.addInfoMessage(gs.getMessage("Click Back to start over or select a different file to import."));
+  </g:evaluate>
+
+<!-- preview list -->
+<div class="list_wrap_n_scroll">
+  <g:call function="import_template_preview_list.xml" table="${jvar_import_table_name}" list_query="${jvar_list_query_selected}"/>
+</div>
+
+<!-- emit g_user support -->
+<g2:client_script type="user" />
+
+<div class="navbar">
+  <div class="container-fluid">
+    <div class="navbar-left">
+      <button style="margin-inline-start:4px;" onclick="back()" id="back_button" type="submit" class="btn btn-default">${gs.getMessage('Back')}</button>
+
+      <j:if test="${jvar_enable_show_all_button}">
+        <button style="margin-inline-start:4px;" onclick="showAllRows()" id="back_button" type="submit" class="btn btn-default">${gs.getMessage('Show All Rows')}</button>
+      </j:if>
+
+      <j:if test="${jvar_enable_show_errors_button}">
+       <button style="margin-inline-start:4px;" onclick="showErrorRows()" id="back_button" type="submit" class="btn btn-default">${gs.getMessage('Show Error Rows')} (${jvar_number_of_error_rows})</button>
+      </j:if>
+
+      <form name="import_template_preview" id="import_template_preview" action="sys_import_template.do" method="post" style="margin-inline-start:4px;">
+        <input type="hidden" name="sysparm_referring_url" value="${sysparm_referring_url}" />
+        <input type="hidden" name="sysparm_target" value="${sysparm_target}" />
+        <input type="hidden" name="sysparm_process_stage" value="transform" />
+        <input type="hidden" name="sysparm_import_set_id" value="${sysparm_import_set_id}" />
+        <input type="hidden" name="sysparm_template_type" value="${sysparm_template_type}" />
+        <input type="hidden" name="sysparm_query" value="${jvar_query}" />
+
+        <j:choose>
+          <!-- Submit button with row errors -->
+          <j:when test="${jvar_are_errors == 'true'}">
+            <button onclick="loadingText(true)" id="import_button" type="submit" class="btn btn-primary">${gs.getMessage('Ignore Row Errors and Complete Import')}</button>
+            <span id="loading" style="display: none">
+              <image src="images/loading_anim2.gifx" /><strong id="import_button_text">${gs.getMessage('Completing import')} ...</strong>
+            </span>
+          </j:when>
+          <!-- Submit button with no row errors -->
+          <j:otherwise>
+            <button onclick="loadingText(true)" id="import_button" type="submit" class="btn btn-primary">${gs.getMessage('Complete Import')}</button>
+            <span id="loading" style="display: none">
+              <image src="images/loading_anim2.gifx" /><strong id="import_button_text">${gs.getMessage('Completing import')} ...</strong>
+            </span>
+          </j:otherwise>
+        </j:choose>
+      </form>
+    </div>
+  </div>
+</div>
+ </j:jelly>

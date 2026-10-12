@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j2:set var="sysparm_catalog" value="$[sysparm_catalog]"/>
+    <g2:evaluate jelly="true">
+        var cartContinueShopTargetKey = GlideappCatalogURLGenerator.getBrowsingContextTargetKey();
+        var cartContinueShopTargetValue = GlideappCatalogURLGenerator.getBrowsingContextTarget();
+    </g2:evaluate>
+	<div data-sn-macro-sys-id="${jvar_macro_sys_id}">
+    <j2:if test="$[!(typeof cartContinueShopTargetValue == 'undefined' || cartContinueShopTargetValue == null || cartContinueShopTargetValue == '')]">
+        <input type="HIDDEN" id="$[cartContinueShopTargetKey]" value="$[cartContinueShopTargetValue]" />
+    </j2:if>
+    <g2:evaluate jelly="true">
+        var cartContinueShopKey = GlideappCatalogURLGenerator.getBrowsingContextCategorySysID();
+        var cartContinueShopValue = GlideappCatalogURLGenerator.getContinueShoppingUrl(jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+    </g2:evaluate>
+    <j2:if test="$[!(typeof cartContinueShopValue == 'undefined' || cartContinueShopValue == null || cartContinueShopValue == '')]">
+        <input type="HIDDEN" id="$[cartContinueShopKey]" value="$[cartContinueShopValue]" />
+    </j2:if>
+	<j2:set var="jvar_id" value="$[sysparm_id]" />
+    <j2:set var="jvar_cart_edit" value="$[sysparm_cart_edit]" />
+    <g2:evaluate jelly="true">
+        var header_label = null;
+		var item_guid = "";
+		var cart_item_id = "";
+		var attachment_cat_id = "";
+		var isWishListCartEdit = false;
+		var context_table = "sc_cat_item";
+		var context_id = "";
+        if (jelly.jvar_cart_edit) {
+            if (jelly.sysparm_cart_name == "saved_items") {
+				item_guid = gs.generateGUID('');
+				isWishListCartEdit = true;
+				header_label = 'Wish List';
+				var layoutGr = new GlideRecord('sc_layout');
+				if (layoutGr.get('197d6b27c3031200d68d3b0ac3d3ae85'))
+					header_label = layoutGr.getValue('title');
+				header_label = gs.getMessage(header_label);
+			} else {
+				item_guid = jelly.jvar_cart_edit;
+				header_label = gs.getMessage('catalog_cart_item');
+			}
+			cart_item_id = jelly.jvar_cart_edit;
+			attachment_cat_id = jelly.jvar_cart_edit;
+			context_table = "sc_cart_item";
+			context_id = jelly.jvar_cart_edit;
+        } else {
+            item_guid = gs.generateGUID('');
+			attachment_cat_id = item_guid;
+			context_id = jelly.jvar_id;
+		}
+        sc_cat_item = new GlideRecord('sc_cat_item');
+        sc_cat_item.get(jelly.jvar_id);
+
+        if (!new CatalogItemTypeProcessor().canCreateNormalCartItem(sc_cat_item.sys_class_name)) {
+            sc_cat_item_producer = new GlideRecord('sc_cat_item_producer');
+            sc_cat_item_producer.get(jelly.jvar_id);
+            item_table = sc_cat_item_producer.table_name;
+        } else
+            item_table = "sc_cart_item";
+
+    </g2:evaluate>
+
+	<!-- Set this parameters so, that they will be in available in Table Variable Context -->
+	<j2:set var= "jvar_table_context_name" value="$[context_table]" />
+	<j2:set var= "jvar_table_context_sysid" value="$[context_id]" />
+
+	<g2:evaluate>
+		var paramList = new Array();
+		var blacklist = ['sys_id', 'v', 'sysparm_stack', 'sysparm_historyback', 'jvar_last_transaction_time', 'sysparm_this_url', 'sysparm_referring_url', 'jvar_ref_table', 'jvar_base_uri', 'sysparm_base_form', 'jvar_transaction_info'];
+		if(RP.getParameters() != null) {
+
+			var keys = j2js(RP.getParameters().keySet());
+			for(var i=0;i ${AMP}lt; keys.length;i++) {
+				if (blacklist.indexOf(keys[i]) ${AMP}lt; 0) {
+					paramList.push(keys[i]);
+				}
+
+			}
+		}
+	</g2:evaluate>
+	<j2:set var="jvar_wish_list_cart_edit" value="$[isWishListCartEdit]"/>
+	<j2:forEach var="jvar_param" items="$[paramList]">
+		<g2:evaluate jelly="true">
+			var paramValue = RP.getParameterValue(jelly.jvar_param);
+		</g2:evaluate>
+
+		<!-- Parameters in the URL will be added as hidden input elements here -->
+
+		<input type="HIDDEN" name="$[jvar_param]" id="$[jvar_param]" value="$[paramValue]" class="parameter"/>
+	</j2:forEach>
+    <g2:inline template="output_messages.xml" />
+    <j2:if test="$[sysparm_preview != 'true']">
+        <g:inline template="com.glideapp.servicecatalog_context_menu.xml" />
+    </j2:if>
+    <input type="HIDDEN" id="no_proceed_checkout" value="$[sc_cat_item.no_proceed_checkout]" />
+    <input type="HIDDEN" id="ni.attachment_target" value="$[item_table]" />
+    <input type="HIDDEN" id="sysparm_attachment_cart_id" name="sysparm_attachment_cart_id" value="$[attachment_cat_id]"/>
+    <input type="HIDDEN" id="sysparm_item_guid" name="sysparm_item_guid" value="$[item_guid]" />
+    <input type="HIDDEN" id="sysparm_cart_item_id" name="sysparm_cart_item_id" value="$[cart_item_id]"/>
+    <j2:if test="$[sysparm_link_parent == null || sysparm_link_parent == '']">
+        <g:evaluate var="cat_id" jelly="true">
+            var cat_id = '';
+            var cat_item = GlideappCatalogItem.get(jelly.sysparm_id);
+            if (cat_item)
+                cat_id = cat_item.getFirstAccessibleCategoryForSearch();
+            cat_id;
+        </g:evaluate>
+        <j2:set var="sysparm_parent" value="$[cat_id]" />
+    </j2:if>
+    <j2:if test="$[sysparm_link_parent != null and sysparm_link_parent != '']">
+        <j2:set var="sysparm_parent" value="$[sysparm_link_parent]" />
+    </j2:if>
+    <j2:if test="$[sysparm_headless != 'true']">
+        <g2:evaluate var="sysparm_use_search" jelly="true">
+            var sysparm_use_search = true;
+            if (!new CatalogItemTypeProcessor().canShowSearchField(sc_cat_item.sys_class_name))
+                sysparm_use_search = false;
+            if (sc_cat_item.no_search)
+                sysparm_use_search = false;
+            sysparm_use_search;
+        </g2:evaluate>
+		<g2:evaluate var="show_mini_wish_list_cart" jelly="true">
+			var show_mini_wish_list_cart = new SNC.ServiceCatalogLayoutService().useSCLayout();
+			if (show_mini_wish_list_cart)
+				show_mini_wish_list_cart = new global.GlobalServiceCatalogUtil().isWishListEnabled(jelly.sysparm_catalog);
+			var reqParentID = jelly.RP.getParameterValue("sysparm_parent_sys_id")
+			if (JSUtil.notNil(reqParentID))
+				show_mini_wish_list_cart = false;
+			show_mini_wish_list_cart
+		</g2:evaluate>
+		<g2:evaluate var="wish_list" jelly="true">
+			var wish_list = {};
+			wish_list.showMsg = false;
+			wish_list.title = '';
+			wish_list.msg = '';
+			if (show_mini_wish_list_cart $[AND] !jelly.jvar_cart_edit) {
+				var gr = new GlideRecord('sc_cart_item');
+				gr.addQuery('cat_item', jelly.sysparm_id);
+				gr.addQuery('cart.name', 'saved_items');
+				gr.addQuery('cart.user', gs.getUserID());
+				gr.query();
+				if(gr.next()) {
+					wish_list.showMsg = true;
+					var gr = new GlideRecord('sc_layout');
+					gr.addQuery('target', 'cart_view_wish_list');
+					gr.query();
+					if(gr.next()) {
+						wish_list.title = gs.getMessage(gr.title);
+						wish_list.msg = gs.getMessage('This item is already in your {0}. If you attempt to add this item to your {0} it will overwrite the existing item.', wish_list.title);
+					}
+				}
+			}
+			wish_list;
+		</g2:evaluate>
+		<!-- caption -->
+        <div role="navigation">
+            <table class="wide" cellspacing="0" cellpadding="0" width="100%" role="presentation">
+                <g2:sc_header useAddButton="false"
+                              search="$[sysparm_safe_search]"
+    						  catalog="$[sysparm_catalog]"
+    						  view="$[sysparm_view]"
+    						  catalogView="$[sysparm_catalog_view]"
+    						  processingHint="$[sysparm_processing_hint]"
+    						  category="$[sysparm_parent]"
+    						  noCheckout="$[sysparm_no_checkout]"
+    						  isSearch="false"
+    						  ignore="true"
+    						  isItem="true"
+    						  isBrowse="false"
+    						  useSearch="$[sysparm_use_search]"
+    						  st="false"
+    						  isPreview="$[sysparm_preview]"
+    						  contextId="$[sysparm_id]"
+    						  contextClass="$[sc_cat_item.sys_class_name]"
+    						  contextName="$[sc_cat_item.name.getDisplayValue()]"
+    						  contextTable="$[item_table]"
+    						  headerLabel="$[header_label]"
+    						  currentRow="$[sysparm_current_row]"
+    						  baseForm="$[sysparm_base_form]"
+    						  showMiniWishlistcart="$[show_mini_wish_list_cart]"/>
+            </table>
+        </div>
+    </j2:if>
+    <g:catalog_cart_attachment_list />
+	<j2:if test="$[wish_list.showMsg]">
+		<g2:sc_message classes="outputmsg_image" img="images/outputmsg_info_24.gifx"
+					  type="info"
+					  title="$[wish_list.msg]" />
+	</j2:if>
+    <!-- description, etc -->
+    <table id="item_table" cellSpacing="0" cellPadding="0" border="0" width="100%" aria-label="$[sc_cat_item.name]" role="region">
+        <tr>
+            <td valign="top" width="100%" style="padding-left: 15px; padding-right: 15px;">
+                <!-- item caption -->
+				<g2:evaluate var="jvar_has_image" jelly="true">
+					var image_src = cat_item.getPicture();
+					if (!gs.nil(jelly.sysparm_staged_image_id)) {
+						var stagedItemGR = new GlideRecord('sc_ic_item_staging');
+						if (stagedItemGR.isValid()) {
+							stagedItemGR.addQuery('sys_id', jelly.sysparm_staged_image_id);
+							stagedItemGR.query();
+							if (stagedItemGR.next())
+								image_src = stagedItemGR.desktop_image.getDisplayValue();
+						}
+					}
+					var has_image = true;
+					if (image_src == null || image_src == '') {
+						has_image = false;
+					} else {
+						image_src = image_src + '?t=large';
+					}
+					has_image;
+				</g2:evaluate>
+				<g2:evaluate var="jvar_has_description" jelly="true">
+					var has_description = false;
+					if (sc_cat_item.description != '')
+						has_description = true;
+					has_description;
+				</g2:evaluate>
+				<g2:evaluate var="jvar_has_short_description" jelly="true">
+					var has_short_description = false;
+					if (sc_cat_item.short_description != '')
+						has_short_description = true;
+					has_short_description;
+				</g2:evaluate>
+				<g2:evaluate var="jvar_has_additional_categories" jelly="true">
+					var has_additional_categories = false;
+					var additionalCategoriesArray = GlideappCatalogItem.get(sc_cat_item.sys_id + "").getAdditionalCategories(jelly.sysparm_parent, jelly.sysparm_cart_edit, jelly.sysparm_catalog);
+					if (additionalCategoriesArray.length != 0)
+						has_additional_categories = true;
+					has_additional_categories;
+				</g2:evaluate>
+				<g2:evaluate var="jvar_title" jelly="true">
+					title = has_short_description ? sc_cat_item.short_description.getDisplayValue() : sc_cat_item.name.getDisplayValue();
+					title;
+				</g2:evaluate>
+				
+				<j2:if test="$[jvar_has_image == true || jvar_has_description == true || jvar_has_short_description == true || jvar_has_additional_categories == true]">
+					<table width="100%" style="border-collapse: collapse;" role="presentation">
+						<tr>
+							<td width="100%" style="border-spacing: 0px; padding: 5px 0px 0px 0px;">
+								<table cellspacing="0" cellpadding="0" width="100%" role="presentation">
+									<j2:if test="$[jvar_title != '']">
+										<tr>
+											<td class="guide_tray">
+												<span role="heading" aria-level="2">
+													$[NS:title]
+												</span>
+											</td>
+										</tr>
+									</j2:if>
+									<j2:if test="$[jvar_has_image == true || jvar_has_description == true || jvar_has_additional_categories == true]">
+										<tr>
+											<td colspan="2" class="catalog_description" style="padding: 2px; padding-left: 10px; padding-top: 10px; list-style-position: inside;">
+												<j2:if test="$[jvar_has_image == true || jvar_has_description == true]">
+                                                                                                        <j2:if test="$[jvar_has_image]">
+                                                                                                            <div class="sc_cat_item_image_block">
+                                                                                                            <img src="$[image_src]" alt="$[NS:sc_cat_item.short_description.getDisplayValue()]"></img></div>
+                                                                                                            <div class="sc_cat_item_text_block">
+                                                                                                                <g2:no_escape>$[HTMLSAN:sc_cat_item.description]</g2:no_escape>
+                                                                                                            </div>
+                                                                                                        </j2:if>
+                                                                                                        <j2:if test="$[!jvar_has_image]">
+                                                                                                            <div class="col-xs-12">
+                                                                                                                <g2:no_escape>$[HTMLSAN:sc_cat_item.description]</g2:no_escape>
+                                                                                                            </div>
+                                                                                                        </j2:if>
+												</j2:if>
+											</td>
+										</tr>
+										<j2:if test="$[sysparm_preview != 'true' &amp;&amp; jvar_has_additional_categories == true]">
+										    <tr>
+										        <td style="padding-left: 10px;">
+										            <g:inline template="catalog_item_additional_cats.xml"/>
+										        </td>
+										    </tr>
+										</j2:if>
+							        </j2:if>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+				</j2:if>
+                <g2:evaluate var="jvar_exists">
+                    var templateName ='com.glideapp.servicecatalog_' +
+                    sc_cat_item.sys_class_name + '.xml';
+                    gs.templateOrMacroExists(templateName);
+                </g2:evaluate>
+                <j2:choose>
+                    <j2:when test="$[sc_cat_item.type == 'package']">
+                        <g:macro_invoke macro="catalog_package_display" silent_warnings="true" />
+                    </j2:when>
+                    <j2:when test="$[jvar_exists]">
+                        <g2:inline template="$[templateName]" />
+                    </j2:when>
+                    <j2:otherwise>
+                        <g:inline template="com.glideapp.servicecatalog_item_or_bundle.xml" />
+                    </j2:otherwise>
+                </j2:choose>
+            </td>
+            <!-- cart -->
+            <td valign="top" id="order_and_cart_v2">
+                <j2:if test="$[sysparm_catalog_mode == 'form_facade']">
+                    <g2:inline template="sc_cart_facade.xml" />
+                </j2:if>
+                <j2:if test="$[sysparm_catalog_mode != 'form_facade']">
+                    <j2:choose>
+						            <j2:when test="$[sc_cat_item.instanceOf('sc_cat_item_producer') || sc_cat_item.sys_class_name == 'sc_cat_item_producer_service' || sc_cat_item.sys_class_name == 'sc_cat_item_content' || sc_cat_item.sys_class_name == 'sc_cat_item_service' || !(new CatalogItemTypeProcessor().canCreateNormalCartItem(sc_cat_item.sys_class_name))]">
+                            <!-- no cart for producers ... their submit is down below no cart at all for content pages -->
+                        </j2:when>
+                        <j2:otherwise>
+							<g2:evaluate var="jvar_use_cart_layouts" jelly="true">
+								var jvar_use_cart_layouts = new SNC.ServiceCatalogLayoutService().useSCLayout();
+								if (jvar_use_cart_layouts == true)
+									jvar_use_cart_layouts = sc_cat_item.use_sc_layout + '';
+								else
+									jvar_use_cart_layouts = 'false';
+								jvar_use_cart_layouts;
+							</g2:evaluate>
+                            <j2:if test="$[jvar_use_cart_layouts == 'false']">
+                                <j2:if test="$[!sc_cat_item.custom_cart.nil()]">
+                                    <g2:macro_invoke macro="$[NS:sc_cat_item.custom_cart.name]" />
+                                </j2:if>
+                                <j2:if test="$[sc_cat_item.custom_cart.nil()]">
+                                    <g2:catalog_cart_default />
+                                </j2:if>
+                            </j2:if>
+                            <j2:if test="$[jvar_use_cart_layouts == 'true']">
+                                <g2:catalog_cart_v2 />
+                            </j2:if>
+                        </j2:otherwise>
+                    </j2:choose>
+                </j2:if>
+            </td>
+        </tr>
+    </table>
+    <j2:if test="$[SNC.CatalogCMS.isCMSSite() == true]">
+        <script>
+            var div = $(cel("div"));
+            var table = $("item_table");
+            table.replace(div);
+            div.insert({ top: table });
+            div.style.overflowX = "auto";
+        </script>
+    </j2:if>
+    <j2:if test="$[sc_cat_item.instanceOf('sc_cat_item_producer') || sc_cat_item.sys_class_name == 'sc_cat_item_producer_service']">
+        <g2:inline template="producer_buttons.xml" />
+    </j2:if>
+    <g2:client_script type="catalog_item" catalogItem="$[sysparm_id]" />
+    <j2:set var="jvar_catalog_item" value="$[sysparm_id]" />
+    <g:inline template="catalog_ui_policy.xml" />
+	</div>
+	<j:if test="${gs.getProperty('glide.ui.focus_first_element') == 'true'}">
+		<script type="text/javascript">
+			addAfterPageLoadedEvent(function(){
+				if (!g_formDirtyFocus) {
+					var itemTable = document.getElementById("item_table");
+					if (itemTable)
+						focusFirstElement(itemTable);
+				}
+			});
+		</script>
+	</j:if>
+</j:jelly>

@@ -1,0 +1,1033 @@
+_meta:
+  hash: 3cfff510427cfc15e0c3c8373870efdb5066cefc114dc03aba08fb3345ae205c
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2007-02-01 22:46:10
+  sys_id: 7f7c82630a0a0a6f01480478cfa2ee14
+  sys_mod_count: '2'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_7f7c82630a0a0a6f01480478cfa2ee14
+  sys_updated_by: glide.maint
+  sys_updated_on: 2007-02-02 22:24:46
+active: 'false'
+name: script.pl
+probe: 7f7beaaf0a0a0a6f0041b2bb48873eb4
+sys_name: script.pl
+sys_policy: ''
+value: |-
+  print '<?xml version="1.0" encoding="utf-8"?>';
+  print "\n<computer>\n";
+
+  print "<outputversion>1.3</outputversion>\n";
+
+
+  # hostname, ip, etc...
+
+  my($hostname);
+  my($name);
+  my($aliases);
+  my($addrtype);
+  my($length);
+  my(@addrs);
+  my(@v);
+
+  $hostname = `hostname`;
+  chop $hostname;
+
+  ($name,$aliases,$addrtype,$length,@addrs) = gethostbyname($hostname);
+
+  @v = split(/\./,$name);
+  print "<hostname>$v[0]</hostname>\n";
+  print "<fqdn>$name</fqdn>\n";
+
+  foreach (@addrs) {
+      my($a);
+      my($b);
+      my($c);
+      my($d);
+
+      ($a,$b,$c,$d) = unpack('C4',$_);
+
+      print "<ipaddress>" . sprintf("%s.%s.%s.%s",$a,$b,$c,$d) . "</ipaddress>\n";
+  }
+
+
+  # OS version and patch level, etc ...
+
+  my($computer_model);
+  my($unique_system_id);
+  my($raw_uname);
+  my($major_os);
+  my($major_os_version);
+  my($os_patch_level);
+
+  @raw_uname = split(/ /,`uname -a`);
+
+  $major_os = $raw_uname[0];
+
+  if ($major_os eq "NetBSD" ||
+      $major_os eq "Linux" ||
+      $major_os eq "HP-UX") {
+      $major_os_version = $raw_uname[2];
+  }
+
+  if ( -e "/usr/bin/hostid" ) {
+      $unique_system_id = `/usr/bin/hostid`;
+      chop $unique_system_id;
+  }
+
+  if ($major_os eq "AIX") {
+      my($e);
+      my(@l);
+      my($h);
+      my($n);
+
+      undef $unique_system_id;
+
+      $major_os_version = `oslevel`;
+      chop $major_os_version;
+      
+      $os_patch_level = `oslevel -r`;
+      chop $os_patch_level;
+
+      $computer_model = `lsattr -El sys0 -a modelname -F value`;
+      chop $computer_model;
+
+      $e = `lscfg -vpl sysplanar0`;
+      @l = split("\n",$e);
+
+      $n = 0;
+      while ($n <= $#l) {
+  	if ($l[$n] =~ /System:/ ||
+  	    $l[$n] =~ /System VPD:/) {
+  	    $h = $n;
+
+  	    last;
+  	}
+
+  	$n++;
+      }
+
+      if (defined $h) {
+  	while ($h <= $#l) {
+  	    if ($l[$h] =~ /Machine\/Cabinet.*\.\.\.(.*)$/) {
+  		$unique_system_id = $1;
+  		last;
+  	    }
+
+  	    $h++;
+  	}
+
+  	if (! defined $unique_system_id) {
+  	    if ($raw_uname[3] == 4 &&
+  		$raw_uname[2] == 3) {
+  		$unique_system_id = `/usr/sbin/hostid`;
+  	    } else {
+  		$unique_system_id = `uname -f`;
+  	    }
+  	    chop $unique_system_id;
+  	}
+      } else {
+  	if ($raw_uname[3] == 4 &&
+  	    $raw_uname[2] == 3) {
+  	    $unique_system_id = `/usr/sbin/hostid`;
+  	} else {
+  	    $unique_system_id = `uname -f`;
+  	}
+  	chop $unique_system_id;
+      }
+  }
+
+  if ($major_os eq "HP-UX") {
+      $unique_system_id = `uname -i`;
+      chop $unique_system_id;
+
+      $computer_model = `/usr/bin/getconf MACHINE_MODEL`;
+      chop $computer_model;
+  }
+
+  if (defined $unique_system_id) {
+      print "<serialnumber>$unique_system_id</serialnumber>\n";
+  }
+
+  if (defined $computer_model) {
+      print "<computermodel>$computer_model</computermodel>\n";
+  }
+
+  print "<os>\n";
+  print "<osname>$major_os</osname>\n";
+  if (defined $major_os_version) {
+      print "<osversion>$major_os_version</osversion>\n";
+  }
+  if (defined $os_patch_level) {
+      print "<ospatchlevel>$os_patch_level</ospatchlevel>\n";
+  }
+  print "</os>\n";
+
+
+  # LAN interface information...
+
+  my($iwhere);
+  my(@netinterfaces);
+
+  if ($major_os eq "NetBSD" ||
+      $major_os eq "AIX") {
+      my($e);
+      my(@l);
+      my($n);
+      my(%i);
+      my(@if_info);
+
+      if ($major_os eq "NetBSD") {
+  	$e = `/sbin/ifconfig -au`;
+      }
+
+      if ($major_os eq "AIX") {
+  	$e = `/etc/ifconfig -au`;
+      }
+
+      @l = split("\n",$e);
+      $n = 0;
+
+      while ($n <= $#l) {
+  	if ($l[$n] =~ /flags/) {
+  	    my(@fline);
+  	    my($iname);
+
+  	    if (defined $i{'interfacename'}) {
+  		my(%ii) = %i;
+
+  		push(@netinterfaces,\%ii);
+  	    }
+
+  	    @fline = split(/ /,$l[$n]);
+  	    $iname = $fline[0];
+  	    $iname =~ s/:$//g;
+
+  	    if ($iname !~ /^lo/) {
+  		$i{'interfacename'} = $iname;
+  	    } else {
+  		undef $i{'interfacename'};
+  	    }
+  	    undef $i{'interfacestuff'};
+  	    @if_info = ();
+  	}
+
+  	if ($l[$n] =~ /address: / &&
+  	    defined $i{'interfacename'}) {
+  	    my(@mline);
+  	    my($maddress);
+
+  	    @mline = split(/ /,$l[$n]);
+  	    $maddress = lc($mline[$#mline]);
+  	    $i{'interfacemacaddress'} = $maddress;
+  	}
+
+  	if ($l[$n] =~ /inet / &&
+  	    defined $i{'interfacename'}) {
+  	    my(@iline);
+  	    my($iaddress);
+  	    my($inm);
+  	    my($ibcast);
+  	    my($dd);
+  	    my(%if_info);
+
+  	    @iline = split(/ /,$l[$n]);
+  	    $dd = 0;
+  	    while ($dd <= $#iline) {
+  		if ($iline[$dd] =~ /inet$/) {
+  		    $if_info{'interfaceipaddress'} = $iline[$dd + 1];
+  		}
+  		if ($iline[$dd] eq "netmask") {
+  		    $if_info{'interfacenetmask'} = $iline[$dd + 1];
+  		}
+  		if ($iline[$dd] eq "broadcast") {
+  		    $if_info{'interfacebroadcast'} = $iline[$dd + 1];
+  		}
+
+  		$dd++;
+  	    }
+
+  	    push(@{$i{'interfacestuff'}},\%if_info);
+  	}
+
+  	$n++;
+      }
+
+      if (defined $i{'interfacename'}) {
+  	my(%ii) = %i;
+
+  	push(@netinterfaces,\%ii);
+      }
+  }
+
+  if ($major_os eq "AIX") {
+      my($e);
+      my(@l);
+      my($this_if);
+      my($this_network);
+      my($this_mac);
+      my(@m);
+      my(%macs);
+      my($m);
+      my($junk);
+      my(@junk);
+
+      $e = `netstat -in`;
+
+      @l = split("\n",$e);
+
+      foreach (@l) {
+  	my(@ll);
+
+  	foreach $m (split(/ /)) {
+  	    if ($m ne "") {
+  		push(@ll,$m);
+  	    }
+  	}
+
+  	next if ($ll[0] eq "Name");
+  	next if ($ll[0] =~ /^lo/);
+  	next if ($ll[2] !~ /^link/);
+
+  	@m = split(/\./,$ll[3]);
+
+  	$macs{$ll[0]} = sprintf("%02x:%02x:%02x:%02x:%02x:%02x",$m[0],$m[1],$m[2],$m[3],$m[4],$m[5],$m[6]);
+      }
+
+      foreach (@netinterfaces) {
+  	if (defined $macs{$_->{'interfacename'}} &&
+  	    ! defined $_->{'interfacemacaddress'}) {
+  	    $_->{'interfacemacaddress'} = $macs{$_->{'interfacename'}};
+  	}
+      }
+  }
+
+  if ($major_os eq "HP-UX") {
+      my($e);
+      my(@l);
+      my($n);
+      my($ni);
+      my(%i);
+      my($hmacaddr);
+      my($iname);
+      my($snap);
+
+      $e = `/etc/lanscan -ai`;
+
+      @l = split("\n",$e);
+
+      foreach (@l) {
+  	my(%ii);
+
+  	chop;
+
+  	($hmacaddr,$iname,$snap) = split(/ /);
+
+  	$ii{'interfacename'} = $iname;
+
+  	if ($hmacaddr =~ /^0x([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])/) {
+  	    $ii{'interfacemacaddress'} = lc("$1:$2:$3:$4:$5:$6");
+  	}
+
+  	push(@netinterfaces,\%ii);
+      }
+
+      foreach $ni (@netinterfaces) {
+  	$iname = $ni->{'interfacename'};
+
+  	$e = `/etc/ifconfig $iname 2>&1`;
+
+  	@l = split("\n",$e);
+  	$n = 0;
+
+  	while ($n <= $#l) {
+  	    if ($l[$n] =~ /inet /) {
+  		my(@iline);
+  		my($iaddress);
+  		my($inm);
+  		my($ibcast);
+  		my($dd);
+
+  		@iline = split(/ /,$l[$n]);
+  		$dd = 0;
+  		while ($dd <= $#iline) {
+  		    if ($iline[$dd] =~ /inet$/) {
+  			if ($iline[$dd + 1] ne "0.0.0.0") {
+  			    $ni->{'interfaceipaddress'} = $iline[$dd + 1];
+  			}
+  		    }
+  		    if ($iline[$dd] eq "netmask") {
+  			if ($iline[$dd + 1] ne "0") {
+  			    $ni->{'interfacenetmask'} = '0x' . $iline[$dd + 1];
+  			}
+  		    }
+  		    if ($iline[$dd] eq "broadcast") {
+  			$ni->{'interfacebroadcast'} = $iline[$dd + 1];
+  		    }
+
+  		    $dd++;
+  		}
+  	    }
+
+  	    $n++;
+  	}
+      }
+  }
+
+  if ($major_os eq "Linux") {
+      my($e);
+      my(@l);
+      my($n);
+      my(%i);
+
+      $e = `/sbin/ifconfig`;
+
+      @l = split("\n",$e);
+      $n = 0;
+
+      while ($n <= $#l) {
+  	if ($l[$n] =~ /Link encap:/) {
+  	    my(@fline);
+  	    my($iname);
+  	    my($hc);
+
+  	    if (defined $i{'interfacename'}) {
+  		my(%ii) = %i;
+
+  		push(@netinterfaces,\%ii);
+  	    }
+
+  	    @fline = split(/ /,$l[$n]);
+  	    $iname = $fline[0];
+
+  	    if ($iname !~ /^lo/) {
+  		$i{'interfacename'} = $iname;
+  	    } else {
+  		undef $i{'interfacename'};
+  	    }
+  	    undef $i{'interfaceipaddress'};
+  	    undef $i{'interfacenetmask'};
+  	    undef $i{'interfacebroadcast'};
+  	    undef $i{'interfacemacaddress'};
+
+  	    $hc = 0;
+  	    while ($hc <= $#fline) {
+  		if ($fline[$hc] eq "HWaddr") {
+  		    if ($fline[$hc + 1] ne "") {
+  			$i{'interfacemacaddress'} = lc($fline[$hc + 1]);
+  		    }
+  		    last;
+  		}
+
+  		$hc++;
+  	    }
+  	}
+
+  	if ($l[$n] =~ /inet addr:/ &&
+  	    defined $i{'interfacename'}) {
+  	    my(@iline);
+  	    my($iaddress);
+  	    my($inm);
+  	    my($ibcast);
+  	    my($dd);
+
+  	    @iline = split(/ /,$l[$n]);
+  	    $dd = 0;
+  	    while ($dd <= $#iline) {
+  		if ($iline[$dd] =~ /^addr:/) {
+  		    my($t) = $iline[$dd];
+
+  		    $t =~ s/addr://g;
+  		    $i{'interfaceipaddress'} = $t;
+  		}
+  		if ($iline[$dd] =~ /^Mask:/) {
+  		    my($t) = $iline[$dd];
+
+  		    $t =~ s/Mask://g;
+  		    $i{'interfacenetmask'} = $t;
+  		}
+  		if ($iline[$dd] =~ /^Bcast:/) {
+  		    my($t) = $iline[$dd];
+
+  		    $t =~ s/Bcast://g;
+  		    $i{'interfacebroadcast'} = $t;
+  		}
+
+  		$dd++;
+  	    }
+  	}
+
+  	$n++;
+      }
+
+      if (defined $i{'interfacename'}) {
+  	my(%ii) = %i;
+
+  	push(@netinterfaces,\%ii);
+      }
+
+      foreach (@netinterfaces) {
+  	if (! defined $_->{'interfacemacaddress'}) {
+  	    my($iname) = $_->{'interfacename'} . ".info";
+  	    if ( -e "/proc/net/nicinfo/$iname" ) {
+  		my($line);
+  		my(@f);
+
+  		open(I,"/proc/net/nicinfo/$iname");
+  		while ($line = <I>) {
+  		    if ($line =~ /^Current_HWaddr\W*([0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f])$/) {
+  			$_->{'interfacemacaddress'} = $1;
+  			last;
+  		    }
+  		}
+  		close I;
+  	    }
+  	}
+      }
+  }
+
+  if ($#netinterfaces > -1) {
+      my(@ni);
+      my($d);
+
+      foreach (@netinterfaces) {
+  	if (defined $_->{'interfacestuff'}) {
+  	    foreach $d (@{$_->{'interfacestuff'}}) {
+  		my(%ah);
+
+  		%ah = %{$_};
+
+  		if (defined $d->{'interfaceipaddress'}) {
+  		    $ah{'interfaceipaddress'} = $d->{'interfaceipaddress'};
+  		}
+  		if (defined $d->{'interfacenetmask'}) {
+  		    $ah{'interfacenetmask'} = $d->{'interfacenetmask'};
+  		}
+  		if (defined $d->{'interfacebroadcast'}) {
+  		    $ah{'interfacebroadcast'} = $d->{'interfacebroadcast'};
+  		}
+
+  		push(@ni,\%ah);
+  	    }
+  	} else {
+  	    push(@ni,$_);
+  	}
+      }
+
+      foreach (@ni) {
+  	print "<netinterface>\n";
+  	print "<interfacename>$_->{'interfacename'}</interfacename>\n";
+  	if (defined $_->{'interfaceipaddress'}) {
+  	    print "<interfaceipaddress>$_->{'interfaceipaddress'}</interfaceipaddress>\n";
+  	}
+  	if (defined $_->{'interfacenetmask'}) {
+  	    print "<interfacenetmask>$_->{'interfacenetmask'}</interfacenetmask>\n";
+  	}
+  	if (defined $_->{'interfacebroadcast'}) {
+  	    print "<interfacebroadcast>$_->{'interfacebroadcast'}</interfacebroadcast>\n";
+  	}
+  	if (defined $_->{'interfacemacaddress'}) {
+  	    print "<interfacemacaddress>$_->{'interfacemacaddress'}</interfacemacaddress>\n";
+  	}
+  	print "</netinterface>\n";
+      }
+  }
+
+
+  # cpus, memory, etc...
+
+  my($total_memory);
+  my(@san_devices);
+  my(%san_stuff);
+  my(@cpus);
+  my(@cpusfrequency);
+
+  if ( -e "/var/run/dmesg.boot" ) {
+      open(DMESG,"/var/run/dmesg.boot");
+      while (<DMESG>) {
+  	chop;
+
+  	if (/^total memory = /) {
+  	    my(@v);
+
+  	    @v = split(/ /);
+  	    $total_memory = $v[$#v - 1];
+  	}
+
+  	if (/^cpu[0-9]: /) {
+  	    if (/mhz/i) {
+  		my($c) = $_;
+  		my($v);
+  		my(@v);
+
+  		$c =~ s/^cpu[0-9]: //;
+  		push(@cpus,$c);
+
+  		foreach $v (split(/,/,$c)) {
+  		    if ($v =~ /mhz/i) {
+  			$v =~ s/^[ ]*//g;
+  			@v = split(/ /,$v);
+  			push(@cpusfrequency,$v[0]);
+  		    }
+  		}
+  	    }
+  	}
+      }
+      close DMESG;
+  }
+
+  if ( -e "/proc/cpuinfo" ) {
+      open(CPUINFO,"/proc/cpuinfo");
+      while (<CPUINFO>) {
+  	chop;
+
+  	if (/^model name.*: (.*)$/) {
+  	    push(@cpus,$1);
+  	}
+
+  	if (/^cpu MHz.*: (.*)$/) {
+  	    push(@cpusfrequency,$1);
+  	}
+      }
+      close CPUINFO;
+  }
+
+  if ( -e "/proc/meminfo" ) {
+      open(MEMINFO,"/proc/meminfo");
+      while (<MEMINFO>) {
+  	chop;
+
+  	if (/^Mem\:[\W]*([0-9]*)[\W]/) {
+  	    my($t) = $1;
+
+  	    $total_memory = $t / 1024 / 1024;
+
+  	    last;
+  	}
+      }
+      close MEMINFO;
+  }
+
+  if ($major_os eq "AIX") {
+      my($e);
+      my($processor_name);
+      my($available);
+      my(@junk);
+      my(@processor_names);
+      my(%processor_stuff);
+      my($attribute);
+      my($value);
+
+      $e = `lsdev -C -F 'name,status' -c processor`;
+
+      foreach (split("\n",$e)) {
+  	($processor_name,$available) = split(/,/);
+  	if ($available eq "Available") {
+  	    push(@processor_names,$processor_name);
+  	}
+      }
+
+      foreach (@processor_names) {
+  	my($v);
+
+  	$e = `lsattr -E -F 'attribute,value' -l $_`;
+
+  	foreach $v (split("\n",$e)) {
+  	    ($attribute,$value) = split(/,/,$v);
+  	    $processor_stuff{$_}{$attribute} = $value;
+  	}
+      }
+
+      foreach (@processor_names) {
+  	my(@s);
+  	my($f);
+
+  	@s = ($_);
+  	push(@s,$processor_stuff{$_}{'type'});
+  	$f = $processor_stuff{$_}{'frequency'} / 1000000;
+  	push(@s,$f);
+  	push(@s,"MHZ");
+
+  	push(@cpus,join(' ',@s));
+  	push(@cpusfrequency,$f);
+      }
+
+
+      my($memory_name);
+      my(@memory_names);
+      my(%memory_stuff);
+
+      $e = `lsdev -C -F 'name,status' -c memory`;
+
+      foreach (split("\n",$e)) {
+  	($memory_name,$available) = split(/,/);
+  	if ($available eq "Available" &&
+  	    $memory_name =~ /^mem[0-9]/) {
+  	    push(@memory_names,$memory_name);
+  	}
+      }
+
+      foreach (@memory_names) {
+  	my($v);
+
+  	$e = `lsattr -E -F 'attribute,value' -l $_`;
+
+  	foreach $v (split("\n",$e)) {
+  	    ($attribute,$value) = split(/,/,$v);
+  	    $memory_stuff{$_}{$attribute} = $value;
+  	}
+      }
+
+      $total_memory = 0;
+      foreach (@memory_names) {
+  	$total_memory += $memory_stuff{$_}{'size'};
+      }
+
+      $e = `lsdev -C -F name -c disk`;
+
+      foreach (split("\n",$e)) {
+  	if (/^hdiskpower[0-9]/) {
+  	    push(@san_devices,$_);
+  	}
+      }
+
+      foreach (@san_devices) {
+  	my($v);
+
+  	$e = `lsattr -E -F 'attribute,value' -l $_`;
+
+  	foreach $v (split("\n",$e)) {
+  	    ($attribute,$value) = split(/,/,$v);
+  	    $san_stuff{$_}{$attribute} = $value;
+  	}
+      }
+  }
+
+  if ($major_os eq "HP-UX") {
+      my($v);
+      my($c);
+      my($num_processors);
+      my($hp_processor_frequency);
+      my($hp_processor_type);
+      my($shp_processor_type);
+
+      $e = `/sbin/ioscan -kf -C disk`;
+
+      foreach $v (split("\n",$e)) {
+  	if ($v =~ /^disk[\W]*([0-9]*)[\W]*(.*[0-9])[\W]*sdisk[\W]*CLAIMED[\W]*DEVICE[\W]*EMC[\W]*SYMMETRIX/) {
+  	    push(@san_devices,$2);
+  	}
+      }
+
+      $e = `/usr/local/bin/sudo-1.6.7p5/sudo /opt/ignite/bin/print_manifest 2> /dev/null`;
+
+      foreach $v (split("\n",$e)) {
+  	if ($v =~ /^[\W]*Main Memory:[\W]*([0-9]*) MB/) {
+  	    $total_memory = $1;
+  	}
+
+  	if ($v =~ /^[\W]*Processors:[\W]*([0-9]*)$/) {
+  	    $num_processors = $1;
+  	}
+
+  	if (defined $total_memory &&
+  	    defined $num_processors) {
+  	    last;
+  	}
+      }
+
+      if (! defined $num_processors) {
+  	$num_processors = 1;
+      }
+
+      $hp_processor_type = `getconf CPU_CHIP_TYPE`;
+      chop $hp_processor_type;
+      
+      if ($hp_processor_type eq "") {
+  	$hp_processor_type = 65535;
+      }
+
+      $hp_processor_type = $hp_processor_type >> 5;
+
+    CPU_TYPE: {
+        if ($hp_processor_type == 0xb) {
+  	  $shp_processor_type = "PA7200";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0xd) {
+  	  $shp_processor_type = "PA7100LC";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0xe) {
+  	  $shp_processor_type = "PA8000";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0xf) {
+  	  $shp_processor_type = "PA7300LC";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0x10) {
+  	  $shp_processor_type = "PA8200";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0x11) {
+  	  $shp_processor_type = "PA8500";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0x12) {
+  	  $shp_processor_type = "PA8600";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0x13) {
+  	  $shp_processor_type = "PA8700";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0x14) {
+  	  $shp_processor_type = "PA8800";
+  	  last CPU_TYPE;
+        }
+
+        if ($hp_processor_type == 0x15) {
+  	  $shp_processor_type = "PA8750";
+  	  last CPU_TYPE;
+        }
+
+        $shp_processor_type="PAXXXX";
+    };
+
+      $e = `echo itick_per_tick/D | adb -k /stand/vmunix /dev/kmem | tail -1`;
+      chop $e;
+
+      if ($e =~ /[\W]*([0-9]*)$/) {
+  	$hp_processor_frequency = $1;
+  	$hp_processor_frequency = $hp_processor_frequency / 10000;
+      }
+
+      $c = 0;
+
+      while ($c < $num_processors) {
+  	$cpus[$c] = $shp_processor_type;
+  	$cpusfrequency[$c] = $hp_processor_frequency;
+
+  	$c++;
+      }
+  }
+
+  if (defined $total_memory) {
+      print "<totalmemorymb>$total_memory</totalmemorymb>\n";
+  }
+
+  if ($#san_devices > -1) {
+      foreach (@san_devices) {
+  	print "<sandevice>\n";
+  	print "<name>$_</name>\n";
+  	if (defined $san_stuff{$_}{'lun_id'}) {
+  	    print "<lun>$san_stuff{$_}{'lun_id'}</lun>\n";
+  	}
+  	print "</sandevice>\n";
+      }
+  }
+
+  my($n);
+
+  $n = 0;
+
+  while ($n <= $#cpus) {
+      print "<cpu>\n";
+      print "<cpuidentifier>$cpus[$n]</cpuidentifier>\n";
+      print "<cpufrequencymhz>$cpusfrequency[$n]</cpufrequencymhz>\n";
+      print "</cpu>\n";
+
+      $n++;
+  }
+
+
+  # file systems, etc ...
+
+  my($raw_df);
+  my(@fs_device);
+  my(%fs_total);
+  my(%fs_used);
+  my(%fs_free);
+  my(%original_fs_total);
+  my(%original_fs_used);
+  my(%original_fs_free);
+  my(%fs_mountpoint);
+  my($partial);
+
+  # KByte portable POSIX assumed...  works for NetBSD, AIX, Linux, HP-UX
+  $raw_df = `df -kP`;
+
+  foreach (split("\n",$raw_df)) {
+      my(@v);
+      my(@nv);
+      my($v);
+
+      @v = split(/ /);
+
+      next if ($v[0] !~ /^\/dev\// && ! defined $partial);
+
+      if (defined $partial) {
+  	push(@nv,$partial);
+
+  	undef $partial;
+      }
+
+      foreach $v (@v) {
+  	if ($v ne "") {
+  	    push(@nv,$v);
+  	}
+      }
+
+      if ($#nv == 0) {
+  	$partial = $nv[0];
+
+  	next;
+      }
+
+      push(@fs_device,$nv[0]);
+      $fs_total{$nv[0]} = $nv[1] / 1000 / 1000;
+      $fs_used{$nv[0]} = $nv[2] / 1000 / 1000;
+      $fs_free{$nv[0]} = $nv[3] / 1000 / 1000;
+      $original_fs_total{$nv[0]} = $nv[1];
+      $original_fs_used{$nv[0]} = $nv[2];
+      $original_fs_free{$nv[0]} = $nv[3];
+      $fs_mountpoint{$nv[0]} = $nv[$#nv];
+  }
+
+  foreach (@fs_device) {
+      print "<filesystem>\n";
+      print "<devicename>$_</devicename>\n";
+      print "<mountpoint>$fs_mountpoint{$_}</mountpoint>\n";
+      print "<totalgb>$fs_total{$_}</totalgb>\n";
+      print "<usedgb>$fs_used{$_}</usedgb>\n";
+      print "<freegb>$fs_free{$_}</freegb>\n";
+      print "<originaltotal>$original_fs_total{$_}</originaltotal>\n";
+      print "<originalused>$original_fs_used{$_}</originalused>\n";
+      print "<originalfree>$original_fs_free{$_}</originalfree>\n";
+      print "</filesystem>\n";
+  }
+
+  # System services and processes
+
+  my(%system_services);
+
+  undef $e;
+
+  if ($major_os eq "NetBSD" ||
+      $major_os eq "Linux") {
+      $e = `ps -auxww 2> /dev/null`;
+  }
+
+  if ($major_os eq "AIX" ||
+      $major_os eq "HP-UX") {
+      $e = `ps -elf`;
+  }
+
+  @v = ();
+
+  foreach (split("\n",$e)) {
+      push(@v,$_);
+  }
+
+  foreach (@v) {
+      if ($_ =~ /httpd/ ||
+  	$_ =~ /httpd2/) {
+  	$system_services{'apache'} = 'running';
+      }
+
+      if ($_ =~ /nfsd/ ||
+  	$_ =~ /nfskd/) {
+  	$system_services{'nfs'} = 'running';
+      }
+
+      if ($_ =~ /samba/) {
+  	$system_services{'samba'} = 'running';
+      }
+
+      if ($_ =~ /ftpd/) {
+  	$system_services{'ftpd'} = 'running';
+      }
+
+      if ($_ =~ /telnetd/) {
+  	$system_services{'telnetd'} = 'running';
+      }
+
+      if ($_ =~ /xntpd/ ||
+  	$_ =~ /ntpd/) {
+  	$system_services{'ntp'} = 'running';
+      }
+
+      if ($_ =~ /sshd/) {
+  	$system_services{'sshd'} = 'running';
+      }
+
+      if ($_ =~ /dsmcad/) {
+  	$system_services{'tsmacceptor'} = 'running';
+      }
+
+      if ($_ =~ /dsmc sched/) {
+  	$system_services{'tsmscheduler'} = 'running';
+      }
+  }
+
+  if ( -e "/etc/inetd.conf" ) {
+      open(INETDCONF,"/etc/inetd.conf");
+      while (<INETDCONF>) {
+  	if (/^ftp[ 	]/ &&
+  	    ! defined $system_services{'ftpd'}) {
+  	    $system_services{'ftpd'} = 'enabled';
+  	}
+
+  	if (/^telnet[ 	]/ &&
+  	    ! defined $system_services{'telnetd'}) {
+  	    $system_services{'telnetd'} = 'enabled';
+  	}
+
+  	if (/^ssh[ 	]/ &&
+  	    ! defined $system_services{'sshd'}) {
+  	    $system_services{'sshd'} = 'enabled';
+  	}
+
+  	if (/^shell[ 	]/) {
+  	    $system_services{'rsh'} = 'enabled';
+  	}
+
+  	if (/^login[ 	]/) {
+  	    $system_services{'rlogin'} = 'enabled';
+  	}
+
+  	if (/^exec[ 	]/) {
+  	    $system_services{'rexec'} = 'enabled';
+  	}
+      }
+      close INETDCONF;
+  }
+
+  if ( -e "/etc/oratab" ) {
+      if (! defined $system_services{'oracle'}) {
+  	$system_services{'oracle'} = 'enabled';
+      }
+  }
+
+  foreach (keys %system_services) {
+      print "<systemservice>\n";
+      print "<name>$_</name>\n";
+      print "<state>$system_services{$_}</state>\n";
+      print "</systemservice>\n";
+  }
+
+  print "</computer>\n";
+value_script: ''

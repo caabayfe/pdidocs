@@ -1,0 +1,183 @@
+<div ng-if="c.data.cartItems.length > 0">
+  <div class="panel panel-primary b {{::c.data.isMEE ? 'cart-mobile' : ''}}">
+    <div class="cart-header">
+	    <h2 id="main-cart-header" class="main-cart-header h3 m-t-sm" ng-class="{'padder-md' : !c.data.isMEE, 'pull-left padder-l-none' : c.data.isMEE}" tabindex="-1">${Your Cart}</h2>
+      <button ng-if="::c.data.isMEE" class="btn btn-default" ng-click="c.clearCart()">${Empty Cart}</button>
+    </div>
+    <table ng-if="::!c.data.isMEE" id="cart" class="table table-hover b-t table-condensed cart-table" aria-label="${Your Cart}" aria-describedby="id-caption-cart">
+      <caption id="id-caption-cart"><span class="sr-only">${Your Cart}</span></caption>
+      <thead>
+        <tr>
+          <th id="id-header-item" scope="col" class="col-sm-6 wrapper padder-md">${Item}</th>
+          <th id="id-header-price" scope="col" class="col-sm-2 wrapper hidden-xs" ng-if="c.data.cart.cart_items.show_subtotal_price === 'true'">${Price}</th>
+          <th id="id-header-quantity" scope="col" class="col-sm-1 wrapper hidden-xs">${Quantity}</th>
+          <th id="id-header-subtotal" scope="col" class="col-sm-2 wrapper hidden-xs" ng-if="c.data.cart.cart_items.show_subtotal_price === 'true'">${Subtotal}</th>
+          <th id="id-header-item-controls" scope="col" class="col-sm-1"><span style="visibility: hidden;">${Item Controls}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="item-row b-b" ng-repeat="item in c.data.cartItems | orderBy: 'created_on' track by item.sys_id">
+          <td headers="id-header-item" data-th="Product" class="col-sm-7 col-xs-11 wrapper-md break-word">
+            <div class="row">
+              <a ng-href="{{::item.item_url}}" aria-labelledby="sc_cat_item_{{::item.sys_id}}" aria-describedby="sc_cat_item_short_desc_{{::item.sys_id}}" ng-class="::{'a-disabled': !item.can_order}" class="block">
+                <div>
+              		<div class="sn-flexbox">
+                    		<div class="col-sm-3 col-xs-4">
+                      			<img ng-if="item.picture" ng-src="{{::item.picture}}" class="img-responsive item-image" alt=""/>
+                    		</div>
+                    		<div class="col-sm-9 col-xs-8">
+                    			<div class="nomargin h4 catalog-text-wrap"><div ng-href="{{::item.item_url}}" ng-class="::{'a-disabled': !item.can_order}" id="sc_cat_item_{{::item.sys_id}}">{{::item.name}}</div></div>
+                			<p class="catalog-text-wrap sc-cart-text" id="sc_cat_item_short_desc_{{::item.sys_id}}">{{::item.short_description}}</p>
+                      <div class="visible-xs sc-cart-text" ng-if="c.data.cart.cart_items.show_subtotal_price === 'true'">
+                        <span class="sr-only" ng-if="::(c.showPrice(item))">${Subtotal Price:} {{item.subtotal_price_display}}</span>
+            		        <span ng-if="::(c.showPrice(item) && c.showRecurringPrice(item))" aria-hidden="true">&nbsp;&nbsp;&nbsp;{{item.subtotal_price_display}}</span>
+            		        <span ng-if="::(c.showPrice(item) && !c.showRecurringPrice(item))" aria-hidden="true">{{item.subtotal_price_display}}</span>
+                        <span class="sr-only" ng-if="::c.showRecurringPrice(item)">${Recurring subtotal price} {{item.recurring_subtotal_price_display + ' ' + item.recurring_frequency}}</span>
+                        <div ng-if="::c.showRecurringPrice(item)" aria-hidden="true">{{::c.showPrice(item) ? '+ ' : ' '}} {{item.recurring_subtotal_price_display + ' ' + item.recurring_frequency}}</div>
+                        <span class="sr-only" ng-if="::(!c.showPrice(item) && !c.showRecurringPrice(item))">${blank}</span>
+                        <div ng-if="::(!c.showPrice(item) && !c.showRecurringPrice(item))" aria-hidden=true>
+                          ---
+                        </div>
+                      </div>
+                    		</div>
+              		</div>
+                </div>
+             </a>
+            </div>
+
+                <div class="col-xs-6 visible-xs">
+                  <select ng-if="c.showQuantity(item) && !item.read_only_quantity"
+                    id="{{item.sys_id + 'xs'}}"
+                    title="{{c.getQuantityTitle(item)}}"
+                    class="m-t scBasicSelect"
+                    ng-disabled="(item.order_guide && !item.show_quantity_guide_item)  || !item.can_order"
+                    ng-model="item.quantity"
+                    ng-change="c.updateQuantity(item)">
+                     <option ng-repeat="num in data.choiceListQuantity" value={{::num.value}}>{{::num.label}}</option>
+                  </select>
+                </div>
+          </td>
+          <td headers="id-header-price" class="break-word hidden-xs wrapper" ng-if="c.data.cart.cart_items.show_subtotal_price === 'true'">
+            <span ng-if="::(c.showPrice(item) && c.showRecurringPrice(item))">&nbsp;&nbsp;&nbsp;{{item.price_display}}</span>
+            <span ng-if="::(c.showPrice(item) && !c.showRecurringPrice(item))">{{item.price_display}}</span>
+            <div ng-if="::c.showRecurringPrice(item)">
+            	<div aria-hidden="true">{{::c.showPrice(item) ? '+ ' : ' '}} {{item.recurring_price_display + ' ' + item.recurring_frequency}}</div>
+              <span class="sr-only">${Recurring Price} {{item.recurring_price_display}} {{item.recurring_frequency}}</span>
+            </div>
+            <span class="sr-only" ng-if="::(!c.showPrice(item) && !c.showRecurringPrice(item))">${blank}</span>
+            <div ng-if="::(!c.showPrice(item) && !c.showRecurringPrice(item))" aria-hidden=true>
+               ---
+            </div>
+          </td>
+          <td headers="id-header-quantity" data-th="Quantity" class="break-word hidden-xs wrapper">
+            <select ng-if="c.showQuantity(item) && !item.read_only_quantity"
+                    id="{{item.sys_id}}"
+                    title="{{c.getQuantityTitle(item)}}"
+                    class="scBasicSelect"
+                    ng-disabled="(item.order_guide && !item.show_quantity_guide_item) || !item.can_order"
+                    ng-model="item.quantity"
+                    ng-change="c.updateQuantity(item)">
+                     <option ng-repeat="num in data.choiceListQuantity" value={{::num.value}}>{{::num.label}}</option>
+                  </select>
+            <span ng-if="::(!item.show_quantity || (item.read_only_quantity && item.sys_class_name != 'sc_cat_item_producer'))">{{::item.show_quantity ? item.quantity : '--'}}</span>
+          </td>
+          <td headers="id-header-subtotal" class="break-word hidden-xs wrapper" ng-if="c.data.cart.cart_items.show_subtotal_price === 'true'">
+            <span ng-if="::(c.showPrice(item) && c.showRecurringPrice(item))" aria-hidden="true">&nbsp;&nbsp;&nbsp;{{item.subtotal_price_display}}</span>
+            <span ng-if="::(c.showPrice(item) && !c.showRecurringPrice(item))" aria-hidden="true">{{item.subtotal_price_display}}</span>
+            <span ng-if="::(c.showPrice(item))" class="sr-only">${Price} {{item.subtotal_price_display}}</span>
+            <div ng-if="::c.showRecurringPrice(item)">
+            	<div aria-hidden="true">{{::c.showPrice(item) ? '+ ' : ' '}} {{item.recurring_subtotal_price_display + ' ' + item.recurring_frequency}}</div>
+              <span class="sr-only">${Recurring Price} {{item.recurring_subtotal_price_display}} {{item.recurring_frequency}}</span>
+            </div>
+            <span class="sr-only" ng-if="::(!c.showPrice(item) && !c.showRecurringPrice(item))">${blank}</span>
+            <div ng-if="::(!c.showPrice(item) && !c.showRecurringPrice(item))" aria-hidden=true>
+               ---
+             </div>
+          </td>
+          <td headers="id-header-item-controls" class="actions break-word col-xs-1" data-th="">
+              <button class="btn btn-clear" ng-click="c.removeItem($event, item)" data-toggle="tooltip" data-placement="top"  data-container="body" title="${Remove Item} {{::item.name}}" aria-label="${Remove Item}">
+              <i class="fa fa-times-circle btn-remove" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div ng-if="::c.data.isMEE" id="cart">
+      <div ng-repeat="item in c.data.cartItems | orderBy: 'created_on' track by item.sys_id" class="cart-item-mobile-info b-b">
+        <div class="col-xs-3 no-padder">
+            <a ng-href="{{::item.item_url}}" ng-if ="::item.picture" aria-label="{{::item.name}}">
+            <img ng-show="item.picture" ng-src="{{::item.picture}}" class="img-responsive item-image" role="img" alt="{{::item.name}}"/>
+          </a>
+        </div>
+        <div class="item-info col-xs-7">
+          <div class="col-sm-9">
+            <h2 class="nomargin h4 catalog-text-wrap"><a ng-href="{{::item.item_url}}" class="padder-v" ng-class="::{'a-disabled': !item.can_order}">{{::item.name}}</a></h2>
+          </div>
+          <div class="col-sm-9">
+            <span ng-if="c.showQuantity(item)" role="text" aria-label="${quantity} {{::item.quantity}}">{{item.quantity}}{{c.showPrice(item) || c.showRecurringPrice(item) ? ' x ' : ' '}}</span>
+            <span role="text">
+              <span ng-if="::(c.data.cart.cart_items.show_subtotal_price === 'true' && c.showPrice(item))"><span class="sr-only">${Price }</span>{{item.price_display}}</span>
+            	<span ng-if="::(c.data.cart.cart_items.show_subtotal_price === 'true' && c.showRecurringPrice(item))">{{::c.showPrice(item) ? '+ ' : ' '}} <span class="sr-only"> ${Recurring Price }</span>{{item.recurring_price_display + ' ' + item.recurring_frequency}}</span>
+            </span>
+            <div role="text">
+              <span class="sr-only" ng-if="::(c.data.cart.cart_items.show_subtotal_price === 'true' && !c.showPrice(item) && !c.showRecurringPrice(item))">${Price blank}</span>
+              <div ng-if="::(c.data.cart.cart_items.show_subtotal_price === 'true' && !c.showPrice(item) && !c.showRecurringPrice(item))" aria-hidden=true>
+              ---
+            	</div>
+            </div>
+
+          </div>
+        </div>
+        <button class="btn btn-clear" ng-click="c.removeItem($event,item)" aria-label="${Remove Item From Cart} {{::item.name}}" title="${Remove Item} {{::item.name}}">
+          <i class="fa fa-times-circle btn-remove" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div class="clearfix" ng-class="{'wrapper': !c.data.isMEE}">
+
+      <div class="m-b-lg m-t-lg" ng-if="::c.data.isMEE && c.data.cart.cart_items.show_subtotal_price === 'true'" role="text">
+        <div class="pull-left"><strong>${Total price}:</strong></div>
+        <div class="m-r-sm">
+          <span>&nbsp;{{c.data.cart.cart_items.subtotal_price}}</span>
+          <div ng-repeat="(key, value) in c.data.cart.recurring_subtotals">+ <span class="sr-only">${recurring price}</span>{{value}} {{key}}</div>
+        </div>
+
+      </div>
+
+      <div class="pull-right m-r-lg m-b-lg" ng-if="::!c.data.isMEE && c.data.cart.cart_items.show_subtotal_price === 'true'">
+        <div class="pull-left"><strong>${Total price}: </strong></div>
+        <div class="pull-left m-l-sm">
+          <span>&nbsp;&nbsp;&nbsp;{{c.data.cart.cart_items.subtotal_price}}</span>
+          <div ng-repeat="(key, value) in c.data.cart.recurring_subtotals">+ {{value}} {{key}}</div>
+        </div>
+      </div>
+
+      <div class="sc-btn-group">
+        <button ng-if="::!c.data.isMEE" ng-click="c.redirectToCatalogHome()" name="submit" class="btn sc-btn btn-default m-r-xs">${Continue Shopping}</button>
+        <button ng-if="::!c.data.isMEE" class="btn sc-btn btn-default" ng-click="c.saveBundle()">${Save as Bundle}</button>
+        <div ng-if="::!c.data.isMEE" class="sc-btn-group pull-right">
+          <button class="btn sc-btn btn-default m-r-xs sc-remove-btn" ng-click="c.clearCart()" >${Clear Cart}</button>
+          <button ng-disabled="c.checkoutInProgress" name="submit" ng-click="c.triggerCheckout()" class="btn sc-btn btn-primary" ng-class="{'rounded m-r-lg padder-xl': c.data.isMEE}">
+            <span ng-show="!c.checkoutInProgress && c.data.sys_properties.twostep">${Proceed to Checkout}</span>
+            <span ng-show="!c.checkoutInProgress && !c.data.sys_properties.twostep">${Checkout}</span>
+            <span ng-show="c.checkoutInProgress">${Ordering...}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div ng-show="c.data.cartItems.length == 0" class="panel panel-default b">
+	<div class="panel-body">
+		<div class="empty-state-content" ng-show="!c.data.checkedOut">
+			<span class="fa fa-shopping-cart" aria-hidden="true"></span>
+			<h2 class="h3" id="empty-cart-heading" tabindex="-1">${Your shopping cart is empty}</h2>
+			<p>${Once you have added items to your shopping cart, you can check out from here.}</p>
+			<a class="btn btn-primary" href="?id=sc_home" ng-if="!c.data.isMEE">${View the Catalog}</a>
+    	</div>
+    	<div class="text-a-c" ng-show="c.data.checkedOut">
+      		<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+      		<span class="sr-only">${Loading...}</span>
+		</div>
+  </div>
+</div>

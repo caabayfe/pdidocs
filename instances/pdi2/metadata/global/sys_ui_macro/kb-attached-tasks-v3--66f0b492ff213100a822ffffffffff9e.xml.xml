@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<!-- list of tasks to which this article has been attached -->
+	<j:set var="jvar_kb_show_tasks" value="${gs.getProperty('glide.knowman.recent_tasks.display','true')}"/>
+
+	<j:if test="${jvar_kb_show_tasks}">
+		<j2:if test="${gs.hasRole('itil') || gs.hasRole('knowledge')}">
+			<g:evaluate var="jvar_is_doctype" expression="GlideMobileExtensions.getDeviceType() == 'doctype'"/>
+			<j2:set var="jvar_t" value="$[kb.sys_id]" />
+			<g2:evaluate var="tasks" jelly="true" expression="
+				var tasks = new GlideRecordSecure('m2m_kb_task');
+				var versioningInstalled = new KBCommon().isVersioningInstalled();
+				var target = readOnlyPage ? '_blank': '_self';
+				if(versioningInstalled &amp;&amp; !kb.summary.nil()){
+					tasks.addQuery('kb_knowledge.summary',kb.summary);
+					tasks.addQuery('kb_knowledge.sys_created_on','&lt;=',kb.sys_created_on);
+				}
+				else
+				tasks.addQuery('kb_knowledge', kb.sys_id);
+				tasks.orderByDesc('task.sys_created_on');
+				tasks.setLimit(gs.getProperty('glide.knowman.recent_tasks',10));
+				tasks.query();
+				var seenTasks = [];
+				var sysIds = [];
+				while(tasks.next()) {
+					var taskNumber = tasks.task.number;
+					if(seenTasks.indexOf(taskNumber)!==-1) {
+						continue;
+					}
+					seenTasks.push(taskNumber);
+					sysIds.push(tasks.getValue('sys_id'));
+				}
+				tasks = new GlideRecordSecure('m2m_kb_task');
+				tasks.addEncodedQuery('sys_idIN' + sysIds.join(','));
+				tasks.query();"/>
+			<j2:if test="$[tasks.hasNext()]">
+
+				<div class="snc-article-incidents">
+					<span class="snc-article-footer-metadata-title">${gs.getMessage("Most recent tasks")}$[SP]</span>
+					<span id="attachments-content" class="attachments-content">
+						<j2:while test="$[tasks.next()]">
+							<g2:evaluate var="jvar_task_exists">
+								var attachedTask = new GlideRecordSecure("task");
+								attachedTask.get(tasks.task);
+							</g2:evaluate>
+							<j2:choose>
+								<j2:when test="$[jvar_task_exists]">
+									<a class="obvious" aria-label="${ALLOW_JELLY: gs.getMessage('{0} - {1}', ['$[HTML:tasks.task.number]', '$[HTML:tasks.task.short_description]'])}" href="task.do?sys_id=$[tasks.task]${AMP}sysparm_referring_url=kb_view.do" target="$[target]">
+										<j2:choose>
+											<j2:when test="$[!jvar_is_doctype || jvar_isMSIE8 || jvar_isMSIE7]">
+												<span class="icon-document snc-article-incident-icon" />
+											</j2:when>
+											<j2:otherwise>
+												<img src="images/icons/kb_task.gifx" alt="$[HTML:tasks.task.number] - $[HTML:tasks.task.short_description]"/>
+											</j2:otherwise>
+										</j2:choose>
+										$[HTML:tasks.task.number] - $[HTML:tasks.task.short_description]
+									</a>
+								</j2:when>
+							   <j2:otherwise></j2:otherwise>
+							</j2:choose>
+						</j2:while>
+					</span>
+				</div>
+			</j2:if>
+		</j2:if>
+	</j:if>
+
+</j:jelly>

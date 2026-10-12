@@ -1,0 +1,46 @@
+		<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null">
+	<g2:doctype name="html" />
+	<html ng-app="sn.map">
+		<head>
+			<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+			<g:requires name="styles/sn/sn_map/css_includes_sn_map_page.css" includes="true" />
+			<script src="scripts/sn/sn_map/js_includes_sn_map.js"/>
+			
+			<g:evaluate jelly="true">
+                var rawSysId = '${JS:sysparm_sys_id}'; 
+                
+                var sysId = null;
+                var sysIdRegex = /^[0-9a-fA-F]{32}$/;
+                
+                if (sysIdRegex.test(rawSysId)) {
+                    sysId = rawSysId;
+                }
+
+                var mapConfString = "{}"; // Default safe empty JSON
+                if (sysId) {
+                    mapConfString = global.SNMapHelper.getMapConfigStr(sysId);
+                }
+
+                var mapConf = JSON.parse(mapConfString);
+                var hasValidRoles = mapConf['hasValidRoles'] == "true";
+			</g:evaluate>
+			
+			<script>
+				var g_ck = '$[JS:gs.getSessionToken()]';
+				window.smap = JSON.parse('${mapConfString}');
+				// passing float number in Jelly's way instead of JSON way.
+		        window.smap.userProfileLocation = {lat: 0, lng: 0};
+			</script>
+			
+			<g:inline template="map_page_configuration_include.xml"></g:inline>
+		</head>
+		<body class="sn-map">
+			<j:if test="${hasValidRoles}">
+				<sn-map class="sn-map"></sn-map>
+			</j:if>
+			<j:if test="${!hasValidRoles}">
+				<span>${gs.getMessage('Security constraints prevent access to requested page')}</span>
+			</j:if>
+		</body>
+	</html>
+</j:jelly>

@@ -1,0 +1,136 @@
+_meta:
+  hash: fa677a4294be2cf8ee04b8680c85203ffe4439655b8a18a9a5d38022bbfa71a2
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: aleck.lin
+  sys_created_on: 2012-03-09 08:09:23
+  sys_id: aea82397ff202000dada361332f49ddf
+  sys_mod_count: '21'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_aea82397ff202000dada361332f49ddf
+  sys_updated_by: aleck.lin
+  sys_updated_on: 2012-08-14 08:29:06
+active: 'true'
+name: GetEnvFile.js
+probe: bd7f5717ff202000dada361332f49d01
+sys_name: GetEnvFile.js
+sys_policy: ''
+value: |2-
+    /**********************************************
+     * Use Service-now.com WMIAPI to gather stats
+     * This script requires the admin share (admin$) enabled and point to the windows system directory (like \WINDOWS or \WINNT).
+    ***********************************************/
+    var CMD_RETRIES = 3;
+    var FOR_READING = 1;
+    var OUTPUT_FILE = "apdenv_output" + getGUID() + ".txt";
+    var DEBUG = false;
+    var MAX_TIMEOUT = 60000; //60 seconds; This timeout dictates how long each command can run.
+
+    var scanner = getScanner();
+    if (scanner) 
+        var output = run();
+
+    scanner.appendToRoot("output", output);
+
+    /*******************************************
+     * Function definitions
+     ******************************************/
+    function run() {
+        var sysDir = "C:\\WINDOWS\\system32";
+        sysDir = setSystemDirectory(scanner.fetchTable("Win32_OperatingSystem"));
+
+        dirPath = "${envFilePath}";
+
+        // Running the command and pipe the output to a file and read the file back... 
+        // the "2>&1" redirect both stdout and stderr to the file
+        executeCommand(sysDir + "\\cmd.exe /c more \"" + dirPath + "\" > %SystemRoot%\\temp\\" + OUTPUT_FILE );// + " 2>&1");
+        var output = readFile(OUTPUT_FILE);
+
+        //Clean up the temp file created...
+        executeCommand(sysDir + "\\cmd.exe /c del %SystemRoot%\\temp\\" + OUTPUT_FILE);
+
+        return output;
+    }
+
+    function setSystemDirectory(items) {
+        for(var i = 0; i < items.length; i++) {
+            var item = items[i];
+            sysDir = item.SystemDirectory;
+        }
+
+        return sysDir;
+    }
+
+    function executeCommand(command) {
+        for(var i = 0; i < CMD_RETRIES; i++) {
+            var oProcess = GetObject('winmgmts:\\\\' + gCurrentMachine + '\\root\\CIMV2:Win32_Process')
+            var oMethod = oProcess.Methods_.Item("Create");
+            var oInParam = oMethod.InParameters.SpawnInstance_();
+            oInParam.CommandLine = command;
+
+            var oOutParam = oProcess.ExecMethod_(oMethod.Name, oInParam);
+            var retValue = oOutParam.ReturnValue;
+            var pid = oOutParam.ProcessID;
+  	  debug("Running command: " + command);
+            debug("The return value is " + retValue);
+            debug("The process ID is " + pid);
+
+            //If the command returns successfully, let's get out of here...
+        	  if (retValue == 0)  
+                break;
+         }
+         
+         waitForProcessComplete(pid); 
+     }
+
+    function readFile(fileName) {
+        var fileObj = new ActiveXObject("Scripting.FileSystemObject");
+        try {
+            var objTextFile = fileObj.OpenTextFile("\\\\" + gCurrentMachine + "\\admin$\\temp\\" + fileName, FOR_READING);
+            var output = objTextFile.ReadAll();
+            objTextFile.close();
+        } catch (e) {
+            return "Exception in readFile: " + e.message;
+        }
+
+        return output;
+    }
+
+    function waitForProcessComplete(pid) {
+        var myDate = new Date();
+        myDate.setTime(myDate.getTime()+MAX_TIMEOUT)
+
+        while (processExists(pid) == true && ((new Date()) < myDate)) 
+             WScript.Sleep(100);
+    }
+
+    function processExists(pid) {
+        try {
+            var wql = "SELECT * FROM Win32_Process WHERE ProcessId=" + pid;
+  	  debug("Running wql query: " + wql);
+            var procs = GetObject('WinMgmts:\\\\' + gCurrentMachine + "\\root\\CIMV2").ExecQuery(wql);
+            for (var en = new Enumerator(procs); !en.atEnd(); en.moveNext())
+                return true;
+
+            return false;
+        } catch (e) {
+            return false;
+        }
+    }
+   
+    function debug(msg) {
+         if (DEBUG == true)
+             WScript.echo(msg);
+    }
+
+    /*** found in http://note19.com/2007/05/27/javascript-guid-generator/ ***/
+    function S4() {
+       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    }
+
+    function getGUID() {
+        return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+    }
+value_script: ''

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<j:set var="jvar_n" value="show_map:${ref}"/>
+<a id="${jvar_n}" 
+  onclick="showMap('${jvar_n}')"
+  name="${jvar_n}" 
+  style="visibility: hidden"
+>
+    <img border="0" src="images/icons/bsm2.gifx" title="${gs.getMessage('Show CI map view')}" alt="${gs.getMessage('Show CI map view')}"/>
+
+</a>
+<script>
+//
+// show link if populated, hide if not 
+//
+function onChange_cmdb_ci_bsm(element, original, changed, loading) {
+  var visibility = 'hidden';
+   if (changed.length > 0)
+    visibility = 'visible';
+
+  var e = gel('${jvar_n}');
+  e.style.visibility = visibility;
+}
+
+// show map if the sys_id is populated
+function showMap(name) {
+  var fieldName = name.split(':')[1];
+  var n = gel(fieldName); 
+  n = n.value; 
+  if (n.length == 0) 
+    alert("Populate CI field first"); 
+  else
+    showBSMMap(n); 
+}
+
+// show bsm map version for sys_id
+function showBSMMap(sys_id) {
+  var version = gel('bsm_chart.version').value;
+  var url = '$keylines_bsm_map.do?sysparm_nameofstack=bsm'; 
+  url += '&amp;amp;';
+  url += 'sysparm_attributes=table=cmdb_ci';
+  url += ',id=' + sys_id;
+  url += ',version=' + version; 
+  url += ',ciview=,restack=true';
+  g_navigation.open(url, 'super_bsm_map');
+}
+
+// register a handler for the cmdb_ci field
+var h = new GlideEventHandler('onChange_cmdb_ci_bsm', onChange_cmdb_ci_bsm, '${ref}');
+g_event_handlers.push(h);
+</script>
+</j:jelly> 

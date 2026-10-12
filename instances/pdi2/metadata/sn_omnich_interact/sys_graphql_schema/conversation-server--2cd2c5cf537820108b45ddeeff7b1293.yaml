@@ -1,0 +1,158 @@
+_meta:
+  hash: 745b9e67be238955e85394d6f00785849c732199dc7a8c7991439c7f20217290
+  hash_version: 1
+  scope: sn_omnich_interact
+  sys_class_name: sys_graphql_schema
+  sys_created_by: admin
+  sys_created_on: 2020-12-04 22:47:18
+  sys_id: 2cd2c5cf537820108b45ddeeff7b1293
+  sys_mod_count: '80'
+  sys_package: 4ebff608c8d5f6968c0b7a713456a51a
+  sys_scope: 4ebff608c8d5f6968c0b7a713456a51a
+  sys_update_name: sys_graphql_schema_2cd2c5cf537820108b45ddeeff7b1293
+  sys_updated_by: admin
+  sys_updated_on: 2026-07-15 20:16:22
+active: 'true'
+application_namespace: now
+contextual_acl_max_depth: ''
+enforce_acl: 8b2dbd026f05311026b95d3a945b3632
+name: Conversation Server
+namespace: cs
+paths: AutoPilotConversation:inAutoPilotMode,AutoPilotConversation:sysId,ChatMetadata:aggressivelyFetchMessageEnabled,ChatMetadata:containerLayoutPerfFix,ChatMetadata:emojiEnabled,ChatMetadata:isGenAIEnabled,ChatMetadata:liveProfileSysId,ChatMetadata:multiPartyChatEnabled,ChatMetadata:profanityIndicatorMessage,ChatMetadata:thirdPartyIntegration,ChatMetadata:whisperEnabled,ChatWindowPosition:position,ChatWindowPosition:sysId,Conversation:audioTranscriptAttachmentId,Conversation:messages,Conversation:sysId,ConversationMessagesMap:conversationSysId,ConversationMessagesMap:messages,GetWorkSpaceSettingType:active,GetWorkSpaceSettingType:firstColorThreshold,GetWorkSpaceSettingType:secondColorThreshold,GetWorkSpaceSettingType:settings,Interaction:conversationSysId,Interaction:interactionMetadata,Interaction:phoneInteractionMetadata,Interaction:previousInteractions,Interaction:type,InteractionMetadata:audioTranscriptAttachmentId,InteractionMetadata:conversationSentiment,Message:agentTranslatedMessage,Message:avatar,Message:conversationSysId,Message:createdAt,Message:createdBy,Message:externalChatStatus,Message:feedback,Message:initials,Message:internal,Message:isBotMessage,Message:isProfane,Message:messageId,Message:messageType,Message:messageUpdated,Message:payload,Message:private,Message:senderLiveProfileSysId,Message:senderName,Message:sentiment,Message:sequence,Message:status,Message:system,Message:transitory,Mutation:cancelCurrentTopic,Mutation:sendMessage,PhoneInteractionMetadata:audioTranscriptAttachmentId,PhoneInteractionMetadata:conversationSentiment,PreviousInteraction:audioTranscriptAttachmentId,PreviousInteraction:conversationSysId,PreviousInteraction:duration,PreviousInteraction:number,PreviousInteraction:sentiment,PreviousInteraction:sysId,PreviousInteraction:type,Query:autoPilotModeForConversations,Query:conversation,Query:conversationsLatestMessages,Query:fetchInformationSessionTabWorkSpaceSetting,Query:getChatMetadata,Query:inAutoPilotMode,Query:interaction,Query:positionChatWindow,Query:shouldCloseChat,ScriptableResponse:message,ScriptableResponse:success
+requires_acl_authorization: 'true'
+requires_authentication: 'true'
+requires_snc_internal_role: 'true'
+schema: |-
+  schema {
+  			query: Query
+  			mutation: Mutation
+  			}
+
+  			type Query {
+  			conversation(sysId: String!): Conversation,
+  			inAutoPilotMode(conversationId: String!): Boolean,
+  			interaction(conversationSysId: String!, type: String): Interaction,
+  			positionChatWindow(sysIds: [String]!): [ChatWindowPosition],
+  			shouldCloseChat(sysId: String!): Boolean,
+  			autoPilotModeForConversations(conversationIds: [String]!): [AutoPilotConversation],
+  			conversationsLatestMessages(conversationsLatestSequence: [ConversationLatestSequence]!): [ConversationMessagesMap],
+  			fetchInformationSessionTabWorkSpaceSetting(workspaceId: String): GetWorkSpaceSettingType,
+  			getChatMetadata: ChatMetadata
+  			}
+  			
+  			input ConversationLatestSequence {
+  			conversationSysId: String
+  			sequence: String
+  			}
+  			
+  			type ChatMetadata {
+  				whisperEnabled: String,
+  	            emojiEnabled: String,
+  	            isGenAIEnabled: Boolean,
+  				thirdPartyIntegration: String,
+  	            multiPartyChatEnabled: String,
+  				liveProfileSysId: String,
+  				containerLayoutPerfFix: Boolean,
+  				profanityIndicatorMessage: String,
+  				aggressivelyFetchMessageEnabled: Boolean
+  				
+  			}
+  			
+  			type GetWorkSpaceSettingType {
+  				firstColorThreshold: Int,
+  				secondColorThreshold: Int,
+  				active: Boolean, 
+  				settings: String
+  			}
+  			
+  			type ConversationMessagesMap {
+  			conversationSysId: String
+  			messages: [Message]
+  			}
+
+  			type Conversation {
+  			sysId: String
+  			messages(boundaryId: String, limit: Int, before: Boolean): [Message],
+  			audioTranscriptAttachmentId: String
+  			}
+
+  			type Interaction {
+  			conversationSysId: String
+  			type: String
+  			previousInteractions: [PreviousInteraction],
+  			interactionMetadata(interactionSysId: String): InteractionMetadata,
+
+  			# Deprecated but necessary during upgrade from pre-Vancouver
+  			phoneInteractionMetadata(interactionSysId: String): PhoneInteractionMetadata
+  			}
+
+  			type InteractionMetadata {
+  			audioTranscriptAttachmentId: String
+  			conversationSentiment: String
+  			}
+
+  			# Deprecated but necessary during upgrade from pre-Vancouver
+  			type PhoneInteractionMetadata {
+  			audioTranscriptAttachmentId: String
+  			conversationSentiment: String
+  			}
+
+  			type PreviousInteraction {
+  			sysId: String
+  			number: String
+  			conversationSysId: String,
+  			audioTranscriptAttachmentId: String,
+  			sentiment: String
+  			duration: String
+  			type: String
+  			}
+
+
+  			type Message {
+  			private: Boolean
+  			conversationSysId: String
+  			initials: String
+  			senderLiveProfileSysId: String
+  			avatar: String
+  			createdAt: String
+  			sequence: String
+  			system: Boolean
+  			messageType: String
+  			payload: String
+  			createdBy: String
+  			agentTranslatedMessage: String
+  			status: String
+  			internal: Boolean
+  			transitory: Boolean
+  			isProfane: Boolean
+  			senderName: String,
+  			sentiment: String,
+  			messageId: String,
+  			feedback: String,
+  			messageUpdated: Boolean,
+  		    isBotMessage:Boolean
+  			externalChatStatus:String
+  			}
+  			
+  			type ChatWindowPosition {
+  			sysId: String,
+  			position: String
+  			}
+  			
+  			type AutoPilotConversation {
+  			sysId: String,
+  			inAutoPilotMode: Boolean
+  			}
+
+  			type Mutation {
+  			sendMessage(conversationId: String!, chatMessage: String!, attachments: [String], internal: Boolean): [Message],
+  			cancelCurrentTopic(conversationId: String!) : ScriptableResponse
+  			}
+
+  			type ScriptableResponse {
+  			message: String,
+  			success: Boolean,
+  			}   
+sys_name: Conversation Server
+sys_policy: ''
+type_names: ''

@@ -1,0 +1,982 @@
+_meta:
+  hash: aea4a8da774ac14a8d6b0bbf74cf8ee0f3510a27964f58ef69fea86d9f651408
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2022-12-06 11:45:40
+  sys_domain: global
+  sys_id: e978d02eebab1110da1861c59c5228e7
+  sys_mod_count: '31'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_e978d02eebab1110da1861c59c5228e7
+  sys_updated_by: admin
+  sys_updated_on: 2023-05-18 17:12:41
+compiled_topic: 2578d02eebab1110da1861c59c5228e1
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"bafb5d79c1c94055baaef2e048e1f966","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"bafb5d79c1c94055baaef2e048e1f966"}],"goals":[{"name":"primary","trigger_id":"bafb5d79c1c94055baaef2e048e1f966","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"d2044dface7044d5ad4ce7c07639e590","name":"Start"},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"d04c47bf1b7b42219679d037dde1f706","name":"End"},{"type":"ScriptedAction","script":"(function execute() {\n    if (vaVars.softpinRetryCount == 0) {\n        vaVars.softpinRetryCount = 1;\n    } else {\n        CustomAdapterSoftPinHelper.recordInvalidAttempt(vaContext.providerAppId, vaContext.providerUserId);\n        vaVars.softpinRetryCount = vaVars.softpinRetryCount + 1;\n    }\n})()\n","id":"cb26e271f53e4f0eaea239827dad56de","name":"SoftPin Retry : Increment retry count","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.identifiedUser = vaInputs.identifieduser.getValue();\n    vaVars.softpinRetryCount = vaInputs.softpinretrycount.getValue();\n    vaVars.softPinLockoutEnabled = vaInputs.softpinlockoutenabled.getValue();\n    vaVars.inboundId = vaInputs.inboundid.getValue();\n    vaVars.providerId = vaInputs.providerid.getValue();\n    vaVars.redirectToLA = vaInputs.redirecttola.getValue();\n})()\n","id":"1e603b3abf7c437796e94989a70c7c78","name":"set inputs","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"LibraryCall","library_topic_name":"SoftPIN Verification","library_topic_id":"decd38545382011017c3ddeeff7b127f","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"userid","value":{"type":"String","mode":"string","value":"{{vaInputs.identifieduser}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"verificationid","value":{"type":"String","mode":"script","value":"(function execute() {\n    var verificationQuestionId = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"verification_question_id\", vaContext.providerAppId);\n    return verificationQuestionId;\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"contextid","value":{"type":"String","mode":"script","value":"(function execute() {\n    return vaSystem.getConversationId();\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}}],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"status","main_topic_mapped_variable_name":"vq_status"}],"id":"eedf04585a7a481c952c8f1bcc047ff2","name":"_verification_question_topic_block","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"qna_userVerified","branches":[{"type":"Branch","label":"User not verified","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var MAX_RETRY_COUNT = parseInt(sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"softpin_max_retry_attempts\", vaContext.providerAppId)) || vaVars.defaultMaxSoftPinInvalidAttempts;\n    var value = vaInputs.vq_status.getValue() == \"Error\"  && vaVars.softpinRetryCount>= MAX_RETRY_COUNT;\n\n    return value;\n})()\n"},"id":"079f3b6755f446e2af067e910dd23a72","name":"User not verified"},{"type":"Branch","label":"Should Retry - staus_Error","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var MAX_RETRY_COUNT = parseInt(sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"softpin_max_retry_attempts\", vaContext.providerAppId)) || vaVars.defaultMaxSoftPinInvalidAttempts;\n    var value =  vaInputs.vq_status.getValue() == \"Error\" && vaVars.softpinRetryCount < MAX_RETRY_COUNT;\n    return value;\n})()\n"},"id":"8e3475c488a448adaf8d6e02936898bc","name":"Should Retry - staus_Error"},{"type":"Branch","label":"UserVerified - status_Success","expression":{"type":"Applicability","mode":"query","value":"vq_status=Success"},"id":"f5409ffb1b394fc9accde69d1a6dd013","name":"UserVerified - status_Success"}],"id":"b74b8fddb2674afa8f3a6b021ecf7d74","goal_id":"primary"},{"type":"ScriptedAction","script":"(function execute() {\n    var providerAppId = vaContext.providerAppId;\n    var retryInterval = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(''softpin_max_invalid_attempts_interval_hrs'', providerAppId);\n    \n    if (vaVars.softPinLockoutEnabled)\n        vaVars.softpinRetryCount = CustomAdapterSoftPinHelper.getInvalidAttemptsForUserInInterval(providerAppId, vaContext.providerUserId, retryInterval);\n    \n    vaVars.defaultMaxSoftPinInvalidAttempts = CustomAdapterSoftPinHelper.DEFAULT_MAX_INVALID_ATTEMPTS;\n})()\n","id":"f19fdd12474b4788b8c6dc822dceee16","name":"SoftPin Retry: Initialize","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"SoftPIN Lockout Enabled","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.softPinLockoutEnabled == true;\n})()\n"},"id":"6efe4e79fe9d4e08a46eeb4365ef0af3","name":"Yes"},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.softPinLockoutEnabled == false;\n})()\n"},"id":"8901a92c052746d480f199a74a33be23","name":"No"}],"id":"ed061e944fb2494c99e1d18b0396c2fe","goal_id":"primary"},{"type":"ScriptedAction","script":"(function execute() {\n    CustomAdapterSoftPinHelper.recordInvalidAttempt(vaContext.providerAppId, vaContext.providerUserId);\n    \n    // If soft pin lockout is enabled, we will set this flag so that the calling topic knows that they\n    // should connect to LA\n    if (vaVars.softPinLockoutEnabled)\n        vaVars.connectToLA = true;\n})()\n","id":"fe8ee7a6a0cb4dadbb41fd72c90ecb09","name":"Record Invalid SoftPin Attempt","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.linkStatus = ''failure'';\n})()\n","id":"be8a47f5cbde4eb0b025b7a6dbbd9c22","name":"Set Link Status to Failure","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var USER_NOT_ENROLLED_CODE = \"40001\";\n    var INCORRECT_PIN_CODE = \"50000\";\n    var CONFIGURATION_ISSUE = \"40002\";\n    \n    var defaultMsg = \"Something went wrong. We’re going to transfer you to an agent. Please hold.\"; // config issue\n    var custom_message_key = \"link_account_unexpected_error_msg\";\n\n    var custom_message = sn_cs.VASystemObject.getBotMessage(custom_message_key, vaVars.inboundId, vaVars.providerId);\n\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n   \n})()\n"}],"id":"80675cf459854d96b0d6cc2c05625407","name":"Auth Failed","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n    gs.error(\"User : \" + vaVars.identifiedUser + \" Authentication failed : topic block: SoftPIN\" );\n    //For SMS, will not connect to live agent directly, will go through topic picker in order for Setup/Reset PIN topic block to show up\n    if (vaVars.redirectToLA)\n        vaVars.connectToLA = true;\n})()\n","id":"aa6a33ff76764ef69d3474f27c0b8435","name":"Set ConnectToLA variable","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var defaultMsg = \"The response you provided is incorrect. Please try again.\";\n    var custom_message = sn_cs.VASystemObject.getBotMessage(\"invalid_pin_retry_msg\", vaVars.inboundId, vaVars.providerId);\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n})()\n"}],"id":"c7024765d1d6426c89cfcfafedf209db","name":"Retry Message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n    \n    if (vaVars.softPinLockoutEnabled) {\n        CustomAdapterSoftPinHelper.markInvalidAttemptsInactive(vaContext.providerAppId, \n                                                                vaContext.providerUserId);\n    }\n})()\n","id":"7efce0d5daa2426f8d723bdde6031245","name":"Reset SoftPIN Metadata for User","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.linkStatus = ''success'';\n})()\n","id":"83361ac8b9d14a63b29350c18e81f82b","name":"Set Link Status to Success","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"LibraryCall","library_topic_name":"MFA_link_account","library_topic_id":"e93e3a92eba71110da1861c59c5228dd","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"authtype","value":{"type":"String","mode":"string","value":"{{vaInputs.authtype}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"identifieduser","value":{"type":"String","mode":"string","value":"{{vaVars.identifiedUser}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"inboundid","value":{"type":"String","mode":"string","value":"{{vaVars.inboundId}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"providerid","value":{"type":"String","mode":"string","value":"{{vaVars.providerId}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"redirecttola","value":{"type":"String","mode":"data_pill","value":"{{vaVars.redirectToLA}}"},"metadata":{"type":"True/False","list":false,"items":[],"use_items":false}}],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"connecttola","main_topic_mapped_variable_name":"mfa_connecttola"},{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"linkstatus","main_topic_mapped_variable_name":"mfa_linkstatus"}],"id":"b08b37a6513a4b588c891eaa2d75fc19","name":"MFA_link_account","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n   vaVars.connectToLA = vaInputs.mfa_connecttola.getValue();\n   vaVars.linkStatus = vaInputs.mfa_linkstatus.getValue();\n})()\n","id":"5da631f9ec9349018eeee02da61f5599","name":"set connectToLA","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var defaultMessage = ''Your account has been locked due to invalid Soft PIN entries. Please try again later.'';\n    var customMessage = sn_cs.VASystemObject.getBotMessage(''softpin_lockout_message'',  vaVars.inboundId, vaVars.providerId);\n\n    var promptMessage = customMessage || defaultMessage;\n\n    return gs.getMessageLang(promptMessage, vaContext.getRequesterLang());\n})()\n"}],"id":"50b57b88aff1427fbc930f24e2c9612f","name":"Show Soft PIN lockout message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false}],"edges":[{"type":"Edge","source_node_id":"eedf04585a7a481c952c8f1bcc047ff2","target_node_id":"b74b8fddb2674afa8f3a6b021ecf7d74","id":"da5618ebec164c1f827f198606dd7c69"},{"type":"Edge","source_node_id":"d2044dface7044d5ad4ce7c07639e590","target_node_id":"1e603b3abf7c437796e94989a70c7c78","id":"4495ba5a80514c1d81ef1fef4b3d99f5"},{"type":"Edge","source_node_id":"cb26e271f53e4f0eaea239827dad56de","target_node_id":"eedf04585a7a481c952c8f1bcc047ff2","id":"ae6f833b09d947988ce118f81756948b"},{"type":"Edge","source_node_id":"1e603b3abf7c437796e94989a70c7c78","target_node_id":"f19fdd12474b4788b8c6dc822dceee16","id":"3343bf8c50ea4f39b679ee7512b113b0"},{"type":"Edge","source_node_id":"f19fdd12474b4788b8c6dc822dceee16","target_node_id":"cb26e271f53e4f0eaea239827dad56de","id":"3b70a4c34eed4134aa874a8949d56c4f"},{"type":"Edge","source_node_id":"b74b8fddb2674afa8f3a6b021ecf7d74","target_node_id":"ed061e944fb2494c99e1d18b0396c2fe","branch_id":"079f3b6755f446e2af067e910dd23a72","id":"378c25e792cb40ca8ec69571c8f6fabd","name":"079f3b6755f446e2af067e910dd23a72"},{"type":"Edge","source_node_id":"ed061e944fb2494c99e1d18b0396c2fe","target_node_id":"fe8ee7a6a0cb4dadbb41fd72c90ecb09","branch_id":"6efe4e79fe9d4e08a46eeb4365ef0af3","id":"60feb8ae2b6544b7a2f78e820246dce4","name":"6efe4e79fe9d4e08a46eeb4365ef0af3"},{"type":"Edge","source_node_id":"fe8ee7a6a0cb4dadbb41fd72c90ecb09","target_node_id":"be8a47f5cbde4eb0b025b7a6dbbd9c22","id":"4bc9307b5b494be2b5c93a658818c224"},{"type":"Edge","source_node_id":"ed061e944fb2494c99e1d18b0396c2fe","target_node_id":"80675cf459854d96b0d6cc2c05625407","branch_id":"8901a92c052746d480f199a74a33be23","id":"0cf2df7d363243fc8f958f092dc8e7db","name":"8901a92c052746d480f199a74a33be23"},{"type":"Edge","source_node_id":"80675cf459854d96b0d6cc2c05625407","target_node_id":"aa6a33ff76764ef69d3474f27c0b8435","id":"7244d6bdf364441585a40c5e9054120b"},{"type":"Edge","source_node_id":"aa6a33ff76764ef69d3474f27c0b8435","target_node_id":"d04c47bf1b7b42219679d037dde1f706","id":"f0b09923634f4dc4a94ec1cfe58c42f7"},{"type":"Edge","source_node_id":"b74b8fddb2674afa8f3a6b021ecf7d74","target_node_id":"c7024765d1d6426c89cfcfafedf209db","branch_id":"8e3475c488a448adaf8d6e02936898bc","id":"3aa9417c3e344070bf211b6bc43246f5","name":"8e3475c488a448adaf8d6e02936898bc"},{"type":"Edge","source_node_id":"c7024765d1d6426c89cfcfafedf209db","target_node_id":"cb26e271f53e4f0eaea239827dad56de","id":"7e3fbc0362e34d32b38c6989a30e35c8"},{"type":"Edge","source_node_id":"b74b8fddb2674afa8f3a6b021ecf7d74","target_node_id":"7efce0d5daa2426f8d723bdde6031245","branch_id":"f5409ffb1b394fc9accde69d1a6dd013","id":"6a12b7c634f64a7cb7edd78bc0de29bd","name":"f5409ffb1b394fc9accde69d1a6dd013"},{"type":"Edge","source_node_id":"7efce0d5daa2426f8d723bdde6031245","target_node_id":"83361ac8b9d14a63b29350c18e81f82b","id":"677dfb9fdf3046ad8676bf593b65adcf"},{"type":"Edge","source_node_id":"83361ac8b9d14a63b29350c18e81f82b","target_node_id":"b08b37a6513a4b588c891eaa2d75fc19","id":"df91c00a01b04dcf864082442bf9a1b5"},{"type":"Edge","source_node_id":"b08b37a6513a4b588c891eaa2d75fc19","target_node_id":"5da631f9ec9349018eeee02da61f5599","id":"ba5ecfed812b45a39ba02cd280105c1a"},{"type":"Edge","source_node_id":"5da631f9ec9349018eeee02da61f5599","target_node_id":"d04c47bf1b7b42219679d037dde1f706","id":"a9dce86f54c14b83a13435ddde3bafa2"},{"type":"Edge","source_node_id":"be8a47f5cbde4eb0b025b7a6dbbd9c22","target_node_id":"50b57b88aff1427fbc930f24e2c9612f","id":"95f4d147eba44a139272659e75a45b1f"},{"type":"Edge","source_node_id":"50b57b88aff1427fbc930f24e2c9612f","target_node_id":"d04c47bf1b7b42219679d037dde1f706","id":"262f07eaf2de4d31bbbba347c1b8581d"}],"id":"primary"}],"script_variables":[{"type":"String","name":"softpinRetryCount","value":{"type":"String","mode":"string"},"list":false,"id":"7f1dee12edf447a3b03067d2c3bd3ada","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"inboundId","value":{"type":"String","mode":"string"},"list":false,"id":"b9842635c8a34471935dc3ff21f5d146","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"providerId","value":{"type":"String","mode":"string"},"list":false,"id":"4ebeee4f10ab4e7785e4ff6bc4ac3bf1","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"softPinLockoutEnabled","value":{"type":"String","mode":"string"},"list":false,"id":"571a5c779047447c9fa08eb48341e31a","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"identifiedUser","value":{"type":"String","mode":"string"},"list":false,"id":"bf34ee397cf44ca8a429c47c6bd6817a","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"connectToLA","value":{"type":"String","mode":"string"},"list":false,"id":"781011b6fe464ff6896028ca2e9763b0","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"linkStatus","value":{"type":"String","mode":"string"},"list":false,"id":"419b25df61e248b5bb768d3d52432c17","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"redirectToLA","value":{"type":"String","mode":"string"},"list":false,"id":"12f772231adb4c01bd0e5976335bf87c","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"String","name":"softpinretrycount","list":false,"id":"836888d2813441ba825fb0910ca5d890","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"identifieduser","list":false,"id":"c1274b78cf3145dc932f3de4f8baa0f9","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"True/False","id":"16b5da46d17743b4abe3f0cba5a8d901","name":"softpinlockoutenabled","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"list":false},{"type":"String","name":"inboundid","list":false,"id":"c4bf711a588c422cad9cae453ff5f2d6","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"providerid","list":false,"id":"4a46ad74d3f14266933dfab8dff08d0a","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"vq_status","list":false,"id":"b5da1443933e4c4380b46748bde62818","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false},{"type":"String","name":"authtype","list":false,"id":"e60c7edf99db40e7828f64c398ed83b3","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"True/False","id":"12fdea464a834b49bdc5b9a6f9e906d2","name":"redirecttola","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"list":false},{"type":"String","name":"mfa_connecttola","list":false,"id":"c5fa81c5a9c348c5a8dad5358cc9538e","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false},{"type":"String","name":"mfa_linkstatus","list":false,"id":"bd47d05159204894be826fd88d6cb6a3","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"softpinretrycount","label":"softpinRetryCount","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"836888d2813441ba825fb0910ca5d890","type":"String"},{"name":"identifieduser","label":"identifiedUser","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"c1274b78cf3145dc932f3de4f8baa0f9","type":"String"},{"name":"softpinlockoutenabled","label":"softPinLockoutEnabled","default-value":"true","required":true,"metadata":{"type":"True/False","list":false,"items":[],"use_items":false},"id":"16b5da46d17743b4abe3f0cba5a8d901","type":"True/False"},{"name":"inboundid","label":"inboundId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"c4bf711a588c422cad9cae453ff5f2d6","type":"String"},{"name":"providerid","label":"providerId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"4a46ad74d3f14266933dfab8dff08d0a","type":"String"},{"name":"authtype","label":"authType","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"e60c7edf99db40e7828f64c398ed83b3","type":"String"},{"name":"redirecttola","label":"redirectToLA","default-value":"false","required":true,"metadata":{"type":"True/False","list":false,"items":[],"use_items":false},"id":"12fdea464a834b49bdc5b9a6f9e906d2","type":"True/False"}],"return-values-mapping":[{"name":"linkstatus","label":"linkStatus","value":{"type":"String","mode":"string","value":"{{vaVars.linkStatus}}"}},{"name":"connecttola","label":"connectToLA","value":{"type":"String","mode":"string","value":"{{vaVars.connectToLA}}"}}]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"919714eaebab1110da1861c59c52286a","name":"SoftPin_authorisation","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"modify_confirmation_enabled":false,"library":true,"csTopicId":"2578d02eebab1110da1861c59c5228e1","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 919714eaebab1110da1861c59c52286a
+graph: |-
+  {
+    "graph_api_version": "1.0.46",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "d2044dface7044d5ad4ce7c07639e590": {
+            "id": "d2044dface7044d5ad4ce7c07639e590",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "836888d2813441ba825fb0910ca5d890",
+                "name": "softpinRetryCount",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "c1274b78cf3145dc932f3de4f8baa0f9",
+                "name": "identifiedUser",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "True/False",
+                "value": "true",
+                "id": "16b5da46d17743b4abe3f0cba5a8d901",
+                "name": "softPinLockoutEnabled",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "c4bf711a588c422cad9cae453ff5f2d6",
+                "name": "inboundId",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "4a46ad74d3f14266933dfab8dff08d0a",
+                "name": "providerId",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "e60c7edf99db40e7828f64c398ed83b3",
+                "name": "authType",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "True/False",
+                "value": "false",
+                "id": "12fdea464a834b49bdc5b9a6f9e906d2",
+                "name": "redirectToLA",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              }
+            ],
+            "variableIds": [
+              "836888d2813441ba825fb0910ca5d890",
+              "c1274b78cf3145dc932f3de4f8baa0f9",
+              "16b5da46d17743b4abe3f0cba5a8d901",
+              "c4bf711a588c422cad9cae453ff5f2d6",
+              "4a46ad74d3f14266933dfab8dff08d0a",
+              "e60c7edf99db40e7828f64c398ed83b3",
+              "12fdea464a834b49bdc5b9a6f9e906d2"
+            ]
+          },
+          "d04c47bf1b7b42219679d037dde1f706": {
+            "id": "d04c47bf1b7b42219679d037dde1f706",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": [
+              {
+                "key": "linkStatus",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.linkStatus}}",
+                          "displayValue": "Script Variables➛linkStatus"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true
+              },
+              {
+                "key": "connectToLA",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.connectToLA}}",
+                          "displayValue": "Script Variables➛connectToLA"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true
+              }
+            ]
+          },
+          "cb26e271f53e4f0eaea239827dad56de": {
+            "id": "cb26e271f53e4f0eaea239827dad56de",
+            "name": "SoftPin Retry : Increment retry count",
+            "script": "(function execute() {\n    if (vaVars.softpinRetryCount == 0) {\n        vaVars.softpinRetryCount = 1;\n    } else {\n        CustomAdapterSoftPinHelper.recordInvalidAttempt(vaContext.providerAppId, vaContext.providerUserId);\n        vaVars.softpinRetryCount = vaVars.softpinRetryCount + 1;\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "1e603b3abf7c437796e94989a70c7c78": {
+            "id": "1e603b3abf7c437796e94989a70c7c78",
+            "name": "set inputs",
+            "script": "(function execute() {\n    vaVars.identifiedUser = vaInputs.identifieduser.getValue();\n    vaVars.softpinRetryCount = vaInputs.softpinretrycount.getValue();\n    vaVars.softPinLockoutEnabled = vaInputs.softpinlockoutenabled.getValue();\n    vaVars.inboundId = vaInputs.inboundid.getValue();\n    vaVars.providerId = vaInputs.providerid.getValue();\n    vaVars.redirectToLA = vaInputs.redirecttola.getValue();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "eedf04585a7a481c952c8f1bcc047ff2": {
+            "id": "eedf04585a7a481c952c8f1bcc047ff2",
+            "stepType": "ReusableTopic",
+            "name": "_verification_question_topic_block",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "SoftPIN Verification",
+            "reusableTopicId": "decd38545382011017c3ddeeff7b127f",
+            "inputs": {
+              "userid": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.identifieduser}}",
+                          "displayValue": "Input Variables➛IdentifiedUser"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "verificationid": {
+                "value": "(function execute() {\n    var verificationQuestionId = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"verification_question_id\", vaContext.providerAppId);\n    return verificationQuestionId;\n})()\n",
+                "mode": "script",
+                "type": "String"
+              },
+              "contextid": {
+                "value": "(function execute() {\n    return vaSystem.getConversationId();\n})()\n",
+                "mode": "script",
+                "type": "String"
+              }
+            },
+            "outputs": [
+              {
+                "id": "b5da1443933e4c4380b46748bde62818",
+                "value": "status",
+                "mapping": "Vq_status",
+                "preventDisable": false
+              }
+            ],
+            "variableIds": [
+              "b5da1443933e4c4380b46748bde62818"
+            ],
+            "outdatedNote": false,
+            "loading": false,
+            "useTemplateTopic": false
+          },
+          "b74b8fddb2674afa8f3a6b021ecf7d74": {
+            "id": "b74b8fddb2674afa8f3a6b021ecf7d74",
+            "stepType": "Decision",
+            "name": "qna_userVerified"
+          },
+          "f19fdd12474b4788b8c6dc822dceee16": {
+            "id": "f19fdd12474b4788b8c6dc822dceee16",
+            "name": "SoftPin Retry: Initialize",
+            "script": "(function execute() {\n    var providerAppId = vaContext.providerAppId;\n    var retryInterval = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy('softpin_max_invalid_attempts_interval_hrs', providerAppId);\n    \n    if (vaVars.softPinLockoutEnabled)\n        vaVars.softpinRetryCount = CustomAdapterSoftPinHelper.getInvalidAttemptsForUserInInterval(providerAppId, vaContext.providerUserId, retryInterval);\n    \n    vaVars.defaultMaxSoftPinInvalidAttempts = CustomAdapterSoftPinHelper.DEFAULT_MAX_INVALID_ATTEMPTS;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "ed061e944fb2494c99e1d18b0396c2fe": {
+            "id": "ed061e944fb2494c99e1d18b0396c2fe",
+            "stepType": "Decision",
+            "name": "SoftPIN Lockout Enabled"
+          },
+          "fe8ee7a6a0cb4dadbb41fd72c90ecb09": {
+            "id": "fe8ee7a6a0cb4dadbb41fd72c90ecb09",
+            "name": "Record Invalid SoftPin Attempt",
+            "script": "(function execute() {\n    CustomAdapterSoftPinHelper.recordInvalidAttempt(vaContext.providerAppId, vaContext.providerUserId);\n    \n    // If soft pin lockout is enabled, we will set this flag so that the calling topic knows that they\n    // should connect to LA\n    if (vaVars.softPinLockoutEnabled)\n        vaVars.connectToLA = true;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "be8a47f5cbde4eb0b025b7a6dbbd9c22": {
+            "id": "be8a47f5cbde4eb0b025b7a6dbbd9c22",
+            "name": "Set Link Status to Failure",
+            "script": "(function execute() {\n    vaVars.linkStatus = 'failure';\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "80675cf459854d96b0d6cc2c05625407": {
+            "id": "80675cf459854d96b0d6cc2c05625407",
+            "stepType": "TextOutput",
+            "name": "Auth Failed",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var USER_NOT_ENROLLED_CODE = \"40001\";\n    var INCORRECT_PIN_CODE = \"50000\";\n    var CONFIGURATION_ISSUE = \"40002\";\n    \n    var defaultMsg = \"Something went wrong. We’re going to transfer you to an agent. Please hold.\"; // config issue\n    var custom_message_key = \"link_account_unexpected_error_msg\";\n\n    var custom_message = sn_cs.VASystemObject.getBotMessage(custom_message_key, vaVars.inboundId, vaVars.providerId);\n\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n   \n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "aa6a33ff76764ef69d3474f27c0b8435": {
+            "id": "aa6a33ff76764ef69d3474f27c0b8435",
+            "name": "Set ConnectToLA variable",
+            "script": "(function execute() {\n    gs.error(\"User : \" + vaVars.identifiedUser + \" Authentication failed : topic block: SoftPIN\" );\n    //For SMS, will not connect to live agent directly, will go through topic picker in order for Setup/Reset PIN topic block to show up\n    if (vaVars.redirectToLA)\n        vaVars.connectToLA = true;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "c7024765d1d6426c89cfcfafedf209db": {
+            "id": "c7024765d1d6426c89cfcfafedf209db",
+            "stepType": "TextOutput",
+            "name": "Retry Message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var defaultMsg = \"The response you provided is incorrect. Please try again.\";\n    var custom_message = sn_cs.VASystemObject.getBotMessage(\"invalid_pin_retry_msg\", vaVars.inboundId, vaVars.providerId);\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "7efce0d5daa2426f8d723bdde6031245": {
+            "id": "7efce0d5daa2426f8d723bdde6031245",
+            "name": "Reset SoftPIN Metadata for User",
+            "script": "(function execute() {\n    \n    if (vaVars.softPinLockoutEnabled) {\n        CustomAdapterSoftPinHelper.markInvalidAttemptsInactive(vaContext.providerAppId, \n                                                                vaContext.providerUserId);\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "83361ac8b9d14a63b29350c18e81f82b": {
+            "id": "83361ac8b9d14a63b29350c18e81f82b",
+            "name": "Set Link Status to Success",
+            "script": "(function execute() {\n    vaVars.linkStatus = 'success';\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "b08b37a6513a4b588c891eaa2d75fc19": {
+            "id": "b08b37a6513a4b588c891eaa2d75fc19",
+            "stepType": "ReusableTopic",
+            "name": "MFA_link_account",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "MFA_link_account",
+            "reusableTopicId": "e93e3a92eba71110da1861c59c5228dd",
+            "inputs": {
+              "authtype": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.authtype}}",
+                          "displayValue": "Input Variables➛AuthType"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "identifieduser": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.identifiedUser}}",
+                          "displayValue": "Script Variables➛identifiedUser"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "inboundid": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.inboundId}}",
+                          "displayValue": "Script Variables➛inboundId"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "providerid": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.providerId}}",
+                          "displayValue": "Script Variables➛providerId"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "redirecttola": {
+                "value": "{{vaVars.redirectToLA}}",
+                "mode": "data_pill",
+                "type": "True/False"
+              }
+            },
+            "variableIds": [
+              "c5fa81c5a9c348c5a8dad5358cc9538e",
+              "bd47d05159204894be826fd88d6cb6a3"
+            ],
+            "outputs": [
+              {
+                "id": "c5fa81c5a9c348c5a8dad5358cc9538e",
+                "value": "connecttola",
+                "mapping": "mfa_connecttola",
+                "preventDisable": true
+              },
+              {
+                "id": "bd47d05159204894be826fd88d6cb6a3",
+                "value": "linkstatus",
+                "mapping": "mfa_linkstatus",
+                "preventDisable": true
+              }
+            ],
+            "outdatedNote": false,
+            "loading": false,
+            "useTemplateTopic": false
+          },
+          "5da631f9ec9349018eeee02da61f5599": {
+            "id": "5da631f9ec9349018eeee02da61f5599",
+            "name": "set connectToLA",
+            "script": "(function execute() {\n   vaVars.connectToLA = vaInputs.mfa_connecttola.getValue();\n   vaVars.linkStatus = vaInputs.mfa_linkstatus.getValue();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "50b57b88aff1427fbc930f24e2c9612f": {
+            "id": "50b57b88aff1427fbc930f24e2c9612f",
+            "stepType": "TextOutput",
+            "name": "Show Soft PIN lockout message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var defaultMessage = 'Your account has been locked due to invalid Soft PIN entries. Please try again later.';\n    var customMessage = sn_cs.VASystemObject.getBotMessage('softpin_lockout_message',  vaVars.inboundId, vaVars.providerId);\n\n    var promptMessage = customMessage || defaultMessage;\n\n    return gs.getMessageLang(promptMessage, vaContext.getRequesterLang());\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "da5618ebec164c1f827f198606dd7c69",
+            "edgeType": "Edge",
+            "source": "eedf04585a7a481c952c8f1bcc047ff2",
+            "target": "b74b8fddb2674afa8f3a6b021ecf7d74",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4495ba5a80514c1d81ef1fef4b3d99f5",
+            "edgeType": "Edge",
+            "source": "d2044dface7044d5ad4ce7c07639e590",
+            "target": "1e603b3abf7c437796e94989a70c7c78",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ae6f833b09d947988ce118f81756948b",
+            "edgeType": "Edge",
+            "source": "cb26e271f53e4f0eaea239827dad56de",
+            "target": "eedf04585a7a481c952c8f1bcc047ff2",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3343bf8c50ea4f39b679ee7512b113b0",
+            "edgeType": "Edge",
+            "source": "1e603b3abf7c437796e94989a70c7c78",
+            "target": "f19fdd12474b4788b8c6dc822dceee16",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3b70a4c34eed4134aa874a8949d56c4f",
+            "edgeType": "Edge",
+            "source": "f19fdd12474b4788b8c6dc822dceee16",
+            "target": "cb26e271f53e4f0eaea239827dad56de",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "378c25e792cb40ca8ec69571c8f6fabd",
+            "edgeType": "Branch",
+            "source": "b74b8fddb2674afa8f3a6b021ecf7d74",
+            "target": "ed061e944fb2494c99e1d18b0396c2fe",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var MAX_RETRY_COUNT = parseInt(sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"softpin_max_retry_attempts\", vaContext.providerAppId)) || vaVars.defaultMaxSoftPinInvalidAttempts;\n    var value = vaInputs.vq_status.getValue() == \"Error\"  && vaVars.softpinRetryCount>= MAX_RETRY_COUNT;\n\n    return value;\n})()\n"
+            },
+            "label": "User not verified"
+          },
+          {
+            "id": "60feb8ae2b6544b7a2f78e820246dce4",
+            "edgeType": "Branch",
+            "source": "ed061e944fb2494c99e1d18b0396c2fe",
+            "target": "fe8ee7a6a0cb4dadbb41fd72c90ecb09",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.softPinLockoutEnabled == true;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "4bc9307b5b494be2b5c93a658818c224",
+            "edgeType": "Edge",
+            "source": "fe8ee7a6a0cb4dadbb41fd72c90ecb09",
+            "target": "be8a47f5cbde4eb0b025b7a6dbbd9c22",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0cf2df7d363243fc8f958f092dc8e7db",
+            "edgeType": "Branch",
+            "source": "ed061e944fb2494c99e1d18b0396c2fe",
+            "target": "80675cf459854d96b0d6cc2c05625407",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.softPinLockoutEnabled == false;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "7244d6bdf364441585a40c5e9054120b",
+            "edgeType": "Edge",
+            "source": "80675cf459854d96b0d6cc2c05625407",
+            "target": "aa6a33ff76764ef69d3474f27c0b8435",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f0b09923634f4dc4a94ec1cfe58c42f7",
+            "edgeType": "Edge",
+            "source": "aa6a33ff76764ef69d3474f27c0b8435",
+            "target": "d04c47bf1b7b42219679d037dde1f706",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3aa9417c3e344070bf211b6bc43246f5",
+            "edgeType": "Branch",
+            "source": "b74b8fddb2674afa8f3a6b021ecf7d74",
+            "target": "c7024765d1d6426c89cfcfafedf209db",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var MAX_RETRY_COUNT = parseInt(sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"softpin_max_retry_attempts\", vaContext.providerAppId)) || vaVars.defaultMaxSoftPinInvalidAttempts;\n    var value =  vaInputs.vq_status.getValue() == \"Error\" && vaVars.softpinRetryCount < MAX_RETRY_COUNT;\n    return value;\n})()\n"
+            },
+            "label": "Should Retry - staus_Error"
+          },
+          {
+            "id": "7e3fbc0362e34d32b38c6989a30e35c8",
+            "edgeType": "Edge",
+            "source": "c7024765d1d6426c89cfcfafedf209db",
+            "target": "cb26e271f53e4f0eaea239827dad56de",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6a12b7c634f64a7cb7edd78bc0de29bd",
+            "edgeType": "Branch",
+            "source": "b74b8fddb2674afa8f3a6b021ecf7d74",
+            "target": "7efce0d5daa2426f8d723bdde6031245",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.vq_status=Success",
+              "mode": "query"
+            },
+            "label": "UserVerified - status_Success"
+          },
+          {
+            "id": "677dfb9fdf3046ad8676bf593b65adcf",
+            "edgeType": "Edge",
+            "source": "7efce0d5daa2426f8d723bdde6031245",
+            "target": "83361ac8b9d14a63b29350c18e81f82b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "df91c00a01b04dcf864082442bf9a1b5",
+            "edgeType": "Edge",
+            "source": "83361ac8b9d14a63b29350c18e81f82b",
+            "target": "b08b37a6513a4b588c891eaa2d75fc19",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ba5ecfed812b45a39ba02cd280105c1a",
+            "edgeType": "Edge",
+            "source": "b08b37a6513a4b588c891eaa2d75fc19",
+            "target": "5da631f9ec9349018eeee02da61f5599",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a9dce86f54c14b83a13435ddde3bafa2",
+            "edgeType": "Edge",
+            "source": "5da631f9ec9349018eeee02da61f5599",
+            "target": "d04c47bf1b7b42219679d037dde1f706",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "95f4d147eba44a139272659e75a45b1f",
+            "edgeType": "Edge",
+            "source": "be8a47f5cbde4eb0b025b7a6dbbd9c22",
+            "target": "50b57b88aff1427fbc930f24e2c9612f",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "262f07eaf2de4d31bbbba347c1b8581d",
+            "edgeType": "Edge",
+            "source": "50b57b88aff1427fbc930f24e2c9612f",
+            "target": "d04c47bf1b7b42219679d037dde1f706",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "7f1dee12edf447a3b03067d2c3bd3ada": {
+        "id": "7f1dee12edf447a3b03067d2c3bd3ada",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "softpinRetryCount",
+        "label": "softpinRetryCount",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "836888d2813441ba825fb0910ca5d890": {
+        "id": "836888d2813441ba825fb0910ca5d890",
+        "name": "softpinretrycount",
+        "label": "SoftpinRetryCount",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "d2044dface7044d5ad4ce7c07639e590",
+        "isHidden": false
+      },
+      "c1274b78cf3145dc932f3de4f8baa0f9": {
+        "id": "c1274b78cf3145dc932f3de4f8baa0f9",
+        "name": "identifieduser",
+        "label": "IdentifiedUser",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "d2044dface7044d5ad4ce7c07639e590",
+        "isHidden": false
+      },
+      "16b5da46d17743b4abe3f0cba5a8d901": {
+        "id": "16b5da46d17743b4abe3f0cba5a8d901",
+        "name": "softpinlockoutenabled",
+        "label": "SoftPinLockoutEnabled",
+        "defaultValue": "true",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "d2044dface7044d5ad4ce7c07639e590",
+        "isHidden": false
+      },
+      "c4bf711a588c422cad9cae453ff5f2d6": {
+        "id": "c4bf711a588c422cad9cae453ff5f2d6",
+        "name": "inboundid",
+        "label": "InboundId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "d2044dface7044d5ad4ce7c07639e590",
+        "isHidden": false
+      },
+      "4a46ad74d3f14266933dfab8dff08d0a": {
+        "id": "4a46ad74d3f14266933dfab8dff08d0a",
+        "name": "providerid",
+        "label": "ProviderId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "d2044dface7044d5ad4ce7c07639e590",
+        "isHidden": false
+      },
+      "b9842635c8a34471935dc3ff21f5d146": {
+        "id": "b9842635c8a34471935dc3ff21f5d146",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "inboundId",
+        "label": "inboundId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4ebeee4f10ab4e7785e4ff6bc4ac3bf1": {
+        "id": "4ebeee4f10ab4e7785e4ff6bc4ac3bf1",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "providerId",
+        "label": "providerId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "571a5c779047447c9fa08eb48341e31a": {
+        "id": "571a5c779047447c9fa08eb48341e31a",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "softPinLockoutEnabled",
+        "label": "softPinLockoutEnabled",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "bf34ee397cf44ca8a429c47c6bd6817a": {
+        "id": "bf34ee397cf44ca8a429c47c6bd6817a",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "identifiedUser",
+        "label": "identifiedUser",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "b5da1443933e4c4380b46748bde62818": {
+        "id": "b5da1443933e4c4380b46748bde62818",
+        "name": "vq_status",
+        "label": "Vq_status",
+        "defaultValue": "status",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": false,
+        "nodeId": "eedf04585a7a481c952c8f1bcc047ff2",
+        "isHidden": false
+      },
+      "e60c7edf99db40e7828f64c398ed83b3": {
+        "id": "e60c7edf99db40e7828f64c398ed83b3",
+        "name": "authtype",
+        "label": "AuthType",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "d2044dface7044d5ad4ce7c07639e590",
+        "isHidden": false
+      },
+      "781011b6fe464ff6896028ca2e9763b0": {
+        "id": "781011b6fe464ff6896028ca2e9763b0",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "connectToLA",
+        "label": "connectToLA",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "419b25df61e248b5bb768d3d52432c17": {
+        "id": "419b25df61e248b5bb768d3d52432c17",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "linkStatus",
+        "label": "linkStatus",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "12f772231adb4c01bd0e5976335bf87c": {
+        "id": "12f772231adb4c01bd0e5976335bf87c",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "redirectToLA",
+        "label": "redirectToLA",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "12fdea464a834b49bdc5b9a6f9e906d2": {
+        "id": "12fdea464a834b49bdc5b9a6f9e906d2",
+        "name": "redirecttola",
+        "label": "RedirectToLA",
+        "defaultValue": "false",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "d2044dface7044d5ad4ce7c07639e590",
+        "isHidden": false
+      },
+      "c5fa81c5a9c348c5a8dad5358cc9538e": {
+        "id": "c5fa81c5a9c348c5a8dad5358cc9538e",
+        "name": "mfa_connecttola",
+        "label": "Mfa_connecttola",
+        "defaultValue": "connecttola",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "b08b37a6513a4b588c891eaa2d75fc19",
+        "isHidden": false
+      },
+      "bd47d05159204894be826fd88d6cb6a3": {
+        "id": "bd47d05159204894be826fd88d6cb6a3",
+        "name": "mfa_linkstatus",
+        "label": "Mfa_linkstatus",
+        "defaultValue": "linkstatus",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "b08b37a6513a4b588c891eaa2d75fc19",
+        "isHidden": false
+      }
+    }
+  }
+name: SoftPin_authorisation
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

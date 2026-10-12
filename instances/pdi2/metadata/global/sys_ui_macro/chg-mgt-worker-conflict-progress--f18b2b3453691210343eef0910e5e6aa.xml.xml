@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j2:if test="$[sysparm_media != 'print']">
+        <g2:evaluate>
+            // Build up labels and messages
+            var conflictMode = gs.getProperty("change.conflict.mode");
+            var conflictRoles = gs.getProperty("change.conflict.role", "itil,sn_change_write");
+            var currentSysId = current.getUniqueValue();
+            var excludeFromConflict = current.getValue("exclude_from_conflict_detection");
+
+            var conflictWorkerSysId = gs.getSession().getClientData('conflictWorker_' + currentSysId);
+
+            //check if the flag to run Conflict Detection has been set and clear it
+            //so conflict detection does not get run on form refresh
+            var runWorkerUI = gs.getSession().getClientData('run_conflict_ui');
+            if (runWorkerUI == 'true')
+            gs.getSession().clearClientData('run_conflict_ui');
+
+            var screenReaderWarnMessage = gs.getMessage("Warning Message");
+            var warningMessage = "";
+            if (conflictMode == 'basic')
+            warningMessage = gs.getMessage("Cannot run conflict detection. Required: Configuration item, Planned start date, Planned end date. Also ensure 'Exclude from conflict detection' is disabled.");
+            else
+            warningMessage = gs.getMessage("Cannot run conflict detection. Required: Configuration item/Affected CIs, Planned start date, Planned end date. Also ensure 'Exclude from conflict detection' is disabled.");
+
+            var buttonState = "ready";
+            var affectedItemCount = 0;
+
+            if (currentSysId) {
+            // Find out how many affected items are associated with this change request
+            var taskCiGr = new GlideAggregate('task_ci');
+            taskCiGr.addQuery('task', currentSysId);
+            taskCiGr.addAggregate('COUNT');
+            taskCiGr.query();
+
+            if (taskCiGr.next())
+            affectedItemCount = parseInt(taskCiGr.getAggregate('COUNT'), 10);
+            }
+
+            var workerSysId = "";
+
+            //If Conflict detection has been triggered by BR 'Update Conflicts' then set the workerSysId
+            if (conflictWorkerSysId != '') {
+            workerSysId = conflictWorkerSysId;
+            gs.getSession().clearClientData('conflictWorker_' + currentSysId);
+            }
+
+            if (currentSysId) {
+            // Find the id of any existing conflict workers running for this change
+            var chgMgtWorkerGR = new GlideRecord("chg_mgt_worker");
+            chgMgtWorkerGR.addQuery("source_record", currentSysId);
+            chgMgtWorkerGR.addQuery("type", "conflict_detection");
+            chgMgtWorkerGR.addQuery("state", "IN", ["1", "2"]);
+            chgMgtWorkerGR.orderByDesc("sys_created_on");
+            chgMgtWorkerGR.setLimit(1);
+            chgMgtWorkerGR.query();
+            if (chgMgtWorkerGR.next())
+            workerSysId = chgMgtWorkerGR.getUniqueValue();
+            }
+        </g2:evaluate>
+        <j2:set var="jvar_hasConflictRole" value="$[gs.hasRole(conflictRoles)]" />
+        <tr>
+            <td>
+                <link href="19658752d7b00200d82ba1737e61034d.cssdbx?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet" />
+                <style>
+                    .ie-conflicts {
+                        margin: 15px 0px 15px 0px;
+                        overflow: auto;
+                        border: solid transparent 1px;
+                    }
+
+                    .ie-conflict-status {
+                        float: left;
+                    }
+
+                    .ie-check-conflicts {
+                        float: right;
+                    }
+
+                    #conflictDetectionStatus {
+                        margin: var(--now-global-space--sm);
+                    }
+
+                    #conflict_status,
+                    #conflict_action_run {
+                        margin: 0 var(--now-global-space--sm);
+                    }
+                </style>
+                <div id="conflictDetectionStatus" class="outputmsg outputmsg_warning notification notification-warning" style="display: none">
+                    <span class="notification-icon icon-alert">
+                        <span class="sr-only">$[screenReaderWarnMessage]</span>
+                    </span>
+                    <span class="outputmsg_text">$[warningMessage]</span>
+                </div>
+                <div id="meta_data">
+                    <input type="hidden" id="conflict_run_state" value="$[buttonState]" />
+                    <input type="hidden" id="conflict_worker_id" value="$[workerSysId]" />
+                    <input type="hidden" id="conflict_mode" value="$[conflictMode]" />
+                    <input type="hidden" id="affected_item_count" value="$[affectedItemCount]" />
+                    <input type="hidden" id="run_worker_ui" value="$[runWorkerUI]" />
+                    <input type="hidden" id="exclude_from_conflict_hidden" value="$[excludeFromConflict]" />
+                </div>
+                <j2:if test="$[(jvar_isMSIE8 || jvar_isMSIE7) &amp;&amp; jvar_hasConflictRole]">
+                    <div class="ie-conflicts">
+                        <div class="ie-conflict-status">
+                            <label id="conflict_status" class="percent_complete"></label>
+                        </div>
+                        <div class="ie-check-conflicts">
+                            <button style="white-space: nowrap" class="btn btn-default" id="conflict_action_run">$[gs.getMessage("Check Conflicts")]</button>
+                        </div>
+                    </div>
+                </j2:if>
+                <j2:if test="$[!(jvar_isMSIE8 || jvar_isMSIE7) &amp;&amp; jvar_hasConflictRole]">
+                    <div class="cd_table">
+                        <div class="cd_row">
+                            <div class="cd_cell cd_left">
+                                <label id="conflict_status" class="percent_complete"></label>
+                            </div>
+                            <div class="cd_cell cd_right">
+                                <button style="white-space: nowrap" class="btn btn-default" id="conflict_action_run">$[gs.getMessage("Check Conflicts")]</button>
+                            </div>
+                        </div>
+                    </div>
+                </j2:if>
+                <j2:if test="$[jvar_hasConflictRole]">
+                    <script type="text/template" id="conflict_canceled_progress_status">
+                        <div>
+					<table cellspacing="0" width="100%">
+						<tbody>
+							<tr>
+								<td style="text-align: left;">
+									<span><b>$[gs.getMessage("Conflict Detection")]</b></span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div>
+						<div>
+							<div class="progress">
+								<div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuenow="100" aria-valuemax="100" style="width: 100%; min-width: 0px;">
+									<span class="sr-only">$[gs.getMessage("100% (canceled)")]</span>
+								</div>
+							</div>
+							<div style="text-align: right;">
+								<span style="width: 100%; word-wrap: break-word; font-weight: bold;">$[gs.getMessage("Conflict detection has been canceled")]</span>
+							</div>
+						</div>
+					</div>
+					</div>
+				</script>
+                    <g:requires name="ChangeConflictWorkerUtils.jsdbx" />
+                    <script>
+                        addLoadEvent(function() {
+                            initializeConflictDetection();
+                        });
+                    </script>
+                </j2:if>
+            </td>
+        </tr>
+    </j2:if>
+</j:jelly>

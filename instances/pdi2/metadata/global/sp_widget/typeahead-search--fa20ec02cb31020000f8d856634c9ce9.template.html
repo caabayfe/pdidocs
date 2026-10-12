@@ -1,0 +1,49 @@
+<form ng-if="!c.data.aisEnabled && !c.data.isAINativeChatEnabled" ng-submit="c.submitSearch()" role="search">
+  <input type="hidden" name="id" value="search"/>
+  <input type="hidden" name="t" value="{{c.searchType}}"/>
+  <div class="input-group input-group-{{::c.options.size}} input-group-typeahead" role="presentation">
+    <!-- uses ui.bootstrap.typeahead -->
+<input ng-if="c.isTypeAheadEnabled && c.showSuggestions" name="q" placeholder="{{::c.options.title}}" ng-model="c.searchTerm" autocomplete="off" uib-typeahead="item as item.term for item in c.getSearchSuggestions($viewValue)" typeahead-wait-ms="c.data.typeaheadWaitMS" typeahead-min-length="c.data.typeaheadMinLength" typeahead-focus-first="false" typeahead-on-select="c.onSelect($item, $model, $label)" typeahead-template-url="sp-typeahead.html" typeahead-popup-template-url="sp-typeahead-popup.html" class="form-control input-typeahead" role="combobox" aria-autocomplete="list" title="{{::c.options.title}}" data-toggle="tooltip" data-placement="bottom" aria-label="{{::c.options.title}}" tabindex="0" aria-haspopup="listbox">
+<input ng-if="c.isTypeAheadEnabled && !c.showSuggestions" name="q" placeholder="{{::c.options.title}}" ng-model="c.searchTerm" autocomplete="off" uib-typeahead="item as item.primary for item in c.getResults($viewValue)" typeahead-wait-ms="c.data.typeaheadWaitMS" typeahead-min-length="c.data.typeaheadMinLength" typeahead-focus-first="false" typeahead-on-select="c.onSelect($item, $model, $label)" typeahead-template-url="sp-typeahead.html" typeahead-popup-template-url="sp-typeahead-popup.html" class="form-control input-typeahead" role="combobox" aria-autocomplete="list" title="{{::c.options.title}}" data-toggle="tooltip" data-placement="bottom" aria-label="{{::c.options.title}}" tabindex="0" aria-haspopup="listbox">
+<input ng-if="!c.isTypeAheadEnabled" name="q" type="text" placeholder="{{::c.options.title}}" ng-model="c.searchTerm" autocomplete="off" class="form-control" role="listbox" title="{{::c.options.title}}" data-toggle="tooltip" data-placement="bottom" aria-label="{{::c.options.title}}" tabindex="0">
+<span class="input-group-btn">
+<button name="search" type="submit" class="btn btn-{{::c.options.color}}" title="{{::c.data.searchMsg}}" aria-label="{{::c.data.searchMsg}}" data-toggle="tooltip" data-placement="bottom">
+<i ng-if="::c.options.glyph" class="fa fa-{{::c.options.glyph}}"></i>
+</button>
+</span>
+</div>
+</form>
+<div ng-if="c.data.aisEnabled && !c.data.isAINativeChatEnabled">
+<sn-search-combobox
+                    class="aisearch" 
+                    search-context-config-id="{{c.data.searchApplicationId}}" 
+                    placeholder="{{::c.options.placeholder}}" 
+                    search-term="{{c.data.q}}" 
+                    disable-autocomplete="{{c.options.disable_all_suggestions}}" 
+                    placement="{{c.options.placement ? c.options.placement : 'dynamic-landing-header'}}" 
+                    utterance-placement="{{c.options.utterancePlacement ? c.options.utterancePlacement : 'header'}}" 
+                    enable-exact-match=false 
+                    exact-match-regex="{{c.data.exactMatchRegex}}" 
+                    is-now-assist-enabled="{{c.data.nowAssistEnabled || c.data.isDynamicChatAssistantEnabled}}"
+                    now-assist-placeholder="{{::c.options.placeholder}}"
+                    is-full-page-enabled="{{c.data.nowAssistEnabled}}"
+                    ai-assistant={{c.data.assistantName}} 
+                    search-from-chat={{c.data.isSearchFromChat}} 
+                    show-utterances={{c.data.showSuggestedUtterances}}
+                    display-onboarding-popover={{c.data.displayOnboardingPopover}} 
+                    onboarding-dismissed={{c.data.isOnboardingPopoverDismissed}}
+                    additional-context={{c.data.additionalContext}}
+                    enable-multi-line-input={{c.data.nowAssistEnabled}}
+                    disable-href={{c.data.disableHref}}
+                    >
+</sn-search-combobox>
+</div>
+<div ng-if="c.data.isAINativeChatEnabled">
+  <now-lbf-chat-client
+		id="sp-lbf-omnibar"
+		mode="hero"
+		channel="portal"
+		input-layout="{{c.options.size === 'lg' ? 'expanded' : 'compact'}}"
+		enable-voice-input="{{c.data.enableVoiceInput}}">
+  </now-lbf-chat-client>
+</div>

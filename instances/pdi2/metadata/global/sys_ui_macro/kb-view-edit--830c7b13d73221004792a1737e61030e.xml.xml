@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<j:set var="jvar_got_tiny" value="${pm.isRegistered('com.glide.editor.tinymce')}" />
+	<j:set var="jvar_editor" value="${gs.getProperty('glide.ui.html.editor')}" />
+
+	<g:evaluate var="jvar_tinymce_lang">
+		// determine the user language
+		// 		- first, try the user's language
+		//		- second, the system's language
+		//		- third, just use english
+
+		// list of translations supported in /scripts/tiny_mce/langs
+		var langsDefault = 'de,en,es,fr,it,ja,ko,nl,pt,ru,th,tr,zh,zt';
+		var langs = gs.getProperty('glide.ui.html.editor.langauges', langsDefault);
+
+		var userLanguage = gs.getUser().getLanguage();
+		if (!userLanguage || langs.indexOf(userLanguage) == -1)
+		userLanguage = gs.getProperty('glide.sys.language');
+
+		if (!userLanguage || langs.indexOf(userLanguage) == -1)
+		userLanguage = 'en'; // if we don't have the language, fall back to english
+
+		userLanguage;
+	</g:evaluate>
+
+	<j:choose>
+		 <j:when test="${jvar_editor=='tinymce' &amp;&amp; jvar_got_tiny}">
+			 <script>
+				// variables for tinymce init
+				var g_tinymce_lang = "${JS:jvar_tinymce_lang}";
+				var g_tinymce_remove_script_host = ${gs.getProperty('glide.ui.html.editor.remove_host', 'true')};
+				var tinymce_toolbar_line1 = "${JS:gs.getProperty('glide.ui.html.editor.v4.toolbar.line1')}";
+				var tinymce_toolbar_line2 = "${JS:gs.getProperty('glide.ui.html.editor.v4.toolbar.line2')}";
+				var tinymce_fonts = "${JS:gs.getProperty('glide.ui.html.editor.v4.font.collection','Arial=arial,helvetica,sans-serif;')}";
+
+				addLoadEvent(function() {
+					if (typeof g_sc_form == "undefined") if (typeof g_form != "undefined") {
+						g_sc_form = g_form;
+					}
+				});
+			 </script>
+		 </j:when>
+		 <j:otherwise>
+			 <g:requires name="scripts/htmlareaIncludes.js" includes="true" />
+			 <g:requires name="scripts/htmlarea/htmlarea.css" />
+			 <script>
+				 var _editor_url = "scripts/htmlarea/";
+
+				 function initHTMLArea() {
+					 var config = new HTMLArea.Config("${gs.getProperty('glide.ui.html.toolbar')}");
+					 <j:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]"/>
+					 config.headContent = '<link href="styles/css_includes.css?c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" type="text/css" rel="stylesheet"/>';
+					 config.attachment_add_attachments = "false";
+					 var ta = new HTMLArea('article', config);
+					 ta.registerPlugin(SpellChecker);
+					 ta.generate(null, null, "5");
+					 ta.setTextDirection("${jvar_i18n_style}");
+					 if (typeof g_sc_form != "undefined")
+						 g_sc_form.registerHandler('article', ta);
+					 else if (typeof g_form != "undefined") {
+						 g_form.registerHandler('article', ta);
+						 g_sc_form = g_form;
+					 }
+				 }
+
+				 addLoadEvent(function() {
+					 if (typeof HTMLArea != "undefined")
+						 initHTMLArea();
+					 else
+						 CustomEvent.observe("htmlarea.loaded", initHTMLArea);
+				 });
+			 </script>
+		 </j:otherwise>
+	</j:choose>
+
+</j:jelly>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <j:if test="${!GlideMobileExtensions.getDeviceType() != 'doctype';}">
+    <g:requires name="classes/GlideFilter.js" />
+  </j:if>
+  <j:if test="${GlideMobileExtensions.getDeviceType() == 'doctype';}">
+    <g:requires name="doctype/GlideFilter14.js" />
+  </j:if>
+  <g:requires name="GlideFilterCurrency.js" />
+    <g2:evaluate>
+        var __ref__ = current.getElement('condition');
+    </g2:evaluate>
+    <g2:evaluate var="jvar_dependent" expression="__ref__.getDependent()" />
+    <g2:evaluate var="jvar_show_condition_count" jelly="true">
+		var showCount = false;
+		if (__ref__.hasAttribute('show_condition_count'))
+			showCount = true;
+	    showCount;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_restricted_fields" jelly="true" object="true">
+		var otherCondition = new GlideRecord('cert_cond');
+		otherCondition.addQuery('cert_template', current.cert_template);
+		otherCondition.addQuery('sys_id', '!=', current.sys_id);
+		otherCondition.query();
+		var otherFields = [];
+		while(otherCondition.next()) {
+		    otherFields.push(otherCondition.column_name + '');
+		}
+	    var answer = otherFields.join(',');
+	    answer;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_table">
+	    current.getTableName();
+	</g2:evaluate>
+    <g2:evaluate var="ref">
+        current.getTableName() + '.condition';
+    </g2:evaluate>
+    <g2:evaluate var="jvar_single_row" jelly="true" object="true">
+		var answer = '';
+		if (__ref__.hasAttribute('single_row'))
+			answer = __ref__.getAttribute('single_row');
+		else
+			answer = 'false';
+		answer;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_is_relationship" jelly="true" object="true">
+		var answer = '';
+		if (__ref__.hasAttribute('is_relationship'))
+			answer = __ref__.getAttribute('is_relationship');
+		else
+			answer = 'false';
+		answer;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_reverse_restriction" jelly="true" object="true">
+		var answer = '';
+		if (__ref__.hasAttribute('reverse_restriction'))
+			answer = __ref__.getAttribute('reverse_restriction');
+		else
+			answer = 'false';
+		answer;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_rel_type_table" jelly="true" object="true">
+		var answer = '';
+		if (__ref__.hasAttribute('rel_type_table'))
+			answer = __ref__.getAttribute('rel_type_table');
+		answer;
+	</g2:evaluate>
+    <g2:evaluate var="jvar_extended_operators" expression="__ref__.getAttribute('extended_operators')" />
+    <tr>
+        <td colspan="99" class="label_left" style="padding: 4px">
+            <label for="$[jvar_table].$[current.getLabel()]">Condition:</label>
+            <j2:if test="$[jvar_is_relationship == 'false']">
+                <span id="condition_widget.$[ref]">
+                    <a id="condition_count.$[ref]" 
+                        class="navigation_link" 
+                        data-ref="$[ref]"
+                        data-dependent="$[jvar_dependent]"
+                        data-table="$[jvar_table]"
+                        data-type="condition_count" 
+                        title="${gs.getMessage('View results in new tab')}" />
+                    <a id="condition_count_update.$[ref]" 
+                        class="pointerhand" 
+                        data-ref="$[ref]"
+                        data-dependent="$[jvar_dependent]"
+                        data-table="$[jvar_table]"
+                        data-type="condition_count_update">
+                        <img src="images/icons/refresh.gifx" title="${gs.getMessage('Update count')}"/> 
+                    </a>
+                </span>
+            </j2:if>
+        </td>
+    </tr>
+    <tr>
+		<td colspan="2" width="100%">
+            <input type="hidden" id="sys_original.$[ref]" name="sys_original.$[ref]"
+                value="$[__ref__]" />
+            <input type="hidden"
+                id="$[ref]" 
+                class="glide_destroy_cert_filter" 
+                name="$[ref]"
+                value="$[__ref__]" 
+                data-dependent = "$[jvar_dependent]"
+                data-restricted_fields = "$[jvar_restricted_fields]"
+                data-extended_operators =  "$[jvar_extended_operators]"
+                data-usage_context = "element_conditions"
+                single-row = "$[jvar_single_row]"
+                is-relationship = "$[jvar_is_relationship]"
+                rel-type-table = "$[jvar_rel_type_table]"
+                reverse-restriction = "$[jvar_reverse_restriction]"/>
+                
+            <TABLE id="$[ref]filters_table" cellSpacing="0" cellPadding="1"
+                border="0" class="filerTable">
+                <TBODY id="$[ref]gcond_filters" style=""></TBODY>
+            </TABLE>
+		</td>
+	</tr>
+	<g:requires position="last" inline="true" name="scripts/elements/element_conditions.js" />
+        <g:inline template="cert_glide_filter.xml" />
+</j:jelly>

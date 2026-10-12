@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <!--
+       Checking if security violation has happened or not.
+    -->
+    <g:macro_invoke macro="$pwd_csrf_validation" />
+
+    <!--
+      Once security is clear, then create a new token.
+    -->
+    <g:evaluate var="jvar_csrf_token" jelly="true">
+        new SNC.PwdSecurityManager().generateSecureToken();
+    </g:evaluate>
+
+    <!--
+    common client script for CSRF handling on the client side.
+    -->
+    <g:include_script src="pwd_csrf_common_ui_script.jsdbx" />
+    <g:include_script src="$pwd_util.jsdbx" />
+
+    <g:evaluate var="sysparm_sys_user_id" jelly="true">gs.getSession().getProperty('sysparm_sys_user_id'); </g:evaluate>
+    <g:evaluate var="sysparm_request_id" jelly="true">gs.getSession().getProperty('sysparm_request_id'); </g:evaluate>
+    <g:evaluate var="sysparm_page_directory_id" jelly="true">gs.getSession().getProperty('sysparm_directory'); </g:evaluate>
+
+    <j:if test="${jvar_is_secure}">
+
+        <g:evaluate jelly="true">
+
+            // if the request is not found, then redirect the page to the error page.
+            var found = new SNC.PwdTrackingManager().requestExists(jelly.sysparm_request_id);
+            if(!found)
+            new SNC.PwdUtil().redirect('/$pwd_error.do');
+
+            var pwd_process_id = new SNC.PwdTrackingManager().getProcessIdByRequestId(jelly.sysparm_request_id);
+
+            var result = PwdVerificationSelectionHelper.getVerificationSelection(pwd_process_id, jelly.sysparm_sys_user_id, jelly.sysparm_request_id);
+
+            var pwd_min_verifications = result.min_selections;
+
+            var pwd_email_reset_url = result.email_password_reset_url;
+
+            var pwd_allow_verification_choice = result.verification_selection;
+
+            var pwd_verifications_count = 0;
+
+            /* Get a list of verification IDs with mandatory ones first. Then, if more verifications are needed to meet
+            the "min_verifications" on the process we randomly select optional verifications which the user is enrolled
+            in to equal min_verifications.
+            */
+            var verGr = new GlideRecord('pwd_verification');
+            function getVerObj(verId, required) {
+            verGr.get(verId);
+            return {
+            id: verId,
+            label: verGr.getDisplayValue('label') ? verGr.getDisplayValue('label') : verGr.getDisplayValue('name'), // Label and required are needed if optional verification choice form is shown.
+            required: required
+            };
+            }
+            var verifications = [];
+            for (var i = 0; i != result.mandatory.length; ++i)
+            verifications.push(getVerObj(result.mandatory[i], true));
+
+            var pwd_mandatory_ver_count = verifications.length;
+            var pwd_optional_ver_count = pwd_min_verifications - pwd_mandatory_ver_count;
+            var pwd_optional_choice_msg = gs.getMessage("Optional Verifications (You must select {0})", pwd_optional_ver_count + '');
+
+            var optionalSize = !result.optional ? 0:result.optional.length;
+            for (var i = 0; i != optionalSize ; i++ )
+            verifications.push(getVerObj(result.optional[i], false));
+
+            var pwd_verifications = verifications;
+        </g:evaluate>
+
+        <!-- ACTUAL PAGE STARTS HERE -->
+
+        <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+        <g:include_script src="pwd_mobile.jsdbx" />
+
+        <j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates() || gs.isLoggedIn()}">
+            <g:macro_invoke macro="$pwd_error_message" error_message="" />
+        </j:if>
+
+        <span class="sr-only">${gs.getMessage('ServiceNow Password Reset, step 2 out of 3')}</span>
+        <g:evaluate var="jvar_show_header_footer" jelly="true">
+            var showHeaderFooter = gs.getSession().getProperty('show_custom_header_footer');
+            showHeaderFooter;
+        </g:evaluate>
+
+        <main>
+            <j:choose>
+                <g:macro_invoke macro="$pwd_reset_stylesheet" />
+                <!-- Polarisberg (external/stylized auth) -->
+                <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+                    <!-- Box override via margin because the frame has padding baked in -->
+                    <div id="$pwd_verify" class="login-wrapper">
+                        <g:inline template="polarisberg_login_wrapper_svg.xml" />
+
+                        <div class="login-container">
+                            <g:macro_invoke macro="$pwd_error_message" error_message="" />
+
+                            <div class="login-logo">
+                                <g:inline template="polarisberg_login_logo.xml" />
+                            </div>
+                            <!-- Process custom header -->
+                            <j:if test="${jvar_show_header_footer}">
+                                <!-- Pulled from from $pwd_process_flow (UI macro); we don't need the whole thing -->
+                                <j:if test="${!empty(sysparm_process_id)}">
+                                    <g:evaluate var="jvar_custom_header_name" jelly="true">
+                                        var customHeaderMacroName;
+                                        var p = new SNC.PwdProcess(jelly.sysparm_process_id);
+                                        if (p.exists())
+                                        customHeaderMacroName = p.getHeaderMacroName();
+                                        customHeaderMacroName;
+                                    </g:evaluate>
+                                    <j:if test="${!empty(jvar_custom_header_name)}">
+                                        <div class="login-card login-card-custom-header">
+                                            <g:macro_invoke macro="${jvar_custom_header_name}" stage="1" />
+                                        </div>
+                                    </j:if>
+                                </j:if>
+                            </j:if>
+                            <div class="login-card ${jvar_hide_illustrations}">
+                                <div id="verification_forms" class="login-form">
+                                    <ol class="login-forgot-password-steps" role="list">
+                                        <li>
+                                            <span class="step-circle" aria-hidden="true">1</span>
+                                            <span class="step-label">Identify</span>
+                                        </li>
+                                        <li class="stepper-separator" aria-hidden="true"></li>
+                                        <li class="current" aria-current="step">
+                                            <span class="step-circle" aria-hidden="true">2</span>
+                                            <span class="step-label">Verify</span>
+                                        </li>
+                                        <li class="stepper-separator" aria-hidden="true"></li>
+                                        <li>
+                                            <span class="step-circle" aria-hidden="true">3</span>
+                                            <span class="step-label">Reset</span>
+                                        </li>
+                                    </ol>
+
+                                    <!-- If the user is allowed to choose which optional verifications they want, and there is a choice available
+                                     then we will show a form here that asks which ones they want. We will initially render all of the verification forms
+                                     but then when they click next, we'll remove the ones they don't want.
+                                -->
+                                    <j:if test="${pwd_allow_verification_choice}">
+                                        <form id="optional-verification-choice-form" onsubmit="return false;">
+                                            <h1 id="verifications-list-header" class="pwd-title" tabindex="0" aria-label="${gs.getMessage('ServiceNow Password Reset, step 2 out of 3, Verifications')}" aria-describedby="mandatory-verifications-header mandatory-verifications-list optional-verifications-header">${gs.getMessage("Verifications")}</h1>
+                                            <h2 id="mandatory-verifications-header" class="pwd-section-title" style="font-size: 14px;">${gs.getMessage("Mandatory Verifications")}</h2>
+
+                                            <ul id="mandatory-verifications-list">
+                                                <j:if test="${pwd_mandatory_ver_count == 0}">
+                                                    <li>${gs.getMessage("There are no mandatory verifications")}</li>
+                                                </j:if>
+                                                <j:forEach items="${pwd_verifications}" var="jvar_verification">
+                                                    <j:if test="${jvar_verification.required}">
+                                                        <li>${jvar_verification.label}</li>
+                                                    </j:if>
+                                                </j:forEach>
+                                            </ul>
+
+                                            <h3 id="optional-verifications-header" class="pwd-section-title" style="font-size: 14px;">${pwd_optional_choice_msg}</h3>
+                                            <j:forEach items="${pwd_verifications}" var="jvar_verification">
+                                                <j:if test="${!jvar_verification.required}">
+                                                    <div class="form-group">
+                                                        <span class="input-group-checkbox">
+                                                            <input id="chk_${jvar_verification.id}" class="checkbox" type="checkbox" name="chk_${jvar_verification.id}" />
+                                                            <label for="chk_${jvar_verification.id}" class="checkbox-label" aria-label="${gs.getMessage('Optional')} ${jvar_verification.label}">${jvar_verification.label}</label>
+                                                        </span>
+                                                    </div>
+                                                </j:if>
+                                            </j:forEach>
+
+                                            <button type="submit" id="sysverb_select_verifications_next" aria-disabled="true" class="btn btn-primary" onclick="processOptionalVerificationChoices(); return false;" tabindex="-1">${gs.getMessage('Next')}</button>
+                                        </form>
+                                    </j:if>
+
+                                    <j:forEach items="${pwd_verifications}" var="jvar_verification">
+                                        <g:evaluate var="sysparm_verification_id" jelly="true">jelly.jvar_verification.id</g:evaluate>
+
+                                        <form style="display: none;" id="verification.${jvar_verification.id}" onsubmit="return false">
+                                            <g:evaluate var="jvar_verification_ui" object="true" jelly="true">
+                                                new SNC.PwdVerificationManager().getVerificationUIByVerificationId(jelly.sysparm_verification_id);
+                                            </g:evaluate>
+                                            <g:macro_invoke macro="${jvar_verification_ui}" />
+
+                                            <!-- Next button verifies a single form and proceeds to the next if successful.
+                                         When it is clicked on the final form, we verify all the forms together so that the
+                                         server is the single source of truth-->
+                                            <button type="submit" name="sysverb_pwd_reset_${jvar_verification.id}" id="sysverb_pwd_reset" class="btn btn-primary" tabindex="0" onclick="verifyResponse(); return false;">${gs.getMessage('Next')}</button>
+                                            <span id="password_comment_${jvar_verification.id}" class="help-block" style="margin-top:10px;display:block;"></span>
+                                            <g:evaluate jelly="true">++pwd_verifications_count;</g:evaluate>
+                                        </form>
+                                    </j:forEach>
+
+                                    <form id="pwd_master_form" name="pwd_master_form" method="post">
+                                        <input type="hidden" name="sysparm_error" id="sysparm_error" value="" />
+                                        <input type="hidden" name="sysparm_action" id="sysparm_action" value="password_reset_verify" />
+                                        <input type="hidden" name="sysparm_directory" id="sysparm_directory_id" value="${sysparm_page_directory_id}" />
+                                        <input type="hidden" name="pwd_csrf_token" id="pwd_csrf_token" value="${jvar_csrf_token}" />
+                                        <input type="hidden" name="sysparm_request_id" id="sysparm_request_id" value="${sysparm_request_id}" />
+                                    </form>
+
+                                </div>
+                                <j:if test="${gs.getProperty('glide.ui.branding.works_with.is_visible', 'false') == 'true'}">
+                                    <g:macro_invoke macro="ShowSNBrandTaglineOnLoginPage" />
+                                </j:if>
+                            </div>
+                            <!-- Process custom footer -->
+                            <j:if test="${jvar_show_header_footer}">
+                                <g:macro_invoke macro="$pwd_process_footer" stage="1" process="${sysparm_process_id}" use_polaris="true" />
+                            </j:if>
+                        </div>
+                    </div>
+                    <style>
+                        .pwd-form-control {
+                            border: 1px solid #757575;
+                        }
+
+                        [aria-disabled="true"] {
+                            opacity: 0.5;
+                            cursor: not-allowed;
+                        }
+                    </style>
+                </j:when>
+                <!-- Heisenberg -->
+                <j:otherwise>
+                    <g:macro_invoke macro="$pwd_process_flow" stage="2" process="${pwd_process_id}" show_custom_header="${jvar_show_header_footer}" />
+
+                    <center id="$pwd_verify">
+
+                        <div class="pwd-reset-box default-focus-outline">
+                            <div id="verification_forms">
+
+                                <!-- If the user is allowed to choose which optional verifications they want, and there is a choice available
+                                 then we will show a form here that asks which ones they want. We will initially render all of the verification forms
+                                 but then when they click next, we'll remove the ones they don't want.
+                            -->
+                                <j:if test="${pwd_allow_verification_choice}">
+                                    <form id="optional-verification-choice-form" onsubmit="return false;">
+                                        <h2 id="verifications-list-header" class="pwd-title" tabindex="0" aria-label="${gs.getMessage('ServiceNow Password Reset, step 2 out of 3, Verifications')}" aria-describedby="mandatory-verifications-header mandatory-verifications-list optional-verifications-header">${gs.getMessage("Verifications")}</h2>
+
+                                        <h3 id="mandatory-verifications-header" class="pwd-section-title" style="font-size: 14px;">${gs.getMessage("Mandatory Verifications")}</h3>
+                                        <ul id="mandatory-verifications-list">
+                                            <j:if test="${pwd_mandatory_ver_count == 0}">
+                                                <li>${gs.getMessage("There are no mandatory verifications")}</li>
+                                            </j:if>
+                                            <j:forEach items="${pwd_verifications}" var="jvar_verification">
+                                                <j:if test="${jvar_verification.required}">
+                                                    <li>${jvar_verification.label}</li>
+                                                </j:if>
+                                            </j:forEach>
+                                        </ul>
+
+                                        <h3 id="optional-verifications-header" class="pwd-section-title" style="font-size: 14px;">${pwd_optional_choice_msg}</h3>
+                                        <j:forEach items="${pwd_verifications}" var="jvar_verification">
+                                            <j:if test="${!jvar_verification.required}">
+                                                <div class="form-group">
+                                                    <span class="input-group-checkbox">
+                                                        <input id="chk_${jvar_verification.id}" class="checkbox" type="checkbox" name="chk_${jvar_verification.id}" />
+                                                        <label for="chk_${jvar_verification.id}" class="checkbox-label" aria-label="${gs.getMessage('Optional')} ${jvar_verification.label}">${jvar_verification.label}</label>
+                                                    </span>
+                                                </div>
+                                            </j:if>
+                                        </j:forEach>
+
+                                        <button id="sysverb_select_verifications_next" aria-disabled="true" class="btn btn-primary btn-pwd-submit" onclick="processOptionalVerificationChoices(); return false;" tabindex="-1">${gs.getMessage('Next')}</button>
+                                    </form>
+                                </j:if>
+
+                                <j:forEach items="${pwd_verifications}" var="jvar_verification">
+                                    <g:evaluate var="sysparm_verification_id" jelly="true">jelly.jvar_verification.id</g:evaluate>
+
+                                    <form style="display: none;" id="verification.${jvar_verification.id}" onsubmit="return false">
+                                        <g:evaluate var="jvar_verification_ui" object="true" jelly="true">
+                                            new SNC.PwdVerificationManager().getVerificationUIByVerificationId(jelly.sysparm_verification_id);
+                                        </g:evaluate>
+                                        <g:macro_invoke macro="${jvar_verification_ui}" />
+
+                                        <!-- Next button verifies a single form and proceeds to the next if successful.
+                                     When it is clicked on the final form, we verify all the forms together so that the
+                                     server is the single source of truth-->
+                                        <span id="password_comment_${jvar_verification.id}" class="help-block" style="margin-top:10px;display:block;"></span>
+
+                                        <span class="col-xs-12 verify-btn">
+                                            <button name="sysverb_pwd_reset_${jvar_verification.id}" id="sysverb_pwd_reset" class="btn btn-primary btn-pwd-submit" tabindex="0" onclick="verifyResponse(); return false;">${gs.getMessage('Next')}</button>
+                                        </span>
+
+                                        <g:evaluate jelly="true">++pwd_verifications_count;</g:evaluate>
+                                    </form>
+                                </j:forEach>
+                            </div>
+
+                            <form id="pwd_master_form" name="pwd_master_form" method="post">
+                                <input type="hidden" name="sysparm_error" id="sysparm_error" value="" />
+                                <input type="hidden" name="sysparm_action" id="sysparm_action" value="password_reset_verify" />
+                                <input type="hidden" name="sysparm_directory" id="sysparm_directory_id" value="${sysparm_page_directory_id}" />
+                                <input type="hidden" name="pwd_csrf_token" id="pwd_csrf_token" value="${jvar_csrf_token}" />
+                                <input type="hidden" name="sysparm_request_id" id="sysparm_request_id" value="${sysparm_request_id}" />
+                            </form>
+
+                        </div>
+                    </center>
+                    <!-- Process footer -->
+                    <j:if test="${jvar_show_header_footer}">
+                        <g:macro_invoke macro="$pwd_process_footer" stage="2" process="${pwd_process_id}" />
+                    </j:if>
+                </j:otherwise>
+            </j:choose>
+        </main>
+    </j:if>
+</j:jelly>

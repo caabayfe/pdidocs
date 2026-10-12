@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div class="diagnostics-results uc-results">
+	
+		<g:evaluate>
+			var uc_heading = gs.getMessage('User Criteria');
+			
+			if(!finalResults.isDomainSeparationActive){
+				if(ucResults.summary == 4) 
+					uc_heading = gs.getMessage('How to Provide Access');
+				else 
+					uc_heading = gs.getMessage('User Criteria Assigned');
+			}
+				
+		</g:evaluate>
+
+		<div class ="diagnostics-summary collapsible">
+			<h2>
+				<i class="icon-add expand" tabindex="0"></i>
+				<i class="icon-user" aria-hidden="true"></i>
+				<span class="summary-heading">${uc_heading}</span>
+			</h2>
+		</div>
+
+
+
+		<div class="content">
+			<j:if test="${finalResults.isDomainSeparationActive}">
+				<g2:no_escape><p class="note">${ucResults.note}</p></g2:no_escape>
+			</j:if>
+			<j:if test="${ucResults.summary == 4}">
+				<g:evaluate>
+
+					var table_note = "";
+					
+					if(ucResults.results.length == 0){
+						if(isArticle == 'true')
+							table_note = gs.getMessage('To provide access to the knowledge article, add an appropriate user criteria to the {1} knowledge base for {0}.',links);
+						else
+							table_note = gs.getMessage('To provide access to the knowledge base, add an appropriate user criteria to the {1} knowledge base for {0}.',links);
+					}
+					else {
+						if(isArticle == 'true')
+							table_note = gs.getMessage('To provide access to article {2} in knowledge base {1}, add {0} to one or more of the following user criteria set at article or knowledge base level.',links);
+						else
+							table_note = gs.getMessage('To provide access to knowledge base ({1}), add {0} to one or more of the following user criteria.',links);	
+					}
+				</g:evaluate>
+				<g2:no_escape><p class="note">${table_note}</p></g2:no_escape>
+			</j:if>
+
+
+			<j:if test="${ucResults.results.length > 0 &amp;&amp; ucResults.summary!=0}">
+				<div class="diagnostics-table" aria-live="polite" aria-atomic="true">
+
+					<table class="results-table table table-hover uc-table">
+						<tr>
+							<th>${gs.getMessage('User Criteria')}</th>
+							<th>${gs.getMessage('Access Type')}</th>
+							<th>${gs.getMessage('Set on')}</th>
+						</tr>
+
+						<g2:evaluate>
+							var count = 1;
+						</g2:evaluate>
+						<j:forEach items="${ucResults.results}" var="jvar_result">
+							<g2:evaluate>
+								var display;
+								if(10 ${AMP}lt; count)
+								display="none";
+								else
+								display="table-row";
+								count++;
+							</g2:evaluate>
+							<tr class="ucRow" style="display:$[display]">
+								<td>
+									<a class = "linked formlink" href="/user_criteria.do?sys_id=${jvar_result.sysId}">
+										<g2:no_escape>
+											${jvar_result.name}
+										</g2:no_escape>
+									</a>
+								</td>
+								<td>${jvar_result.type}</td>
+								<td>${jvar_result.setAt}</td>
+							</tr>
+						</j:forEach>
+					</table>
+					<g2:evaluate var="jvar_table_caption2" jelly="true">
+						var nResults = ucResults.results.length;
+						var caption1 = gs.getMessage('1 to {0} of {1} results',[nResults+'',nResults+'']);
+
+						var showMore = 10 ${AMP}lt; ucResults.results.length;
+
+						var num ;
+						if(showMore)
+						num = '10';
+						else
+						num = nResults+'';
+						var caption = gs.getMessage('1 to {0} of {1} results',[num,nResults+'']);
+						caption1;
+					</g2:evaluate>
+					<span class="no-rows" id="table_caption">$[caption]</span>		
+					<j2:if test="$[showMore==true]">
+						<a id="seeMoreLink" href="javascript:void(0)" onclick="showAll()" style="float:right">${gs.getMessage('See all {0} results',ucResults.results.length+'')}</a>
+					</j2:if>
+				</div>
+			</j:if>
+
+		</div>
+
+	</div>
+	<script>
+		function showAll(){
+		$j(".ucRow").css('display','table-row');
+		$j('#seeMoreLink').remove();
+		$j('#table_caption').text('$[jvar_table_caption2]');
+		$j(".uc-results").find(".content").css("max-height","max-content");
+		}
+	</script>
+
+</j:jelly>

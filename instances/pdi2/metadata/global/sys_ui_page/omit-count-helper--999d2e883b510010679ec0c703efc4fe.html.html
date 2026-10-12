@@ -1,0 +1,392 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.listTable {
+			width: 100%;
+			border: 1px solid;
+		}
+		
+		.listTable td, .listTable th {
+			border: 1px solid #ddd;
+			padding: 8px;
+			width: 150px;
+		}
+		
+		.listTable th[scope=col] {
+			padding-top: 12px;
+			padding-bottom: 12px;
+			text-align: left;
+			background-color: black;
+			color: white;
+		}
+		
+		.listTable tr:nth-child(even) {
+			background-color: #f2f2f2;
+		}
+		
+		.listTable tr:hover {
+			background-color: #ddd; 
+		}
+
+		#table_name {
+			display: inline-block;
+			width: 85%;
+		}
+
+		#table_button {
+			float:right;
+			padding-right: 50px;
+		}
+
+		#number_input {
+			margin-left: 50px;
+		}
+
+		#number_button {
+			float: right;
+			padding-right: 50px;
+			margin-bottom: 10px;
+		}
+
+		#backButton {
+			margin-left: 5px;
+		}
+
+		.icon-loading {
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+	</style>
+	
+	<g2:evaluate var="jvar_page" expression="RP.getParameterValue('sysparm_page')"/>
+	<g2:evaluate var="jvar_tableName" expression="RP.getParameterValue('sysparm_tableName')"/>
+	<g2:evaluate var="jvar_sizeclass" expression="RP.getParameterValue('sysparm_sizeclass')"/>
+	
+	<g2:evaluate>
+		var tableName;
+		var listControlSysId;
+	</g2:evaluate>
+
+	<j2:if test="$[jvar_page == '']">
+		<g2:evaluate jelly="true">
+			var sizeclassLimit = jelly.jvar_sizeclass;
+			if (!sizeclassLimit)
+				sizeclassLimit = 1000000;
+
+			var grDictionary = new GlideRecord('sys_dictionary');
+			grDictionary.addQuery('sizeclass', '>=', sizeclassLimit);
+			grDictionary.orderByDesc('sizeclass');
+			grDictionary.query();
+
+			var msgAllRegLists = gs.getMessage('Omit Count for All Default Lists for Listed Tables');
+			var msgAllRelatedLists = gs.getMessage('Omit Count for All Related Lists for Listed Tables');
+			var msgOmitCount = gs.getMessage('Omit Count');
+
+			var omitCountHelper = gs.getMessage('Remove Pagination Count Helper for Large Tables');
+			var omitCountHelperDescription = gs.getMessage("Selecting the 'Remove pagination count' checkbox on a List Control will prevent the system from counting the number of records prior to querying the table.  This can improve performance for large tables.  Note that this will also change the default behavior of List Pagination.");
+
+			var omitCountHelperInstruction = gs.getMessage("Use the dropdown to navigate directly to a specific table's lists, or click the table name in the list below.");
+
+			var openMsg = gs.getMessage('Open Regular and Related Lists for Table:');
+			var tableCountMsg = gs.getMessage('Tables with Record Count Greater Than:')
+		</g2:evaluate>
+
+		<h1 id="titlePageHeader">$[omitCountHelper]</h1>
+		<h4>$[omitCountHelperDescription]</h4>
+		<h4>$[omitCountHelperInstruction]</h4>
+
+		<br/>
+
+		<span>$[openMsg]</span>
+		<div>
+			<select id="table_name" name="table_name" class="form-control" onchange="">
+	        	<g:table_options selected="" all=""/>
+	        </select>
+	        <button type="button" id="table_button">${gs.getMessage('Open')}</button>
+    	</div>
+
+    	<hr/>
+
+    	<div>
+    	<span>$[tableCountMsg]</span>
+    	<input type="number" id="number_input" value="$[sizeclassLimit]"/>
+    	<button type="button" id="number_button">${gs.getMessage('Filter')}</button>
+    	</div>
+		<table id="homeTable" class="listTable">
+			<thead>
+				<tr>
+					<th scope="col">${gs.getMessage('Table Name')}</th>
+					<th scope="col">${gs.getMessage('Number of Records')}</th>
+				</tr>
+			</thead>
+			
+			<tbody>
+				<j2:while test="$[grDictionary.next()]">
+					<g2:evaluate>
+						var grDictionaryTableLabel = new GlideRecord('sys_db_object');
+						var dictionaryLabelExists = grDictionaryTableLabel.get('name', grDictionary.getDisplayValue('name'));
+						var dictionaryTableLabel = dictionaryLabelExists ? grDictionaryTableLabel.getDisplayValue() : gs.getMessage('NULL');
+					</g2:evaluate>
+					<tr data-tableName="$[grDictionary.getValue('name')]">
+						<th scope="row">
+							<a href="omit_count_helper.do?sysparm_page=table&amp;sysparm_tableName=$[grDictionary.name]"> $[dictionaryTableLabel] ($[grDictionary.getDisplayValue('name')])</a>
+						</th>
+						<g2:evaluate>
+							var sizeclassNumber = grDictionary.getValue('sizeclass');
+						</g2:evaluate>
+						<th scope="row">
+							$[sizeclassNumber]
+						</th>
+					</tr>
+				</j2:while>
+			</tbody>
+		</table>
+	</j2:if>
+	
+	<j2:if test="$[jvar_page == 'table']">
+		<g2:evaluate jelly="true">
+			tableName = jelly.jvar_tableName;
+			var regListOmitCount = false;
+			var regListSpecificView = false;
+			var regListSpecificViewList;
+			
+			var grList = new GlideRecord('sys_ui_list');
+			grList.addQuery('name', tableName);
+			grList.addNullQuery('user');
+			grList.addNullQuery('parent');
+			grList.query();
+
+			var grListLC = new GlideRecord('sys_ui_list_control');
+			grListLC.addQuery('name', tableName);
+			grListLC.addNullQuery('related_list');
+			grListLC.query();
+			if (grListLC.next()) {
+				regListOmitCount = grListLC.getDisplayValue('omit_count') === 'true';
+				regListSpecificView = grListLC.getDisplayValue('omit_count_views') === 'true';
+				regListSpecificViewList = grListLC.getValue('omit_count_views_list');
+			}
+
+			listControlSysId = grListLC.getUniqueValue();
+			
+			var grRelatedList = new GlideRecord('sys_ui_related_list_entry');
+			grRelatedList.addQuery('related_list','STARTSWITH', tableName + '.');
+			grRelatedList.orderBy('list_id.name');
+			grRelatedList.orderBy('related_list');
+			grRelatedList.query();
+			
+			var relatedListControlObject = {};
+			
+			var grRelatedListLC = new GlideRecord('sys_ui_list_control');
+			grRelatedListLC.addQuery('related_list', 'STARTSWITH', tableName + '.');
+			grRelatedListLC.orderBy('name');
+			grRelatedListLC.orderBy('related_list');
+			grRelatedListLC.query();
+			
+			while (grRelatedListLC.next()) {
+				relatedListControlObject[grRelatedListLC.getValue('name') + '_' + grRelatedListLC.getElement('related_list')] = grRelatedListLC.getValue('omit_count');
+			}
+			
+			var grTableName = new GlideRecord('sys_db_object');
+			var tableNameExists = grTableName.get('name', tableName);
+			var tableNameDisplay = tableNameExists ? grTableName.getDisplayValue() : gs.getMessage('NULL');
+			
+			var msgRegList = gs.getMessage('Omit Count for all {0} Lists', tableNameDisplay);
+			var msgRelatedList = gs.getMessage('Omit Count for all {0} Related Lists', tableNameDisplay);
+			var msgOmitCount = gs.getMessage('Omit Count');
+			var msgTitle = gs.getMessage('Regular and Related Lists for Table: {0}', tableNameDisplay);
+			var msgOmitCountRelated = gs.getMessage('Omit Count for Related List');
+			var msgOmitCountList = gs.getMessage('Omit Count for List View');
+
+			var msgCreateLC = gs.getMessage('Note: This will create List Controls where needed, using the default List Control values.')
+			
+			var relatedList;
+			var parentTable;
+			var rlTableLabel;
+		</g2:evaluate>
+	
+		<nav id="list-attributes-nav" class="navbar navbar-default" role="navigation">
+			<div class="navbar-left">
+				<button id="backButton" class="btn btn-default icon-chevron-left navbar-btn" title="${gs.getMessage('Back')}" onclick="goBack();"></button>
+			</div>
+			<div class="navbar-right">
+			<g:dialog_button
+				id="save_button"
+				style_class="btn btn-primary pull-right"
+				onclick="return modifyListLayout()">
+				${gs.getMessage('Save')}
+			</g:dialog_button>
+			</div>
+		</nav>
+		<h1>
+			$[msgTitle]
+		</h1>
+		<h4>
+			$[msgCreateLC]
+		</h4>
+		<h2>
+			${gs.getMessage('Regular Lists')}
+		</h2>
+		
+		<table id="regularListTable_$[jvar_tableName]]" class="listTable">
+			<thead>
+				<tr>
+					<th scope="col">${gs.getMessage('View')}</th>
+					<th scope="col" aria-label="$[msgOmitCount]">
+						<j2:if test="$[regListOmitCount &amp;&amp; !regListSpecificView]">
+							<label for="omitCount_regList_selectAll">
+								<input aria-describedby="omitCount_regList_selectAll_description" type="checkbox" class="select-all select-all-regular" id="regList_omitCount" checked="true"/>
+								$[msgOmitCount]
+							</label>
+							<span id="omitCount_regList_selectAll_description" 
+								  aria-hidden="true"  
+								  class="sr-only">
+								$[msgRegList]
+							</span>
+						</j2:if>
+						<j2:if test="$[!regListOmitCount || regListOmitCount &amp;&amp; regListSpecificView]">
+							<label for="omitCount_regList_selectAll">
+								<input aria-describedby="omitCount_regList_selectAll_description" type="checkbox" class="select-all select-all-regular" id="regList_omitCount"/>
+								$[msgOmitCount]
+							</label>
+							<span id="omitCount_regList_selectAll_description" 
+								  aria-hidden="true"  
+								  class="sr-only">
+								$[msgRegList]
+							</span>
+						</j2:if>
+					</th>
+				</tr>
+			</thead>
+			
+			<tbody>
+				<j2:while test="$[grList.next()]">
+				<j2:if test="$[!grList.getDisplayValue('view').startsWith('Rpt')]">
+					<tr data-sysid="$[grList.getUniqueValue()]">
+						<th scope="row">
+							$[grList.getDisplayValue('view')]
+						</th>
+							<g2:evaluate>
+								var checkboxBoolean = (regListOmitCount &amp;&amp; !regListSpecificView) || (regListOmitCount &amp;&amp; regListSpecificView &amp;&amp; regListSpecificViewList.indexOf(grList.getValue('view')) > -1);
+							</g2:evaluate>
+							<j2:if test="$[checkboxBoolean]">
+								<td>
+									<label for="$[grList.getUniqueValue()]_omitCount]">
+										<input type="checkbox" id="$[grList.getUniqueValue()]_omitCount" name="regList_omitCount" class="checkbox" checked="true" value="$[grList.getValue('view')]"/> 
+										<span class="sr-only">
+											$[msgOmitCountList] $[grList.getDisplayValue('view')]
+										</span>
+									</label>
+								</td>
+							</j2:if>
+							<j2:if test="$[!checkboxBoolean]">
+								<td>
+									<label for="$[grList.getUniqueValue()]_omitCount]">
+										<input type="checkbox" id="$[grList.getUniqueValue()]_omitCount" name="regList_omitCount" class="checkbox" value="$[grList.getValue('view')]"/> 
+										<span class="sr-only">
+											$[msgOmitCountList] $[grList.getDisplayValue('view')]
+										</span>
+									</label>
+								</td>
+							</j2:if>
+					</tr>
+					</j2:if>
+				</j2:while>
+			</tbody>
+		</table>
+
+		<h2>
+			$[tableNameDisplay] ${gs.getMessage('Related Lists')}
+		</h2>
+		<table id="relatedListTable_$[jvar_tableName]]" class="listTable">
+			<thead>
+				<tr>
+					<th scope="col">${gs.getMessage('Related List Label (if available)')}</th>
+					<th scope="col">${gs.getMessage('Related List')}</th>
+					<th scope="col">${gs.getMessage('Parent Table (the form containing the related list)')}</th>
+					<th scope="col" aria-label="$[msgOmitCount]">
+							<label for="omitCount_relatedList_selectAll">
+								<input aria-describedby="omitCount_relatedList_selectAll_description" type="checkbox" class="select-all" id="relatedList_omitCount"/>
+								$[msgOmitCount]
+							</label>
+							<span id="omitCount_relatedList_selectAll_description" 
+								  aria-hidden="true"  
+								  class="sr-only">
+								$[msgRelatedList]
+							</span>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				<j2:while test="$[grRelatedList.next()]">
+					<g2:evaluate>
+						var breakBoolean = (grRelatedList.getValue('related_list') === relatedList) &amp;&amp; (grRelatedList.getElement('list_id.name').toString() === parentTable.toString());
+					</g2:evaluate>
+					<j2:if test="$[!breakBoolean]">
+						<g2:evaluate>
+							relatedList = grRelatedList.getValue('related_list')
+							parentTable = grRelatedList.getElement('list_id.name');
+							
+							var grGetTableLabel = new GlideRecord('sys_db_object');
+							var querySuccess = grGetTableLabel.get('name', parentTable);
+							
+							rlTableLabel = querySuccess ? grGetTableLabel.getDisplayValue() : gs.getMessage('NULL');
+							
+							var grRLListControl = new GlideRecord('sys_ui_list_control');
+							grRLListControl.addQuery('name', parentTable);
+							grRLListControl.addQuery('related_list', relatedList);
+							grRLListControl.query();
+							var recordExists = grRLListControl.next();
+							
+							var rlLabel = recordExists ? grRLListControl.getValue('label') : gs.getMessage('(empty)');
+							if (rlLabel == "" || rlLabel == null)
+								rlLabel = gs.getMessage('(empty)');
+						</g2:evaluate>
+
+						<tr data-sysid="$[grRelatedList.getUniqueValue()]">
+							<th>$[rlLabel]</th>
+							<th scope="row">
+								$[relatedList]
+							</th>
+							<th scope="row">
+								$[rlTableLabel] ($[parentTable])
+							</th>
+							<g2:evaluate>
+								var relatedListValue = relatedListControlObject[parentTable + '_' + relatedList];
+							</g2:evaluate>
+							<j2:if test="$[relatedListValue == true]">
+								<td>
+									<label for="$[grRelatedList.getUniqueValue()]_omitCount]">
+										<input type="checkbox" id="$[grRelatedList.getUniqueValue()]_omitCount" name="relatedList_omitCount" class="checkbox" checked="true" value="$[grRelatedList.getValue('related_list')]" table="$[parentTable]" relatedList="$[relatedList]"/> 
+										<span class="sr-only">
+											$[msgOmitCountRelated] $[grRelatedList.getValue('related_list')]
+										</span>
+									</label>
+								</td>
+							</j2:if>
+							<j2:if test="$[relatedListValue != true]">
+								<td>
+									<label for="$[grRelatedList.getUniqueValue()]_omitCount]">
+										<input type="checkbox" id="$[grRelatedList.getUniqueValue()]_omitCount" name="relatedList_omitCount" class="checkbox" value="$[grRelatedList.getValue('related_list')]" table="$[parentTable]" relatedList="$[relatedList]"/> 
+										<span class="sr-only">
+											$[msgOmitCountRelated] $[grRelatedList.getValue('related_list')]
+										</span>
+									</label>
+								</td>
+							</j2:if>
+						</tr>
+					</j2:if>
+				</j2:while>
+			</tbody>
+		</table>
+			<g:dialog_button
+				id="save_button_bottom"
+				style_class="btn btn-primary pull-right"
+				onclick="return modifyListLayout()">
+				${gs.getMessage('Save')}
+			</g:dialog_button>
+	</j2:if>
+	<br/>
+
+	<i class="icon-loading icon-lg"/>
+
+</j:jelly>

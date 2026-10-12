@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false"
+  xmlns:j="jelly:core"
+  xmlns:g="glide"
+  xmlns:j2="null"
+  xmlns:g2="null">
+
+  <style>
+
+    body.-polaris {
+    padding: 0;
+    }
+
+    .deeplink-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 32px 0 32px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .deeplink-container.adaptive {
+            background-color: RGB(var(--now-color--neutral-20));
+            color: RGB(var(--now-color--neutral-0));
+        }
+
+        .timingDiv {
+            background-color: RGB(var(--now-color--neutral-20));
+        }
+
+        .input-group-checkbox input.checkbox~label.checkbox-label.adaptive {
+          color: RGB(var(--now-color--neutral-0));
+        }
+    }
+
+    .deeplink {
+    text-align: center;
+    }
+
+    .deeplink .title {
+    margin: 16px auto 16px auto;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    }
+
+    .deeplink .description {
+    margin-bottom: 40px;
+    }
+
+    .deeplink .icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 14px;
+    }
+
+    .deeplink .copylink .input-group-checkbox .checkbox-label {
+    display: flex;
+    align-items: start;
+    text-align: start;
+    margin-bottom: 32px;
+    gap: 8px;
+    }
+
+    .ltr {
+    direction: ltr;
+    }
+
+    .rtl {
+    direction: rtl;
+    }
+
+    .error h1 {
+    font-size: 20px;
+    }
+
+    .btn-open-store {
+        border-radius: 8px;
+        height: 40px;
+    }
+  </style>
+
+  <j2:set var="jvar_snapp" value="$[snapp]"/>
+
+  <g2:evaluate>
+    var glide_session = GlideSession.get();
+  </g2:evaluate>
+
+  <g2:evaluate var="jvar_user_agent_os">
+    var user_agent_os = glide_session.getProperty('user_agent_os');
+    user_agent_os;
+  </g2:evaluate>
+
+  <g2:evaluate var="jvar_app_record" object="true" jelly="true">
+    var gr = new GlideRecord("sys_sg_mobile_application");
+    gr.addQuery("link_path", jelly.snapp);
+    gr.query();
+    gr.next();
+    gr;
+  </g2:evaluate>
+
+  <g2:evaluate var="jvar_text_direction">
+    var lang_code = glide_session.getLanguage();
+    var lang_record = new GlideRecord("sys_language");
+    lang_record.addQuery("id", lang_code);
+    lang_record.query();
+    lang_record.next() ? lang_record.getValue("text_direction") : "ltr";
+  </g2:evaluate>
+
+  <g2:evaluate var="jvar_ref">
+    GlideTransaction.get().getBaseURL() + RP.getReferringURL();
+  </g2:evaluate>
+
+  <g2:evaluate var="jvar_app_store_link" jelly="true">
+    var app_store_link = "";
+    var link_path = gr.getValue('link_path');
+    if (jelly.jvar_user_agent_os == "ios") {
+    var ios_apple_id = gr.getValue('ios_apple_id');
+    if (JSUtil.notNil(link_path) ${AND} JSUtil.notNil(ios_apple_id))
+      app_store_link = "https://apps.apple.com/us/app/servicenow-" + link_path + "/id" + ios_apple_id;
+    } else if (jelly.jvar_user_agent_os == "android") {
+      var android_package_name = gr.getValue('android_package_name');
+      if (JSUtil.notNil(link_path) ${AND} JSUtil.notNil(android_package_name))
+      app_store_link = "https://play.google.com/store/apps/details?id=" + android_package_name + "$[AMP]referrer=utm_source%3Dservicenoww%26utm_content%3D" + encodeURIComponent(jelly.jvar_ref);
+    }
+    app_store_link;
+  </g2:evaluate>
+
+  <g2:evaluate var="jvar_valid_app_store_link" jelly="true">
+    var valid_app_store_link = JSUtil.notNil(jelly.jvar_app_store_link);
+    valid_app_store_link;
+  </g2:evaluate>
+
+  <g2:evaluate var="jvar_route_to_app_store" jelly="true">
+    jelly.jvar_app_record.route_to_public_store_if_not_installed
+  </g2:evaluate>
+
+  <j2:set var="jvar_app_image" value="$[jvar_app_record.getDisplayValue('app_banner_image')]" />
+  <j2:set var="jvar_app_title" value="$[jvar_app_record.getDisplayValue('app_banner_title')]" />
+  <j2:set var="jvar_app_description" value="$[jvar_app_record.getDisplayValue('app_banner_description')]" />
+
+  <j2:choose>
+    <j2:when test="$[(jvar_user_agent_os == 'ios' || jvar_user_agent_os == 'android') &amp;&amp; jvar_valid_app_store_link &amp;&amp; jvar_route_to_app_store]">
+      <div class="deeplink-container adaptive $[jvar_text_direction]">
+        <div class="deeplink">
+          <img class="icon" src="$[jvar_app_image]" alt="$[jvar_app_title] ${gs.getMessage('Logo')}"/>
+          <h1 class="title">$[jvar_app_title]</h1>
+          <p class="description">$[jvar_app_description]</p>
+          <div class="copylink">
+            <span class="input-group-checkbox">
+              <input
+                class="checkbox"
+                id="copy_deeplink"
+                name="copy_deeplink"
+                title="Additional Assignee List changed"
+                type="checkbox"
+                checked="true"
+                data-original-title="Additional Assignee List changed"
+              />
+              <label class="checkbox-label adaptive" for="copy_deeplink">
+                ${gs.getMessage("Save my place in the app. A link will be copied to continue to this page.")}
+              </label>
+            </span>
+          </div>
+          <j2:if test="$[jvar_user_agent_os == 'android']">
+            <button id="open_app_store_link_android" class="btn btn-primary btn-block btn-open-store">${gs.getMessage("Open")}</button>
+          </j2:if>
+          <j2:if test="$[jvar_user_agent_os == 'ios']">
+            <button id="open_app_store_link_ios" class="btn btn-primary btn-block btn-open-store">${gs.getMessage("Open")}</button>
+          </j2:if>
+        </div>
+      </div>
+    </j2:when>
+    <j2:otherwise>
+      <div class="deeplink-container adaptive">
+        <div class="deeplink error">
+          <img src="default_empty_state_search_results.svg" alt="${gs.getMessage('Empty Search Results')}"/>
+          <h1>${gs.getMessage("Page not found")}</h1>
+          <p>${gs.getMessage("Sorry, the page you're looking for could not be found.")}</p>
+        </div>
+      </div>
+    </j2:otherwise>
+  </j2:choose>
+
+  <script>
+  	document.querySelector(".btn-open-store").addEventListener("click", event => {
+        if (typeof navigator.clipboard !== "undefined") {
+          if (document.querySelector('#copy_deeplink').checked == true)
+            navigator.clipboard.writeText(window.location.href);
+        }
+        window.location="$[jvar_app_store_link]";
+    });
+  </script>
+
+</j:jelly>

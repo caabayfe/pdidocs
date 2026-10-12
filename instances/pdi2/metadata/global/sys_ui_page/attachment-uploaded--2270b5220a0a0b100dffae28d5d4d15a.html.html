@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate jelly="true">
+
+        // arrays to hold details about the new attachments
+        var fileNameStr = '';
+        var canDelete = [];
+        var createdBy = [];
+        var createdOn = [];
+        var contentType = [];
+        var encryption = [];
+
+        var newAttachmentIdList = (jelly.sysparm_name || '') + '';
+        var newAttachmentIds = newAttachmentIdList.split(',');
+
+        for (var i = 0; i &#60; newAttachmentIds.length; ++i) {
+            gr = new GlideRecord("sys_attachment");
+            if (gr.get('sys_id', newAttachmentIds[i])) {
+                var canRead = gr.canRead();
+                if (canRead) {
+                    fileNameStr += gr.getValue("file_name") + '///';
+                    canDelete.push(gr.canDelete());
+                    createdBy.push(gr.getValue("sys_created_by"));
+                    createdOn.push(gr.getElement("sys_created_on").getDisplayValue());
+                    contentType.push(gr.getValue("content_type"));
+                    if (gr.isValidField("encryption_context"))
+                        encryption.push(gr.encryption_context.name);
+                    else
+                        encryption.push("");
+                }
+            }
+        }
+
+        // storing details in a comma separated string
+        // problem with arrays when values used in client script
+        var canDeleteStr = canDelete.toString();
+        var createdByStr = createdBy.toString();
+        var createdOnStr = createdOn.toString();
+        var contentTypeStr = contentType.toString();
+        var encryptionStr = encryption.toString();
+
+   </g:evaluate>
+
+   <j:set var="jvar_sys_id" value="${sysparm_name}" />
+   <g:inline template="id_to_icon_path.xml" />
+
+   <g:evaluate var="jvar_icon_path" jelly="true">
+       jelly.jvar_icon_path.replaceAll('"', '')
+   </g:evaluate>
+
+   <script>
+      var fileNameStr = "${JS:fileNameStr}";
+      var canDeleteStr = "${JS:canDeleteStr}";
+      var createdByStr = "${JS:createdByStr}";
+      var createdOnStr = "${JS:createdOnStr}";
+      var contentTypeStr = "${JS:contentTypeStr}";
+      var encryptionStr = "${JS:encryptionStr}";
+      var newAttachmentIdString = "${JS:newAttachmentIdList}";
+      var ids = "${JS:jvar_sys_id}";
+      var iconPaths = "${JS:jvar_icon_path}";
+	  var missingAttachmentMsg = "${gs.getMessage('Missing attachment')}";
+   </script>
+</j:jelly>

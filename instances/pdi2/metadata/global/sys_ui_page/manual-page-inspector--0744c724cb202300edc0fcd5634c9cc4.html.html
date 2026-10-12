@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j:jelly xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null" trim="false">
+	<g2:evaluate object="true" var="jvar_workspace_options">
+		var formUIChoiceList = {};
+		var gr = new GlideRecord("sys_aw_master_config");
+		gr.query();
+		while (gr.next())
+			formUIChoiceList[gr.workspace_url] = gr.name;
+
+		formUIChoiceList;
+	</g2:evaluate>
+
+	<g2:evaluate object="true" var="jvar_tables">
+		var tables = [];
+		var gr = new GlideRecord("sys_db_object");
+		gr.orderBy('name');
+		gr.query();
+		while (gr.next())
+			tables.push({'name': gr.getValue('name'), 'label': gr.getValue('label')});
+
+		tables;
+	</g2:evaluate>
+
+  <style>
+		body .navbar-title {
+			padding-left: 5px;
+		}
+
+		body select {
+			cursor: pointer;
+		}
+
+		body .gtd-create-inspect-form {
+			margin-top: 32px
+		}
+
+		body span.required-marker.label-description {
+			display: inline-block
+		}
+
+		body .select2-arrow {
+			color: #343d47;
+		}
+
+		body .select2-chosen {
+			visibility: hidden;
+		}
+
+		body .select2-chosen span {
+			visibility: visible;
+		}
+
+		body .col-sm-offset-3.col-sm-7 {
+			padding-right: 0px;
+		}
+
+		body .col-sm-offset-3.col-sm-7 button {
+			float: left;
+		}
+
+		.hide {
+			display: none;
+		}
+	</style>
+    <link rel="stylesheet" href="styles/polarisberg/css_includes_polarisberg.css" type="text/css" />
+	<nav class="navbar navbar-default" role="navigation">
+		<div class="container-fluid">
+			<h1 class="form_header navbar-title navbar-title-twoline">
+				<div class="pointerhand">
+					<div class="navbar-title-caption">${gs.getMessage('ATF_CUSTOM_UI:Open Page Inspector')}</div>
+				</div>
+			</h1>
+		</div>
+	</nav>
+
+	<div class="container-fluid">
+		<div class="gtd-create-inspect-form">
+			<form class="form-horizontal" role="form">
+				<div class="form-group">
+					<label for="page-type" class="col-sm-3 control-label text-right" data-label-name="page-type">
+						<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a page type');}" class="label-description required-marker">
+							${gs.getMessage('ATF_CUSTOM_UI:Page type');}
+						</span>
+					</label>
+					<span class="col-sm-3 form-field" aria-label="${gs.getMessage('ATF_CUSTOM_UI:Page type');}">
+						<select class="form-control" name="page-type" id="page-type"
+								title="${gs.getMessage('ATF_CUSTOM_UI:Select a page type')}"
+								data-original-title="${gs.getMessage('ATF_CUSTOM_UI:Select a page type')}">
+							<option value="" selected="selected">${gs.getMessage('ATF_CUSTOM_UI:Select a page type');}</option>
+							<option value="ui_pages">${gs.getMessage('ATF_CUSTOM_UI:UI Pages');}</option>
+							<option value="standard_ui">${gs.getMessage('Standard UI');}</option>
+							<option value="service_portal">${gs.getMessage('ATF_CUSTOM_UI:Service Portal');}</option>
+							<!-- <option value="workspace">${gs.getMessage('ATF_CUSTOM_UI:Workspace');}</option> -->
+							<option value="custom">${gs.getMessage('ATF_CUSTOM_UI:Custom');}</option>
+						</select>
+					</span>
+				</div>
+
+				<!-- UI Pages -->
+				<div id="is-ui-pages" class="form-group hide">
+					<label class="col-sm-3  control-label text-right" for="inspector-start-ui-page"
+						   data-label-name="inspector-start-ui-page">
+						<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a starting page');}" class="required-marker label-description">
+							${gs.getMessage('ATF_CUSTOM_UI:Starting page');}
+						</span>
+					</label>
+					<div class="col-sm-3 form-field">
+						<input type="hidden" name="inspector-start-ui-page" id="inspector-start-ui-page"
+							   class="form-control select2 select2-offscreen" title="${gs.getMessage('ATF_CUSTOM_UI:Page name')}"
+							   data-original-title="${gs.getMessage('ATF_CUSTOM_UI:Page name')}" />
+					</div>
+				</div>
+
+				<!-- Standard UI Pages -->
+				<div id="is-standard-ui" class="hide">
+					<div class="form-group">
+						<label class="col-sm-3 control-label text-right" for="standard-ui-start-page"
+							   data-label-name="standard-ui-start-page">
+							<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a starting page');}" class="required-marker label-description">
+								${gs.getMessage('ATF_CUSTOM_UI:Starting page');}
+							</span>
+						</label>
+						<div class="col-sm-3 form-field">
+							<input type="hidden" name="standard-ui-start-page" id="standard-ui-start-page"
+								   class="form-control select2 select2-offscreen" title="${gs.getMessage('ATF_CUSTOM_UI:Page name')}"
+								   data-original-title="${gs.getMessage('ATF_CUSTOM_UI:Page name')}" />
+						</div>
+					</div>
+					<div class="form-group" id="record-select-section">
+						<label class="col-sm-3 control-label text-right" for="table-record" data-label-name="table-record">
+							<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a record')}" class="label-description">
+								${gs.getMessage('ATF_CUSTOM_UI:Record');}
+							</span>
+						</label>
+						<div class="col-sm-3 form-field">
+							<select name="table-record" id="table-record" class="form-control select2 select2-offscreen" >
+								<option selected="selected" value="">${gs.getMessage('-- None --')}</option>
+							</select>
+						</div>
+					</div>
+				</div>
+
+				<!-- Workspaces -->
+				<div id="is-workspace" class="hide">
+					<div class="form-group">
+						<label class="col-sm-3  control-label text-right" for="inspector-workspace"
+							   data-label-name="inspector-workspace">
+							<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a workspace');}" class="required-marker label-description">
+								${gs.getMessage('ATF_CUSTOM_UI:Workspace');}
+							</span>
+						</label>
+						<div class="col-sm-3 form-field">
+							<select name="inspector-workspace" id="inspector-workspace" class="form-control"
+									title="${gs.getMessage('ATF_CUSTOM_UI:Workspace name')}" data-original-title="${gs.getMessage('ATF_CUSTOM_UI:Workspace name')}">
+								<option selected="selected" value="">${gs.getMessage('ATF_CUSTOM_UI:Select a workspace')}</option>
+								<j2:forEach var="jvar_workspace_choice" items="$[jvar_workspace_options]">
+									<g2:evaluate>
+										// Jelly likes to serialize objects as key=value strings, so parse the string for the data we want
+										var workspace_data = "$[jvar_workspace_choice]".split('=');
+										var workspace_key = workspace_data[0];
+										var workspace_value = workspace_data[1];
+									</g2:evaluate>
+									<option value="$[workspace_key]">$[workspace_value]</option>
+								</j2:forEach>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label text-right" for="inspector-workspace-table"
+							   data-label-name="inspector-workspace-table">
+							<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a table')}" class="label-description">
+								${gs.getMessage('Table');}
+							</span>
+						</label>
+						<div class="col-sm-3 form-field">
+							<select name="inspector-workspace-table" id="inspector-workspace-table"
+									class="form-control select2 select2-offscreen" title="${gs.getMessage('Table name')}"
+									data-original-title="${gs.getMessage('Table name')}">
+								<option selected="selected" value="">${gs.getMessage('-- None --')}</option>
+								<j2:forEach var="jvar_table" items="$[jvar_tables]">
+									<option value="$[jvar_table.name]">$[jvar_table.label]</option>
+								</j2:forEach>
+							</select>
+						</div>
+					</div>
+					<div class="form-group" id="workspace-record-section">
+						<label class="col-sm-3 control-label text-right" for="workspace-record" data-label-name="workspace-record">
+							<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a record')}" class="label-description">
+								${gs.getMessage('ATF_CUSTOM_UI:Record');}
+							</span>
+						</label>
+						<div class="col-sm-3 form-field">
+							<select name="workspace-record" id="workspace-record" class="form-control select2 select2-offscreen" >
+								<option selected="selected" value="">${gs.getMessage('-- None --')}</option>
+							</select>
+						</div>
+					</div>
+				</div>
+
+				<!-- Service Portal -->
+				<div id="is-sp" class="hide">
+					<div class="form-group">
+						<label class="col-sm-3 control-label text-right" for="portal" data-label-name="portal">
+							<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a service portal')}" class="required-marker label-description">
+								${gs.getMessage('Portal')}
+							</span>
+						</label>
+						<div class="col-sm-3 form-field">
+							<select name="portal" id="portal" class="form-control select2 select2-offscreen"
+									title="${gs.getMessage('ATF_CUSTOM_UI:Portal name')}" data-original-title="${gs.getMessage('ATF_CUSTOM_UI:Portal name')}">
+								<option selected="selected" value="">${gs.getMessage('ATF_CUSTOM_UI:Select a portal')}</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label text-right" for="starting-page-title" data-label-name="starting-page-title">
+							<span title="${gs.getMessage('ATF_CUSTOM_UI:Select a service portal starting page');}"
+								  class="required-marker label-description">
+								${gs.getMessage('ATF_CUSTOM_UI:Starting page');}
+							</span>
+						</label>
+						<div class="col-sm-3 form-field">
+							<select name="starting-page-title" id="starting-page-title"
+									class="form-control select2 select2-offscreen" title="${gs.getMessage('ATF_CUSTOM_UI:Starting page')}"
+									data-original-title="${gs.getMessage('ATF_CUSTOM_UI:Starting page')}">
+								<option selected="selected" value="">${gs.getMessage('ATF_CUSTOM_UI:Select a portal page')}</option>
+							</select>
+						</div>
+					</div>
+				</div>
+
+				<!-- Custom URL -->
+				<div id="is-custom" class="form-group hide">
+					<label class="col-sm-3 control-label text-right" for="custom-start-page-url" data-label-name="custom-start-page-url">
+						<span title="${gs.getMessage('ATF_CUSTOM_UI:Enter the URL for the page you would like to inspect')}"
+							  class="required-marker label-description">
+							${gs.getMessage('ATF_CUSTOM_UI:Starting page URL');}
+						</span>
+					</label>
+					<div class="col-sm-3 form-field">
+						<input class="form-control" type="text" id="custom-start-page-url" name="custom-start-page-url"
+							   aria-invalid="true" placeholder="${gs.getMessage('e.g. $knowledge.do')}"
+							   title="${gs.getMessage('ATF_CUSTOM_UI:Starting page URL')}"
+							   data-original-title="${gs.getMessage('ATF_CUSTOM_UI:Starting page URL')}" />
+					</div>
+				</div>
+
+				<!-- Inspect Button -->
+				<div class="form-group">
+					<div class="col-sm-offset-3 col-sm-7">
+						<button id="launch-atf-inspector" class="btn btn-primary" aria-label="Inspect"
+								aria-disabled="true" disabled="disabled">
+							${gs.getMessage('ATF_CUSTOM_UI:Inspect');}
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</j:jelly>

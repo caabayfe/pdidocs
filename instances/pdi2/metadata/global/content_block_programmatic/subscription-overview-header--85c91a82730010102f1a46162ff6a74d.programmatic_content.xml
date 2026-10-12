@@ -1,0 +1,73 @@
+<!-- Stick variables here to try to keep the mix/match of jelly tags out of the HTML as much as I can. -->
+<g:evaluate var="jvar_msgMonitoredSubscriptions">
+	gs.getMessage('In a non-production environment, your subscription allocation counts will not match with production');
+</g:evaluate>
+<g:evaluate var="jvar_all_user_set_converted">
+    var userSetGA = new GlideAggregate("sys_user_set");
+    userSetGA.addQuery("group_conversion_status", "fail");
+    userSetGA.query();
+    var userSetConversionFailed = false;
+    if(userSetGA.hasNext())
+		userSetConversionFailed = true;
+
+    userSetConversionFailed;
+</g:evaluate>
+<g:evaluate var="jvar_msg_user_set_conversion_fail">
+    var failedUserSetLink = '<a id="permalink" class="linked" style="color:#666666;" href="/sys_user_set_list.do?sysparm_query=group_conversion_status=fail" target="_blank">Here</a>';
+    var documentLink = '<a id="permalink" class="linked" style="color:#666666;" href="/weba_redirect.do?sysparm_url=https://docs.servicenow.com/?context=CSHelp:Subscription-Management-Missing-Subscriptions" target="_blank">Here</a>';
+    gs.getMessage("Some user sets were not converted to a group. Please review your user sets {0}. To know more about this click {1}.", [failedUserSetLink, documentLink]);
+</g:evaluate>
+<g:evaluate var="jvar_txtRefreshBtn">
+	gs.getMessage("Update Allocation Totals");
+</g:evaluate>
+<g:evaluate var="jvar_txtRunSummaryDialogTitle">
+	gs.getMessage("Are you sure you want to continue?");
+</g:evaluate>
+<g:evaluate var="jvar_titleMessage">
+    gs.getMessage("Manage your product subscriptions");
+</g:evaluate>
+<g:evaluate var="jvar_subHeading">
+    gs.getMessage("Get visibility into your subscription entitlement to track usage over time, identify compliance issues and make informed decisions.");
+</g:evaluate>
+<!-- Javascript -->
+<script language="javascript">
+function openSubscriptionSummaryDialog() {
+	var dialogClass = GlideModal ? GlideModal : GlideDialogWindow;
+    var dd = new dialogClass("subscription_summary_confirm");
+    dd.setTitle("${jvar_txtRunSummaryDialogTitle}");
+    dd.setWidth(500);
+    dd.render();
+}
+</script>
+<!-- Info Message container -->
+<div id="output_messages" class="outputmsg_container ">
+    <div class="outputmsg_div" aria-live="polite" role="region">
+		<g:macro_invoke macro="subscription_management_v1_to_v2"/>
+		<div class="outputmsg outputmsg_info notification notification-info">
+			<span class="notification-icon icon-info">
+            <span class="sr-only">Info Message</span>
+            </span>
+            <div class="outputmsg_text">${jvar_msgMonitoredSubscriptions}</div>
+            <button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="GlideUI.get().clearOutputMessages(this); return false;"></button>
+        </div>
+        <j2:if test="$[jvar_all_user_set_converted]">
+            <div class="outputmsg outputmsg_info notification notification-info">
+                <span class="notification-icon icon-info">
+                <span class="sr-only">Info Message</span>
+                </span>
+                <div class="outputmsg_text">${jvar_msg_user_set_conversion_fail}</div>
+                <button aria-label="Close Messages" id="close-messages-btn" class="btn btn-icon close icon-cross" onclick="GlideUI.get().clearOutputMessages(this); return false;"></button>
+            </div>
+        </j2:if>
+    </div>
+</div>
+<!-- Actions and buttons -->
+<div>
+    <div class="pull-left">
+        <h2>${jvar_titleMessage}</h2>
+        <span>${jvar_subHeading}</span>
+    </div>
+    <div class="pull-right">
+        <button class="btn btn-default navbar-btn" onclick="openSubscriptionSummaryDialog()" aria-label="${jvar_txtRunSummaryBtn}" data-toggle="tooltip" title="${jvar_txtRunSummaryTooltip}">${jvar_txtRefreshBtn}</button>
+    </div>
+</div>

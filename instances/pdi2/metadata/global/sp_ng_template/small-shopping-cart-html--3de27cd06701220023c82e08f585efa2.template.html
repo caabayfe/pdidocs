@@ -1,0 +1,59 @@
+<div class="panel">
+  <div class="panel-body" ng-if="c.data.cartItems.length > 0">
+    <ul class="media-list" ng-if="c.data.cartItems.length > 0">
+      <li class="media" ng-repeat="item in c.data.cartItems track by item.sys_id | orderBy: 'order'">
+        <div class="media-left">
+          <a ng-href="?id=sc_cat_item&sys_id={{item.item_id}}">
+            <img ng-show="item.picture" ng-src="{{item.picture}}" alt="{{item.name}}" class="img-responsive item-image"/>
+          </a>
+        </div>
+        <div class="media-body">
+          <a ng-href="?id=sc_cat_item&sys_id={{item.item_id}}"><div class="media-heading">{{item.name}}</div></a>
+          <p>{{item.short_description}}</p>
+          <p class="quantity-price">
+            <span class="quantity">{{item.quantity}}&nbsp;x</span><span class="price">{{item.display_price}}</span>
+            <span class="recurring" ng-show="item.recurring_subtotal > 0">+{{item.recurring_subtotal_price}}&nbsp;{{item.recurring_frequency_display}}</span>
+          </p>
+          <button class="btn btn-link" ng-click="c.editItem(item.sys_id)" ng-if="item.has_options">${Edit Item}</button>
+        </div>
+        <div class="media-right">
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-clear"
+                    ng-click="c.removeItem($event, item)"
+                    aria-label="${Remove Item} {{item.name}}">
+              <i class="fa fa-times-circle" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="panel-body" ng-show="c.data.cartItems.length == 0">
+    <div class="empty-state-content small-cart">
+      <span class="fa fa-shopping-cart small-cart"></span>
+      <div class="h4">${Your shopping cart is empty}</div>
+      <p>${Once you have added items to your shopping cart, you can check out from here.}</p>
+    </div>
+  </div>
+  <div ng-if="c.data.cartItems.length > 0" class="panel-footer align-right">
+    <label class="subtotal">${Total price}: <strong>{{c.data.cart.display_subtotal}}</strong></label>
+    <label ng-repeat="(key, value) in c.data.cart.recurring_subtotals" class="subtotal">+ {{value}} {{key}}</label>
+  </div>
+  <div class="panel-footer">
+    <div class="btn-group btn-group-justified" role="group">
+      <div class="btn-group" role="group">
+        <a type="button"
+           class="btn btn-default"
+           ng-href="?id=sc_cart">${View Cart}</a>
+      </div>
+      <div class="btn-group" role="group" ng-if="c.data.cartItems.length > 0">
+        <button ng-disabled="c.checkoutInProgress"
+                ng-click="c.triggerCheckout($event, c.data.sys_properties.twostep_checkout)"
+                class="btn btn-primary">
+          <span ng-show="!c.checkoutInProgress">${Checkout}</span>
+          <span ng-show="c.checkoutInProgress">${Ordering...}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

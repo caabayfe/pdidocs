@@ -1,0 +1,45 @@
+   <g:include_script src="classes/GwtWindowList.jsx"/>
+   <g:include_script src="classes/GwtSelectTable.jsx"/>
+   <table border="0" cellspacing="1" id="tbl" style="position:relative;width:650px;height:500px">
+      <tr>
+         <td>${gs.getMessage("Available")}</td>
+         <td>$[SP]</td>
+         <td>${gs.getMessage("Selected")}</td>
+      </tr>
+      <tr>
+         <td style="vertical-align:top;overflow:auto" width="300px" height="500px" dropzone="true" id="collapsed_list_tr">
+            <div id="collapsed_list" class="gwt_window_list" style="height:100%;align:middle" dropzone="true" />
+         </td>
+
+         <td style="vertical-align:center;width:50px">
+            <g:ui_select_list_addremove_control name="bsmCollapseExpand" selecttable="bsmCollapseTable" leftzone="bsmCollapseList" rightzone="bsmExpandList" />
+         </td>
+	
+         <td style="vertical-align:top;overflow:auto" width="300px" height="500px" dropzone="true" id="expanded_list_tr">
+            <div id="expanded_list" class="gwt_window_list" style="height:100%;align:middle" dropzone="true" />
+         </td>
+      </tr>
+      
+      <tr>
+         <td colspan="3"><br /></td>
+      </tr>
+      
+      <tr id="dialog_buttons">
+         <td colspan="3" align="right">
+            <g:dialog_buttons_ok_cancel ok="return actionOk(this);" />
+         </td>
+      </tr>
+   </table>
+
+   <g:evaluate>
+      var idGR = new GlideRecord('cmdb_ci');
+      idGR.addQuery('sys_id', '${sysparm_ids}'.split(','))
+      idGR.orderBy('name');
+      idGR.query();
+   </g:evaluate>
+
+   <xml id="select_info">
+      <j:while test="${idGR.next()}">
+         <select_val name='${idGR.getDisplayValue()}' value='${idGR.sys_id}' />
+      </j:while>
+   </xml>

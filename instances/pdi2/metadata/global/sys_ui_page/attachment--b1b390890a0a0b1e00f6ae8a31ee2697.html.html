@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j:jelly trim="false" xmlns:g="glide" xmlns:g2="null" xmlns:j="jelly:core"
+    xmlns:j2="null">
+    <j:set var="jvar_target_sys_id" value="${JS:RP.getWindowProperties().get('target_sys_id')}" />
+    <j:set var="jvar_target_table" value="${JS:RP.getWindowProperties().get('target_table')}" />
+    <j:set var="jvar_attachment_disabled" value="${RP.getWindowProperties().get('attachment_disabled')}" />
+    <j:set var="jvar_sc_override" value="${RP.getWindowProperties().get('sc_override')}" />
+    <j:set var="jvar_show_link" value="true" />
+    <j:if test="${gs.getProperty('glide.ui.disable_attachment_view') == 'true'}">
+        <j:set var="jvar_show_link" value="false" />
+    </j:if>
+    <input type="hidden" id="ni.show_attachment_view" name="ni.show_attachment_view" value="${jvar_show_link}" />
+    <j:set var="jvar_show_link_popup" value="true" />
+    <j:if test="${gs.getProperty('glide.ui.attachment_popup')=='false'}">
+        <j:set var="jvar_show_link_popup" value="false" />
+    </j:if>
+
+    <!-- Check no_attachment attribute in order to override if necessary. -->
+    <g:evaluate var="jvar_no_attachment" jelly="true">
+        var gr = new GlideRecord(jelly.jvar_target_table);
+        gr.getED().getBooleanAttribute("no_attachment");
+    </g:evaluate>
+
+    <!-- Check if attachements are edge encrypted to show Download all only is not edge encrypted. -->
+    <g:evaluate var="jvar_attachments_edge_encrypted" jelly="true">
+        var gr = new GlideRecord(jelly.jvar_target_table);
+        gr.getED().hasAttachmentsEncrypted();
+    </g:evaluate>
+
+    	<g:evaluate var="jvar_have_sensitive_attachments" jelly="true">
+	var count = new GlideAggregate('sys_attachment');
+    count.addQuery('table_name', jelly.jvar_target_table);
+    count.addQuery('table_sys_id', jelly.jvar_target_sys_id);
+    count.addAggregate('COUNT');
+    count.query();
+	 var hasSensitive = false;
+    if (count.next() &amp;&amp; count.getAggregate('COUNT') > 0) {
+        var attachGR = new GlideRecord('sys_attachment');
+        attachGR.addQuery('table_name', jelly.jvar_target_table);
+        attachGR.addQuery('table_sys_id', jelly.jvar_target_sys_id);
+        attachGR.query();
+
+        while (attachGR.next()) {
+            var virusState = attachGR.state.toString();
+            if (virusState == 'available' || virusState == 'available_conditionally') {
+                var sysAttachment = new GlideSysAttachment();
+                if (!sysAttachment.canDownloadSensitiveAttachment(attachGR.sys_id.toString())) {
+                    hasSensitive = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    hasSensitive;
+</g:evaluate>
+
+    <g:evaluate var="jvar_have_not_available_attachments" jelly="true">
+        var count = new GlideAggregate('sys_attachment');
+        count.addQuery('table_name', jelly.jvar_target_table);
+        count.addQuery('table_sys_id', jelly.jvar_target_sys_id);
+        count.addQuery('state', 'not_available');
+        count.addAggregate('COUNT');
+        count.query();
+        count.next() &amp;&amp; (count.getAggregate('COUNT') > 0);
+    </g:evaluate>
+
+    <g:evaluate var="jvar_kmfcleprop" jelly="true">
+        gs.getProperty('glide_encryption.cle_replatforming_with_kmf');
+    </g:evaluate>
+    <g:evaluate var="jvar_optional_attachment_encryption" jelly="true">
+        gs.getProperty('com.glide.encryption.enable_attachment_key_ui');
+    </g:evaluate>
+    <g:evaluate var="jvar_attachments_platform_encrypted" jelly="true">
+        var gr = new GlideRecord(jelly.jvar_target_table);
+        gr.getED().isEncrypted();
+    </g:evaluate>
+    <g:evaluate var="jvar_show_optional_attachment" jelly="true">
+        <!-- If attachments are  encrypted and optional attachment encryption property is true -->
+        (jelly.jvar_attachments_platform_encrypted == "true") ${AMP}${AMP} (jelly.jvar_optional_attachment_encryption == "true");
+    </g:evaluate>
+    <!-- Store if attachements are edge encrypted for use in javascript -->
+    <script>
+        var edgeEncryptionEnabledForAttachments = '${jvar_attachments_edge_encrypted}';
+    </script>
+
+    <g:evaluate var="jvar_cloudedge_invalid" jelly="true">
+        <!-- If attachments are edge encrypted and not edge session -->
+        (jelly.jvar_attachments_edge_encrypted == "true") ${AMP}${AMP} !gs.isEdgeEncryptedSession();
+    </g:evaluate>
+
+    <!-- Check Users Ability to Attach -->
+    <g:evaluate var="jvar_attachrole" expression="gs.getProperty('glide.attachment.role')" />
+
+    <g:evaluate var="jvar_can_write_to_record" jelly="true">
+        (jelly.jvar_sc_override == 'true') ||
+        new AttachmentSecurity().canWriteTarget(jelly.jvar_target_table, jelly.jvar_target_sys_id);
+    </g:evaluate>
+
+    <j:if test="${jvar_attachment_disabled == 'true'}" >
+        <j:set var="jvar_can_write_to_record" value='false' />
+    </j:if>
+
+    <g:evaluate var="jvar_email_client_override" jelly="true">
+        var ret = jelly.sysparm_this_url.startsWith('email_client.do');
+        ret;
+    </g:evaluate>
+
+    <!-- Store parent sys_id for use in javascript -->
+    <script>
+        var attachmentParentSysId = '${jvar_target_sys_id}';
+    </script>
+
+    <j:set var="jvar_can_add_attachments" value="false" />
+    <j:set var="jvar_can_edit_attachments" value="false" />
+
+    <j:if test="${jvar_email_client_override == 'true'|| jvar_sc_override == 'true'}" >
+        <j:set var="jvar_can_add_attachments" value="true" />
+        <j:set var="jvar_can_edit_attachments" value="true" />
+    </j:if>
+    <j:if test="${jvar_email_client_override == 'false'}">
+        <j:if test="${jvar_no_attachment == 'false'}">
+            <j:if test="${jvar_can_write_to_record == 'true'}">
+                <j:set var="jvar_can_edit_attachments" value="true" />
+                <j:if test="${jvar_session.hasRole(jvar_attachrole)}">
+                    <j:set var="jvar_can_add_attachments" value="true" />
+                </j:if>
+            </j:if>
+        </j:if>
+    </j:if>
+
+    <j:if test="${jvar_attachment_disabled == 'true' || jvar_cloudedge_invalid == 'true'}" >
+        <j:set var="jvar_can_add_attachments" value="false" />
+        <j:set var="jvar_can_edit_attachments" value="false" />
+    </j:if>
+
+    <input type="hidden" id="ni.show_rename_link" name="ni.show_rename_link"
+        value="${jvar_can_add_attachments}" />
+
+    <g:evaluate var="jvar_attachment_extensions" jelly="true">
+        var scope = new GlideRecord(jelly.jvar_target_table).getTableScope();
+        var p = gs.getProperty(scope + '.attachment.extensions', null);
+        p;
+    </g:evaluate>
+    <script>
+        var scopeFileTypes = '${jvar_attachment_extensions}';
+    </script>
+
+    <input type="hidden" id="ni.show_attachment_popup" name="ni.show_attachment_popup" value="${jvar_show_link_popup}" />
+    <div id="alert_container"></div>
+    <table width="100%" style="table-layout:fixed;" role="presentation">
+        <tbody>
+            <g2:attachment_list_by_availability sys_id="${jvar_target_sys_id}" table="${jvar_target_table}" available="true">
+                <g2:for_each_record file_variable="sys_attachment" var="attachment">
+                    <j2:set value="true" var="jvar_have_attachments" />
+                </g2:for_each_record>
+            </g2:attachment_list_by_availability>
+            <j2:set var="jvar_no_attachments_display" value="block" />
+            <j2:if test="$[jvar_have_attachments]">
+                <j2:set var="jvar_no_attachments_display" value="none" />
+            </j2:if>
+            <g:if_polaris>
+                <g:then>
+                    <j2:if test="$[!jvar_have_attachments]">
+                        <script>$('sys_attachment').style.visibility = 'hidden';</script>
+                    </j2:if>
+                    <tr>
+                        <td>
+                            <div id="no_available_attachments" style="display: $[jvar_no_attachments_display]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="216" height="168" fill="none" viewBox="0 0 216 168" class="attachment-flavin">
+                                    <style>
+                                        .main-object--outline {
+                                                fill:rgb(var(--empty-state--main-object--outline, var(--main-object--outline, var(--now-color--interactive-3, 51,53,123))));
+                                        }
+                                        .main-object--fill {
+                                                fill:rgb(var(--empty-state--main-object--fill, var(--main-object--fill, var(--now-color--interactive-1, 144,146,213))));
+                                        }
+                                        .primary-object--outline {
+                                                fill:rgb(var(--empty-state--primary-object--outline, var(--primary-object--outline, var(--now-color_border--secondary, 176,181,191))));
+                                        }
+                                        .primary-object--primary-fill {
+                                                fill:rgb(var(--empty-state--primary-object--primary-fill, var(--primary-object--primary-fill, var(--now-color_background--primary, 255,255,255))));
+                                        }
+                                        .primary-object--tertiary-fill {
+                                                fill:rgb(var(--empty-state--primary-object--tertiary-fill, var(--primary-object--tertiary-fill, var(--now-color_background--secondary, 246,246,248))));
+                                        }
+                                        .primary-object--shadow {
+                                                fill:rgb(var(--empty-state--primary-object--shadow, var(--primary-object--shadow, var(--now-color_background--tertiary, 228,230,234))));
+                                        }
+                                        .background--tertiary-lines {
+                                                fill:rgb(var(--empty-state--background--tertiary-lines, var(--background--tertiary-lines, var(--now-color_border--tertiary, 211,214,220))));
+                                        }
+                                    </style>
+                                    <g>
+                                    <path  fill-rule="evenodd" d="M145 107a1 1 0 0 1 1-1h1.75a1 1 0 0 1 0 2H146a1 1 0 0 1-1-1Zm8.75 0a1 1 0 0 1 1-1h3.5a1 1 0 0 1 0 2h-3.5a1 1 0 0 1-1-1Zm10.5 0a1 1 0 0 1 1-1h3.5a1 1 0 0 1 0 2h-3.5a1 1 0 0 1-1-1Zm10.5 0a1 1 0 0 1 1-1h3.5a1 1 0 0 1 0 2h-3.5a1 1 0 0 1-1-1Zm10.5 0a1 1 0 0 1 1-1H188a1 1 0 0 1 0 2h-1.75a1 1 0 0 1-1-1ZM164 49a1 1 0 0 1 1-1h1.625a1 1 0 0 1 0 2H165a1 1 0 0 1-1-1Zm8.125 0a1 1 0 0 1 1-1h3.25a1 1 0 0 1 0 2h-3.25a1 1 0 0 1-1-1Zm9.75 0a1 1 0 0 1 1-1h1.625a1 1 0 0 1 0 2h-1.625a1 1 0 0 1-1-1ZM26 65a1 1 0 0 1 1-1h2.417a1 1 0 1 1 0 2H27a1 1 0 0 1-1-1Zm12.083 0a1 1 0 0 1 1-1H41.5a1 1 0 1 1 0 2h-2.417a1 1 0 0 1-1-1Zm4.417 63a1 1 0 0 0-1-1h-1.875a1 1 0 0 0 0 2H41.5a1 1 0 0 0 1-1Zm-9.375 0a1 1 0 0 0-1-1h-3.75a1 1 0 0 0 0 2h3.75a1 1 0 0 0 1-1Zm-11.25 0a1 1 0 0 0-1-1H19a1 1 0 0 0 0 2h1.875a1 1 0 0 0 1-1Z" class="background--tertiary-lines" clip-rule="evenodd"/>
+                                    <path  d="M158 149.846c0 4.845-22.61 4.845-50.5 4.845s-50.5 0-50.5-4.845C57 145 79.61 145 107.5 145s50.5 0 50.5 4.846Z" class="primary-object--shadow"/>
+                                    <path  d="M74.787 149h66.426c7.732 0 14-6.268 14-14V49.041a14 14 0 0 0-4.311-10.106L134.17 22.894A14.001 14.001 0 0 0 124.481 19H74.787c-7.732 0-14 6.268-14 14v102c0 7.732 6.268 14 14 14Z" class="primary-object--primary-fill"/>
+                                    <path  fill-rule="evenodd" d="M74.787 20c-7.18 0-13 5.82-13 13v102c0 7.18 5.82 13 13 13h66.426c7.18 0 13-5.82 13-13V49.041c0-3.543-1.445-6.932-4.003-9.384l-16.732-16.041A13.002 13.002 0 0 0 124.481 20H74.787Zm-15 13c0-8.284 6.716-15 15-15h49.694a15 15 0 0 1 10.381 4.172l16.732 16.041a15 15 0 0 1 4.619 10.828V135c0 8.284-6.715 15-15 15H74.787c-8.284 0-15-6.716-15-15V33Z" class="primary-object--outline" clip-rule="evenodd"/>
+                                    <path  d="M128.594 19.617v19.468a6 6 0 0 0 6 6h20.049a13.997 13.997 0 0 0-3.74-6.15L134.17 22.894a13.995 13.995 0 0 0-5.576-3.277Z" class="primary-object--tertiary-fill"/>
+                                    <path  fill-rule="evenodd" d="m127.594 18.264 1.293.397a15 15 0 0 1 5.975 3.51l16.733 16.042a15.002 15.002 0 0 1 4.008 6.59l.378 1.282h-21.387a7 7 0 0 1-7-7V18.264Zm2 2.783v18.038a5 5 0 0 0 5 5h18.638a12.992 12.992 0 0 0-3.022-4.428l-16.732-16.041a12.993 12.993 0 0 0-3.884-2.569Z" class="primary-object--outline" clip-rule="evenodd"/>
+                                    <path  d="m109.301 67.146-14.139 17.2-.015.017c-5.419 6.343-5.236 13.771-.133 18.874 2.55 2.55 6.18 3.879 9.759 3.879 3.585 0 6.833-1.324 8.807-3.699l9.065-11.124a2.5 2.5 0 0 1 3.876 3.158l-9.078 11.141-.007.008c-3.124 3.768-7.931 5.516-12.663 5.516-4.742 0-9.697-1.746-13.295-5.344-7.188-7.188-7.01-17.59-.148-25.638l14.269-17.357.086-.086c5.075-5.076 13.304-5.076 18.379 0 5.206 5.206 4.598 12.713.176 18.183l-.006.008-14.291 17.382-.086.087a7.748 7.748 0 0 1-10.957 0c-3.071-3.072-2.904-7.593-.167-10.775l8.916-11.527a2.5 2.5 0 0 1 3.955 3.059l-9.005 11.643-.051.057c-1.268 1.45-1.12 3-.112 4.007a2.748 2.748 0 0 0 3.812.071l14.11-17.163c3.197-3.96 3.16-8.507.17-11.497a7.996 7.996 0 0 0-11.227-.08Z" class="main-object--fill"/>
+                                    <path  fill-rule="evenodd" d="M124.369 63.95a.999.999 0 0 1 1.406.145c4.544 5.582 3.603 13.015-.757 18.407l-.011.015L110.716 99.9a1.11 1.11 0 0 1-.065.072l-.086.086a8.753 8.753 0 0 1-10.001 1.689 1 1 0 0 1 .872-1.8 6.75 6.75 0 0 0 7.714-1.303l.052-.052 14.254-17.339.006-.006.001-.002c3.914-4.841 4.57-11.208.761-15.888a1 1 0 0 1 .145-1.407Zm-14.331 3.876a6.996 6.996 0 0 1 9.784.107 1 1 0 1 0 1.414-1.414 8.996 8.996 0 0 0-12.631-.09 1.015 1.015 0 0 0-.076.082L94.396 83.703l-.01.01c-2.838 3.323-4.261 6.99-4.258 10.553.003 3.57 1.439 6.952 4.165 9.678a1.001 1.001 0 0 0 1.414-1.414c-2.376-2.377-3.577-5.26-3.58-8.266-.002-3.012 1.2-6.23 3.78-9.251l.016-.018.012-.015 14.103-17.154Zm2.178 11.49a1 1 0 0 1 .179 1.404l-9.005 11.643a.607.607 0 0 1-.039.047l-.05.057c-.503.575-.665 1.096-.662 1.504.002.407.168.801.504 1.137a1 1 0 0 1-1.414 1.414c-.672-.672-1.084-1.556-1.09-2.538-.007-.982.392-1.96 1.157-2.835l.031-.034 8.986-11.619a1 1 0 0 1 1.403-.18Zm14.937 15.36a1 1 0 0 1 .144 1.407l-9.084 11.147-.007.008c-3.354 4.046-8.473 5.878-13.433 5.878-3.502 0-7.118-.906-10.28-2.765a.999.999 0 1 1 1.014-1.724c2.836 1.668 6.099 2.489 9.266 2.489 4.504 0 9-1.664 11.893-5.154l.002-.002.005-.006 9.073-11.134a1 1 0 0 1 1.407-.144Z" class="main-object--outline" clip-rule="evenodd"/>
+                                </g>
+                                </svg>
+
+                                <div class="flavin-msg-lg">
+                                    ${gs.getMessage("There are no attachments")}<br/>
+                                    <br />
+                                    <j:if test="${jvar_can_add_attachments}">
+                                        <button class="btn btn-primary" onclick="document.getElementById('loadFileXml').click()">${gs.getMessage('file_attach')}</button>
+                                    </j:if>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </g:then>
+            </g:if_polaris>
+            <j:if test="${jvar_can_add_attachments}">
+                <tr>
+                    <td>
+                        <div class="caption" style="display:none;">
+                            <span>${gs.getMessage('Choose a file to attach')}:</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <form id="sys_attachment" name="sys_attachment" action="sys_attachment.do?sysparm_record_scope=$[jvar_parent_record_scope]"
+                            enctype="multipart/form-data" method="post"
+                            onsubmit="return validateAttachment();" target="upload_target"
+                            style="display: none;">
+                            <j:if test="${jvar_can_add_attachments}">
+                                <script>$('sys_attachment').style.display = 'block';</script>
+                            </j:if>
+                            <input name="attachments_modified" id="attachments_modified"
+                                type="hidden" value="" />
+                            <input name="sysparm_sys_id" type="hidden" value="${jvar_target_sys_id}" />
+                            <input name="sysparm_table" type="hidden" value="${jvar_target_table}" />
+                            <input name="max_size" type="hidden" value="${gs.getProperty('com.glide.attachment.max_size')}" />
+                            <input name="file_types" type="hidden" value="${gs.getProperty('glide.attachment.extensions')}" />
+                            <input name="sysparm_nostack" type="hidden" value="yes" />
+                            <input name="sysparm_redirect" type="hidden" value="attachment_uploaded.do?sysparm_domain_restore=false&amp;sysparm_nostack=yes" />
+                            <input id="sysparm_encryption_context" name="sysparm_encryption_context" type="hidden" value="" />
+                            <table id="attachmentTable" width="100%" style="table-layout:fixed;" role="presentation">
+                                <tr class="attachmentRow">
+                                    <g2:set_if var="jvar_td_styles" test="$[GlideMobileExtensions.getDeviceType() == 'm']" true="visibility: hidden; width: 0;" false=""/>
+                                    <!-- Show no file chosen text only if we do not have any attachments -->
+                                    <g2:set_if var="jvar_no_file_chosen_text_style" test="$[jvar_have_attachments]" true="display:none;" />
+                                    <td style="$[jvar_td_styles]" id="attachFileCell" colspan="3">
+                                        <input id="attachFile" aria-hidden="true" name="attachFile" onChange="checkAndSetAttachButton(); setDeleteButton(this.value); $('attachButton').click(); trackUxMetrics(event);" size="41" type="file" multiple="true" style="width: 0.1px;height: 0.1px;opacity: 0;overflow: hidden;position: absolute;z-index: -1;" tabindex="-1">
+                                            <input type="button" class="btn btn-primary" title="${gs.getMessage('Attach')}" id="loadFileXml" value="${gs.getMessage('file_attach')}" onclick="document.getElementById('attachFile').click();">
+                                                <span id="no_file_chosen_text" style="$[jvar_no_file_chosen_text_style]">
+                                                    $[SP]$[SP]${gs.getMessage('no_file_chosen')}
+                                                </span>
+                                            </input>
+                                        </input>
+                                        <a href="#" class="attachfile-delete" onclick="clearAttachmentField($(this).up().up()); setDeleteButton(this.value);" style="cursor: default;display:none;">
+                                            <img src="images/icons/kb_no_disabled.gif" />
+                                        </a>
+                                        <input style="display:none;" disabled="true" class="attachfile-attach button" id="attachButton" type="submit" value="${gs.getMessage('Attach')}" />
+                                    </td>
+                                    <script>document.getElementById("loadFileXml").focus()</script>
+
+                                    <j2:if test="$[GlideMobileExtensions.getDeviceType() == 'm']">
+                                        <g:requires name="scripts/snm/cabrillo/js_includes_cabrillo.js" includes="true" />
+                                        <td colspan="3">
+                                            <button id="cabrilloAttach" title="${gs.getMessage('Attach')}" size="41">${gs.getMessage('Attach')}</button>
+                                            <script>
+                                                (function($, cabrillo){
+                                                    var cabrilloTable = '${JS:jvar_target_table}';
+                                                    var cabrilloSysId = '${JS:jvar_target_sys_id}';
+                                                    $('#cabrilloAttach').on('click', function saveCabrilloAttachments(event) {
+                                                        event.preventDefault();
+                                                        cabrillo.attachments.addFile(cabrilloTable, cabrilloSysId).then(
+                                                            function(data) {
+                                                                var url = $('[name=sysparm_redirect]').val();
+                                                                url += "${AMP}sysparm_name=" + data.sys_id;
+                                                                $('#upload_target').attr('src', url);
+                                                                validateAttachment();
+                                                            },
+                                                            function(err) {
+                                                                console.error("Upload failed", error);
+                                                            }
+                                                        );
+                                                    });
+                                                })(jQuery, snmCabrillo);
+                                            </script>
+                                        </td>
+                                    </j2:if>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input style="display:none;" type="button" value="${gs.getMessage('Add Another Attachment')}"
+                                            onclick="addRowToTable()" class="btn btn-default"></input>
+                                    </td>
+                                </tr>
+                            </table>
+                        </form>
+                    </td>
+                </tr>
+            </j:if>
+            <j:if test="${jvar_cloudedge_invalid}">
+                <tr>
+                    <td>
+                        <div class="caption">
+                            <p>${gs.getMessage('The attachments are encrypted and all actions are disabled until you connect to your company network.')}</p>
+                        </div>
+                    </td>
+                </tr>
+            </j:if>
+            <tr>
+                <td>
+                    <g:if_polaris>
+                        <g:then>
+                            <div class="now-progress-bar-container -stacked" style="display:none;" id="please_wait">
+                                <g:now_progress_bar />
+                            </div>
+                        </g:then>
+                        <g:else>
+                            <img style="margin: 6px 3px 6px 3px;display:none;" id="please_wait" src="images/please_wait.gifx" alt="${gs.getMessage('Please Wait')}" />
+                            <div class="caption" style="display: none;">
+                                <span>${gs.getMessage('Current file attachments')}:</span>
+                            </div>
+                        </g:else>
+                    </g:if_polaris>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <form action="sys_attachment.do?DELETE" method="post" target="upload_target"
+                        onsubmit="return startRemoveAttachments()">
+                        <input name="sysparm_nostack" type="hidden" value="yes" />
+                        <input name="sysparm_this_url" id="sysparm_this_url" type="hidden"
+                            value="" />
+                        <input name="deleted_sys_ids" id="deleted_sys_ids" type="hidden" value="" />
+                        <table width="100%" style="table-layout:fixed;">
+                            <tr>
+                                <td style="white-space:nowrap;">
+                                    <div id="current_attachments" style="display:block">
+                                        <div class="current-attachments-container">
+                                            <div id="attachment_dialog_list">
+                                                <table width="100%" style="table-layout:fixed;">
+                                                    <tbody id="attachment_table_body">
+                                                        <j2:set value="false" var="jvar_some_deletable" />
+														 <g2:attachment_list_by_availability sys_id="${jvar_target_sys_id}" table="${jvar_target_table}" available="true">
+                                                           <g2:for_each_record file_variable="sys_attachment" >
+	<g2:evaluate var="jvar_sensitive">
+        var state = "$[sys_attachment.state]";
+        var sysId = "$[sys_attachment.sys_id]";
+        var sensitive = false;
+        if (state === 'available' || state === 'available_conditionally') {
+                var sa = new GlideSysAttachment();
+                sensitive = !sa.canDownloadSensitiveAttachment(sysId);
+        }
+        sensitive;
+    </g2:evaluate>
+	
+	<j2:if test="$[!jvar_sensitive]">
+                                                                <g2:evaluate var="jvar_checkbox_label">
+                                                                    gs.getMessage("Select attachment {0} for removal", sys_attachment.file_name);
+                                                                </g2:evaluate>
+                                                                <j2:set value="$[sys_attachment.encryption_context.getDisplayValue()]" var="jvar_encrypt_context" />
+                                                                <tr>
+                                                                    <td colspan="2" style="white-space:nowrap;">
+                                                                        <j2:set var="jvar_can_delete" value="$[sys_attachment.canDelete()]" />
+                                                                        <input name="Name" type="hidden" value="false" />
+                                                                        <input type="hidden" id="$[sys_attachment.sys_id]" class="attachment_sys_id" />
+                                                                        <g:if_polaris>
+                                                                            <g:then>
+                                                                            <span class="input-group-checkbox">
+                                                                                <j2:if test="${jvar_can_edit_attachments}">
+                                                                                    <j2:if test="$[jvar_can_delete]">
+                                                                                        <input name="sys_id_$[sys_attachment.sys_id]"
+                                                                                            id="sys_id_$[sys_attachment.sys_id]" class="checkbox" title="$[HTML:jvar_checkbox_label]"
+                                                                                            onclick="setRemoveButton(this);" type="checkbox" aria-label="$[HTML:jvar_checkbox_label]" data-now-ux-metrics-fileName="$[sys_attachment.file_name]"/>
+                                                                                        <j2:set value="true" var="jvar_some_deletable" />
+                                                                                    </j2:if>
+                                                                                </j2:if>
+                                                                                <label for="sys_id_$[sys_attachment.sys_id]" class="checkbox-label">
+                                                                                    <g2:attachment_entry />
+                                                                                </label>
+                                                                            </span>
+                                                                            </g:then>
+                                                                            <g:else>
+                                                                            <j2:if test="${jvar_can_edit_attachments}">
+                                                                                <j2:if test="$[jvar_can_delete]">
+                                                                                    <input name="sys_id_$[sys_attachment.sys_id]"
+                                                                                        id="sys_id_$[sys_attachment.sys_id]" title="$[HTML:jvar_checkbox_label]"
+                                                                                        onclick="setRemoveButton(this);" type="checkbox" aria-label="$[HTML:jvar_checkbox_label]" data-now-ux-metrics-fileName="$[sys_attachment.file_name]"/>
+                                                                                    <j2:set value="true" var="jvar_some_deletable" />
+                                                                                </j2:if>
+                                                                            </j2:if>
+                                                                            <g2:attachment_entry />
+                                                                            </g:else>
+                                                                        </g:if_polaris>
+                                                                    </td>
+                                                                </tr>
+                                                                </j2:if>
+                                                            </g2:for_each_record>
+                                                        </g2:attachment_list_by_availability>
+                                                        <tr id="no_attachments" style="display:none;">
+                                                            <td colspan="2">${gs.getMessage("None")}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                    <j2:set var="jvar_show_not_available_header" value="none" />
+                                                    <j2:if test="${jvar_have_not_available_attachments || jvar_have_sensitive_attachments}">
+                                                        <j2:set var="jvar_show_not_available_header" value="block" />
+                                                    </j2:if>
+                                                    <td id="not_available_files_header" style="display:$[jvar_show_not_available_header]">${gs.getMessage('Potential security risks')}</td>
+	                                            <!-- One Loop for sensitive attachments -->
+                                                    <g2:attachment_list_by_availability sys_id="${jvar_target_sys_id}" table="${jvar_target_table}" available="true">
+                                                        <g2:for_each_record file_variable="sys_attachment" var="attachment">
+                                                        <g2:evaluate var="jvar_sensitive" copyToRhino="true">
+                                                             var state = "$[sys_attachment.state]";
+                                                             var sysId = "$[sys_attachment.sys_id]";
+	                                                     var sensitive = false;
+                                                             if (state === 'available' || state === 'available_conditionally') {
+                                                                   var sa = new GlideSysAttachment();
+                                                                   sensitive = !sa.canDownloadSensitiveAttachment(sysId);
+                                                             }
+                                                             sensitive;
+                                                     </g2:evaluate>
+                                                     <j2:if test="$[jvar_sensitive]">
+                                                            <j2:set value="true" var="jvar_have_not_available_attachments" />
+                                                            <g2:evaluate var="jvar_checkbox_label">
+                                                                gs.getMessage("Select attachment {0} for removal", sys_attachment.file_name);
+                                                            </g2:evaluate>
+                                                            <j2:set value="$[sys_attachment.encryption_context.getDisplayValue()]" var="jvar_encrypt_context" />
+                                                            <tr>
+                                                                <td colspan="2" style="white-space:nowrap;">
+                                                                <g:if_polaris>
+                                                                    <g:then>
+                                                                    <span class="input-group-checkbox">
+                                                                        <j2:if test="${jvar_can_edit_attachments}">
+                                                                            <j2:if test="$[sys_attachment.canDelete()]">
+                                                                                <input name="sys_id_$[sys_attachment.sys_id]"
+                                                                                    id="sys_id_$[sys_attachment.sys_id]" title="$[HTML:jvar_checkbox_label]"
+                                                                                    onclick="setRemoveButton(this);" type="checkbox" class="not_available checkbox" aria-label="$[HTML:jvar_checkbox_label]"/>
+                                                                                <j2:set value="true" var="jvar_some_deletable" />
+                                                                            </j2:if>
+                                                                        </j2:if>
+                                                                        <label for="sys_id_$[sys_attachment.sys_id]" class="checkbox-label">
+                                                                            <g2:attachment_entry />
+                                                                        </label>
+                                                                    </span>
+                                                                    </g:then>
+                                                                    <g:else>
+                                                                    <j2:if test="${jvar_can_edit_attachments}">
+                                                                        <j2:if test="$[sys_attachment.canDelete()]">
+                                                                            <input name="sys_id_$[sys_attachment.sys_id]"
+                                                                                id="sys_id_$[sys_attachment.sys_id]" title="$[HTML:jvar_checkbox_label]"
+                                                                                onclick="setRemoveButton(this);" type="checkbox" class="not_available" aria-label="$[HTML:jvar_checkbox_label]"/>
+                                                                            <j2:set value="true" var="jvar_some_deletable" />
+                                                                        </j2:if>
+                                                                    </j2:if>
+                                                                    <g2:attachment_entry />
+                                                                    </g:else>
+                                                                </g:if_polaris>
+                                                                </td>
+                                                            </tr>
+                                                            </j2:if>
+                                                        </g2:for_each_record>
+                                                    </g2:attachment_list_by_availability>
+	                                            <!-- Another Loop for not available attachments -->
+	                                            <g2:attachment_list_by_availability sys_id="${jvar_target_sys_id}" table="${jvar_target_table}" available="false">
+                                                        <g2:for_each_record file_variable="sys_attachment" var="attachment">
+                                                            <j2:set value="true" var="jvar_have_not_available_attachments" />
+                                                            <g2:evaluate var="jvar_checkbox_label">
+                                                                gs.getMessage("Select attachment {0} for removal", sys_attachment.file_name);
+                                                            </g2:evaluate>
+                                                            <j2:set value="$[sys_attachment.encryption_context.getDisplayValue()]" var="jvar_encrypt_context" />
+                                                            <tr>
+                                                                <td colspan="2" style="white-space:nowrap;">
+                                                                <g:if_polaris>
+                                                                    <g:then>
+                                                                    <span class="input-group-checkbox">
+                                                                        <j2:if test="${jvar_can_edit_attachments}">
+                                                                            <j2:if test="$[sys_attachment.canDelete()]">
+                                                                                <input name="sys_id_$[sys_attachment.sys_id]"
+                                                                                    id="sys_id_$[sys_attachment.sys_id]" title="$[HTML:jvar_checkbox_label]"
+                                                                                    onclick="setRemoveButton(this);" type="checkbox" class="not_available checkbox" aria-label="$[HTML:jvar_checkbox_label]"/>
+                                                                                <j2:set value="true" var="jvar_some_deletable" />
+                                                                            </j2:if>
+                                                                        </j2:if>
+                                                                        <label for="sys_id_$[sys_attachment.sys_id]" class="checkbox-label">
+                                                                            <g2:attachment_entry />
+                                                                        </label>
+                                                                    </span>
+                                                                    </g:then>
+                                                                    <g:else>
+                                                                    <j2:if test="${jvar_can_edit_attachments}">
+                                                                        <j2:if test="$[sys_attachment.canDelete()]">
+                                                                            <input name="sys_id_$[sys_attachment.sys_id]"
+                                                                                id="sys_id_$[sys_attachment.sys_id]" title="$[HTML:jvar_checkbox_label]"
+                                                                                onclick="setRemoveButton(this);" type="checkbox" class="not_available" aria-label="$[HTML:jvar_checkbox_label]"/>
+                                                                            <j2:set value="true" var="jvar_some_deletable" />
+                                                                        </j2:if>
+                                                                    </j2:if>
+                                                                    <g2:attachment_entry />
+                                                                    </g:else>
+                                                                </g:if_polaris>
+                                                                </td>
+                                                            </tr>
+                                                        </g2:for_each_record>
+                                                    </g2:attachment_list_by_availability>
+                                                </table>
+                                            </div>
+                                            <j2:if test="${jvar_can_edit_attachments}">
+                                                <table class="current-attachments-footer" width="100%" style="table-layout:fixed;">
+                                                    <tr>
+                                                        <td>
+                                                            <j2:set var="jvar_show_download_all_button" value="none" />
+                                                                <j2:if test="$[jvar_have_attachments]">
+                                                                    <j2:set var="jvar_show_download_all_button" value="inline" />
+                                                                </j2:if>
+                                                            <input style="display:$[jvar_show_download_all_button];" id="download_all_button" type="button" class="btn btn-default" value="${gs.getMessage('Download All')}" onclick="downloadAllAttachments()"/>
+                                                        </td>
+                                                        <td>
+                                                            <span id="delete_button_span" style="float:right; text-align:right; display:none;">
+                                                                <input disabled="true" id="removeButton" class="btn btn-destructive-subdued" title="${gs.getMessage('Remove')}" type="submit" value="${gs.getMessage('Remove')}" data-now-ux-metrics-event="Apply Attachment Action" data-now-ux-metrics-action="Remove"/>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </j2:if>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                    <j2:if test="$[jvar_some_deletable]">
+                        <script>document.getElementById('delete_button_span').style.display = "inline";</script>
+                    </j2:if>
+                </td>
+            </tr>
+            <tr>
+                    <j:if test="${jvar_kmfcleprop != 'opt_in'}">
+                        <g2:attachment_encrypt />
+                    </j:if>
+                <td>
+                    <j:if test="${jvar_show_optional_attachment == 'true'}">
+                        <g2:optional_attachment_encrypt />
+                    </j:if>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <!-- this is where we send our form submissions so that the dialog stays up -->
+    <iframe id="upload_target" tabindex="-1" name="upload_target" title="${gs.getMessage('Attachments')}" src="blank.do?sysparm_domain_restore=false" style="position:fixed;clip: rect(0,0,0,0);width:100%;height:0;border:0px solid #fff;">$[SP]</iframe>
+</j:jelly>

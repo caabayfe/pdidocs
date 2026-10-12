@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<table role="presentation" border="0" style="width: 100%;">
+  <tr id="link_type_row">
+	<td><label for="link_type">${gs.getMessage("Type")}:</label></td>
+	<td>
+		<select name="link_type" id="link_type" onchange="changedLinkType();">
+			<option value="url">URL</option>
+			<option value="attachment">Attachment</option>
+		</select>
+	</td>
+  </tr>
+  <tr>
+    <td><label for="f_href">${gs.getMessage("URL")}:</label></td>
+    <td>
+       <div id="type_url">
+		<input type="text" id="f_href" size="70" value="$[RP.getWindowProperties().get('f_href')]" />
+       </div>
+       <div id="type_attachment" style="display: none;">
+                   <select name="attachment_list" id="attachment_list" title="${gs.getMessage('Attachments')}">$[SP]
+                      <g2:evaluate>
+						 var table = "$[RP.getWindowProperties().get('target_table')]";
+						 var sysid = "$[RP.getWindowProperties().get('target_sys_id')]";
+
+						 var attachmentGR;
+
+						 if(!table || !sysid) {
+						  	attachmentGR = null;
+						 } else {
+							var sa = new GlideSysAttachment();
+						  	attachmentGR = sa.getAttachments(table, sysid);
+						 }
+
+                      </g2:evaluate>
+                      <j2:set var="jvar_has_attachments" value="false" />
+                      <j2:while test="$[attachmentGR &amp;&amp; attachmentGR.next()]">>
+                            <j2:set var="jvar_has_attachments" value="true" />
+                            <j2:set var="jvar_file_name" value="$[HTML:attachmentGR.getValue('file_name')]"/>
+                            <g2:ui_select_option text="$[jvar_file_name]" value="$[attachmentGR.getValue('sys_id')]" />
+                      </j2:while>
+                   </select>
+        </div>
+     </td>
+  </tr>
+  <tr>
+    <td><label for="f_title">${gs.getMessage("Text")}:</label></td>
+    <td><input type="text" id="f_title" style="width: 100%" value="$[RP.getWindowProperties().get('f_title')]" /></td>
+  </tr>
+  <tr>
+    <td><label for="f_target">${gs.getMessage("Target")}:</label></td>
+    <td style="white-space:nowrap">
+       <select id="f_target">
+          <j2:set var="jvar_selected_target" value="$[RP.getWindowProperties().get('f_target')]" />
+          <g2:ui_select_option text="${gs.getMessage('None (use implicit)')}" value="" selected="$[jvar_selected_target]" />
+          <g2:ui_select_option text="${gs.getMessage('New window (_blank)')}" value="_blank" selected="$[jvar_selected_target]" />
+          <g2:ui_select_option text="${gs.getMessage('Same frame (_self)')}" value="_self" selected="$[jvar_selected_target]" />
+          <g2:ui_select_option text="${gs.getMessage('Top frame (_top)')}" value="_top" selected="$[jvar_selected_target]" />
+       </select>
+       <input type="text" name="f_other_target" id="f_other_target" size="10" style="display: none" title="Other Target" />
+    </td>
+  </tr>
+</table>
+<input type="hidden" id="ni.has_attachments" name="ni.has_attachments" value="$[jvar_has_attachments]" />
+
+<div id="buttons" style="text-align: right">
+    <g:dialog_buttons_ok_cancel ok="return onOK()" ok_id="ok_button" cancel_type="button" />
+</div>
+</j:jelly>

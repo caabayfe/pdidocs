@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_msg_arr" jelly="true" object="true">
+		var msg = [];
+		if (jelly.sysparm_conf_type == 'limit_decrease_confirmation') {
+			msg.push(gs.getMessage("You have changed the 'Password History Limit' parameter value from {0} to {1}.", [jelly.sysparm_old_limit, jelly.sysparm_new_limit]));
+			msg.push(gs.getMessage("Passwords older than {0} will be deleted from the history.", [jelly.sysparm_new_limit]));
+			msg.push(gs.getMessage("Continue?"));
+		} else {
+			msg.push(gs.getMessage("You have deactivated the 'Password history limit' feature."));
+			msg.push(gs.getMessage("All password histories will be deleted and new passwords will no longer be subject to the history check"));
+			msg.push(gs.getMessage("Continue?"));
+		}
+		msg;	
+	</g:evaluate>
+	
+	<style>
+			.conf-msg {
+				padding-bottom: 5px;
+			}
+	</style>
+	
+	<div>
+		<j:forEach var="jvar_msg" items="${jvar_msg_arr}">
+			<div class="conf-msg">
+				${HTML:jvar_msg}
+			</div>
+		</j:forEach>	
+		<footer class="modal-footer">
+			<g:dialog_buttons_ok_cancel ok="return updateRecord('${JS:sysparm_action}')"
+				ok_style_class="btn btn-primary" ok_text="${gs.getMessage('Continue')}"
+				ok_type="button" cancel_type="button" />
+		</footer>
+	</div>
+</j:jelly>

@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_osx" expression="gs.getProperty('mid.buildstamp') === null ? 'true' : 'false'" />
+    <g:evaluate var="jvar_packages" object="true">
+        var buildstamp = gs.getProperty('mid.buildstamp');
+        var packages = {
+            linux32: new MIDPackage('mid', buildstamp, 'linux', 'x86-32'),
+            linux64: new MIDPackage('mid', buildstamp, 'linux', 'x86-64'),
+            windows32ZIP: new MIDPackage('mid', buildstamp, 'windows', 'x86-32'),
+            windows64ZIP: new MIDPackage('mid', buildstamp, 'windows', 'x86-64'),
+            windows32MSI: new MIDPackage('mid-windows-installer', buildstamp, 'windows', 'x86-32'),
+            windows64MSI: new MIDPackage('mid-windows-installer', buildstamp, 'windows', 'x86-64'),
+            linux64RPM: new MIDPackage('mid-linux-rpm-installer', buildstamp, 'linux', 'x86-64'),
+            linux64RPMSign: new MIDPackage('mid-linux-rpm-installer', buildstamp, 'linux', 'x86-64'),
+            linux64DEB: new MIDPackage('mid-linux-deb-installer', buildstamp, 'linux', 'x86-64'),
+            linux64DEBSign: new MIDPackage('mid-linux-deb-installer', buildstamp, 'linux', 'x86-64'),
+            linux64DockerRecipe: new MIDPackage('mid-linux-container-recipe', buildstamp, 'linux', 'x86-64'),
+            osx64: new MIDPackage('mid', buildstamp, 'osx', 'x86-64')
+        };
+		var midPackages = {};
+		for (var packName in packages) {
+			var pack = packages[packName];
+		    var midPack = {
+				name: pack.getName(),
+				buildstamp: pack.getBuildStamp(),
+				operatingSystem: pack.getOperatingSystemName(),
+				architecture:pack.getArchitectureName(),
+				uri: new MIDPackageUriFactory(pack, 'attachment_download').getUris(1)[0]
+		    }
+		    midPackages[packName] = midPack;
+		};
+
+        JSON.stringify(midPackages);
+    </g:evaluate>
+
+	<input type="hidden" id="mid_packages" value="${jvar_packages}" />
+<head>
+    <title>${gs.getMessage("Download MID Server")}</title>
+    <style>
+        .mid-ui-list-header {
+            background-color: #E6E8EA;
+        }
+
+        .mid-ui-testing-text {
+        	color: #666666;
+        }
+
+        .mid-ui-img {
+            min-width: 80px;
+        }
+
+		.checkbox {
+		 vertical-align:middle;
+		}
+		label.checkbox-label input[type=checkbox]{
+			position: relative;
+			vertical-align: middle;
+			bottom: 1px;
+		}
+
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-static-top" style="margin-bottom: 15px;" role="navigation">
+        <div class="container-fluid pull-left">
+            <div class="navbar-header">
+                <h1 class="navbar-title">${gs.getMessage("Download MID Server")}</h1>
+            </div>
+        </div>
+    </nav>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-1 mid-ui-img">
+                <img src="ico_discovery_installedmidserver.png" alt="${gs.getMessage('MID Server')}"/>
+            </div>
+            <div class="col-sm-10">
+				<span>
+                	${gs.getMessage("MID Server Download UI Header")}$[SP]
+					<a id="permalink" class="linked" href="${gs.getProperty('help.base.servicenow')}CSHelp:MID-Server-Installer" target="_blank">${gs.getMessage("installation instructions")}</a>$[SP]
+					${gs.getMessage("for more details.")}
+				</span>
+                <div>${gs.getMessage("Note: Please refer release notes for MID Server Host OS compatibility matrix for current and upcoming releases.")}</div>
+                <div class="row">
+					<h2>${gs.getMessage("Windows Downloads")}</h2>
+					<div class="row">
+						<div class="col-sm-4" id="windowsMSI">
+							<div class="list-group">
+								<h5 class="list-group-item mid-ui-list-header">${gs.getMessage("Windows (MSI)")}</h5>
+								<div class="list-group-item">${gs.getMessage("64 bit")}
+									<a id="windows64MSI" href="#" onclick="downloadPackage('windows64MSI')">
+										<i aria-label="Download Windows 64bit MSI" class="pull-right icon-download" title="Download" role="img"></i>
+									</a>
+									<a id="windows64MSILink" href="#" onclick="copyDownloadLink('windows64MSI')">
+										<i aria-label="Copy Windows 64bit MSI download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+									</a>
+								</div>
+								<div class="list-group-item" style="display: none;">
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<h2>${gs.getMessage("Linux Downloads")}</h2>
+					<div id="ServiceSuggestion">
+						<span>
+							${ALLOW_JELLY:gs.getMessage("MID Server Docker Recipe Download Guideline for Linux")}$[SP]
+							<a id="permalink" class="linked" href="${gs.getProperty('help.base.servicenow')}CSHelp:BuildLinuxMIDServerDockerImage" target="_blank">${gs.getMessage("Build MID Server Docker Image for Linux")}</a>$[SP].
+						</span>
+					</div>
+					<div class="row">
+						<div class="col-sm-4" id="linuxRPM">
+							<div class="list-group">
+								<h5 class="list-group-item mid-ui-list-header">${gs.getMessage("Linux (RPM)")}</h5>
+								<div class="list-group-item">${gs.getMessage("64 bit")}
+									<a id="linux64RPM" href="#" onclick="downloadPackage('linux64RPM')">
+										<i aria-label="Download Linux 64bit RPM" class="pull-right icon-download" title="Download" role="img"></i>
+									</a>
+									<a id="linux64RPMLink" href="#" onclick="copyDownloadLink('linux64RPM')">
+										<i aria-label="Copy Linux 64bit RPM download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+									</a>
+								</div>
+								<div class="list-group-item">${gs.getMessage("64 bit signatures")}
+									<a id="linux64RPMSign" href="#" onclick="downloadPackage('linux64RPMSign')">
+										<i aria-label="Download Linux 64bit RPM signatures" class="pull-right icon-download" title="Download Signatures" role="img"></i>
+									</a>
+									<a id="linux64RPMSignLink" href="#" onclick="copyDownloadLink('linux64RPMSign')">
+										<i aria-label="Copy Linux 64bit RPM signatures download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+									</a>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-4" id="linuxDockerRecipeZIP">
+							<div class="list-group">
+								<h5 class="list-group-item mid-ui-list-header">${gs.getMessage("Linux Docker Recipe")}</h5>
+								<div class="list-group-item">${gs.getMessage("64 bit")}
+									<a id="linux64" href="#" onclick="downloadPackage('linux64DockerRecipe')">
+										<i aria-label="Download Linux docker recipe" class="pull-right icon-download" title="Download" role="img"></i>
+									</a>
+									<a id="linux64Link" href="#" onclick="copyDownloadLink('linux64DockerRecipe')">
+										<i aria-label="Copy Linux docker recipe download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-4" id="linuxDEB">
+							<div class="list-group">
+								<h5 class="list-group-item mid-ui-list-header">${gs.getMessage("Linux (DEB)")}</h5>
+								<div class="list-group-item">${gs.getMessage("64 bit")}
+									<a id="linux64DEB" href="#" onclick="downloadPackage('linux64DEB')">
+										<i aria-label="Download Linux 64bit DEB" class="pull-right icon-download" title="Download" role="img"></i>
+									</a>
+									<a id="linux64DEBLink" href="#" onclick="copyDownloadLink('linux64DEB')">
+										<i aria-label="Copy Linux 64bit DEB download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+									</a>
+								</div>
+								<div class="list-group-item">${gs.getMessage("64 bit signatures")}
+									<a id="linux64DEBSign" href="#" onclick="downloadPackage('linux64DEBSign')">
+										<i aria-label="Download Linux 64bit DEB signatures" class="pull-right icon-download" title="Download Signatures" role="img"></i>
+									</a>
+									<a id="linux64DEBSignLink" href="#" onclick="copyDownloadLink('linux64DEBSign')">
+										<i aria-label="Copy Linux 64bit DEB signatures download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<j:if test="${jvar_osx}">
+					<h2>${gs.getMessage("OSX")}</h2>
+					<div class="row">
+							<div class="col-sm-4">
+								<div class="list-group">
+									<h5 class="list-group-item mid-ui-list-header">${gs.getMessage("OSX")}</h5>
+									<div class="list-group-item">${gs.getMessage("64 bit")}
+										<a id="osx64" href="#" onclick="downloadPackage('osx64')">
+											<i aria-label="Download o s x 64 package" class="pull-right icon-download" title="Download" role="img"></i>
+										</a>
+										<a id="osx64Link" href="#" onclick="copyDownloadLink('osx64')">
+											<i aria-label="Copy o s x 64 package download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+										</a>
+									</div>
+									<div class="list-group-item" style="display: none;">
+									</div>
+								</div>
+							</div>
+					</div>
+					</j:if>
+
+				</div>
+
+			</div>
+				<div class="row">
+					<div class="col-sm-10">
+						<div class="col-sm-1">
+						</div>
+						<div class="col-sm-10">
+							<label type="checkbox-label" for="zip_checkbox">
+								<input type="checkbox" name="zip_checkbox" id="zip_checkbox" value="false" onclick="useZipClicked(this);"  style="margin: 0px 5px 0px 0px;"/>${gs.getMessage('Download MID Server as ZIP archive')}</label>
+						</div>
+					</div>
+				</div>
+				<div class="row" id="ZIPDIV" style="display:none">
+					<div class="col-sm-1">
+					</div>
+					<div class="col-sm-10">
+						<div id="ServiceSuggestion">
+							<span>
+                                ${ALLOW_JELLY:gs.getMessage("MID Server ZIP Download Guideline")}$[SP]
+                                <a id="permalink" class="linked" href="${gs.getProperty('help.base.servicenow')}CSHelp:InstallWinMIDServer" target="_blank">${gs.getMessage("Install a MID Server on Windows")}</a>$[SP]
+                                ${gs.getMessage("for Windows and")}$[SP]
+                                <a id="permalink" class="linked" href="${gs.getProperty('help.base.servicenow')}CSHelp:InstallLinuxMIDServer" target="_blank">${gs.getMessage("Install a MID Server on Linux")}</a>$[SP]
+                                ${gs.getMessage("for Linux.")}
+                            </span>
+						</div>
+						<div class="row">
+							<div class="col-sm-4" id="linuxZIP">
+								<div class="list-group">
+									<h5 class="list-group-item mid-ui-list-header">${gs.getMessage("Linux (ZIP)")}</h5>
+									<div class="list-group-item">${gs.getMessage("64 bit")}
+										<a id="linux64" href="#" onclick="downloadPackage('linux64')">
+											<i aria-label="Download linux 64 mid server zip archive" class="pull-right icon-download" title="Download" role="img"></i>
+										</a>
+										<a id="linux64Link" href="#" onclick="copyDownloadLink('linux64')">
+											<i aria-label="Copy linux 64 mid server zip archive download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+										</a>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-4" id="windowsZIP">
+								<div class="list-group">
+									<h5 class="list-group-item mid-ui-list-header">${gs.getMessage("Windows (ZIP)")}</h5>
+									<div class="list-group-item">${gs.getMessage("64 bit")}
+										<a id="windows64" href="#" onclick="downloadPackage('windows64ZIP')">
+											<i aria-label="Download Windows 64 bit mid server zip archive" class="pull-right icon-download" title="Download" role="img"></i>
+										</a>
+										<a id="windows64Link" href="#" onclick="copyDownloadLink('windows64ZIP')">
+											<i aria-label="Copy windows 64 bit mid server zip archive download link" class="pull-right icon-copy" style="padding-right: 10px;" title="Copy link" role="img"></i>
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+		</div>
+		<div class="row">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-10">
+                <p class="mid-ui-testing-text">${gs.getMessage("MID Server Download UI Footer")}</p>
+			</div>
+		</div>
+	</div>
+
+</body>
+
+</j:jelly>

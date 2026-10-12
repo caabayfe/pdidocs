@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null">
+	<g:include_script src="AddRelationship.jsdbx" />
+
+	<j2:set var="jvar_item_id" value="$[sysparm_collectionID]" />
+	<g2:evaluate>
+		var base_item = new GlideRecord('cmdb_ci');
+		base_item.get('$[jvar_item_id]');
+	</g2:evaluate>
+
+	<g2:set_if var="jvar_changeset_id" test="$[empty(sysparm_changeset)]" true="" false="$[sysparm_changeset]" />
+	<g2:set_if var="jvar_propose_change" test="$[empty(sysparm_propose_change)]" true="" false="$[sysparm_propose_change]" />
+	<g2:set_if var="jvar_mode" test="$[empty(sysparm_mode)]" true="form" false="$[sysparm_mode]" />
+
+	<input type="HIDDEN" id="item_name" value="$[HTML:base_item.name]" />
+	<input type="HIDDEN" id="rel_type" value="$[sysparm_collectionType]" />
+
+	<nav class="navbar navbar-default" role="navigation">
+		<div class="container-fluid">
+			<div class="navbar-header">           
+				<button class="btn btn-default icon-chevron-left navbar-btn" onclick="history.go(-1);"></button>           
+				<span class="navbar-title">${gs.getMessage('Relationship Editor - ')} $[HTML:base_item.name] ($[HTML:base_item.sys_class_name.getDisplayValue()])</span>
+			</div>
+		</div>
+	</nav>	
+	
+	<div class="container slushbucket-relationship">
+		<div class="well col-sm-8 col-sm-offset-2">
+			<div class="col-sm-6">
+				<div class="row">
+					<label for="available_select" class="for-select">${gs.getMessage('Available Relationships')}</label>
+
+					<SELECT id="available_select" size="6" class="form-control">
+						<option value="loading">${gs.getMessage('Loading...')}</option>
+					</SELECT>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<g2:evaluate var="jvar_allow_show_all">
+					var prop = gs.getProperty('glide.ecmdb.all_relationship_role', 'itil_admin');
+					gs.hasRole(prop) || gs.hasRole('sn_cmdb_admin');
+				</g2:evaluate>
+				<p class="form-control-static">$[SP]</p>
+
+				<j2:if test="$[jvar_allow_show_all]">
+					<div class="form-group">
+						<div class="input-group-checkbox">
+							<input type="checkbox" class="checkbox" id="show_all_relationships" />
+							<label class="checkbox-label" for="show_all_relationships">${gs.getMessage('Show all relationships')}</label>
+						</div>
+					</div>
+				</j2:if>
+				<div class="form-group">
+					<div class="input-group-checkbox">
+						<input type="checkbox" class="checkbox" id="hide_ci_relationships" />
+						<label class="checkbox-label" for="hide_ci_relationships">${gs.getMessage('Hide CI relationships')}</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="input-group-checkbox">
+						<input type="checkbox" class="checkbox" id="hide_user_relationships" />
+						<label class="checkbox-label" for="hide_user_relationships">${gs.getMessage('Hide user relationships')}</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="input-group-checkbox">
+						<input type="checkbox" class="checkbox" id="hide_group_relationships" />
+						<label class="checkbox-label" for="hide_group_relationships">${gs.getMessage('Hide group relationships')}</label>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-xs-12" id="loading_span">
+			<g:inline template="redirect_page.xml" message="${gs.getMessage('Loading')}" />
+		</div>
+
+		<div class="col-xs-12" id="no_rel_possible" style="display: none;">
+			${gs.getMessage('No relationships available')}
+		</div>
+	</div>
+
+	<div style="visibility: hidden;" id="relationship_slushbucket">
+		<j:set var="jvar_collection_key" value="not_important"/>
+		<j:set var="jvar_collection_related_file" value="cmdb_ci"/>
+		<g:evaluate var="jvar_display_col2" expression="gs.getDisplayColumn('cmdb_ci')"/>
+		<j:set var="jvar_suppress_buttons" value="true"/>
+		<j:set var="jvar_m2m_select_0" value="select_0"/>
+		<j:set var="jvar_m2m_select_1" value="select_1"/>
+		<j:set var="jvar_m2m_lcodes_0" value="lcodes_0"/>
+		<j:set var="jvar_m2m_lcodes_1" value="lcodes_1"/>
+		<j:set var="jvar_list_entries" value=""/>
+		<j:set var="jvar_include_apply" value="true" />
+		<j:set var="jvar_on_sel_change" value="onSelectionChange('${jvar_m2m_select_1}')"/>
+						<j:set var="jvar_quick_filters" value="true" />
+						<j:set var="jvar_quick_filter_list" value="cmdb_ci,sys_user,sys_user_group" />
+						<j:set var="jvar_no_preload" value="true" />
+		<script>
+			function onSelectionChange(select) {
+				if (typeof (g_add_relationships) != 'undefined')
+					g_add_relationships.selChange();
+			}
+		</script>
+		<g:inline template="sys_m2m_body.xml" />
+
+		<div class="container">
+			<div id="rel_changed" class="col-xs-8 col-xs-offset-2 alert alert-info" style="visibility:hidden"/>
+		</div>
+	</div>
+			
+	<j2:if test="$[jvar_mode == 'dialog']">
+		<script>
+			// make a global variable in this scope of the bsm map
+			g_bsmMap = parent.bsmMap;
+			
+			function focusAndRedraw(node) {
+					node.diagram.setParam('id', node.getID());
+			   node.diagram.setParam('table', node.getData('ci_type'));
+			   node.diagram.setParam('sticky_nodes', '');
+			   node.diagram.id = node.getID();
+			   node.diagram.load();
+			   
+			   node.diagram.getContainer().scrollTop = 0;
+			   node.diagram.getContainer().scrollLeft = 0;
+			   
+			   node.diagram.setParam('node_ids', '');	
+			}
+			 
+			function redrawParent() {
+					   var bsm = g_bsmMap;
+					   var node_id = '$[jvar_item_id]';
+					   var node = bsm.getNode(node_id);
+					   focusAndRedraw(node);
+			}
+			
+			addUnloadEvent( function() { if (g_add_relationships.madeChanges) redrawParent() });
+		</script>
+	</j2:if>
+	<script>
+		addLoadEvent(function() { g_add_relationships = new AddRelationship('$[JS:jvar_item_id]', '$[JS:jvar_changeset_id]', '$[JS:jvar_propose_change]'); g_add_relationships.init() } );
+		addUnloadEvent(function() { g_add_relationships.destroy()});
+	</script>
+	
+</j:jelly>

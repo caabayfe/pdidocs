@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate jelly="true" var="jvar_picker_language_list"
+					 expression="new SNC.I18nPickerGenerator().getAvailableLanguages()"/>
+	<g2:evaluate jelly="true" var="jvar_lang_list" object="true">
+		<!-- e.g., [{"label":"Chinese","value":"zh"},{"label":"English","value":"en"}] -->
+		var langList = jelly.jvar_picker_language_list; 
+		langList = JSON.parse(langList);
+		var i = 0;
+		var countValidLang = langList.length;
+		langList;
+	</g2:evaluate>
+	<g2:evaluate jelly="true" var="jvar_session_lang_id">
+		<!-- Get current session language information. -->
+		var session = gs.getSession();
+		var sessionLang = session.getLanguage();
+		sessionLang;
+	</g2:evaluate>
+	<j2:forEach var="jvar_lang_obj" items="$[langList]" indexVar="jvar_i">
+		<j2:if test="$[jvar_lang_obj.value == 'en']">
+			<g2:evaluate jelly="true">
+				jelly.jvar_lang_obj.valid = true;
+			</g2:evaluate>
+		</j2:if>
+		<j2:if test="$[jvar_lang_obj.value != 'en']">
+			<g2:evaluate jelly="true">
+				var translatedText = new GlideRecord("sys_translated_text");
+				translatedText.addQuery("documentkey", jelly.jvar_assessable_type);
+				translatedText.addQuery("language", jelly.jvar_lang_obj.value);
+				translatedText.query();
+				if (!translatedText.hasNext()) {
+					countValidLang = countValidLang - 1;
+					jelly.jvar_lang_obj.valid = false;
+				} else 
+					jelly.jvar_lang_obj.valid = true;
+			</g2:evaluate>
+		</j2:if>
+	</j2:forEach>
+	<j2:forEach var="jvar_lang_obj" items="$[langList]" indexVar="jvar_j">
+		<j2:if test="$[jvar_lang_obj.value == jvar_session_lang_id]">
+			<g2:evaluate jelly="true">
+				var sessionLangLab = jelly.jvar_lang_obj.label;
+				var sessionLangVal = jelly.jvar_lang_obj.value;
+			</g2:evaluate>
+		</j2:if>
+	</j2:forEach>
+	<style>
+		.selected_language::after {
+		  content: ' ✓';
+		}
+	</style>
+	<script>
+		function changeSessionLanguage(targetLanguageValue, instanceID, sessionLanguageValue) {
+			if (targetLanguageValue == sessionLanguageValue)
+				return;
+		
+			<!-- Append 'lang' to url and call it -->
+			if (window.location.href.indexOf("sysparm_lang") !== -1) {
+				var index = window.location.href.indexOf("sysparm_lang");
+				window.location.href = window.location.href.replaceAt(index, "sysparm_lang=" + targetLanguageValue);
+			} else {
+				window.location.href +=  "$[AMP]sysparm_lang=" + targetLanguageValue + "$[AMP]sysparm_assessable_sysid=" + instanceID;
+			}
+		}
+		
+		String.prototype.replaceAt = function(index, replacement) {
+			return this.substr(0, index) + replacement+ this.substr(index + replacement.length);
+		}
+	</script>
+	<j2:if test="$[countValidLang &gt; 1]">
+		<div class="btn-group" role="application">
+			<button id="language_button" class="btn btn-default" data-toggle="dropdown" aria-label="Language menu" data-original-title="Language menu" aria-haspopup="true" aria-expanded="false">
+				$[sessionLangLab]$[AMP]nbsp;<span class="caret"></span>
+			</button>
+			<ul id="asmt_lang_list" class="dropdown-menu" aria-labelledby="language_button">
+				<j2:while test="$[i &lt; langList.length]">
+					<g2:evaluate>
+						var langObj = langList[i];
+						var liOptionId = "asmt_lang_" + langObj.value;
+						i = i+1;
+					</g2:evaluate>
+					<j2:if test="$[langObj.valid]">
+						<li id="$[liOptionId]" role="presentation">
+							<j2:if test="$[langObj.value == sessionLang]">
+								<a href="javascript:void(0);" class="selected_language" role="listitem" tabindex="-1" onclick="changeSessionLanguage('$[langObj.value]', '$[jvar_assessable_sysid]', '$[sessionLangVal]')">$[langObj.label]</a>
+							</j2:if>
+							<j2:if test="$[langObj.value != sessionLang]">
+								<a href="javascript:void(0);" role="listitem" tabindex="-1" onclick="changeSessionLanguage('$[langObj.value]', '$[jvar_assessable_sysid]', '$[sessionLangVal]')">$[langObj.label]</a>
+							</j2:if>
+						</li>
+					</j2:if>
+				</j2:while>
+			</ul>
+		</div>
+	</j2:if>
+</j:jelly>

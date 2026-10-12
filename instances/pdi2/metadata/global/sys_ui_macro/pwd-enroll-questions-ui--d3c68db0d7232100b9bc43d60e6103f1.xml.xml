@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <!--  
+        Include UI script that contains javascript for client side.  
+        Let's keep the same name as this macro. 
+    -->
+    <g:include_script src="$pwd_enroll_questions_ui.jsdbx" />
+    
+    <!--  
+        Initialize Question and Answer Manager with the passed verificationId
+    -->    
+    <g:evaluate var="jvar_mgr" jelly="true" object="true" >
+        new SNC.PwdQAManager();
+    </g:evaluate>
+    
+    <!--  
+    Figure out whether this is for update or insert.
+    -->
+    <g:evaluate var="jvar_mode" jelly="true">
+        var userId = gs.getSession().getUser().getID();
+        var wasPreviouslyEnrolled = false;
+		
+		var enrollmentGr = new GlideRecord("pwd_enrollment");
+		enrollmentGr.addQuery("user", userId);
+        enrollmentGr.addQuery("verification", jelly.jvar_verification_id);
+		enrollmentGr.query();
+		
+		if(enrollmentGr.next()){
+             wasPreviouslyEnrolled = true;
+		}
+        
+        if(wasPreviouslyEnrolled){
+            'update';
+        }
+        else{
+            'create';
+        }
+    </g:evaluate>
+    
+    <!--  
+    Get available questions.
+    -->
+    <g:evaluate var="jvar_questions" jelly="true" object="true" >
+        var userId = gs.getSession().getUser().getID();
+        jelly.jvar_mgr.getAvailableQuestionsByVerificationId(userId, jelly.jvar_verification_id);
+    </g:evaluate>
+    
+    <!-- 
+    two different modes:
+        -1. create 
+        -2. update
+     -->
+     <j:if test="${jvar_mode=='create'}">
+        <!--  
+            Do nothing.
+        -->
+     </j:if>
+     
+     <j:if test="${jvar_mode=='update'}">
+        <g:evaluate var="jvar_stored_answer_ids" object="true" jelly="true" >
+            var userId = gs.getSession().getUser().getID();
+            jelly.jvar_mgr.getStoredAnswerIdsByVerificationId(userId, jelly.jvar_verification_id);
+        </g:evaluate>
+    </j:if>
+    
+    <!-- 
+        Returns the required number of the questions and answers that need to be enrolled.
+     -->
+    <g:evaluate var="jvar_required_num_of_answers" jelly="true" >
+        var num_enroll = jelly.jvar_mgr.getRequiredQuestionCountByVerificationId(jelly.jvar_verification_id);
+		num_enroll = parseInt(num_enroll);
+		num_enroll;
+    </g:evaluate>
+
+    
+    <!-- include java script that requires server side data -->
+    <g:inline template="$pwd_enroll_questions_ui_js.xml" />
+    
+    <j:if test="${!empty(jvar_required_num_of_answers)}" >
+      <div class="pwd-section-subtitle" id="steps_header_${jvar_verification_id}">${gs.getMessage('Complete the question and answer section below')}</div>
+    </j:if>
+    <j:if test="${empty(jvar_required_num_of_answers)}" >
+      <div class="pwd-section-subtitle">No required number of questions is specified for this enrollment.</div>
+    </j:if>
+
+    <j:set var="jvar_select_index" value="0"/>   
+    <j:forEach begin="1" end="${jvar_required_num_of_answers}" indexVar="jvar_select_index">
+
+      <div class="form-group is-required" id="question_form_group_${jvar_select_index}">
+        <label for="question_${jvar_select_index}" class="control-label col-sm-3"> 
+          <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+          ${gs.getMessage('Question ')} ${jvar_select_index}
+        </label>
+        <span class="col-sm-9">
+          <select name="question_${jvar_select_index}" id="question_${jvar_select_index}" class="form-control pwd-form-control" aria-required="true"
+            onchange="changeList(${jvar_select_index},this); updateMandatoryMarker(this, 'question_form_group_${jvar_select_index}');">
+            <option value="">${gs.getMessage("Select a question")}</option>
+            <j:forEach begin="0" end="${jvar_questions.size()-1}" indexVar="questionIndex" >
+              <option value="${jvar_questions.get(questionIndex)}">
+                ${jvar_questions.get(questionIndex)}
+              </option>
+            </j:forEach>
+          </select>
+          <span id="error_msg_question_${jvar_select_index}" class="help-block"></span>
+        </span>
+      </div>
+
+      <div class="form-group is-required" id="answer_form_group_${jvar_select_index}">
+        <label for="answer_${jvar_select_index}" class="control-label col-sm-3">
+          <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+          ${gs.getMessage('Answer ')} ${jvar_select_index}
+        </label>
+        <span class="col-sm-9">
+          <input id="answer_${jvar_select_index}" placeholder="" name="answer_${jvar_select_index}" class="form-control pwd-form-control" maxlength="256" 
+            type="password" aria-required="true"
+            onchange="markChanged(${jvar_select_index},this)" 
+            onfocus="clearValue(${jvar_select_index},this)"
+            onblur="restoreValue(${jvar_select_index},this)"
+		    oninput="updateMandatoryMarker(this, 'answer_form_group_${jvar_select_index}')" />
+          <span id="error_msg_answer_${jvar_select_index}" class="help-block"></span>
+        </span>
+      </div>
+
+      <span style="display:inline-block">$[SP]</span>
+
+      <input type="hidden" name="changed_${jvar_select_index}" value="false" />
+      <input type="hidden" name="stored_sys_id_${jvar_select_index}" value="" />
+      <input type="hidden" name="validation_id" value="${jvar_validation_id}" />
+
+    </j:forEach>
+
+    <g:evaluate var="jvar_min_length" jelly="true" >
+        gs.getProperty('password_reset.qa.ans_min_len');
+    </g:evaluate>
+	
+    <input type="hidden" id="min_length" name="min_length_for_qa" value="${jvar_min_length}" />
+    <input type="hidden" id="mode" name="mode" value="${jvar_mode}" />
+    <input type="hidden" id="count" name="count" value="${jvar_required_num_of_answers}" />
+    <input type="hidden" id="verification_id" name="verification_id" value="${jvar_verification_id}" />
+    <input type="hidden" name="mandatory" value="${jvar_mandatory}" />
+    <input type="hidden" name="tab_index" value="${jvar_tab_index}" />
+</j:jelly>

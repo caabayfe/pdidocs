@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:set var="jvar_tour_id" value="${sysparm_tour_id}" />
+
+    <!--If tour exists, return the roles else return false-->
+    <g:evaluate var="jvar_tour_roles" jelly="true">
+        var tour_role;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			tour_role = gr.roles;
+		}
+		else {
+			tour_role=false;
+		}
+		tour_role;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_tour_name" jelly="true">
+        var tour_name;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			tour_name = gr.name;
+		}
+		tour_name;
+    </g:evaluate>
+	<g:evaluate var="jvar_tour_active" jelly="true">
+		var tour_active;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			tour_active = gr.active;
+		}
+		tour_active;
+    </g:evaluate>
+	<g:evaluate var="jvar_tour_status" jelly="true">
+		var tour_status;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			tour_status = gr.status;
+		}
+		tour_status = tour_status || 'published';;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_tour_page" jelly="true">
+        var tour_page;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			tour_page = gr.context;
+		}
+		tour_page;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_user_has_access" jelly="true">
+        <!--Validate if current user has correct access to view the tour-->
+        gs.hasRole("${jvar_tour_roles}");
+    </g:evaluate>
+
+    <g:evaluate var="jvar_tour_type" jelly='true'>
+		var tour_type;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			tour_type = gr.type;
+		}
+		tour_type;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_tour_params" jelly='true'>
+		var tour_params;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			tour_params = gr.route_parameters;
+		}
+		tour_params;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_tour_is_valid_params" jelly='true'>
+		var tour_is_valid_params = true;
+		var gr = new GlideRecord('sys_embedded_tour_guide');
+		gr.addQuery('sys_id','${jvar_tour_id}');
+		gr.query();
+		if (gr.next()) {
+			if(gr.type == "now_experience" ${AND} gr.route_parameters) {
+				try {
+					var params = JSON.parse(gr.route_parameters);
+					//TODO: Add more validations
+				} catch(e) {
+					tour_is_valid_params = false;
+				}
+			}
+		}
+		tour_is_valid_params;
+	</g:evaluate>
+
+    <j:choose>
+        <!--Show error messages if any else redirect and start the tour-->
+        <j:when test="${jvar_tour_roles=='false'}">
+            <h4>${gs.getMessage('Tour not found. Verify the tour ID.')}</h4>
+        </j:when>
+
+        <j:when test="${jvar_user_has_access == 'false'}">
+            <h4>${gs.getMessage('Security constraints prevent access to requested page.')}</h4>
+        </j:when>
+
+        <j:when test="${jvar_tour_active == false}">
+            <h4>${gs.getMessage('This tour is inactive and cannot be played.')}</h4>
+        </j:when>
+
+		<j:when test="${jvar_tour_is_valid_params == 'false'}">
+            <h4>${gs.getMessage('Failed to parse tour parameters! Make sure the route parameters in JSON are correct.')}</h4>
+        </j:when>
+
+        <j:when test="${jvar_user_has_access == 'true'}">
+            <script>
+                function play_tour(id, tour_name, tour_status, tour_page, tour_type, tour_params) {
+					if (tour_page.indexOf('&amp;') >= 0) {
+                        tour_page = tour_page.split('&amp;').join('%26');
+                    }
+                    var tour_id = id;
+					var gotoURL;
+					var url;
+					var re = /\.do/i;
+					var tourTypeExperience = "now_experience";
+					var tourTypeAIUX = "aiux";
+					var isAIUXMode = window.location.href.indexOf('sysparm_aiux_mode=true') >= 0;
+					if (tour_page.startsWith("appshell:")) {
+						tour_page = tour_page.replace("appshell:", "");
+					}
+					if (tour_type === tourTypeAIUX) {
+						gotoURL = tour_page;
+						if(!!tour_params) {
+                            var aiuxParams;
+                            try {
+                                    aiuxParams = JSON.parse(tour_params);
+                            } catch(e) {
+                                    aiuxParams = null;
+                            }
+                            // AIUX params are already in route order (dynamic segments interleaved with
+                            // any static ones in between), so rebuilding the URL is a straight positional
+                            // append of each value - unlike now_experience's keyed required/optional params.
+                            if (aiuxParams) {
+                                    aiuxParams.forEach(param => {
+                                            gotoURL += "/" + param.value;
+                                    });
+                            }
+                        }
+					}
+					else if (tour_type === tourTypeExperience) {
+
+						if(!!tour_params) {
+							var params;
+							var paramsInArray;
+							try {
+								params = JSON.parse(tour_params);
+								paramsInArray = Object.values(params);
+								paramsInArray.sort(function (a, b) { return parseInt(a.order) - parseInt(b.order); });
+							} catch(e) {
+								return;
+							}
+
+							var paramsURL = "";
+							var isFirstOptParam  = true;
+							paramsInArray.forEach(param => {
+								if(param.isRequired) {
+									paramsURL += "/" + param.value;
+								} else {
+									if(isFirstOptParam) {
+										paramsURL += "/params";
+										isFirstOptParam = false;
+									}
+									paramsURL += "/" + param.paramKey + "/" + param.value;
+								}
+							});
+							gotoURL = tour_page + paramsURL;
+						} else {
+							gotoURL = tour_page;
+						}
+					}
+					else if (re.exec(tour_page) == null) {
+						gotoURL = tour_page + '.do' + "%3F";
+					} else if(tour_page.indexOf('?') == -1){
+                        gotoURL = tour_page + "%3F";
+                    }else{
+                        gotoURL = tour_page +'%26';
+                    }
+                    window.sessionStorage.setItem('AUTOSTART', tour_id);
+                    window.sessionStorage.setItem('TOURNAME', tour_name);
+                    window.sessionStorage.setItem('TOURSTATUS', tour_status);
+					window.sessionStorage.setItem('SESSION_TOUR_MODE', 'preview');
+
+                    //Appending any additionl parameters passed by the user to the final URL.
+                    var url_test = document.createElement('a');
+                    url_test.href = window.location.href;
+                    var x = url_test.search;
+                    var res_parm = encodeURIComponent(x.substr(1));
+					if (isAIUXMode) {
+						if (tour_type === 'platform' || tour_type === 'custom_ui' || !tour_type) {
+							var classicPage = tour_page;
+							if (re.exec(classicPage) === null) classicPage = classicPage + '.do';
+							url = '/aiux/ui/classic?target=%2F' + classicPage + '%3Fsysparm_tour_id%3D' + tour_id + '%26mode%3Dpreview';
+						} else if (tour_type === tourTypeExperience) {
+							url = '/aiux/ui/workspace/' + gotoURL;
+						}
+					}
+					if (!url) {
+						if (tour_type === tourTypeAIUX) {
+							url = '/' + gotoURL + '?sysparm_tour_id=' + tour_id + '%26mode%3Dpreview';
+						} else if (tour_type === tourTypeExperience){
+							url = gotoURL + '?' + res_parm;
+						}
+						else {
+							url = "nav_to.do?uri=/" + gotoURL + res_parm;
+						}
+					}
+                    top.window.location = url;
+                }
+
+           play_tour('${jvar_tour_id}', '${jvar_tour_name}', '${jvar_tour_status}', '${jvar_tour_page}', '${jvar_tour_type}', '${jvar_tour_params}')
+            </script>
+        </j:when>
+
+    </j:choose>
+
+
+</j:jelly>

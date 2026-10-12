@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:doctype name="html" />
+	<g2:evaluate var="jvar_compatibility">
+		new ScopedGlideUICompatibility("sn_chg_soc").getCompatibility();
+	</g2:evaluate>
+	<j2:if test="$[jvar_compatibility == 'block']">
+		<g:inline template="sn_chg_soc_change_soc_compatibility.xml" />
+	</j2:if>
+	<g2:evaluate var="jvar_has_rights">
+		var rights = new global.ChangeSoCUtil().canRead();
+		rights;
+	</g2:evaluate>
+	<j2:if test="$[jvar_has_rights]">
+		<j2:if test="$[jvar_compatibility != 'block']">
+
+			<g:inline template="glide_weba_header.xml" />
+			<g:inline template="dir_checker.xml" />
+			<html ng-app="sn.chg_soc.landing" class="${jvar_text_direction}" lang="$[gs.getSession().getLanguage()]">
+				<head>
+					<meta charset="utf-8" />
+					<title>${gs.getMessage('Change Schedules')}</title>
+					<g:inline template="change_soc_landing_requires.xml" />
+				</head>
+				<body ng-controller="ScheduleSoCController as scheduleSoCCtrl" ng-init="scheduleSoCCtrl.init()" class="soc-landing">
+					<g:inline template="sn_chg_soc_landing_translation.xml" />
+					<g:inline template="sn_chg_soc_landing_wizard_translation.xml" />
+					<div class="soc-board-list-body sn-soc" ng-cloak="">
+						<div class="soc-board-list-wrapper">
+							<sn-landing-page-header />
+							<sn-landing-pinned-notification />
+							<section ng-cloak="" class="col-sm-12 soc-board-list-content clearfix" aria-hidden="false">
+								<div class="soc-board-lists">
+									<sn-landing-tabs tabs="pinned own_belong all" />
+									<ul class="soc-board-list clearfix"
+										ng-if="scheduleSoCCtrl.showSchedules"
+										i-scroll="scheduleSoCCtrl.getSchedules()"
+										i-scroll-disabled="{{scheduleSoCCtrl.loading}}"
+										i-scroll-distance="1"
+										i-scroll-container=".soc-board-list-content"
+										i-scroll-immediate-check="{{scheduleSoCCtrl.immediateCheck()}}">
+										<li ng-repeat="schedule in filteredSchedules = (scheduleSoCCtrl.getScheduleArray() | socfilter:scheduleSoCCtrl.textSearch) track by schedule.sys_id.value">
+											<sn-landing-card />
+										</li>
+									</ul>
+									<!-- Splash screens when no data available -->
+									<sn-splash-screens />
+									<!-- Bottom of page decoration e.g. loading and limit reached -->
+									<sn-landing-decoration />
+								</div>
+							</section>
+						</div>
+					</div>
+				</body>
+			</html>
+		</j2:if>
+	</j2:if>
+</j:jelly>

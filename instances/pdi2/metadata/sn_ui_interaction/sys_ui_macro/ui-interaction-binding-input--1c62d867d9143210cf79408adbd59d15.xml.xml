@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="ref" value="input_map.${jvar_input.name}"/>
+	<g:set_if var="jvar_element_display" test="${jvar_shown}" true="display: block;" false="display: none;"/>
+
+	<g:evaluate var="jvar_binding_hint">
+		gs.getMessage("Bindings should be formatted as \u007B\u007Bvariable_name\u007D\u007D, where \"variable_name\" is the name of the field or value you're referencing. For example: \u007B\u007Btable\u007D\u007D or \u007B\u007Bfields.assigned_to.value\u007D\u007D");
+	</g:evaluate>
+
+	<j:set var="jvar_mandatory_class" value="is-required"/>
+	<j:if test="${jvar_value != ''}">
+		<j:set var="jvar_mandatory_class" value="is-prefilled"/>
+	</j:if>
+
+	<div id="element.${ref}.binding" class="form-group ${jvar_mandatory_class}" style="${jvar_element_display}">
+		<div id="label.${ref}.binding">
+			<label onclick="return labelClicked(this);" for="${ref}.binding" dir="ltr" class="col-xs-12 col-md-3 col-lg-3 control-label">
+				<span id="status.${ref}.binding" role="note" data-dynamic-title="${jvar_input.description}" mandatory="true" oclass="mandatory" class="mandatory required-marker"/>
+				<span title="${jvar_input.description}" class="label-text" data-html="false">${jvar_input.label}</span>
+				<!-- This outer span prevents the form label change logic from messing up the tooltip. -->
+				<span>
+					<span aria-label="${jvar_binding_hint}" alt="${jvar_binding_hint}" data-dynamic-title="${jvar_binding_hint}" data-html="false" label-title="${jvar_binding_hint}" tabindex="0" data-omit-aria-describedby="true" role="button" class="icon-help btn-default" style="padding-left: 3px; " aria-hidden="false" data-original-title="" title=""></span>
+				</span>
+			</label>
+		</div>
+		<div class="col-xs-10 col-md-7 col-lg-7 form-field input_controls">
+			<input type="text" id="${ref}.binding" name="${jvar_input.name}.binding" data-required="true" data-type="binding" aria-required="true" aria-labelledby="label.${ref}.binding" onchange="onInputMapChange('${ref}.binding');" value="${jvar_value}" autocomplete="off" class="form-control" spellcheck="false"/>
+		</div>
+		<div class="col-xs-2 col-md-1 col-lg-1 form-field-addons">
+			<g:macro_invoke macro="configure_ui_interaction_static_value"/>
+		</div>
+	</div>
+</j:jelly>

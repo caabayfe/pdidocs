@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide">
+   <g:macro name="REQUIRED" table="REQUIRED" fields="" header_class="targetRecord"/>
+   <table width="100%" border="0" cellspacing="1" cellpadding="1" class="uiSingleRecord">
+     <tr class="${jvar_header_class}">
+	<td width="50%" style="white-space:nowrap">
+	      <g:evaluate var="table_label" expression="
+	        var tgr = new GlideRecord('${jvar_table}');
+		tgr.initialize();
+	      "/>
+          $[SP]<b>${tgr.getED().getLabel()}</b>	
+	</td>
+	<td width="50%" style="white-space:nowrap" align="right">
+	  <img src="images/page_left.pngx" onclick="${jvar_name}_previewBackward(gel('preview_${jvar_name}'));"/>
+	  <label for="preview_${jvar_name}">Viewing:$[SP]</label>
+          <input type="text" id="preview_${jvar_name}" name="preview_${jvar_name}" style="text-align:right; border-style:none;"  value="1" size="3" disabled="disabled" readonly="true"/>
+	  <img src="images/page_right.pngx" onclick="${jvar_name}_previewForward(gel('preview_${jvar_name}'));"/>	
+	</td>
+     </tr>
+     <tr>
+	<td class="FieldValueHeading">Field</td>
+	<td class="FieldValueHeading">Value</td>
+     </tr>
+     <tbody id="${jvar_name}"></tbody>
+   </table>
+
+   <script>
+
+     function ${jvar_name}_showPreview() {
+       var rel = gel('preview_${jvar_name}');
+       var row = rel.value;     
+       ${jvar_name}_showRecordPreview('${jvar_table}', '${jvar_fields}', '${jvar_name}', row);
+     }
+
+     addLoadEvent(${jvar_name}_showPreview); 
+
+     function ${jvar_name}_previewForward(el) {
+       var row = (el.value * 1) + 1;
+       el.value = row;
+
+       ${jvar_name}_showPreview();
+     }
+
+     function ${jvar_name}_previewBackward(el) {
+       var row = (el.value * 1) - 1;
+       if (row &amp;lt; 1)
+         row = 1;
+
+       el.value = row;
+
+       ${jvar_name}_showPreview();
+     }
+
+     function ${jvar_name}_singleRecordResponse(request, args) {
+       var divname = args[0];
+       var preview = document.getElementById(divname);
+       clearNodes(preview);
+       if (request.responseXML.documentElement) {
+	  var items = request.responseXML.getElementsByTagName("item");
+          for(var iCnt = 0; iCnt &amp;lt; items.length; iCnt++) {
+		var item = items[iCnt];
+		var name = item.getAttribute("label");
+		var tr = document.createElement('tr');
+		var tdLabel = document.createElement('td');
+		tdLabel.className = "label";
+		tdLabel.setAttribute('noWrap', 'true');
+		var label = document.createElement('label');
+                label.setAttribute('for', name);
+		label.appendChild(document.createTextNode("\u00a0" + name +":"));
+		tdLabel.appendChild(label);
+		tr.appendChild(tdLabel);
+		var tdValue = document.createElement('td');
+		tr.appendChild(tdValue);
+		label = document.createElement('label');
+                label.setAttribute('title', name);
+		var evalue = item.getAttribute("value");
+		label.appendChild(document.createTextNode(evalue));
+		tdValue.appendChild(label);
+  		preview.appendChild(tr);
+         }
+       }
+     }
+
+     function ${jvar_name}_showRecordPreview(table, field_list, divname, row) {
+        if (!field_list)
+          field_list = ${jvar_name}_fields;
+
+    	var ajax = new GlideAjax("SingleRecord");
+    	ajax.addParam("sysparm_name", table);
+    	ajax.addParam("sysparm_field_list", field_list);
+    	ajax.addParam("sysparm_row", row);
+    	ajax.addParam("sysparm_type", "SingleRecord");
+
+        ajax.getXML(${jvar_name}_singleRecordResponse, null, new Array(divname));
+     }
+   </script>
+</j:jelly>

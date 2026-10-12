@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/js_coverage_codemirror_includes.js" includes="true"/>
+	<g:requires name="styles/js_coverage_codemirror_includes.css" includes="true"/>
+	
+	<g2:evaluate var="jvar_script">
+		new SNC.JSCoverageScriptProvider().getScript(current.script_name);
+	</g2:evaluate>
+	<g2:evaluate var="jvar_covered_lines">
+		current.lines;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_executable_lines" jelly="true">
+		new SNC.JSCoverageSourceParser().parse(jelly.jvar_script);
+	</g2:evaluate>
+	
+	<div nowrap="true" type="string">
+		<label dir="ltr" class="col-xs-12 col-md-1_5 col-lg-2 control-label">
+			<span class="label-text" data-html="false">Script</span>
+		</label>
+	</div>
+	<div id="coverage_container" class="col-xs-10 col-md-9 col-lg-8 form-field">
+		<textarea id="coverage_editor"/>
+	</div>
+	
+	<script language="javascript">
+		var editor = CodeMirror.fromTextArea(document.getElementById('coverage_editor'), {
+			lineNumbers: true,
+			lineWrapping: true,
+			mode: 'javascript',
+			gutters: ["CodeMirror-lint-markers", "CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+			theme: "snc_readonly",
+			readOnly: true
+        });
+		
+		editor.setValue('$[JS:jvar_script]');
+		
+		var STATE = {
+			COVERED : 0, 
+			UNCOVERED: 1, 
+			NOTEXECUTABLE : 2
+		};
+		
+		var getState = function(line, covered, uncovered) {
+			if (covered.indexOf(line) != -1) 
+				return STATE.COVERED;
+			else if (uncovered.indexOf(line) != -1)
+				return STATE.UNCOVERED;
+			else
+				return STATE.NOTEXECUTABLE;
+		}
+		
+		var covered_lines = '$[jvar_covered_lines]'.split(',');
+		var executable_lines = '$[jvar_executable_lines]'.replace('[', '')
+			.replace(']', '').split(', ');
+		var uncovered_lines = executable_lines.filter(function(line) {
+			return covered_lines.indexOf(line) == -1;
+		});
+		
+		var prevState = STATE.NOTEXECUTABLE;
+		for (var line = 1; line != editor.lineCount()+1; line++) {
+			var state = getState(line.toString(), covered_lines, uncovered_lines);
+			if (state == STATE.COVERED) {
+				editor.addLineClass(line-1, "background", "codecoverage-covered");
+				if (prevState != STATE.COVERED)
+					editor.addLineClass(line-1, "background", "codecoverage-covered-start");
+			} else if (state == STATE.UNCOVERED) {
+				editor.addLineClass(line-1, "background", "codecoverage-uncovered");
+				editor.addLineClass(line-1, "gutter", "codecoverage-uncovered-gutter");
+				if (prevState != STATE.UNCOVERED)
+					editor.addLineClass(line-1, "background", "codecoverage-uncovered-start");
+			}
+			prevState = state;
+		}
+		var prevState = STATE.NOTEXECUTABLE;
+		for (var line = editor.lineCount(); line != 0; line--) {
+			var state = getState(line.toString(), covered_lines, uncovered_lines);
+			if (state == STATE.COVERED) {
+				if (prevState != STATE.COVERED)
+					editor.addLineClass(line-1, "background", "codecoverage-covered-end");
+			} else if (state == STATE.UNCOVERED) {
+				if (prevState != STATE.UNCOVERED)
+					editor.addLineClass(line-1, "background", "codecoverage-uncovered-end");
+			}
+			prevState = state;
+		}
+	</script>
+</j:jelly>

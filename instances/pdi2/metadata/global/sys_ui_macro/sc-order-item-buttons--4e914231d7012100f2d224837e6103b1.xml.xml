@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script>
+		function processOrderNow(isWishListItem) {
+			if ($$('.order_buttons .disabled_order_button').length == 0) {
+				try {	
+					orderItemWidget.orderNow('${jvar_cat_item.isNewOrderNow()}', isWishListItem);
+				}
+				catch (e) {
+					orderItemWidget.g_cart.disableCartButtons(false);
+					throw e;
+				}
+			}
+			else
+				alert('${gs.getMessage('Please wait - price being updated')}'); 
+		}
+	</script>
+	<g:evaluate var="jvar_oi_order_now_button_override" jelly="true">
+		var jvar_oi_order_now_button_override = jelly.jvar_sc_order_now_button;
+		if (!jelly.jvar_cat_item.isUseScLayout())
+			jvar_oi_order_now_button_override = !jelly.jvar_cat_item.isNoOrderNow();
+		if (jelly.jvar_ignore_order_buttons + '' == 'true')
+			jvar_oi_order_now_button_override = 'false';
+		jvar_oi_order_now_button_override;
+	</g:evaluate>
+	<g:evaluate var="jvar_oi_order_item_button_override" jelly="true">
+		var jvar_oi_order_item_button_override = jelly.jvar_sc_order_item_button;
+		if (!jelly.jvar_cat_item.isUseScLayout())
+		    jvar_oi_order_item_button_override = 'false';
+		if (jelly.jvar_ignore_order_buttons + '' == 'true')
+			jvar_oi_order_item_button_override = 'false';
+		if(jelly.jvar_cat_item.isNewOrderNow())
+			jvar_oi_order_item_button_override = 'false';
+		jvar_oi_order_item_button_override;
+	</g:evaluate>
+    <g:evaluate var="jvar_oi_add_to_cart_button_override" jelly="true">
+        var jvar_oi_add_to_cart_button_override = jelly.jvar_show_add_to_cart_button;
+        if (jelly.jvar_ignore_add_to_cart_buttons + '' == 'true')
+            jvar_oi_add_to_cart_button_override = 'false';
+        jvar_oi_add_to_cart_button_override;
+    </g:evaluate>
+    <g:evaluate var="jvar_show_update_cart_button_override" jelly="true">
+    	if (jelly.sysparm_cart_name != null ${AND} jelly.sysparm_cart_name == 'saved_items')
+		jvar_show_update_cart_button_override = 'false';
+	else
+    		jvar_show_update_cart_button_override = 'true';
+	jvar_show_update_cart_button_override;
+    </g:evaluate>
+	<g:evaluate var="jvar_show_add_to_wish_list_button_override" jelly="true">
+		var jvar_show_add_to_wish_list_button_override = '' + jelly.jvar_sc_add_to_wish_list_button;
+		if (jvar_show_add_to_wish_list_button_override == 'true')
+			jvar_show_add_to_wish_list_button_override = '' + new global.GlobalServiceCatalogUtil().isWishListEnabled(jelly.sysparm_catalog);
+			var reqParentID = jelly.RP.getParameterValue("sysparm_parent_sys_id");
+			if (JSUtil.notNil(reqParentID))
+				jvar_show_add_to_wish_list_button_override = false;
+		jvar_show_add_to_wish_list_button_override;
+	</g:evaluate>
+    <tr class="order_buttons">
+        <td colspan="2">
+            <j:if test="${sysparm_cart_edit == null}">
+                <j:if test="${jvar_oi_order_now_button_override == 'true'}">
+                    <g:sc_button classes="request_catalog_button_with_icon"
+								 img="images/button_cursor.gifx"
+								 id="oi_order_now_button"
+								 onclick="processOrderNow(false)"
+								 label="${jvar_sc_order_now_label}"
+								 title="${jvar_sc_order_now_label}"
+								 isPrimary="true"/>
+                </j:if>
+                <j:if test="${jvar_oi_order_item_button_override == 'true'}">
+                    <g:sc_button classes="request_catalog_button_with_icon"
+								 img="images/button_cursor.gifx"
+								 id="oi_order_item_button"
+								 onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderItemWidget.orderItem('false'); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }"
+								 label="${jvar_sc_order_item_label}"
+								 title="${jvar_sc_order_item_label}"
+								 isPrimary="true"/>
+                </j:if>
+                <j:if test="${jvar_oi_add_to_cart_button_override != 'false'}">
+                    <g:sc_button classes="request_catalog_button_with_icon"
+								 img="images/button_cart.gifx"
+								 id="oi_add_to_cart_button"
+								 onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderItemWidget.addToCart(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }"
+								 label="${jvar_sc_add_to_cart_label}"
+								 title="${jvar_sc_add_to_cart_label}"/>
+                </j:if>
+				<j:if test="${jvar_show_add_to_wish_list_button_override == 'true'}">
+					<g:sc_button classes="request_catalog_button_with_icon"
+								 img="images/button_cart.gifx"
+								 id="oi_add_to_wish_list_cart_button"
+								 onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { wishListItems.saveItemForLater(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }"
+								 label="${jvar_sc_add_to_wish_list_label}"
+								 title="${jvar_sc_add_to_wish_list_label}"/>
+				</j:if>
+			</j:if>
+
+			<j:if test="${sysparm_cart_edit != null}">
+				<j:if test="${jvar_show_update_cart_button_override == 'true'}">
+					<g:sc_button classes="request_catalog_button_with_icon"
+								 img="images/button_cart.gifx"
+								 id="oi_update_cart_button"
+								 onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderItemWidget.orderEdit(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }"
+								 label="${jvar_sc_update_cart_label}"
+								 title="${jvar_sc_update_cart_label}"/>
+				</j:if>
+				<j:if test="${sysparm_cart_name=='saved_items'}">
+					<j:if test="${jvar_oi_order_now_button_override == 'true'}">
+						<g:sc_button classes="request_catalog_button_with_icon"
+									 img="images/button_cursor.gifx"
+									 id="oi_order_now_button"
+									 onclick="processOrderNow(true)"
+									 label="${jvar_sc_order_now_label}"
+									 title="${jvar_sc_order_now_label}"
+									 isPrimary="true"/>
+					</j:if>
+					<j:if test="${jvar_oi_order_item_button_override == 'true'}">
+						<g:sc_button classes="request_catalog_button_with_icon"
+									 img="images/button_cursor.gifx"
+									 id="oi_order_item_button"
+									 onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderItemWidget.orderItem('true'); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }"
+									 label="${jvar_sc_order_item_label}"
+									 title="${jvar_sc_order_item_label}"
+									 isPrimary="true"/>
+					</j:if>
+					<j:if test="${jvar_oi_add_to_cart_button_override != 'false'}">
+						<g:sc_button classes="request_catalog_button_with_icon"
+									 img="images/button_cart.gifx"
+									 id="oi_add_to_cart_button"
+									 onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderItemWidget.addSavedItemToCart(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }"
+									 label="${jvar_sc_add_to_cart_label}"
+									 title="${jvar_sc_add_to_cart_label}"/>
+					</j:if>
+					<j:if test="${jvar_show_add_to_wish_list_button_override == 'true'}">
+						<g:sc_button classes="request_catalog_button_with_icon"
+									 img="images/button_cart.gifx"
+									 id="oi_add_to_wish_list_cart_button"
+									 onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { wishListItems.updateSavedItem(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }"
+									 label="Update"
+									 title="Update"/>
+					</j:if>
+				</j:if>
+            </j:if>
+
+        </td>
+    </tr>
+</j:jelly>

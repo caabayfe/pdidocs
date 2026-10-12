@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:if test="${jvar_show_tags_context_menu}">
+     <script>
+	var mLabels = new GwtContextMenu('context_labelsub${jvar_section_id}');
+	mLabels.clear();
+
+        <j2:if test="$[jvar_labels == null]" >
+	   <g2:evaluate object="true" var="jvar_labels">
+	       GlideLabelUtil.getRecentDisplayLabelsForUser(9);
+	   </g2:evaluate>
+           <g2:evaluate jelly="true" var="jvar_show_more_option">
+               var showMore = false;
+               if (jelly.jvar_labels.size() == 9) {
+                  jelly.jvar_labels.remove(8)
+                  showMore = true;
+               }
+               showMore;
+       </g2:evaluate>
+        </j2:if>
+
+	mLabels.addHref("${gs.getMessage('New Tag...')}", "newLabel('${ref}', '$[${ref}.sys_id]')");
+
+	<j2:forEach var="jvar_label" items="$[jvar_labels]">
+           <g2:evaluate object="true" var="jvar_label" jelly="true">
+	      GlideStringUtil.escapeHTML('$[jvar_label]');
+	   </g2:evaluate>
+	   mLabels.addHref("$[jvar_label]", "doAssignLabel('${ref}','$[jvar_label]', '$[${ref}.sys_id]')");
+	</j2:forEach>
+
+    <j2:if test="$[jvar_show_more_option]">
+	    mLabels.addHref("${gs.getMessage('More...')}", "assignLabelViaLookup('${ref}', '$[${ref}.sys_id]')");
+    </j2:if>
+
+        gcm.addMenu("${gs.getMessage('Assign Tag')}", mLabels);
+
+        <j2:if test="$[jvar_labels_assigned == null]" >
+	   <g2:evaluate object="true" jelly="true" var="jvar_labels_assigned">
+	      GlideLabelUtil.getDisplayLabelsForRecord(jelly.jvar_labels, __ref_string__, __ref__.sys_id);
+	   </g2:evaluate>
+	   <g2:evaluate jelly="true" var="jvar_more_labels_assigned">
+	       var moreLabels = false;
+	       if (jelly.jvar_labels_assigned.size() > 30)
+	           moreLabels = true;
+	       moreLabels;
+	   </g2:evaluate>
+        </j2:if>
+
+	<j2:if test="$[jvar_labels_assigned.size() > 0]">
+		mLabels = new GwtContextMenu('context_labelremove${jvar_section_id}');
+		mLabels.clear();
+		<j2:forEach var="jvar_label" items="$[jvar_labels_assigned]" begin="0" end="29">
+                        <g2:evaluate object="true" var="jvar_label" jelly="true">
+	                    GlideStringUtil.escapeHTML('$[jvar_label]');
+	                </g2:evaluate>
+			mLabels.addHref("$[jvar_label]", "doRemoveLabel('${ref}', '$[jvar_label]', '$[${ref}.sys_id]')");
+		</j2:forEach>
+		<j2:if test="$[jvar_more_labels_assigned]">
+		    mLabels.addHref("${gs.getMessage('More...')}", "removeLabelViaLookup('${ref}', '$[${ref}.sys_id]')");
+		</j2:if>
+		gcm.addMenu("${gs.getMessage('Remove Tag')}", mLabels);
+	</j2:if>
+     </script>
+</j:if>
+</j:jelly>

@@ -1,0 +1,87 @@
+<g:ui_form>
+<g:messages>
+  Text index generation successfully scheduled.
+  Please specify an email address
+  An email will be sent to {0} upon completion.
+</g:messages>
+<g2:evaluate var="jvar_has_index">
+  var table = "${RP.getWindowProperties().get('table_name')}";
+  var hasIndex = "false";
+  if (table != "") {
+     var td = GlideTableDescriptor.get(table);
+     hasIndex = td.hasTextIndex().toString();
+  }
+  hasIndex;
+</g2:evaluate>
+<g2:evaluate var="jvar_table" expression="table"/>
+<g2:evaluate var="jvar_isMigratedTable">
+	var isMigratedTable = false;
+	if (table != "") {
+		isMigratedTable = new GlideTSUtil().isTableMigrationNeeded(table);
+	}
+	isMigratedTable;
+</g2:evaluate>
+<g2:evaluate var="jvar_cautionMsg">
+	var cautionMsg = "";
+	if (isMigratedTable) {
+		cautionMsg = gs.getMessage("Caution : {0} is not a root table. Creating configuration and indexing it will remove data from its parent table corpus. This means content of {0} table will no longer be searchable from it\'s parent table.", table);
+	}
+	cautionMsg;
+</g2:evaluate>
+<table width="100%">
+  <input type="HIDDEN" name="table" id="table" value="$[jvar_table]"/>
+	<j2:if test="$[jvar_isMigratedTable]">
+		<tr>
+			<td colspan="99">
+				$[jvar_cautionMsg]
+			</td>
+		</tr>
+		<tr><td><br/></td></tr>
+	</j2:if>
+  <tr>
+    <td colspan="99">
+       <j2:if test="$[!empty(jvar_table)]">
+         ${gs.getMessage('text_index_generation')}
+       </j2:if>
+       <j2:if test="$[empty(jvar_table)]">
+         ${gs.getMessage("Regenerating all indexes may take a while to complete, and you may notice performance degradation or incomplete search results while the indexes are being regenerated. Regenerate only the affected index whenever possible.")}
+       </j2:if>
+    </td>
+  </tr>
+  <tr class="header">
+    <td colspan="99">${gs.getMessage('Upon completion')}</td>
+  </tr>
+  <tr>
+    <td width="100%">
+      <input type="radio" checked="true" name="notify" id="notify" value="email" onclick="gel('email').style.visibility=''" title="${gs.getMessage('Email me')}">
+        ${gs.getMessage('Email me')}
+      </input>
+      <br/>
+      <input type="radio" name="notify" id="notify" value="none" onclick="gel('email').style.visibility='hidden'" title="${gs.getMessage('Do not notify me')}">
+        ${gs.getMessage('Do not notify me')}
+      </input>			
+    </td>
+    <td valign="top">
+      <input name="email" id="email" title="${gs.getMessage('Enter email address')}" value="${JS:gs.getUser().getEmail()}" size="30" />	
+    </td>
+  </tr>
+
+  <j2:if test="$[!empty(jvar_table)]">
+     <tr class="header">
+       <td colspan="2">${gs.getMessage('Text Index Specifics')}</td>
+     </tr>
+     <tr>
+       <td class="label">${gs.getMessage('Table Name')}</td>
+       <td>$[jvar_table]</td>
+     </tr>
+  </j2:if>
+  
+  <tr>
+    <td colspan="2" align="right">
+      <g:dialog_buttons_ok_cancel ok="return validateAndSubmit('$[jvar_table]','$[jvar_has_index]', '$[jvar_isMigratedTable]');" />
+    </td>
+  </tr>
+
+</table>
+
+</g:ui_form>

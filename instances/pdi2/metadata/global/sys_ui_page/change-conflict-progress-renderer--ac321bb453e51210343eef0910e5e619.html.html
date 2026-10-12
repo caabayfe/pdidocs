@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div id="container" >
+		<div style="height: 60px; text-align: center;">$[gs.getMessage('Loading...')]<div><i class="icon-loading">$[SP]</i></div></div>
+	</div>
+	<div id="buttonsPanel" align="right" style="padding-top:20px; padding-bottom:3px;"/>
+	
+	<script type="text/javascript">
+		with (nowapi) {
+			ScriptLoader.getScripts(['ChangeConflictProgressRenderer.jsdbx'],
+				function() {
+					//locate parent dialog to extract its parameters
+					var parentDlg = GlideModal.prototype.locate(g_document.getElement("#container"));
+					var prefs = parentDlg ? parentDlg.getPreferences() : {};
+
+					var progressRenderer = new ChangeConflictProgressRenderer();
+					var progressTitle = prefs['sysparm_renderer_progress_title'];
+					if (progressTitle)
+						progressRenderer.progressTitle = progressTitle;
+
+					/*** set up parameters of the progress renderer ***/
+
+					/*** create buttons and pass events from progress renderer up to the dialog level ***/
+					if (parentDlg) {
+						progressRenderer.executionStartHandler = function(response) {
+							parentDlg.fireEvent("executionStarted", response);
+						};
+						progressRenderer.renderStatusHandler = function(statusObject) {
+							parentDlg.fireEvent("renderStatus", statusObject);
+						};
+						progressRenderer.executionCompleteHandler = function(trackerObj) {
+							var buttonsPanel = g_document.getElement("#buttonsPanel");
+							buttonsPanel.innerHTML = '';
+							for(var prefName in prefs) {
+								if (prefName.startsWith("sysparm_button_")) {
+									var button = g_document.createElement('button');
+									button.id = prefName;
+									button.innerHTML = prefs[prefName];
+									button.setAttribute('type', 'button');
+									button.className = 'btn btn-default';
+									button.style.marginLeft = '5px';
+									buttonsPanel.appendChild(button);
+								}
+							}
+							parentDlg.fireEvent("executionComplete", trackerObj);
+						};
+					}
+
+					// AJAX processor which initiates the hierarchical progress worker
+					var ajaxProcessor = prefs['sysparm_ajax_processor'];
+					jslog("progress_viewer:: ajaxProcessor = " + ajaxProcessor);
+
+					if (ajaxProcessor) {
+					var ga = new GlideAjax(ajaxProcessor);
+					// pass all the dialog parameters to the ajax processor
+					var foundAnyAjaxProcessorParams = false;
+					for(var prefName in prefs) {
+						if (prefName.startsWith("sysparm_ajax_processor_") || prefName.startsWith("ni.nolog.sysparm_ajax_processor_")) {
+							foundAnyAjaxProcessorParams = true;
+							ga.addParam(prefName, prefs[prefName]);
+						}
+					}
+					if (!foundAnyAjaxProcessorParams) {
+						// seems like older convention was used in the caller,
+						// previously "ajax_processor_" prefix was not required for AJAX processor parameters
+						// in this case let's pass all parameters we have
+						for(var prefName in prefs) {
+							if (prefName.startsWith("sysparm_"))
+							ga.addParam(prefName, prefs[prefName]);
+						}
+					}
+					// checks if AJAX processor function name was passed
+					// if not use 'start' name by default
+					var funcName = prefs['sysparm_ajax_processor_name'];
+					if (!funcName)
+						ga.addParam('sysparm_name', 'start'); // default
+						// pass the configured ajax processor to the progress renderer
+						// it will initiate the hierarchical progress worker and render its status here
+						progressRenderer.start(ga);
+					} else {
+						var worker_id = prefs['sysparm_renderer_worker_id'];
+						if (!worker_id)
+							worker_id = prefs['sysparm_renderer_execution_id'];
+						// just checks and renders the worker's progress
+						progressRenderer.checkStatus(worker_id);
+					}
+				});
+		}
+	</script>
+</j:jelly>

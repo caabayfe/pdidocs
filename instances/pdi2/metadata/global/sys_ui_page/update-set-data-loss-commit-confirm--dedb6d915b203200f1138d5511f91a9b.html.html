@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_delObjList" value="${sysparm_del_obj_list}"/>
+	<j:set var="jvar_sysId" value="${sysparm_sys_id}"/>
+	<j:set var="jvar_encodedQuery" value="${sysparm_encodedQuery}"/>
+	<style>
+		.data_loss_table thead tr th,
+		.data_loss_table tbody tr td {
+			padding-left: 15px;
+		}
+		.data_loss_table tbody tr td a {
+			text-decoration: none;
+			color: #278efc;
+		}
+	</style>
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="icon icon-alert-triangle pull-left" style="font-size:35px; margin: 0px 15px 0px 15px;" />
+			<span style="font-weight: bold; font-size: 15px;">${gs.getMessage('Warning')}</span>
+			<p>${gs.getMessage('If you commit this update set, the system will automatically delete all data stored in the tables and columns that are defined in these Customer Updates:')}</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-12">
+			<!-- display related objects table -->
+			<table class="table data_loss_table">
+				<thead>
+					<tr><th>${gs.getMessage('Type')}</th><th>${gs.getMessage('Name')}</th></tr>
+				</thead>
+				<tbody class="pre-scrollable" style="max-height: 150px">
+					<j:forEach items="${jvar_delObjList.split(',')}" var="jvar_obj_pair" indexVar="jvar_n">
+						<j:if test="${jvar_n > 4}">
+							<j:set var="jvar_displayMore" value="true" />
+							<j:break />
+						</j:if>
+						<tr>
+							<j:forEach items="${jvar_obj_pair.split(':')}" var="jvar_obj" indexVar="jvar_i">
+								<j:choose>
+									<j:when test="${jvar_i == 0}">
+										<td>${jvar_obj}</td>
+									</j:when>
+									<j:otherwise>
+										<td>${jvar_obj}</td>
+									</j:otherwise>
+								</j:choose>
+							</j:forEach>
+						</tr>
+					</j:forEach>
+					<j:if test="${jvar_displayMore.equals('true')}">
+						<tr>
+							<td colspan="2"><a href="/sys_update_xml_list.do?sysparm_query=${URL:jvar_encodedQuery}">${gs.getMessage('View More')}</a></td>
+						</tr>
+					</j:if>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-12">
+			${gs.getMessage('Deleting these records may trigger cascade deletions. For example, deleting a table also deletes associated columns and the data in them. The only way to recover the data will be to restore it from backup, which is slow and complex.')}
+		</div>
+	</div>
+<div class="modal-footer" id="to_move_up">
+	<div class="row">
+		<div class="col-sm-12">
+			<g:dialog_buttons_ok_cancel ok="return okToDestroyData()" cancel="return cancel()" ok_type="button"
+										ok_style_class="btn btn-destructive" cancel_type="button"
+										ok_text="${gs.getMessage('Proceed with Commit')}" />
+		</div>
+	</div>
+	</div>
+	<script>
+		function okToDestroyData() {
+		commitInProgress = true;
+		runTheCommit('${JS:jvar_sysId}');
+		destroyDialog();
+		return true;
+		}
+	</script>
+</j:jelly>

@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+		
+		// order Action details : the action id will never change
+		var orderActionDetails = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.order) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.order) : null;
+		
+		// this_helped : the action id will never change, this is used to show the checked pill if user clicked this helped
+		var thisHelpedActionDetails = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.this_helped) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.this_helped) : null;
+		
+		// attac : the action id will never change
+		var attachActionDetails = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.attach) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.attach) : null;
+		
+		var docIdArray = jelly.jvar_cxs_result.id.split(":");
+        var document = {
+            table: docIdArray[0],
+            id: docIdArray[1],
+            displayName: GlideTableDescriptor.get(docIdArray[0]).getLabel()
+        };
+		
+		// Use "cxs_popup" view if availavle, or "sys_popup" if it is not available
+		// Use "sys_popup" view if available, or default view if "sys_popup" view not available
+		var popupView = "";
+		var guc = new GlideRecord("sys_ui_section");
+		guc.addQuery("name", document.table);
+		guc.query();
+		while (guc.next()) {
+			if (guc.view.name == "cxs_popup") {
+				popupView = "cxs_popup";
+				break;
+			} else if (guc.view.name == "sys_popup")
+				popupView = "sys_popup";			
+		}
+		
+		function truncate(text, length) {
+			return (text.length > length ? text.substring(0, length-3) + "..." : text);
+		}
+
+		function toInt(value) {
+			var parsedValue = parseInt(value, 10);
+			if (!isNaN(parsedValue))
+				return parsedValue;
+			return 0;
+		};
+
+		function toDisplayDate(dateStr) {
+			var gdt = new GlideDateTime();
+			gdt.setValue(dateStr);
+			return gdt.getDate().getDisplayValue();
+		}
+		
+		function toLinkTarget(target) {
+			return JSUtil.notNil(target) ? target : "";
+		};
+
+		function buildLink(display, base_link) {
+			if (!base_link)
+				return "";
+			
+			// If search resource is "GlideRecordSearchResource", we use "cxs_result_view_readonly" ui page to show glide records in read-only view. If not, we keep it as it was because we may use another ui page.
+			var link;
+			if ((display.isGlideResource || display.isSimilarityResource) ${AMP}${AMP} !display.isKnowledgeArticle) {
+				link = new GlideURL("cxs_result_view_readonly.do");
+				link.set("sysparm_table", document.table);
+				link.set("sysparm_sys_id", document.id);
+				link.set("sysparm_view", display.sysparm_view);
+			} else {
+				link = new GlideURL(base_link);
+				if (!display.link_target)
+					link.set("sysparm_stack", "no");
+
+				if (display.isKnowledgeArticle) {
+					link.set("sysparm_popup", "true");
+					link.set("sysparm_context", "popup");
+					link.set("sysparm_no_create", "true");
+					link.set("sysparm_no_update", "true");
+					link.set("sysparm_no_info", "true");
+					link.set("sysparm_no_history", "true");
+					link.set("sysparm_no_suggest", "true");
+					link.set("sysparm_no_create_incident", "true");
+					link.set("sysparm_no_rating", "true");
+				} else if (display.isSocialQAQuestion) {
+					link.set("sysparm_popup", "true");
+					link.set("sysparm_context", "popup");
+				} else if (display.isCommunityQA || display.isCommunityBlog) {
+					link.set("sysparm_popup", "true");
+					link.set("sysparm_readonly", "true");
+				}
+
+				if (jelly.jvar_cxs_result.meta.direct)
+					link.set("view", "true");
+
+				if (display.sysparm_view)
+					link.set("sysparm_view", display.sysparm_view);
+			}
+
+			return link.toString();
+		}
+
+		function buildRelatedLinkHTML(display, relatedLinks) {
+			var linkHTML = "";
+			if(orderActionDetails != null) {
+				//even though service is returnng and array, there is only one order button
+				if (relatedLinks) {
+					for (var i=0; i != relatedLinks.length; i++) {
+						var relatedLink = relatedLinks[i];
+						if (JSUtil.nil(relatedLink))
+							continue;
+						if (relatedLink.title ${AMP}${AMP} relatedLink.title === 'Order') {
+							var msgArray = [orderActionDetails.actionLabel, display.title];
+							var ariaLabel = gs.getMessage("{0} {1}, navigates to catalog page", msgArray);
+							linkHTML += '<button  aria-label = "' + ariaLabel + '" onclick="cxs_onCatalogOrder(this); return false;" data-url="' + relatedLink.link + cxs_link_parent + '" data-index="' + display.index + '" action-value="' + orderActionDetails.actionValue + '" class="request_catalog_button_with_icon btn btn-default">' + orderActionDetails.actionLabel + '</button>';
+						}
+					}
+				}
+			}
+			return linkHTML;
+		}
+
+		// Data related to the display of the result
+		var display = {
+			isDoctype: jelly.jvar_cxs_doctype == "true",
+	        isKnowledgeArticle: (document.table == "kb_knowledge"),
+			isSocialQAQuestion: (document.table == "kb_social_qa_question" ${AMP}${AMP} jelly.jvar_cxs_result.meta.source == "social"),
+			isCommunityBlog: (document.table == "sn_communities_blog"),
+			isCommunityQA: ((document.table == "kb_social_qa_question" || document.table == "kb_social_qa_answer") ${AMP}${AMP} (jelly.jvar_cxs_result.meta.source == "community_question" || jelly.jvar_cxs_result.meta.source == "community_answer")),
+			isGlideResource: (jelly.jvar_cxs_result.meta.source == "gliderecordsearch"),
+			isSimilarityResource: (jelly.jvar_cxs_result.meta.source == "scriptresource"),
+			title: (jelly.jvar_cxs_result.title) ? GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.title) : gs.getMessage("No title"),
+			title_truncated: (jelly.jvar_cxs_result.title) ? GlideStringUtil.escapeHTML(truncate(jelly.jvar_cxs_result.title, 40)) : gs.getMessage("No title"),
+			title_tooltip_not_escaped: truncate(jelly.jvar_cxs_result.title, 100),
+			snippet: (jelly.jvar_cxs_result.snippet ${AND} jelly.jvar_cxs_result.snippet != 'null') ? jelly.jvar_cxs_result.snippet : gs.getMessage("No description"),
+			link_target: toLinkTarget(jelly.jvar_cxs_result.link_target),
+			feedback_class: jelly.jvar_cxs_result.meta.relevance ${AMP}${AMP} thisHelpedActionDetails != null ${AMP}${AMP} jelly.jvar_cxs_result.meta.relevance[thisHelpedActionDetails.actionValue] ? "cxs_show_pill" : "cxs_hide_pill",
+		    index: jelly.jvar_cxs_index,
+			kb_index: -1,
+			action_label: thisHelpedActionDetails != null ? thisHelpedActionDetails.actionLabel : '',
+			action_value: thisHelpedActionDetails != null ? thisHelpedActionDetails.actionValue : '',
+			sysparm_view: popupView
+		};
+
+
+		var cxsUtils = new cxs_Utils();
+
+		// Validate returned strings to prevent hanging surrogates for emojis
+		display.title = cxsUtils.toWellFormedString(display.title);
+		display.title_truncated = cxsUtils.toWellFormedString(display.title_truncated);
+		display.title_tooltip_not_escaped = cxsUtils.toWellFormedString(display.title_tooltip_not_escaped);
+		display.snippet = cxsUtils.toWellFormedString(display.snippet);
+
+		// Strip HTML tags from snippet
+		display.snippet_stripped_html = cxsUtils.stripHTML(display.snippet);
+
+		display.link = buildLink(display, jelly.jvar_cxs_result.link);
+		display.related_links = buildRelatedLinkHTML(display, jelly.jvar_cxs_result.related_links);
+		
+		// Aria accessibility
+		var aria = {
+			presentation: "presentation",
+			preview: gs.getMessage("Preview of {0}", display.title_truncated),
+			attach: gs.getMessage("{0}, attaches the knowledge article to this form on save", display.title_truncated)
+		};
+		
+		// Flags determining what is displayed (boolean values)
+		var show = {};
+				
+		// Metadata for the result
+		var meta = {};
+		
+		if ((display.isKnowledgeArticle) ${AMP}${AMP} !(display.isGlideResource || display.isSimilarityResource)) {		
+			show = {
+				meta_data: (gs.getProperty("com.snc.contextual_search.widget.form.show_meta_data", false) == "true" || false),
+				knowledgebase: (gs.getProperty("glide.knowman.search.show_knowledgebase", false) == "true" || false),
+				author: (gs.getProperty("glide.knowman.search.show_author", false) == "true" || false),
+				article_number: (gs.getProperty("glide.knowman.search.show_article_number", false) == "true" || false),
+				category: (gs.getProperty("glide.knowman.search.show_category", false) == "true" || false),
+				relevance: (gs.getProperty("glide.knowman.search.show_relevancy", false) == "true" || false),
+				last_modified: (gs.getProperty("glide.knowman.search.show_last_modified", false) =="true" || false),
+				published: (gs.getProperty("glide.knowman.search.show_published", false) == "true" || false),
+				unpublished: (gs.getProperty("glide.knowman.show_unpublished", false) == "true" || false),
+				view_count: (gs.getProperty("glide.knowman.search.show_view_count", false) == "true" || false),
+				rating: (gs.getProperty("glide.knowman.search.show_rating", false) == "true" || false)
+			};
+			
+			meta = {
+				knowledgebase: jelly.jvar_cxs_result.meta.knowledgeBase,
+				author: GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.author),
+				article_number: jelly.jvar_cxs_result.meta.number,
+				category: GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.category),
+				relevance: parseInt(jelly.jvar_cxs_result.meta.score || "-1", 10),
+				last_modified: toDisplayDate(jelly.jvar_cxs_result.meta.modified || jelly.jvar_cxs_result.meta.published),
+				published: jelly.jvar_cxs_result.meta.published,
+				view_count: toInt(jelly.jvar_cxs_result.meta.viewCount),
+				rating: Math.round(jelly.jvar_cxs_result.meta.rating || 0),
+				data_type: jelly.jvar_cxs_result.meta.attachmentType
+			};
+			var showOnNew = JSUtil.nil(attachActionDetails) ? false : attachActionDetails.showOnNew;
+			display.attach = showOnNew === true ? true : jelly.jvar_cxs_is_new_record !== "true";
+			display.info_class = "kb_info"
+			display.kb_index = display.index;
+			display.no_margin_style = show.knowledgebase ${AMP}${AMP} show.category ? "no_margin" : "";
+		
+			// Hide view count if it's had no views
+			if (meta.view_count == 0)
+				show.view_count = false;
+		
+			// Hide last modified if there in no data
+			if (JSUtil.nil(meta.last_modified))
+				show.last_modified = false;
+		
+			meta.view_count_label =  (meta.view_count == 1 ? gs.getMessage("{0} view", meta.view_count + "") : gs.getMessage("{0} views", meta.view_count + ""));
+			meta.rating_description = meta.rating > 0 ? gs.getMessage("{0} star rating", (meta.rating + "")) :  gs.getMessage("No rating");
+		
+		
+			if (JSUtil.notNil(jelly.jvar_cxs_result.meta.parentCategories)) {
+				var delimiter = GlideI18NStyle.getDirection() == "ltr" ? " &gt; " : " &lt; ";							
+				meta.category = GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.parentCategories.reverse().join(delimiter));
+			}
+		}
+		
+		if (display.isSocialQAQuestion) {
+			meta = {
+				votes: toInt(jelly.jvar_cxs_result.meta.votes),
+				answers: toInt(jelly.jvar_cxs_result.meta.answerCount)
+			};
+			meta.answers_label = (meta.answers == 1 ? gs.getMessage('answer') : gs.getMessage('answers'));
+		}
+		
+		if (display.isCommunityQA) {
+			show = {
+				meta_data: (gs.getProperty("com.snc.contextual_search.widget.form.show_meta_data", false) == "true" || false)
+			};
+			meta = {
+				type: "Question",
+				type_display_value: gs.getMessage("Question"),
+				posted_by: GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.author),
+				published: toDisplayDate(jelly.jvar_cxs_result.meta.sys_updated_on),
+				views: toInt(jelly.jvar_cxs_result.meta.views),
+				comments: toInt(jelly.jvar_cxs_result.meta.comments)
+			};
+			meta.comments_label = (meta.comments == 1 ? gs.getMessage('{0} reply', meta.comments + '') : gs.getMessage('{0} replies', meta.comments + ''));
+			meta.views_label = (meta.views == 1 ? gs.getMessage('{0} view', meta.views + '') : gs.getMessage('{0} views', meta.views + ''));
+			if(jelly.jvar_cxs_result.meta.topics ${AMP}${AMP} jelly.jvar_cxs_result.meta.topics.length > 0) {
+				meta.topic = jelly.jvar_cxs_result.meta.topics[0].label;
+				show.topic = true;
+			}
+			if(jelly.jvar_cxs_result.meta.forum ){
+				show.forum = true;
+				meta.forum = jelly.jvar_cxs_result.meta.forum;
+			}
+		}
+		if (display.isCommunityBlog) {
+			show = {
+				meta_data: (gs.getProperty("com.snc.contextual_search.widget.form.show_meta_data", false) == "true" || false)
+			};
+			meta = {
+				type: "Blog",
+				type_display_value: gs.getMessage("Blog"),
+				posted_by: GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.author),
+				published: toDisplayDate(jelly.jvar_cxs_result.meta.sys_updated_on),
+				views: toInt(jelly.jvar_cxs_result.meta.views),
+				comments: toInt(jelly.jvar_cxs_result.meta.comments)
+			};
+			meta.comments_label = (meta.replies == 1 ? gs.getMessage('{0} comment', meta.comments+'') : gs.getMessage('{0} comments', meta.comments + ''));
+			meta.views_label = (meta.views == 1 ? gs.getMessage('{0} view', meta.views + '') : gs.getMessage('{0} views', meta.views + ''));
+			if(jelly.jvar_cxs_result.meta.topics ${AMP}${AMP} jelly.jvar_cxs_result.meta.topics.length > 0){
+				meta.topic = jelly.jvar_cxs_result.meta.topics[0].label;
+				show.topic = true;
+			}
+			if(jelly.jvar_cxs_result.meta.forum ){
+				meta.forum = jelly.jvar_cxs_result.meta.forum;
+				show.forum = true;
+			}
+		}
+
+		if (display.isGlideResource || display.isSimilarityResource) {
+			show = {
+				meta_data: (gs.getProperty("com.snc.contextual_search.widget.form.show_meta_data", false) == "true" || false)
+			};
+
+			var totalLength = 0;
+			var totalLengthLimit = 150;
+			var fieldLengthLimit = 20;
+			var tooltipLengthLimit = 100;
+			var fieldsArray = [];
+
+			var additional_fields = jelly.jvar_cxs_result.meta.additional_fields.split("|||");
+			var resourceGr= new GlideRecord(document.table);
+			resourceGr.initialize();
+
+			for (var i = 0; i != additional_fields.length; i++) {
+				var fieldStr = additional_fields[i].split("///");
+				var fieldName = fieldStr[0];
+				var fieldValue = fieldStr[2] ${AND} fieldStr[2] != 'null' ? fieldStr[2] : gs.getMessage("None");
+				var fieldLabel = fieldStr[1];
+
+				// skip if field not exist
+				if (!fieldLabel)
+					continue;
+
+				// truncate long value and total length
+				var truncatedFieldValue = truncate(fieldValue, fieldLengthLimit);
+				var isTruncated = (fieldValue.length != truncatedFieldValue.length);
+				var tooltip = truncate(fieldValue, tooltipLengthLimit);
+				totalLength += fieldLabel.length + truncatedFieldValue.length + 2;
+
+				// deal with totalLength and totalLengthLimit
+				if (totalLength &lt;= totalLengthLimit)
+					fieldsArray.push({"field":fieldLabel, "value":GlideStringUtil.escapeHTML(fieldValue), "truncatedValue":GlideStringUtil.escapeHTML(truncatedFieldValue), "isTruncated":isTruncated, "tooltip":GlideStringUtil.escapeHTML(tooltip)});
+				else {
+					// if exceed limit when appending fieldValue, trancate fieldValue; if happends when appending fieldName, do not append this field
+					if (totalLength - truncatedFieldValue.length &lt; totalLengthLimit) {
+						truncatedFieldValue = truncate(fieldValue, totalLengthLimit - (totalLength - truncatedFieldValue.length));
+						isTruncated = true;
+						fieldsArray.push({"field":fieldLabel, "value":GlideStringUtil.escapeHTML(fieldValue), "truncatedValue":GlideStringUtil.escapeHTML(truncatedFieldValue), "isTruncated":isTruncated, "tooltip":GlideStringUtil.escapeHTML(tooltip)});
+					}
+					break;
+				}
+			}
+
+			meta = {
+				fields: fieldsArray
+			};
+		}
+    </g:evaluate>
+	<style>
+		li.cxs_meta_fields_icon:first-child i {
+			display: none;
+		}
+	</style>
+    <j:set var="jvar_answer" value="4" />
+    <tr class="list_row" width="100%" data-kb-index = "${display.kb_index}">
+		
+		<td class="cxs_table_cell cxs_table_link">
+			<div class="cxs_table_cell_title">
+				<j:if test="${display.title_truncated.length() == display.title.length()}">
+					<a data-index="${display.index}" class="cxs_result" style="text-decoration: underline !important;" tabindex="0" href="${display.link}" data-href="${display.link}" target="${display.link_target}" data-type="${meta.data_type}" onclick="cxs_onPreviewResult(this); return false;">${display.title}</a>
+				</j:if>
+				<j:if test="${display.title_truncated.length() != display.title.length()}">
+					<a data-index="${display.index}" class="cxs_result" style="text-decoration: underline !important;" tabindex="0" href="${display.link}" data-href="${display.link}" target="${display.link_target}" data-type="${meta.data_type}" onclick="cxs_onPreviewResult(this); return false;" title="${display.title_tooltip_not_escaped}">${display.title_truncated}</a>
+				</j:if>
+			</div>
+			<j:if test = "${show.meta_data &amp;&amp; (show.knowledgebase || show.category)}">
+			<div class="cxs_meta_row kb_fields"><div class="cxs_article_info kb_form_fields ${display.no_margin_style}" aria-label = "${gs.getMessage('kb article meta fields')}">
+				<j:if test = "${show.knowledgebase}">${HTML:meta.knowledgebase}</j:if>
+				<j:if test = "${show.knowledgebase &amp;&amp; show.category}"><span class="pipe" role = "separator" aria-orientation="vertical">|</span></j:if>
+				<j:if test = "${show.category}">${meta.category}</j:if>
+			</div></div>
+			</j:if>
+			<j:if test="${show.meta_data &amp;&amp; (display.isCommunityQA || display.isCommunityBlog)}">
+			<div class="cxs_meta_row kb_fields"><div class="cxs_article_info kb_form_fields ${display.no_margin_style}" aria-label = "${gs.getMessage('kb article meta fields')}">
+				<j:if test = "${show.forum}">${meta.forum}</j:if>
+				<j:if test = "${show.topic}"><span class="pipe" role = "separator" aria-orientation="vertical">|</span></j:if>
+				<j:if test = "${show.topic}">${meta.topic}</j:if>
+			</div></div>
+			</j:if>
+        </td>
+        <td class="cxs_table_cell cxs_table_description">
+		<j:if test="${!display.isSocialQAQuestion}">
+			<div class="cxs_table_cell_title cxs_table_cell_detail_title cxs_table_link cxs_snippet_overflow_container">
+				<span class="cxs_snippet_overflow_container_ellipsis" title="${display.snippet_stripped_html}">${display.snippet}</span>
+			</div>
+			<j:if test="${display.isKnowledgeArticle &amp;&amp; show.meta_data}">
+			<div class="cxs_meta_row kb_fields"><ul class="cxs_article_info kb_form_fields" aria-label = "${gs.getMessage('kb article meta fields')}">
+				<j:if test="${show.article_number}"><li>${SP}
+					<span>${meta.article_number}</span>
+				</li></j:if>
+				<j:if test="${show.author}"><li>
+					<j:if test="${show.article_number}"><i aria-hidden="true" class="icon-circle-solid"></i>${SP}</j:if>
+					<span>${gs.getMessage("Author")}: ${meta.author}</span>
+				</li></j:if>
+				<j:if test = "${show.view_count}"><li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${meta.view_count_label}</span>
+				</li></j:if>
+				<j:if test="${show.last_modified}"><li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${gs.getMessage("Last modified")}: ${meta.last_modified}</span>
+				</li></j:if>
+				<j:if test="${show.published}"><li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${gs.getMessage("Published")}: ${meta.published}</span>
+				</li></j:if>
+				<j:if test="${show.relevance}"><li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					${gs.getMessage("Relevance")}: ${meta.relevance}
+				</li></j:if>
+				<j:if test = "${show.rating}"><li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span class="cxs_rating_container" role='presentation'>${gs.getMessage("Rating")}:
+						<span class='sr-only' role="presentation">${meta.rating_description}</span>
+						<div class="cxs_rating_readonly" aria-hidden = 'true'>
+						<g:evaluate>
+							var ratingCounter = 0;
+						</g:evaluate>
+						<j:while test = "${ratingCounter++ &lt; 5}">
+							<j:if test = "${ratingCounter &lt;= meta.rating}"><span aria-hidden = "true" class='active-star'>&#9733;</span></j:if>
+							<j:if test = "${!(ratingCounter &lt;= meta.rating)}"><span aria-hidden = "true" class="inactive-star">&#9733;</span></j:if>
+						</j:while>
+						</div>
+					</span>
+				</li></j:if>
+				</ul></div>
+			</j:if>
+		</j:if>
+		<j:if test="${display.isSocialQAQuestion}">
+			<div class="cxs_table_cell_title cxs_table_cell_detail_title cxs_table_cell_question cxs_snippet_overflow_container" style="vertical-align: top;">
+				<span class="cxs_snippet_overflow_container_ellipsis" title="${snippet_stripped_html}">${display.snippet}</span>
+			</div>
+			<div class="cxs_question_stats" role = "${aria.presentation}">
+				<div class="cxs_stat_box hidden-sm">
+					<div class="number-box" role = "${aria.presentation}">${meta.votes + ""}</div>
+					<div class="number-label" role = "${aria.presentation}">${meta.votes == 1 ? gs.getMessage('Vote') : gs.getMessage('Votes')}</div>
+				</div>
+				<div class="cxs_stat_box hidden-sm">
+					<div class="number-box" role = "${aria.presentation}">${meta.answers + ""}</div>
+					<div class="number-label" role = "${aria.presentation}">${(meta.answers == 1 ? gs.getMessage('Answer') : gs.getMessage('Answers'))}</div>
+				</div>
+			</div>
+		</j:if>
+		<j:if test="${display.isCommunityQA &amp;&amp; show.meta_data}">
+			<div class="cxs_meta_row kb_fields"><ul class="cxs_article_info kb_form_fields" aria-label = "${gs.getMessage('question meta fields')}">
+				<li>${SP}
+					<span>${meta.type_display_value}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${gs.getMessage("Asked by")}: ${meta.posted_by}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${gs.getMessage("Posted")}: ${meta.published}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${meta.views_label}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${meta.comments_label}</span>
+				</li>
+				</ul></div>
+			</j:if>
+			<j:if test="${display.isCommunityBlog &amp;&amp; show.meta_data}">
+			<div class="cxs_meta_row kb_fields"><ul class="cxs_article_info kb_form_fields" aria-label = "${gs.getMessage('question meta fields')}">
+				<li>${SP}
+					<span>${meta.type_display_value}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${gs.getMessage("Posted by")}: ${meta.posted_by}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${gs.getMessage("Posted")}: ${meta.published}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${meta.views_label}</span>
+				</li>
+				<li>
+					<i aria-hidden="true" class="icon-circle-solid"></i>${SP}
+					<span>${meta.comments_label}</span>
+				</li>
+				</ul></div>
+			</j:if>
+
+			<j:if test="${(display.isGlideResource || display.isSimilarityResource) &amp;&amp; show.meta_data}">
+			<div class="cxs_meta_row kb_fields"><ul class="cxs_article_info kb_form_fields" aria-label = "${gs.getMessage('table search meta fields')}">
+				<j:forEach items="${meta.fields}" var="jvar_field_metadata">
+					<li class="cxs_meta_fields_icon">
+						<j:if test="${jvar_field_metadata.isTruncated == true}">
+							<i aria-hidden="true" class="icon-circle-solid">${SP}</i>
+							<span title="${jvar_field_metadata.tooltip}">${jvar_field_metadata.field}:${SP}${jvar_field_metadata.truncatedValue}</span>
+						</j:if>
+						<j:if test="${jvar_field_metadata.isTruncated != true}">
+							<i aria-hidden="true" class="icon-circle-solid">${SP}</i>
+							<span>${jvar_field_metadata.field}:${SP}${jvar_field_metadata.value}</span>
+						</j:if>
+					</li>
+				</j:forEach>
+				</ul></div>
+			</j:if>
+		</td>
+        <td class="cxs_table_action">
+            <j:if test="${thisHelpedActionDetails !== null}">
+            <span class="${display.feedback_class}" title="${thisHelpedActionDetails.actionLabel}" data-index="${display.index}" action-value="${thisHelpedActionDetails.actionValue}" aria-label = "${thisHelpedActionDetails.actionLabel}">
+                <j:if test="${display.isDoctype}">
+                    <i data-index="${display.index}" action-value="${thisHelpedActionDetails.actionLabel}" class="cxs_result_icon icon-check-circle" aria-hidden = 'true'></i>
+                </j:if>
+                <j:if test="${!display.isDoctype}">
+                    <img src="images/icons/result_cached_true.gifx" height="16px" width="16px" alt = "${display.action_value}" aria-hidden = 'true'></img>
+                </j:if>
+            </span>
+            </j:if>
+        </td>
+        <td class="cxs_result_action cxs_table_action">
+            <span style="white-space: nowrap;" role = "${aria.presentation}">
+            	<j:if test="${jvar_cxs_preview_button_active == 1}">
+                	<button aria-label = "${aria.preview}" class="btn btn-default cxs_result" data-index="${display.index}" data-href="${display.link}" data-type="${meta.data_type}" onclick="cxs_onPreviewResult(this); return false;">${gs.getMessage("upper_preview")}</button> 
+            	</j:if>
+                <j:if test="${attachActionDetails !== null &amp;&amp; display.attach}">
+					<button aria-label = "${aria.attach}" class="btn btn-default cxs_attach" action-value="${attachActionDetails.actionValue}" data-index="${display.index}" onclick="cxs_onResultAttach(this); return false;">${attachActionDetails.actionLabel}</button>
+                </j:if>
+				<j:if test="${(display.isGlideResource || display.isSimilarityResource) &amp;&amp; display.additional_resource_action !== null}">
+					${display.additional_resource_action}
+				</j:if>
+                ${display.related_links}
+				
+            </span>
+        </td>
+	</tr>
+</j:jelly>

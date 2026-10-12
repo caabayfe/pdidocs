@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <script>
+
+        var mModify = new GwtContextMenu('context_modifysub${jvar_section_id}');
+        mModify.setTableName('${ref}');
+        mModify.clear();
+		<g:evaluate var="jvar_personalize_list" expression="gs.hasRightsTo('ui/configure.personalize_list/write', null)" />
+		<g:evaluate var="jvar_personalize_form" expression="gs.hasRightsTo('ui/configure.personalize_form/write', null)" />
+		<g:evaluate var="jvar_personalize_dictionary" expression="gs.hasRightsTo('ui/configure.personalize_dictionary/write', null)" />
+		<g:evaluate var="jvar_personalize_security" expression="gs.hasRightsTo('ui/configure.personalize_security/write', null)" />
+		<g:evaluate var="jvar_personalize_business_rules" expression="gs.hasRightsTo('ui/configure.personalize_business_rules/write', null)" />
+		<g:evaluate var="jvar_personalize_client_scripts" expression="gs.hasRightsTo('ui/configure.personalize_client_scripts/write', null)" />
+		<g:evaluate var="jvar_personalize_ui_policies" expression="gs.hasRightsTo('ui/configure.personalize_ui_policies/write', null)" />
+		<g:evaluate var="jvar_personalize_data_policies" expression="gs.hasRightsTo('ui/configure.personalize_data_policies/write', null)" />
+		<g:evaluate var="jvar_personalize_ui_actions" expression="gs.hasRightsTo('ui/configure.personalize_ui_actions/write', null)" />
+		<g:evaluate var="jvar_personalize_notifications" expression="gs.hasRightsTo('ui/configure.personalize_notifications/read', null)" />
+		<g2:evaluate var="jvar_context_menu_export_xml" expression="gs.hasRightsTo('ui/context_menu.export_xml/read', null)" />
+		<g2:evaluate var="jvar_context_menu_export_pdf" expression="${ref}.canRead()" />
+		<g2:evaluate var="jvar_context_menu_copy_sysid" expression="gs.hasRightsTo('ui/context_menu.copy_sysid/read', null)" />
+		<g2:evaluate var="jvar_context_menu_show_xml" expression="gs.hasRightsTo('ui/context_menu.show_xml/read', null)" />
+        <g2:evaluate var="jvar_is_new_record" expression="${ref}.isNewRecord()" />
+		<g2:evaluate var="jvar_historyrole" expression="gs.getProperty('glide.history.role')" />
+		<g2:evaluate var="jvar_is_scriptable_table" expression="GlideTableDescriptor.get('${ref}').isRemoteTable()"/>
+
+        <j:if test="${jvar_admin == true || jvar_personalize_list == true ||
+                      jvar_personalize_form == true || jvar_personalize_dictionary == true ||
+                      jvar_personalize_business_rules == true || jvar_personalize_client_scripts == true ||
+                      jvar_personalize_ui_policies == true || jvar_personalize_data_policies == true ||
+                      jvar_personalize_ui_actions == true}">
+            <j:set var="jvar_personalizer" value="true" />
+            gcm.addLine();
+            <j:if test="${jvar_personalize_form == true}">
+                <g:evaluate var="view_id" jelly="true">
+                   var view_id = RP.getViewManager().getID();
+                   view_id;
+                </g:evaluate>
+                <j:if test="${pm.isRegistered('sn_table_builder')}">
+                    mModify.addFunc("${gs.getMessage('Form Builder')}", function() {
+                        var url = new GlideURL('now/build/form/main/params/table/${ref}/view/${view_id}/page/views/context/platform');
+                        g_navigation.open(url.getURL(), 'edit_form_builder');
+                    });
+                </j:if>
+                <j:if test="${pm.isRegistered('com.glide.ui.ng.fd')}">
+                    mModify.addFunc("${gs.getMessage('Form Design')}", function() {
+                        var url = new GlideURL('$ng_fd.do');
+                        url.addParam('sysparm_attributes', 'startTable:"${ref}",startView:"${ view_id }"');
+						g_navigation.open(url.getURL(), 'edit_form_design');
+                    });
+                </j:if>
+                <g:set_if test="${GlideMobileExtensions.getDeviceType() == 'doctype'}" var="jvar_form_layout" true="auto" false="${jvar_section_id}"/>
+                mModify.addFunc("${gs.getMessage('Form Layout')}", function() { personalizer('${jvar_form_layout}', 'section'); });
+            </j:if>
+            <j:if test="${jvar_personalize_list == true}">
+              <j:if test="${sysparm_view != 'sys_popup'}">
+                mModify.addFunc("${gs.getMessage('Related Lists')}", function() { personalizer('${ref}', 'related_list'); });
+              </j:if>
+            </j:if>
+            mModify.addLine();
+            <j:if test="${jvar_personalizer == true}">
+                mModify.addURL("${gs.getMessage('All')}", "personalize_all.do?sysparm_rules_table=${ref}$[AMP]sysparm_rules_label=$[GlideMetaData.getTablePlural('${ref}')]");
+            </j:if>
+            <j:if test="${jvar_personalize_dictionary == true}">
+                mModify.addURL("${gs.getMessage('Table')}", "sys_db_object.do?sys_id=${ref}$[AMP]sysparm_refkey=name");
+            </j:if>
+			<j:if test="${jvar_personalize_security == true}">
+				mModify.addFunc("${gs.getMessage('Security Rules')}", function() { listSecurity('table', '${ref}'); });
+			</j:if>
+            <j:if test="${jvar_personalize_business_rules == true }">
+                mModify.addFunc("${gs.getMessage('Business Rules')}", function() { listCollection('sys_script', 'collection', '${ref}', '${JS:sysparm_view}'); });
+            </j:if>
+            <j:if test="${jvar_personalize_client_scripts == true }">
+                mModify.addFunc("${gs.getMessage('Client Scripts')}", function() { listCollection('sys_script_client', 'table', '${ref}', '${JS:sysparm_view}'); });
+            </j:if>
+            <j:if test="${jvar_personalize_ui_policies == true }">
+				mModify.addFunc("${gs.getMessage('UI Policies')}", function() { listCollection('sys_ui_policy', 'table', '${ref}', '${JS:sysparm_view}'); });
+            </j:if>
+            <j:if test="${jvar_personalize_data_policies == true }">
+				mModify.addFunc("${gs.getMessage('Data Policies')}", function() { listCollection('sys_data_policy2', 'model_table', '${ref}', '${JS:sysparm_view}'); });
+            </j:if>
+            <j:if test="${jvar_personalize_ui_actions == true }">
+				mModify.addFunc("${gs.getMessage('UI Actions')}", function() { listCollection('sys_ui_action', 'table', '${ref}', '${JS:sysparm_view}'); });
+            </j:if>
+            <j:if test="${jvar_personalize_notifications == true}">
+				mModify.addFunc("${gs.getMessage('Notifications')}", function() { listCollection('sysevent_email_action', 'collection', '${ref}', '${JS:sysparm_view}'); });
+            </j:if>
+            <j:if test="${jvar_personalize_dictionary == true}">
+                mModify.addFunc("${gs.getMessage('Dictionary')}", function() { personalizeFields('${ref}', 'sys_dictionary_list.do'); });
+            </j:if>
+            gcm.addMenu("${gs.getMessage('Configure')}", mModify, "context_configuremenu");
+        </j:if>
+
+        </script>
+            <g:template_context />
+        <script>
+
+        var mExport = new GwtContextMenu('context_pdfsub${jvar_section_id}');
+        mExport.setTableName('${ref}');
+        mExport.clear();
+		<j2:if test="$[jvar_context_menu_export_pdf == true]">
+			mExport.addFunc("${gs.getMessage('PDF')}", function() {
+				var gdw = new GlideModal("export_to_pdf", false, 400);
+				gdw.setTitle(getMessage("Export to PDF"));
+				gdw.setPreference("sysparm_table_name", '${ref}');
+				gdw.setPreference("sysparm_sys_id", '$[${ref}.sys_id]');
+				gdw.setPreference("sysparm_view", '${JS:sysparm_view}');
+				gdw.setPreference("sysparm_domain", '$[JS:jvar_form_domain]');
+				gdw.render();
+			});
+		</j2:if>
+		<j2:if test="$[jvar_context_menu_export_xml == true]">
+			mExport.addURL("${gs.getMessage('XML (This Record)')}", "${ref}.do?UNL$[AMP]sysparm_query=sys_id=$[${ref}.sys_id]");
+        </j2:if>
+		<j2:if test="$[jvar_context_menu_export_pdf == true || jvar_context_menu_export_xml == true]">
+        	gcm.addMenu("${gs.getMessage('Export')}", mExport, "context_exportmenu");
+		</j2:if>
+        <j2:if test="$[${ref}.isNewRecord() == false]" >
+            <j2:if test="$[jvar_view_select]">
+                <g:view_context id="context_header_view_${jvar_this_table}" table="${ref}" type="section" first_form_section="${jvar_first_form_section}" />
+            </j2:if>
+        </j2:if>
+
+        gcm.addLine();
+    </script>
+
+    <j:if test="${gs.getProperty('glide.ui.label.enable','true')}">
+        <g:label_context />
+    </j:if>
+	<j2:if test="$[pm.isActive('com.glide.ui.ui16') == true ${AND} gs.getUser().getPreference('use.concourse') == 'true']">
+		<g2:evaluate var="jvar_page_title" jelly="true">
+			var pageTitle = gs.getMessage('Untitled');
+			if (jelly.jvar_section_caption $[AND] jelly.jvar_section_caption != ''){
+				pageTitle = jelly.jvar_section_caption;
+				if (RP.isSearch())
+					pageTitle = gs.getMessage('Search') + ' ' + __ref__.getPlural();
+				else if (__ref__.isNewRecord())
+					pageTitle = gs.getMessage('Create New') + ' ' + pageTitle;
+				else
+					pageTitle += ' - ' + __ref__.getDisplayValue();
+			}
+			pageTitle;
+		</g2:evaluate>
+		<script>
+            gcm.addFunc("${gs.getMessage('Create Favorite')}", function() {
+				if (typeof MagellanCreateFavorites !== 'undefined' $[AND] MagellanCreateFavorites.addFavorite) {
+					MagellanCreateFavorites.addFavorite({
+						title : '$[JS:jvar_page_title]',
+						icon : 'form'
+					});
+				}
+			}, "context_createfavorite");
+		</script>
+	</j2:if>
+    <script>
+		<j:choose>
+			<j:when test="${sysparm_view != ''}">
+			    <j:set var="sysparm_view_jsesc" value="${JS:sysparm_view}"/>
+				gcm.addHref("${gs.getMessage('Copy URL')}", "copyToClipboard('${jvar_base_uri}nav_to.do?uri=${ref}.do?sys_id=$[${ref}.sys_id]%26sysparm_view=${sysparm_view_jsesc}');");
+			</j:when>
+			<j:when test="${ref == 'sys_metadata'}">
+				gcm.addHref("${gs.getMessage('Copy URL')}", "copyToClipboard('${jvar_base_uri}nav_to.do?uri=${ref}.do?sys_id=$[${ref}.sys_id]%26sysparm_ignore_class=true');");
+			</j:when>
+			<j:otherwise>
+				gcm.addHref("${gs.getMessage('Copy URL')}", "copyToClipboard('${jvar_base_uri}nav_to.do?uri=${ref}.do?sys_id=$[${ref}.sys_id]');");
+			</j:otherwise>
+		</j:choose>
+
+		<j2:if test="$[jvar_context_menu_copy_sysid]">
+			gcm.addHref("${gs.getMessage('Copy sys_id')}", "copyToClipboard('$[${ref}.sys_id]');");
+		</j2:if>
+        <j2:if test="$[jvar_context_menu_show_xml and !jvar_is_new_record]" >
+			gcm.addHref("${gs.getMessage('Show XML')}", "xmlView('${ref}', '$[${ref}.sys_id]');");
+		</j2:if>
+    </script>
+
+		<j2:if test="$[jvar_session.hasRole(jvar_historyrole) ${AND} !jvar_is_scriptable_table]">
+			<j2:if test="$[${ref}.isNewRecord() == false]" >
+				<g:history_context />
+			</j2:if>
+		</j2:if>
+
+    <script>
+		gcm.addHref("${gs.getMessage('Reload form')}", "reloadWindow(window);");
+    </script>
+</j:jelly>

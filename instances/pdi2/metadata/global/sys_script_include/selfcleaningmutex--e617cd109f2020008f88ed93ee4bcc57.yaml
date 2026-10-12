@@ -1,0 +1,66 @@
+_meta:
+  hash: ef67856b37b0f6c6173f04a55da8de89cba6c140cd5502c097a0698c32ddb7cb
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: james.grinter
+  sys_created_on: 2012-02-28 12:42:34
+  sys_id: e617cd109f2020008f88ed93ee4bcc57
+  sys_mod_count: '20'
+  sys_package: e200be338c1103100a22deb6dd2b4e9a
+  sys_scope: global
+  sys_update_name: sys_script_include_e617cd109f2020008f88ed93ee4bcc57
+  sys_updated_by: admin
+  sys_updated_on: 2015-09-24 20:38:34
+access: package_private
+active: 'true'
+api_name: global.SelfCleaningMutex
+caller_access: ''
+client_callable: 'false'
+description: |-
+  API to Acquire a database-based, system-wide, self-cleaning, named mutex
+          & Release the mutex after use
+
+  This is appropriate for a Mutex that protects an arbitrary resource with an 'unpredictable' name (e.g. containing a sys_id).
+  (Cf. Mutex, which is more appropriate for a Mutex that is being used over and over again.)
+
+  This is compatible with Mutex, but cleans up after itself in the database.
+
+  Caveats: The self-cleaning mutex is stored system-wide, in the database, so there is a performance 'cost' to using it.
+                 therefore do not acquire and release inside a tight loop!
+                 The Mutex Name is the "scope" of the mutex, and can be anything appropriate, though there are 
+                 conventions in use in some parts of the system, e.g. [table name + record sys_id].
+
+  Status of Interface: Evolving, subject to change.
+
+  // Example usage:
+  var MY_MUTEX = '<<<--My Self-cleaning Mutex Name ' + current.sys_id + ' -->>>';
+  ...
+
+  // Easiest, if you have a single function or method that needs to be restricted to one execution at a time:
+  // call myFunction(), in "this" scope, with arguments: (myFunctionArgument1, myFunctionArgument2, ...)
+  // myFunction can also be an anonymous function defined inline.
+  var returnValue = SelfCleaningMutex.enterCriticalSection( MY_MUTEX, this, myFunction, myFunctionArgument1, myFunctionArgument2, ... );
+
+  // Alternate: more complex way, manually create the self-cleaning mutex object:
+  var mySCMutex = new SelfCleaningMutex(MY_MUTEX);
+
+  // optional
+  mySCMutex.setSpinWait(200);     // time to wait between attempts, in ms
+  mySCMutex.setMaxSpins(125); // maximum number of times to try
+
+  // get the mutex, and then enter the critical section
+  // use 'finally', to make sure that the mutex is always released.
+  if (mySCMutex.get())
+     try {
+        // enter critical section
+        ...
+     }
+     finally {
+        mySCMutex.release();
+     }
+mobile_callable: 'false'
+name: SelfCleaningMutex
+sandbox_callable: 'false'
+sys_name: SelfCleaningMutex
+sys_policy: ''

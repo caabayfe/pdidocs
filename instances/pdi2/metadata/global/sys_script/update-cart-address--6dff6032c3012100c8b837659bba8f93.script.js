@@ -1,0 +1,1 @@
+new GlideappCart().processUserChange(current);

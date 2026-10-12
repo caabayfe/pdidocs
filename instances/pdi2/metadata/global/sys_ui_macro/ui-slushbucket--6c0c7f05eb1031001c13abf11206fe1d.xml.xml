@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- slushbucket creates its own table -->
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:macro name="slush" left_header="${gs.getMessage('Available')}" right_header="${gs.getMessage('Selected')}" up_down="true"/>
+	<script eval="true">
+	   var ${jvar_name};
+	   addLoadEvent(function() {
+		  ${jvar_name} = new SlushBucket('${jvar_name}');
+	   });
+	</script>
+	<g:ipad_multiselect />
+	<g:evaluate jelly="true" expression="var rightHeading=jelly.jvar_right_header" />
+	<g:set_if test="${GlideI18NStyle.getDirection() == 'rtl'}" var="jvar_add_to_slush_bucket_icon" true="icon-chevron-left" false="icon-chevron-right"></g:set_if>
+ 	<g:set_if test="${GlideI18NStyle.getDirection() == 'rtl'}" var="jvar_remove_from_slush_bucket_icon" true="icon-chevron-right" false="icon-chevron-left"></g:set_if>
+	<div id="${jvar_name}" class="container-fluid slushbucket">
+		<div class="row form-group">
+			<div class="col-xs-6">
+				<div class="glide-list" role="presentation">
+					<label for="${jvar_name}_left">${jvar_left_header}</label>
+
+					<div class="slushbucket-top">
+						<!-- left selection -->
+						<select id="${jvar_name}_left"
+							aria-label="${jvar_left_header}"
+							name="${jvar_name}_left" class="slushselect form-control"
+							multiple="yes" size="10" width="120"
+							onkeydown="${jvar_name}.onKeyMoveLeftToRight(event); ${jvar_name}.onKeyMoveUpDown(event, this);"
+							onkeyup="${jvar_name}.onKeyUpMoveUpDown(event, this);"
+							ondblclick="${jvar_name}.moveLeftToRight();"
+							onclick="${jvar_name}.onOptionSelected(event, this)">
+							<!-- option that gets erased onload -->
+							<options>--</options>
+							<!-- you can build your options list inline... -->
+							<g:insert/>
+						</select>
+
+						<div class="button-column" id="addRemoveButtons">
+							<A title="${gs.getMessage('uppercase_add')}" class="btn btn-default ${jvar_add_to_slush_bucket_icon} slush-bucket-add"
+							   onclick="${jvar_name}.moveLeftToRight();"
+							   onkeydown="${jvar_name}.keydownMoveLeftToRight(event)" href="javascript:void(0)"
+							   role="button">
+								<span class="sr-only">
+								    ${gs.getMessage("Add selected options to the {0} listbox", rightHeading)}
+								</span>
+							</A>
+
+							<A title="${gs.getMessage('Remove')}" class="btn btn-default ${jvar_remove_from_slush_bucket_icon} slush-bucket-remove"
+							   onclick="${jvar_name}.moveRightToLeft();"
+							   onkeydown="${jvar_name}.keydownMoveRightToLeft(event);" href="javascript:void(0)"
+							   role="button">
+								<span class="sr-only">
+									${gs.getMessage('Remove selected options from the {0} listbox', rightHeading)}
+								</span>
+							</A>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-xs-6">
+				<div class="glide-list" role="presentation">
+					<label for="${jvar_name}_right">${jvar_right_header}</label>
+
+					<div class="slushbucket-top slushbody">
+						<!-- left selection -->
+						<select id="${jvar_name}_right"
+							aria-label="${jvar_right_header}"
+							name="${jvar_name}_right" class="slushselect form-control"
+							multiple="yes" size="10" width="120"
+							onkeydown="${jvar_name}.onKeyMoveRightToLeft(event); ${jvar_name}.onKeyMoveUpDown(event, this);"
+							onkeyup="${jvar_name}.onKeyUpMoveUpDown(event, this);"
+							ondblclick="${jvar_name}.moveRightToLeft();"
+							onclick="${jvar_name}.onOptionSelected(event, this)">
+							<!-- option that gets erased onload -->
+							<option>--</option>
+						</select>
+
+						<div id="upDownButtons" class="button-column">
+							<j:if test="${jvar_up_down != 'false'}">
+								<A title="${gs.getMessage('Move up')}" class="btn btn-default icon-chevron-up"
+								   href="javascript:void(0)"
+								   role="button"
+								   onclick="${jvar_name}.moveUp();" ondblclick="${jvar_name}.moveUp();">
+									<span class="sr-only">
+											${gs.getMessage('Move selected options up in the {0} listbox', rightHeading)}
+									</span>
+								</A>
+
+								<A title="${gs.getMessage('Move down')}" class="btn btn-default icon-chevron-down"
+								   href="javascript:void(0)"
+								   role="button"
+								   onclick="${jvar_name}.moveDown();" ondblclick="${jvar_name}.moveDown();">
+									<span class="sr-only">
+											${gs.getMessage('Move selected options down in the {0} listbox', rightHeading)}
+									</span>
+								</A>
+							</j:if>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</j:jelly>

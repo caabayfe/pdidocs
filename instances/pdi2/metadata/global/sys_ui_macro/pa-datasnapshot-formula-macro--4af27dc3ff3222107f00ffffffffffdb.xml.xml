@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <body id="portalPageParam" onload="loadSession()" jelly="true">
+        <j:set var="jvar_current_kpi_sysId" value="$[JS:sys_id]" />
+
+        <g2:evaluate var="jvar_formula_sysIds">
+            var currentSysId = '${jvar_current_kpi_sysId}';
+            var res = "";
+            if(currentSysId == -1){
+                res;
+            }else{
+                var grIndicator = new GlideRecordSecure('pa_datasnapshot_indicator');
+                var currentSysId = '${jvar_current_kpi_sysId}';
+                if(grIndicator.get(currentSysId)){
+                    res = grIndicator.getValue('formula');
+                }
+                res;
+            }
+        </g2:evaluate>
+        <g2:evaluate var="jvar_formula" jelly="true">
+            var res="";
+            var currentSysId = current.isNewRecord() ? -1 : current.getUniqueValue();
+
+            var invalidFormulaSessionKey = "pa_datasnapshot_invalid_formulas_" + currentSysId;
+            try {
+                var session = gs.getSession();
+                if (session != null) {
+                    var invalidFormula = session.getClientData(invalidFormulaSessionKey);
+                    if (invalidFormula != null) {
+                        res = invalidFormula;
+                        <!-- Removing session data after rendering since we don't want to show it anymore -->
+                        session.clearClientData(invalidFormulaSessionKey);
+                    }
+                }
+            } catch (ex) {
+                res="";
+                gs.error("Exception while retrieving formula in macro : " + ex.message);
+            }
+            if (res == "" $[AMP]$[AMP] currentSysId != -1){
+                var formula = new SNC.FormulaParserScriptable();
+                var response = JSON.parse(formula.getFormulaStringNameFromSysId(jelly.jvar_formula_sysIds));
+                res = response.parsedFormula;
+            }
+            res;
+        </g2:evaluate>
+        <g2:evaluate var="jvar_can_write">
+            var grIndicator = new GlideRecordSecure('pa_datasnapshot_indicator');
+            res1=grIndicator.canWrite();
+            res1;
+        </g2:evaluate>
+
+
+        <g:requires position="last" inline="true" name="scripts/elements/textarea_sizer.js" />
+        <g:requires position="last" inline="true" name="scripts/elements/textarea_autosizer.js" />
+        <tr>
+            <td>
+                <table class="wide" cellspacing="0" style="table-layout: fixed;">
+                    <tr>
+                        <td>
+                            <div data-type="label" id="label.pa_datasnapshot_indicator.formula" class="form-group required-field is-required">
+                                <label onclick="return labelClicked(this);" for="pa_datasnapshot_indicator.formula" dir="ltr" class="control-label"> <span id="" class="required-marker" style="padding: 0 0 0 10px;"></span>
+                                    <span>${gs.getMessage('Formula')}</span>
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="margin-bottom: 5px; text-align: right;">
+                                <button type="button" onclick="textareaSizer_Resize('pa_datasnapshot_indicator.formula', -60);" id="sizer_minus_formula" class="btn btn-sm btn-default">
+                                    <span class="icon-remove icon" aria-hidden="true"></span>
+                                </button>
+                                <button type="button" onclick="textareaSizer_Resize('pa_datasnapshot_indicator.formula', +60);" id="sizer_plus_formula" class="btn btn-sm btn-default">
+                                    <span class="icon-add icon" aria-hidden="true" style="margin-right:0px"></span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2">
+                            <j2:if test="$[jvar_can_write == true]">
+                                <textarea id="pa_datasnapshot_indicator.formula" name="pa_datasnapshot_indicator.formula" style="width:100%; overflow:auto; font-family: courier,serif; $[jvar_add_fieldstyle];" wrap="soft" data-length="$[__ref__.sys_meta.max_length]" onblur="updateMandatoryColors(false)" class="form-control ">$[jvar_formula]</textarea>
+                            </j2:if>
+
+                            <j2:if test="$[jvar_can_write != true]">
+                                <textarea id="pa_datasnapshot_indicator.formula" name="pa_datasnapshot_indicator.formula" style="width:100%; overflow:auto; font-family: courier,serif; $[jvar_add_fieldstyle];" wrap="soft" data-length="$[__ref__.sys_meta.max_length]" readonly="readonly">$[jvar_formula]</textarea>
+                            </j2:if>
+                        </td>
+                    </tr>
+                    <tr>
+                        <j2:if test="$[jvar_can_write == true]">
+
+                            <td>
+                                <input type="hidden" id="kpiConfiguration" />
+                                <input type="hidden" id="sys_display.kpiConfiguration" onchange="closeSelectionWindow(this)" />
+                                <a id="browse_indicator_link" class="navigation_link" onclick="openKPIConfigurationList()">${gs.getMessage('Browse for an indicator')}
+                                </a>
+                            </td>
+
+                        </j2:if>
+
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </body>
+    <script type="text/javascript">
+        window.SNC = window.SNC || {};
+        window.SNC.PA = window.SNC.PA || {};
+        var submitForm = gel('pa_datasnapshot_indicator.do');
+        addOnSubmitEvent(submitForm, function() {
+            g_form.clearMessages();
+            updateMandatoryColors(true);
+        });
+
+        function updateMandatoryColors(isSubmitAction) {
+            var textarea = document.getElementById('pa_datasnapshot_indicator.formula');
+            const starMarkLabel = document.getElementById('label.pa_datasnapshot_indicator.formula');
+            if (textarea.value === "") {
+                //required state
+                starMarkLabel.classList.replace('is-filled', 'is-required');
+                if (isSubmitAction) {
+                    textarea.setStyle({
+                        'border-color': 'rgb(200, 60, 54)',
+                    });
+                }
+            } else {
+                //filled state
+                starMarkLabel.classList.replace('is-required', 'is-filled');
+                textarea.setStyle({
+                    'border': '1px solid #cbcbcb',
+                });
+            }
+        }
+
+        function loadSession() {
+
+            var formulaStr = "$[jvar_formula]";
+            var formulaSysId = getSegments("$[jvar_formula_sysIds]");
+            var indicatorsFormula = getSegments(formulaStr);
+            var lenOfMap = Math.min(formulaSysId.length, indicatorsFormula.length);
+            var cnt = 0;
+            var indicatorMap = {};
+
+            while (lenOfMap > cnt) {
+                indicatorMap[indicatorsFormula[cnt]] = formulaSysId[cnt];
+                cnt++;
+            }
+
+            g_scratchpad.indicatorsMap = indicatorMap;
+            updateSessionVariable(indicatorMap);
+        }
+
+        function getQueryForKpiConfigurationSelection() {
+            if (g_form.getValue("calendar") == "standard") {
+                return "type=11";
+            } else {
+                return "type=11^data_snapshot_source.frequency=all_activity";
+            }
+        }
+
+        function openKPIConfigurationList() {
+            var query = getQueryForKpiConfigurationSelection();
+            reflistOpen('kpiConfiguration', 'null', 'pa_datasnapshot_indicator', '', 'false', 'QUERY:' + query, query, '');
+        }
+
+
+        function updateSessionVariable(indicatorMap) {
+            var formulaSysId = "${jvar_current_kpi_sysId}";
+            var ga = new GlideAjax('FormulaSysIdManager');
+            ga.addParam('sysparm_name', 'updateSessionForIndicatorMap');
+            if (formulaSysId != "-1")
+                ga.addParam('sysparm_session_var', 'mapOfIndicators' + "_" + formulaSysId);
+            else
+                ga.addParam('sysparm_session_var', 'mapOfIndicators' + "_");
+            ga.addParam('sysparm_var_value', JSON.stringify(indicatorMap));
+            ga.getXML(handleUpdateSession);
+        }
+
+        function handleUpdateSession() {
+            //do nothing
+        }
+
+        function escapeRegexChars(str) {
+            return str
+                .replace(/\\/g, '\\\\')
+                .replace(/\./g, '\\.')
+                .replace(/\*/g, '\\*')
+                .replace(/\+/g, '\\+')
+                .replace(/\?/g, '\\?')
+                .replace(/\^/g, '\\^')
+                .replace(/\$/g, '\\$')
+                .replace(/\{/g, '\\{')
+                .replace(/\}/g, '\\}')
+                .replace(/\(/g, '\\(')
+                .replace(/\)/g, '\\)')
+                .replace(/\|/g, '\\|')
+                .replace(/\[/g, '\\[')
+                .replace(/\]/g, '\\]');
+        }
+
+        function getIndicatorSysIdStored(indicatorName) {
+            var currentMap = g_scratchpad.indicatorsMap;
+            //validate the formula string to see if indicatorName still exists on it(user can delete indicators)
+            var currentFormula = gel('pa_datasnapshot_indicator.formula');
+            if (currentFormula $[AMP]$[AMP] currentFormula.value) {
+                var formulaText = currentFormula.value;
+                var escapedIndicatorName = escapeRegexChars(indicatorName);
+
+                var pattern = new RegExp('\\[\\[\\s*' + escapedIndicatorName + '\\s*\\]\\]', 'g');
+                if (pattern.test(formulaText)) {
+                    if (currentMap.hasOwnProperty(indicatorName)) {
+                        return currentMap[indicatorName];
+                    }
+                }
+            }
+
+            return "";
+        }
+
+        function getSegments(str) {
+            var regex = /\[\[(.*?)\]\]/g;
+            var matches = [];
+            var match;
+            while ((match = regex.exec(str)) !== null) {
+                matches.push(match[1]);
+            }
+            return matches;
+        }
+        SNC.PA.insertIndicatorIntoFormula = function() {
+            var selectedIndicatorValue = gel('kpiConfiguration').value === '' ? false : gel('kpiConfiguration').value;
+            var selectedIndicatorLabel = gel('sys_display.kpiConfiguration').value === '' ? false : gel('sys_display.kpiConfiguration').value;
+            var storedIndicatorSysId = getIndicatorSysIdStored(selectedIndicatorLabel);
+            if (storedIndicatorSysId != "") {
+                if (storedIndicatorSysId != selectedIndicatorValue) {
+                    window.close();
+                    var duplicateErrorMessage = getMessage("Invalid insert: Indicator name {0} already exists. Duplicate indicator names are not allowed.", [selectedIndicatorLabel]);
+                    g_form.addErrorMessage(duplicateErrorMessage);
+                    return;
+                }
+            } else {
+                var existingMapValue = g_scratchpad.indicatorsMap;
+                existingMapValue[selectedIndicatorLabel] = selectedIndicatorValue;
+
+                g_scratchpad.indicatorsMap = existingMapValue;
+                updateSessionVariable(existingMapValue);
+            }
+
+            var start = '[[';
+            var end = ']]';
+            SNC.PA.insertTextIntoFormula(start + selectedIndicatorLabel + end);
+        }
+
+        function closeSelectionWindow(oThis) {
+            // Set formula
+            SNC.PA.insertIndicatorIntoFormula();
+        }
+
+        SNC.PA.insertTextIntoFormula = function(text) {
+            var textarea = gel('pa_datasnapshot_indicator.formula');
+            if (document.selection) {
+                textarea.focus();
+                sel = document.selection.createRange();
+                sel.text = text;
+            } else if (textarea.selectionStart || textarea.selectionStart == '0') {
+                //Mozilla/Firefox/Netscape 7+ support
+                textarea.focus();
+                var startPos = textarea.selectionStart;
+                var endPos = textarea.selectionEnd;
+                textarea.value = textarea.value.substring(0, startPos) + text + textarea.value.substring(endPos, textarea.value.length);
+                textarea.setSelectionRange(endPos + text.length, endPos + text.length);
+            } else {
+                textarea.value += text;
+            }
+        }
+    </script>
+</j:jelly>

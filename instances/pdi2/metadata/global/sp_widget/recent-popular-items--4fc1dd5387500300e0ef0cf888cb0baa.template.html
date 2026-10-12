@@ -1,0 +1,97 @@
+<div class="recent-widget">
+    <div class="panel panel-default">
+        <div class="panel-heading pad-bottom">
+            <ul class="nav nav-tabs" style="border-bottom : 0px" role="tablist">
+                <li class="item" id="tab-recent-items"
+                    ng-click="c.changePanel('recent')" ng-keydown="c.switchTab($event, 'recent')"
+                    role="presentation">
+                    <div ng-class="{'sc-tab-div' : c.show_recent}" class="recent"
+                         ng-attr-tabindex="{{!c.show_recent ? '-1': 0}}"
+                         ng-attr-aria-controls="{{c.show_recent ? 'tabpanel-recent-items' : undefined}}"
+                         aria-selected="{{c.show_recent}}" role="tab">
+                        <span> ${My Recent Items} </span>
+                    </div>
+                </li>
+                <li class="item" id="tab-popular-items"
+                    ng-keydown="c.switchTab($event, 'popular')" ng-click="c.changePanel('popular')"
+                    role="presentation">
+                    <div ng-class="{'sc-tab-div' : !c.show_recent}" class="popular"
+                         ng-attr-tabindex="{{c.show_recent ? '-1': 0}}"
+                         ng-attr-aria-controls="{{!c.show_recent ? 'tabpanel-popular-items' : undefined}}"
+                         aria-selected="{{!c.show_recent}}" role="tab">
+                        <span> ${Popular Items} </span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div id="tabpanel-recent-items" class="panels-container" ng-if="c.show_recent" role="tabpanel"
+             aria-labelledby="tab-recent-items">
+            <span class="sr-only" role="heading" aria-level="2"> ${My Recent Items} </span>
+            <div class="no-data-message" ng-if="!data.recentItems.length">
+                ${No data available}
+            </div>
+            <ul ng-if="data.recentItems && data.recentItems.length" class="row item-list-style-type-none item-card-row" role="list" aria-labelledby="tab-recent-items">
+                <li class="item-card-column" ng-repeat="item in data.recentItems track by item.sys_id" role="listitem" ng-init="startItemList()">
+                    <div class="panel-default item-card b" data-original-title="{{::item.name}}">
+                        <a href="?id={{::item.page}}&sys_id={{::item.sys_id}}&referrer=recent_items"
+                           class="panel-body block height-100"
+                           onclick='window.GlideWebAnalytics.trackEvent("Service Catalog", "Recent Item", "Item Clicked");'>
+                            <div>
+                                <h3 class="h4 m-t-none m-b-xs text-overflow-ellipsis catalog-item-name" title="{{::item.name}}">{{::item.name}}</h3>
+                                <img ng-src="{{::item.picture}}" ng-if="::item.picture"
+                                     class="m-r-sm m-b-sm item-image pull-left" alt="" aria-hidden="true"/>
+                                <div class="text-muted item-short-desc catalog-text-wrap">{{::item.short_description}}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="panel-footer b">
+                        <a href="?id={{::item.page}}&sys_id={{item.sys_id}}&referrer=recent_items"
+                           class="pull-left text-muted" aria-label="${View Details} {{::item.name}}"
+                           onclick='window.GlideWebAnalytics.trackEvent("Service Catalog", "Recent Item", "Item Clicked");'>${View Details}</a>
+                        <span ng-if="data.showPrices && item.hasPrice" class="pull-right item-price font-bold">{{::item.price}}</span>
+                        &nbsp;
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div id="tabpanel-popular-items" class="panels-container" ng-if="!c.show_recent" role="tabpanel"
+             aria-labelledby="tab-popular-items">
+            <span class="sr-only" role="heading" aria-level="2"> ${Popular Items} </span>
+            <div ng-if="c.data.usePopularItemsV2">
+                <sp-widget widget="c.data.popularItemsWidget"></sp-widget>
+	    </div>
+            <div class="no-data-message" ng-if="!c.data.usePopularItemsV2 && !data.popularItems.length">
+                ${No data available}
+            </div>
+            <ul ng-if="data.popularItems && data.popularItems.length && !c.data.usePopularItemsV2" class="row item-list-style-type-none item-card-row" role="list" aria-labelledby="tab-popular-items">
+                <li class="item-card-column"
+                    ng-repeat="item in data.popularItems | orderBy: 'order' | limitTo: data.limit track by item.sys_id"
+                    role="listitem" ng-init="startItemList()">
+                    <div class="panel-default item-card b" data-original-title="{{::item.name}}">
+                        <a href="?id={{::item.page}}&sys_id={{::item.sys_id}}&referrer=popular_items"
+                           class="panel-body block height-100"
+                           onclick='window.GlideWebAnalytics.trackEvent("Service Catalog", "Popular Item", "Item Clicked");'>
+                            <div>
+                                <h3 class="h4 m-t-none m-b-xs text-overflow-ellipsis catalog-item-name" title="{{::item.name}}">{{::item.name}}</h3>
+                                <img ng-src="{{::item.picture}}" ng-if="::item.picture"
+                                     class="m-r-sm m-b-sm item-image pull-left" alt="" aria-hidden="true"/>
+                                <div class="text-muted item-short-desc catalog-text-wrap">{{::item.short_description}}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="panel-footer b">
+                        <a href="?id={{::item.page}}&sys_id={{item.sys_id}}&referrer=popular_items"
+                           class="pull-left text-muted" aria-label="${View Details} {{::item.name}}"
+                           onclick='window.GlideWebAnalytics.trackEvent("Service Catalog", "Popular Item", "Item Clicked");'>${View Details}</a>
+                        <span ng-if="data.showPrices && item.hasPrice" class="pull-right item-price font-bold">{{::item.price}}</span>
+                        &nbsp;
+                    </div>
+                </li>
+            </ul>
+        </div>
+ </div>
+</div>

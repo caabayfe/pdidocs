@@ -1,0 +1,71 @@
+<style>
+	/* dialog styles */
+	.dialog_content {
+	width: 100%;
+	height: 100px;
+	vertical-align: middle;
+	min-width: 300px;
+	padding: 0 10px 10px 10px;
+	}
+
+	.dialog_buttons {
+	display: inline;
+	text-align: right;
+	vertical-align:bottom;
+	white-space: nowrap;
+	}
+</style>
+<g:ui_form onsubmit="return invokePromptCallBack();">
+	<g2:evaluate>
+		var title = "${RP.getWindowProperties().get('title')}";
+		title =  new GlideStringUtil().unEscapeHTML(title);
+		var warning = "${RP.getWindowProperties().get('warning')}";
+		warning =  new GlideStringUtil().unEscapeHTML(warning);
+	</g2:evaluate>
+	<table border="0" width="100%">
+		<tr>
+			<td nowrap="true" style="vertical-align:top;">
+				<j2:switch on="$[warning]">
+					<j2:case value="true">
+						<img id="image_dialog" src="images/dialog_warn.pngx" width="110" height="130"/>
+					</j2:case>
+					<j2:default>
+						<img id="image_dialog" src="images/dialog_confirm.gifx" width="110" height="130"/>
+					</j2:default>
+				</j2:switch>
+			</td>
+			<td>
+				<table border="0" width="100%">
+					<tr>
+						<td class="dialog_content">$[title]</td>
+					</tr>
+					<tr>
+                                                      <g:macro 
+							 ok="actionOK()" 
+                                                      cancel="GlideDialogWindow.prototype.locate(this).destroy(); return false" 
+                                                      ok_id="ok_button" 
+                                                      cancel_id="cancel_button" 
+                                                      ok_type="submit" 
+                                                      cancel_type="submit" 
+							/>
+						
+						<td class="dialog_buttons">
+							<g:dialog_button 
+							id="${jvar_ok_id}" 
+							type="button" 
+							onclick="invokePromptCallBack('ok');" 
+							style="width: 5em;">${gs.getMessage('Yes')}</g:dialog_button>
+						</td>
+                                                <td class="dialog_buttons">	
+							<g:dialog_button 
+							id="${jvar_ok_id}" 
+							type="button" 
+							onclick="invokePromptCallBack('cancel')" 
+							style="width: 5em;">${gs.getMessage('No')}</g:dialog_button>							
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</g:ui_form>

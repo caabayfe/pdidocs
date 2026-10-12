@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:evaluate jelly="true">
+		var commits = new GlideRecord('service_offering_commitment');
+		commits.addQuery('service_offering', jelly.jvar_service_offering);
+		commits.orderBy('order');
+		commits.query();
+	</g:evaluate>
+
+			
+<div class="catalog_commitments_heading">${gs.getMessage('Commitments')}</div>
+<div class="catalog_commitments_content">
+	<j:if test="${commits.hasNext()}">
+	<j:while test="${commits.next()}">	
+		<j:choose>
+			
+			<j:when test="${commits.service_commitment.type == 'availability'}">
+					
+			<div class="system_message outputmsg_default">
+				<table cellspacing="0" cellpadding="0" border="0" class="background_transparent">
+					<tr>
+						<td class="message_image"><img width="16" height="16" src="images/outputmsg_success.gifx" alt="${gs.getMessage('Informational Message')}"/>$[SP]$[SP]</td>
+						<td width="100%">
+
+						     <span style="font-weight: bold;">${commits.service_commitment.availability}% ${commits.service_commitment.type.getDisplayValue()}	   <!--${commits.service_commitment.type.getDisplayValue()}:-->
+					         <span class="catalog_status_caption">
+								<j:if test="${commits.service_commitment.schedule.nil()}">
+									24 x 7
+								</j:if>
+								<j:if test="${!commits.service_commitment.schedule.nil()}">
+									${commits.service_commitment.schedule.getDisplayValue()}
+								</j:if>
+							</span>		
+									
+							</span>	
+												
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			</j:when>
+			<j:otherwise>
+
+			<div class="system_message outputmsg_default">
+				<table cellspacing="0" cellpadding="0" border="0" class="background_transparent">
+					<tr>
+						<td class="message_image"><img width="16" height="16" src="images/outputmsg_success.gifx" alt="${gs.getMessage('Informational Message')}"/>$[SP]$[SP]</td>
+						<td width="100%">
+							<span style="font-weight: bold;">${commits.service_commitment.name}
+								<j:if test="${commits.service_commitment.type != 'other'}">
+					        <span class="catalog_status_caption">${commits.service_commitment.type.getDisplayValue()}</span>		
+								</j:if>
+							</span>	
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			</j:otherwise>
+			
+		</j:choose>
+	</j:while>
+	</j:if>
+</div>
+</j:jelly>

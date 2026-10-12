@@ -1,0 +1,671 @@
+_meta:
+  hash: 839f7e62c0fa10de05ed3619247604501c3493e4b3eb9b53df9047722d7d3e5d
+  hash_version: 1
+  scope: sn_par_vis_base
+  sys_class_name: sys_ux_data_broker_rest
+  sys_created_by: maint
+  sys_created_on: 2022-04-07 14:48:11
+  sys_id: 86e725d4533201104096ddeeff7b123e
+  sys_mod_count: '4'
+  sys_package: 2926d7e8a2ac632a750a9c9101f4cff0
+  sys_scope: 2926d7e8a2ac632a750a9c9101f4cff0
+  sys_update_name: sys_ux_data_broker_rest_86e725d4533201104096ddeeff7b123e
+  sys_updated_by: maint
+  sys_updated_on: 2024-01-23 10:30:00
+api_name: global.Data Visualization API for indicator data source
+api_url: /api/now/analytics/data?invalidate_cache_entry={{invalidateCacheEntry}}&expiration_time_duration={{cacheExpirationTime}}&cache_enabled={{useDataCache}}&additional_key={{additionalKey}}
+batch_exclude: 'false'
+description: |-
+  Returns Data visualization API results for the indicator data source. Supports a single data source.
+  For simple visualizations (eg. Single Score), do not set Group by field, and Trend by field should be set to disable.
+  For group visualizations (eg. Bar), set the Group by field(Only one group is supported.) and Trend by field should be set to disable.
+  For time series visualizations, set the Trend by to enable, also can set Group by field (Only one group is supported.)
+  The properties take the sys_id's of Performance Analytics objects as parameters. You can use the Copy Sys ID context action, or the PAScorecards API to get these sys_id values. See "Performance Analytics API Examples" in the product documentation.
+http_method: POST
+mutates_server_data: 'false'
+name: Data Visualization API for indicator data source
+output_schema: ''
+parameters: |-
+  {
+    "invalidate_cache_entry": "{{invalidateCacheEntry}}",
+    "expiration_time_duration": "{{cacheExpirationTime}}",
+    "cache_enabled": "{{useDataCache}}",
+    "additional_key": "{{additionalKey}}"
+  }
+private: 'false'
+props: |-
+  [
+    {
+      "name": "indicator",
+      "label": "Indicator",
+      "description": "Indicator as data source. Enter the sys_id of one indicator on the pa_indicators table",
+      "readOnly": false,
+      "fieldType": "reference",
+      "mandatory": true,
+      "typeMetadata": {
+        "reference": "pa_indicators"
+      },
+      "defaultValue": "fb007202d7130100b96d45a3ce6103b4"
+    },
+    {
+      "name": "breakdowns",
+      "label": "Breakdowns",
+      "description": "Breakdowns for the indicator. Optional. Enter the sysId of one breakdown and the elementSysIds of 0-2 breakdown elements.",
+      "readOnly": false,
+      "fieldType": "json",
+      "mandatory": false,
+      "defaultValue": "[{\"sysId\": \"65947e02d7130100b96d45a3ce61033a\", \"elementSysIds\": [\"ae750813bf230100b96dac808c0739a7\"]}]"
+    },
+    {
+      "name": "aggregate",
+      "label": "Time aggregation",
+      "description": "Time aggregation for the indicator. For Daily time aggregation, leave this field empty. Optional. Enter the sys_id of one record on the pa_aggregates table.",
+      "readOnly": false,
+      "fieldType": "reference",
+      "mandatory": false,
+      "typeMetadata": {
+        "reference": "pa_aggregates"
+      },
+      "defaultValue": "75a15011d7001100ba986f14ce6103ee"
+    },
+    {
+      "name": "aggregateFunction",
+      "label": "Aggregate function",
+      "description": "Defines indicator aggregation logic on how scores for the selected period will be shown.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": true,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Latest score",
+            "value": "latest"
+          },
+          {
+            "label": "Sum",
+            "value": "sum"
+          },
+          {
+            "label": "Average",
+            "value": "avg"
+          }
+        ]
+      },
+      "defaultValue": "latest"
+    },
+    {
+      "name": "trendBy",
+      "label": "Trend by",
+      "description": "Enable/disable trend. Required for trend visualizations.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Enable",
+            "value": "anything"
+          },
+          {
+            "label": "Disable",
+            "value": ""
+          }
+        ]
+      },
+      "defaultValue": "anything"
+    },
+    {
+      "name": "groupBy",
+      "label": "Group by",
+      "description": "Group results by a breakdown. Supports only one group. Required for group visualizations and optional for trend visualizations.",
+      "readOnly": false,
+      "fieldType": "json",
+      "mandatory": false,
+      "defaultValue": [
+        "0df47e02d7130100b96d45a3ce610399"
+      ]
+    },
+    {
+      "name": "numberOfGroups",
+      "label": "Max number of groups",
+      "description": "Maximum number of groups to display. Required when Group by is set.",
+      "readOnly": false,
+      "fieldType": "number",
+      "mandatory": false,
+      "defaultValue": 10
+    },
+    {
+      "name": "includeChange",
+      "label": "Include change",
+      "description": "Includes the change compared to the previous score or period. Only applies to simple visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeChangePercentage",
+      "label": "Include change %",
+      "description": "Shows the percentage of the change from the previous score or period. Only applies to simple visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "showChangeFrom",
+      "label": "Include change from",
+      "description": "Sets whether the score change is calculated compared to the previous score, the previous aggregate period, or the period start.  Only applies to simple visualizations and only when Apply data range is enabled.",
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Previous value",
+            "value": "previous"
+          },
+          {
+            "label": "Previous aggregate period",
+            "value": "previous_aggregate"
+          },
+          {
+            "label": "Value of period start",
+            "value": "period_start"
+          }
+        ]
+      },
+      "defaultValue": "previous"
+    },
+    {
+      "name": "includeGlobalTargets",
+      "label": "Include global targets",
+      "description": "Includes the global target value. Target will only appear if it is defined for the indicator. Only applies to simple visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includePersonalTargets",
+      "label": "Include personal targets",
+      "description": "Includes the personal target value. Target will only appear if it is defined for the indicator. Only applies to simple visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeGapPercentage",
+      "label": "Include gap %",
+      "description": "Includes the percentage between the current value and the target value. Only applies to simple visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeForecast",
+      "label": "Include forecast",
+      "description": "Includes forecast data in the chart based on current trend data. Only applies to trend visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeForecastRange",
+      "label": "Include forecast range",
+      "description": "Includes the 95% confidence interval of the forecast. Only applies to trend visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeTrend",
+      "label": "Include trend line",
+      "description": "Includes the direction the indicator is moving, or how values have changed over time. Only applies to trend visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeBand",
+      "label": "Include confidence band",
+      "description": "Includes the bandwidth between which indicator scores are moving. Only applies to trend visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeComment",
+      "label": "Include comment",
+      "description": "Includes comments added to data points. Only applies to trend visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includeGlobalThresholds",
+      "label": "Include global thresholds",
+      "description": "Includes an active global threshold set for the selected indicator, such as an all-time high or low. Thresholds appear only if they have been defined for the selected indicator. Only applies to trend visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "includePersonalThresholds",
+      "label": "Include personal thresholds",
+      "description": "Includes an active personal threshold set for the selected indicator, such as an all-time high or low. Thresholds appear only if they have been defined for the selected indicator. Only applies to trend visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "shouldApplyDateRange",
+      "label": "Apply date range",
+      "description": "Applies a date range filter, if one exists, from a filter component or manually configured in this data visualization. Only applies to simple visualizations.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "startTime",
+      "label": "Date range start",
+     "description": "Start of date range. Required when Apply date range is enabled. Can be defined as period  or absolute time. Period format is P<number of units><unit>, such as P7D for 7 days ago.",
+      "readOnly": false,
+      "fieldType": "date",
+      "mandatory": false,
+      "defaultValue": "P3M"
+    },
+    {
+      "name": "endTime",
+      "label": "Date range end",
+      "description": "End of date range. Required when Apply date range is enabled. Required when the start time is defined as absolute time.",
+      "readOnly": false,
+      "fieldType": "date",
+      "mandatory": false,
+      "defaultValue": "2022-04-07T16:55:26.322Z"
+    },
+    {
+      "name": "sortBy",
+      "label": "Sort type",
+      "description": "Defines the attribute used to sort groups or categories.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Name",
+            "value": "name"
+          },
+          {
+            "label": "Value",
+            "value": "value"
+          },
+          {
+            "label": "Group bucket",
+            "value": "bucket"
+          }
+        ]
+      },
+      "defaultValue": "value"
+    },
+    {
+      "name": "sortOrder",
+      "label": "Sort order",
+      "description": "Specifies whether to sort groups or categories in ascending or descending order. Required for group visualizations.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Ascending",
+            "value": "asc"
+          },
+          {
+            "label": "Descending",
+            "value": "desc"
+          }
+        ]
+      },
+      "defaultValue": "desc"
+    },
+    {
+      "name": "benchmarkScoreType",
+      "label": "Benchmark score type",
+      "description": "When benchmarking indicator is used, this defines the type of benchmark score to be retrieved",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+        {
+          "label": "Mean Value",
+          "value": "mean_value"
+        },
+        {
+          "label": "Median Value",
+          "value": "median_value"
+        },
+        {
+          "label": "Percentile Rank",
+          "value": "percentile_rank"
+        }
+      ]
+     },
+     "defaultValue": "mean_value"
+    },
+    {
+      "name": "useDataCache",
+      "label": "Use data cache",
+      "description": "Original load of data visualization will use visualization cache data when available to ensure better performance. User can get current data on demand by using the \"Invalidate cache\" property.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": false
+    },
+    {
+      "name": "cacheExpirationTime",
+      "label": "Cache expiration time",
+      "description": "Defines the time that cache will be valid. If existing cache is older than specified time the cache is deleted and new query will be done upon next request and new cache entry created.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "1 hour",
+            "value": "3600"
+          },
+          {
+            "label": "2 hours",
+            "value": "7200"
+          },
+          {
+            "label": "4 hours",
+            "value": "14400"
+          },
+          {
+            "label": "8 hours",
+            "value": "28800"
+          },
+          {
+            "label": "12 hours",
+            "value": "43200"
+          },
+          {
+            "label": "24 hours",
+            "value": "86400"
+          }
+        ]
+      },
+        "defaultValue": "86400"
+    },
+    {
+      "name": "invalidateCacheEntry",
+      "label": "Invalidate cache",
+      "description": "Mark existing cache as invalid and replace with current data",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": false
+    },
+    {
+      "name": "additionalKey",
+      "label": "Additional key",
+      "description": "Unique identifier used by the data resource",
+      "readOnly": false,
+      "fieldType": "string",
+      "mandatory": false,
+      "defaultValue": ""
+    },
+    {
+      "name": "filterConfigurations",
+      "label": "Filter configurations",
+      "description": "Bind this to @state.parFilters to make the data resource react to filters on the page.",
+      "readOnly": false,
+      "fieldType": "json",
+      "mandatory": false,
+      "defaultValue": []
+    }
+  ]
+request_body: |-
+  {
+    "dataConfigurations": [
+      {
+        "sortBy": "{{sortBy}}",
+        "sortOrder": "{{sortOrder}}",
+        "benchmarkScoreType": "{{benchmarkScoreType}}",
+        "sourceType": "indicator",
+        "order": 0,
+        "aggregateFunction": "{{aggregateFunction}}",
+        "showChangeFrom": "{{showChangeFrom}}",
+        "includeChange": {{includeChange}},
+        "includeChangePercentage": {{includeChangePercentage}},
+        "includeGlobalTargets": {{includeGlobalTargets}},
+        "includePersonalTargets": {{includePersonalTargets}},
+        "includeForecast": {{includeForecast}},
+        "includeForecastRange": {{includeForecastRange}},
+        "includeTrend": {{includeTrend}},
+        "includeBand": {{includeBand}},
+        "includeGapPercentage": {{includeGapPercentage}},
+        "includeComments": {{includeComment}},
+        "includeGlobalThresholds": {{includeGlobalThresholds}},
+        "includePersonalThresholds": {{includePersonalThresholds}},
+        "includeLiveScore": false,
+        "shouldApplyDateRange": {{shouldApplyDateRange}},
+        "startTime": "{{startTime}}",
+        "endTime": "{{endTime}}",
+        "groupBy": {{groupBy}},
+        "numberOfGroups": {{numberOfGroups}},
+        "trendBy": "{{trendBy}}",
+        "trendInterval": "date",
+        "uuid": {
+          "indicator": "{{indicator}}",
+          "breakdowns": {{breakdowns}},
+          "aggregate": "{{aggregate}}"
+        }
+      }
+    ],
+    "filterConfigurations": {{filterConfigurations}}
+  }
+required_translations: |-
+  [ {
+    "message" : "Additional key",
+    "comment" : ""
+  }, {
+    "message" : "Aggregate function",
+    "comment" : ""
+  }, {
+    "message" : "Applies a date range filter, if one exists, from a filter component or manually configured in this data visualization. Only applies to simple visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Apply date range",
+    "comment" : ""
+  }, {
+    "message" : "Benchmark score type",
+    "comment" : ""
+  }, {
+    "message" : "Breakdowns",
+    "comment" : ""
+  }, {
+    "message" : "Breakdowns for the indicator. Optional. Enter the sysId of one breakdown and the elementSysIds of 0-2 breakdown elements.",
+    "comment" : ""
+  }, {
+    "message" : "Cache expiration time",
+    "comment" : ""
+  }, {
+    "message" : "Date range end",
+    "comment" : ""
+  }, {
+    "message" : "Date range start",
+    "comment" : ""
+  }, {
+    "message" : "Defines indicator aggregation logic on how scores for the selected period will be shown.",
+    "comment" : ""
+  }, {
+    "message" : "Defines the time that cache will be valid. If existing cache is older than specified time the cache is deleted and new query will be done upon next request and new cache entry created.",
+    "comment" : ""
+  }, {
+    "message" : "Enable/disable trend. Required for trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "End of date range. Required when Apply date range is enabled. Required when the start time is defined as absolute time.",
+    "comment" : ""
+  }, {
+    "message" : "Group by",
+    "comment" : ""
+  }, {
+    "message" : "Group results by a breakdown. Supports only one group. Required for group visualizations and optional for trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Max number of groups",
+    "comment" : ""
+  }, {
+    "message" : "Maximum number of groups to display. Required when Group by is set.",
+    "comment" : ""
+  }, {
+    "message" : "Include change",
+    "comment" : ""
+  }, {
+    "message" : "Include change %",
+    "comment" : ""
+  }, {
+    "message" : "Include change from",
+    "comment" : ""
+  }, {
+    "message" : "Include comment",
+    "comment" : ""
+  }, {
+    "message" : "Include confidence band",
+    "comment" : ""
+  }, {
+    "message" : "Include forecast",
+    "comment" : ""
+  }, {
+    "message" : "Include forecast range",
+    "comment" : ""
+  }, {
+    "message" : "Include gap %",
+    "comment" : ""
+  }, {
+    "message" : "Include global targets",
+    "comment" : ""
+  }, {
+    "message" : "Include global thresholds",
+    "comment" : ""
+  }, {
+    "message" : "Include personal targets",
+    "comment" : ""
+  }, {
+    "message" : "Include personal thresholds",
+    "comment" : ""
+  }, {
+    "message" : "Include trend line",
+    "comment" : ""
+  }, {
+    "message" : "Includes an active global threshold set for the selected indicator, such as an all-time high or low. Thresholds appear only if they have been defined for the selected indicator. Only applies to trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes an active personal threshold set for the selected indicator, such as an all-time high or low. Thresholds appear only if they have been defined for the selected indicator. Only applies to trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes comments added to data points. Only applies to trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes forecast data in the chart based on current trend data. Only applies to trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes the 95% confidence interval of the forecast. Only applies to trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes the bandwidth between which indicator scores are moving. Only applies to trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes the change compared to the previous score or period. Only applies to simple visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes the direction the indicator is moving, or how values have changed over time. Only applies to trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes the global target value. Target will only appear if it is defined for the indicator. Only applies to simple visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes the percentage between the current value and the target value. Only applies to simple visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Includes the personal target value. Target will only appear if it is defined for the indicator. Only applies to simple visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Indicator",
+    "comment" : ""
+  }, {
+    "message" : "Invalidate cache",
+    "comment" : ""
+  }, {
+    "message" : "Mark existing cache as invalid and replace with current data",
+    "comment" : ""
+  }, {
+    "message" : "Original load of data visualization will use visualization cache data when available to ensure better performance. User can get current data on demand by using the \"Invalidate cache\" property.",
+    "comment" : ""
+  }, {
+    "message" : "Indicator as data source. Enter the sys_id of one indicator. on the pa_indicators table",
+    "comment" : ""
+  }, {
+    "message" : "Sets whether the score change is calculated compared to the previous score, the previous aggregate period, or the period start.  Only applies to simple visualizations and only when Apply data range is enabled.",
+    "comment" : ""
+  }, {
+    "message" : "Shows the percentage of the change from the previous score or period. Only applies to simple visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Sort order",
+    "comment" : ""
+  }, {
+    "message" : "Sort type",
+    "comment" : ""
+  }, {
+    "message" : "Specifies whether to sort groups or categories in ascending or descending order. Required for group visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Defines the attribute used to sort groups or categories.",
+    "comment" : ""
+  }, {
+    "message" : "Start of date range. Required when Apply date range is enabled. Can be defined as period  or absolute time. Period format is P<number of units><unit>, such as P7D for 7 days ago.",
+    "comment" : ""
+  }, {
+    "message" : "Time aggregation",
+    "comment" : ""
+  }, {
+    "message" : "Time aggregation for the indicator. For Daily time aggregation, leave this field empty. Optional. Enter the sys_id of one record on the pa_aggregates table.",
+    "comment" : ""
+  }, {
+    "message" : "Trend by",
+    "comment" : ""
+  }, {
+    "message" : "Unique identifier used by the data resource",
+    "comment" : ""
+  }, {
+    "message" : "Use data cache",
+    "comment" : ""
+  }, {
+    "message" : "When benchmarking indicator is used, this defines the type of benchmark score to be retrieved",
+    "comment" : ""
+  }, {
+    "message" : "Bind this to @state.parFilters to make the data resource react to filters on the page.",
+    "comment" : ""
+  }, {
+    "message" : "Filter configurations",
+    "comment" : ""
+  } ]
+schema_version: 1.0.0
+sys_name: Data Visualization API for indicator data source
+sys_policy: ''

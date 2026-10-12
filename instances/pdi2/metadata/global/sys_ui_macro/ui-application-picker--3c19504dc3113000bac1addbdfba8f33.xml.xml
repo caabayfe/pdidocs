@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+		<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+		<g:inline template="app_templates.xml"/>
+		<!-- Add an Application picker -->
+		<g:requires name="styles/app_notification.css"/>
+		<g:requires name="scripts/ApplicationPicker.js" inline="true"/>
+		<g:requires name="scripts/ApplicationChangeNotificationHandler.js" position="last" inline="true"/>
+		<span id="application_picker" version="2" role="${gs.getProperty('glide.ui.apps_picker.role', 'admin')}">
+        <a id="application_picker_select_title" title="${gs.getMessage('View list of Applications')}"
+		   style="color:white" target="gsft_main" href="sys_scope_list.do?sysparm_query=active=true">
+			${gs.getMessage("Application")}</a>:$[SP]
+        <SELECT id="application_picker_select" name="application_picker_select"
+				onchange="g_application_picker.changeApplication();">
+			<option value="" data-scope_name="global">${gs.getMessage("Loading...")}</option>
+		</SELECT>
+        <span style="margin-left:2px"/>
+		<a title="${gs.getMessage('Show selected application')}" target="gsft_main" name="application_drill" id="application_drill">
+			<img src="images/icons/app.gifx" border="0" width="16"
+				 height="16" alt="${gs.getMessage('View current application under development')}"/>
+		</a>
+        <span style="margin-left:2px"/>
+        <span style="margin-left:2px"/>
+		<a title="${gs.getMessage('Refresh application picker')}" name="application_refresh" id="application_refresh">
+			<img src="images/icons/refresh.gifx" border="0" width="16"
+				 height="16" alt="${gs.getMessage('Refresh application picker')}"/>
+		</a>
+        <span style="margin-left:5px"/>
+        <script language="javascript">
+			g_application_picker = new ApplicationPicker("application_picker");
+			g_application_picker.on("afterload", function () {
+				$("application_drill").on("click", function () {
+					var select = $("application_picker_select");
+					var chosen = select.options[select.selectedIndex].value;
+
+					CustomEvent.fire(GlideEvent.NAV_OPEN_URL, {
+						url: "sys_scope.do?sys_id=" + chosen,
+						openInForm: true
+					});
+				});
+
+				$("application_refresh").on("click", function (event) {
+					g_application_picker.fillApplications();
+					event.stopPropagation ? event.stopPropagation() : (event.cancelBubble = true);
+				});
+			});
+		</script>
+    </span>
+	</j:jelly>

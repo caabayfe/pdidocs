@@ -1,0 +1,81 @@
+<div ng-if="data.userExists && data.configExists" class="profile-header-container">
+  
+    <!-- Employee profile banner -->
+    <div class="banner-container col-xs-12" ng-style="c.backgroundBanner" ng-if="data.headerConfig.showBGImage">
+        <div ng-if="data.hasValidEmployeeRecord && c.profileDetails.primaryInfo.backgroundBanner && data.isEditable" id="uploadBanner" ng-click="c.uploadImage($event, 'cover', 'edit')"
+            tabindex="0" aria-label="${Edit cover image}" class="icon-container topcorner" data-toggle="tooltip" data-placement="top" data-title="${Edit cover image}">
+            <i class="fa fa-pencil fa-lg" data-container="body"></i>
+        </div>
+        <div ng-if="data.hasValidEmployeeRecord && !c.profileDetails.primaryInfo.backgroundBanner && data.isEditable" ng-click="c.uploadImage($event, 'cover', 'new')"
+tabindex="0" aria-label="${Add a cover image}" class="icon-container topcorner" data-toggle="tooltip" data-placement="top" data-title="${Add a cover image}">
+            <i class="fa fa-camera fa-lg" data-container="body"></i>
+        </div>
+    </div>
+  
+    <!-- Employee profile avatar and details -->
+    <div class="profile-info col-xs-12" ng-class="data.headerConfig.showBGImage ? '' : 'border-radius-6' ">
+        <div ng-class="data.headerConfig.showBGImage ? 'col-sm-2 col-xs-12 col-md-2 profile-avatar-container' : 'col-sm-1 col-xs-12 col-md-1 profile-avatar-container-small' " >
+          
+          <div ng-class="data.headerConfig.showBGImage ?  'avatar-extra-large' : 'avatar-small' " class="avatar-container" style="cursor:default;">
+                <div class="avatar soloAvatar bottom">
+                    <div class="sub-avatar" id="sub-avatar" ng-style="c.profilePic">
+                        <div id="user-initials" ng-if="!c.profilePic">{{c.profileDetails.primaryInfo.initials || data.userDetails.initials}}</div>
+                    </div>
+                </div>
+            </div>
+            
+          <div ng-if="data.hasValidEmployeeRecord && data.isEditable && c.profileDetails.profile_picture" ng-click="c.uploadImage($event, 'profile' , 'edit')"
+                aria-label="${Edit profile image}" tabindex="0" ng-class="data.headerConfig.showBGImage ?  'dp-icon-container' : 'dp-icon-container-for-small-image' " data-toggle="tooltip" data-placement="bottom" data-title="${Edit profile image}">
+                <i class="fa fa-pencil fa-xs" data-container="body"></i>
+            </div>
+            <div ng-if="data.hasValidEmployeeRecord && data.isEditable && !c.profileDetails.profile_picture" ng-click="c.uploadImage($event, 'profile' ,'new')"
+                aria-label="${Add a profile image}" tabindex="0" ng-class="data.headerConfig.showBGImage ?  'dp-icon-container' : 'dp-icon-container-for-small-image' " data-toggle="tooltip" data-placement="bottom" data-title="${Add a profile image}">
+                <i class="fa fa-camera fa-xs" data-container="body"></i>
+            </div>
+        </div>
+       
+     <div class="profile-details-container col-xs-12 " ng-class="{ 'col-sm-10 col-md-10' : !data.headerConfig.actions, 'col-sm-5 col-md-6' : data.headerConfig.actions && data.headerConfig.showBGImage, 'col-sm-6 col-md-7' : data.headerConfig.actions && !data.headerConfig.showBGImage }" >
+          <div class="profile-container">
+            <div class="profile-name">
+                <span>{{c.profileDetails.primaryInfo.userNameValue || data.userDetails.name}} <span
+                        ng-if="c.profileDetails.primaryInfo.pronoun && data.headerConfig.showPronoun">({{c.profileDetails.primaryInfo.pronoun}})</span></span>
+            </div>
+            <div class="profile-details" ng-if="data.userDetails">
+                <span>{{data.userDetails.title}}<span ng-if="data.userDetails.title && data.userDetails.department">,
+                    </span>{{data.userDetails.department}}</span>
+            </div>
+            <div class="profile-details" ng-if="!data.userDetails && c.profileDetails && secondaryFieldValues.length">
+              <span ng-repeat="field in secondaryFieldValues">
+                  <a id="item-{{field.fieldName}}" ng-if="field.tag && field.fieldValue" href="{{field.tag}}" target="{{field.target}}" class="brand-primary item" aria-label="{{field.fieldLabel}}">{{::field.fieldValue}}
+                  </a>
+                  <span id="item-{{field.fieldName}}" ng-if="!field.tag" class="item" aria-label="{{field.fieldLabel}}">{{field.fieldValue}}</span>
+                <span class="separator" ng-if="!$last" aria-label="separator">&nbsp;&nbsp;{{c.profileDetails.secondaryInfo.separator}}&nbsp;&nbsp;</span>
+              </span>
+            </div>
+
+            <div class="profile-details" ng-if="data.showPresence">
+              <div ng-if="c.data.presenceResponse">
+                <span class="{{c.data.presenceClass}}" />
+                <span class="teams-presence">{{c.data.mappedPresence}}</span>
+                <a href="{{data.userChatURL}}" target="_blank" ng-if="!data.isMyProfile" aria-label="${Connect on Microsoft Teams}">${Connect}</a>
+              </div>
+              <div ng-if="c.data.teamsOauthInitiatorURL">
+                <div class="teams-logout-group">
+                  <div tabindex="0" data-toggle="tooltip" data-placement="top" data-title="${After successful login, please refresh the page to start viewing the status}" role="button" aria-label="${After successful login, please refresh the page to start viewing the status}">
+                    <span class="{{c.data.presenceClass}}"/>
+                  </div>
+                  <a href="{{c.data.teamsOauthInitiatorURL}}" target="_blank">${Login to view Microsoft Teams status}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+      
+      <div class="profile-actions col-sm-5 col-xs-12 col-md-4" ng-if="data.headerConfig.actions" >
+        <sp-widget widget="c.data.actionWidgetData"></sp-widget>
+      </div>
+    </div>
+</div>
+
+<now-message key="This is a great place for your favorite team photo, or a place to show off furry friends and family members" value="${This is a great place for your favorite team photo, or a place to show off furry friends and family members}"/>
+<now-message key="Help teammates get to know you by showing them your best smile" value="${Help teammates get to know you by showing them your best smile}"/>

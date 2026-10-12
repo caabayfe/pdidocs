@@ -1,0 +1,843 @@
+_meta:
+  hash: 11b10ce89842b6842dec6c348794997ee7780168ba144ca16ca8c22fc087d603
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2022-12-06 05:11:22
+  sys_domain: global
+  sys_id: 2d3e3a92eba71110da1861c59c5228e1
+  sys_mod_count: '40'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_2d3e3a92eba71110da1861c59c5228e1
+  sys_updated_by: admin
+  sys_updated_on: 2023-05-18 17:07:58
+compiled_topic: e93e3a92eba71110da1861c59c5228dd
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"6f29fc2b2ad04b98a94506fb3d565d74","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"6f29fc2b2ad04b98a94506fb3d565d74"}],"goals":[{"name":"primary","trigger_id":"6f29fc2b2ad04b98a94506fb3d565d74","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"1530984fa49e4928a56d378d3491326a","name":"Start"},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"1adcdc47357f4bb5966ba0151c0d2049","name":"End"},{"type":"Decision","name":"Should run MFA","branches":[{"type":"Branch","label":"Run MFA","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n     var applies = vaVars.authType == \"QnA_and_mfa\" ? true : false;\n       return applies;\n})()\n"},"id":"d4a86ed0a781436896fdf00c02cd9cb3","name":"Run MFA"},{"type":"Branch","label":"Should not run MFA","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n     var applies = vaVars.authType == \"QnA\" ? true : false;\n       return applies;\n})()\n"},"id":"c405a5f5dc4c47b39a2b493e6e5693d5","name":"Should not run MFA"}],"id":"928bf4e2b22143648a37d1b062366acb","goal_id":"primary"},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var defaultMsg = \"Great. Your SoftPin is correct.\";\n    var custom_message = sn_cs.VASystemObject.getBotMessage(\"user_pin_verified_start_mfa_msg\", vaVars.inboundId, vaVars.providerId);\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n})()\n"}],"id":"152a2f441a9b43409b9ca8f9d79c9502","name":"SoftPIN verified - Continue to MFA","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var defaultMsg = \"Great, you’ve been verified.\";\n    var custom_message = sn_cs.VASystemObject.getBotMessage(\"user_verification_confirmed_msg\", vaVars.inboundId, vaVars.providerId);\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n})()\n"}],"id":"67113656a4644ab3a38087ff0895de83","name":"User Verified","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n   \n    if (gs.nil(vaContext.providerAppId)) {\n        vaVars.isGoogleAuthentication = false;\n    }\n\n    var two_factor_methods = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"two_factor_methods\", vaContext.providerAppId);\n    if (gs.nil(two_factor_methods)) {\n        vaVars.isGoogleAuthentication = false;\n        return;\n    }\n   \n    vaVars.isGoogleAuthentication = two_factor_methods.toLowerCase().equals(\"google_authenticator\");\n})()\n","id":"651cf6c21e134717a63aa9cd88918fe5","name":"Determine MFA","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n    var userId = vaVars.identifiedUser;\n    var status = vaSystem.elevateSession(userId);\n    gs.debug(\"Elevate Session status : \" +status);\n})()\n","id":"bd1710dd751c4a3c88e2e04168033f90","name":"Link Account","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"Which MFA to run","branches":[{"type":"Branch","label":"Google Authenticator","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.isGoogleAuthentication;\n})()\n"},"id":"fd252c82454d499ebc15feb248717d24","name":"Google Authenticator"},{"type":"Branch","label":"SMS","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.isGoogleAuthentication;\n})()\n"},"id":"51f07f4c2749442faefcb431bc5f9184","name":"SMS"}],"id":"383669109af9425da77daafec4a385d5","goal_id":"primary"},{"type":"LibraryCall","library_topic_name":"Authenticator App Verification","library_topic_id":"6eea6ed194ce5110f877f65b88f23ea6","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"userid","value":{"type":"String","mode":"string","value":"{{vaInputs.identifieduser}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"verificationid","value":{"type":"String","mode":"script","value":"(function execute() {\n    var verificationId = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"mfa_question_id\", vaContext.providerAppId);\n    return verificationId;\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"contextid","value":{"type":"String","mode":"script","value":"(function execute() {\n  return vaSystem.getConversationId();\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}}],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"status","main_topic_mapped_variable_name":"mfa_status"},{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"status_code","main_topic_mapped_variable_name":"mfa_error_code"}],"id":"d93c37f101554687920330aa4d74d38a","name":"Google Authenticator Verification","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"LibraryCall","library_topic_name":"SMS Verification","library_topic_id":"0ebb2b725f8e01100a9bedbf2f7313c5","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"userid","value":{"type":"String","mode":"string","value":"{{vaInputs.identifieduser}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"verificationid","value":{"type":"String","mode":"script","value":"(function execute() {\n    var verificationQuestionId = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"mfa_question_id\", vaContext.providerAppId);\n    return verificationQuestionId;\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"contextid","value":{"type":"String","mode":"script","value":"(function execute() {\n    return vaSystem.getConversationId();\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}}],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"status","main_topic_mapped_variable_name":"mfa_status"},{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"error_code","main_topic_mapped_variable_name":"mfa_error_code"}],"id":"10e5530b9b40495c85cb83321e9530fc","name":"SMS Verification","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"mfa_verified","branches":[{"type":"Branch","label":"MFA user not Verified","expression":{"type":"Applicability","mode":"query","value":"mfa_status=Error"},"id":"a30de6e4b6ae4468893a647cea7ae765","name":"MFA user not Verified"},{"type":"Branch","label":"MFA user verified","expression":{"type":"Applicability","mode":"query","value":"mfa_status=Success"},"id":"87310ae8ef3c475e9059a2f9a41129d2","name":"MFA user verified"}],"id":"4bb73058be4a40a6958c70093e249852","goal_id":"primary"},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.linkStatus = ''failure'';\n})()\n","id":"f9380db0734947ff8dc71ea03466c14c","name":"Set Link Status to Failure","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var USER_NOT_ENROLLED_CODE = \"40001\";\n    var INCORRECT_PIN_CODE = \"50000\";\n    var CONFIGURATION_ISSUE = \"40002\";\n    \n    var defaultMsg = \"Something went wrong. We’re going to transfer you to an agent. Please hold.\"; // config issue\n    var custom_message_key = \"link_account_unexpected_error_msg\";\n\n    if(vaInputs.mfa_error_code.getValue() == USER_NOT_ENROLLED_CODE) {\n        defaultMsg = \"You have not configured any device for OTP. Not to worry, we''re routing you to an Agent to help you\";\n        custom_message_key = \"user_sms_device_not_enrolled_msg\";\n\n    } else if(vaInputs.mfa_error_code.getValue() == INCORRECT_PIN_CODE) {\n        defaultMsg = \"The OTP you gave us is incorrect. We’re going to transfer you to an agent. Please hold.\";\n        custom_message_key = \"user_otp_verification_failed_msg\";\n        \n    } else if(vaInputs.mfa_error_code.getValue() == CONFIGURATION_ISSUE){\n        gs.error(\"Configuration error in provider channel record, please check the SysId for verification_question_id or mfa_question_id in provider properties \")\n    }\n\n    var custom_message = sn_cs.VASystemObject.getBotMessage(custom_message_key, vaVars.inboundId, vaVars.providerId);\n\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n   \n})()\n"}],"id":"1b61a2db6c8d45d7b4333fe1a74c5288","name":"Auth Failed","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n    var topicBlock = \"MFA\";\n    var mfaErrorCode = gs.nil(vaInputs.mfa_error_code.getValue()) ? \"\" : \" topic block error code:\" + vaInputs.mfa_error_code.getValue();\n    gs.error(\"User : \" + vaVars.identifiedUser + \" Authentication failed : topic block:\" + topicBlock + mfaErrorCode);\n\n    //For voice channels, Will connect to live agent directly, will go through topic picker in order for Setup/Reset PIN topic block to show up\n    if (vaVars.redirectToLA)\n        vaVars.connectToLA = true;\n})()\n","id":"0973e5bc0a9b4eab9d307c7ce250c10b","name":"Set ConnectToLA variable","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n     vaVars.authType = vaInputs.authtype.getValue();\n     vaVars.identifiedUser = vaInputs.identifieduser.getValue();\n     vaVars.inboundId = vaInputs.inboundid.getValue();\n     vaVars.providerId = vaInputs.providerid.getValue();\n     vaVars.redirectToLA = vaInputs.redirecttola.getValue();\n})()\n","id":"61b1c8278f31415fa92a4a429a5b83ec","name":"read inputs","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.linkStatus = ''success'';\n})()\n","id":"51e5010f6ec64f78add27e8d65b5096b","name":"Set Link status to Success","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}}],"edges":[{"type":"Edge","source_node_id":"928bf4e2b22143648a37d1b062366acb","target_node_id":"152a2f441a9b43409b9ca8f9d79c9502","branch_id":"d4a86ed0a781436896fdf00c02cd9cb3","id":"7d7115d60ba04ec3bf6af74e35ee1363","name":"d4a86ed0a781436896fdf00c02cd9cb3"},{"type":"Edge","source_node_id":"928bf4e2b22143648a37d1b062366acb","target_node_id":"51e5010f6ec64f78add27e8d65b5096b","branch_id":"c405a5f5dc4c47b39a2b493e6e5693d5","id":"d0bcddec3e0d46a7850b582ee7ed8270","name":"c405a5f5dc4c47b39a2b493e6e5693d5"},{"type":"Edge","source_node_id":"152a2f441a9b43409b9ca8f9d79c9502","target_node_id":"651cf6c21e134717a63aa9cd88918fe5","id":"9ce6c0b9b17143f0815bd138b3c33afa"},{"type":"Edge","source_node_id":"67113656a4644ab3a38087ff0895de83","target_node_id":"bd1710dd751c4a3c88e2e04168033f90","id":"245e09d37efe4e73a200a52b9a6da683"},{"type":"Edge","source_node_id":"bd1710dd751c4a3c88e2e04168033f90","target_node_id":"1adcdc47357f4bb5966ba0151c0d2049","id":"de44f89c95ff4cac97e3d40f008588cb"},{"type":"Edge","source_node_id":"651cf6c21e134717a63aa9cd88918fe5","target_node_id":"383669109af9425da77daafec4a385d5","id":"4e463ed9e3864bac94b92a0c3e102a08"},{"type":"Edge","source_node_id":"383669109af9425da77daafec4a385d5","target_node_id":"d93c37f101554687920330aa4d74d38a","branch_id":"fd252c82454d499ebc15feb248717d24","id":"4ab40149bfdf4c76bb45ef57f601ad79","name":"fd252c82454d499ebc15feb248717d24"},{"type":"Edge","source_node_id":"d93c37f101554687920330aa4d74d38a","target_node_id":"4bb73058be4a40a6958c70093e249852","id":"2d0a15d85795473b9e5e6c0e2adc7350"},{"type":"Edge","source_node_id":"383669109af9425da77daafec4a385d5","target_node_id":"10e5530b9b40495c85cb83321e9530fc","branch_id":"51f07f4c2749442faefcb431bc5f9184","id":"8c9366edfc7344ccb40ec9255439b866","name":"51f07f4c2749442faefcb431bc5f9184"},{"type":"Edge","source_node_id":"10e5530b9b40495c85cb83321e9530fc","target_node_id":"4bb73058be4a40a6958c70093e249852","id":"fe5e5800478546d6870fa783093ba7aa"},{"type":"Edge","source_node_id":"4bb73058be4a40a6958c70093e249852","target_node_id":"f9380db0734947ff8dc71ea03466c14c","branch_id":"a30de6e4b6ae4468893a647cea7ae765","id":"b11476266bd24afd9046e578df32aa49","name":"a30de6e4b6ae4468893a647cea7ae765"},{"type":"Edge","source_node_id":"f9380db0734947ff8dc71ea03466c14c","target_node_id":"1b61a2db6c8d45d7b4333fe1a74c5288","id":"a7ade1a85e8449daa85824cca5cbe5d5"},{"type":"Edge","source_node_id":"1b61a2db6c8d45d7b4333fe1a74c5288","target_node_id":"0973e5bc0a9b4eab9d307c7ce250c10b","id":"a92421233a804aafa114379126852e5a"},{"type":"Edge","source_node_id":"0973e5bc0a9b4eab9d307c7ce250c10b","target_node_id":"1adcdc47357f4bb5966ba0151c0d2049","id":"38dc4d8be3f84119b4c21b478815e8f8"},{"type":"Edge","source_node_id":"1530984fa49e4928a56d378d3491326a","target_node_id":"61b1c8278f31415fa92a4a429a5b83ec","id":"50d648491c234e3eb696255cfec3a6e1"},{"type":"Edge","source_node_id":"61b1c8278f31415fa92a4a429a5b83ec","target_node_id":"928bf4e2b22143648a37d1b062366acb","id":"a24557d5b9b84750a3d15771a7dc0032"},{"type":"Edge","source_node_id":"4bb73058be4a40a6958c70093e249852","target_node_id":"51e5010f6ec64f78add27e8d65b5096b","branch_id":"87310ae8ef3c475e9059a2f9a41129d2","id":"c3f71e90e9ca4e88a980b51553fbc900","name":"87310ae8ef3c475e9059a2f9a41129d2"},{"type":"Edge","source_node_id":"51e5010f6ec64f78add27e8d65b5096b","target_node_id":"67113656a4644ab3a38087ff0895de83","id":"14ae26dd51e64422b8d29fa924587818"}],"id":"primary"}],"script_variables":[{"type":"String","name":"identifiedUser","value":{"type":"String","mode":"string"},"list":false,"id":"6148cdc0f2104d19b2526865749c66e5","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"authType","value":{"type":"String","mode":"string"},"list":false,"id":"3c2767a462b84b44b177a3fe49b9d1ab","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"inboundId","value":{"type":"String","mode":"string"},"list":false,"id":"df09ff959cb74f37a66c486c68b6a864","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"providerId","value":{"type":"String","mode":"string"},"list":false,"id":"5329777a7ec04fc083490f917387d79f","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"connectToLA","value":{"type":"String","mode":"string"},"list":false,"id":"4e5b0ce7d6264f5f90528227a9348008","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"isGoogleAuthentication","value":{"type":"String","mode":"string"},"list":false,"id":"eb67add083144761a472403ecdee6be8","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"linkStatus","value":{"type":"String","mode":"string"},"list":false,"id":"c90584f0c8df482197fd7ac3f67f5e82","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"redirectToLA","value":{"type":"String","mode":"string"},"list":false,"id":"e7e7a77b143b4c8a8865c50fa32d6a32","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"String","name":"authtype","list":false,"id":"0235cada89d741b687583b1994415e2b","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"identifieduser","list":false,"id":"4a3932e61dee4aa7b3e599518f481bac","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"inboundid","list":false,"id":"84ae7c4097dd44adb6b414c25bb2517f","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"providerid","list":false,"id":"1a84f053b17648c9817ac6a647c6434b","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"mfa_status_2","list":false,"id":"7341b859ee034e70bafedd4a80a87c87","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false},{"type":"String","name":"mfa_error_code_2","list":false,"id":"51a0a64cb7f848bda842b42723b31652","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false},{"type":"String","name":"mfa_status","list":false,"id":"00c07e1b5b094ee5ad4845e19446d705","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false},{"type":"String","name":"mfa_error_code","list":false,"id":"c1be0209189047209d2d0b4902c2bc86","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false},{"type":"True/False","id":"c599ed6a6ba14425aa5b9a9673b54812","name":"redirecttola","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"list":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"authtype","label":"authType","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"0235cada89d741b687583b1994415e2b","type":"String"},{"name":"identifieduser","label":"identifiedUser","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"4a3932e61dee4aa7b3e599518f481bac","type":"String"},{"name":"inboundid","label":"inboundId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"84ae7c4097dd44adb6b414c25bb2517f","type":"String"},{"name":"providerid","label":"providerId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"1a84f053b17648c9817ac6a647c6434b","type":"String"},{"name":"redirecttola","label":"redirectToLA","default-value":"false","required":true,"metadata":{"type":"True/False","list":false,"items":[],"use_items":false},"id":"c599ed6a6ba14425aa5b9a9673b54812","type":"True/False"}],"return-values-mapping":[{"name":"connecttola","label":"connectToLA","value":{"type":"String","mode":"string","value":"{{vaVars.connectToLA}}"}},{"name":"linkstatus","label":"linkStatus","value":{"type":"String","mode":"string","value":"{{vaVars.linkStatus}}"}}]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"255847c2eb271110da1861c59c522851","name":"MFA_link_account","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"modify_confirmation_enabled":false,"library":true,"csTopicId":"e93e3a92eba71110da1861c59c5228dd","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 255847c2eb271110da1861c59c522851
+graph: |-
+  {
+    "graph_api_version": "1.0.46",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "1530984fa49e4928a56d378d3491326a": {
+            "id": "1530984fa49e4928a56d378d3491326a",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "0235cada89d741b687583b1994415e2b",
+                "name": "authType",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "4a3932e61dee4aa7b3e599518f481bac",
+                "name": "identifiedUser",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "84ae7c4097dd44adb6b414c25bb2517f",
+                "name": "inboundId",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "1a84f053b17648c9817ac6a647c6434b",
+                "name": "providerId",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "True/False",
+                "value": "false",
+                "id": "c599ed6a6ba14425aa5b9a9673b54812",
+                "name": "redirectToLA",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              }
+            ],
+            "variableIds": [
+              "0235cada89d741b687583b1994415e2b",
+              "4a3932e61dee4aa7b3e599518f481bac",
+              "84ae7c4097dd44adb6b414c25bb2517f",
+              "1a84f053b17648c9817ac6a647c6434b",
+              "c599ed6a6ba14425aa5b9a9673b54812"
+            ]
+          },
+          "1adcdc47357f4bb5966ba0151c0d2049": {
+            "id": "1adcdc47357f4bb5966ba0151c0d2049",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": [
+              {
+                "key": "connectToLA",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.connectToLA}}",
+                          "displayValue": "Script Variables➛connectToLA"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true,
+                "cannotBeDeleted": true,
+                "alertMessage": "You cannot delete this parameter because other calling topics use it.",
+                "additionalInfoUrl": "/sys_cs_topic_library_usage_list.do?sysparm_query=library_cs_topic_id=e93e3a92eba71110da1861c59c5228dd%5Ecalling_cs_topic_idIN2578d02eebab1110da1861c59c5228e1",
+                "additionalInfoLabel": "See calling topics"
+              },
+              {
+                "key": "linkStatus",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.linkStatus}}",
+                          "displayValue": "Script Variables➛linkStatus"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true
+              }
+            ]
+          },
+          "928bf4e2b22143648a37d1b062366acb": {
+            "id": "928bf4e2b22143648a37d1b062366acb",
+            "stepType": "Decision",
+            "name": "Should run MFA"
+          },
+          "152a2f441a9b43409b9ca8f9d79c9502": {
+            "id": "152a2f441a9b43409b9ca8f9d79c9502",
+            "stepType": "TextOutput",
+            "name": "SoftPIN verified - Continue to MFA",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var defaultMsg = \"Great. Your SoftPin is correct.\";\n    var custom_message = sn_cs.VASystemObject.getBotMessage(\"user_pin_verified_start_mfa_msg\", vaVars.inboundId, vaVars.providerId);\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "67113656a4644ab3a38087ff0895de83": {
+            "id": "67113656a4644ab3a38087ff0895de83",
+            "stepType": "TextOutput",
+            "name": "User Verified",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var defaultMsg = \"Great, you’ve been verified.\";\n    var custom_message = sn_cs.VASystemObject.getBotMessage(\"user_verification_confirmed_msg\", vaVars.inboundId, vaVars.providerId);\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "651cf6c21e134717a63aa9cd88918fe5": {
+            "id": "651cf6c21e134717a63aa9cd88918fe5",
+            "name": "Determine MFA",
+            "script": "(function execute() {\n   \n    if (gs.nil(vaContext.providerAppId)) {\n        vaVars.isGoogleAuthentication = false;\n    }\n\n    var two_factor_methods = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"two_factor_methods\", vaContext.providerAppId);\n    if (gs.nil(two_factor_methods)) {\n        vaVars.isGoogleAuthentication = false;\n        return;\n    }\n   \n    vaVars.isGoogleAuthentication = two_factor_methods.toLowerCase().equals(\"google_authenticator\");\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "bd1710dd751c4a3c88e2e04168033f90": {
+            "id": "bd1710dd751c4a3c88e2e04168033f90",
+            "name": "Link Account",
+            "script": "(function execute() {\n    var userId = vaVars.identifiedUser;\n    var status = vaSystem.elevateSession(userId);\n    gs.debug(\"Elevate Session status : \" +status);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "383669109af9425da77daafec4a385d5": {
+            "id": "383669109af9425da77daafec4a385d5",
+            "stepType": "Decision",
+            "name": "Which MFA to run"
+          },
+          "d93c37f101554687920330aa4d74d38a": {
+            "id": "d93c37f101554687920330aa4d74d38a",
+            "stepType": "ReusableTopic",
+            "name": "Google Authenticator Verification",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "Authenticator App Verification",
+            "reusableTopicId": "6eea6ed194ce5110f877f65b88f23ea6",
+            "inputs": {
+              "userid": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.identifieduser}}",
+                          "displayValue": "Input Variables➛IdentifiedUser"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "verificationid": {
+                "value": "(function execute() {\n    var verificationId = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"mfa_question_id\", vaContext.providerAppId);\n    return verificationId;\n})()\n",
+                "mode": "script",
+                "type": "String"
+              },
+              "contextid": {
+                "value": "(function execute() {\n  return vaSystem.getConversationId();\n})()\n",
+                "mode": "script",
+                "type": "String"
+              }
+            },
+            "outputs": [
+              {
+                "id": "00c07e1b5b094ee5ad4845e19446d705",
+                "value": "status",
+                "mapping": "mfa_status",
+                "preventDisable": true
+              },
+              {
+                "id": "c1be0209189047209d2d0b4902c2bc86",
+                "value": "status_code",
+                "mapping": "mfa_error_code",
+                "preventDisable": true
+              }
+            ],
+            "variableIds": [
+              "00c07e1b5b094ee5ad4845e19446d705",
+              "c1be0209189047209d2d0b4902c2bc86"
+            ],
+            "outdatedNote": false,
+            "loading": false,
+            "useTemplateTopic": false
+          },
+          "10e5530b9b40495c85cb83321e9530fc": {
+            "id": "10e5530b9b40495c85cb83321e9530fc",
+            "stepType": "ReusableTopic",
+            "name": "SMS Verification",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "SMS Verification",
+            "reusableTopicId": "0ebb2b725f8e01100a9bedbf2f7313c5",
+            "inputs": {
+              "userid": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.identifieduser}}",
+                          "displayValue": "Input Variables➛IdentifiedUser"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "verificationid": {
+                "value": "(function execute() {\n    var verificationQuestionId = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(\"mfa_question_id\", vaContext.providerAppId);\n    return verificationQuestionId;\n})()\n",
+                "mode": "script",
+                "type": "String"
+              },
+              "contextid": {
+                "value": "(function execute() {\n    return vaSystem.getConversationId();\n})()\n",
+                "mode": "script",
+                "type": "String"
+              }
+            },
+            "outputs": [
+              {
+                "id": "7341b859ee034e70bafedd4a80a87c87",
+                "value": "status",
+                "mapping": "mfa_status",
+                "preventDisable": true
+              },
+              {
+                "id": "51a0a64cb7f848bda842b42723b31652",
+                "value": "error_code",
+                "mapping": "mfa_error_code",
+                "preventDisable": true
+              }
+            ],
+            "variableIds": [
+              "7341b859ee034e70bafedd4a80a87c87",
+              "51a0a64cb7f848bda842b42723b31652"
+            ],
+            "outdatedNote": false,
+            "loading": false,
+            "useTemplateTopic": false
+          },
+          "4bb73058be4a40a6958c70093e249852": {
+            "id": "4bb73058be4a40a6958c70093e249852",
+            "stepType": "Decision",
+            "name": "mfa_verified"
+          },
+          "f9380db0734947ff8dc71ea03466c14c": {
+            "id": "f9380db0734947ff8dc71ea03466c14c",
+            "name": "Set Link Status to Failure",
+            "script": "(function execute() {\n    vaVars.linkStatus = 'failure';\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "1b61a2db6c8d45d7b4333fe1a74c5288": {
+            "id": "1b61a2db6c8d45d7b4333fe1a74c5288",
+            "stepType": "TextOutput",
+            "name": "Auth Failed",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var USER_NOT_ENROLLED_CODE = \"40001\";\n    var INCORRECT_PIN_CODE = \"50000\";\n    var CONFIGURATION_ISSUE = \"40002\";\n    \n    var defaultMsg = \"Something went wrong. We’re going to transfer you to an agent. Please hold.\"; // config issue\n    var custom_message_key = \"link_account_unexpected_error_msg\";\n\n    if(vaInputs.mfa_error_code.getValue() == USER_NOT_ENROLLED_CODE) {\n        defaultMsg = \"You have not configured any device for OTP. Not to worry, we're routing you to an Agent to help you\";\n        custom_message_key = \"user_sms_device_not_enrolled_msg\";\n\n    } else if(vaInputs.mfa_error_code.getValue() == INCORRECT_PIN_CODE) {\n        defaultMsg = \"The OTP you gave us is incorrect. We’re going to transfer you to an agent. Please hold.\";\n        custom_message_key = \"user_otp_verification_failed_msg\";\n        \n    } else if(vaInputs.mfa_error_code.getValue() == CONFIGURATION_ISSUE){\n        gs.error(\"Configuration error in provider channel record, please check the SysId for verification_question_id or mfa_question_id in provider properties \")\n    }\n\n    var custom_message = sn_cs.VASystemObject.getBotMessage(custom_message_key, vaVars.inboundId, vaVars.providerId);\n\n    var prompt = custom_message || defaultMsg;\n    return gs.getMessageLang(prompt, vaContext.getRequesterLang());\n   \n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "0973e5bc0a9b4eab9d307c7ce250c10b": {
+            "id": "0973e5bc0a9b4eab9d307c7ce250c10b",
+            "name": "Set ConnectToLA variable",
+            "script": "(function execute() {\n    var topicBlock = \"MFA\";\n    var mfaErrorCode = gs.nil(vaInputs.mfa_error_code.getValue()) ? \"\" : \" topic block error code:\" + vaInputs.mfa_error_code.getValue();\n    gs.error(\"User : \" + vaVars.identifiedUser + \" Authentication failed : topic block:\" + topicBlock + mfaErrorCode);\n\n    //For voice channels, Will connect to live agent directly, will go through topic picker in order for Setup/Reset PIN topic block to show up\n    if (vaVars.redirectToLA)\n        vaVars.connectToLA = true;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "61b1c8278f31415fa92a4a429a5b83ec": {
+            "id": "61b1c8278f31415fa92a4a429a5b83ec",
+            "name": "read inputs",
+            "script": "(function execute() {\n     vaVars.authType = vaInputs.authtype.getValue();\n     vaVars.identifiedUser = vaInputs.identifieduser.getValue();\n     vaVars.inboundId = vaInputs.inboundid.getValue();\n     vaVars.providerId = vaInputs.providerid.getValue();\n     vaVars.redirectToLA = vaInputs.redirecttola.getValue();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "51e5010f6ec64f78add27e8d65b5096b": {
+            "id": "51e5010f6ec64f78add27e8d65b5096b",
+            "name": "Set Link status to Success",
+            "script": "(function execute() {\n    vaVars.linkStatus = 'success';\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "7d7115d60ba04ec3bf6af74e35ee1363",
+            "edgeType": "Branch",
+            "source": "928bf4e2b22143648a37d1b062366acb",
+            "target": "152a2f441a9b43409b9ca8f9d79c9502",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n     var applies = vaVars.authType == \"QnA_and_mfa\" ? true : false;\n       return applies;\n})()\n"
+            },
+            "label": "Run MFA"
+          },
+          {
+            "id": "d0bcddec3e0d46a7850b582ee7ed8270",
+            "edgeType": "Branch",
+            "source": "928bf4e2b22143648a37d1b062366acb",
+            "target": "51e5010f6ec64f78add27e8d65b5096b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n     var applies = vaVars.authType == \"QnA\" ? true : false;\n       return applies;\n})()\n"
+            },
+            "label": "Should not run MFA"
+          },
+          {
+            "id": "9ce6c0b9b17143f0815bd138b3c33afa",
+            "edgeType": "Edge",
+            "source": "152a2f441a9b43409b9ca8f9d79c9502",
+            "target": "651cf6c21e134717a63aa9cd88918fe5",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "245e09d37efe4e73a200a52b9a6da683",
+            "edgeType": "Edge",
+            "source": "67113656a4644ab3a38087ff0895de83",
+            "target": "bd1710dd751c4a3c88e2e04168033f90",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "de44f89c95ff4cac97e3d40f008588cb",
+            "edgeType": "Edge",
+            "source": "bd1710dd751c4a3c88e2e04168033f90",
+            "target": "1adcdc47357f4bb5966ba0151c0d2049",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4e463ed9e3864bac94b92a0c3e102a08",
+            "edgeType": "Edge",
+            "source": "651cf6c21e134717a63aa9cd88918fe5",
+            "target": "383669109af9425da77daafec4a385d5",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4ab40149bfdf4c76bb45ef57f601ad79",
+            "edgeType": "Branch",
+            "source": "383669109af9425da77daafec4a385d5",
+            "target": "d93c37f101554687920330aa4d74d38a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.isGoogleAuthentication;\n})()\n"
+            },
+            "label": "Google Authenticator"
+          },
+          {
+            "id": "2d0a15d85795473b9e5e6c0e2adc7350",
+            "edgeType": "Edge",
+            "source": "d93c37f101554687920330aa4d74d38a",
+            "target": "4bb73058be4a40a6958c70093e249852",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "8c9366edfc7344ccb40ec9255439b866",
+            "edgeType": "Branch",
+            "source": "383669109af9425da77daafec4a385d5",
+            "target": "10e5530b9b40495c85cb83321e9530fc",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.isGoogleAuthentication;\n})()\n"
+            },
+            "label": "SMS"
+          },
+          {
+            "id": "fe5e5800478546d6870fa783093ba7aa",
+            "edgeType": "Edge",
+            "source": "10e5530b9b40495c85cb83321e9530fc",
+            "target": "4bb73058be4a40a6958c70093e249852",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b11476266bd24afd9046e578df32aa49",
+            "edgeType": "Branch",
+            "source": "4bb73058be4a40a6958c70093e249852",
+            "target": "f9380db0734947ff8dc71ea03466c14c",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.mfa_status=Error",
+              "mode": "query"
+            },
+            "label": "MFA user not Verified"
+          },
+          {
+            "id": "a7ade1a85e8449daa85824cca5cbe5d5",
+            "edgeType": "Edge",
+            "source": "f9380db0734947ff8dc71ea03466c14c",
+            "target": "1b61a2db6c8d45d7b4333fe1a74c5288",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a92421233a804aafa114379126852e5a",
+            "edgeType": "Edge",
+            "source": "1b61a2db6c8d45d7b4333fe1a74c5288",
+            "target": "0973e5bc0a9b4eab9d307c7ce250c10b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "38dc4d8be3f84119b4c21b478815e8f8",
+            "edgeType": "Edge",
+            "source": "0973e5bc0a9b4eab9d307c7ce250c10b",
+            "target": "1adcdc47357f4bb5966ba0151c0d2049",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "50d648491c234e3eb696255cfec3a6e1",
+            "edgeType": "Edge",
+            "source": "1530984fa49e4928a56d378d3491326a",
+            "target": "61b1c8278f31415fa92a4a429a5b83ec",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a24557d5b9b84750a3d15771a7dc0032",
+            "edgeType": "Edge",
+            "source": "61b1c8278f31415fa92a4a429a5b83ec",
+            "target": "928bf4e2b22143648a37d1b062366acb",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "c3f71e90e9ca4e88a980b51553fbc900",
+            "edgeType": "Branch",
+            "source": "4bb73058be4a40a6958c70093e249852",
+            "target": "51e5010f6ec64f78add27e8d65b5096b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.mfa_status=Success",
+              "mode": "query"
+            },
+            "label": "MFA user verified"
+          },
+          {
+            "id": "14ae26dd51e64422b8d29fa924587818",
+            "edgeType": "Edge",
+            "source": "51e5010f6ec64f78add27e8d65b5096b",
+            "target": "67113656a4644ab3a38087ff0895de83",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "6148cdc0f2104d19b2526865749c66e5": {
+        "id": "6148cdc0f2104d19b2526865749c66e5",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "identifiedUser",
+        "label": "identifiedUser",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "0235cada89d741b687583b1994415e2b": {
+        "id": "0235cada89d741b687583b1994415e2b",
+        "name": "authtype",
+        "label": "AuthType",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "1530984fa49e4928a56d378d3491326a",
+        "isHidden": false
+      },
+      "4a3932e61dee4aa7b3e599518f481bac": {
+        "id": "4a3932e61dee4aa7b3e599518f481bac",
+        "name": "identifieduser",
+        "label": "IdentifiedUser",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "1530984fa49e4928a56d378d3491326a",
+        "isHidden": false
+      },
+      "84ae7c4097dd44adb6b414c25bb2517f": {
+        "id": "84ae7c4097dd44adb6b414c25bb2517f",
+        "name": "inboundid",
+        "label": "InboundId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "1530984fa49e4928a56d378d3491326a",
+        "isHidden": false
+      },
+      "1a84f053b17648c9817ac6a647c6434b": {
+        "id": "1a84f053b17648c9817ac6a647c6434b",
+        "name": "providerid",
+        "label": "ProviderId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "1530984fa49e4928a56d378d3491326a",
+        "isHidden": false
+      },
+      "7341b859ee034e70bafedd4a80a87c87": {
+        "id": "7341b859ee034e70bafedd4a80a87c87",
+        "name": "mfa_status_2",
+        "label": "Mfa_status (2)",
+        "defaultValue": "status",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "10e5530b9b40495c85cb83321e9530fc",
+        "isHidden": false
+      },
+      "51a0a64cb7f848bda842b42723b31652": {
+        "id": "51a0a64cb7f848bda842b42723b31652",
+        "name": "mfa_error_code_2",
+        "label": "Mfa_error_code (2)",
+        "defaultValue": "error_code",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "10e5530b9b40495c85cb83321e9530fc",
+        "isHidden": false
+      },
+      "00c07e1b5b094ee5ad4845e19446d705": {
+        "id": "00c07e1b5b094ee5ad4845e19446d705",
+        "name": "mfa_status",
+        "label": "Mfa_status",
+        "defaultValue": "status",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "d93c37f101554687920330aa4d74d38a",
+        "isHidden": false
+      },
+      "c1be0209189047209d2d0b4902c2bc86": {
+        "id": "c1be0209189047209d2d0b4902c2bc86",
+        "name": "mfa_error_code",
+        "label": "Mfa_error_code",
+        "defaultValue": "status_code",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "d93c37f101554687920330aa4d74d38a",
+        "isHidden": false
+      },
+      "3c2767a462b84b44b177a3fe49b9d1ab": {
+        "id": "3c2767a462b84b44b177a3fe49b9d1ab",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "authType",
+        "label": "authType",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "df09ff959cb74f37a66c486c68b6a864": {
+        "id": "df09ff959cb74f37a66c486c68b6a864",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "inboundId",
+        "label": "inboundId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "5329777a7ec04fc083490f917387d79f": {
+        "id": "5329777a7ec04fc083490f917387d79f",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "providerId",
+        "label": "providerId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4e5b0ce7d6264f5f90528227a9348008": {
+        "id": "4e5b0ce7d6264f5f90528227a9348008",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "connectToLA",
+        "label": "connectToLA",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "eb67add083144761a472403ecdee6be8": {
+        "id": "eb67add083144761a472403ecdee6be8",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "isGoogleAuthentication",
+        "label": "isGoogleAuthentication",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "c90584f0c8df482197fd7ac3f67f5e82": {
+        "id": "c90584f0c8df482197fd7ac3f67f5e82",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "linkStatus",
+        "label": "linkStatus",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "e7e7a77b143b4c8a8865c50fa32d6a32": {
+        "id": "e7e7a77b143b4c8a8865c50fa32d6a32",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "redirectToLA",
+        "label": "redirectToLA",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "c599ed6a6ba14425aa5b9a9673b54812": {
+        "id": "c599ed6a6ba14425aa5b9a9673b54812",
+        "name": "redirecttola",
+        "label": "RedirectToLA",
+        "defaultValue": "false",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "1530984fa49e4928a56d378d3491326a",
+        "isHidden": false
+      }
+    }
+  }
+name: MFA_link_account
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

@@ -1,0 +1,1 @@
+/* The separator goes near the bottom to seperate the load more option */

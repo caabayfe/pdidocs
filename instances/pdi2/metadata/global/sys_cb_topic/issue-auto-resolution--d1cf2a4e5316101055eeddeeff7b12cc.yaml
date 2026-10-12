@@ -1,0 +1,766 @@
+_meta:
+  hash: 006029c9f8499b3ccce0075674131db7ed23ce4b92d28d2e0bc484f07ce37a58
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_topic
+  sys_created_by: admin
+  sys_created_on: 2020-07-30 21:26:41
+  sys_domain: global
+  sys_id: d1cf2a4e5316101055eeddeeff7b12cc
+  sys_mod_count: '115'
+  sys_package: dd6ebe778c9d03100a22deb6dd2b4eb4
+  sys_scope: global
+  sys_update_name: sys_cb_topic_d1cf2a4e5316101055eeddeeff7b12cc
+  sys_updated_by: admin
+  sys_updated_on: 2024-10-22 02:33:44
+applicability: ''
+applicability_mode: query
+autopilot_topic: 'false'
+category: ''
+channels: ''
+connect_queue: ''
+context_profiles: ''
+description: Auto Resolution Topic
+dialog_acts_enabled: 'false'
+expose_on_palette: 'false'
+flexible_conversation_switching: 'true'
+foundational: 'false'
+graph: |-
+  {
+    "graph_api_version": "1.0.71",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "1821b76dae664951984624918a8f2bef": {
+            "id": "1821b76dae664951984624918a8f2bef",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "b4df58eeb84749dfa3737fac3bca85ff": {
+            "id": "b4df58eeb84749dfa3737fac3bca85ff",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "441b4d33a3604280a4133889dbc973eb": {
+            "id": "441b4d33a3604280a4133889dbc973eb",
+            "name": "Validation",
+            "script": "(function execute() {\n    \n    var notificationContext = JSON.parse(vaVars.global_notification_context);\n    vaVars.auto_resolution_context_id = notificationContext.tableSysId;\n    vaVars.action_sys_id = notificationContext.actionId;\n    interactionId = vaSystem.getInteractionSysId();\n\n    var contextHelper = new global.AutoResolutionContextHelper();\n    var context = contextHelper.getContextDetails(vaVars.auto_resolution_context_id);\n    contextHelper.setInteraction(vaVars.auto_resolution_context_id, interactionId);\n    new global.AutoResolutionTaskHelper().associateTaskToInteraction(context.taskTable, context.taskId, interactionId);\n    \n    vaVars.topic_id = context.topicId;\n    vaVars.task_id = context.taskId;\n    vaVars.task_table = context.taskTable;\n    vaVars.is_valid = context.isValid;\n    vaVars.validation_reason = context.validationReason;\n    vaVars.is_notification_expired = context.validationReason == 'Notification expired';\n    vaVars.is_notification_accepted = context.validationReason == 'Notification accepted';\n\n    var logUtils = new global.AutoResolutionLoggingUtils()\n                        .withName('topic')\n                        .withContextId(vaVars.auto_resolution_context_id)\n                        .withTaskValues(vaVars.task_id, vaVars.task_table)\n                        .withLanguage(context.language)\n                        .withConfiguration(context.configId)\n                        .withTopic(vaVars.topic_id);\n    vaVars.loggingContext = JSON.stringify(logUtils.CONTEXT);\n    var logger = logUtils.createLogger();\n    logger.info('Starting Auto-Resoluton Topic');\n    \n     //!!!!!IMPORTANT: DO NOT CHANGE THIS VALUE!!!!!\n    vaVars.is_iar_wrapper_topic = true;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "b2ce1b4e581845e4867c0a2ee5c30ee8": {
+            "id": "b2ce1b4e581845e4867c0a2ee5c30ee8",
+            "stepType": "Decision",
+            "name": "Help Now?"
+          },
+          "717d9e4d03b048c3963ad44c30ecee0b": {
+            "id": "717d9e4d03b048c3963ad44c30ecee0b",
+            "name": "Invoke Resolution Topic",
+            "script": "(function execute() {\n    var context = contextHelper.getContextDetails(vaVars.auto_resolution_context_id);\n    var logUtils = new global.AutoResolutionLoggingUtils()    \n                       .withName('topic')\n                       .withContextId(vaVars.auto_resolution_context_id)\n                       .withTaskValues(vaVars.task_id, vaVars.task_table)\n                       .withLanguage(context.language)\n                       .withConfiguration(context.configId)\n                       .withTopic(vaVars.topic_id);\n    vaVars.loggingContext = JSON.stringify(logUtils.CONTEXT);\n    var logger = logUtils.createLogger();\n    var contextHelper = new global.AutoResolutionContextHelper();\n    contextHelper.updateNotificationResponded(vaVars.auto_resolution_context_id, 'accepted');\n    logger.debug('Marking context={0} as accepted', vaVars.auto_resolution_context_id);\n\n    logger.info('User accepted the Auto-Resolution topic. Swtiching to topic={0}', vaVars.topic_id);\n    vaSystem.switchTopicById(vaVars.topic_id);\n    vaSystem.switchTopicById(vaVars.topic_id);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "f11ef09e6ff442c2b1f9d2cceea83728": {
+            "stepType": "ChoicePrompt",
+            "name": "Close Task Input",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "If there's anything else you need related to this ticket, I can keep it open."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "5a3f98adebba43c5a9fc639ce6b24e00",
+            "id": "f11ef09e6ff442c2b1f9d2cceea83728",
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "055e230ea978461ea3c3ed93353cf81d": {
+            "id": "055e230ea978461ea3c3ed93353cf81d",
+            "stepType": "Decision",
+            "name": "Close Task?"
+          },
+          "5f245cbc4b12423f95bf6575fa767ace": {
+            "id": "5f245cbc4b12423f95bf6575fa767ace",
+            "name": "Unassign Task and keep task open",
+            "script": "(function execute() {\n    \n   var helper = new global.AutoResolutionContextHelper();\n   helper.executeTemplate(helper.UNRESOLVED, vaVars.auto_resolution_context_id, vaVars.loggingContext);\n\n   var logger = new global.AutoResolutionLoggingUtils()\n                        .withName('topic')\n                        .withContext(vaVars.loggingContext)\n                        .createLogger();\n    logger.info('User decided to keep the task={0} open', vaVars.task_id);\n\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "7ec718a8c47b4fc98aa9e1463325008d": {
+            "id": "7ec718a8c47b4fc98aa9e1463325008d",
+            "name": "Mark Task Resolved",
+            "script": "(function execute() {\n\n    var helper = new global.AutoResolutionContextHelper();\n    helper.executeTemplate(helper.RESOLVED, vaVars.auto_resolution_context_id, vaVars.loggingContext);\n\n    var logger = new global.AutoResolutionLoggingUtils()\n                        .withName('topic')\n                        .withContext(vaVars.loggingContext)\n                        .createLogger();\n    logger.info('User decided to mark the task={0} as resolved', vaVars.task_id);\n    \n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "9425a0357c314d708f3972dcdcaed14c": {
+            "id": "9425a0357c314d708f3972dcdcaed14c",
+            "stepType": "TextOutput",
+            "name": "Unable to Proceed",
+            "value": [
+              {
+                "value": "(function execute() {\n\n    var logger = new global.AutoResolutionLoggingUtils()\n                        .withName('topic')\n                        .withContext(vaVars.loggingContext)\n                        .createLogger();\n    var message;\n\n    if (vaVars.is_notification_expired || vaVars.is_notification_accepted)\n        message =  gs.getMessageLang(\"It looks like another agent is already working on your incident. I won’t be able to help you at this time.\");\n    else\n        message =  gs.getMessageLang(\"I’m currently unable to help with your request.\");\n\n    logger.info('Unable to proceed with Auto-resolution topic, reason={0}', message);\n    return message;\n\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true
+          },
+          "c1b0535da95a4dd096fc349276a8202e": {
+            "id": "c1b0535da95a4dd096fc349276a8202e",
+            "stepType": "TextOutput",
+            "name": "Let's Get Started",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "Great, if it turns out you need more help with it, we can leave the ticket open."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "67530d569a93410eacf29e636ba93906": {
+            "id": "67530d569a93410eacf29e636ba93906",
+            "stepType": "TextOutput",
+            "name": "Unassigned Task Message",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "text": "I unassigned myself from the ticket. An agent will reach out to help you with it."
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "c7cfcba603c34a8da11217e04fd97509": {
+            "id": "c7cfcba603c34a8da11217e04fd97509",
+            "name": "Apply topic completion template",
+            "script": "(function execute() {\n    var helper = new global.AutoResolutionContextHelper();\n    helper.executeTemplate(helper.TOPIC_COMPLETED, vaVars.auto_resolution_context_id, vaVars.loggingContext);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "7fa3072b5d074027a9af99e78568e9d8": {
+            "id": "7fa3072b5d074027a9af99e78568e9d8",
+            "name": "Mark context declined",
+            "script": "(function execute() {\n\n    var contextHelper = new global.AutoResolutionContextHelper();\n    contextHelper.updateNotificationResponded(vaVars.auto_resolution_context_id, \"declined\");\n    contextHelper.executeTemplate(contextHelper.DECLINED, vaVars.auto_resolution_context_id, vaVars.loggingContext);\n\n    var logger = new global.AutoResolutionLoggingUtils()\n                        .withName('topic')\n                        .withContext(vaVars.loggingContext)\n                        .createLogger();\n    logger.info('User declined the Auto-Resolution topic');\n\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "45f270501fa2417483eb2d026107bb4e": {
+            "id": "45f270501fa2417483eb2d026107bb4e",
+            "stepType": "TextOutput",
+            "name": "Close message",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "Awesome! I've closed it!  Check in with me next time you need help with things like this.  "
+                      },
+                      {
+                        "type": "emoji",
+                        "emoji": {
+                          "id": "wave",
+                          "name": "Waving Hand Sign",
+                          "short_names": [
+                            "wave"
+                          ],
+                          "colons": ":wave:",
+                          "emoticons": [],
+                          "unified": "1f44b",
+                          "skin": 1,
+                          "native": ""
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "emoji",
+                        "emoji": {
+                          "id": "wave",
+                          "name": "Waving Hand Sign",
+                          "short_names": [
+                            "wave"
+                          ],
+                          "colons": ":wave:",
+                          "emoticons": [],
+                          "unified": "1f44b",
+                          "skin": 1,
+                          "native": ""
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "emoji",
+                        "emoji": {
+                          "id": "wave",
+                          "name": "Waving Hand Sign",
+                          "short_names": [
+                            "wave"
+                          ],
+                          "colons": ":wave:",
+                          "emoticons": [],
+                          "unified": "1f44b",
+                          "skin": 1,
+                          "native": ""
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "f2c2f98ab1c441d289a1fb21b302327b": {
+            "id": "f2c2f98ab1c441d289a1fb21b302327b",
+            "stepType": "Component",
+            "name": "Track Deflection",
+            "fields": [],
+            "reusableTopicId": "7fb4ca055303201033cdddeeff7b12b3",
+            "reusableTopicChoice": "Deflection Tracker",
+            "sourceType": "TOPIC_BLOCK",
+            "loading": false,
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "inputs": {
+              "deflection_configuration": {
+                "value": "93d2f7645383201033cdddeeff7b1208",
+                "mode": "simple",
+                "type": "Reference",
+                "table": "ssa_deflection_configuration"
+              },
+              "deflection_pattern": {
+                "value": "d7d6f3285383201033cdddeeff7b12c0",
+                "mode": "string",
+                "type": "Reference",
+                "table": "ssa_deflection_pattern"
+              },
+              "activity_table": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.task_table}}",
+                          "displayValue": "Script Variables➛task_table"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "activity_ids": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.task_id}}",
+                          "displayValue": "Script Variables➛task_id"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              }
+            },
+            "outputs": [],
+            "outdatedNote": false,
+            "variableIds": []
+          }
+        },
+        "edges": [
+          {
+            "id": "7411b0c39d0142cb898086f156be0428",
+            "edgeType": "Edge",
+            "source": "441b4d33a3604280a4133889dbc973eb",
+            "target": "b2ce1b4e581845e4867c0a2ee5c30ee8",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "38bcade537794d948dd8730c147df3df",
+            "edgeType": "Edge",
+            "source": "c7cfcba603c34a8da11217e04fd97509",
+            "target": "f11ef09e6ff442c2b1f9d2cceea83728",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "60ef0859eb1c4459b44c8663019d79c9",
+            "edgeType": "Edge",
+            "source": "67530d569a93410eacf29e636ba93906",
+            "target": "b4df58eeb84749dfa3737fac3bca85ff",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e7f46f7d4c644c1b9d98dc8f8f2eb445",
+            "edgeType": "Branch",
+            "source": "055e230ea978461ea3c3ed93353cf81d",
+            "target": "7ec718a8c47b4fc98aa9e1463325008d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.close_task_input=close",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "58099978b2d440db96e82559e7132ee5",
+            "edgeType": "Edge",
+            "source": "1821b76dae664951984624918a8f2bef",
+            "target": "441b4d33a3604280a4133889dbc973eb",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "bc53304cee554965970c4b2c31106087",
+            "edgeType": "Edge",
+            "source": "f11ef09e6ff442c2b1f9d2cceea83728",
+            "target": "055e230ea978461ea3c3ed93353cf81d",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9a646ea8d1284e2f9686f42932c5b6b9",
+            "edgeType": "Branch",
+            "source": "055e230ea978461ea3c3ed93353cf81d",
+            "target": "5f245cbc4b12423f95bf6575fa767ace",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.close_task_input=open",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "b5d82663f76f41cbb1666cc224408a24",
+            "edgeType": "Branch",
+            "source": "b2ce1b4e581845e4867c0a2ee5c30ee8",
+            "target": "9425a0357c314d708f3972dcdcaed14c",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.is_valid;\n})()\n"
+            },
+            "label": "Error/Timeout"
+          },
+          {
+            "id": "f9c098736e644ee5b2c4a09c15f02eb9",
+            "edgeType": "Edge",
+            "source": "9425a0357c314d708f3972dcdcaed14c",
+            "target": "b4df58eeb84749dfa3737fac3bca85ff",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f7514a26e3954f138cdd3eb53291c904",
+            "edgeType": "Branch",
+            "source": "b2ce1b4e581845e4867c0a2ee5c30ee8",
+            "target": "c1b0535da95a4dd096fc349276a8202e",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var yesActions = ['19164c195377101055eeddeeff7b129d', '93373e4a53910110af71ddeeff7b12af'];\n    return vaVars.is_valid && yesActions.indexOf(vaVars.action_sys_id) >= 0;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "dd3d57cdc10a436887667b9c80a02994",
+            "edgeType": "Edge",
+            "source": "c1b0535da95a4dd096fc349276a8202e",
+            "target": "717d9e4d03b048c3963ad44c30ecee0b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "2bd7fb91a2e94268a3a51705e09d4c15",
+            "edgeType": "Edge",
+            "source": "5f245cbc4b12423f95bf6575fa767ace",
+            "target": "67530d569a93410eacf29e636ba93906",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b5ae1fe0bb9f4cbfb7cfc7aa36eff9e7",
+            "edgeType": "Edge",
+            "source": "717d9e4d03b048c3963ad44c30ecee0b",
+            "target": "c7cfcba603c34a8da11217e04fd97509",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "dbd211d235d148bab9430eec07628e39",
+            "edgeType": "Branch",
+            "source": "b2ce1b4e581845e4867c0a2ee5c30ee8",
+            "target": "7fa3072b5d074027a9af99e78568e9d8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var noActions = ['2a2f0c421b77101093b5ebda234bcb7f', '9a577e4a53910110af71ddeeff7b12c6']\n    return vaVars.is_valid && noActions.indexOf(vaVars.action_sys_id) >= 0;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "5868f07662df4a26a95e4f2bca2ad297",
+            "edgeType": "Edge",
+            "source": "7fa3072b5d074027a9af99e78568e9d8",
+            "target": "67530d569a93410eacf29e636ba93906",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b0b64935a32c46ada31246b668ce3fa2",
+            "edgeType": "Edge",
+            "source": "45f270501fa2417483eb2d026107bb4e",
+            "target": "b4df58eeb84749dfa3737fac3bca85ff",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b675d9fa19f64caeb1eecdf171d199e5",
+            "edgeType": "Edge",
+            "source": "7ec718a8c47b4fc98aa9e1463325008d",
+            "target": "f2c2f98ab1c441d289a1fb21b302327b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0ad3670e9c224848a4c4be34e32bc4cd",
+            "edgeType": "Edge",
+            "source": "f2c2f98ab1c441d289a1fb21b302327b",
+            "target": "45f270501fa2417483eb2d026107bb4e",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "730322e0452043b895efd30399e62105": {
+        "id": "730322e0452043b895efd30399e62105",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n})()\n"
+        },
+        "name": "is_valid",
+        "label": "is_valid",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "8cb5bc1f3872420ca70dfc736c2f3786": {
+        "id": "8cb5bc1f3872420ca70dfc736c2f3786",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "validation_reason",
+        "label": "validation_reason",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "58eccd7187854813a49a047c2169ff4b": {
+        "id": "58eccd7187854813a49a047c2169ff4b",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "auto_resolution_context_id",
+        "label": "auto_resolution_context_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "eb0f71f002c549dcb921e48b2efa1a61": {
+        "id": "eb0f71f002c549dcb921e48b2efa1a61",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "topic_id",
+        "label": "topic_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "5a3f98adebba43c5a9fc639ce6b24e00": {
+        "id": "5a3f98adebba43c5a9fc639ce6b24e00",
+        "name": "close_task_input",
+        "label": "Close Task Input",
+        "varType": "choice",
+        "choices": [
+          {
+            "label": "No, close it",
+            "value": "close"
+          },
+          {
+            "label": "Yes, keep it open",
+            "value": "open",
+            "checked": true
+          }
+        ],
+        "category": "vaInputs",
+        "nodeId": "f11ef09e6ff442c2b1f9d2cceea83728",
+        "isHidden": false
+      },
+      "dc8c00f606624e19b210dececb6d6282": {
+        "id": "dc8c00f606624e19b210dececb6d6282",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "task_id",
+        "label": "task_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "fdcdbf7fc87a495b95a547738fd6d3fe": {
+        "id": "fdcdbf7fc87a495b95a547738fd6d3fe",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "task_table",
+        "label": "task_table",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "9de5e5e9746748878952302a3485d3bf": {
+        "id": "9de5e5e9746748878952302a3485d3bf",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "is_notification_expired",
+        "label": "is_notification_expired",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "3a3d030e447e4f988d8b364e53c1ca40": {
+        "id": "3a3d030e447e4f988d8b364e53c1ca40",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "action_sys_id",
+        "label": "action_sys_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "7aba24c94343465a9bf034c6ff98937a": {
+        "id": "7aba24c94343465a9bf034c6ff98937a",
+        "value": {
+          "mode": "simple",
+          "value": "true"
+        },
+        "name": "is_iar_wrapper_topic",
+        "label": "is_iar_wrapper_topic",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+key_phrases: Issue Auto-Resolution
+library: 'false'
+live_agent: 'false'
+model_type: nlu_keyword
+modify_confirmation_enabled: 'false'
+name: Issue Auto-Resolution
+nlu_intent: ''
+nlu_intent_label: ''
+nlu_model: ''
+nlu_model_label: ''
+nlu_provider: ''
+palette_label: ''
+roles: ''
+root_topic_id: ''
+secure_custom_input_control: 'false'
+source_topic_id: ''
+sys_name: Issue Auto-Resolution
+sys_policy: read
+title: Issue Auto-Resolution
+triggerable_by_notification: 'false'
+type: STANDARD

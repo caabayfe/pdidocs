@@ -1,0 +1,53 @@
+<div ng-class = "c.panelWrapper" ng-if="data.loading || data.showEmptyState || data.getSupportItems.length>0">
+  <div class = "panel-heading b-b" ng-if="data.show_title">
+    <h3 class="panel-title">{{data.getSupportHeader}}</h3>
+  </div>
+  <div ng-class="c.panelClass">
+    <div ng-if="data.loading"  class="flex-container flex-container-cols-modal">
+      <div class="card-container skeleton-loader" ng-repeat="item in [1, 2, 3]"></div>
+    </div>
+    <div ng-if="!data.loading && data.showEmptyState" class="empty-section" align="center">
+      <div>
+        <i class="fa fa-folder-open"></i>
+      </div>
+      <div class="empty-content-title">
+        ${No support content to display}
+      </div>
+      <div class="empty-content">
+        ${This may be because you don't have access, or there is no support content available for you}
+      </div>
+    </div>
+    <div ng-if="!data.loading && data.getSupportItems && data.getSupportItems.length > 0" ng-class="c.itemsMargin">
+      <div ng-repeat="item in data.getSupportItems | orderBy : 'order' track by $index" class="col">
+        <div ng-if="!item.url && item.type != 'guided_help'" class="card-container" aria-label="{{data.getSupportHeader}} {{item.title}}">
+          <div class="content-container">
+            <div class="content-title webkit-clamp-1" ng-if="item.title">
+              <span class="card-title text-ellipsis">{{item.title}}
+              </span>
+            </div>
+            <div class="content static" ng-bind-html="trustAsHtml(item.content)">
+            </div>
+          </div>
+        </div>
+        <a class="card-container" ng-if="item.type == 'guided_help' || (item.url && item.url.length > 0)" ng-style="item.type == 'guided_help' && {'cursor': 'pointer'}" 
+           aria-label="{{data.getSupportHeader}} {{item.title}}" title = "{{item.title}}" 
+           ng-href="{{item.url}}" ng-attr-target="{{item.target}}" ng-click="handleClick(item, $event)" tabindex="0" ng-keydown="handleClick(item, $event)">
+          <div class="parent-content-container">
+            <div class="icon-container" ng-if="item.icon">
+              <img ng-src={{item.icon}}>
+            </div>
+            <div class="content-container">
+              <div class="content-title webkit-clamp-2" ng-if="item.title">
+                <span class="card-title text-ellipsis">{{item.title}}
+                </span>
+              </div>
+              <div class="content link-desc" ng-if="item.content">
+                {{item.content}}
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

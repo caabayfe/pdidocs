@@ -1,0 +1,87 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+<table border="0" width="100%">
+	<tr>
+		<td nowrap="nowrap" align="right">
+                    <label for="map_layout">${SNC.GlideHTMLSanitizer.sanitize(gs.getMessage('Layout'))}:</label>
+                </td>
+		<td>
+			<select id='map_layout' style='width: 200px'>
+				<option value='sugiyamah'>${SNC.GlideHTMLSanitizer.sanitize(gs.getMessage('Horizontal'))}</option>
+				<option value='sugiyamav'>${SNC.GlideHTMLSanitizer.sanitize(gs.getMessage('Vertical'))}</option>
+				<!-- <option value='circle'>${gs.getMessage('Circle')}</option> -->
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td nowrap="nowrap" align="right">
+                    <label for="map_interval">${SNC.GlideHTMLSanitizer.sanitize(gs.getMessage('Update Interval'))}:</label>
+                </td>
+		<td>
+			<select id='map_interval' style='width: 200px'>
+				<option value='180'>180 ${gs.getMessage('seconds')}</option>
+				<option value='60'>60 ${gs.getMessage('seconds')}</option>
+				<option value='30'>30 ${gs.getMessage('seconds')}</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td nowrap="nowrap" align="right">
+                    <label for="map_levels">${SNC.GlideHTMLSanitizer.sanitize(gs.getMessage('Levels to display'))}:</label>
+                </td>
+		<td>
+			<select id='map_levels' style='width: 200px'>
+				<option value='1'>1</option>
+				<option value='2'>2</option>
+				<option value='3'>3</option>
+				<option value='4'>4</option>
+				<option value='5'>5</option>
+			</select>
+		</td>
+	</tr>
+	
+	<g2:evaluate>
+           var views = new GlideRecord('map_view');
+           views.orderBy('name'); 
+           views.query(); 
+        </g2:evaluate>
+		<tr>
+
+		<td nowrap="nowrap" align="right">
+                    <label for="map_ciview">${SNC.GlideHTMLSanitizer.sanitize(gs.getMessage('View'))}:</label>
+                </td>
+
+		<td>
+		<select name='map_ciview' id='map_ciview' style='width: 200px; overflow: auto;'>
+			<option value=''> ${gs.getMessage('All')} </option>
+
+			<j2:while test="$[views.next()]">
+                            <g2:evaluate>
+                               var viewHasRole = false; 
+                               var roles = views.roles.split(','); 
+                               if (roles.length != 0) {          
+                                  for (var i=0; i != roles.length; i++) {
+                                     if (gs.hasRole(roles[i])) {
+                                        viewHasRole = true;
+                                        break;  
+                                     } 
+                                  }
+                               } 
+                               else
+                                  viewHasRole = true;  
+                            </g2:evaluate>
+                            <j2:if test="$[viewHasRole]">
+                               <option value='$[views.sys_id]'> $[views.getValue("name")]</option>
+                            </j2:if> 
+                   	</j2:while>
+		</select>
+		</td>
+		</tr>
+
+	<tr>
+		<td colspan="2" align="center">
+                   <g:dialog_buttons_ok_cancel ok="return applyChanges()" />
+		</td>
+	</tr>
+</table>
+</j:jelly>

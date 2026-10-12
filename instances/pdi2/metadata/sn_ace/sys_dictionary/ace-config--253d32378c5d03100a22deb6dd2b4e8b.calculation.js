@@ -1,0 +1,1 @@
+         (function calculatedFieldValue(current) {             if (current.document_table.toString() == 'sn_ace_page'){                 return current.document_id.getRefRecord().ace_app;              }             else {                 return current.document_id;             }         })(current);

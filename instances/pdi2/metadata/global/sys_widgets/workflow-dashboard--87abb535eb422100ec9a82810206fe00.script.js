@@ -1,0 +1,21 @@
+function sections() {
+    return {
+              'Workflows Without Current Record' : { 'type' : 'wf_without_current' }
+             
+    };
+}
+
+function render() {
+	var type = renderer.getPreferences().get("type")
+        var gf = new GlideForm(renderer.getGC(), "render_gadget_" + type, 0);
+        gf.setDirect(true);
+        gf.setRenderProperties(renderer.getRenderProperties());
+        return gf.getRenderedPage();
+}
+
+function getEditLink() {
+        if (gs.hasRole('admin') || gs.hasRole('workflow_admin'))
+            return "sys_ui_page.do?sysparm_query=name=render_gadget_" + renderer.getPreferences().get("type");
+
+        return '';
+}

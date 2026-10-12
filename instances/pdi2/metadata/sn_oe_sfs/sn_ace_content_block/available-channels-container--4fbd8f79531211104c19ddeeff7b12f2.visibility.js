@@ -1,0 +1,1 @@
+answer= new sn_oe_sfs.CIUtil().getInstalledTeamsCount() == 0 || new sn_oe_sfs.CIUtil().getInstalledSlackCount() == 0 || new sn_oe_sfs.CIUtil().getInstalledWorkplaceCount() == 0 || new sn_oe_sfs.CIUtil().getInstalledMessengerCount() == 0 || new sn_oe_sfs.CIUtil().getInstalledLineCount() == 0 || new sn_oe_sfs.CIUtil().getInstalledGoogleChatCount() == 0;

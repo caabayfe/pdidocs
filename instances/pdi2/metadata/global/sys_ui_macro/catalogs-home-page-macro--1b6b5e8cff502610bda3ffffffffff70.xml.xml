@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/js_includes_catalog.js" includes="true" />
+    <g:evaluate var="jvar_theme">
+        var theme = gs.getPreference('glide.css.theme.ui16');
+        if (null == theme){
+        var company = gs.getUser().getCompanyRecord();
+        if (null != company)
+        theme = company.getValue("theme");
+        }
+        theme;
+    </g:evaluate>
+    <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <j:set var="jvar_is_catalog" value="${true}" />
+    <g:inline template="sc_sanitize.xml" />
+    <j2:set var="jvar_gridName" value="homepage_grid" />
+    <g2:evaluate jelly="true">
+        var hu = new GlideappHome(jelly);
+        var current_page = hu.getCurrentPage();
+    </g2:evaluate>
+    <g:inline template="sc_request_parent_message.xml" />
+    <style>
+        TABLE {
+            white-space: normal;
+        }
+    </style>
+    <g:messages>
+        Close
+        Edit
+        Collapse
+    </g:messages>
+    <g:inline template="grid_header.xml" />
+    <g2:evaluate var="jvar_editable_grid" jelly="true">
+        jelly.jvar_editable_grid $[AMP]$[AMP] gs.hasRole('catalog_admin') $[AMP]$[AMP] !GlideMobileExtensions.runningTablet();
+    </g2:evaluate>
+    <g2:evaluate var="jvar_editable_content">
+        gs.hasRole('catalog_admin') $[AMP]$[AMP] !GlideMobileExtensions.runningTablet();
+    </g2:evaluate>
+    <g:inline template="catalogs_title_editor.xml" />
+    <g2:call function="$[current_page.getLayout()]" name="$[jvar_gridName]" />
+    <g2:generate_grid id="$[current_page.getID()]" editable="$[jvar_editable_content]" />
+    <g:inline template="grid_script.xml" />
+    <g2:call function="grid_footer.xml" editable="$[jvar_editable_grid]" name="$[jvar_gridName]" view="$[sysparm_view]" />
+    <script>
+        focusOnSearch();
+
+        function focusOnSearch() {
+            var elemSearchInput = document.getElementsByClassName("scSearchInput");
+            if (elemSearchInput $[AMP]$[AMP] elemSearchInput.length > 0)
+                elemSearchInput[0].focus();
+
+        }
+
+        function addHomeContent() {
+            var page_id = glideGrid.getProperty('sys_id');
+            var title = "${gs.getMessage('Sections')}";
+            var filter = "$[gs.getProperty('glide.sc.catalogs.home.filter')]";
+            sectionDialog({
+                renderer: SECTIONS,
+                title: title,
+                filter: filter,
+                page_id: page_id,
+                pinned: true,
+                focusTrap: true
+            });
+        }
+    </script>
+</j:jelly>

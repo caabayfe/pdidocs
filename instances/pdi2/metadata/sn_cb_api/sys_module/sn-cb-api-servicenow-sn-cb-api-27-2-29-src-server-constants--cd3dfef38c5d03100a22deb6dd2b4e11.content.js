@@ -1,0 +1,1 @@
+export const STRING_FIELD_MAX_LENGTH = 255;

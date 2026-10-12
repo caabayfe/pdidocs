@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_element_label" value="${gs.getMessage('Change Request values')}"/>
+	<j:set var="jvar_templ_on_table" value="change_request"/>
+	<j:set var="jvar_template_value_readonly" value="true"/>
+
+	<g:macro_invoke macro="snc_itsma_custom_form_field_doctype" element_id="template_value_ui_formatter" element_label="${jvar_element_label}">
+		<g:macro_invoke macro="std_chg_template_handler"/>
+	</g:macro_invoke>
+	<g:macro_invoke macro="snc_itsma_custom_form_field_nondoctype" element_id="template_value_ui_formatter" element_label="${jvar_element_label}">
+		<g:macro_invoke macro="std_chg_template_handler"/>
+	</g:macro_invoke>
+
+	<script>
+		addRenderEvent(function() {
+			// Tried setting a variable in the jelly script to 'template value'
+			// but, we are seeing that the value is cached and when user navigates to a different record 
+			// the same old value being displayed. Hence making a glide ajax call
+			var ga = new GlideAjax('StdChangeUtils');
+			ga.addParam('sysparm_name', 'getTemplateValue');
+			ga.addParam('sysparm_sysid', g_form.getUniqueValue());
+			ga.addParam('sysparm_tableName', g_form.getTableName());
+			ga.getXMLAnswer(function(answer) {
+				processFields(answer);
+				var field = gel('sys_template.templatefilters_table');
+				if(field){
+					field.align = "center";
+					field.width = "100%";
+				}
+
+				// We are seeing a horizontal scroll bar rendered by the GlideFilter
+				// hence hiding the same in the readonly mode
+				var uiFormatter = gel('template_value_ui_formatter');
+				if(uiFormatter)
+					uiFormatter.parentElement.style.overflowX = "hidden";
+			});
+		});
+	</script>
+</j:jelly>

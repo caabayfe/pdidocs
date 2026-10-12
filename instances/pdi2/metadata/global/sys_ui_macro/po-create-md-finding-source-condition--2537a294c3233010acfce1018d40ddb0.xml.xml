@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j2:if test="$[current.canWrite()]">
+
+<script>
+        function openFindingCondition(){
+			var d = new GlideModalForm('Create new condition', 'promin_finding_def_condition');
+			d.setOnloadCallback(populateModal);
+			d.setCompletionCallback(function(action_verb, sys_id, table, displayValue) {
+				g_form.setValue("source_condition", sys_id);
+			});
+			d.render();
+
+			function populateModal() {
+				//Access GlideModal g_form
+				var source_condition_form = window.frames["dialog_frame"].g_form;
+
+				var findingConfigType = g_scratchpad.findingConfigType;
+				var findingProcessTable = g_scratchpad.findingProcessTable;
+				var findingDefSysId = g_scratchpad.findingDefSysId;
+				var newTableName = '';
+				source_condition_form.removeOption("type", "CONTEXT");
+	
+				if(findingConfigType == "PROCESS"){
+					newTableName = findingProcessTable;
+					source_condition_form.setDisplay('entity', false);
+				} 
+				if(findingConfigType == "PROJECT"){
+					source_condition_form.setMandatory('entity', true);
+				} 
+				if(newTableName != '') {
+					source_condition_form.setValue("table", newTableName);
+					source_condition_form.setReadOnly("table", true);
+				}
+				if(findingDefSysId != '') {
+					source_condition_form.setValue("finding_def", findingDefSysId);
+					source_condition_form.setReadOnly("finding_def", true);
+				}
+			}
+        }
+    </script>
+    <a href="#" onclick="javascript:openFindingCondition()" aria-label="Create new start condition" tabindex="-1" class="btn btn-default btn-ref reference_decoration icon-add hide" title="Create new start condition"></a>
+</j2:if>
+</j:jelly>

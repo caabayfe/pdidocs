@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:doctype name="html" />
+	<g2:evaluate var="jvar_compatibility">
+		new GlideUICompatibility("sn_chg_model_ui").getCompatibility();
+	</g2:evaluate>
+	<g2:evaluate var="jvar_enabled">
+		new ChgLandingCardBuilder().landingPageEnabled();
+	</g2:evaluate>
+	<g2:evaluate var="jvar_authorized">
+		global.ChangeCommon.canRead('chg_model');
+	</g2:evaluate>
+	<j2:if test="$[!jvar_authorized]">
+		<g:inline template="sn_chg_model_ui_cmu_landing_not_authorized.xml" />
+	</j2:if>
+	<j2:if test="$[jvar_authorized]">
+		<j2:if test="$[!jvar_enabled]">
+			<g:inline template="sn_chg_model_ui_cmu_landing_disabled.xml" />
+		</j2:if>
+		<j2:if test="$[jvar_enabled]">
+			<j2:if test="$[jvar_compatibility == 'block']">
+				<g:inline template="sn_chg_model_ui_cmu_landing_compatibility.xml" />
+			</j2:if>
+			<j2:if test="$[jvar_compatibility == 'allow']">
+				<g:inline template="glide_weba_header.xml" />
+				<g:inline template="dir_checker.xml" />
+				<html ng-app="sn.chg_model_ui.landing" class="${jvar_text_direction}" lang="$[gs.getSession().getLanguage()]">
+					<head>
+						<meta charset="utf-8" />
+						<title>${gs.getMessage('Create change request')}</title>
+						<g:inline template="set_theme_vars.xml" />
+						<g:inline template="sn_chg_model_ui_cmu_landing_requires.xml" />
+					</head>
+					<body ng-controller="ChgModelLandingController as chgModelLandingCtrl" ng-init="chgModelLandingCtrl.init()" class="$[sn_ui.PolarisUI.getBodyClassNames()]">
+						<g:inline template="sn_chg_model_ui_cmu_landing_translation.xml" />
+						<div class="change-model-board-list-body sn-change-model" role="main" ng-cloak="">
+							<div class="change-model-board-list-wrapper">
+								<sn-landing-page-header />
+								<sn-landing-pinned-notification />
+								<section ng-cloak="" class="col-sm-12 change-model-board-list-content clearfix" aria-hidden="false">
+									<div class="change-model-board-lists">
+										<sn-landing-tabs tabs="chgModelLandingCtrl.getTabs()" />
+											<div id="change-model-tabpanel" role="tabpanel">
+												<ul class="change-model-board-list clearfix"
+													ng-if="chgModelLandingCtrl.showChgModels"
+													i-scroll="chgModelLandingCtrl.getChangeModels()"
+													i-scroll-disabled="{{chgModelLandingCtrl.loading}}"
+													i-scroll-distance="1"
+													i-scroll-container=".change-model-board-list-content"
+													i-scroll-immediate-check="{{chgModelLandingCtrl.immediateCheck()}}">
+													<li ng-repeat="chgModel in filteredChgModels = (chgModelLandingCtrl.chgModelArray | chgModelFilter:chgModelLandingCtrl.textSearch) track by chgModel.sys_id.value">
+														<sn-landing-card></sn-landing-card>
+													</li>
+													</ul>
+												<!-- Splash screens when no data available -->
+												<sn-splash-screens />
+											</div>
+										<!-- Bottom of page decoration e.g. loading and limit reached -->
+										<sn-landing-decoration />
+									</div>
+								</section>
+							</div>
+						</div>
+					</body>
+				</html>
+			</j2:if>
+		</j2:if>
+	</j2:if>
+</j:jelly>

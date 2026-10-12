@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_replacement_article_query" jelly="true">
+		'workflow_state=published^sys_class_name!=kb_knowledge_block^sys_id!=${JS:sysparm_base_article_id}^kb_knowledge_base.application=${JS:sysparm_base_article_scope}'
+	</g:evaluate>
+	
+	<style>
+		.modal-body {
+			padding: 10px;
+		}
+		.radio-input {
+			margin-inline-end: 42px;
+		}
+		.radio-button {
+			margin: 0px 0px 2px 0px !important;
+		}
+		.radio-label {
+			margin: 0px 8px 0px 8px;
+		}
+		.radio-group-label {
+			padding-bottom: 5px
+		}
+		.radio-group {
+			padding: 0px 8px 0px 8px;
+		}
+		.reference-field-form {
+			margin-top: 20px;
+			display: none;
+		}
+		.reference-field {
+			padding: 0px 10px 0px 8px !important;
+		}
+		.footer-button {
+			min-width: 5em; 
+			margin-left: 8px !important;
+		}
+	</style>
+	
+    <div id="replacement-article-form">
+		<div class="form-group radio-group">
+			<div class="radio-group-label">
+				<div>${gs.getMessage('Do you want to replace the current article with another existing article?')}</div>
+			</div>
+			<div class="radio-group-input">
+				<span class="radio-input">
+					<input class="radio-button" type="radio" name="is-replacement-required" value="true" onclick="gel('select-article').style.display='block'" aria-label="${gs.getMessage('Yes')}" onchange="toggleRetireButton()"/>
+					<label class="radio-label"> ${gs.getMessage('Yes')}</label>
+				</span>
+				<span class="radio-input">
+					<input class="radio-button" type="radio" name="is-replacement-required" value="false" onclick="gel('select-article').style.display='none'" aria-label="${gs.getMessage('No')}" onchange="toggleRetireButton()" checked="true"/>
+					<label class="radio-label"> ${gs.getMessage('No')}</label>
+				</span>
+			</div>
+		</div>
+
+		<div id="select-article" class="form-group is-required reference-field-form">
+			<label for="replacement-article" class="control-label" data-label-name="replacement-article">
+				<span title="${gs.getMessage('Select Article')}" class="label-description required-marker">
+					${gs.getMessage('Select Article')}
+				</span>
+			</label>
+			<div class="form-field reference-field" aria-label="${gs.getMessage('Select Replacement Article')}">
+				<g:ui_reference
+					id="replacement-article"
+					name="replacement-article"
+					table="kb_knowledge" 
+					columns="number;short_description"
+					order_by="number"
+					required="true"
+					query="${jvar_replacement_article_query}"
+					onchange="toggleRetireButton()"/>
+			</div>
+		</div>
+    </div>
+	
+	<footer class="modal-footer" align="right">	
+		<button class="btn btn-default footer-button" onclick="cancel()">${gs.getMessage('Cancel')}</button>
+		<button class="btn btn-primary footer-button" onclick="retire()" id="retire-button">${gs.getMessage('Retire')}</button>
+	</footer>
+</j:jelly>

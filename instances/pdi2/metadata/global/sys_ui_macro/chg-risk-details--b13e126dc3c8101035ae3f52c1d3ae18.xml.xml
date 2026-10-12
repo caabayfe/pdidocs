@@ -1,0 +1,135 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div class="chg-risk-wrapper" role="dialog" aria-describedby="glide_popup_popover_title">
+		<g:inline template="chg_risk_details_translations.xml" />
+		<div class="popover-header popover-header-bar popover-header-buttons">
+			<h4 id="glide_popup_popover_title" class="popover-title chg-risk-title">{{ ::title }}</h4>
+			<button ng-if="mode == 'modal'" id="chk_risk_closemodal" ng-click="cancel()" class="btn btn-icon close icon-cross">
+				<span class="sr-only">${gs.getMessage('Close')}</span>
+			</button>
+		</div>
+
+		<table class="table">
+			<thead>
+				<tr>
+					<th />
+					<th>${gs.getMessage('Risk Type')}</th>
+					<th>${gs.getMessage('Level')}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-if="hasConditionalRules()">
+					<td>
+						<i ng-if="selected('risk_condition_risk')" class="icon-check-circle chg-risk-selected-icon">
+							<span class="sr-only">{{ getSelectedMessage() }}</span>
+						</i>
+					</td>
+					<td>${gs.getMessage('Risk Conditional Rules')}</td>
+					<td class="col-level">
+						<span ng-class="{highlight: selected('risk_condition_risk')}">
+							<strong ng-if="selected('risk_condition_risk')">{{ getConditionalRulesValue() }}</strong>
+							<span ng-if="!selected('risk_condition_risk')">{{ getConditionalRulesValue() }}</span>
+						</span>
+						<span id="rule-name-tooltip"
+							  class="chg-risk-info-icon icon-info"
+							  uib-tooltip="{{ getConditionalRulesName() }}"
+							  tooltip-placement="auto"
+							  tooltip-append-to-body="true"
+							  tooltip-popup-delay="1000" >
+							<span class="sr-only">{{ getConditionalRulesName() }}</span>
+						</span>
+					</td>
+				</tr>
+				<tr ng-if="hasRiskAssessment()">
+					<td>
+						<i ng-if="selected('risk_assessment')" class="icon-check-circle chg-risk-selected-icon">
+							<span class="sr-only">{{ getSelectedMessage() }}</span>
+						</i>
+					</td>
+					<td>${gs.getMessage('Risk Assessment')}</td>
+					<td class="col-level">
+						<span ng-class="{highlight: selected('risk_assessment')}">
+							<strong ng-if="selected('risk_assessment')">{{ getRiskAssessmentValue() }}</strong>
+							<span ng-if="!selected('risk_assessment')">{{ getRiskAssessmentValue() }}</span>
+						</span>
+						<span ng-if="getRiskAssessmentName() !== ''"
+								class="chg-risk-info-icon icon-info"
+								uib-tooltip="{{ getRiskAssessmentName() }}"
+								tooltip-placement="auto"
+								tooltip-append-to-body="true"
+								tooltip-popup-delay="1000" >
+								<span class="sr-only">{{ getRiskAssessmentName() }}</span>
+						</span>
+					</td>
+				</tr>
+				<tr ng-if="hasLegacyRiskAssessment() &amp;&amp; !hasRiskAssessment()">
+					<td>
+						<i ng-if="selected('legacy_risk_assessment')" class="icon-check-circle chg-risk-selected-icon">
+							<span class="sr-only">{{ getSelectedMessage() }}</span>
+						</i>
+					</td>
+					<td>${gs.getMessage('Legacy Risk Assessment')}</td>
+					<td class="col-level">
+						<span ng-class="{highlight: selected('legacy_risk_assessment')}">
+							<strong ng-if="selected('legacy_risk_assessment')">{{ getLegacyRiskAssessmentValue() }}</strong>
+							<span ng-if="!selected('legacy_risk_assessment')">{{ getLegacyRiskAssessmentValue() }}</span>
+						</span>
+						<span ng-if="getLegacyRiskAssessmentName() !== ''"
+								class="chg-risk-info-icon icon-info"
+								uib-tooltip="{{ getLegacyRiskAssessmentName() }}"
+								tooltip-placement="auto"
+								tooltip-append-to-body="true"
+								tooltip-popup-delay="1000" >
+								<span class="sr-only">{{ getLegacyRiskAssessmentName() }}</span>
+						</span>
+					</td>
+				</tr>
+				<tr ng-if="hasMLResults()">
+					<td>
+						<span id="ml-read-only"
+							  ng-if="isMLReadOnly()"
+							  class="icon-preview"
+							  uib-tooltip="{{ ml_review }}"
+							  tooltip-placement="auto"
+							  tooltip-append-to-body="true"
+							  tooltip-popup-delay="1000" >
+							<span class="sr-only">{{ ml_review }}</span>
+						</span>
+						<i ng-if="selected('risk_ml') &amp;&amp; !isMLReadOnly()" class="icon-check-circle chg-risk-selected-icon" tabindex="0">
+							<span class="sr-only">{{ getSelectedMessage() }}</span>
+						</i>
+					</td>
+					<td>${gs.getMessage('Risk Intelligence')}</td>
+					<td class="col-level">
+						<span ng-class="{highlight: selected('risk_ml')}">
+							<strong ng-if="selected('risk_ml')">{{ getRiskMLValue() }}</strong>
+							<span ng-if="!selected('risk_ml')">{{ getRiskMLValue() }}</span>
+						</span>
+					</td>
+				</tr>
+				<tr ng-if="hasCalculatedRiskScore()">
+					<td>
+						<i ng-if="selected('calculated_risk_score_risk')" class="icon-check-circle chg-risk-selected-icon">
+							<span class="sr-only">{{ getSelectedMessage() }}</span>
+						</i>
+					</td>
+					<td>${gs.getMessage('Calculated Risk Score')}</td>
+					<td class="col-level">
+						<span ng-class="{highlight: selected('calculated_risk_score_risk')}">
+							<strong ng-if="selected('calculated_risk_score_risk')">{{ getCalculatedRiskScoreValue() }}</strong>
+							<span ng-if="!selected('calculated_risk_score_risk')">{{ getCalculatedRiskScoreValue() }}</span>
+						</span>
+						<span id="rule-name-tooltip"
+							  class="chg-risk-info-icon"
+							  ng-class="getCalculatedRiskScoreStatus() ? 'icon-info' : 'icon-alert-triangle'"
+							  uib-tooltip="{{ getCalculatedRiskScoreName() }}"
+							  tooltip-placement="auto"
+							  tooltip-append-to-body="true"
+							  tooltip-popup-delay="1000" >
+							<span class="sr-only">{{ getCalculatedRiskScoreName() }}</span>
+					   </span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</j:jelly>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:set var="jvar_select_decorations_display" value="${gs.getUser().getPreference('select_decorations')}"/>
+<g:evaluate var="jvar_select_decorations_img" jelly="true">
+  if (jelly.jvar_select_decorations_display == "none")
+    "images/toggle_left.gifx";
+  else
+    "images/toggle_right.gifx"
+</g:evaluate>
+<span id="select_decorations" style="display:${jvar_select_decorations_display}">
+  <j2:if test="$[jvar_session.isLoggedIn()]">   
+    <j:if test="${pm.isActive('com.snc.apps_picker')}">
+      <g:ui_application_picker />
+    </j:if>
+    <g:ui_update_set_picker />
+    <g:ui_timezone_changer />
+    <j:if test="${pm.isActive('com.glide.i18n')}">
+      <g:ui_language_select />
+    </j:if>
+    <j:if test="${pm.isActive('com.glide.ui.themes.core')}">
+      <g:ui_theme_changer />
+    </j:if>
+    <j:if test="${pm.isActive('com.glide.domain')}">
+      <g:requires name="scripts/DomainChangeNotificationHandler.js" />
+      <g:domain_select />
+      <g:domain_reference_picker />
+    </j:if>
+    <j:if test="${pm.isActive('com.glide.encryption')}">
+      <g:encryption_select />
+    </j:if>
+  </j2:if>
+</span>
+  <script>
+    addLoadEvent(function() {setSelectDecorationsToggle()});
+
+    function setSelectDecorationsToggle() {
+      var haveSome = false;
+      var e = gel("select_decorations");
+      var spans = e.getElementsByTagName("span");
+      for (var i = 0; spans.length > i; i++) {
+        if (spans[i].parentNode == e $[AND] spans[i].style.display != "none") {
+          haveSome = true;
+          break; 
+        }
+      }
+      if (haveSome)
+        gel("select_toggle").style.display = "inline";
+    }
+
+    CustomEvent.observe('user.login', setDisplay);
+    function setDisplay() {
+      gel("select_decorations").style.display = getPreference('select_decorations');
+    }
+
+    function flipSelectDecorationsToggleImage() {
+      var e = gel("select_toggle");
+      if (e.src.indexOf("toggle_right.gif") > -1)
+        e.src = "images/toggle_left.gifx";
+      else
+        e.src = "images/toggle_right.gifx";
+    }
+  </script>
+  <img id="select_toggle" class="h_flip_content" src="${jvar_select_decorations_img}" style="display:none;cursor:pointer;cursor:hand;" onclick="toggleInline('select_decorations');flipSelectDecorationsToggleImage();" title="${gs.getMessage('Toggle selectors')}" alt="${gs.getMessage('Toggle selectors')}"/>
+</j:jelly>

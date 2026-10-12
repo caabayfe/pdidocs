@@ -1,0 +1,1 @@
+answer = gs.getUser().hasRole("sn_kmf.cryptographic_manager") || gs.getUser().hasRole("sn_kmf.cryptographic_integrator") || gs.getUser().hasRole("sn_kmf.cryptographic_operator") || gs.getUser().hasRole("sn_kmf.cryptographic_auditor");

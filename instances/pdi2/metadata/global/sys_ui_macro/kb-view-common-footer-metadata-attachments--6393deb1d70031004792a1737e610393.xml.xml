@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script type="text/javascript">
+		function openAttachment(url, name) {
+			window.open(url, name, "toolbar=no,menubar=no,personalbar=no,width=800,height=600," +
+						"scrollbars=yes,resizable=yes");
+			
+		}
+	</script>
+	<j:if test="${attachments.length > 0 &amp;&amp; knowledgeRecord.display_attachments}">
+		<div id="kb_attachments" class="snc-article-attachments">
+			<span class="snc-article-footer-metadata-title">${gs.getMessage("Attachments")}$[SP]</span>
+			<span id="attachments-content" class="attachments-content">
+				<j:set var="jvar_index" value="0"/>
+				<j:set var="jvar_total" value="${attachments.length +''}"/>
+				<j:set var="jvar_use_doc_viewer" value="${gs.getProperty('glide.knowman.use_document_viewer', false) == 'true' ? pm.isActive('com.snc.documentviewer') : false}"/>
+				<j:while test="${jvar_index lt jvar_total}">
+					<g:evaluate jelly="true">
+						var attachment_sys_id = attachments[jelly.jvar_index].sys_id;
+						var attachment_file_name = attachments[jelly.jvar_index].file_name;
+						if(gs.getProperty('glide.ui.escape_text') == 'false')
+							attachment_file_name = SNC.GlideHTMLSanitizer.sanitize(attachment_file_name);
+					</g:evaluate>
+					<a href="sys_attachment.do?sys_id=${attachment_sys_id}">
+						<span class="icon-paperclip snc-article-footer-metadata-attachments-paperclip" title="${attachment_file_name}" aria-label="${gs.getMessage('Attachment')}" />
+						${attachment_file_name}</a>
+					<j:if test="${jvar_use_doc_viewer == 'true'}">
+						<a href="#" onclick="openAttachment('sys_attachment.do?sys_id=${attachment_sys_id}${AMP}view=true', '${attachment_file_name}'); return false;" title="${gs.getMessage('View Attachment {0}', attachment_file_name)}" aria-label="${gs.getMessage('View Attachment {0}', attachment_file_name)}">[${gs.getMessage('View')}]</a>
+					</j:if>
+					<j:set var="jvar_index" value="${jvar_index + 1}"/>
+				</j:while>
+			</span>
+		</div>
+	</j:if>
+</j:jelly>

@@ -1,0 +1,48 @@
+    <div class="modal-header">
+		<h4 class="modal-title">
+          <button class="btn btn-icon close icon-cross pull-right" ng-click="cancel()"><span class="sr-only">${Close dialog}</span></button> {{data.task}}
+		</h4>
+	</div>
+	<div class="modal-body" style="height: 80vh">
+		<iframe title="${Agenda item}" ng-attr-id="{{modalName}}" onload="hideDeleteCopyChangeBtnsAndAttachHandler()" ng-if="data.url" ng-src="{{data.url}}" width="100%" height="100%" frameborder="0" border="0"></iframe>
+      <span class="sr-only" tabindex = '0'>${End of dialog}</span>
+	</div>
+	<style>
+  		.modal-content {
+  			width: 130%;
+    		margin-left: -15%;
+  		}
+	</style>
+	<script>
+    function hideDeleteCopyChangeBtnsAndAttachHandler() {
+        var ESCAPE = 27, event;
+        var cabwModal = document.getElementById('CabwPopupModal');
+        if (cabwModal) {
+            var innerDoc = cabwModal.contentDocument || cabwModal.contentWindow.document;
+            if (innerDoc) {
+                var deleteChangeBtnId = innerDoc.getElementById('sysverb_delete');
+                var copyChangeBtnId = innerDoc.getElementById('copy_change_request');
+                var changeCalendar = innerDoc.getElementById('toggle_change_calendar');
+                if (deleteChangeBtnId)
+                    deleteChangeBtnId.style.display = 'none';
+                if (copyChangeBtnId)
+                    copyChangeBtnId.style.display = 'none';
+                if (changeCalendar)
+                    changeCalendar.style.display = 'none';
+
+                angular.element(innerDoc).on('keydown', function(e) {
+                    if (e && e.keyCode == ESCAPE) {
+                        if (typeof window.CustomEvent === "function") {
+                            event = new CustomEvent('DismissCabwModal');
+                        } else {
+                            // fallback for IE9+, since customEvent constructor is not available in IE9+
+                            event = window.document.createEvent('CustomEvent');
+                            event.initCustomEvent('DismissCabwModal', true, true, {});
+                        }
+                        window.parent.document.body.dispatchEvent(event);
+                    }
+                });
+            }
+        }
+    }
+	</script>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:ui_form>
+	<g:evaluate var="jvar_impersonate_name" expression="gs.getImpersonatingUserName()" />
+	<g:evaluate var="jvar_imp_display_name" expression="gs.getImpersonatingUserDisplayName()" />
+	<g:evaluate>
+		var name = gs.getImpersonatingUserName();
+		var actual_user = null;
+		if (name == null || name == '')
+			actual_user = user;
+		else
+			actual_user = GlideUser.getUser(name);
+		
+		var recent_impersonations = actual_user.getPreference('recent.impersonations');
+	</g:evaluate>
+
+	<input type="hidden" name="imp_type" id="imp_type" value="" />
+	<div class="col-sm-12">
+		<label for="imp_recent">${gs.getMessage('Recent Impersonations')}</label>
+		<select id="imp_recent" multiple="true" size="6" name="imp_recent" 
+			onclick="clearRef()" ondblclick="gel('ok_button').click()" class="form-control">
+			<g:impersonate_choices history ="${recent_impersonations}" /> 
+		</select>
+		<g:evaluate var="jvar_impersonate_query">
+			var answer = 'QUERY:active=true^locked_out=false^web_service_access_only=false^ORweb_service_access_onlyISEMPTY';
+			if (!actual_user.hasRole('admin'))
+			  answer += '^roles!=admin';
+
+			if (GlideTableDescriptor.get('sys_user').isValidField('identity_type'))
+			  answer += '^identity_type!=ai_agent^ORidentity_type=NULL';
+
+			answer;
+		</g:evaluate>
+		<input id="impersonate_query" type="hidden" value="${jvar_impersonate_query}" /><br/>
+
+		<label for="${jvar_impersonate_query}" class="sr-only">
+			${gs.getMessage('Search for user')}
+		</label>
+		<g:ui_reference name="${jvar_impersonate_query}" table="sys_user" onchange="clearSelect()"/>
+	</div>
+
+	<div id="dialog_buttons" class="modal-footer">
+		<g:dialog_buttons_ok_cancel ok="return impOk()" ok_id="ok_button" cancel_type="button" />
+	</div>
+	<script>
+		var e = gel("sys_display.${jvar_impersonate_query}");
+		if (e)
+			e.focus();
+	</script>
+</g:ui_form>
+</j:jelly>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:ui_form>
+	<g2:evaluate var="jvar_url" jelly="true">
+		var url = jelly.sysparm_redirect_record;
+		var clean_url = GlideSecurityUtils.cleanURL(url); 
+		
+		if(!clean_url || clean_url == "undefined") 
+			clean_url = ""; 
+		clean_url;
+	</g2:evaluate>
+    <table cellpadding="0" cellspacing="0" width="500px">
+        <g:ui_progress_worker worker_id="${sysparm_pworker_sysid}"/>
+        <tr>
+            <td>
+                <table id="completed_links" style="display: none" width="100%">
+                     <tr> 
+                        <td> 
+                            <hr/> 
+                            <div class="caption">Next steps...</div> 
+                        </td> 
+                    </tr> 
+                    <g2:evaluate object="true" var="jvar_has_problems" expression="GlidePreviewProblemHandler.hasUnresolvedProblems('${sysparm_rus_id}');"/>
+                    <j2:choose>
+                      <j2:when test="$[jvar_has_problems == 'false']">
+                      	 <j2:if test="${gs.getUser().getDomainID() == null || gs.getUser().getDomainID() == 'global'}">                    
+	                          <g2:evaluate object="true" var="jvar_action_list" expression="new GlideActionManager('c38b2cab0a0a0b5000470398d9e60c36').getActions('sys_remote_update_set', '${sysparm_rus_id}', '');" />
+	                          <j2:forEach items="$[jvar_action_list]" var="jvar_action" indexVar="jvar_index">
+	                              <tr id="update_set_commit_action" data-rus_id="${sysparm_rus_id}">
+	                                  <td>
+	                                      <g2:call function="navigation_link.xml" action="$[jvar_action]" submit="gsftSubmit" form_cell="true" form_cell_class="breadcrumb"/>
+	                                       $[SP] ${gs.getMessage('Apply all updates to this instance')}
+	                                 </td>
+	                              </tr>
+	                          </j2:forEach>
+	                     </j2:if>
+                      </j2:when>
+                      <j2:otherwise>
+                          <tr id="update_set_record_link">
+                            <td>
+                              <a class="breadcrumb" href="$[jvar_url]">
+                                 ${gs.getMessage('Show Preview Problems')}
+                              </a> $[SP] ${gs.getMessage('Go back to the retrieved update set to review problems and commit')}
+                            </td>
+                          </tr>
+                      </j2:otherwise>
+                    </j2:choose>
+                </table>
+                <table id="restore_summary" style="display: none" width="100%">
+                    <tr>
+                        <td>${pgr.output_summary.getHTMLValue()}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <j:if test='${pgr.state == "complete"}'>
+        <script>
+            var el = gel("completed_links");
+            el.style.display = "";
+
+            var e2 = gel("restore_summary");
+            e2.style.display = "";        
+        </script>
+    </j:if>
+</g:ui_form>
+</j:jelly>

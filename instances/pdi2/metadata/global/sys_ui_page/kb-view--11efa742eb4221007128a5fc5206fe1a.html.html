@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j2:set var="jvar_hide_response_time" value="true" />
+	<g:inline template="ie_checker.xml" />
+	<g:requires name="scripts/lib/jquery_includes.js"/>
+	<j:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]"/>
+	
+	<j2:if test="$[!jvar_isMSIE7]">
+		<j2:if test="$[!jvar_isMSIE8]">
+			<g:requires name="scripts/classes/timeAgo.js"/>
+		</j2:if>
+	</j2:if>
+
+	<!-- Common styles are loaded in the "Knowledge Common Styles" stylesheet -->
+	<g:if_polaris>
+		<g:then>
+			<g:requires name="styles/knowledge.ng/css_includes_knowledge_polaris.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}"/>
+			<link href="e113037c8d995110f877cc1790289d71.cssdbx?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet"/>
+		</g:then>
+		<g:else>
+			<g:requires name="styles/knowledge.ng/css_includes_knowledge.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}"/>
+			<link href="b3ba3821d73221004792a1737e610382.cssdbx?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet"/>
+		</g:else>
+	</g:if_polaris>
+	
+	<g:evaluate jelly="true" copyToRhino="true">
+		var uiMacro = "kb_view_legacy";
+		var kbViewModel = new KBViewModel();
+		var kbViewInfo = kbViewModel;
+		kbViewModel.getInfo();
+		var canContributeHelper = new SNC.KnowledgeHelper();
+		var knowledgeHelp = new KnowledgeHelp();
+		var historyRowCount = 0;
+		var isValidRecord = kbViewModel.isValid;
+		var knowledgeExists = kbViewModel.knowledgeExists;
+		var NOT_RETIRED = gs.getMessage("Article not retired");
+		var NOT_PUBLISHED = gs.getMessage("Article not published");
+		var NOT_SAVED = gs.getMessage("Article not saved");
+		var SAVED = gs.getMessage("Article saved");
+		var DISCARDED = gs.getMessage("Article changes discarded");
+		var SUBMITTED = gs.getMessage("Your article has been submitted");
+		var PREVIEW = gs.getMessage(" Preview ");
+		var PREVIEW_HINT = gs.getMessage("Preview changes");
+		var DELETE = gs.getMessage("Delete");
+		var CONFIRM_DELETE = gs.getMessage("Confirm deletion of this article?");
+		var TITLE_CANCEL = gs.getMessage("Cancel changes");
+		var MESSAGE_CANCEL = gs.getMessage("Discard all changes?");
+		var TITLE_RETIRE = gs.getMessage("Retire");
+		var MESSAGE_RETIRE = gs.getMessage("Retire this article?");
+		// Status messages for the message bar.
+		var DRAFT_MSG = gs.getMessage("This knowledge item has been created");
+		var REVIEW_MSG = gs.getMessage("This knowledge item has been published");
+		var PUBLISHED_MSG = gs.getMessage("This knowledge item has been published");
+		var PEND_RETIRE_MSG = gs.getMessage("This knowledge item has been retired");
+		var RETIRED_MSG = gs.getMessage("This knowledge item has been retired");
+		var DELETE_FAIL_MSG = gs.getMessage("This article could not be deleted");
+		var TXT_PLACEHOLDER = gs.getMessage("Add content");
+		var tsQueryId = RP.getParameterValue("sysparm_tsqueryId");
+		var rank = RP.getParameterValue("sysparm_rank");
+		var readOnlyPage = false;
+		
+		var canAdminOverrideRedirect = (!gs.nil(jelly.sysparm_redirect) &amp;&amp; jelly.sysparm_redirect + '' === 'false') &amp;&amp; kbViewModel.isAdminUser(kbViewModel.knowledgeRecord);
+		
+		if(isValidRecord &amp;&amp; !canAdminOverrideRedirect) {
+			var articleIdentifier = !gs.nil(jelly.sysparm_article) ? 'sysparm_article' : 'sys_kb_id';
+			var baseArticleURL = "kb_view.do?" + articleIdentifier + "=" + jelly[articleIdentifier] + "${'&amp;sysparm_redirect=false'}";
+			var replacementArticleId = '';
+			var replacementAlert = '';
+		
+			if(kbViewModel.isAdminUser(kbViewModel.knowledgeRecord)) {
+				replacementAlert = gs.getMessage("The article {0} has been retired and replaced with the current article.", "&#160;&lt;a href='" + baseArticleURL + "'&gt;" + kbViewModel.knowledgeRecord.getValue('number') + "&lt;/a&gt;&#160;");
+			} else {
+				replacementAlert = gs.getMessage("The article {0} has been retired and replaced with the current article.", [kbViewModel.knowledgeRecord.getValue('number')]);		
+			}
+
+			while(isValidRecord &amp;&amp; kbViewModel.hasReplacementAvailable()) {
+				if(articleIdentifier === 'sysparm_article') {
+					var replacementArticleNumber = kbViewModel.knowledgeRecord.getElement('replacement_article.number');
+					kbViewModel = new KBViewModel();
+					if(kbViewModel.isVersioningEnabled())
+						kbViewModel.findLatestVersion(replacementArticleNumber);
+					else
+						kbViewModel.findKnowledgeByNumber(replacementArticleNumber);
+				} else {
+					replacementArticleId = kbViewModel.knowledgeRecord.getValue('replacement_article');
+					kbViewModel = new KBViewModel();
+					var latestReplacementArticle = kbViewModel.getLatestAccessibleVersionFromId(replacementArticleId);
+					var isLatest = (!gs.nil(latestReplacementArticle) &amp;&amp; (latestReplacementArticle.getValue('version')!=knowledgeRecord.getValue('version')));
+					replacementArticleId = isLatest? latestReplacementArticle.getValue('sys_id'):replacementArticleId;
+					kbViewModel.findKnowledgeById(replacementArticleId);
+				}
+
+				isValidRecord = kbViewModel.isValid;
+			}
+		}
+		
+		if (isValidRecord) {
+			var knowledgeRecord = kbViewModel.knowledgeRecord;
+			var canContributeToKnowledge = canContributeHelper.canContribute(kbViewModel.knowledgeRecord);
+			var versioningInfo = kbViewModel.versioningInfo;
+			var revisionString = kbViewModel.revisionString;
+			var isEditable = kbViewModel.isEditable;
+			var publishedRecord = kbViewModel.publishedRecord;
+			var feedbackRecords = kbViewModel.feedbackRecord;
+			var bannerImage = kbViewModel.bannerImage;
+			var authorImage = kbViewModel.authorImage;
+			var authorName = kbViewModel.authorName;
+			var authorCompany = kbViewModel.authorCompany || kbViewModel.getAuthorInfo("author.company.name");
+			var authorDepartment = kbViewModel.authorDepartment || kbViewModel.getAuthorInfo("author.department.name");
+			var authorTitle = kbViewModel.authorTitle || kbViewModel.getAuthorInfo("author.title");
+			var i18n = function(message, array) {
+				message = message || "";
+				var padded = " " + message + " ";
+				var translated = gs.getMessage(padded, array);
+				var trimmed = translated.trim();
+				return trimmed;
+			};
+
+			var canCreateNew = kbViewModel.canCreateNew;
+			var isNewRecord = kbViewModel.isNewRecord;
+			var published = "";
+			var sys_updated_on = "";
+			if (kbViewModel.publishedRecord) {
+				published = kbViewModel.publishedRecord.published;
+				sys_updated_on = kbViewModel.publishedRecord.sys_updated_on;
+			}
+			var number = knowledgeRecord.number;
+			var permalink = kbViewModel.permalink;
+			var category = knowledgeRecord.category;
+			var attachments = kbViewModel.attachments;
+			var disableSuggesting = knowledgeRecord.disable_suggesting;
+			var isWikiArticle = knowledgeRecord.article_type == 'wiki';
+			var glideWikiModel = new GlideWikiModel();
+			glideWikiModel.setLinkBaseURL(glideWikiModel.getLinkBaseURL() + "${AMP}sysparm_field=kb_knowledge.wiki" + "${AMP}sysparm_kbtable=" + kbViewInfo.tableName);
+		}
+
+		var isVersion2 = new KBCommon().isKBVersion2(knowledgeRecord.kb_knowledge_base);
+		if (isVersion2) {
+			if (jelly.sysparm_context == 'popup')
+				uiMacro = "kb_view_legacy_popup";
+			else
+				uiMacro = "kb_view_legacy";
+		}
+		if(tsQueryId ${AMP}${AMP} rank){
+			var inc = new GlideRecord('ts_query_kb');
+			inc.get(tsQueryId);
+			var prevRank = inc.top_click_rank;
+			if(prevRank ${AMP}${AMP} prevRank !=""){
+				if(parseInt(prevRank) > parseInt(rank)){
+					inc.top_click_rank = rank;
+					inc.updateWithReferences();
+				}
+			}else{
+				inc.top_click_rank = rank;
+				inc.update();
+			}
+		}
+		var escapeTextProperty = gs.getProperty('glide.ui.escape_text','false');
+		var kb_name = knowledgeRecord.kb_knowledge_base.getDisplayValue();
+		var kb_desc = knowledgeRecord.short_description.getDisplayValue();
+		var encodedKb_desc = encodeURIComponent(kb_desc);
+		var kb_title = GlideStringUtil.escapeHTML(kb_name + " - " + kb_desc);
+		
+		if(gs.getProperty("glide.knowman.contextual_search.show_read_only_article","false") == "true" &amp;&amp; RP.getParameterValue("sysparm_popup") == "true"){ 
+			readOnlyPage = true;
+			kbViewInfo.showKBFeedback = false;
+			kbViewInfo.hideFeedbackOptions = true;
+			versioningInfo.showHistory = false;
+		}
+		
+	</g:evaluate>
+
+	<script>
+		if('$[JS:kb_desc]' != ''){
+			$j("title").text(new DOMParser().parseFromString("$[kb_title]", "text/html").documentElement.textContent);
+		}
+		var kbConfig = {
+			canContribute: '${canContributeToKnowledge}',
+			historyRowCount: ${historyRowCount},
+			i18n: {
+				STATUS_MSG: {
+					draft: '${JS:DRAFT_MSG}',
+					review: '${JS:REVIEW_MSG}',
+					published: '${JS:PUBLISHED_MSG}',
+					pending_retirement: '${JS:PEND_RETIRE_MSG}',
+					retired: '${JS:RETIRED_MSG}',
+					delete_failed: '${JS:DELETE_FAIL_MSG}'
+				},
+				TXT_PLACEHOLDER: '${JS:TXT_PLACEHOLDER}',
+				NOT_RETIRED: '${JS:NOT_RETIRED}',
+				NOT_PUBLISHED: '${JS:NOT_PUBLISHED}',
+				NOT_SAVED: '${JS:NOT_SAVED}',
+				SAVED: '${JS:SAVED}',
+				DISCARDED: '${JS:DISCARDED}',
+				SUBMITTED: '${JS:SUBMITTED}',
+				PREVIEW: '${JS:PREVIEW}',
+				PREVIEW_HINT: '${JS:PREVIEW_HINT}',
+				CONFIRM_DELETE: '${JS:CONFIRM_DELETE}',
+				DELETE: '${JS:DELETE}',
+				TITLE_RETIRE: '${JS:TITLE_RETIRE}',
+				MESSAGE_RETIRE: '${JS:MESSAGE_RETIRE}',
+				TITLE_CANCEL: '${JS:TITLE_CANCEL}',
+				MESSAGE_CANCEL: '${JS:MESSAGE_CANCEL}'
+			}
+		};
+
+		$j(function() {
+			if (parent.document) {
+				// fix iframe resize issue for CMS service portal
+				parent.CustomEvent.fire('content_frame.resized', window.name, parent.document.body.scrollHeight);
+			}
+
+			if('${replacementArticleId}' != '') {
+				if(typeof URL != 'undefined') {
+					var url = new URL(window.location.href);
+					url.searchParams.set('${articleIdentifier}', '${replacementArticleId}');
+					window.history.pushState({path: url.href}, '', url);
+				} else {
+					// Fallback solution for IE where URL is not defined.
+					var replaceQueryParameter = function(parameter, value, search) {
+						var regex = new RegExp("([?;&amp;])" + parameter + "[^&amp;]*[;&amp;]?");
+						var query = search.replace(regex, "$1").replace(/&amp;$/, '');
+
+						return (query.length > 2 ? query + "&amp;" : "?") + (value ? parameter + "=" + value : '');
+					}
+		
+					var url = window.location.origin + replaceQueryParameter('${articleIdentifier}', '${replacementArticleId}', window.location.search);
+					window.history.pushState({path: url}, '', url);
+				} 
+			}
+		});
+	</script>
+
+	<j:if test="${isWikiArticle}">
+		<g:inline template="wiki_styles.xml"/>
+	</j:if>	
+
+	<j:choose>
+		<j:when test="${isVersion2}">
+			<g:inline template="${uiMacro}"/>
+		</j:when>
+		<j:when test="${isValidRecord &amp;&amp; knowledgeHelp.hasRights(knowledgeRecord)}">
+			<g:inline template="kb_view_common" />
+		</j:when>
+		<j:when test="${knowledgeExists}">
+			<g:inline template="kb_view_cannot_read"/>
+		</j:when>
+		<j:otherwise>
+			<g:inline template="kb_view_not_valid_record"/>
+		</j:otherwise>
+	</j:choose>
+	<!--Knowledge in IFrame fix-->
+	<script language="javascript" src="KnowledgeIframeFix.jsdbx"></script>
+</j:jelly>

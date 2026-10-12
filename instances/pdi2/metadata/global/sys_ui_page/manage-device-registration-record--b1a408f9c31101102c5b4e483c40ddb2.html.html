@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates()}">
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+	</j:if>
+<j:if test="${gs.getProperty('glide.authenticate.auth.policy.enabled', 'false') == 'true'}">
+   <j:if test="${gs.getProperty('glide.authenticate.preauth.allow.trusted.device', 'false') == 'true'}">
+      <g:evaluate jelly="true">
+         var device_sys_id = '${RP.getWindowProperties().get("device_sys_id")}';
+         var trustedDevice = new GlideRecord('sys_auth_policy_device_app_registry');
+         trustedDevice.addQuery('sys_id', device_sys_id);
+		 trustedDevice.addQuery('user', gs.getUserID());
+         trustedDevice.query();
+         trustedDevice;
+      </g:evaluate>
+      <g:evaluate var="jvar_device_sys_id" jelly="true">
+         var device_sys_id = '${RP.getWindowProperties().get("device_sys_id")}';
+         device_sys_id;
+      </g:evaluate>
+	   <main>
+      <div>
+         
+            <j:while test="${trustedDevice.next()}">
+				<div class="row" style="font-size: medium; margin-bottom: 3%;">
+					<div class="flex col-sm-12">
+					   <p style="font-size: large;"><b>${gs.getMessage('Are you sure you want to remove')} ${trustedDevice.device_name} ?</b></p>
+					</div>
+				 </div>
+               <div class="row col-sm-12 col-md-12 col-lg-12">
+					  <p> ${gs.getMessage('You will no longer be able to access ServiceNow from this device.')} </p>
+               </div>
+            </j:while>
+            <footer class="modal-footer flex float-right">
+               <button class="btn btn-default"   id="btnClose" style="margin-right:16px;" onclick="closeDialog()">${gs.getMessage('Cancel')}</button>
+               <button class="btn btn-destructive" id="btnRemove" onclick="removeDeviceRegistration()"> ${gs.getMessage('Delete')} </button>
+            </footer>
+      </div>
+	   </main>
+   </j:if>
+</j:if>
+</j:jelly>

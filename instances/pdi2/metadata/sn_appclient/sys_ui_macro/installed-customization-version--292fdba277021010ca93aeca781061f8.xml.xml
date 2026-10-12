@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate jelly="true" var="jvar_customization_version">
+		var version = '';
+		var gr = new GlideRecord('sys_app_customization');
+		gr.addQuery('vendor_app', current.sys_id);
+		gr.query();
+		if (gr.next())
+			version = gr.getValue('version');
+		
+		version;
+	</g2:evaluate>
+	
+	<g2:evaluate jelly="true" var="jvar_customization_supported" expression="sn_app_customization.AppCustomizationAPI.isAppCustomizationCapableByScopeName(current.scope);"/>
+
+	<g2:evaluate jelly="true" var="jvar_element_hint" expression="gs.getMessage('Displays the installed or published customization version');"/>
+
+	<j2:if test="$[jvar_customization_supported]">
+		<div id="element.${ref}" class="form-group " style="width:100%; margin-left: 0px">
+			<div class="" data-type="label" choice="0" type="string" id="label.${ref}" nowrap="true">
+				<g:form_label onclick="return labelClicked(this);" for="${ref}">
+					${gs.getMessage('Installed Customization Version')}
+				</g:form_label>
+			</div>
+			<div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+				<input class="form-control disabled " style="margin-top: 3px" id="sys_readonly.${ref}" value="$[jvar_customization_version]" ng-non-bindable="" readonly="readonly" aria-label="label.${ref}"/>
+			</div>
+		</div>
+	</j2:if>
+</j:jelly>

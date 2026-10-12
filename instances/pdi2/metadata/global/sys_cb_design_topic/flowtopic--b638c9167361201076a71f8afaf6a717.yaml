@@ -1,0 +1,673 @@
+_meta:
+  hash: 63d7a49a09eedea89d0b00865639615e8dc5d3f6ca44619686a0e85d7dca3cd8
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2021-01-08 21:56:51
+  sys_domain: global
+  sys_id: b638c9167361201076a71f8afaf6a717
+  sys_mod_count: '2'
+  sys_package: aeddf2bf8c5d03100a22deb6dd2b4eb7
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_b638c9167361201076a71f8afaf6a717
+  sys_updated_by: admin
+  sys_updated_on: 2024-10-02 21:00:50
+compiled_topic: ec276f1a3b3110102c67667993efc48b
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"e94dce7826e74726b4a3f4d7b4dd40b9","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"e94dce7826e74726b4a3f4d7b4dd40b9"}],"goals":[{"name":"primary","trigger_id":"e94dce7826e74726b4a3f4d7b4dd40b9","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"f6c73c5de66f4ee8a67cd992bac57ace","name":"Start","expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"ab1eb0cf7f2c4b1fb17f116198a2fa8b","name":"End","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var contextualSearch = new global.VAGlobalContextualSearchUtil();\n    var response = contextualSearch.search(\n        vaVars.search_context_sys_id, vaInputs.query, vaInputs.kb_knowledge_base\n    );\n    var success = contextualSearch.processSearchResponse(response);\n    if (!success) {\n        return;\n    }\n\n    var relevantSearchResults = contextualSearch.processGeneralResults(response, 6, -2, vaSystem);\n    vaVars.searchResultCount = relevantSearchResults.length;\n    vaVars.search_result_json_string = JSON.stringify(relevantSearchResults);\n    vaVars.index = 0;\n    return;\n})()\n","id":"000df41e27ee439e8622ae78cf59ae8e","name":"FAQ Conversation Builder","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Did the search return results?","branches":[{"type":"Branch","label":"More than one","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if(vaVars.searchResultCount > 1) {\n        vaVars.results_returned = true;\n        return true;\n    }\n    return false;\n})()\n"},"id":"d3c14d34a05143999560b0cf1724e218","name":"More than one","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if (!(vaVars.searchResultCount > 0)) {\n        vaVars.results_helpful = false;\n        vaVars.results_returned = false;\n        return true;\n    }\n    return false;\n\n})()\n"},"id":"3cf36e8f724b4de68b676c94b4ae6d90","name":"No","expert_mode":false},{"type":"Branch","label":"Found one","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if(vaVars.searchResultCount === 1) {\n        vaVars.results_returned = true;\n        vaVars.selected_faq = 0;\n        vaVars.selected_type = ''single'';\n        return true;\n    }\n    return false;\n})()\n"},"id":"2009a71f4138415f8b01f64cf569a0f6","name":"Found one","expert_mode":false}],"id":"39362b36cffd49a6847adfaed75284eb","goal_id":"primary","expert_mode":false},{"type":"InputPrompt","variable_id":"24c1f84aa4554693934e136b10052132","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"Did this information help you?\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"e857c2794e864bb88fe9fe6835424228","name":"Did Info Help","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"description":""},{"type":"ScriptedAction","script":"(function execute() {\n    if(vaInputs.did_info_help == ''true'') {\n        vaVars.results_helpful = true;\n    } else {\n        vaVars.results_helpful = false;\n    }\n})()\n","id":"25c9bf78462c43ac8f222941c32a4f85","name":"Record Outputs","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"string","value":"gs.getMessageLang(\"I found this information that might help you\", vaContext.getRequesterLang())"}],"request_feedback":true,"id":"97e6ba4ac4994fa3b6d51d11a44b27f9","name":"Found Information","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"a121a58686e349389bfb2d87c500bbf4","name":"Choose FAQ","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"variable_id":"b8d263516fe442cab62a76e97f88ea85","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"I found some information that might help you\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n\n    for (i = 0; i < searchJsonObj.length; i++) {\n        options.push({ ''value'': i, ''label'': searchJsonObj[i].title });\n    }\n\n    options.push({ ''value'': ''-1'', ''label'': ''I\\''m looking for something else'' })\n\n    return options;\n})()\n","metadataScript":"","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No records found.\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var options = [];\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n\n    for (i = 0; i < searchJsonObj.length; i++) {\n        options.push({ ''value'': i, ''label'': searchJsonObj[i].title });\n    }\n\n    options.push({ ''value'': ''-1'', ''label'': ''I\\''m looking for something else'' })\n\n    return options;\n})()\n"},"description":""},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Something else","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.choose_faq.getValue() == ''-1'';\n})()\n"},"id":"1d741e2bfb48460d994403222f93fedd","name":"Something else","expert_mode":false},{"type":"Branch","label":"Selected one","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if (vaInputs.choose_faq.getValue() != ''-1'') {\n        // need parseInt because it was keeping decimals\n        vaVars.selected_faq = parseInt(vaInputs.choose_faq.getValue());\n        vaVars.selected_type = ''multi'';\n        return true;\n    }\n    return false;\n})()\n"},"id":"3a3204aa31dd49cb986ab75f3481c397","name":"Selected one","expert_mode":false}],"id":"20a65688fa144d31b08edbcc4221900c","goal_id":"primary","expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n   // relevant properties to get record\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n    var resultNumber = searchJsonObj[vaVars.selected_faq].meta.number;\n    var faqUtil = new global.VAFaqUtil();\n    // build the header text\n    header_text =  faqUtil.buildHeaderText(resultNumber, vaVars.selected_type);\n    \n    header_text += ''<br><br>'';\n\n    var linkBuilder = new global.cxs_SearchResultLinkBuilder();\n    var link = linkBuilder.build(searchJsonObj[vaVars.selected_faq], vaInputs.portal);\n\n    header_text += ''<a href=\"''+link.link+''\" target=\"_blank\" >''+ ''Read full article''+ ''</a>'';\n    //header_text += ''[Read full article](''+link.link+'')''\n    return header_text;\n})()\n"}],"request_feedback":true,"id":"715713859aad4988b21d989932fd5c4d","name":"Display FAQ","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false}],"edges":[{"type":"Edge","source_node_id":"715713859aad4988b21d989932fd5c4d","target_node_id":"e857c2794e864bb88fe9fe6835424228","id":"b4f61440bc6a4ed285c0b41004176975"},{"type":"Edge","source_node_id":"e857c2794e864bb88fe9fe6835424228","target_node_id":"25c9bf78462c43ac8f222941c32a4f85","id":"cfdd788f234f41439c62550133fb69d5"},{"type":"Edge","source_node_id":"39362b36cffd49a6847adfaed75284eb","target_node_id":"a121a58686e349389bfb2d87c500bbf4","branch_id":"d3c14d34a05143999560b0cf1724e218","id":"bfced8c9d7844407861578b25adeda19","name":"d3c14d34a05143999560b0cf1724e218"},{"type":"Edge","source_node_id":"39362b36cffd49a6847adfaed75284eb","target_node_id":"ab1eb0cf7f2c4b1fb17f116198a2fa8b","branch_id":"3cf36e8f724b4de68b676c94b4ae6d90","id":"6c8ed8984ecf453d99b5cbb33e701466","name":"3cf36e8f724b4de68b676c94b4ae6d90"},{"type":"Edge","source_node_id":"f6c73c5de66f4ee8a67cd992bac57ace","target_node_id":"000df41e27ee439e8622ae78cf59ae8e","id":"8b9293ae660f4e2ab52c3a4019775fa9"},{"type":"Edge","source_node_id":"000df41e27ee439e8622ae78cf59ae8e","target_node_id":"39362b36cffd49a6847adfaed75284eb","id":"f33dceaf22d74448a5a0bf72c97b007b"},{"type":"Edge","source_node_id":"25c9bf78462c43ac8f222941c32a4f85","target_node_id":"ab1eb0cf7f2c4b1fb17f116198a2fa8b","id":"72e1ebb1e9b24ab09473e85a9d2ce7c7"},{"type":"Edge","source_node_id":"39362b36cffd49a6847adfaed75284eb","target_node_id":"97e6ba4ac4994fa3b6d51d11a44b27f9","branch_id":"2009a71f4138415f8b01f64cf569a0f6","id":"fa92125b6d164b67ad7396861735142f","name":"2009a71f4138415f8b01f64cf569a0f6"},{"type":"Edge","source_node_id":"a121a58686e349389bfb2d87c500bbf4","target_node_id":"20a65688fa144d31b08edbcc4221900c","id":"07848213c0474b9e9c8e439aac465b3d"},{"type":"Edge","source_node_id":"20a65688fa144d31b08edbcc4221900c","target_node_id":"ab1eb0cf7f2c4b1fb17f116198a2fa8b","branch_id":"1d741e2bfb48460d994403222f93fedd","id":"7fcab0167c41412d83df7cb5525fefaa","name":"1d741e2bfb48460d994403222f93fedd"},{"type":"Edge","source_node_id":"20a65688fa144d31b08edbcc4221900c","target_node_id":"715713859aad4988b21d989932fd5c4d","branch_id":"3a3204aa31dd49cb986ab75f3481c397","id":"0cb304cf11eb4faa8b483861fd379591","name":"3a3204aa31dd49cb986ab75f3481c397"},{"type":"Edge","source_node_id":"97e6ba4ac4994fa3b6d51d11a44b27f9","target_node_id":"715713859aad4988b21d989932fd5c4d","id":"e4d6570f5f1743589f0d870a9781250b"}],"id":"primary"}],"script_variables":[{"type":"String","name":"search_result_json_string","value":{"type":"String","mode":"string"},"list":false,"id":"015b41a0d2854206a6d16e9e0d1a7847","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"index","value":{"type":"String","mode":"script","value":"(function execute() {\n    return '''';\n})()\n"},"list":false,"id":"da1f29f67f014b7ab38be2af098d512f","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"limit","value":{"type":"String","mode":"string","value":"3"},"list":false,"id":"cf0ea9b6e582499e8d27fa193e5263aa","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"search_context_sys_id","value":{"type":"String","mode":"string","value":"753c0f743b4290102c67667993efc459"},"list":false,"id":"c5d7293c470648058916b524b55e36b8","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"searchResultCount","value":{"type":"String","mode":"string","value":"0"},"list":false,"id":"286c3dc4e01c41eb8ce96e221054dbb6","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"results_returned","value":{"type":"String","mode":"string","value":"false"},"list":false,"id":"4f43a1dc506f41a0be90761ebc0be688","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"results_helpful","value":{"type":"String","mode":"string","value":"false"},"list":false,"id":"4d2ef878c61e4658b0ca3b874ead7cce","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"DEBUG_JSON_RESULT","value":{"type":"String","mode":"string"},"list":false,"id":"dbc9b074f96146b6ba9d234490a75461","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"selected_faq","value":{"type":"String","mode":"string"},"list":false,"id":"c8fc39ab3cfc42d0ab37505be696ee0d","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"selected_type","value":{"type":"String","mode":"script","value":"(function execute() {\n    return ''none'';\n})()\n"},"list":false,"id":"66f751f675a14311a4fca3326995e602","formatType":"text","secure":false,"sensitive":false,"aiInput":false}],"glide_variables":[{"type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"query","list":false,"id":"d3b4a2dfabae4582a6bde857ca9dddf4","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"portal","list":false,"id":"f0d3a9136af949e99faf47e6fecc188d","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"kb_knowledge_base","list":false,"id":"502f202695044ea883cefa9ceb6de424","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"True/False","id":"24c1f84aa4554693934e136b10052132","name":"did_info_help","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"Choice","choices":[],"id":"b8d263516fe442cab62a76e97f88ea85","name":"choose_faq","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false,"table":""}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"query","label":"query","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"d3b4a2dfabae4582a6bde857ca9dddf4","type":"String","hint":""},{"name":"portal","label":"portal","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"f0d3a9136af949e99faf47e6fecc188d","type":"String","hint":""},{"name":"kb_knowledge_base","label":"kb_knowledge_base","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"502f202695044ea883cefa9ceb6de424","type":"String","hint":""}],"return-values-mapping":[{"name":"results_returned","label":"Results_Returned","value":{"type":"String","mode":"string","value":"{{vaVars.results_returned}}"}},{"name":"results_helpful","label":"Results_Helpful","value":{"type":"String","mode":"string","value":"{{vaVars.results_helpful}}"}}]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"3596671a3b3110102c67667993efc489","name":"FAQ Conversation Builder","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"description":"Contextual search to search only knowledge articles that have been made with the FAQ template.","model_type":"nlu_keyword","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"FAQ Conversation Builder","library":true,"csTopicId":"ec276f1a3b3110102c67667993efc48b","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 3596671a3b3110102c67667993efc489
+graph: |-
+  {
+    "graph_api_version": "1.0.68",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "f6c73c5de66f4ee8a67cd992bac57ace": {
+            "id": "f6c73c5de66f4ee8a67cd992bac57ace",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "name": "query",
+                "value": "",
+                "id": "d3b4a2dfabae4582a6bde857ca9dddf4",
+                "disabled": true,
+                "referenced": true,
+                "type": "String",
+                "hint": "",
+                "required": true
+              },
+              {
+                "name": "portal",
+                "value": "",
+                "id": "f0d3a9136af949e99faf47e6fecc188d",
+                "referenced": false,
+                "disabled": true,
+                "type": "String",
+                "hint": "",
+                "required": false
+              },
+              {
+                "name": "kb_knowledge_base",
+                "value": "",
+                "id": "502f202695044ea883cefa9ceb6de424",
+                "referenced": true,
+                "disabled": true,
+                "type": "String",
+                "hint": "",
+                "required": false
+              }
+            ],
+            "variableIds": [
+              "d3b4a2dfabae4582a6bde857ca9dddf4",
+              "f0d3a9136af949e99faf47e6fecc188d",
+              "502f202695044ea883cefa9ceb6de424"
+            ]
+          },
+          "ab1eb0cf7f2c4b1fb17f116198a2fa8b": {
+            "id": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": [
+              {
+                "key": "Results_Returned",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.results_returned}}",
+                          "displayValue": "vaVars➛results_returned"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": false
+              },
+              {
+                "key": "Results_Helpful",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.results_helpful}}",
+                          "displayValue": "vaVars➛results_helpful"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": false
+              }
+            ]
+          },
+          "000df41e27ee439e8622ae78cf59ae8e": {
+            "id": "000df41e27ee439e8622ae78cf59ae8e",
+            "name": "FAQ Conversation Builder",
+            "script": "(function execute() {\n    var contextualSearch = new global.VAGlobalContextualSearchUtil();\n    var response = contextualSearch.search(\n        vaVars.search_context_sys_id, vaInputs.query, vaInputs.kb_knowledge_base\n    );\n    var success = contextualSearch.processSearchResponse(response);\n    if (!success) {\n        return;\n    }\n\n    var relevantSearchResults = contextualSearch.processGeneralResults(response, 6, -2, vaSystem);\n    vaVars.searchResultCount = relevantSearchResults.length;\n    vaVars.search_result_json_string = JSON.stringify(relevantSearchResults);\n    vaVars.index = 0;\n    return;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "39362b36cffd49a6847adfaed75284eb": {
+            "id": "39362b36cffd49a6847adfaed75284eb",
+            "stepType": "Decision",
+            "name": "Did the search return results?"
+          },
+          "e857c2794e864bb88fe9fe6835424228": {
+            "id": "e857c2794e864bb88fe9fe6835424228",
+            "stepType": "BooleanPrompt",
+            "name": "Did Info Help",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "Did this information help you?"
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "24c1f84aa4554693934e136b10052132",
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "25c9bf78462c43ac8f222941c32a4f85": {
+            "id": "25c9bf78462c43ac8f222941c32a4f85",
+            "name": "Record Outputs",
+            "script": "(function execute() {\n    if(vaInputs.did_info_help == 'true') {\n        vaVars.results_helpful = true;\n    } else {\n        vaVars.results_helpful = false;\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "97e6ba4ac4994fa3b6d51d11a44b27f9": {
+            "id": "97e6ba4ac4994fa3b6d51d11a44b27f9",
+            "stepType": "TextOutput",
+            "name": "Found Information",
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "text": "I found this information that might help you"
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true
+          },
+          "a121a58686e349389bfb2d87c500bbf4": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Choose FAQ",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "I found some information that might help you"
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "b8d263516fe442cab62a76e97f88ea85",
+            "id": "a121a58686e349389bfb2d87c500bbf4",
+            "mode": "external",
+            "script": "(function execute() {\n    var options = [];\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n\n    for (i = 0; i < searchJsonObj.length; i++) {\n        options.push({ 'value': i, 'label': searchJsonObj[i].title });\n    }\n\n    options.push({ 'value': '-1', 'label': 'I\\'m looking for something else' })\n\n    return options;\n})()\n",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "No records found."
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var options = [];\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n\n    for (i = 0; i < searchJsonObj.length; i++) {\n        options.push({ 'value': i, 'label': searchJsonObj[i].title });\n    }\n\n    options.push({ 'value': '-1', 'label': 'I\\'m looking for something else' })\n\n    return options;\n})()\n",
+              "mode": "external_script"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "20a65688fa144d31b08edbcc4221900c": {
+            "id": "20a65688fa144d31b08edbcc4221900c",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "715713859aad4988b21d989932fd5c4d": {
+            "id": "715713859aad4988b21d989932fd5c4d",
+            "stepType": "TextOutput",
+            "name": "Display FAQ",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n   // relevant properties to get record\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n    var resultNumber = searchJsonObj[vaVars.selected_faq].meta.number;\n    var faqUtil = new global.VAFaqUtil();\n    // build the header text\n    header_text =  faqUtil.buildHeaderText(resultNumber, vaVars.selected_type);\n    \n    header_text += '<br><br>';\n\n    var linkBuilder = new global.cxs_SearchResultLinkBuilder();\n    var link = linkBuilder.build(searchJsonObj[vaVars.selected_faq], vaInputs.portal);\n\n    header_text += '<a href=\"'+link.link+'\" target=\"_blank\" >'+ 'Read full article'+ '</a>';\n    //header_text += '[Read full article]('+link.link+')'\n    return header_text;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          }
+        },
+        "edges": [
+          {
+            "id": "b4f61440bc6a4ed285c0b41004176975",
+            "edgeType": "Edge",
+            "source": "715713859aad4988b21d989932fd5c4d",
+            "target": "e857c2794e864bb88fe9fe6835424228",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "cfdd788f234f41439c62550133fb69d5",
+            "edgeType": "Edge",
+            "source": "e857c2794e864bb88fe9fe6835424228",
+            "target": "25c9bf78462c43ac8f222941c32a4f85",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "bfced8c9d7844407861578b25adeda19",
+            "edgeType": "Branch",
+            "source": "39362b36cffd49a6847adfaed75284eb",
+            "target": "a121a58686e349389bfb2d87c500bbf4",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if(vaVars.searchResultCount > 1) {\n        vaVars.results_returned = true;\n        return true;\n    }\n    return false;\n})()\n"
+            },
+            "label": "More than one"
+          },
+          {
+            "id": "6c8ed8984ecf453d99b5cbb33e701466",
+            "edgeType": "Branch",
+            "source": "39362b36cffd49a6847adfaed75284eb",
+            "target": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (!(vaVars.searchResultCount > 0)) {\n        vaVars.results_helpful = false;\n        vaVars.results_returned = false;\n        return true;\n    }\n    return false;\n\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "8b9293ae660f4e2ab52c3a4019775fa9",
+            "edgeType": "Edge",
+            "source": "f6c73c5de66f4ee8a67cd992bac57ace",
+            "target": "000df41e27ee439e8622ae78cf59ae8e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f33dceaf22d74448a5a0bf72c97b007b",
+            "edgeType": "Edge",
+            "source": "000df41e27ee439e8622ae78cf59ae8e",
+            "target": "39362b36cffd49a6847adfaed75284eb",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "72e1ebb1e9b24ab09473e85a9d2ce7c7",
+            "edgeType": "Edge",
+            "source": "25c9bf78462c43ac8f222941c32a4f85",
+            "target": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "fa92125b6d164b67ad7396861735142f",
+            "edgeType": "Branch",
+            "source": "39362b36cffd49a6847adfaed75284eb",
+            "target": "97e6ba4ac4994fa3b6d51d11a44b27f9",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if(vaVars.searchResultCount === 1) {\n        vaVars.results_returned = true;\n        vaVars.selected_faq = 0;\n        vaVars.selected_type = 'single';\n        return true;\n    }\n    return false;\n})()\n"
+            },
+            "label": "Found one"
+          },
+          {
+            "id": "07848213c0474b9e9c8e439aac465b3d",
+            "edgeType": "Edge",
+            "source": "a121a58686e349389bfb2d87c500bbf4",
+            "target": "20a65688fa144d31b08edbcc4221900c",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "7fcab0167c41412d83df7cb5525fefaa",
+            "edgeType": "Branch",
+            "source": "20a65688fa144d31b08edbcc4221900c",
+            "target": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.choose_faq.getValue() == '-1';\n})()\n"
+            },
+            "label": "Something else"
+          },
+          {
+            "id": "0cb304cf11eb4faa8b483861fd379591",
+            "edgeType": "Branch",
+            "source": "20a65688fa144d31b08edbcc4221900c",
+            "target": "715713859aad4988b21d989932fd5c4d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaInputs.choose_faq.getValue() != '-1') {\n        // need parseInt because it was keeping decimals\n        vaVars.selected_faq = parseInt(vaInputs.choose_faq.getValue());\n        vaVars.selected_type = 'multi';\n        return true;\n    }\n    return false;\n})()\n"
+            },
+            "label": "Selected one"
+          },
+          {
+            "id": "e4d6570f5f1743589f0d870a9781250b",
+            "edgeType": "Edge",
+            "source": "97e6ba4ac4994fa3b6d51d11a44b27f9",
+            "target": "715713859aad4988b21d989932fd5c4d",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "d3b4a2dfabae4582a6bde857ca9dddf4": {
+        "id": "d3b4a2dfabae4582a6bde857ca9dddf4",
+        "name": "query",
+        "label": "Query",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "f6c73c5de66f4ee8a67cd992bac57ace",
+        "isHidden": false
+      },
+      "f0d3a9136af949e99faf47e6fecc188d": {
+        "id": "f0d3a9136af949e99faf47e6fecc188d",
+        "name": "portal",
+        "label": "Portal",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "f6c73c5de66f4ee8a67cd992bac57ace",
+        "isHidden": false
+      },
+      "502f202695044ea883cefa9ceb6de424": {
+        "id": "502f202695044ea883cefa9ceb6de424",
+        "name": "kb_knowledge_base",
+        "label": "Kb_knowledge_base",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "f6c73c5de66f4ee8a67cd992bac57ace",
+        "isHidden": false
+      },
+      "015b41a0d2854206a6d16e9e0d1a7847": {
+        "id": "015b41a0d2854206a6d16e9e0d1a7847",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "search_result_json_string",
+        "label": "search_result_json_string",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "da1f29f67f014b7ab38be2af098d512f": {
+        "id": "da1f29f67f014b7ab38be2af098d512f",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return '';\n})()\n"
+        },
+        "name": "index",
+        "label": "index",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "cf0ea9b6e582499e8d27fa193e5263aa": {
+        "id": "cf0ea9b6e582499e8d27fa193e5263aa",
+        "value": {
+          "mode": "simple",
+          "value": "3"
+        },
+        "name": "limit",
+        "label": "limit",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "c5d7293c470648058916b524b55e36b8": {
+        "id": "c5d7293c470648058916b524b55e36b8",
+        "value": {
+          "mode": "simple",
+          "value": "753c0f743b4290102c67667993efc459"
+        },
+        "name": "search_context_sys_id",
+        "label": "search_context_sys_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "286c3dc4e01c41eb8ce96e221054dbb6": {
+        "id": "286c3dc4e01c41eb8ce96e221054dbb6",
+        "value": {
+          "mode": "simple",
+          "value": "0"
+        },
+        "name": "searchResultCount",
+        "label": "searchResultCount",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4f43a1dc506f41a0be90761ebc0be688": {
+        "id": "4f43a1dc506f41a0be90761ebc0be688",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "results_returned",
+        "label": "results_returned",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4d2ef878c61e4658b0ca3b874ead7cce": {
+        "id": "4d2ef878c61e4658b0ca3b874ead7cce",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "results_helpful",
+        "label": "results_helpful",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "dbc9b074f96146b6ba9d234490a75461": {
+        "id": "dbc9b074f96146b6ba9d234490a75461",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "DEBUG_JSON_RESULT",
+        "label": "DEBUG_JSON_RESULT",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "24c1f84aa4554693934e136b10052132": {
+        "id": "24c1f84aa4554693934e136b10052132",
+        "name": "did_info_help",
+        "label": "Did Info Help",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "nodeId": "e857c2794e864bb88fe9fe6835424228",
+        "isHidden": false
+      },
+      "b8d263516fe442cab62a76e97f88ea85": {
+        "id": "b8d263516fe442cab62a76e97f88ea85",
+        "name": "choose_faq",
+        "label": "Choose FAQ",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs",
+        "nodeId": "a121a58686e349389bfb2d87c500bbf4",
+        "isHidden": false
+      },
+      "c8fc39ab3cfc42d0ab37505be696ee0d": {
+        "id": "c8fc39ab3cfc42d0ab37505be696ee0d",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "selected_faq",
+        "label": "selected_faq",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "66f751f675a14311a4fca3326995e602": {
+        "id": "66f751f675a14311a4fca3326995e602",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return 'none';\n})()\n"
+        },
+        "name": "selected_type",
+        "label": "selected_type",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+name: FAQ Conversation Builder
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

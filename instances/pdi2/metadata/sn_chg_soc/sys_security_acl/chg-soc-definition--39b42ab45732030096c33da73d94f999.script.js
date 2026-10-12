@@ -1,0 +1,1 @@
+new SoCDefinition(current).canRead();

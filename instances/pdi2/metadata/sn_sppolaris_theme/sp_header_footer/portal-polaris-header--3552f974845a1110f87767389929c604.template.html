@@ -1,0 +1,187 @@
+<!-- Nav bar menu items starts-->
+<nav class="navbar-inverse instance-{{c.data.instanceId}}" aria-label="Primary" role="navigation">
+  <!-- Piece above searchbar -->
+  <div class="clearfix">
+    <div class="navbar-header nav-container">
+    <!-- Header search widget for Mobile View -->
+      <div ng-if="data.showTypeAheadSearch && (showMobileMenuOnDesktop || mobileDevice)">
+        <div class="mobile-header-search" ng-show="showSearchbarOnMobile">
+          <div class="mobile-header-search-back"  ng-click="hideSearchBarMobile()">
+            <i class="fa fa-arrow-left"></i>
+          </div>
+          <div id="searchBox" class="full-width" >
+            <sp-widget widget="data.typeAheadSearch"></sp-widget>
+          </div>
+        </div>
+      </div>
+      <!-- Logo -->
+      <a class="navbar-brand" ng-if="!portal.logo && !showSearchbarOnMobile" href="?id={{::portal.homepage_dv}}" aria-label="{{::portal.title}}"><span>{{::portal.title}}</span></a>
+	    <a class="navbar-brand navbar-brand-logo"
+           ng-if="portal.logo && !showSearchbarOnMobile"
+           href="?id={{::portal.homepage_dv}}"
+           aria-label="{{::portal.title}}${ - Home Page}"
+           data-toggle="tooltip"
+           data-placement="bottom"
+           data-title="{{::portal.title}}${ - Home}">
+        <img ng-src="{{::portal.logo}}" alt="{{::portal.title}}${ - Home Page}"/>
+      </a>
+
+      <!-- Mobile Navigation View -->
+      <div ng-if="(showMobileMenuOnDesktop || mobileDevice) && !showSearchbarOnMobile">
+        <!-- Header search icon for Mobile View -->
+        <div class="gt-menu-item" ng-if="data.showTypeAheadSearch">
+          <div ng-show="!data.excludeSeachForPages.includes(newPageId)" class="mobile-header-search-icon-wrapper">
+            <div ng-if="!showSearchbarOnMobile" class="mobile-header-search-icon" tabindex="0" ng-click="showSearchBarMobile($event)" >
+              <i class="fa fa-search searchprimary"></i>
+            </div>
+          </div>
+        </div>
+        <!-- Toggle Button (Hamburger Menu for Mobile View) -->
+        <button type="button" 
+                class="sub-navbar-overflow-entry-button"
+                aria-label="${Show menu primary navigation}" 
+                data-toggle="tooltip"
+                data-placement="auto bottom" 
+                data-original-title="${Show Menu}"
+                ng-click="toggleMobileMenuVisibility($event)">
+          <div ng-if="!isMobileViewOnDesktopExpanded">
+             <span class="label label-as-badge label-primary">{{data.todoCount + data.requestCount + cartItemCount}}</span>
+             <span class="icon-bar"></span>
+             <span class="icon-bar"></span>
+             <span class="icon-bar"></span>
+          </div>
+        </button>
+
+        <!-- Mobile menu items dialog modal-->
+      	<div ng-show="isMobileViewOnDesktopExpanded" id = "mobile-menu-items-modal" ng-include="'polaris-menuitems-mobileview'"></div>
+      
+      </div>
+
+      <!-- Header Navbar -->
+      <div ng-if="!(showMobileMenuOnDesktop || mobileDevice)" class="navbar-right">
+        <div class="height-adjust">
+          <ul class="nav navbar-nav" role="presentation">
+            <li class="hidden-xs sp-loading-indicator la-sm" ng-class="{'invisible': !loadingIndicator}" >
+               <div></div>
+               <div></div>
+               <div></div>
+            </li>
+            
+            <!-- Header search widget for desktop view -->
+            <li class="gt-menu-item" ng-if="data.showTypeAheadSearch" >
+              <div ng-show="!data.excludeSeachForPages.includes(newPageId)" class="desktop-headersearch-wrapper">
+                <div id="searchBox" class="hide-search visibility-collapse desktop-headersearch">
+                  <sp-widget widget="data.typeAheadSearch"></sp-widget>
+                </div>
+                <div aria-expanded="false" class="desktop-headersearch-icon" id="searchbox-icon" ng-click="showAndExpandSearch()" tabindex = "0" aria-label="${Show search box}">
+                  <i class="fa fa-search searchprimary"></i>
+                </div>
+              </div>
+            </li>
+            
+            
+            <li class="gt-menu-item" aria-label="Custom Widget">
+               <sp-widget widget="::data.embeddedWidget"></sp-widget>
+            </li>
+            <li class="gt-menu-item" id="more-items" role="presentation" ng-if="data.showMoreItems" >
+              <a ng-if="(data.moreItems.length === 1) && (data.moreItems[0].label !== data.moreItems[0].shortLabel)"
+                 href="{{data.moreItems[0].href}}"
+                 data-toggle="tooltip"
+                 data-placement="bottom"
+                 data-original-title="${{{data.moreItems[0].label}}}"
+                 aria-label="${{{data.moreItems[0].label}}}"
+                 >
+                <span ng-bind-html="'${' + data.moreItemsTitle + '}'" aria-hidden="true"></span>
+              </a>
+              <a ng-if="(data.moreItems.length === 1) && (data.moreItems[0].label === data.moreItems[0].shortLabel)"
+                 href="{{data.moreItems[0].href}}"
+                 aria-label="${{{data.moreItems[0].label}}}"
+                 >
+                <span ng-bind-html="'${' + data.moreItemsTitle + '}'" aria-hidden="true"></span>
+              </a>
+              <a href
+                 ng-if="data.moreItems.length > 1"
+                 id="more-items-button"
+                 data-toggle="dropdown"
+                 data-target="more-items-dropdown"
+                 data-placement="bottom"
+                 aria-label="${{{data.moreItemsTitle}}}"
+                 >
+                <span ng-bind-html="'${' + data.moreItemsTitle + '}'" aria-hidden="true"></span>
+                <i class="fa collapse-margin m-l-xs fa-caret-down"></i>
+              </a>
+              <ul id="more-items-dropdown" ng-if="data.moreItems.length > 1" class="dropdown-menu"
+                   aria-label="${{{data.moreItemsTitle}}}">
+                <li role="presentation"
+                    ng-repeat="item in data.moreItems"
+                    class="ng-scope dropdown-menu-line header-menu-item">
+                  <a ng-if="item.label !== item.shortLabel"
+                     href="{{item.href}}"
+                     data-toggle="tooltip"
+                     data-placement="bottom"
+                     data-original-title="${ {{item.label}} }"
+                     aria-label="{{item.label}}"
+                    >
+                    <span ng-bind-html="'${' + item.shortLabel + '}'" aria-hidden="true"></span>
+                  </a>
+                  <a ng-if="item.label === item.shortLabel"
+                     href="{{item.href}}"
+                     aria-label="{{item.label}}"
+                     >
+                    <span ng-bind-html="'${' + item.shortLabel + '}'" aria-hidden="true"></span>
+                  </a>
+                </li>
+              </ul>
+            </li>
+            
+            <!-- Cart, tours, and Wishlist -->
+              <li class="gt-menu-item" >
+                <sp-widget widget="data.top.menu" id="menu_item"></sp-widget>
+              </li>  
+              <li class="gt-menu-item" aria-label="Language Selector">
+                <sp-widget widget="::data.langSelector"></sp-widget>
+              </li>
+            
+            <li>
+              <div sp-navbar-toggle="" class="navbar-right" id="sp-nav-bar" >
+                <ul ng-if="::(!user.logged_in && page.id != portal.login_page_dv && !data.hasLogin)" class="nav navbar-nav" role="presentation">
+                  <li class="login"><a href ng-click="openLogin()" role="button">${Login}</a></li>
+                </ul>
+                <ul ng-if="::user.logged_in" class="nav navbar-nav" role="presentation">
+                  <!-- chat, avatar, and logout -->
+                  <li class="dropdown hidden-xs">
+                    <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown" aria-label="{{c.userLabel}}" role="button" aria-haspopup="true" aria-expanded="false">
+                      <span class="navbar-avatar"><sn-avatar class="avatar-small-medium" primary="avatarProfile" /></span>
+                      <span class="visible-lg-inline">{{::user.name}}</span>
+                    </a>
+                    <ul class="dropdown-menu" role="presentation">
+                      <li><a ng-href="?id={{::data.supportProfilePortal}}">${Profile}</a></li>
+                      <li class="logout"><a href="{{::portal.logoutUrl}}">${Logout}</a></li>
+                    </ul>
+                  </li>
+                  <li class="visible-xs-block"><a ng-href="?id={{::data.supportProfilePortal}}"><span class="navbar-avatar"><sn-avatar class="avatar-small-medium" primary="avatarProfile" /></span>{{::user.name}}</a></li>
+                  <li class="visible-xs-block logout"><a href="{{::portal.logoutUrl}}">${Logout}</a></li>
+                </ul>
+              </div>
+            </li>
+
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+      
+  <!-- Sub Navbar on Desktop -->
+  <div class="navbar-collapse sub-navbar clearfix collapse collapsed hidden-xs"
+       ng-class="{ 'in': expanded, 'collapsed': !expanded, 'sub-navbar--mobile-view': showMobileMenuOnDesktop }"
+       ng-if="data.showSubHeader && !showMobileMenuOnDesktop && !mobileDevice">
+    <div>
+      <sp-widget widget="data.sub.menu"></sp-widget>
+    </div>
+  </div>
+
+  <!-- Analytics -->
+  <div ng-if="data.analyticsSupportEnabled">
+    <widget id="cda-site-analytics" options="{'enable_logging': false}"></widget>
+  </div>
+</nav>

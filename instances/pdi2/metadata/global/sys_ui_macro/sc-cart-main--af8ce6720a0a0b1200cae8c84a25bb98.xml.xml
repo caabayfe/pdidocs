@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:call function="sc_cart_current_price.xml" arguments="sysparm_cart_edit" />
+<g:evaluate var="jvar_display" expression="
+   var jvar_display = 'display: none;';
+   if(${show_price})
+      jvar_display = '';
+   jvar_display;"/>
+ <g:evaluate var="jvar_plus_symbol" expression="
+   var jvar_plus_symbol = '';
+   if(${show_price})
+      jvar_plus_symbol = '+';
+   jvar_plus_symbol;"/>
+<g:evaluate var="jvar_recurring_display" expression="
+   var jvar_recurring_display = 'display: none;';
+   if(${show_recurring_price})
+     if (${!sc_cat_item.recurring_frequency.nil()})
+      jvar_recurring_display = '';
+   jvar_recurring_display;"/>
+<g:evaluate var="jvar_label_display" expression="
+   var jvar_label_display = 'display: none;';
+   if(${show_price || show_recurring_price})
+      jvar_label_display = '';
+   jvar_label_display;"/>
+<g:evaluate var="jvar_quantity_display" expression="
+   var jvar_quantity_display = 'display: none;';
+   if(${show_quantity &amp;&amp; sc_cat_item.no_quantity == false})
+      jvar_quantity_display = '';
+   jvar_quantity_display;"/>
+	<tbody data-sn-macro-sys-id="${jvar_macro_sys_id}">
+	<tr style="padding: 0px;">
+		<td class="sc_cart_left" style="vertical-align: top;">
+                        <span id="price_label_span" style="${jvar_label_display}">
+			        <strong>${sc_cat_item.price.sys_meta.label}</strong>
+			</span>						
+		</td>
+		<td class="cart_price_cell sc_cart_right">
+			<span id="price_span" style="${jvar_display}">
+				<g:currency_format value="${d_cart_item_price}" />
+			</span>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" class="cart_price_cell sc_cart_right">
+			<span id="recurring_price_span" style="${jvar_recurring_display}">
+	        	${jvar_plus_symbol} <g:currency_format value="${d_cart_item_recurring_price}" /> 
+	    	</span>
+			
+	       	<span id="recurring_frequency_span" style="${jvar_recurring_display}">
+	        	${sc_cat_item.recurring_frequency.getDisplayValue()}
+	       	</span>
+		</td>
+	</tr>
+		<tr style="padding: 0px;${jvar_quantity_display}">
+			<td class="sc_cart_left" style="vertical-align: top;">
+				<strong><label for="quantity" style='${jvar_quantity_display}'>${gs.getMessage('catalog_quantity')}</label></strong>
+			</td>
+			<td class="sc_cart_left">
+				<g:evaluate expression="var cl = GlideScriptChoiceList.getChoiceList('sc_cart_item', 'quantity');"/>
+				<select id="quantity" class="form-control" onchange="calcPrice()" style='width:auto; ${jvar_quantity_display}'>
+					<g:options choiceList="${cl}" choiceValue="${cart_item_quan}" />
+				</select>	
+			</td>
+		</tr>	
+		<tr style="padding: 0px;${jvar_quantity_display}" class="sc_cart_subtotal_row">
+			<td colspan="2"><hr/></td>
+		</tr>	
+		<tr style="padding: 0px;${jvar_quantity_display}">
+			<td class="sc_cart_left" style="vertical-align: top; padding-top: 5px;">
+				<span id="price_subtotal_label_span" style="${jvar_label_display}">
+					<strong>${gs.getMessage('Subtotal')}</strong>
+				</span>
+			</td>
+			<td class="cart_price_cell"> 
+				<span id="price_subtotal_span" style="${jvar_display}">
+					<g:currency_format value="${d_cart_item_subtotal}" />
+				</span>
+				<input type="HIDDEN" id="price_subtotal_value" name="price_subtotal_value" value="${sc_cat_item.price.getReferenceValue()}"/>
+			</td>
+		</tr>
+		<tr style="${jvar_quantity_display}">
+			<td colspan="2" class="cart_price_cell sc_cart_right">
+				<span id="recurring_price_subtotal_span" style="${jvar_recurring_display}">
+		        	${jvar_plus_symbol} <g:currency_format value="${d_cart_item_recurring_subtotal}" /> 
+		    	</span>
+				
+		       	<span id="recurring_frequency_subtotal_span" style="${jvar_recurring_display}">
+		        	${sc_cat_item.recurring_frequency.getDisplayValue()}
+		       	</span>
+				<input type="HIDDEN" id="recurring_price_subtotal_value" name="recurring_price_subtotal_value" value="${sc_cat_item.recurring_price.getReferenceValue()}"/>
+				<input type="HIDDEN" id="recurring_frequency_subtotal_value" name="recurring_frequency_subtotal_value" value="${sc_cat_item.recurring_frequency.getDisplayValue()}"/>
+			</td>
+		</tr>
+	
+    <j:set var="jvar_wf" value="${sc_cat_item.workflow}"/>
+    <j:if test="${!empty(jvar_wf)}">
+    	<g:evaluate var="jvar_wf_delivery_time" jelly="true" expression="new Workflow().getEstimatedDeliveryTime(jelly.jvar_wf);" />
+		<tr style="padding: 0px;">
+			<j:if test="${jvar_wf_delivery_time != ''}">
+				<td class="sc_cart_left" id="sc_delivery_time_label_cell">
+				   <strong>${gs.getMessage('catalog_delivery_time')}</strong>
+		        </td>					
+				<td id="sc_delivery_time_cell" class="sc_cart_right">${jvar_wf_delivery_time}</td>
+			</j:if>
+        </tr>
+    </j:if>
+
+    <j:if test="${empty(jvar_wf)}">
+		<j:if test="${sc_cat_item.delivery_plan.total_delivery_time.getDisplayValue().length > 0}">	
+			<tr style="padding: 0px;">
+				<td class="sc_cart_left" id="sc_delivery_time_label_cell">
+					<strong>${gs.getMessage('catalog_delivery_time')}</strong>							
+				</td>					
+				<td id="sc_delivery_time_cell" class="sc_cart_right">
+					${sc_cat_item.delivery_plan.total_delivery_time.getDisplayValue()} 						
+				</td>
+			</tr>
+		</j:if>
+	</j:if>
+	<j:if test="${empty(jvar_wf)}">
+		<j:if test="${sc_cat_item.delivery_plan.total_delivery_time.getDisplayValue().length == 0}">	
+			<tr style="padding: 0px;">
+				<td class="sc_cart_left" id="sc_delivery_time_label_cell">
+					<strong>${gs.getMessage('catalog_delivery_time')}</strong>							
+				</td>					
+				<td id="sc_delivery_time_cell" class="sc_cart_right">
+					${GlideappCatalogItem.get(sc_cat_item.sys_id).getEstimatedDeliveryTime()} 						
+				</td>
+			</tr>
+		</j:if>
+	</j:if>
+	</tbody>
+</j:jelly>

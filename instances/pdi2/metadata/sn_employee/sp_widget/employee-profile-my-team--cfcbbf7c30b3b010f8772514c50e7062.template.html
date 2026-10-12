@@ -1,0 +1,178 @@
+<div id="my-team-panel" class="panel panel-default b" ng-if="showTeamWidget()">
+  <div ng-class="{true: 'myteam-panel-header-mobile', false: 'myteam-panel-header'}[isMobile()]">
+    <h2 class="h4 panel-title ng-binding">{{c.data.widgetTitle}}</h2>
+    <div>
+      <sp-widget widget="data.publicProfileWidget"></sp-widget>
+    </div>
+  </div>
+  <hr class="seprator" aria-hidden="true">
+  <div class="panel-body my-team-panel-body">
+    <div ng-class="{true: 'inner-panel-body-mobile', false: 'inner-panel-body'}[isMobile()]" aria-label="Manager coworker direct reports" role="group">
+      
+    <div class="managersContainer" ng-if="managersCount > 0">
+        
+        <div class="managersContainerHeader" id="manager" ng-click="toggleManagersSection()" tabindex="0">
+          <h3 class="team_header m-t-none m-b-none">${Managers ({{managersCount}})}</h3>
+          <i data-toggle="tooltip" data-placement="top" data-container="body" data-title="${Expand/Collapse}" class="fa accordion-icon expand-icon" ng-class="showManagersSection ? 'fa-chevron-up' : 'fa-chevron-down' "></i>
+        </div>
+        
+        <div class="managersData" ng-if="showManagersSection">
+          
+          <div class="directManager"  ng-if="myManager">
+            <h3 class="team_header m-t-none m-b-none">${Direct manager}</h3>
+            <div class="row info-row" ng-init="member = myManager">
+              <div class="user-detail-container col-10">
+                <div class="user-avatar col-2" aria-hidden="true">
+                  <sn-avatar class="avatar-large" primary="member.sys_id"></sn-avatar>
+                </div>
+                <div class="col-10">
+                  <a tabindex="0" ng-href="?id=employee_profile&sys_id={{member.sys_id}}" class="name col-xs-12" aria-label="Open profile: {{member.name + ' '+ member.pronoun}}">{{member.name + ' '+ member.pronoun}}</a>
+                  <div class="title col-xs-12">{{member.title}}</div>
+                </div>
+              </div>
+              <div id="more-{{member.sys_id}}" class="more-info col-2">
+                <button class="show-more-button" ng-click="showMoreinfo(member)" aria-label="View Profile" data-toggle="tooltip" data-placement="top" data-container="body" data-title="${View profile}" aria-haspopup="dialog">
+                  <fa name="ellipsis-h"/>
+                </button>
+              </div>
+              <ng-include src="'my-team-popover'" />
+            </div>
+          </div>
+
+          <div class="dottedManagers" id="dotted_managers"  ng-if="dottedManagers && dottedManagers.length > 0" >
+            <h3 class="team_header m-t-none m-b-none">${Other managers ({{dottedManagers.length}})}</h3>
+              <div class="row info-row" ng-repeat="member in dottedManagers | limitTo: showFullInfoDottedManagers ? dottedManagers.length : numberOfDottedManagersDisplayed">
+                <div class="user-detail-container col-10">
+                  <div class="user-avatar col-2" aria-hidden="true">
+                    <sn-avatar class="avatar-large" primary="member.sys_id" show-presence="false"></sn-avatar>
+                  </div>
+                  <div class="col-10">
+                    <a tabindex="0" class="name col-xs-12" ng-href="?id=employee_profile&sys_id={{member.sys_id}}" aria-label="Open profile: {{member.name + ' '+ member.pronoun}}">{{member['name'] + ' ' + member['pronoun']}}</a>
+                    <div class="title col-xs-12">{{member['title']}}</div>
+                  </div>
+                  
+                </div>
+                <div id="more-{{member.sys_id}}" class="more-info col-2">
+                  <button class="show-more-button" ng-click="showMoreinfo(member)" aria-label="View profile" data-toggle="tooltip" data-placement="top" data-container="body" data-title="${View profile}" aria-haspopup="dialog">
+                    <fa name="ellipsis-h"/>
+                  </button>
+                </div>
+                <ng-include src="'my-team-popover'" />
+            </div>
+            <div ng-if="dottedManagers.length > data.limitTo" align="center" class="more_link">
+              <a href="javascript:void(0)" ng-if="!showFullInfoDottedManagers && numberOfDottedManagersLeftToDisplay>0" ng-click="updateList('dotted_managers',true)">${Show {{numberOfDottedManagersLeftToDisplay >= c.show_more_count ? c.show_more_count : numberOfDottedManagersLeftToDisplay}} more }</a>
+              <a href="javascript:void(0)" ng-if="showFullInfoDottedManagers || numberOfDottedManagersLeftToDisplay==0" ng-click="updateList('dotted_managers',false)">${Show less}</a>
+            </div>
+        </div>
+          
+      </div>
+    </div>
+      
+    <hr class="seprator" ng-if="managersCount> 0" aria-hidden="true"/>
+      
+    <div class = "reportsContainer" ng-if=" directReports.length || dottedReports.length ">
+      
+      <div class="reportsContainerHeader" id="reports" ng-click="toggleReportsSection()" tabindex="0">
+          <h3 class="team_header m-t-none m-b-none">${Reports ({{directReports.length + dottedReports.length }})}</h3>
+          <i data-toggle="tooltip" data-placement="top" data-container="body" data-title="${Expand/Collapse}" class="fa accordion-icon expand-icon" ng-class="showReportsSection ? 'fa-chevron-up' : 'fa-chevron-down' "></i>
+      </div>
+      
+      <div class="reportsData" ng-if="showReportsSection">
+        
+        <div class="directReports" id="direct_reports" ng-if="directReports && directReports.length > 0">
+          <h3 class="team_header m-t-none m-b-none">${Direct reports ({{directReports.length}})}</h3>
+          <div class="row info-row" ng-repeat="member in directReports | limitTo: showFullInfoReports ? directReports.length : numberOfReporteeDisplayed">
+            <div class="user-detail-container col-10">
+              <div class="user-avatar col-2" aria-hidden="true">
+                <sn-avatar class="avatar-large" primary="member.sys_id" show-presence="false"></sn-avatar>
+              </div>
+              <div class="col-10">
+                <a tabindex="0" class="name col-xs-12" ng-href="?id=employee_profile&sys_id={{member.sys_id}}" aria-label="Open profile: {{member.name + ' '+ member.pronoun}}">{{member['name'] + ' ' + member['pronoun']}}</a>
+                <div class="title col-xs-12">{{member['title']}}</div>
+              </div>
+            </div>
+            <div id="more-{{member.sys_id}}" class="more-info col-2">
+              <button class="show-more-button" ng-click="showMoreinfo(member)" aria-label="View profile" data-toggle="tooltip" data-placement="top" data-container="body" data-title="${View profile}" aria-haspopup="dialog">
+                <fa name="ellipsis-h"/>
+              </button>
+            </div>
+            <ng-include src="'my-team-popover'" />
+          </div>
+          <div ng-if="directReports.length > data.limitTo" align="center" class="more_link">
+            <a href="javascript:void(0)" ng-if="!showFullInfoReports && numberOfReporteeLeftToDisplay>0" ng-click="updateList('direct_reports',true)">${Show {{numberOfReporteeLeftToDisplay >= c.show_more_count ? c.show_more_count : numberOfReporteeLeftToDisplay}} more }</a>
+            <a href="javascript:void(0)" ng-if="showFullInfoReports || numberOfReporteeLeftToDisplay==0" ng-click="updateList('direct_reports',false)">${Show less}</a>
+          </div>
+        </div>
+
+        <div class="dottedReports" id="dotted_reports" ng-if="dottedReports && dottedReports.length > 0" >
+          <h3 class="team_header m-t-none m-b-none">${Other reports ({{dottedReports.length}})}</h3>
+          <div class="row info-row" ng-repeat="member in dottedReports | limitTo: showFullInfoDottedReports ? dottedReports.length : numberOfDottedReportsDisplayed">
+            <div class="user-detail-container col-10">
+              <div class="user-avatar col-2" aria-hidden="true">
+                <sn-avatar class="avatar-large" primary="member.sys_id" show-presence="false"></sn-avatar>
+              </div>
+              <div class="col-10">
+                <a tabindex="0" class="name col-xs-12" ng-href="?id=employee_profile&sys_id={{member.sys_id}}" aria-label="Open profile: {{member.name + ' '+ member.pronoun}}">{{member['name'] + ' ' + member['pronoun']}}</a>
+                <div class="title col-xs-12">{{member['title']}}</div>
+              </div>
+            </div>
+            <div id="more-{{member.sys_id}}" class="more-info col-2">
+              <button class="show-more-button" ng-click="showMoreinfo(member)" aria-label="View profile" data-toggle="tooltip" data-placement="top" data-container="body" data-title="${View profile}" aria-haspopup="dialog">
+                <fa name="ellipsis-h"/>
+              </button>
+            </div>
+            <ng-include src="'my-team-popover'" />
+          </div>
+          <div ng-if="dottedReports.length > data.limitTo" align="center" class="more_link">
+            <a href="javascript:void(0)" ng-if="!showFullInfoDottedReports && numberOfDottedReportsLeftToDisplay>0" ng-click="updateList('dotted_reports',true)">${Show {{numberOfDottedReportsLeftToDisplay >= c.show_more_count ? c.show_more_count : numberOfDottedReportsLeftToDisplay}} more }</a>
+            <a href="javascript:void(0)" ng-if="showFullInfoDottedReports || numberOfDottedReportsLeftToDisplay==0" ng-click="updateList('dotted_reports',false)">${Show less}</a>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+                                  
+    <hr class="seprator" ng-if="(directReports.length || dottedReports.length) && teamMembers && teamMembers.length>0" />
+      
+    <div class="colleaguesContainer" ng-if="teamMembers && teamMembers.length>0">
+       <div class="colleaguesContainerHeader" id="colleagues" ng-click="toggleCoworkersSection()" tabindex="0">
+          <h3 class="team_header m-t-none m-b-none">${Coworkers ({{teamMembers.length}})}</h3>
+          <i data-toggle="tooltip" data-placement="top" data-container="body" data-title="${Expand/Collapse}" class="fa accordion-icon expand-icon" ng-class="showCoworkersSection ? 'fa-chevron-up' : 'fa-chevron-down' "></i>
+      </div>
+      
+      <div class="colleaguesData" ng-if="showCoworkersSection" >
+        <div class="row info-row" ng-repeat="member in teamMembers | limitTo: showFullInfoCollegues ? teamMembers.length : numberOfCoworkersDisplayed">
+          <div class="user-detail-container col-10">
+            <div class="user-avatar col-2" aria-hidden="true">
+              <sn-avatar class="avatar-large" primary="member.sys_id" show-presence="false"></sn-avatar>
+            </div>
+            <div class="col-10">
+              <a tabindex="0" class="name col-xs-12" ng-href="?id=employee_profile&sys_id={{member.sys_id}}" aria-label="Open profile: {{member.name + ' '+ member.pronoun}}">{{member['name'] + ' ' + member['pronoun']}}</a>
+              <div class="title col-xs-12">{{member['title']}}</div>
+            </div>
+          </div>
+          <div id="more-{{member.sys_id}}" class="more-info col-2">
+            <button class="show-more-button" ng-click="showMoreinfo(member)" aria-label="View profile" data-toggle="tooltip" data-placement="top" data-container="body" data-title="${View profile}" aria-haspopup="dialog">
+              <fa name="ellipsis-h"/>
+            </button>
+          </div>
+          <ng-include src="'my-team-popover'" />
+        </div>
+        <div ng-if="teamMembers.length > data.limitTo" align="center" class="more_link">
+          <a href="javascript:void(0)" ng-if="!showFullInfoCollegues && numberOfCoworkersLeftToDisplay>0" ng-click="updateList('colleagues',true)">${Show {{numberOfCoworkersLeftToDisplay >= c.show_more_count ? c.show_more_count : numberOfCoworkersLeftToDisplay}} more }</a>
+          <a href="javascript:void(0)" ng-if="showFullInfoCollegues || numberOfCoworkersLeftToDisplay==0" ng-click="updateList('colleagues',false)">${Show less}</a>
+        </div>
+       </div>
+      </div>
+      
+    </div>
+
+    <hr class="seprator" aria-hidden="true"/>
+    <div class="my-team-footer">
+      <a class="widget-button btn btn-link" aria-label="View Org Chart" id="my_org_chart" ng-href="?id=my_org_chart&p={{data.sysUserID}}" >
+        ${View org chart}
+        <fa name="angle-right" class="flip-icon-rtl" />
+      </a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,114 @@
+<g:ui_table>
+  <g:evaluate var="jvar_tablename">
+      RP.getWindowProperties().get('table_name');
+  </g:evaluate>
+
+  <g:evaluate var="jvar_fieldname">
+      RP.getWindowProperties().get('field_name');
+   </g:evaluate>
+
+  <g:evaluate var="jvar_allow_assign_field" jelly="true">
+      var accessChecker = new GlideAccessChecker("sys_security_acl", true);
+      accessChecker.canAssignField(jelly.jvar_tablename, jelly.jvar_fieldname); 
+  </g:evaluate>
+  <g2:evaluate var="jvar_is_doctype" expression="GlideMobileExtensions.getDeviceType() == 'doctype'" />
+  <g2:evaluate var="jvar_messages" expression="gs.getAccessMessages()" object="true"/>
+  <g2:evaluate var="jvar_flushMessage" expression="gs.flushAccessMessages()" object="true"/>
+
+
+  <input type="HIDDEN" id="table_name" value="${jvar_tablename}"/>
+  <input type="HIDDEN" id="field_name" value="${jvar_fieldname}"/>
+  <input type="HIDDEN" id="allow_assign_field" value="${jvar_allow_assign_field}"/>
+
+  <j2:forEach var="jvar_message" items="$[jvar_messages]">
+    <script>
+        var alertMsg = { msg: '$[JS:jvar_message]', id: 'scope_alert_msg', type: 'warning' };
+        GlideUI.get().setMsgTags("acl_output_messages", ".acl_outputmsg_div");
+        GlideUI.get().addOutputMessage(alertMsg);
+    </script>
+  </j2:forEach>
+
+  <j2:if test="$[jvar_is_doctype]">
+   <tr>
+      <div id="acl_output_messages" style="display: none;" class="outputmsg_container">
+           <img onclick="glideUI.clearOutputMessages()" class="outputmsg_close" src="images/x.gifx" />
+           <div class="acl_outputmsg_div">
+           </div>
+      </div>
+
+      <td colspan="2">
+		  <label class="col-xs-4 col-sm-4 col-md-4 col-lg-4 no-left-padding">${gs.getMessage('Security Definition for')}:</label>
+		  <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+			  <p class="form-control-static"><b>${RP.getWindowProperties().get('table_name')}.${RP.getWindowProperties().get('field_name')}</b></p>
+		  </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="column_head" colspan="2">
+		  <div class="form-horizontal">
+			<label class="col-xs-4 col-sm-4 col-md-4 col-lg-4 no-left-padding" for="operation">${gs.getMessage('Operation to Secure')}</label>
+			<div class="col-xs-8 col-sm-8 col-md-8 col-lg-8 no-right-padding">
+			  <select name="operation" id="operation" onchange="selectOperation()" class="form-control">
+				<g:evaluate>
+				   var operations = new GlideRecord('sys_security_operation');
+				   operations.orderBy('order');
+				   operations.orderBy('name');
+				   operations.query();
+				</g:evaluate>
+				<j:while test="${operations.next()}">
+					<option value="${operations.sys_id}">${operations.name}</option>
+				</j:while>
+			 </select>
+			</div>
+		  </div>
+      </td>
+    </tr>
+	<tr>
+	<td colspan="2">
+		<hr />
+		</td>
+	  </tr>
+  </j2:if>
+  <j2:if test="$[!jvar_is_doctype]">
+    <tr class="header">
+      <div id="acl_output_messages" style="display: none;" class="outputmsg_container">
+           <img onclick="glideUI.clearOutputMessages()" class="outputmsg_close" src="images/x.gifx" />
+           <div class="acl_outputmsg_div">
+           </div>
+      </div>
+
+      <td colspan="2">${gs.getMessage('Security Definition for')}:
+         ${RP.getWindowProperties().get('table_name')}.${RP.getWindowProperties().get('field_name')}
+      </td>
+    </tr>
+    <tr><td><input type="HIDDEN"/></td></tr>
+    <tr class="header">
+      <td class="column_head" colspan="2">
+        <label for="operation">${gs.getMessage('Operation to Secure')} $[SP]</label>
+        <select name="operation" id="operation" onchange="selectOperation()">
+          <g:evaluate>
+             var operations = new GlideRecord('sys_security_operation');
+             operations.orderBy('order');
+             operations.orderBy('name');
+             operations.query();
+          </g:evaluate>
+          <j:while test="${operations.next()}">
+              <option value="${operations.sys_id}">${operations.name}</option>
+          </j:while>
+       </select>
+      </td>
+    </tr>
+  </j2:if>
+  <tr>
+    <td colspan="2">
+      <g:ui_slushbucket up_down="true"/>
+    </td>
+  </tr>
+  <tr>
+    <td id="status" style="width:75%;"></td>
+    <td align="right">
+      <g:dialog_buttons_ok_cancel ok_id="ok_button"/>
+    </td>
+  </tr>
+
+</g:ui_table>

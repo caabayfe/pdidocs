@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_show_modal">
+	var showModal = false;
+	if (GlidePluginManager.isActive('sn_km_gen_ai')){
+		showModal = new sn_km_gen_ai.KMNowAssistInProductUtils().shouldShowGenAIGenerate(current.isNewRecord(),'task',current.getValue('source'),current.sys_class_name);
+	}
+	showModal;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_timeout">
+	var timeout = 20000;
+	if (GlidePluginManager.isActive('sn_km_gen_ai')){
+		timeout = new sn_km_gen_ai.KMNowAssistInProductUtils().getClientSideTimeout();
+	}
+	timeout;
+	</g2:evaluate>
+	<j2:if test='$[jvar_show_modal]'>
+		<script>
+			jQuery(window).load(function(){
+				addAfterPageLoadedEvent(function() { showGenAIDialog(); });
+			});
+
+			function showGenAIDialog(){
+				var dialog = new GlideModal('knowledge_confirm_genAI_modal');
+				dialog.setPreference('focusTrap', true);
+				dialog.setPreference('sysparm_genai_client_timeout', '$[jvar_timeout]');
+				dialog.setWidth(619);
+				dialog.render();
+			}
+		</script>
+	</j2:if>
+</j:jelly>

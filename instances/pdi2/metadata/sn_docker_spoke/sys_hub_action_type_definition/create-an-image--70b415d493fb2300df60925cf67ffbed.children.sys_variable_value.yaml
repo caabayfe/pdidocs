@@ -1,0 +1,268 @@
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '25'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 01b455d493fb2300df60925cf67ffb46
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: post
+  variable: e85b7ebf47222200b4fad7527c9a71e3
+- document: sys_hub_action_type_definition
+  document_key: 70b415d493fb2300df60925cf67ffbed
+  order: '5'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-11-30 14:36:40
+  sys_id: 08160260776311105fff7277ba5a995f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-11-30 14:36:40
+  value: '{"complexObjectSchema":{"FlowDesigner:FDbf060260ec631110d300cb9657900845":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDbf060260ec631110d300cb9657900845.$type_facets":{"SimpleMapFacet":"{\"sourceId\":\"\",\"default_value\":null,\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"c9becba2-a786-4290-8923-6950337edb7e\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDbf060260ec631110d300cb9657900845\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"sourceUiUniqueId\":\"\",\"sourceType\":\"\",\"hint\":\"\",\"uiType\":\"object\",\"order\":\"5\",\"max_length\":\"-1\"}"}},"serializationFormat":"JSON","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"version":"1.0"}'
+  variable: 48160260776311105fff7277ba5a994f
+- document: sys_hub_step_instance
+  document_key: 41b455d493fb2300df60925cf67ffb04
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:10
+  sys_id: 09b455d493fb2300df60925cf67ffb30
+  sys_mod_count: '4'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-11-30 14:36:39
+  value: |-
+    (function execute(inputs, outputs) {  
+      inputs = new sn_docker_spoke.DockerUtils().trimStringInputs(inputs);
+      var repo_name = inputs.repo_record.repository_name;
+      var repo_type = inputs.repo_record.repository_type;
+      var user_name = inputs.repo_record.user_name.toString();
+      var password = inputs.repo_record.password.getDecryptedValue().toString(); 
+      var email_address = inputs.repo_record.email.toString();
+      var server_address = inputs.repo_record.server_address.toString();
+      var tag = new sn_docker_spoke.DockerUtils().validateTag(inputs.image_tag);
+      
+              if (repo_type == "Private Repository") {
+                             if(user_name && password && email_address && server_address) {
+      	                        var jsonData = {
+      		                                  "username": user_name,
+      		                                  "password": password,
+      		                                  "email": email_address,
+      		                                  "serveraddress": server_address
+      	                                     };
+                             var finalJSON = JSON.stringify(jsonData);
+                             outputs.encoded_value = gs.base64Encode(finalJSON);
+                          } else {
+                          new sn_docker_spoke.DockerUtils().invalidDetails();
+                          }
+              }
+
+      outputs.image_name = repo_name;
+      outputs.repo = repo_name;
+      outputs.tag = tag;
+      outputs.platform = inputs.platform;
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '20'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 0db455d493fb2300df60925cf67ffb46
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: /images/create
+  variable: 3d090af03b23320057a4a2e334efc455
+- document: sys_hub_step_instance
+  document_key: 45b455d493fb2300df60925cf67ffb4b
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 19b455d493fb2300df60925cf67ffb7c
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: |-
+    (function execute(inputs, outputs) {
+      if (inputs.status_code == 200 && inputs.response.indexOf('Error processing tar file') == -1) {
+        outputs.status = "Success";
+        if(inputs.from_image){
+        	outputs.image_name = inputs.from_image;
+        } else if(inputs.repo) {
+        	outputs.image_name = inputs.repo;
+        }
+        outputs.image_tag = inputs.tag;
+      } else if (inputs.status_code == 200 && inputs.response.indexOf('Error processing tar file') != -1) {
+        outputs.status = "Error";
+        outputs = new sn_docker_spoke.DockerErrorHandler().createImageErrorHandler(inputs,outputs); 
+      } else {
+        outputs.status = "Error";
+        outputs = new sn_docker_spoke.DockerErrorHandler().createImageErrorHandler(inputs,outputs);       
+      }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-11-30 14:36:39
+  sys_id: 3f060260776311105fff7277ba5a992f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-11-30 14:36:39
+  value: ''
+  variable: 7a59009bc7522010820469467ec260c0
+- document: sys_hub_action_type_definition
+  document_key: 70b415d493fb2300df60925cf67ffbed
+  order: '6'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-11-30 14:36:40
+  sys_id: 44160260776311105fff7277ba5a995f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-11-30 14:36:40
+  value: '0'
+  variable: 8c160260776311105fff7277ba5a9955
+- document: sys_hub_step_instance
+  document_key: 41b455d493fb2300df60925cf67ffb04
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:10
+  sys_id: 45b455d493fb2300df60925cf67ffb30
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:10
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '25'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 49b455d493fb2300df60925cf67ffb46
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: '{}'
+  variable: 4328e2fb47222200b4fad7527c9a7164
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '15'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 4db455d493fb2300df60925cf67ffb45
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-09-07 13:39:37
+  value: http://54.74.21.190:2375
+  variable: a67a8ef03b23320057a4a2e334efc472
+- document: sys_hub_step_instance
+  document_key: 45b455d493fb2300df60925cf67ffb4b
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 55b455d493fb2300df60925cf67ffb7c
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-11-30 14:36:39
+  sys_id: 77060260776311105fff7277ba5a992f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-11-30 14:36:39
+  value: '1'
+  variable: 58715a1c53f22010d3a8ddeeff7b1248
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '10'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 85b455d493fb2300df60925cf67ffb46
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: adf80925db0bd300dd14596e5e96198c
+  variable: 262882f03b23320057a4a2e334efc4f0
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '13'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: 89b455d493fb2300df60925cf67ffb45
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: 18409d8007482000dada43c0d1021e8f
+  variable: c30a451d2f201300a09a839fb18c95b4
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '12'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: c1b455d493fb2300df60925cf67ffb46
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f11ebf865f101300a09a2abd7f466652
+- document: sys_hub_step_instance
+  document_key: 81b455d493fb2300df60925cf67ffb35
+  order: '30'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 05:20:11
+  sys_id: c5b455d493fb2300df60925cf67ffb45
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 05:20:11
+  value: '{}'
+  variable: 371837f1c71003007b237f48cb9763b0
+- document: sys_hub_action_type_definition
+  document_key: 70b415d493fb2300df60925cf67ffbed
+  order: '0'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-02-19 07:37:47
+  sys_id: fc343190933f2300df60925cf67ffbe9
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-02-19 07:37:47
+  value: ''
+  variable: ddb455d493fb2300df60925cf67ffb81

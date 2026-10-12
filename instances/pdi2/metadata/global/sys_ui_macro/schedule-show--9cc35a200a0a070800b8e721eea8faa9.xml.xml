@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_guid" expression="gs.generateGUID(this);" />
+    <j:set var="jvar_n" value="show_schedule:${ref}" />
+    <a id="${jvar_n}" onclick="showSchedule('${jvar_n}');" name="${jvar_n}" style="visibility: hidden">
+        <img border="0" tabindex="0" aria-label="Show Schedule" role="button" src="images/small_calendar.gifx" title="${gs.getMessage('Show Schedule')}" alt="Show Schedule" style="margin: auto" />
+    </a>
+    <script>
+        // show link if populated, hide if not
+        function onChange_${jvar_guid}(element, original, changed, loading) {
+            var visibility = 'hidden';
+            if (changed.length > 0)
+                visibility = 'visible';
+            var e = gel('${jvar_n}');
+            e.style.visibility = visibility;
+        }
+
+        // show schedule if the sys_id is populated
+        function showSchedule(name) {
+            var fieldName = name.split(':')[1];
+            var n = gel(fieldName);
+            n = n.value;
+            if (n.length == 0) {
+                alert(new GwtMessage().getMessage("A schedule must be specified first"));
+            } else {
+                showSchedulePopup(n, fieldName);
+            }
+        }
+
+        // generic show schedule function for sys_id
+        function showSchedulePopup(sys_id, fieldName) {
+            var url = 'show_schedule.do?sysparm_stack=no';
+            url += '&amp;amp;';
+            url += 'sysparm_sys_id=' + sys_id;
+            url += '&amp;amp;';
+            url += 'sysparm_include_view=monthly,weekly,daily,oldtimeline';
+            g_navigation.open(url, '_blank ');
+        }
+
+        // create the onchange handler
+        var h = new GlideEventHandler('onChange_${jvar_guid}', onChange_${jvar_guid}, '${ref}');
+        g_event_handlers.push(h);
+    </script>
+</j:jelly>

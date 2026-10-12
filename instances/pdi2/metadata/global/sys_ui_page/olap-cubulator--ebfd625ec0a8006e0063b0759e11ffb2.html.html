@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:inline template="sys_print_button.xml"/>
+  <j:if test="${!RP.isPrint()}">		
+	<script src="scripts/olap.js" />
+  </j:if>
+  <style>
+  SELECT.multi
+  {
+    width: 120px;
+  }
+  DIV.label 
+  {
+   margin-top: 2px;
+   margin-bottom: 2px;
+   font-weight: bold;
+  }
+  </style>
+  <j:if test="${RP.isPrint()}" >
+	<div align="left">
+		<label style="font-weight: bold; font-size: 18;">${sysparm_title}</label>
+	</div>	
+  </j:if>   
+  <g:evaluate var="jvar_admin" expression="gs.hasRole('admin')" />
+  <form name="cubulator" method="get" action="olap_cubulator.do" onsubmit="javascript:olapSubmit()">
+    <j:if test="${!RP.isPrint()}">
+		<table class="wide" cellspacing="0">
+		  <tr class="header" border="0" cellspacing="0">
+			<td>
+			  <div class="caption"><img src="images/context.gifx" alt="OLAP Cubulator: ${sysparm_title}"/>OLAP Cubulator: ${sysparm_title}</div>
+			</td>
+			<td align="right" nowrap="true"></td>
+		  </tr>
+		</table>
+	</j:if>
+	<j:if test="${!RP.isPrint()}">
+	
+	<fieldset>
+	<table cellspacing="0">
+      <tr border="0" cellspacing="0">
+		<td>
+		<INPUT class="filerTableButton" type="submit" value="Run Query" name="run" />
+	    <j:if test="${sysparm_create != 'true'}">
+		<INPUT class="filerTableButton" type="button" value="Update" name="save" onclick="cubulator.sysparm_action.value = 'update';cubulator.onsubmit();cubulator.submit();" />	
+		</j:if>
+		<INPUT class="filerTableButton" type="button" value="Insert" name="saveas" onclick="cubulator.sysparm_action.value = 'insert';cubulator.onsubmit();cubulator.submit();" />			
+        <j:if test="${jvar_admin == 'true' || sysparm_owner == 'true'}">
+			<INPUT class="filerTableButton" type="button" value="Delete" name="delete" onclick="cubulator.sysparm_action.value = 'delete';cubulator.onsubmit();cubulator.submit();" />
+        </j:if>				
+		</td>
+        <td>
+          <b><label for="sysparm_title">Name:</label></b>
+        </td>
+        <td>
+          <input class="filerTableInput" size="40" style="margin-left: 6px;" type="text" name="sysparm_title" id="sysparm_title"
+               value="${sysparm_title}" />
+        </td>
+        <td>          
+		  <div class="label" style="margin-right: 5px"><label for="cube">Cube:</label></div>
+		</td>
+		<td>
+          <select name="cube" id="cube" onchange="onCubeChange()">
+            <g2:olap_cube_options/>
+          </select>
+        </td>
+	  </tr>
+	</table>
+	</fieldset>
+	<fieldset>
+    <table cellspacing="10">
+      <tr>
+        <td vAlign="top">
+          <div class="label"><label for="dimensions">Available Dimensions</label></div>
+          <select size="8" class="multi" id="dimensions" name="dimensions"></select>
+		</td>
+        <td vAlign="top">
+          <table cellSpacing="0" cellPadding="0" border="0">
+            <tr>
+              <td>
+                <A onclick="replaceOption('columns');">
+                  <IMG height="23" alt="Add" src="images/arrow_rt.gifx?v=2" width="23" border="0" />
+                </A>
+              </td>
+              <td>
+                <div class="label"><label for="columns">Columns (max 1 dimension)</label></div>
+                <select size="2" class="multi" id="columns" name="columns"></select>
+              </td>
+            </tr>
+          </table>
+          <table cellSpacing="0" cellPadding="0" border="0">
+            <tr>
+              <td align="middle" vAlign="top">
+                <div>
+                  <a onclick="olapFlip();">
+                    <img src="images/change.gifx" style="margin-top: 5px; margin-bottom:3px;" alt="Flip column with top row" />
+                  </a>
+                </div>
+                <A onclick="moveOption(document.getElementById('dimensions'),document.getElementById('rows'),'--None--',[],'--None--');">
+                  <IMG height="23" alt="Add" src="images/arrow_rt.gifx?v=2" width="23" border="0" />
+                </A>
+                <div>
+                  <A onclick="moveOption(document.getElementById('rows'),document.getElementById('dimensions'),'--None--',['home'],'--None--');">
+                    <IMG height="23" alt="Remove" src="images/arrow_lt.gifx?v=2" width="23" border="0" />
+                  </A>
+                </div>
+              </td>
+              <td>
+                <div class="label"><label for="rows">Rows</label></div>
+                <select size="4" class="multi" id="rows" name="rows"></select>
+              </td>
+              <td align="left">
+                <A onclick="moveUp(document.getElementById('rows'));">
+                  <IMG height="23" alt="Up" src="images/arrow_up.gifx?v=2" width="23" border="0" style="margin-left:2px; margin-top: 2px;" />
+                </A>
+                <div>
+                  <A onclick="moveDown(document.getElementById('rows'));">
+                    <IMG height="23" alt="Down" src="images/arrow_dwn.gifx?v=2" width="23" border="0" style="margin-left:2px;"/>
+                  </A>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td vAlign="top">
+		  <div class="label" style="margin-right: 5px"><label for="show_empty">Show Empty Cells</label></div>
+          <select name="show_empty" id="show_empty">
+            <option value="none">None</option>
+            <option value="rows">Rows</option>
+            <option value="columns">Columns</option>
+            <option value="all">All</option>
+          </select>
+          <div class="label" style="margin-right: 5px"><label for="order">Order</label></div>
+          <select name="order" id="order">
+            <option value="normal">Rows and Columns</option>
+            <option value="rank_rows">Rank Rows</option>
+            <option value="rank_columns">Rank Columns</option>
+            <option value="top_10">Top 10</option>
+            <option value="top_20">Top 20</option>
+          </select>		  
+		  <div class="label" style="margin-right: 5px"><label for="show_all">Show the ALL member</label></div>
+          <select name="show_all" id="show_all">
+            <option value="none">None</option>
+            <option value="all">Rows and Columns</option>
+            <option value="rows">Rows</option>
+            <option value="columns">Columns</option>
+          </select>
+		  <div class="label" style="margin-right: 5px"><label for="report_type">Report Type</label></div>
+          <select name="report_type" id="report_type" onchange="olapReportChange()" >
+            <option value="list">Rows and Columns</option>
+            <option value="bar">Bar Chart (Vertical)</option>
+            <option value="stacked_bar">Bar Chart (Vertically Stacked)</option>			
+            <option value="horizontal_bar">Bar Chart (Horizontal)</option>
+            <option value="horizontal_stacked_bar">Bar Chart (Horizontally Stacked)</option>			
+            <option value="pie">Pie Chart</option>
+            <option value="time">Time Series</option>
+          </select>
+        </td>
+		<td vAlign="top" colspan="2">
+		  <table>
+		   <div style="display: block;" id="filterdiv">
+		   <tr>
+            <td>
+              <INPUT class="filerTableButton" onclick="olapAddFilter()" type="button"
+               value="Add New Filter" name="Add" ID="Button1" />
+            </td>
+		   </tr>	
+           <tr>
+             <td colspan="2">
+               <TABLE id="filters_table" cellSpacing="0" cellPadding="1" border="0" class="filerTable">
+                 <TBODY id="gcond_filters"></TBODY>
+               </TABLE>
+             </td>
+           </tr>
+		   </div>
+		  </table>
+		</td>        
+      </tr>
+    </table>
+	</fieldset>  
+	
+	</j:if> <!-- print -->
+	
+    <input type="hidden" id="sysparm_rows" name="sysparm_rows" value="$[sysparm_rows]" />
+    <input type="hidden" id="sysparm_columns" name="sysparm_columns" value="$[sysparm_columns]" />
+    <input type="hidden" id="sysparm_slicer" name="sysparm_slicer" value="$[sysparm_slicer]" />
+    <input type="hidden" id="sysparm_slicer_spec" name="sysparm_slicer_spec" value="$[sysparm_slicer_spec]" />
+    <input type="hidden" id="sysparm_cube" name="sysparm_cube" value="$[sysparm_cube]" />
+    <input type="hidden" id="sysparm_show_empty" name="sysparm_show_empty" value="$[sysparm_show_empty]" />
+    <input type="hidden" id="sysparm_order" name="sysparm_order" value="$[sysparm_order]" />
+    <input type="hidden" id="sysparm_show_all" name="sysparm_show_all" value="$[sysparm_show_all]" />
+    <input type="hidden" id="sysparm_report_type" name="sysparm_report_type" value="$[sysparm_report_type]" />
+    <input type="hidden" id="sysparm_drill_down" name="sysparm_drill_down" value="$[sysparm_drill_down]" /> 
+    <input type="hidden" id="sysparm_action" name="sysparm_action" value="run" /> 
+    <input type="hidden" id="sysparm_global" name="sysparm_global" value="$[sysparm_global]" /> 
+    <input type="hidden" id="sysparm_owner" name="sysparm_owner" value="$[sysparm_owner]" /> 
+    <input type="hidden" id="sysparm_pages" name="sysparm_pages" value="$[sysparm_pages]" /> 
+    <input type="hidden" id="sysparm_page_option" name="sysparm_page_option" value="$[sysparm_page_option]" /> 
+  </form>
+  <table width="100%">
+	<g2:olap_view />
+  </table>
+	<form name="cubulator2">
+	   <j:if test="${jvar_drill_names != ''}">
+		<input type="hidden" id="sysparm_drill_names" name="sysparm_drill_names" value="$[jvar_drill_names]" /> 
+		<input type="hidden" id="sysparm_drill_values" name="sysparm_drill_values" value="$[jvar_drill_values]" /> 
+	   </j:if>		
+	</form>
+</j:jelly>

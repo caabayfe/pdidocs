@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/restapi/lib/js_includes_explorer.js" includes="true" />
+	<g:evaluate var="jvar_check_role" expression="gs.hasRole('virtual_agent_admin')"/>
+	<g:evaluate var="jvar_check_admin_role" expression="gs.hasRole('admin')"/>
+
+	<j:if test="${jvar_check_role == 'false'}">
+		<g:inline template="not_allowed.xml"/>
+	</j:if>
+
+	<j:if test="${jvar_check_role == 'true'}">
+		<nav class="navbar navbar-default" role="navigation">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<button id="back_button" class="btn btn-default icon-chevron-left navbar-btn" onclick="history.go(-1)" type="button"></button>
+					<h1 class="navbar-title" style="display:inline-block;">${gs.getMessage("Connections")}</h1>
+				</div>
+			</div>
+		</nav>
+
+		<div style="padding:5px">
+			<h4  style="font-weight:bold; padding-bottom: 5px">${gs.getMessage('Connect your Virtual or Live Agent to other conversational channels')}</h4>
+			<p style="line-height: 1rem"> ${gs.getMessage('We provide connection setup apps for many channels to get you up and running with these integrations in minutes.')} <br />
+			${gs.getMessage('You can also setup a custom connection to a conversational channel.')} </p>
+
+			<hr style="marginBottom:11px"/>
+
+			<p style="font-size:15px; font-weight:bold; padding-bottom:10px">${gs.getMessage('Here are your current channel connections')}</p>
+
+			<g:macro_invoke macro="cs_provider_list" />
+
+			<hr style="marginBottom:11px"/>
+
+			<p  style="font-size:15px; font-weight:bold; padding-bottom:20px">${gs.getMessage('Get the connection app to set up your agent on these channels')}</p>
+
+			<div data-doctype="true" ng-app="sn_vaIntergrationApp">
+				<div ng-controller="mainCtrl" ng-init="getStoreApps()">
+
+					<div class="container-fluid" ng-repeat="app in storeApps" ng-show="!error">
+						<div class="row" style="display: flex; align-items: center;">
+
+							<div class="form-field-addons">
+								<img src="{{app.icon}}.iix" width="40" height="40"></img>
+
+								<label class="control-label" style="padding-left: 20px; font-size: 15px; line-height:40px">
+									<span class="required-marker"></span>${gs.getMessage("{{app.name}}")}
+								</label>
+
+							</div>
+
+							<div class="form-field-addons" style="position:absolute; right:15px">
+								<a href="{{app.link}}" class="btn-secondary btn btn-default" target='_blank' ng-disabled='disableIfInstalled("{{app.button}}")'>${gs.getMessage("{{app.button}}")}</a>
+							</div>
+						</div>
+						<hr>
+						</hr>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</j:if>
+
+
+</j:jelly>

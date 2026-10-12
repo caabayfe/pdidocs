@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <g2:evaluate var="jvar_maxDeviceCount" jelly="true">
+       jvar_maxDeviceCount = gs.getProperty('glide.trusted.device.max.count', 3);
+   </g2:evaluate>
+   
+	<j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates()}">
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+	</j:if>
+	<link href="84f0346b87120300cfab6dd207cb0b72.cssdbx?" rel="stylesheet" type="text/css"/>
+	<link rel="stylesheet" type="text/css" href="scripts/icon-fonts/font-awesome/css/font-awesome.css"/>
+
+   <g:requires name="styles/retina_icons/retina_icons.css" includes="true"/>
+   <link href="84f0346b87120300cfab6dd207cb0b72.cssdbx?" rel="stylesheet" type="text/css"/>
+<j:if test="${gs.getProperty('glide.authenticate.auth.policy.enabled', 'false') == 'true'}">
+   <j:if test="${gs.getProperty('glide.authenticate.preauth.allow.trusted.device', 'false') == 'true'}">
+	   <g:evaluate jelly="true">  
+		  var deviceRegistration = new GlideRecord('sys_auth_policy_device_app_registry');
+		  deviceRegistration.addQuery('user', gs.getUserID());
+		  deviceRegistration.addQuery('is_registered', true);
+		  deviceRegistration.addQuery('active', true);
+		  deviceRegistration.query();        
+		  deviceRegistration;
+	   </g:evaluate>
+	   <g2:evaluate var="jvar_deviceCount" jelly="true">
+		var grDevice = new GlideAggregate('sys_auth_policy_device_app_registry');
+		if(grDevice.isValid()) {
+			grDevice.addQuery('user', gs.getUserID());
+			grDevice.addQuery('is_registered', true);
+			grDevice.addQuery('active', true);
+			var deviceCount = grDevice.getCount();
+			deviceCount; 
+		   }
+	   </g2:evaluate>
+	   <style type="text/css">
+		  .box {
+		  border: 1px;
+		  margin: 5px;
+		  display: flex;
+		  }
+		  .box_image {
+		  padding: 5px;
+		  margin: 5px;
+		  }
+		  .square img {
+		  height: 75px;
+		  width: 75px;
+		  }
+		  .box_info {
+		  padding: 5px;
+		  margin: 5px;
+		  }
+	   </style>
+	   <nav class="navbar navbar-default" role="navigation">
+		  <div class="container-fluid">
+			 <div class="navbar-header">
+				<button class="btn btn-default icon-chevron-left navbar-btn" title="${gs.getMessage('Back')}" onclick="goBack();"></button>
+				<h1 style="display:inline-block;" class="navbar-title">${gs.getMessage('Register a trusted mobile device')}</h1>
+			 </div>
+		  </div>
+	   </nav>
+
+		<div class="notification notification-success" id="divNotificationMain" style="display:none;">
+			<button data-dismiss="alert" class="btn-icon close icon-cross">
+				<span class="sr-only">${gs.getMessage('Close')}</span>
+			</button>
+		</div>
+
+	   <div style="padding: 0% 15% 0% 15%;">
+
+		  <div>
+			 <div>
+				<h2> ${gs.getMessage('Register Trusted Devices')} </h2>
+			 </div>
+
+			  <hr></hr>
+
+			 <div>
+				 <h4>
+					 <p>
+				 <g:no_escape>${ALLOW_JELLY:gs.getMessage("device_registration_profile_section_message")}</g:no_escape>
+					 </p>
+				 </h4>
+			 </div>
+		  </div>
+
+		  <div>
+			  <h4 style="margin-top:20px"><b>${gs.getMessage('Registered Devices')}</b></h4>
+			 <div>
+				<div class="flex">
+					  <div >
+						 <div id="deviceRegistration" role="tabpanel" aria-labelledby="deviceRegistrationHeader">
+							<div class="container-fluid">
+							   <j:if test="${!deviceRegistration.hasNext()}">
+								  <div >
+									 <p style="font-size: medium;">${gs.getMessage('No devices are registered with this instance')}</p>
+								  </div>
+							   </j:if>
+							</div>
+							<j:while test="${deviceRegistration.next()}">
+							   <div class="col-sm-12 col-md-12 col-lg-12" style="padding: 16px; box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12); margin: 5px;">
+								   <div class="col-sm-2 col-md-2 col-lg-2 img square">
+												 <img
+													src="DeviceTrust.svg" alt="Authenticator app"
+													/>
+											  </div>
+								  <div class="col-sm-10 col-md-10 col-lg-10">
+									 <div class="col-sm-4 col-md-4 col-lg-4">
+										<p>${deviceRegistration.device_name}</p>
+										<p>${gs.getMessage('Registration time:')} ${deviceRegistration.sys_created_on} </p>
+										 <p>${gs.getMessage('Last Login time:')} ${deviceRegistration.last_login_time} </p>
+									 </div>
+									 <div class="col-sm-8 col-md-8 col-lg-8">
+										<a href="#delete">
+											<h4><span id="${deviceRegistration.sys_id}" class="fa fa-trash-o" style="float:right;" aria-label="manage" onclick="openManageDeviceRegistration(this.id)"></span></h4>
+										</a>
+									 </div>
+								  </div>
+							   </div>
+							</j:while>
+						 </div>
+						   <j:if test="${GlideImpersonate().isImpersonating() == false}">
+							  <div>
+								  <a onclick="openDeviceRegistrationSetupDialog()"  role="button">
+									  <h6 style="display: inline-block; padding: 5px;">${gs.getMessage('Add a new trusted mobile device')} </h6>
+								  </a>
+							  </div>
+						  </j:if>
+					  </div>
+				</div>
+			 </div>
+		  </div>
+	 </div>
+	</j:if>
+</j:if>
+</j:jelly>

@@ -1,0 +1,219 @@
+_meta:
+  hash: 76c36c2d2b34980acb9fe53a0b326e6a5de6fb5af482bac73f448a3888ef6bc9
+  hash_version: 1
+  scope: sn_creatorstudio
+  sys_class_name: sys_graphql_schema
+  sys_created_by: admin
+  sys_created_on: 2023-01-24 22:40:34
+  sys_id: d8a3cf520f602110f23ff722ff767e67
+  sys_mod_count: '155'
+  sys_package: 81ac5fe1c7442110408bc8d6f2c260d1
+  sys_scope: 81ac5fe1c7442110408bc8d6f2c260d1
+  sys_update_name: sys_graphql_schema_d8a3cf520f602110f23ff722ff767e67
+  sys_updated_by: admin
+  sys_updated_on: 2025-03-04 19:10:18
+active: 'true'
+application_namespace: snCreatorstudio
+contextual_acl_max_depth: ''
+enforce_acl: c30bd67643302110f3c3d1b4bab8f260
+name: Request App Schema
+namespace: requestApp
+paths: AgentRole:label,AgentRole:sysId,ApplicationPaginated:applicationsCount,ApplicationPaginated:pagination,ApplicationPaginated:results,ApplicationsCount:totalAppCount,ApplicationsCount:totalBookmarkedAppCount,ApplicationsCount:totalOwnedAppCount,ApplicationsCount:totalSharedAppCount,Applicaton:canRead,Applicaton:color,Applicaton:created,Applicaton:createdBy,Applicaton:description,Applicaton:icon,Applicaton:lastAccessed,Applicaton:name,Applicaton:sysId,Created:displayValue,Created:value,Error:errorType,Error:message,Error:scopeId,Error:sysId,Error:tableName,LastAccessed:displayValue,LastAccessed:value,Mutation:createNewRequestAppRequest,Mutation:prepareForDeletion,Mutation:updateRequestApp,NewRequestAppRequest:sysId,Pagination:currentPage,Pagination:pageSize,Pagination:totalPageCount,Pagination:totalRecordCount,ProcessDefinition:active,ProcessDefinition:designerState,ProcessDefinition:label,ProcessDefinition:status,ProcessDefinition:sysId,Query:getApplications,Query:getRequestApp,RecordProducer:name,RecordProducer:sysId,RequestApp:agentRoles,RequestApp:color,RequestApp:createdBy,RequestApp:createdOn,RequestApp:description,RequestApp:icon,RequestApp:isDeleting,RequestApp:logo,RequestApp:name,RequestApp:processes,RequestApp:requestTable,RequestApp:requestTableInfo,RequestApp:requestTableLabel,RequestApp:scope,RequestApp:scopeId,RequestApp:services,RequestApp:sysId,RequestApp:version,RequestTableInfo:canRead,RequestTableInfo:scopeMatchesApp,RequestTableInfo:supportsRequestTypeTriggerCondition,ScReference:displayValue,ScReference:value,Service:active,Service:formImageUrl,Service:isCheckedOut,Service:name,Service:publishedRef,Service:requestTable,Service:scopeId,Service:state,Service:stateValue,Service:sysId
+requires_acl_authorization: 'true'
+requires_authentication: 'true'
+requires_snc_internal_role: 'true'
+schema: |-
+  schema {
+  	query: Query
+  	mutation: Mutation
+  }
+
+  type Query {
+  	getRequestApp(scopeId: String!, filterConditions: RequestAppQueryFilterConditions): GetRequestAppResult
+  	getApplications(payload: AppRequestPayload!, isAppCountRequired: Boolean): GetApplications
+  }
+
+  type Mutation {
+  	createNewRequestAppRequest(payload: CreateNewRequestAppRequestPayload!): GetNewRequestAppRequestResult
+  	updateRequestApp(payload: UpdateRequestAppPayload!): UpdateRequestAppResult
+  	prepareForDeletion(payload: PrepareForDeletionPayload!): PrepareForDeletionResult
+  }
+
+  # Resolver result types
+  union GetRequestAppResult = RequestApp | Error
+  union GetServiceResult = Service | Error
+  union GetProcessResult = ProcessDefinition | Error
+  union GetNewRequestAppRequestResult = NewRequestAppRequest | Error
+  union GetApplications = ApplicationPaginated | Error
+  union UpdateRequestAppResult = RequestApp | Error
+  union PrepareForDeletionResult = RequestApp | Error
+
+  enum SortOrder {
+  	ASC
+  	DESC
+  }
+
+  enum Filter {
+  	ALL,
+  	SHARED,
+  	OWNED,
+  	BOOKMARKS
+  }
+
+  input RequestAppQueryFilterConditions {
+  	services: String
+  	processes: String
+  }
+
+  input CreateNewRequestAppRequestPayload {
+  	name: String!
+  	description: String!
+  	additionalComments: String
+  	url: String!
+  }
+
+  input AppRequestPayload {
+  	sortField: String
+  	sortOrder: SortOrder
+  	currentPage: Int
+  	pageSize: Int
+  	filter: Filter
+  	searchProperties: SearchProperties
+  }
+
+  input UpdateRequestAppPayload {
+  	sysId: String!
+  	name: String
+  	description: String
+  	icon: String
+  	color: String
+  }
+
+  input PrepareForDeletionPayload {
+  	sysId: String!
+  }
+
+  type RequestApp {
+  	sysId: String
+  	name: String
+  	description: String
+  	logo: String
+  	icon: String
+  	color: String
+  	version: String
+  	scopeId: String
+  	scope: String
+  	createdOn: String 
+  	createdBy: String 
+  	requestTable: String
+  	requestTableLabel: String
+  	requestTableInfo: RequestTableInfo
+  	agentRoles: [AgentRole]
+  	isDeleting: Boolean
+  	services: [GetServiceResult] @source(value: "queryParams")
+  	processes: [GetProcessResult] @source(value: "queryParams")
+  }
+
+  type RequestTableInfo {
+  	supportsRequestTypeTriggerCondition: Boolean
+  	canRead: Boolean
+  	scopeMatchesApp: Boolean
+  }
+
+  type ScReference {
+  	value: String! @source(value: "sys_id.value")
+  	displayValue: String @source(value: "title.display_value")
+  }
+
+  type RecordProducer {
+  	sysId: String @source(value: "sysId")
+  	name: String @source(value: "name")
+  }
+
+  type ProcessDefinition {
+  	sysId: String
+  	label: String
+  	active: String
+  	status: String
+  	designerState: String
+  }
+
+  type Service {
+  	sysId: String
+  	name: String
+  	scopeId: String
+  	state: String
+  	stateValue: String
+  	active: String
+  	isCheckedOut: String
+  	requestTable: String
+  	formImageUrl: String
+  	publishedRef: String
+  }
+
+  type NewRequestAppRequest {
+  	sysId: String
+  }
+
+  type Applicaton {
+  	name: String
+  	description: String
+  	icon: String
+  	color: String
+  	created: Created
+  	createdBy: String
+  	canRead: Boolean
+  	sysId: String
+  	lastAccessed: LastAccessed
+  }
+
+  type Created {
+  	value: String
+  	displayValue: String
+  }
+
+  type LastAccessed {
+  	value: String
+  	displayValue: String 
+  }
+
+  type Pagination {
+  	totalRecordCount: Int
+  	totalPageCount: Int
+  	currentPage: Int
+  	pageSize: Int
+  }
+
+  type ApplicationPaginated {
+  	results: [Applicaton]
+  	pagination: Pagination
+  	applicationsCount: ApplicationsCount
+  }
+
+  type ApplicationsCount {
+  	totalAppCount:Int
+  	totalOwnedAppCount:Int
+  	totalSharedAppCount:Int
+  	totalBookmarkedAppCount: Int
+  }
+
+  type AgentRole {
+  	sysId: ID!
+  	label: String
+  }
+
+  # Error data types
+  type Error {
+  	errorType: String!
+  	message: String!
+  	tableName: String
+  	sysId: String
+  	scopeId: String
+  }
+
+  input SearchProperties {
+  	keyword: String
+  }
+sys_name: Request App Schema
+sys_policy: read
+type_names: GetApplications,GetNewRequestAppRequestResult,GetProcessResult,GetRequestAppResult,GetServiceResult,PrepareForDeletionResult,UpdateRequestAppResult

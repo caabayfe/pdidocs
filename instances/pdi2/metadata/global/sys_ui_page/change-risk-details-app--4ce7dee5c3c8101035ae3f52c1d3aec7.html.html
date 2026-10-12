@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:doctype name="html" />
+	<g:inline template="dir_checker.xml" />
+	<g:requires name="scripts/lib/jquery2_includes.js" includes="true" />
+	<g:requires name="scripts/angular_includes_1.5.11.js" includes="true" />
+	<g:requires name="scripts/sn/common/js_includes_common.js" includes="true" />
+	<g:requires name="scripts/bootstrap3/bootstrap.js" />
+	<g:requires name="scripts/change_risk_details_app/thirdparty/ui-bootstrap-tpls-2.5.0.min.js" />
+	
+	<g:inline template="set_theme_vars.xml" />
+	<g:if_polaris>
+		<g:then>
+			<g:inline template="polarisberg_output.xml"/>
+		</g:then>
+		<g:else>
+			<g:inline template="heisenberg_output.xml" type="css"/>
+			<g:inline template="heisenberg_output.xml" type="js"/>
+		</g:else>
+	</g:if_polaris>
+
+	<g2:evaluate var="jvar_has_rights">
+		var chgSysId = RP.getParameterValue('sysparm_chg_id');
+		var answer = new global.ChangeRiskDetailsHelper().canRead(chgSysId);
+		answer;
+	</g2:evaluate>
+	<j2:if test="$[!jvar_has_rights]">
+		<div class="chg-risk-security-constraints" aria-hidden="false">
+			${gs.getMessage('Security constraints prevent access to requested page')}
+		</div>
+	</j2:if>
+	<j2:if test="$[jvar_has_rights]">
+		<!-- Custom app to render in the popover/modal -->
+		<g2:requires name="script/change_risk_details_app.jsdbx" includes="true" />
+
+		<link href="409d3aadc30c101035ae3f52c1d3aecd.cssdbx?v=${gs.getProperty('glide.builddate')}" rel="stylesheet" type="text/css" />
+
+		<j:if test="${jvar_text_direction == 'rtl'}">
+			<g:requires name="styles/heisenberg/heisenberg_rtl.css" includes="true" />
+			<link href="9ef02ea3c3c0101035ae3f52c1d3ae13.cssdbx?v=${gs.getProperty('glide.builddate')}" rel="stylesheet" type="text/css" />
+		</j:if>
+
+		<g:evaluate var="jvar_accessibility_enable">
+			new global.ChangeSoCUtil().isAccessibilityEnabled();
+		</g:evaluate>
+
+		<!-- change_risk_details - Accessibility -->
+		<j:if test="${jvar_accessibility_enable == true}">
+			<link href="8445ca25c395101035ae3f52c1d3ae90.cssdbx?${jvar_cssCacheTheme}" rel="stylesheet" type="text/css" />
+		</j:if>
+
+		<g2:evaluate var="jvar_risk_details" object="true" jelly="true">
+			var result = {};
+			var chgSysId = jelly.sysparm_chg_id;
+			result = JSON.stringify(new global.ChangeRiskDetailsHelper().getChangeRiskDetails(chgSysId));
+			result;
+		</g2:evaluate>
+		
+		<g2:evaluate var="jvar_change_probability_details" object="true" jelly="true">
+			var result = {};
+			var chgSysId = jelly.sysparm_chg_id;
+			result = JSON.stringify(new global.ChangeRiskDetailsHelper().getChangeProbabilityDetails(chgSysId));
+			result;
+		</g2:evaluate>
+
+		<body class="$[sn_ui.PolarisUI.getBodyClassNames()]">
+			<div ng-app="sn.change_request.risk_assessment_details" class="popover-content chg-risk-details-popover-content chg-risk-${sysparm_mode}" dir="${jvar_text_direction}">
+				<sn-risk-details />
+			</div>
+		</body>
+	</j2:if>
+</j:jelly>

@@ -1,0 +1,52 @@
+<g:ui_form>
+	<g2:evaluate var="jvar_url" jelly="true">
+		var url = jelly.sysparm_redirect_report;
+		var clean_url = GlideSecurityUtils.cleanURL(url); 
+		
+		if(!clean_url || clean_url == "undefined") 
+			clean_url = ""; 
+		clean_url;
+	</g2:evaluate>
+    <table cellpadding="0" cellspacing="0" width="500px">
+        <g:ui_progress_worker worker_id="${sysparm_pworker_sysid}"/>
+        <tr>
+            <td>
+                <table id="completed_links" style="display: none" width="100%">
+                    <tr> 
+                       <td> 
+                          <hr/> 
+                          <div class="caption">Next steps...</div> 
+                        </td> 
+                    </tr> 
+                    <tr id="collision_report_link">
+                        <td>
+							<a class="breadcrumb" href="$[jvar_url]"> 
+                               ${gs.getMessage('Go to the Collision Report')}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr id="preview_list_link">
+                        <td>
+                            <a class="breadcrumb" href="sys_update_set_list.do">
+                               ${gs.getMessage('Return to the Local Update Sets list')}</a>
+                        </td>
+                    </tr>
+                </table>
+                <table id="restore_summary" style="display: none" width="100%">
+                    <tr>
+                        <td>${pgr.output_summary.getHTMLValue()}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <j:if test='${pgr.state == "complete"}'>
+        <script>
+            var el = gel("completed_links");
+            el.style.display = "";
+
+            var e2 = gel("restore_summary");
+            e2.style.display = "";        
+        </script>
+    </j:if>
+</g:ui_form>

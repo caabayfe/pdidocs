@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) { var productName = ''; if (current.type == 'global_setup' && current.process_definition) { productName = current.process_definition.label; } return productName; })(current);

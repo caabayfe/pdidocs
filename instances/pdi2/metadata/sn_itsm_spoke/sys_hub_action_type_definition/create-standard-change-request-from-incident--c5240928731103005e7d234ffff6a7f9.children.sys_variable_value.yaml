@@ -1,0 +1,132 @@
+- document: sys_hub_action_type_definition
+  document_key: c5240928731103005e7d234ffff6a7f9
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-09 14:29:52
+  sys_id: 102e39dd5335f110935addeeff7b1255
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-09 14:29:52
+  value: '{"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"serializationFormat":"JSON","complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"mapped\":\"{}\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"version":"1.0"}'
+  variable: dc2e39dd5335f110935addeeff7b1247
+- document: sys_hub_step_instance
+  document_key: 135efddd5335f110935addeeff7b125f
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-09 14:30:54
+  sys_id: 1b5efddd5335f110935addeeff7b126d
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-09 14:30:54
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: c5240928731103005e7d234ffff6a7f9
+  order: '3'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-09 14:29:52
+  sys_id: 582e39dd5335f110935addeeff7b1254
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-09 14:29:52
+  value: '0'
+  variable: 502e39dd5335f110935addeeff7b124c
+- document: sys_hub_step_instance
+  document_key: a3f40168731103005e7d234ffff6a75a
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2017-09-15 23:50:44
+  sys_id: bbf40168731103005e7d234ffff6a761
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2017-09-15 23:50:44
+  value: change_request
+  variable: f0fb68f267003200553fafb49585efa0
+- document: sys_hub_step_instance
+  document_key: 135efddd5335f110935addeeff7b125f
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-09 14:30:54
+  sys_id: db5efddd5335f110935addeeff7b126d
+  sys_mod_count: '7'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-10 08:38:03
+  value: |-
+    (function execute(inputs, outputs) {
+        outputs.error = false;
+
+        if (!inputs.standard_change_template_id) {
+            outputs.error_message = gs.getMessage('Standard Change Template id not provided');
+            outputs.error = true;
+            return;
+        }
+
+        var standardChangeTemplate = '';
+        if (GlidePluginManager.isActive('com.snc.change_management.standard_change_catalog')) {
+            standardChangeTemplate = global.StandardChangeTemplate.findById(inputs.standard_change_template_id);
+
+            if (!standardChangeTemplate) {
+                outputs.error_message = gs.getMessage('Standard Change Template not found');
+                outputs.error = true;
+                return;
+            }
+        }
+
+        if (!inputs.incident_id) {
+            outputs.error_message = gs.getMessage('Incident id not provided');
+            outputs.error = true;
+            return;
+        }
+
+        var incGr = new GlideRecordSecure('incident');
+        if (!incGr.get(inputs.incident_id)) {
+            outputs.error_message = gs.getMessage('Incident not found');
+            outputs.error = true;
+            return;
+        }
+
+        if (incGr.rfc) {
+            outputs.error_message = gs.getMessage('Incident already associated to change {0}', incGr.rfc.getDisplayValue());
+            outputs.error = true;
+            return;
+        }
+
+        var changeProcess = global.StandardChangeProcess.newChangeProcess(standardChangeTemplate, {
+            short_description: incGr.short_description,
+            cmdb_ci: incGr.cmdb_ci
+        });
+
+        if (changeProcess.insert()) {
+            var chgGr = changeProcess.getGlideRecord();
+            outputs.record = chgGr.canRead() ? chgGr : null;
+            outputs.standard_change_request = chgGr.getUniqueValue();
+            incGr.setValue('rfc', outputs.standard_change_request);
+
+            if (!incGr.update()) {
+                outputs.error_message = gs.getMessage('Failed to associate change to incident');
+                outputs.error = true;
+            }
+
+            return;
+        }
+
+        var errorMessage = gs.getMessage('Could not create Standard Change Request.');
+        var lastErrorMessage = changeProcess.getGlideRecord().getLastErrorMessage();
+        if (lastErrorMessage)
+            errorMessage += ' ' + lastErrorMessage;
+
+        outputs.error_message = errorMessage;
+        outputs.error = true;
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b

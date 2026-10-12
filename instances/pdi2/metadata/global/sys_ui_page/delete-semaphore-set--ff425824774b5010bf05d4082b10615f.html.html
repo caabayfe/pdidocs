@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		var semSetsInUse = [];
+		var nodeTypes = new GlideAggregate('sys_node_type');
+		nodeTypes.groupBy('semaphore_set_id');
+		nodeTypes.query();
+		while (nodeTypes.next()) {
+		semSetsInUse.push(nodeTypes.getValue('semaphore_set_id'));
+		}
+	</g:evaluate>
+
+	<input type="hidden" id="sem_sets_in_use" name="sem_sets_in_use" value="${semSetsInUse.toString()}"/>
+
+	<g:evaluate>
+		var semSetIdList = [];
+		var gr = new GlideAggregate('sys_semaphore_set');
+		gr.groupBy('semaphore_set_id');
+		gr.query();   
+		while (gr.next()) {
+		semSetIdList.push(gr.getValue('semaphore_set_id'));
+		}
+	</g:evaluate>
+
+	<!-- Set up form fields and labels -->
+	<div class="window">
+		<div class="row" style="padding-left:20px; padding-right:20px; padding-bottom:7px">
+				<div class="notification notification-danger" id="errorMessageBlock" style="display:none; margin-bottom:10px" role="alert">
+					<span class="notification-icon icon-cross-circle" id="error"></span>
+				</div>
+		</div>
+		<div class="description" valign="top">
+			<p id="message">${JS:gs.getMessage("Select the ID of the semaphore set you would like to delete.")} </p>
+			<p id="live-aria-1" style="position: absolute; left: -5000px" role="alert" aria-live="assertive"></p>
+		</div>
+		<div class="id_select">
+				<select name="selected_id" id="selected_id" class="form-control">   
+					<j:forEach items="${semSetIdList}" var="semSetId" >
+						<g:evaluate var="jvar_sem_set_id" expression="jelly.semSetId" jelly="true"/>
+						<option value="${jvar_sem_set_id}">${jvar_sem_set_id}</option>
+					</j:forEach>
+				</select>
+		</div>
+		<div id="dialog_buttons" align="right" style="margin-top:20px">
+			<!-- Pull in 'dialog_buttons_ok_cancel' UI Macro for submit/cancel buttons.
+  'ok' option will call the 'deleteSemSet' Client script function from the UI Page-->
+			<g:dialog_buttons_ok_cancel ok="return deleteSemSet()" ok_type="button" cancel_type="button" />
+		</div>
+	</div>
+</j:jelly>

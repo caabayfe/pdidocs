@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_wish_list_item_count" value="${RP.getWindowProperties().get('wish_list_items_count')}"/>
+	<j:set var="jvar_item_name" value="${RP.getWindowProperties().get('item_name')}"/>
+	<j:set var="jvar_action" value="${RP.getWindowProperties().get('action')}"/>
+	<g:evaluate>
+		var catalogView = RP.getWindowProperties().get('catalog_view');
+		var catalog = RP.getWindowProperties().get('catalog');
+	</g:evaluate>
+	<g:evaluate var="cart_title" jelly="true">
+		var cart_title = "";
+		var layoutGr = new GlideRecordSecure("sc_layout");
+		if (jelly.jvar_action == 'added_saved_item_to_cart') {
+			cart_title = "Shopping Cart";
+			if (layoutGr.get("0aafaf61ff31210057b2ffffffffff9d"))
+				cart_title = layoutGr.getValue("title");
+		}
+		else {
+			cart_title = "Wish List";
+			if (layoutGr.get("197d6b27c3031200d68d3b0ac3d3ae85"))
+				cart_title = layoutGr.getValue("title");
+		}
+		cart_title = gs.getMessage(cart_title);
+		cart_title;
+	</g:evaluate>
+	<g:evaluate jelly="true">
+		var dialog_title = gs.getMessage("Added to {0}", cart_title);
+		if(jelly.jvar_action == "updated_item")
+			dialog_title = gs.getMessage("{0} updated", cart_title);
+		var view_cart_button_title = gs.getMessage("View {0}", cart_title);
+	</g:evaluate>
+	<g:evaluate var="continue_shopping_url">
+		var continue_shopping_url = "'"+GlideappCatalogURLGenerator.getContinueShoppingUrl(catalog, catalogView) + "'";
+		continue_shopping_url;
+	</g:evaluate>
+	<g:evaluate var="cart_view_url" jelly="true">
+		var cart_name = "saved_items";
+		if (jelly.jvar_action == "added_saved_item_to_cart")
+			cart_name = "DEFAULT";
+		var cart_view_url = "'" + GlideappCatalogURLGenerator.getEditCartUrl(catalog, catalogView, "", "", cart_name) + "'";
+		cart_view_url;
+	</g:evaluate>
+	<div id="wish_list_navigate_container">
+		<div class="row modal-wish-list-row">
+			<div class="col-xs-12"><h4>${dialog_title}</h4></div>
+		</div>
+		<div class="row modal-wish-list-row">
+			<div class="col-xs-12"><h4>${jvar_item_name}</h4></div>
+		</div>
+		<div id="navigate_buttons" class="row modal-wish-list-row" style="padding-top: 16px; padding-bottom: 10px;">
+
+			<j:if test="${jvar_action != 'added_saved_item_to_cart'}">
+				<div class="col-xs-6">
+					<button class="btn btn-default add_to_wish_list_dialog_btn" data-toggle="tooltip" title="${gs.getMessage('Continue Shopping')}" href="#" onclick="this.onclick = ''; window.location=${continue_shopping_url};">${gs.getMessage('Continue Shopping')}</button>
+				</div>
+				<div class="col-xs-6">
+					<button class="btn btn-primary add_to_wish_list_dialog_btn" data-toggle="tooltip" title="${view_cart_button_title}" href="#" onclick="this.onclick='';window.location=${cart_view_url};">${view_cart_button_title}</button>
+				</div>
+			</j:if>
+
+			<j:if test="${jvar_action == 'added_saved_item_to_cart'}">
+				<div class="col-xs-6">
+					<button class="btn btn-default add_to_wish_list_dialog_btn" data-toggle="tooltip" title="${gs.getMessage('Continue Shopping')}" href="#" onclick="this.onclick = ''; window.location=${continue_shopping_url};">${gs.getMessage('Continue Shopping')}</button>
+				</div>
+				<div class="col-xs-6">
+					<button class="btn btn-primary add_to_wish_list_dialog_btn" data-toggle="tooltip" title="${view_cart_button_title}" href="#" onclick="this.onclick='';window.location=${cart_view_url};">${view_cart_button_title}</button>
+				</div>
+			</j:if>
+		</div>
+	</div>
+
+</j:jelly>

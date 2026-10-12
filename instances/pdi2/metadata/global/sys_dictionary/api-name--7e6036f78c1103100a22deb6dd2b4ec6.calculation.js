@@ -1,0 +1,1 @@
+      answer = (function() {       if (!current.api_name.nil())        return current.api_name + "";       var scope = current.sys_scope.scope;       if (scope.nil())        scope = "global";       if (!current.name.nil())        return scope + "." + current.name;       return "";      })()     

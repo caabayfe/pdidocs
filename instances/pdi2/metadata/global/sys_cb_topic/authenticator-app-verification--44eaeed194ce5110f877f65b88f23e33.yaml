@@ -1,0 +1,369 @@
+_meta:
+  hash: 69f58ab43cbb907910af3c61caaf3f8eaa83cd28521205a052f549a479f7daaf
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_topic
+  sys_created_by: admin
+  sys_created_on: 2022-09-19 11:38:46
+  sys_domain: global
+  sys_id: 44eaeed194ce5110f877f65b88f23e33
+  sys_mod_count: '1'
+  sys_package: 12b77e7b8c1903100a22deb6dd2b4e46
+  sys_scope: global
+  sys_update_name: sys_cb_topic_44eaeed194ce5110f877f65b88f23e33
+  sys_updated_by: admin
+  sys_updated_on: 2022-10-12 16:29:19
+applicability: ''
+applicability_mode: query
+autopilot_topic: 'false'
+category: ''
+channels: ''
+connect_queue: ''
+context_profiles: ''
+description: This topic block verifies user using authenticator app such as Google, Microsoft etc.
+dialog_acts_enabled: 'false'
+expose_on_palette: 'false'
+flexible_conversation_switching: 'true'
+foundational: 'false'
+graph: |-
+  {
+    "graph_api_version": "1.0.41",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "4455bf091f754383aae397316d4f8f13": {
+            "id": "4455bf091f754383aae397316d4f8f13",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "1c88f87df8284af0b6d8e8655e33d986",
+                "name": "userId",
+                "required": true,
+                "hint": "sys_user table record sys_id",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "b0f347297b704b4b8eb4cf2d11055ce5",
+                "name": "verificationId",
+                "hint": "pwd_verification table record sys_id",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "9887e174c9c041f3a4381eaa8a1802d3",
+                "name": "contextId",
+                "required": true,
+                "hint": "conversation context Id",
+                "referenced": true,
+                "disabled": true
+              }
+            ],
+            "variableIds": [
+              "1c88f87df8284af0b6d8e8655e33d986",
+              "b0f347297b704b4b8eb4cf2d11055ce5",
+              "9887e174c9c041f3a4381eaa8a1802d3"
+            ]
+          },
+          "4d646d8b0511459b9256b969cc056790": {
+            "id": "4d646d8b0511459b9256b969cc056790",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": [
+              {
+                "key": "Status",
+                "value": "(function execute() {\n    return vaVars.input_validation_error ? 'Error' : 'Success';\n})()",
+                "mode": "script",
+                "disabled": true,
+                "cannotBeDeleted": true,
+                "alertMessage": "You cannot delete this parameter because other calling topics use it.",
+                "additionalInfoUrl": "/sys_cs_topic_library_usage_list.do?sysparm_query=library_cs_topic_id=6eea6ed194ce5110f877f65b88f23ea6%5Ecalling_cs_topic_idINa51beed194ce5110f877f65b88f23e26",
+                "additionalInfoLabel": "See calling topics"
+              },
+              {
+                "key": "Status_Code",
+                "value": "(function execute() {\n    var SUCCESS_CODE = \"20000\";\n    return vaVars.input_validation_error ? vaVars.error_code : SUCCESS_CODE;\n})()\n",
+                "mode": "script",
+                "disabled": true,
+                "cannotBeDeleted": true,
+                "alertMessage": "You cannot delete this parameter because other calling topics use it.",
+                "additionalInfoUrl": "/sys_cs_topic_library_usage_list.do?sysparm_query=library_cs_topic_id=6eea6ed194ce5110f877f65b88f23ea6%5Ecalling_cs_topic_idINa51beed194ce5110f877f65b88f23e26",
+                "additionalInfoLabel": "See calling topics"
+              }
+            ]
+          },
+          "17c5346b48454f05a13f3740a53e6ff0": {
+            "id": "17c5346b48454f05a13f3740a53e6ff0",
+            "name": "Validate Inputs",
+            "script": "(function execute() {\n    var passwordResetScopedUtil = new PasswordResetScopedUtil();\n    var AUTHENTICATOR_VERIFICATION_TYPE = 'c7835ab787773200cfab6dd207cb0b88';\n    var userId = vaInputs.userid.getValue();\n    var verificationId =vaInputs.verificationid.getValue();\n    var contextId = vaInputs.contextid.getValue();\n    var INVALID_USER = \"40000\";\n    var CONFIGURATION_ISSUE = \"40002\";\n    //Check for valid user\n    var userInfo = passwordResetScopedUtil.getUserByID(userId);\n    if (gs.nil(userId) || !userInfo.exists()) {\n        vaVars.is_user_valid = false; // Invalid user\n        vaVars.error_code = INVALID_USER;\n    }\n\n    //Check for valid context_id\n    if (gs.nil(contextId)) {\n        vaVars.input_validation_error = true;\n        vaVars.error_code = CONFIGURATION_ISSUE;\n        return;\n    }\n\n    //Check for valid Google authenticator verification type\n    var verification = passwordResetScopedUtil.getVerificationById(verificationId);\n    if (gs.nil(verificationId) || !verification.exists() ||\n        verification.getVerificationTypeId() != AUTHENTICATOR_VERIFICATION_TYPE) {\n        vaVars.input_validation_error = true; // Invalid verification type\n        vaVars.error_code = CONFIGURATION_ISSUE;\n        return;\n    }\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "d21a01f5b6ea42c8912b9261373786da": {
+            "id": "d21a01f5b6ea42c8912b9261373786da",
+            "stepType": "Decision",
+            "name": "Input Validation Check"
+          },
+          "e9b43cf468474a028b1a02210e1a24da": {
+            "id": "e9b43cf468474a028b1a02210e1a24da",
+            "stepType": "Prompt",
+            "name": "Authenticator Code",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Type in the authentication code that's showing on your app screen."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "fb80fc6c23154a5d8ade7411ad7a479d",
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            }
+          },
+          "a36155f098484653a9a4968e6eb85a3c": {
+            "id": "a36155f098484653a9a4968e6eb85a3c",
+            "name": "Validate Authenticator Code",
+            "script": "(function execute() {\n    if(!vaVars.is_user_valid) {\n        vaVars.input_validation_error = true;\n        return;\n    } else {\n        var userId = vaInputs.userid.getValue();\n        var verificationId = vaInputs.verificationid.getValue();\n        var enrollmentMgr = new SNC.PwdEnrollmentManager();\n        var USER_NOT_ENROLLED_CODE  = \"40001\";\n        var is_user_enrolled = enrollmentMgr.isUserEnrolledByVerificationId(userId, verificationId);\n        if (!is_user_enrolled) {\n            vaVars.input_validation_error = true; // User not enrolled\n            vaVars.error_code = USER_NOT_ENROLLED_CODE;\n            return; \n        }\n    }\n\n    var userId = vaInputs.userid.getValue();\n    var verificationId = vaInputs.verificationid.getValue();\n    var contextId = vaInputs.contextid.getValue();\n    var SYSPARM_OTP_CODE = 'sysparm_otp_code';\n    var INCORRECT_PIN_CODE = \"50000\";\n\n    var userInputs = [];\n    userInputs.push({ key: SYSPARM_OTP_CODE, value: vaInputs.authenticator_code.getValue()});\n\n    var passwordResetScopedUtil = new global.PasswordResetScopedUtil();\n    var verification_status = passwordResetScopedUtil.verify(userId, '', verificationId, contextId, userInputs);\n\n    if (!verification_status) {\n        vaVars.input_validation_error = true;\n        vaVars.error_code = INCORRECT_PIN_CODE;\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "0f3b0067c2a142689546d56fa6999d74",
+            "edgeType": "Branch",
+            "source": "d21a01f5b6ea42c8912b9261373786da",
+            "target": "e9b43cf468474a028b1a02210e1a24da",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.input_validation_error;\n})()"
+            },
+            "label": "Valid Inputs"
+          },
+          {
+            "id": "91a071b5050b45dfb0349cb4ba42743a",
+            "edgeType": "Edge",
+            "source": "4455bf091f754383aae397316d4f8f13",
+            "target": "17c5346b48454f05a13f3740a53e6ff0",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0812852acbc348c787cfa86304eb56c0",
+            "edgeType": "Edge",
+            "source": "17c5346b48454f05a13f3740a53e6ff0",
+            "target": "d21a01f5b6ea42c8912b9261373786da",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "c0687a5d29e94fc29cc757b769013115",
+            "edgeType": "Branch",
+            "source": "d21a01f5b6ea42c8912b9261373786da",
+            "target": "4d646d8b0511459b9256b969cc056790",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.input_validation_error;\n})()"
+            },
+            "label": "Invalid Inputs"
+          },
+          {
+            "id": "bff1b056da70456aada5ddfc703d1890",
+            "edgeType": "Edge",
+            "source": "e9b43cf468474a028b1a02210e1a24da",
+            "target": "a36155f098484653a9a4968e6eb85a3c",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "de14833206754fd8aede67514ec8dd3e",
+            "edgeType": "Edge",
+            "source": "a36155f098484653a9a4968e6eb85a3c",
+            "target": "4d646d8b0511459b9256b969cc056790",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "01de649ec6b0445086fb076523eb2268": {
+        "category": "vaInputs",
+        "id": "01de649ec6b0445086fb076523eb2268",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "1c88f87df8284af0b6d8e8655e33d986": {
+        "id": "1c88f87df8284af0b6d8e8655e33d986",
+        "name": "userid",
+        "label": "UserId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "4455bf091f754383aae397316d4f8f13",
+        "isHidden": false
+      },
+      "b0f347297b704b4b8eb4cf2d11055ce5": {
+        "id": "b0f347297b704b4b8eb4cf2d11055ce5",
+        "name": "verificationid",
+        "label": "VerificationId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "4455bf091f754383aae397316d4f8f13",
+        "isHidden": false
+      },
+      "9887e174c9c041f3a4381eaa8a1802d3": {
+        "id": "9887e174c9c041f3a4381eaa8a1802d3",
+        "name": "contextid",
+        "label": "ContextId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "4455bf091f754383aae397316d4f8f13",
+        "isHidden": false
+      },
+      "fb80fc6c23154a5d8ade7411ad7a479d": {
+        "id": "fb80fc6c23154a5d8ade7411ad7a479d",
+        "name": "authenticator_code",
+        "label": "Authenticator Code",
+        "varType": "string",
+        "secure": false,
+        "category": "vaInputs",
+        "encryptionHashFunction": "SHA-256",
+        "encryptionSalt": {
+          "value": "MTY2MzU3NzAxNDUzMiBWQSBEZXNpZ25lciBpcyBhd2Vzb21l",
+          "mode": "simple"
+        },
+        "nodeId": "e9b43cf468474a028b1a02210e1a24da",
+        "isHidden": false
+      },
+      "d8283e50fe0f43a594fc0f92a65152f8": {
+        "id": "d8283e50fe0f43a594fc0f92a65152f8",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return false;\n})()"
+        },
+        "name": "input_validation_error",
+        "label": "input_validation_error",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "c6bce03321924b1c8f668fbf2a8d0b93": {
+        "id": "c6bce03321924b1c8f668fbf2a8d0b93",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return true;\n})()\n"
+        },
+        "name": "is_user_valid",
+        "label": "is_user_valid",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "82cf64fe54254df9a13c977bd6c79e00": {
+        "id": "82cf64fe54254df9a13c977bd6c79e00",
+        "value": {
+          "mode": "simple",
+          "value": "0"
+        },
+        "name": "error_code",
+        "label": "error_code",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+key_phrases: Authenticator App Verification
+library: 'true'
+live_agent: 'false'
+model_type: ''
+modify_confirmation_enabled: 'false'
+name: Authenticator App Verification
+nlu_intent: ''
+nlu_intent_label: ''
+nlu_model: ''
+nlu_model_label: ''
+nlu_provider: ''
+palette_label: ''
+roles: ''
+root_topic_id: ''
+secure_custom_input_control: 'false'
+source_topic_id: bd18bd55940e5110f877f65b88f23ef2
+sys_name: Authenticator App Verification
+sys_policy: ''
+title: ''
+triggerable_by_notification: 'false'
+type: TOPIC_BLOCK

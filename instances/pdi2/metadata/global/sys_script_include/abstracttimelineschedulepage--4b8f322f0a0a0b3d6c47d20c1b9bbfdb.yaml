@@ -1,0 +1,56 @@
+_meta:
+  hash: 8815279af9927449f9e49b540a8b5ef3db9b8c5edd12b5d5f019174442039e6c
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: mark.johnson
+  sys_created_on: 2010-04-29 22:15:46
+  sys_id: 4b8f322f0a0a0b3d6c47d20c1b9bbfdb
+  sys_mod_count: '213'
+  sys_package: c69436f38c5503100a22deb6dd2b4eeb
+  sys_scope: global
+  sys_update_name: sys_script_include_4b8f322f0a0a0b3d6c47d20c1b9bbfdb
+  sys_updated_by: admin
+  sys_updated_on: 2013-06-20 20:52:00
+access: package_private
+active: 'true'
+api_name: global.AbstractTimelineSchedulePage
+caller_access: ''
+client_callable: 'false'
+description: |-
+  Abstract timeline script include for all schedule pages. Each schedule page should reference a script include that extends from this base class. At a minimum, extending classes should override the getItems() method. Note that the script include will automatically receive all Uri parameters from the original Url whose prefix begins with "sysparm_timeline_". To access the values of these, use: [ this.getParameter("sysparm_timeline_VARIABLE"); ] inside your implementing class. This is useful if you need to display a schedule page from a dynamic element, such as from a context menu from a list. By passing in dynamic data via the Url the schedule page will auto-include these parameters inside the Ajax calls and therefore will be accessible inside the AbstractSchedulePage script includes. Additionally note that the private methods inside this class are denoted with a double underscore prefix. This is done as the extending classes have capability to potentially overwrite core methods of this base class because of the prototype/rhino implementation.
+
+  The following sections describe how data is processed by the GlideTimeline after receiving the AJAX response from the script include.
+
+  // :::::::::::::::: PHASE 1 :: RETURN CLIENT PROCESSING - RE-RENDERING ::::::::::::::::
+  The timeline will first check to see if any items need to be updated before doing anything else. There are three options for manipulating the timeline data.
+     1. Action :: No updating (Leave existing items on timeline).
+          --> How?-  No action required. Do not set any <item> nodes and do not set the rerender true.
+     2. Action :: Update with specific items (e.g. These items may not be set in database ... a "preview" mode).
+          --> How?-  Append to the XML document TimelineItem schedule items as implemented in the getItems() method.
+     3. Action :: Re-render the timeline data (This will call the getItems()).
+          --> How?-  this.setDoReRenderTimeline(true)
+
+  Note: If both TimelineItems are returned and setDoReRenderTimeline is set to true, the system will ignore the DoReRenderTimeline and explicitly show only the TimelineItems returned in the XML response.
+
+  // :::::::::::::::: PHASE 2 :: RETURN CLIENT PROCESSING - DIALOG ::::::::::::::::
+  After potentially updating timeline items on the screen, a second phase can be used to perform additional functionality
+  and message popups. The following options are available:
+    1. Action :: Display nothing (No dialog) [ Note the loading will stop automatically ].
+         --> How?-  Do nothing ... especially do not set any status setters below!
+    2. Action :: Display a SUCCESS dialog box.
+         --> How?-  this.setStatusSuccess(strTitle, strMessage);
+    3. Action :: Display an ERROR dialog box.
+         --> How?-  this.setStatusError(strTitle, strMessage);
+    4. Action :: Display a question with "Yes"/"No" buttons that can perform additional functionality.
+         --> How?-  this.setStatusPrompt(strDialogTitle, // Specifies the title for the dialog prompt
+                                                         strDialogMessage, // Specifies the message for the dialog
+                                                         "this._yesScriptIncludeFunction", // Function to execute if the user clicks "Yes"
+                                                         "this._noScriptIncludeFunction", // Function to execute if the user clicks "No"
+                                                         "this._cancelScriptIncludeFunction" // Function to execute if the user clicks "X/Close"
+                         );
+mobile_callable: 'false'
+name: AbstractTimelineSchedulePage
+sandbox_callable: 'false'
+sys_name: AbstractTimelineSchedulePage
+sys_policy: ''

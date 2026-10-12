@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g2:evaluate var="jvar_compatibility">
+		typeof GlideUICompatibility == "undefined" ? GlideVTBCompatibility.getCompatibility() : (new GlideUICompatibility(gs.getCurrentScopeName()).getCompatibility());
+	</g2:evaluate>
+
+	<g2:evaluate var="jvar_upgrade_in_progress">
+		gs.isPaused()
+	</g2:evaluate>
+
+	<j2:if test="$[jvar_compatibility != 'block' &amp;&amp; !jvar_upgrade_in_progress]">
+		<script>
+			window.location.replace("/now/app-manager/home");
+		</script>
+	</j2:if>
+
+	<j2:if test="$[jvar_compatibility == 'block']">
+		<g2:evaluate>
+			gs.addInfoMessage(gs.getMessage("You are using an unsupported browser version. You have been redirected to the Custom Applications list."));
+		</g2:evaluate>
+		<script>
+			window.location.replace("/sys_app_list.do");
+		</script>
+	</j2:if>
+
+	<j2:if test="$[jvar_upgrade_in_progress]">
+		<g2:evaluate>
+			gs.addInfoMessage(gs.getMessage("A system upgrade is currently in progress. App management is disabled until the system resumes. You have been redirected to the Custom Applications list."));
+		</g2:evaluate>
+		<script>
+			window.location.replace("/sys_app_list.do");
+		</script>
+	</j2:if>
+
+</j:jelly>

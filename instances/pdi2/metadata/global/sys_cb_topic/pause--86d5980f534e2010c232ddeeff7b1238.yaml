@@ -1,0 +1,266 @@
+_meta:
+  hash: 788d9001c27c70bc403fb335e22acc5da3978ca8d408be63a5d39e50e4347c60
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_topic
+  sys_created_by: admin
+  sys_created_on: 2021-02-04 22:43:33
+  sys_domain: global
+  sys_id: 86d5980f534e2010c232ddeeff7b1238
+  sys_mod_count: '6'
+  sys_package: aeddf2bf8c5d03100a22deb6dd2b4eb7
+  sys_scope: global
+  sys_update_name: sys_cb_topic_86d5980f534e2010c232ddeeff7b1238
+  sys_updated_by: admin
+  sys_updated_on: 2021-04-07 16:30:45
+applicability: ''
+applicability_mode: query
+autopilot_topic: 'false'
+category: ''
+channels: ''
+connect_queue: ''
+context_profiles: ''
+description: Inserts a pause in the conversation (seconds).
+dialog_acts_enabled: 'false'
+expose_on_palette: 'true'
+flexible_conversation_switching: 'true'
+foundational: 'false'
+graph: |-
+  {
+    "graph_api_version": "1.0.34",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "f213af4f8a574ee8a1da7299ca8439a1": {
+            "id": "f213af4f8a574ee8a1da7299ca8439a1",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "9eaff46b908640dfbfe4a9cecf4c96e7",
+                "name": "Seconds",
+                "required": true,
+                "hint": "Any duration value greater than the maximum defined in the system will revert to the maximum or 60 seconds if not defined.",
+                "referenced": true,
+                "disabled": false
+              }
+            ],
+            "variableIds": [
+              "9eaff46b908640dfbfe4a9cecf4c96e7"
+            ]
+          },
+          "2cadc2f5cf8c48d381f321cf6a52da91": {
+            "id": "2cadc2f5cf8c48d381f321cf6a52da91",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "450ba1c4d6304cc9a3611cdb3a9c8955": {
+            "id": "450ba1c4d6304cc9a3611cdb3a9c8955",
+            "name": "Pause",
+            "invocationType": "subflow",
+            "stepType": "FlowAction",
+            "actionRunAs": "session_user",
+            "actionSecureField": false,
+            "actionSelectSecureField": "",
+            "actionPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionConfirmPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionNonSecureChannelMessage": {
+              "mode": "simple",
+              "value": "This action is not supported on this channel."
+            },
+            "subflowSpoke": "global",
+            "subflowSpokeSubflow": "88b3d88b534e2010c232ddeeff7b1296",
+            "subflowWaitType": "sync",
+            "subflowSecureField": false,
+            "subflowSelectSecureField": "",
+            "subflowPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "subflowConfirmPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "subflowNonSecureChannelMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "subflowInputs": {
+              "input-seconds": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.maximum_duration_to_pause}}",
+                          "displayValue": "Script Variables➛maximum_duration_to_pause"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string"
+              }
+            },
+            "subflowOutputs": {},
+            "subflowDefinition": {
+              "id": "88b3d88b534e2010c232ddeeff7b1296",
+              "latest_snapshot_id": "a055540f534e2010c232ddeeff7b12db",
+              "type": "subflow",
+              "name": "add_a_pause",
+              "label": "Add a Pause",
+              "scope_id": "global",
+              "description": "Add a pause/delay",
+              "category": null,
+              "parameters_have_loaded": true,
+              "input_parameters": [
+                {
+                  "supported_input_modes": [
+                    "script",
+                    "data_pill",
+                    "data_entry"
+                  ],
+                  "name": "seconds",
+                  "label": "seconds",
+                  "type": "string",
+                  "order": 1,
+                  "required": false
+                }
+              ],
+              "output_parameters": []
+            },
+            "variableIds": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "73a90fa5a7454856a825dd29956a33b8": {
+            "id": "73a90fa5a7454856a825dd29956a33b8",
+            "name": "Validate duration",
+            "script": "(function execute() {\n    var maximumDurationToPause = vaInputs.seconds.getValue();\n    var timeout = gs.getProperty('com.glide.cs.fdih.interactive.timeout') || 60;\n    \n    // need parseInt because input seconds is of type String\n    if (isNaN(maximumDurationToPause) || parseInt(maximumDurationToPause) > timeout) {\n        maximumDurationToPause = timeout;\n    }\n    vaVars.maximum_duration_to_pause = maximumDurationToPause;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "4c565c63d3d64ecb9e7a45c9e2c18b0f",
+            "edgeType": "Edge",
+            "source": "450ba1c4d6304cc9a3611cdb3a9c8955",
+            "target": "2cadc2f5cf8c48d381f321cf6a52da91",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "483277d4eea7437694f74ec7bbf5acc5",
+            "edgeType": "Edge",
+            "source": "f213af4f8a574ee8a1da7299ca8439a1",
+            "target": "73a90fa5a7454856a825dd29956a33b8",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "dfd278fb94b24feb93a6f2bf7b901aaf",
+            "edgeType": "Edge",
+            "source": "73a90fa5a7454856a825dd29956a33b8",
+            "target": "450ba1c4d6304cc9a3611cdb3a9c8955",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "9eaff46b908640dfbfe4a9cecf4c96e7": {
+        "id": "9eaff46b908640dfbfe4a9cecf4c96e7",
+        "name": "seconds",
+        "label": "Seconds",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        }
+      },
+      "507c6eb8937d4263b8cba2a2b557df88": {
+        "id": "507c6eb8937d4263b8cba2a2b557df88",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "maximum_duration_to_pause",
+        "label": "maximum_duration_to_pause",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+key_phrases: ''
+library: 'true'
+live_agent: 'false'
+model_type: ''
+modify_confirmation_enabled: 'false'
+name: Pause
+nlu_intent: ''
+nlu_intent_label: ''
+nlu_model: ''
+nlu_model_label: ''
+nlu_provider: ''
+palette_label: ''
+roles: ''
+root_topic_id: ''
+secure_custom_input_control: 'false'
+source_topic_id: ''
+sys_name: Pause
+sys_policy: read
+title: ''
+triggerable_by_notification: 'false'
+type: TOPIC_BLOCK

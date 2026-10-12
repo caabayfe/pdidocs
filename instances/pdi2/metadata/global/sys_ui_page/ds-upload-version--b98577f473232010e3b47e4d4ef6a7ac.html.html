@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j:jelly xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null" trim="false">
+   <g:evaluate var="jvar_documentId" jelly="true">documentId = (jelly.sysparm_document_id || '') + '';
+		documentId;</g:evaluate>
+	<g:evaluate var="jvar_urlOnStack" jelly="true">var x = '${RP.getReferringURL()}';
+		if(x.indexOf("?") == -1) {
+		  x = x + '?sysparm_nostack=no';
+		}
+		x;</g:evaluate>
+	<g:evaluate var="jvar_canWriteDocument" jelly="true">var docGr = new GlideRecord('ds_document');
+		var canWriteDocument = false;
+		if(docGr.get(documentId)) {
+		  canWriteDocument = docGr.canWrite();
+		}
+		canWriteDocument;</g:evaluate>
+	<g:evaluate var="jvar_isActionFromWorkspace" jelly="true">isActionFromWorkspace = jelly.sysparm_workspace_action || 'false';
+		isActionFromWorkspace;</g:evaluate>
+	
+	<script>
+		var iframeMsgHelper = (function () {
+				function createPayload(action, modalId, data) {
+					return {
+						messageType: 'IFRAME_MODAL_MESSAGE_TYPE',
+						modalAction: action,
+						modalId: modalId,
+						data: (data ? data : {})
+					};
+				}
+				function pm(window, payload) {
+					if (window.parent === window) {
+						console.warn('Parent is missing. Is this called inside an iFrame?');
+						return;
+					}
+					window.parent.postMessage(payload, location.origin);
+				}
+				function IFrameMessagingHelper(window) {
+					this.window = window;
+					this.src = location.href;
+					this.messageHandler = this.messageHandler.bind(this);
+					this.window.addEventListener('message', this.messageHandler);
+				}
+				IFrameMessagingHelper.prototype.messageHandler = function (e) {
+					if (e.data.messageType !== 'IFRAME_MODAL_MESSAGE_TYPE' || e.data.modalAction !== 'IFRAME_MODAL_ACTION_INIT') {
+						return;
+					}
+					this.modalId = e.data.modalId;
+				};
+				IFrameMessagingHelper.prototype.confirm = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CONFIRMED', this.modalId, data);
+					pm(this.window, payload);
+				};
+				IFrameMessagingHelper.prototype.cancel = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CANCELED', this.modalId, data);
+					pm(this.window, payload);
+				};
+				return new IFrameMessagingHelper(window);
+			}());
+	</script>
+	
+   <div style="border-bottom: 1px solid #ddd; margin-bottom: 5px;font-size:16px" />
+   <div class="modal-body" id="modalBody" style="padding-top:0px;padding-bottom:5px">
+      <div class="row">
+         <div class="notification notification-danger" id="errorAlert" style="padding:6px;display:none; margin-bottom:5px" aria-live="assertive">
+            <span class="notification-icon icon-cross-circle" id="lblError" />
+            <span class="outputmsg_text" />
+            <button id="close-error-msg-btn" class="btn btn-icon close icon-cross" onclick="return closeMessages(this);" />
+         </div>
+      </div>
+      <div class="row">
+         <label for="file_type" style="font-size:13px">File Type:$[SP]$[SP]</label>
+         <select name="file_type" id="file_type" onChange="displayFileType(this)">
+            <option value="attachment">Attachment</option>
+            <option value="url">URL</option>
+         </select>
+      </div>
+	  <div />
+
+      <div class="row" id="choose_file_row">
+		<form id="sys_attachment" action="sys_attachment.do" enctype="multipart/form-data" method="post" name="sys_attachment">
+            <input id="attachments_modified" name="attachments_modified" type="hidden" value="" />
+            <input name="sysparm_sys_id" id="temporary_ds_version_id" type="hidden" value="" />
+            <input name="sysparm_table" type="hidden" value="ds_document_version" />
+            <input name="sysparm_nostack" type="hidden" value="no" />
+            <input name="sysparm_redirect" type="hidden" value="${jvar_urlOnStack}" />
+            <!-- <input name="sysparm_redirect" type="hidden" value="attachment_uploaded.do?sysparm_nostack=yes" />  -->
+            <input id="sysparm_encryption_context" name="sysparm_encryption_context" type="hidden" value="" />
+			<div>
+				<label for="notes_file" style="font-size:13px">Notes:$[SP]$[SP</label>
+				 <div />
+				 <textarea id="notes_file" type="text" name="notes_file" value="" max_length="2000" />
+			</div>
+            <div id="choose_file">
+               <input type="file" id="file" name="choose_file" />
+            </div>
+			 <br/>
+			<button class="btn btn-default" id="cancel_button" onclick="return destroyWindow()" style="min-width: 5em;" title="" type="submit" data-original-title="">Cancel</button> $[SP]
+<button class="btn btn-primary" id="ok_button" onclick="return processVersion()" style="min-width: 5em;" title="" type="submit" data-original-title="">OK</button>
+            <!--<img id="please_wait" src="images/please_wait.gifx" style="display:none" /> -->
+             <input name="canWriteDocument" id="canWriteDocument" type="hidden" value="${jvar_canWriteDocument}" />
+			 <input name="isActionFromWorkspace" id="isActionFromWorkspace" type="hidden" value="${jvar_isActionFromWorkspace}" />
+		  </form>
+      </div>
+      <div class="row" id="url_text_row" style="display:none">
+         <g:ui_form>
+            <input type="hidden" id="documentId" name="documentId" value="${jvar_documentId}" />
+			<div id="notes_text_url">
+				 <label for="notes_url" style="font-size:13px">Notes:$[SP]$[SP</label>
+				 <div />
+				 <textarea id="notes_url" type="text" name="notes_url" value="" max_length="2000" />
+			</div>
+            <div id="url_text" >
+               <label for="url">URL:$[SP]$[SP]</label>
+               <input type="textarea" id="url" name="url" max_length="2000" />
+            </div>
+			 
+
+            <br />
+            <g:dialog_buttons_ok_cancel ok="return processVersion()" cancel="return destroyWindow()" />
+         </g:ui_form>
+      </div>
+	   
+   </div>
+   <!-- <iframe id="upload_target" name="upload_target" src="blank.do" style="width:0;height:0;border:0px solid #fff;">$[SP]</iframe> -->
+</j:jelly>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+   <g:evaluate var="jvar_external_auth" jelly="true">
+       jvar_external_auth = gs.getProperty('glide.authenticate.external', false);
+   </g:evaluate>
+
+   <j:if test="${jvar_external_auth == true}" >
+	   <script>
+          top.location.href = "./navpage.do";
+       </script>
+   </j:if>
+   <j:if test="${jvar_external_auth != true}" >
+       <j2:set var="jvar_login_url" value="oauth_login.do" />
+	   <g:if_polaris>
+		   <g:then>
+			   <!-- Don't load the banner as it is only meant for pre polaris -->
+			   <g:inline template="oauth_login_polaris.xml" />
+			</g:then>
+		   <g:else>
+			   <g:inline template="oauth_banner.xml" />
+			   <g:inline template="oauth_login.xml" />
+		   </g:else>
+	   </g:if_polaris>	
+   </j:if>
+	
+</j:jelly>

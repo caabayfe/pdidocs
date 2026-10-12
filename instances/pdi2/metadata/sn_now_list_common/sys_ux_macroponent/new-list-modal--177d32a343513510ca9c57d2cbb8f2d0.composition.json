@@ -1,0 +1,171 @@
+[
+    {
+        "definition": {
+            "id": "bd006ac9228522a91975029a2bd8d171",
+            "type": "MACROPONENT"
+        },
+        "elementId": "new_list_modal",
+        "elementLabel": "New List Modal",
+        "eventMappings": [
+            {
+                "eventMappingId": "clmtquhhgnaaaajjwddbhhvihhwodzlz",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_now_list_common.SN_NEW_LIST_MODAL#CLOSE_MODAL",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_now_list_common.SN_NEW_LIST_MODAL#CLOSE_MODAL",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_now_list_common.MODAL_SELECTED_RELAY_177d32a343513510ca9c57d2cbb8f2d0",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "bare": null,
+                                    "displayOptions": null,
+                                    "modalId": null,
+                                    "showModal": null,
+                                    "viewportElementId": null,
+                                    "viewportFields": null,
+                                    "viewportParams": null,
+                                    "viewportRoute": null
+                                }
+                            },
+                            "sysId": "777d32a343513510ca9c57d2cbb8f2d8"
+                        },
+                        "operation": null,
+                        "targetId": "clmtquhhgnaaaajjxddbhhvlgluthhjk",
+                        "type": "EVENT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clmtqubccdaaaaacddbhhvifzqccjjdz",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_now_list_common.SN_NEW_LIST_MODAL#MY_LIST_CREATION_REQUESTED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_now_list_common.SN_NEW_LIST_MODAL#MY_LIST_CREATION_REQUESTED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_now_list_common._LIST_CTRL#MY_LIST_CREATION_REQUESTED_RELAY_177d32a343513510ca9c57d2cbb8f2d0",
+                            "payload": {
+                                "container": {
+                                    "columns": {
+                                        "binding": {
+                                            "address": [
+                                                "columns"
+                                            ]
+                                        },
+                                        "type": "EVENT_PAYLOAD_BINDING"
+                                    },
+                                    "conditions": {
+                                        "binding": {
+                                            "address": [
+                                                "conditions"
+                                            ]
+                                        },
+                                        "type": "EVENT_PAYLOAD_BINDING"
+                                    },
+                                    "fixedQuery": {
+                                        "binding": {
+                                            "address": [
+                                                "fixedQuery"
+                                            ]
+                                        },
+                                        "type": "EVENT_PAYLOAD_BINDING"
+                                    },
+                                    "table": {
+                                        "binding": {
+                                            "address": [
+                                                "table"
+                                            ]
+                                        },
+                                        "type": "EVENT_PAYLOAD_BINDING"
+                                    },
+                                    "title": {
+                                        "binding": {
+                                            "address": [
+                                                "title"
+                                            ]
+                                        },
+                                        "type": "EVENT_PAYLOAD_BINDING"
+                                    }
+                                },
+                                "type": "MAP_CONTAINER"
+                            },
+                            "sysId": "b77d32a343513510ca9c57d2cbb8f2d8"
+                        },
+                        "operation": null,
+                        "targetId": "clmtqubccdaaaaadddbhhvnftfzrig",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "isHidden": {
+            "type": "JSON_LITERAL",
+            "value": null
+        },
+        "preset": null,
+        "propertyValues": {
+            "availableColumns": {
+                "type": "JSON_LITERAL",
+                "value": [
+                    
+                ]
+            },
+            "defaultColumns": {
+                "type": "JSON_LITERAL",
+                "value": [
+                    
+                ]
+            },
+            "defaultLists": {
+                "script": {
+                    "apiVersion": "2.0.0",
+                    "controllerElementId": null,
+                    "inlineScript": "/**\n  * @param {params} params\n  * @param {api} params.api\n  * @param {TransformApiHelpers} params.helpers\n  */\nfunction evaluateProperty({api, helpers}) {\n  const tabs = api.data.controller.listMenu.model.tabs;\n  const menuItems = api.data.controller.listMenu.model.menuItems;\n  const defaultListsTab = tabs.find((tab) => tab.id == 'sys_ux_list');\n  const myListsTab = tabs.find((tab) => tab.id == 'sys_ux_my_list');\n \n  const constructTree = (roots) => {\n    const newRoots = [];\n    for (const rootIndex in roots) {\n      const root = roots[rootIndex];\n      \n      if (root.treeContent){\n        newRoots[rootIndex] = {...root};\n        newRoots[rootIndex].children = [];\n        newRoots[rootIndex].children = constructTree(root.treeContent);\n      }\n      else if (root.children){\n        newRoots[rootIndex] = {...root};\n        newRoots[rootIndex].children = [];\n        newRoots[rootIndex].children = constructTree(root.children);\n      }\n      else{\n        newRoots[rootIndex] = menuItems[root.id];\n      }\n    } \n    return newRoots;\n  };\n\n  const defaultListTree = constructTree(defaultListsTab.treeContent);\n  // When my list sections are added construct tree using constmyListsTab.treeContent instead\n  const myListTree = constructTree([myListsTab]); \n\treturn myListTree.concat(defaultListTree);\n}",
+                    "scriptSysId": "2f7ef6e343513510ca9c57d2cbb8f2e9",
+                    "target": null
+                },
+                "type": "CLIENT_TRANSFORM_SCRIPT"
+            },
+            "hideCreateNewTab": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "userRoles": {
+                "binding": {
+                    "address": [
+                        "user",
+                        "roles"
+                    ],
+                    "category": "session"
+                },
+                "type": "CONTEXT_BINDING"
+            }
+        },
+        "slot": null,
+        "styles": null
+    }
+]

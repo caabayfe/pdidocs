@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+    <g:include_script src="$pwd_enroll_sms_ui.jsdbx" />
+	
+    <input type="hidden" name="user_id" value="${gs.getUserID()}" />
+    <input type="hidden" name="verification_id" value="${jvar_verification_id}" /> 
+	<input type="hidden" name="mandatory" value="${jvar_mandatory}" />   
+	<input type="hidden" name="tab_index" value="${jvar_tab_index}" />   
+	<input type="hidden" name="use_notify" value="${jvar_use_notify}" />
+  <script type="text/javascript">
+    // When the page gets loaded, execute the event handler for on-load event.
+    addLoadEvent(
+      function() {
+        sms_on_load('${jvar_form_id}');
+      },
+	  '${jvar_form_id}'
+    );
+
+    // When the page gets loaded, register the event hanlder for on-submit event for the form.
+    addSubmitEvent(
+        function() { 
+            return sms_on_submit('${jvar_form_id}');
+        },
+	    '${jvar_form_id}'   
+    );
+  </script>
+
+  <span id="steps_header_${jvar_verification_id}" class="pwd-section-subtitle">${gs.getMessage('You must authorize at least one device')}<br/></span>
+
+  <div id="sms_devices_${jvar_verification_id}" name="sms_devices" class="pwd-enroll-sms-devices">
+    <!-- Devices will be added here -->
+  </div>
+
+  <br/>
+	
+  <div style="overflow: hidden;">
+	  <button id="add_device_btn" data-target="#add_device_dlg" class="btn btn-primary btn-pwd-submit" data-toggle="modal"
+		  onclick="
+			 openAddDeviceDialog(this);
+			 return false;
+		  " aria-label="${gs.getMessage('Add Device')}">${gs.getMessage('Add Device')}</button>
+  </div>
+
+  <!-- "Add Device" Dialog -->
+  <div id="add_device_dlg" tabindex="-1" aria-hidden="true" class="modal" role="dialog" aria-labelledby="modal1_title" onclick="hideDropdown(event, '${jvar_verification_id}');">
+    <div class="modal-dialog">
+      <div class="modal-content pwd-add-device-dialog">
+		  <div class="modal-header">
+			  <button data-dismiss="modal" class="btn btn-icon close icon-cross">					
+				  <span class="sr-only">${gs.getMessage("Close dialog")}</span>	
+			  </button> 
+			  <h4 id="modal1_title" class="modal-title">${gs.getMessage("Add an SMS Device")}</h4>
+		  </div>
+		  <div class="modal-body">
+            <div class="form-group is-required" id="name_form_group_${jvar_verification_id}">
+              <label for="sysparm_device_name_${jvar_verification_id}" class="control-label col-sm-4">
+                <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+                ${gs.getMessage('Device name')}
+              </label>
+              <span class="col-sm-8">
+                <input type="text" maxlength="20" id="sysparm_device_name_${jvar_verification_id}" name="sysparm_device_name_${jvar_verification_id}" value="" placeholder="" 
+					   class="form-control pwd-form-control" aria-required="true" autocomplete="off"
+                       onkeypress="clearFieldError('retype_device_name_${jvar_verification_id}', 'name_form_group_${jvar_verification_id}');" 
+					   oninput="updateMandatoryMarker(this, 'name_form_group_${jvar_verification_id}')"
+					   aria-describedby="retype_device_name_${jvar_verification_id}"/>
+                <span id="retype_device_name_${jvar_verification_id}" class="help-block" style="text-align:left" role="alert" aria-live="polite"></span>
+              </span>
+            </div>
+			  
+			<!-- add country code when notify installed -->
+			<j:if test="${jvar_use_notify}" >							
+				<div class="form-group is-required" id="phone_form_group_${jvar_verification_id}">
+					<label for="sysparm_phone_number_${jvar_verification_id}" class="control-label col-sm-4">
+						<span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+						${gs.getMessage('Pwd - Phone Number')}
+					</label>
+					<span class="dropdown col-sm-3" style="padding-right:0;">
+						<input type="text" id="country_${jvar_verification_id}" value=""
+							   placeholder="${gs.getMessage('Country')}" aria-required="true" autocomplete="off" 
+							   style="width:100%; text-align:center;" class="form-control pwd-form-control" 
+							   onfocus="openDropdown(this, '${jvar_verification_id}');"
+							   onkeydown="selectListItem(event, this, '${jvar_verification_id}');"
+							   onkeyup="filterOut(event, this, '${jvar_verification_id}');"
+                               aria-describedby="retype_phone_number_${jvar_verification_id}" 
+							   aria-label="${gs.getMessage('Type in a country code')}" />
+						<ul id="sys_ul_country_${jvar_verification_id}" name="sys_ul_country_${jvar_verification_id}"
+							class="dropdown-menu countrycode-dropdown-ul">
+						</ul>
+						<span id="select_country_code_again_${jvar_verification_id}" class="help-block" style="text-align:left" role="alert" aria-live="polite"></span>
+					</span>
+					<span class="col-sm-5" style="padding-left:0">
+						<input type="text" id="sysparm_phone_number_${jvar_verification_id}" name="sysparm_phone_number_${jvar_verification_id}" value="" maxlength="20"
+							   class="form-control pwd-form-control" aria-required="true" autocomplete="off"
+							   onkeypress="clearFieldError('retype_phone_number_${jvar_verification_id}', 'phone_form_group_${jvar_verification_id}');"
+						       oninput="updateMandatoryMarker(this, 'phone_form_group_${jvar_verification_id}')"
+							   />
+						<span id="retype_phone_number_${jvar_verification_id}" class="help-block" style="text-align:left" role="alert" aria-live="polite"></span>
+					</span>
+				</div>
+			</j:if>
+			  
+			<j:if test="${!jvar_use_notify}" >
+				<div class="form-group is-required" id="phone_form_group_${jvar_verification_id}">
+					<label for="sysparm_phone_number_${jvar_verification_id}" class="control-label col-sm-4">
+						<span class="required-marker" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+						${gs.getMessage('Pwd - Phone Number')}
+					</label>
+					<span class="col-sm-8">
+						<input type="text" id="sysparm_phone_number_${jvar_verification_id}" 
+							   name="sysparm_phone_number_${jvar_verification_id}" value="" placeholder="(xxx) xxx-xxxx" maxlength="20"
+							   class="form-control pwd-form-control" aria-required="true" autocomplete="off"
+							   onkeypress="clearFieldError('retype_phone_number_${jvar_verification_id}', 'phone_form_group_${jvar_verification_id}');"
+							   oninput="updateMandatoryMarker(this, 'phone_form_group_${jvar_verification_id}')"
+                               aria-describedby="retype_phone_number_${jvar_verification_id}" />
+						<span id="retype_phone_number_${jvar_verification_id}" class="help-block" style="text-align:left" role="alert" aria-live="polite"></span>
+					</span>
+				</div>
+				
+				<div class="form-group is-required" id="provider_form_group_${jvar_verification_id}">
+					<label for="sys_select.service_provider_${jvar_verification_id}" class="control-label col-sm-4">
+						<span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+						${gs.getMessage('Service provider')}
+					</label>
+					<span class="col-sm-8">
+						<input type="hidden" id="service_provider_${jvar_verification_id}" name="service_provider_${jvar_verification_id}" value="" 
+							   onchange="onChange('service_provider_${jvar_verification_id}')" />
+						<input id="sys_display.service_provider_${jvar_verification_id}" type="hidden" name="sys_display.service_provider_${jvar_verification_id}" value="" />
+						<select id="sys_select.service_provider_${jvar_verification_id}" name="sys_select.service_provider_${jvar_verification_id}"
+								class="form-control pwd-form-control" aria-required="true"
+								onchange="clearFieldError('select_service_provider_again_${jvar_verification_id}', 'provider_form_group_${jvar_verification_id}');
+										  onSelChange('sys_select.service_provider_${jvar_verification_id}');
+										  updateAndFlip(this, 'service_provider_${jvar_verification_id}');
+										  updateMandatoryMarker(this, 'provider_form_group_${jvar_verification_id}')"
+										  aria-describedby="select_service_provider_again_${jvar_verification_id}">
+							<option value="">None</option>
+						</select>
+						<span id="select_service_provider_again_${jvar_verification_id}" class="help-block" style="text-align:left" role="alert" aria-live="polite"></span>
+					</span>
+				</div>
+			</j:if>
+        </div>
+		  
+        <footer class="modal-footer flex">
+          <button id="dismiss_add_device_dialog_${jvar_verification_id}" data-dismiss="modal" style="display:none;"></button>
+          <button data-dismiss="modal" class="btn btn-default"  aria-label="${gs.getMessage('Close dialog')}">
+            ${gs.getMessage('Cancel')}
+          </button>
+          <button id="sysverb_add_new_device_${jvar_verification_id}" class="btn btn-primary"
+            onclick="
+			  var phoneNo = getPhoneNumber(this);
+              if (addNewDevice(this)) {
+                gel('dismiss_add_device_dialog_${jvar_verification_id}').click();
+				/* focus on 'Verify' button */
+				setTimeout(function() {
+					var deviceId = getDeviceIdUsingPhoneNumber('${jvar_verification_id}', phoneNo);
+					gel('sms_device_verify_button_'+deviceId).focus();
+				}, 100);
+              }
+              return false;
+            " aria-label="${gs.getMessage('Add Device')}">
+            ${gs.getMessage('Add Device')}
+          </button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- "Verify Device" Dialog -->
+
+  <div id="verify_device_dlg" tabindex="-1" aria-hidden="true" class="modal" role="dialog" aria-labelledby="modal1_title">
+    <div class="modal-dialog">
+      <div class="modal-content pwd-verify-device-dialog">
+        <div class="modal-header">
+		  <button data-dismiss="modal" class="btn btn-icon close icon-cross">					
+			<span class="sr-only">${gs.getMessage("Close dialog")}</span>	
+		  </button>
+		  <h4 class="modal-title">${gs.getMessage("Verify the SMS Device")}</h4>
+          <span class="pwd-modal-subtitle">
+            ${gs.getMessage('The system sent a code to the device. Enter the code and click Verify.')}
+          </span>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="verify_dialog_device_id_${jvar_verification_id}" value=""/>
+
+            <div class="form-group" id="verify_dialog_device_name_form_group_${jvar_verification_id}">
+              <label for="verify_dialog_device_name_${jvar_verification_id}" class="control-label col-sm-4">
+                ${gs.getMessage('Device name')}
+              </label>
+              <span class="col-sm-8">
+                <input type="text" id="verify_dialog_device_name_${jvar_verification_id}" value="" class="form-control pwd-form-control" disabled="true"/>
+              </span>
+            </div>
+			  
+			<j:if test="${jvar_use_notify}" >
+				<div class="form-group" id="verify_dialog_device_number_form_group_${jvar_verification_id}">
+					<label for="verify_dialog_device_number_${jvar_verification_id}" class="control-label col-sm-4">
+						${gs.getMessage('Pwd - Phone Number')}
+					</label>
+					<span class="col-sm-3" style="padding-right:0">
+						<input type="text" id="verify_dialog_device_country_${jvar_verification_id}" value="" class="form-control pwd-form-control" disabled="true" aria-label="${gs.getMessage('Country code')}"/>
+					</span>
+					<span class="col-sm-5" style="padding-left:0">
+						<input type="text" id="verify_dialog_device_number_${jvar_verification_id}" value="" class="form-control pwd-form-control" disabled="true" aria-label="${gs.getMessage('Phone number')}"/>
+					</span>
+				</div>
+			</j:if>
+
+			<j:if test="${!jvar_use_notify}" >
+				<div class="form-group" id="verify_dialog_device_number_form_group_${jvar_verification_id}">
+					<label for="verify_dialog_device_number_${jvar_verification_id}" class="control-label col-sm-4">
+						${gs.getMessage('Pwd - Phone Number')}
+					</label>
+					<span class="col-sm-8">
+						<input type="text" id="verify_dialog_device_number_${jvar_verification_id}" value="" class="form-control pwd-form-control" disabled="true"/>
+					</span>
+				</div>
+				<div class="form-group" id="verify_dialog_device_provider_form_group_${jvar_verification_id}">
+					<label for="verify_dialog_device_provider_${jvar_verification_id}" class="control-label col-sm-4">
+						${gs.getMessage('Service provider')}
+					</label>
+					<span class="col-sm-8">
+						<input type="text" id="verify_dialog_device_provider_${jvar_verification_id}" value="" class="form-control pwd-form-control" disabled="true"/>
+					</span>
+				</div>
+			</j:if>
+
+            <div class="form-group is-required" id="verify_dialog_sms_code_form_group_${jvar_verification_id}">
+              <label for="verify_dialog_sms_code_${jvar_verification_id}" class="control-label col-sm-4">
+                <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+                ${gs.getMessage('Code')}
+              </label>
+              <span class="col-sm-8">
+                <div style="display:-webkit-box">
+                  <input type="text" maxlength="20" id="verify_dialog_sms_code_${jvar_verification_id}" 
+						 name="sysparm_sms_code_${jvar_verification_id}" value="" placeholder="${gs.getMessage('Enter code')}"
+                         class="form-control pwd-form-control" style="width:160px; display:inline-block" aria-required="true" autocomplete="off"
+                         onkeypress="clearFieldError('verify_dialog_error_msg_${jvar_verification_id}','verify_dialog_sms_code_form_group_${jvar_verification_id}');"
+						 oninput="updateMandatoryMarker(this, 'verify_dialog_sms_code_form_group_${jvar_verification_id}')"
+                         aria-describedby="verify_dialog_error_msg_${jvar_verification_id}"/>$[SP]
+                  <button class="btn btn-primary"
+                    onclick="
+                      resendEnrollmentCode(this);
+                      return false;
+                    " aria-label="${gs.getMessage('Send New Code')}">
+                    ${gs.getMessage('Send New Code')}
+                  </button>
+                </div>
+                <span id="verify_dialog_error_msg_${jvar_verification_id}" class="help-block" style="text-align:left"></span>
+              </span>
+            </div>
+        </div>
+		  
+        <footer class="modal-footer flex">
+          <button id="dismiss_verify_device_dialog_${jvar_verification_id}" data-dismiss="modal" style="display:none;"></button>
+          <button data-dismiss="modal" class="btn btn-default" aria-label="${gs.getMessage('Close dialog')}">
+            ${gs.getMessage('Cancel')}
+          </button>
+          <button id="sysverb_verify_device_${jvar_verification_id}" class="btn btn-primary "
+            onclick="
+              if (verifyDeviceWithEnrollmentCode(this)) {
+                gel('dismiss_verify_device_dialog_${jvar_verification_id}').click();
+              }
+              return true;
+            " aria-label="${gs.getMessage('Verify')}">
+            ${gs.getMessage('Verify')}
+          </button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+</j:jelly>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:ui_form>
+    <g:evaluate>
+      var relTypes = new GlideRecordSecure('cmdb_rel_type');
+      relTypes.orderBy('parent_descriptor');
+      relTypes.query();
+    </g:evaluate>
+
+   <g:evaluate var="jvar_linkId"
+    expression="RP.getWindowProperties().get('linkId')" /> 
+
+    <g:evaluate>
+      var linkType = new GlideRecordSecure('cmdb_rel_ci');
+      linkType.addQuery('sys_id', '${jvar_linkId}');
+      linkType.query();
+      linkType.next();
+    </g:evaluate>
+
+   <!-- Set up form fields and labels -->
+   <table width="100%">
+
+     <input id="linkId" type="hidden" value="${jvar_linkId}" />
+     <tr valign="top">
+        <td colspan="2">
+           ${gs.getMessage('Pick a Relationship:')}
+        </td>
+     </tr>
+     <tr valign="top">
+       <td>
+         <select id='select_relationship_type'>
+         <j:while test="${relTypes.next()}">
+            <j:choose>
+              <j:when test="${relTypes.sys_id==linkType.type}">
+                 <option value="${relTypes.sys_id}" selected="selected">${relTypes.name}</option>
+              </j:when>
+              <j:otherwise>
+                 <option value="${relTypes.sys_id}">${relTypes.name}</option>
+              </j:otherwise>
+            </j:choose>
+         </j:while>
+         </select>
+       </td>
+     </tr>
+     <tr id="dialog_buttons">
+        <td colspan="2" align="right">
+           <g:dialog_buttons_ok_cancel ok="return BSMLink.editLink()" ok_type="button" cancel_type="button" />
+        </td>
+     </tr>
+  </table>
+</g:ui_form>
+</j:jelly>

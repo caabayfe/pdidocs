@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>  
+		var userGr = new GlideRecord('sys_user');
+		var sysid = RP.getParameterValue('sysparam_user');
+		userGr.get(sysid);
+
+		var isArticle = RP.getParameterValue('sysparam_isarticle');
+
+		var recordGr;
+		if(isArticle=='true')
+		recordGr = new GlideRecord('kb_knowledge');
+		else
+		recordGr = new GlideRecord('kb_knowledge_base');
+
+		recordGr.get(RP.getParameterValue('sysparam_record'));
+
+		var isfilled = true;
+		if(!userGr.getRowCount())
+		isfilled = false;
+		if(!isArticle)
+		isfilled = false;
+		if(!recordGr.getRowCount())
+		isfilled = false;
+
+		var diagnose = new KBDiagnostics(isArticle!='false',userGr.getUniqueValue(),recordGr.getUniqueValue());
+		var links = [];
+		links[0] = diagnose.checkPropertyAndEscapeHtml(userGr.getDisplayValue('name'));
+
+		var recordTitle;
+		if(isArticle!='false'){
+		var kbCommon = new KBCommon();
+		var articleQuery;
+		if(kbCommon.isVersioningEnabled()){
+		recordTitle = recordGr.getDisplayValue('display_number');
+		articleQuery = 'active=true^workflow_state=published^ORworkflow_state=outdated';
+		}
+		else{
+		recordTitle = recordGr.getDisplayValue('number');
+		articleQuery = 'active=true';
+		}
+		if(isArticle=='true'){
+		var gr = new GlideRecord('kb_knowledge_base');
+		var kbId = recordGr.getValue('kb_knowledge_base');
+		gr.get(kbId);
+		var kbname = gr.getDisplayValue('title');
+		links[1] = '<a class = "linked formlink" href="/kb_knowledge_base.do?sys_id='+ kbId + '">'+ diagnose.checkPropertyAndEscapeHtml(kbname) + '</a>';
+		links[2] = '<a class = "linked formlink" href="/kb_knowledge.do?sys_id='+ recordGr.getUniqueValue() + '">'+ recordTitle + '</a>';
+		}
+		}
+		else{
+		recordTitle = recordGr.getDisplayValue('title');
+		links[1] = '<a class = "linked formlink" href="/kb_knowledge_base.do?sys_id='+ recordGr.getUniqueValue() + '">'+ diagnose.checkPropertyAndEscapeHtml(recordTitle) + '</a>';
+		}
+
+
+		
+
+
+	</g:evaluate>
+	
+	<div class="main-content">
+	<nav class="navbar navbar-default">
+		<div class="container-fluid navbar-header">
+			<h1 class="navbar-title">
+				<span class="caption">${gs.getMessage('User Criteria Diagnostics')}</span>
+			</h1>
+		</div>
+	</nav>
+
+	<div class="diagnostics-inputs">
+		<g:kb_reference_field id="user" label="${gs.getMessage('Select user')}" displayvalue="${userGr.getDisplayValue('name')}" value="${userGr.getUniqueValue()}" table="sys_user" query="active=true"/>
+
+		<div class="form-group row">
+			<span class="col-xs-4 col-md-2 checkbox-label">
+				<span>${gs.getMessage('Select record type')}</span>
+			</span>
+			<fieldset class="col-xs-4 col-md-2">
+				<legend class="sr-only">${gs.getMessage('Select record type')}</legend>
+				<j:if test="${isArticle!='false'}">	
+					<div class="radio">
+						<span class="input-group-radio">
+							<input id="articleChkbox" class="radio" name="options" type="radio" checked="checked" onclick="toggleInputs()"/>
+							<label for="articleChkbox" class="radio-label">${gs.getMessage('Article')}</label>
+						</span>
+					</div>
+					<div class="radio">
+						<span class="input-group-radio">
+							<input id="kbChkbox" class="radio" name="options" type="radio" onclick="toggleInputs()"/>
+							<label for="kbChkbox" class="radio-label">${gs.getMessage('Knowledge Base')}</label>
+						</span>
+					</div>
+				</j:if>
+				<j:if test="${isArticle=='false'}">	
+					<div class="radio">
+						<span class="input-group-radio">
+							<input id="articleChkbox" class="radio" name="options" type="radio" onclick="toggleInputs()"/>
+							<label for="articleChkbox" class="radio-label">${gs.getMessage('Article')}</label>
+						</span>
+					</div>
+					<div class="radio">
+						<span class="input-group-radio">
+							<input id="kbChkbox" class="radio" name="options" type="radio" checked="checked" onclick="toggleInputs()"/>
+							<label for="kbChkbox" class="radio-label">${gs.getMessage('Knowledge Base')}</label>
+						</span>
+					</div>
+				</j:if>
+			</fieldset>
+		</div>
+
+		<j:if test="${isArticle==''}">
+			<div id="article_field" style="display:block">
+				<g:kb_reference_field id="article" label="${gs.getMessage('Select article')}" table="kb_knowledge" query="${articleQuery}"/>
+			</div>
+			<div  id="kb_field" style="display:none">
+				<g:kb_reference_field id="kb" label="${gs.getMessage('Select knowledge base')}" table="kb_knowledge_base" query="active=true"/>
+			</div>
+		</j:if>
+		<j:if test="${isArticle=='true'}">
+			<div id="article_field" style="display:block">
+				<g:kb_reference_field id="article" label="${gs.getMessage('Select article')}" table="kb_knowledge" displayvalue="${recordTitle}" value="${recordGr.getUniqueValue()}" query="${articleQuery}"/>
+			</div>
+			<div  id="kb_field" style="display:none">
+				<g:kb_reference_field id="kb" label="${gs.getMessage('Select knowledge base')}" table="kb_knowledge_base" query="active=true"/>
+			</div>
+		</j:if>
+		<j:if test="${isArticle=='false'}">
+			<div id="article_field" style="display:none">
+				<g:kb_reference_field id="article" label="${gs.getMessage('Select article')}" table="kb_knowledge" query="${articleQuery}"/>
+			</div>
+			<div  id="kb_field" style="display:block">
+				<g:kb_reference_field id="kb" label="${gs.getMessage('Select knowledge base')}" table="kb_knowledge_base" displayvalue="${recordTitle}" value="${recordGr.getUniqueValue()}" query="active=true"/>
+			</div>
+		</j:if>
+
+		<div class="row form-group" style="padding-left:18px;margin-top:30px">
+			<div class="col-xs-4 col-md-2"/>
+			<j:if test="${isfilled}">
+				<button id="diagnose" type="button" aria-label="${gs.getMessage(' Diagnose ')}" class="btn btn-primary" onclick="showResults()">
+					${gs.getMessage('Diagnose')}
+				</button>
+			</j:if>
+			<j:if test="${!isfilled}">
+				<button id="diagnose" type="button" aria-label="${gs.getMessage(' Diagnose ')}" class="btn btn-primary" onclick="showResults()" disabled="true">
+					${gs.getMessage('Diagnose')}
+				</button>
+			</j:if>
+		</div>
+	</div>
+
+
+	<j:if test="${isfilled}">
+		<div id="results">	
+			<g:evaluate var="jvar_results" jelly="true" object="true" copyToPhase2="true">
+				
+				var finalResults = diagnose.getDiagnostics();
+				
+				var ucResults = finalResults.userCriteriaResults;
+				
+				ucResults;
+				
+			</g:evaluate>
+
+			<hr />
+			<g:inline template="km_diagnostics_summary"/>
+			
+			<j:if test="${finalResults.isDomainSeparationActive}">
+				<hr />
+				<g:inline template="km_diagnostics_domain_summary"/>
+				<hr />
+				<g:inline template="km_diagnostics_uc_table"/>
+			</j:if>
+			<j:if test="${!finalResults.isDomainSeparationActive}">
+				<j:if test="${ucResults.summary != 0}">
+					<j:if test="${ucResults.results.length != 0 || ucResults.summary == 4}">
+						<hr/>
+						<g:inline template="km_diagnostics_uc_table"/>
+					</j:if>
+				</j:if>
+			</j:if>
+			
+			
+
+
+		</div>
+	</j:if>
+		
+		<div aria-label="Related Links" style="margin-left:15px; margin-top:15px">
+			<h2 class="related_links h4">${gs.getMessage('Related Links')}</h2>
+			<ul class="related_links_container list-unstyled">
+				<li>
+					<a class="navigation_link default-focus-outline" id="unauthenticatesUserKB" href="/get_public_knowledge_bases.do" target="blank" aria-label="${gs.getMessage('View knowledge bases accessible to unauthenticated users')}">${gs.getMessage('View knowledge bases accessible to unauthenticated users')}</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<style>
+		
+		body{
+		overflow-x:hidden;
+		}
+		
+		.diagnostics-results{
+		margin: 0 auto;
+		width:98%;
+		}
+
+		.diagnostics-inputs{
+		margin-top:30px;
+		}
+		
+		.diagnostics-inputs .radio + .radio{
+		margin-top: 0px;
+		}
+		.diagnostics-inputs .checkbox-label {
+		text-align: right;
+		padding-top: 12px;
+		}
+		.diagnostics-summary{
+		margin:0 auto;
+		margin-left:9px;
+		}
+		.diagnostics-table{
+		margin:10px auto;
+		}
+	
+		.summary-heading{
+		padding-top: 7px;
+		padding-left: 7px;
+		padding-bottom: 7px;
+		}
+		
+		.diagnostics-table .table{
+		margin-bottom:10px;
+		}
+
+		.diagnostics-table .table th{
+		background-color: #ffffff;
+		font-size: 14px;
+		border-top: 0px solid #bdc0c4 !important;
+		padding:7px 15px;
+		}
+		
+		.diagnostics-table .table td{
+		border-bottom: 1px solid #bdc0c4;
+		padding:15px;
+		}
+		
+		.diagnostics-table tr:nth-child(odd) {
+		background-color: #eeeeee;
+		}
+		
+		.diagnostics-summary h2{
+		font-size: 20px !important;
+		margin:0px;
+		padding-left:0px;
+		}
+		
+		.diagnostics-inputs fieldset {
+		padding: 0;
+		margin: 0;
+		border: 0;
+		min-width: 0; 
+		line-height: 1.42857em;
+		margin-left:-4px;
+		}
+		.diagnostics-results hr {
+		margin-top: 18px;
+		margin-bottom: 18px;
+		border: 0;
+		height: 0px;
+		border-top: 1px solid #e6e8ea;
+		background-color: #fff;
+		}
+		
+		
+		.note{
+		margin-top: 12px;
+		line-height: 1.42857em;
+		font-size: 14px;
+		font-weight:600;
+		width:98%;
+		margin-left:9px;
+		}
+		
+		.text{
+		margin-top: 12px;
+		line-height: 1.42857em;
+		font-size: 14px;
+		width:98%;
+		margin-left:9px;
+		}
+		.no-rows{
+		padding-left:14px;
+		}
+		
+		.content {
+		overflow: hidden;
+		transition: max-height 0.2s ease-out;
+		  max-height: 0;
+		}
+		
+		.collapsible {
+		cursor: pointer;
+		}
+		.expand{
+		float:right;
+		}
+		
+		.icon-remove, .icon{
+		margin-right:5px;
+		}
+		
+		html[dir="rtl"] .control-label {
+		float: left !important;
+		text-align: left;
+		}
+		html[dir="rtl"] .checkbox-label {
+		text-align: left;
+		}
+		html[dir="rtl"] .radio-label{
+		margin-right: -15px !important;
+		}
+		html[dir="rtl"] .radio input{
+		margin-right: -20px;
+		}
+		html[dir="rtl"] .btn-primary{
+		margin-right: 18px;
+		}
+		html[dir="rtl"] .expand{
+		float: left;
+		}
+		html[dir="rtl"] .summary-icon{
+		margin-right :-2px;
+		}
+		html[dir="rtl"] .summary-heading{
+		padding-right: 7px;
+		}
+		html[dir="rtl"] .note, .text{
+		margin-right: 9px;
+		}
+		html[dir="rtl"] .no-rows{
+		padding-right:14px;
+		}
+		html[dir="rtl"] .icon{
+		margin-left:5px;
+		}
+		
+	</style>
+</j:jelly>

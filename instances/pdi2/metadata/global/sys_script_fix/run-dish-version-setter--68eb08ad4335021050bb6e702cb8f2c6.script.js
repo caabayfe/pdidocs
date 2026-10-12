@@ -1,0 +1,1 @@
+new global.DISHVersion().setVersion();

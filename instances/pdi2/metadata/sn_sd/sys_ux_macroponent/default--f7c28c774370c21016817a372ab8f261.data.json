@@ -1,0 +1,123 @@
+[
+    {
+        "definition": {
+            "id": "0f4b7fba43bc421016817a372ab8f22f",
+            "type": "TRANSFORM"
+        },
+        "dependencies": {},
+        "elementId": "hasLicense",
+        "elementLabel": "HasLicense",
+        "eventMappings": [
+            {
+                "eventMappingId": "cltraaaamnkaaccagddbhhvjjoffnpyabb",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    let appsInfo = api.state.appsInformation;\n    if (Object.keys(api.data.hasLicense.output).length === 0)\n        return;\n    for (let appStatus of Object.entries(api.data.hasLicense.output)) {\n        for (let i = 0; i < appsInfo.length; i++) {\n            if (appsInfo[i].appId == appStatus[0]) {\n                if (!appStatus[1].licensingStatus) {\n                    appsInfo[i].highlightedTextColor = 'gray';\n                    appsInfo[i].highlightedText = api.state.highlightedText;\n                    appsInfo[i].actionName = '';\n                }\n                if (appStatus[1].installationStatus)\n                    appsInfo[i].appStatus = api.state.appStatus;\n                break;\n            }\n        }\n    }\n    return {\n        propName: 'appsInformation',\n        value: appsInfo\n    };\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "cltraaaamnlaaccahddbhhvffrxyseddd",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "appsInfo": {
+                "binding": {
+                    "address": [
+                        "appsInformation"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "artifactId": {
+                "binding": {
+                    "address": [
+                        "appId"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "f85b75374338c21016817a372ab8f275",
+            "type": "TRANSFORM"
+        },
+        "dependencies": {},
+        "elementId": "isConfigurationPossible",
+        "elementLabel": "IsConfigurationPossible",
+        "eventMappings": [
+            {
+                "eventMappingId": "cltrbiixcggaaccdrddbhhvsgjjmvqac",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "11e8593b4374c21016817a372ab8f2d8"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cltrsyqaaaaaabbwqddbhhuelhhjjqhhcj",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "dashboardId": {
+                "binding": {
+                    "address": [
+                        "dashboardNames"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    }
+]

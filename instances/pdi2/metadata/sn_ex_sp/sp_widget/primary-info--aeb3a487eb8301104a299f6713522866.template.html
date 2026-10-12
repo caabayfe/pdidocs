@@ -1,0 +1,115 @@
+<div class="primary-info">
+  <div class="primary-info-header">
+    <div ng-class="{'col-sm-7 col-xs-12 zero-padding' : c.canDelegate()}">
+      <div class="primary-info-attributes">{{::data.primaryInfo.primaryInfoHeader}}</div>
+      <div ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{::data.primaryInfo.title}}" class="primary-info-title" ng-if="data.primaryInfo.title">{{::data.primaryInfo.title}}</div>
+    </div>
+    <div class="col-sm-5 col-xs-12 zero-padding top-margin" ng-if="c.canDelegate()">
+      <!-- if NO delegate is assigned -->
+      <button id="delegate" class="btn-link zero-padding" ng-if="data.currentDelegates.searchResCount === 0 && data.canDelegateRecord" ng-click="c.singleTaskPageModal($event)">
+        <i class="fa fa-lg fa-user-plus"></i> {{::data.CONST.i18n.DELEGATE_SINGLE_TASK}} </button>
+      <!-- if SINGLE delegate is assigned -->
+      <div class="row selected-delegate" ng-if="data.currentDelegates.searchResCount === 1">
+        <div class="col-xs-8">
+          <div class="avatar-container m-r-sm avatar-position">
+            <div class="avatar soloAvatar">
+              <a href="?id=hri_user_profile&sys_id={{ data.currentDelegates.searchRes[0].id }}" target="_blank" aria-label="{{ c.getViewProfileText(data.currentDelegates.searchRes[0].name) }}" class="sub-avatar" ng-class="{'no-photo':!data.currentDelegates.searchRes[0].avatar}" ng-style="c.getAvatar(data.currentDelegates.searchRes[0].avatar)">
+                <sn-presence user="data.currentDelegates.searchRes[0].id" class="presence presence-online"></sn-presence>
+                <span ng-if="!data.currentDelegates.searchRes[0].avatar" ng-bind="data.currentDelegates.searchRes[0].initial"></span>
+              </a>
+            </div>
+          </div>
+          <div class="i-b w60">
+            <span class="block" ng-bind="::data.CONST.i18n.DELEGATE"></span>
+            <div ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{data.currentDelegates.searchRes[0].name}}" class="ellipsis" ng-bind="data.currentDelegates.searchRes[0].name"></div>
+          </div>
+        </div>
+        <div class="col-xs-4">
+          <div class="modify-delegate">
+            <button class="xs-m-r-lg btn-link" ng-click="c.singleTaskPageModal($event, data.currentDelegates.searchRes[0])">
+              <i class="fa fa-lg fa-pencil" data-toggle="tooltip" title="{{ ::data.CONST.i18n.BUTTON_TITLE.EDIT }}"></i>
+            </button>
+            <button class="btn-link m-l-xs" ng-if="data.canDelegateRecord" ng-click="c.singleTaskPageModal($event)">
+              <i class="fa fa-lg fa-plus-circle" title="{{ ::data.CONST.i18n.BUTTON_TITLE.ADD }}" data-toggle="tooltip" data-placement="bottom"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- if MULTIPLE delegate is assigned -->
+      <div class="row selected-delegate" ng-if="data.currentDelegates.searchResCount > 1">
+        <div class="col-xs-9">
+          <div class="avatar-container m-r-sm avatar-position">
+            <div class="avatar soloAvatar">
+              <div class="sub-avatar no-cursor" ng-bind="data.currentDelegates.searchResCount"></div>
+            </div>
+          </div>
+          <div class="delegate-detail-container detail-container">
+            <span class="block" ng-bind="::data.CONST.i18n.DELEGATE"></span>
+            <span class="text-xs">
+              <button class="btn-link show-delegate-popover" title="{{ ::data.CONST.i18n.BUTTON_TITLE.VIEW_ALL }}" ng-click="c.triggerDelegatePopover($event)" ng-bind="::data.CONST.i18n.VIEW_ALL"></button>
+            </span>
+          </div>
+        </div>
+        <div class="delegate-popover fade bottom in" aria-role="group" aria-labelledby="#popoverTitle" ng-class="{'popover': (c.showAllDelegatePopover && data.currentDelegates.searchResCount > 1)}" ng-if="c.showAllDelegatePopover || data.currentDelegates.searchResCount === 1">
+          <h3 id="popoverTitle" class="popover-title" ng-if="(c.showAllDelegatePopover && data.currentDelegates.searchResCount > 1)" ng-bind="c.showDelegateCount(data.currentDelegates.searchResCount)"></h3>
+          <div ng-class="{'popover-content': c.showAllDelegatePopover}">
+            <div class="row multiple-delegates" ng-class="{'as-popover': c.showAllDelegatePopover}" ng-repeat="delegate in data.currentDelegates.searchRes track by $index">
+              <div class="col-xs-9">
+                <div class="avatar-container i-b m-r-sm">
+                  <div class="avatar soloAvatar">
+                    <a class="sub-avatar" href="?id=hri_user_profile&sys_id={{ delegate.id }}" target="_blank" aria-label="{{ c.getViewProfileText(delegate.name) }}" ng-class="{'no-photo':!delegate.avatar}" ng-style="c.getAvatar(delegate.avatar)">
+                      <sn-presence user="delegate.id" class="presence presence-online"></sn-presence>
+                      <span class="delegate-initials" ng-if="!delegate.avatar" ng-bind="delegate.initial"></span>
+                    </a>
+                  </div>
+                </div>
+                <div class="i-b w60">
+                  <div class="ellipsis" ng-class="{'push-down': !delegate.title}" ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{delegate.name}}" ng-bind="delegate.name"></div>
+                </div>
+              </div>
+              <div class="col-xs-3">
+                <div class="tooltip-btn-container">
+                  <button class="btn-link" ng-click="c.singleTaskPageModal($event, delegate)">
+                    <i class="fa fa-lg fa-pencil" data-toggle="tooltip" data-placement="left" title="{{ ::data.CONST.i18n.BUTTON_TITLE.EDIT }}"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-3">
+          <div class="modify-delegate">
+            <button class="btn-link" title="{{ ::data.CONST.i18n.BUTTON_TITLE.ADD }}" data-toggle="tooltip" data-placement="bottom" ng-if="data.canDelegateRecord" ng-click="c.singleTaskPageModal($event)">
+              <i class="fa fa-lg fa-plus-circle"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="primary-info-field-container" ng-if="!data.primaryInfo.widget">
+    <div class="primary-info-field" ng-repeat="field in c.primaryField track by $index" ng-if="c.displayField($index)" ng-class="c.getPrimaryFieldClass()">
+      <a ng-if="field.type === 'sys_user' && field.sysId" class="primary-info-user-link" ng-href="?id=hri_user_profile&sys_id={{field.sysId}}" aria-labelledby="primaryInfoUserField_{{$index}}">
+        <sn-avatar primary="field.sysId" class="primary-info-user-avatar" show-presence="true" enable-context-menu="false"></sn-avatar>
+      </a>
+      <div>
+        <div id="primaryFieldLabel_{{$index}}" ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{field.label}}" class="primary-info-field-label">{{field.label}}</div>
+        <div ng-if="!(field.fieldType == 'translated_html' || field.fieldType =='html')" aria-labelledby="primaryFieldLabel_{{$index}}">
+          <div ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{field.value}}" ng-if="(field.fieldType !== 'url' || (field.fieldType === 'url' && field.value === '${(empty)}')) && (field.type !== 'sys_user' || !field.sysId)" class="primary-info-field-value">{{field.value ? field.value : '${(empty)}'}}</div>
+          <a ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{field.value}}" ng-if="(field.fieldType === 'url' && field.value !== '${(empty)}')" class="primary-info-field-value" ng-href="{{field.value}}" target="_blank">{{field.value}}</a>
+          <a id="primaryInfoUserField_{{$index}}" ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{field.value}}" ng-if="field.type === 'sys_user' && field.sysId" class="primary-info-field-value" ng-href="?id=hri_user_profile&sys_id={{field.sysId}}">{{field.value}}</a>
+        </div>
+        <div ng-if="field.fieldType == 'translated_html' || field.fieldType =='html'" class="primary-info-field-value" ng-init="popoverOpened=false" ng-mouseenter="popoverOpened=true" ng-mouseleave="popoverOpened=false" aria-labelledby="primaryFieldLabel_{{$index}}">
+          <div uib-popover-html="field.htmlValue" popover-trigger="none" popover-placement="bottom" popover-is-open="popoverOpened" popover-title="{{field.label}}" class="info-field-value" ng-bind-html="field.htmlValue"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="show-more" ng-if="!data.primaryInfo.widget && c.displayShowMore()" ng-click="c.clickShowMore($event)">
+    {{c.showMoreText}}
+    <i aria-hidden="true" class="fa" ng-class="c.getShowMoreIconClass()"></i>
+  </button>
+  <div ng-if="data.primaryInfo.widget">
+    <sp-widget widget="data.primaryInfoWidget"></sp-widget>
+  </div>
+</div>

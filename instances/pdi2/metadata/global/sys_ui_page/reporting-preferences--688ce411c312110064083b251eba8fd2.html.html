@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:evaluate var= "jvar_show_usr_grp_prop" jelly="true">
+    var show_usr_grp_prop = GlideProperties.getBoolean('glide.report_home.group_report.show_usr_grp', false);
+    show_usr_grp_prop;
+</g:evaluate>
+
+<g:ui_form>
+<j:choose>
+    <j:when test="${jvar_show_usr_grp_prop == 'true'}" >
+        
+        <h3> ${HTML:gs.getMessage("My reporting preferences")} </h3>
+        <g:evaluate var="jvar_show_group_report_usrgrp" jelly="true">
+            var show_group_report_usrgrp = false;
+            var gr = new GlideRecord('sys_user_preference');        
+       	    gr.addQuery('name', 'report_home.group_report.show_first_group_user');
+            gr.addQuery('user', gs.getUserID());
+            gr.query();
+            if (gr.next() ) {
+                show_group_report_usrgrp = gr.getValue('value');
+            } else {
+                gr = new GlideRecord('sys_user_preference');
+                gr.addQuery('name', 'report_home.group_report.show_first_group_user');
+                gr.addNullQuery('user');
+                gr.query();
+                if (gr.next())	
+        	   show_group_report_usrgrp = gr.getValue('value');
+            }
+            show_group_report_usrgrp;
+        </g:evaluate>
+        
+        
+        <table width="400px">
+	      <tr>
+	        <td nowrap="true">
+	        	<g:evaluate var="jvar_lbl" jelly="true" >
+                     var lbl = gs.getMessage(GlideStringUtil.escapeHTML('Show first group or user name for group reports, on the reports home page'));
+                     lbl;
+                </g:evaluate>
+                <label for="usrgrp_checkbox">${jvar_lbl}</label>
+            </td>
+            <td align="left" style="padding-left:10px;font-weight:normal;">
+                  <g:evaluate var="jvar_tt" jelly="true" >
+            	  	var tt = gs.getMessage(GlideStringUtil.escapeHTML('If this option is checked, it will degrade the performance of the load of your report home page if you have a large number of group reports. Please exercise caution!'));
+         			tt;
+            	  </g:evaluate>
+                  <j:choose>
+                     <j:when test="${jvar_show_group_report_usrgrp == 'true'}" >
+                         <input type="checkbox" name="showFirstGrpUsr" id="usrgrp_checkbox" title="${jvar_tt}" value="${jvar_show_group_report_usrgrp}" checked="yes" onclick="showFirstUsrGrpClicked(this);" />
+                     </j:when>
+                     <j:otherwise>
+                         <input type="checkbox" name="showFirstGrpUsr" id="usrgrp_checkbox" title="${jvar_tt}" value="${jvar_show_group_report_usrgrp}" onclick="showFirstUsrGrpClicked(this);" />
+                     </j:otherwise>
+                  </j:choose>
+             </td>
+           </tr>
+         </table>
+
+         <br/>
+         <table width="100%">
+           <tr>
+              <td align="left">
+                 <input type="hidden" name="user_id" id="user_id" value="${sysparm_user}"/>
+                 <input type="hidden" name="user_name" id="user_id" value="${sysparm_userName}"/>
+                 <input type="hidden" name="show_usr_grp" id="show_usr_grp" value="${jvar_show_group_report_usrgrp}"/>
+                 <g:ui_button action="save">${gs.getMessage('Save')}</g:ui_button>
+                 <g:ui_button action="cancel">${gs.getMessage('Cancel')}</g:ui_button>
+              </td>
+           </tr>
+         </table>
+    </j:when>
+
+    <j:otherwise>
+         <h3> ${HTML:gs.getMessage("No reporting preferences to set")} </h3>
+    </j:otherwise>
+
+
+</j:choose>
+
+</g:ui_form>
+
+</j:jelly>

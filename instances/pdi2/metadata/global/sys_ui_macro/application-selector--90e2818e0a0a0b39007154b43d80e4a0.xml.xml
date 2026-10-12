@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <select name="sysparm_application" id="sysparm_application">
+        <option value="">${gs.getMessage('-- The New One --')}</option>
+        <g2:evaluate var="jvar_item" expression="
+         var gr = new GlideRecord('sys_app_application');
+         gr.addQuery('active', true);
+         gr.addQuery('title', '!=', 'System Maintenance');
+         gr.orderBy('title');
+         gr.orderBy('device_type');
+         gr.query();
+         "/>
+        <j2:while test="$[gr.next()]">
+            <g2:evaluate var="jvar_device_type" expression="
+                var deviceType = '';
+                var dt = gr.device_type;
+                if (dt != 'browser' ${AND} dt != '')
+                    deviceType = '(' + dt + ')';
+                deviceType;" />
+            <option value="$[gr.sys_id]">$[gr.title]$[SP]$[SP]$[jvar_device_type]</option>
+        </j2:while>
+    </select>
+</j:jelly>

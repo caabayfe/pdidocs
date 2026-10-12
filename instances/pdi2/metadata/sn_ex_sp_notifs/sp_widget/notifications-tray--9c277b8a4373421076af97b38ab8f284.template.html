@@ -1,0 +1,76 @@
+<div class="notifications-panel">
+    <div class="notification-header-container" ng-if="c.data.enableNotificationHeader">
+        <div class="notification-header">
+            <div><span>${Notifications}</span></div>
+            <div class="dropdown utilities-dropdown-menu" ng-if="data.enableGlobalActions && data.showMarkAllAsRead">
+              <button class="btn btn-default dropdown-toggle btn-utility-menu" type="button" data-toggle="dropdown" aria-label="${Utility menu}" aria-haspopup="true" aria-expanded="true">
+              	<span class="fa fa-ellipsis-v notification-header-action"></span>
+              </button>
+              <ul role="menu" class="dropdown-menu" aria-labelledby="dropdownMenu">
+              	<li role="menuitem" class="dropdown-menu-list" ng-class="{'disabled': userNotifications.length < 1 || !c.data.showMarkAllAsRead}">
+                  <a tabindex="{{userNotifications.length < 1 ? -1 : 0}}" class="global-filter-item" ng-class="{'disabled': userNotifications.length < 1}" ng-click="c.markAllAsRead()" ng-keydown="c.handleKeydownMarkAllAsRead(event)" ng-disabled="userNotifications.length < 1" aria-disabled="{{userNotifications.length < 1 ? 'true' : 'false'}}">${Mark all as read}</a>
+                </li>
+              </ul>
+            </div>
+        </div>
+        <div class="notification-filters" ng-if="data.filtersAvailable && c.data.enableFilters">
+            <div class="skeleton-loader-filters" ng-if="!showFilters">
+                <div class="skeleton-loader skeleton-loader-filter-item"></div>
+                <div class="skeleton-loader skeleton-loader-filter-item"></div>
+            </div>
+
+            <div class="toggle-unread-notifications" ng-if="showFilters">
+                <label>${Unread}</label>
+                <div class="input-switch">
+                    <input role="switch" type="checkbox" tabindex="-1" ng-model="viewUnreadNotifications" aria-label="${Unread}" ng-attr-aria-checked="{{viewUnreadNotifications}}" />
+                    <label class="switch round" role="switch"   ng-click="c.toggleUnreadNotifications()" ng-keydown="c.handleSwitchKeydown($event)" aria-label="${Unread}"   ng-attr-aria-checked="{{viewUnreadNotifications}}" aria-live="assertive" tabindex="0"></label>
+                </div>
+            </div>
+          
+          <div class="selected-filter" ng-if="showFilters && isFilterSelected">
+            <span class="selection-text">{{appliedFilter}}</span>
+            <i class="fa fa-times selection-remove" aria-label="{{appliedFilter}}" ng-click="c.removeFilter(filterItem)" ng-keydown="c.handleKeydownRemoveFilter(filterItem)" tabindex="0"></i>
+          </div>
+          
+          <div class="dropdown filter-notifications-dropdown" ng-if="showFilters && !isFilterSelected">
+            <button class="btn btn-link dropdown-toggle btn-filter-by" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+              ${Filter by}
+              <span class="caret"></span>
+            </button>
+             <ul class="dropdown-menu dropdown-menu-filter" aria-labelledby="${Filter by}">
+              <li ng-repeat="filterItem in data.staticFilters">
+                <a class="filter-item" tabindex="0" 
+                ng-click="c.setFilter(filterItem)"
+                ng-keydown="c.handleKeydownFilterItems(event,filterItem)"
+               >{{filterItem.name}}</a>
+              </li>
+              <li role="separator" aria-hidden="true" class="filter-divider divider" ng-if="data.dynamicFilters.length > 0"></li>
+              <li ng-repeat="filterItem in data.dynamicFilters">
+                <a class="filter-item" tabindex="0" 
+                ng-click="c.setFilter(filterItem)"
+                ng-keydown="c.handleKeydownFilterItems(event,filterItem)"
+                >{{filterItem.name}}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="new-notification-indicator" role= "alert" tabindex="0" ng-if="showNewNotificationBadge" ng-click="c.reloadNotifications()" aria-label="${You have}">${New notifications}</div>
+    </div>
+    <div class="notification-content-container">
+        <div class="notification-empty-state" ng-if="!isLoadingInitial && !isLoadingMore && (userNotifications.length < 1)">
+            <span>${You do not have any notifications at this time.}</span>
+        </div>
+        <div class="notification-card-container">
+            <div class="notification-card" ng-if="!isLoadingInitial"
+                ng-repeat="notification in userNotifications track by $index">
+                <sp-widget widget="notification"></sp-widget>
+            </div>
+            <div class="skeleton-loader-container" ng-if="isLoadingInitial || isLoadingMore">
+                <div class="skeleton-loader" ng-if="isLoadingMore" ng-include="'ec-notifications-skeleton-loader'">
+                </div>
+                <div class="skeleton-loader" ng-if="isLoadingInitial" ng-repeat="n in c.loadLimit"
+                    ng-include="'ec-notifications-skeleton-loader'"></div>
+            </div>
+        </div>
+    </div>
+</div>

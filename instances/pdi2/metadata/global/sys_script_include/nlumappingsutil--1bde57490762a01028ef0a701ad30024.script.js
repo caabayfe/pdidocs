@@ -1,0 +1,265 @@
+var NLUMappingsUtil = Class.create();
+
+(function() {
+    var tables = NLUConstants.tables;
+    var constants = NLUConstants.constants;
+
+    NLUMappingsUtil.getSNNLUProvider = function() {
+        try {
+            var openNluGr = new GlideRecord(tables.OPEN_NLU_DRIVER);
+            if (openNluGr.get('adapter_script_name', constants.SN_NLU_DRIVER)) {
+                return openNluGr.getUniqueValue();
+            }
+        } catch (ex) {
+            // In case, VA is not installed then this is resulting in exception!
+            gs.error('Failed to get NLU Provider');
+        }
+        return null;
+    };
+
+    NLUMappingsUtil.getVAMappings = function() {
+        var mappingUtil = new NLUMappingsUtil();
+        mappingUtil.populateMappingData();
+        return mappingUtil.getVAMappings();
+    };
+
+    NLUMappingsUtil.saveMappipngs = function(mappings) {
+        return (new NLUMappingsProcessor()).saveMappings(mappings);
+    };
+
+    NLUMappingsUtil.prototype = {
+
+        initialize: function() {
+            this.topicModelMap = {};
+            this.modelMappingsData = {};
+            this.modelGroupsData = [];
+
+            this.primaryIntents = {};
+        },
+
+        findTopicGroup: function(topic) {
+            for (var i in this.modelGroupsData) {
+                var eachGroup = this.modelGroupsData[i];
+                if (eachGroup.topics.indexOf(topic) !== -1)
+                    return eachGroup;
+            }
+            return null;
+        },
+
+        findModelData: function(topicGroup, modelId) {
+            for (var i in topicGroup.models) {
+                var eachData = topicGroup.models[i];
+                if (eachData.id === modelId) {
+                    return eachData;
+                }
+            }
+            return null;
+        },
+
+        addModelToGroup: function(topic, modelId) {
+            var topicGroup = this.findTopicGroup(topic);
+            var modelData = topicGroup && this.findModelData(topicGroup, modelId);
+            if (modelData) return modelData;
+
+            modelData = {
+                id: modelId,
+                name: null,
+                language: null,
+                isPrimary: false,
+                intents: this.modelMappingsData[modelId].intents,
+                entities: this.modelMappingsData[modelId].entities
+            };
+
+            if (!topicGroup) {
+                for (var i in this.modelGroupsData) {
+                    var eachGroup = this.modelGroupsData[i];
+                    for (var j in eachGroup.models) {
+                        var eachData = eachGroup.models[j];
+                        if (eachData.id === modelId) {
+                            eachGroup.topics.push(topic);
+                            return eachData;
+                        }
+                    }
+                }
+                this.modelGroupsData.push({
+                    topics: [topic],
+                    models: [modelData],
+                    mappings: {
+                        models: {
+                            primary: null,
+                            secondary: []
+                        },
+                        intents: [],
+                        entities: []
+                    }
+                });
+            } else {
+                topicGroup.models.push(modelData);
+            }
+            return modelData;
+        },
+
+        populateMappingData: function() {
+            var nluProviderId = NLUMappingsUtil.getSNNLUProvider();
+            if (!nluProviderId) {
+                gs.debug('NLU Provider is NOT active');
+                return [];
+            }
+
+            // Filter only SN NLU Provider topics, having more than one model attached.
+            var groupTopics = [];
+            var aggr = new GlideAggregate(tables.CB_TOPIC);
+            aggr.addQuery('nlu_provider', nluProviderId);
+            aggr.addEncodedQuery('nlu_modelISNOTEMPTY^nlu_intentISNOTEMPTY');
+            aggr.groupBy('cb_topic_id');
+            aggr.addAggregate('COUNT');
+            aggr.query();
+            while (aggr.next()) {
+                if (aggr.getAggregate('COUNT') > 1)
+                    groupTopics.push(aggr.getValue('cb_topic_id'));
+            }
+
+            var gr = new GlideRecord(tables.CB_TOPIC);
+            gr.addQuery('cb_topic_id', 'IN', groupTopics);
+            gr.orderBy('cb_topic_id');
+            gr.orderBy('nlu_model');
+            gr.query();
+            while (gr.next()) {
+                var topic = gr.getValue('cb_topic_id');
+                var modelName = gr.getValue('nlu_model');
+                var intentName = gr.getValue('nlu_intent');
+                var entityData = gr.getValue('nlu_entities');
+                if (!modelName || !intentName)
+                    continue;
+                var entitiesInfo = [];
+                entityData && JSON.parse(entityData).forEach(function(each) {
+                    entitiesInfo.push({
+                        name: each.nlu_entity,
+                        topic: each.node_id
+                    });
+                });
+                if (!this.modelMappingsData[modelName]) this.modelMappingsData[modelName] = {
+                    intents: [],
+                    entities: []
+                };
+
+                this.modelMappingsData[modelName].intents.push({
+                    name: intentName,
+                    topic: topic
+                });
+
+                if (entitiesInfo.length > 0) {
+                    this.modelMappingsData[modelName].entities = this.modelMappingsData[modelName].entities.concat(entitiesInfo);
+                }
+
+                if (!this.topicModelMap[topic]) this.topicModelMap[topic] = [];
+                this.topicModelMap[topic].push(modelName);
+            }
+        },
+
+        checkAndAddData: function(id, name, dataArray, map, isPrimary) {
+            var found = false;
+            dataArray.forEach(function(data) {
+                if (data.name === name) {
+                    found = true;
+                    data.id = id;
+                    if (!map[data.topic]) map[data.topic] = {
+                        primary: null,
+                        secondary: []
+                    };
+                    if (isPrimary)
+                        map[data.topic].primary = id;
+                    else
+                        map[data.topic].secondary.push(id);
+                }
+            });
+            if (!found && id) {
+                dataArray.push({
+                    id: id,
+                    name: name
+                });
+            }
+        },
+
+        populateUnmappedData: function(gr, dataArray, map, isPrimary) {
+            while (gr.next()) {
+                this.checkAndAddData(gr.getUniqueValue(), gr.getValue('name'), dataArray, map, isPrimary);
+            }
+        },
+
+        getVAMappings: function() {
+            var thisObj = this;
+
+            // Create model groups:
+            for (var topic in this.topicModelMap) {
+                this.topicModelMap[topic].forEach(function(eachModel) {
+                    thisObj.addModelToGroup(topic, eachModel);
+                });
+            }
+
+            for (var grpIndex = this.modelGroupsData.length - 1; grpIndex >= 0; grpIndex--) {
+                var eachGroup = this.modelGroupsData[grpIndex];
+                delete eachGroup.topics;
+                var intentsMapping = {};
+                var entitiesMapping = {};
+                var sysEntitiesMapping = {};
+                var foundPrimary = false;
+                for (var modelIndex = eachGroup.models.length - 1; modelIndex >= 0; modelIndex--) {
+                    var eachModel = eachGroup.models[modelIndex];
+                    var modelGr = NLUModel.getGRByName([eachModel.id]);
+                    if (modelGr) {
+                        if (!NLUSystemUtil.isMaint() && modelGr.getValue('sys_policy') === 'read') {
+                            // For non maint user, filter out OOB models
+                            eachGroup.models.splice(modelIndex, 1);
+                        } else {
+                            eachModel.id = modelGr.getUniqueValue();
+                            eachModel.name = modelGr.getValue('display_name');
+                            eachModel.language = NLUModel.getLanguage(modelGr);
+                            if (eachModel.language === String(gs.getSession().getLanguage())) {
+                                eachModel.isPrimary = true;
+                                eachGroup.mappings.models.primary = eachModel.id;
+                                foundPrimary = true;
+                            } else {
+                                eachGroup.mappings.models.secondary.push(eachModel.id);
+                            }
+                            var nluModel = new NLUModel(eachModel.id);
+                            thisObj.populateUnmappedData(nluModel.getIntents(), eachModel.intents, intentsMapping, eachModel.isPrimary);
+                            thisObj.populateUnmappedData(nluModel.getEntities(), eachModel.entities, entitiesMapping, eachModel.isPrimary);
+                        }
+                    } else {
+                        // the model does not exists in NLU tables
+                        eachGroup.models.splice(modelIndex, 1);
+                    }
+                }
+
+                if (eachGroup.models.length === 0) {
+                    this.modelGroupsData.splice(grpIndex, 1);
+                } else {
+                    if (!foundPrimary) {
+                        eachGroup.mappings.models.primary = eachGroup.mappings.models.secondary[0];
+                        eachGroup.mappings.models.secondary.splice(0, 1);
+                    }
+                    for (var iTopic in intentsMapping) {
+                        if (!foundPrimary) {
+                            intentsMapping[iTopic].primary = intentsMapping[iTopic].secondary[0];
+                            intentsMapping[iTopic].secondary.splice(0, 1);
+                        }
+                        if(intentsMapping[iTopic].primary)
+                            eachGroup.mappings.intents.push(intentsMapping[iTopic]);
+                    }
+                    for (var eTopic in entitiesMapping) {
+                        if (!foundPrimary) {
+                            entitiesMapping[eTopic].primary = entitiesMapping[eTopic].secondary[0];
+                            entitiesMapping[eTopic].secondary.splice(0, 1);
+                        }
+                        eachGroup.mappings.entities.push(entitiesMapping[eTopic]);
+                    }
+                }
+            }
+
+            return this.modelGroupsData;
+        },
+
+        type: 'NLUMappingsUtil'
+    };
+})();

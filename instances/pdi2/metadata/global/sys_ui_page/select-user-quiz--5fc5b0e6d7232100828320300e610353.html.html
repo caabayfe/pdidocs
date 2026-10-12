@@ -1,0 +1,52 @@
+<g:ui_form>
+<g:evaluate jelly="true">
+    var sys_id = (jelly.sysparm_sys_id || '') + '';
+    var quiz_assessors = new AssessmentUtils().getAllCategoryUsers(sys_id);
+</g:evaluate>
+
+<input type="hidden" name="asr_type" id="asr_type" value="" />
+<input type="hidden" id="asmtr_sys_id" name="asmtr_sys_id" value="${sysparm_sys_id}"/>
+<input type="hidden" id="type_id" name="type_id" value="${sysparm_type_id}"/>
+<input type="hidden" id="source_id" name="source_id" value="${sysparm_source_id}"/>
+<table width="100%">
+	<tr id="select_row">
+            <td>
+                <table>
+                     <tr>
+                         <td><label for="quiz_taker"> ${gs.getMessage('Quiz Assessor')} </label></td> 
+                     </tr>
+                     <tr>
+                           <td nowrap="true"> 
+                               <select id="quiz_taker" multiple="true" size="6" name="quiz_taker" style="width:250px" onclick="clearRef()" ondblclick="gel('ok_button').click()">
+                                 <j:forEach var="jvar_current_item" items="${quiz_assessors.split(',')}">
+                                   <g:evaluate jelly="true">
+                                      var quiz_user = GlideUser.getUserByID(jelly.jvar_current_item);
+                                      var quiz_name = GlideStringUtil.escapeHTML(quiz_user.getFullName());
+                                   </g:evaluate>
+                                      <option value="${quiz_user.getID()}">${quiz_name} </option>
+                                 </j:forEach>
+                               </select>
+                           </td>
+                     </tr>
+
+                </table>
+	    </td>
+        </tr>
+	<tr id ="poll_img" style="display:none" border="1">
+		<td colspan="2"  align="center" width="300px">
+			<img src="./images/ajax-loader.gifx" alt="${gs.getMessage('Please Wait')}" />
+                        <p id="poll_text" style="font-weight:bold;">
+				${gs.getMessage('Please Wait')}
+			</p>
+		</td>
+	</tr>
+        <tr>
+            <td colspan="2"><br /></td>
+        </tr>
+        <tr id="dialog_buttons">
+                <td colspan="2" align="right">
+                    <g:dialog_buttons_ok_cancel ok="return impOk()" ok_id="ok_button" cancel_type="button" />
+                </td>
+        </tr>
+</table>
+</g:ui_form>

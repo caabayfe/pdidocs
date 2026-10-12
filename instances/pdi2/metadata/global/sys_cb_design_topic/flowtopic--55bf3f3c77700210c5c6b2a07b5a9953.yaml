@@ -1,0 +1,335 @@
+_meta:
+  hash: 4c33f27b43c1b98353285ce1b2b79037426e4bcefbecd52e65d46ee0989dee2e
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2024-03-05 13:47:25
+  sys_domain: global
+  sys_id: 55bf3f3c77700210c5c6b2a07b5a9953
+  sys_mod_count: '18'
+  sys_package: 30f4fa7b8c5503100a22deb6dd2b4e2c
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_55bf3f3c77700210c5c6b2a07b5a9953
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-03 05:11:29
+compiled_topic: 59bf3f3c77700210c5c6b2a07b5a994f
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"96ac401a86da4c4ca8c580384d69e4a9","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"96ac401a86da4c4ca8c580384d69e4a9"}],"goals":[{"name":"primary","trigger_id":"96ac401a86da4c4ca8c580384d69e4a9","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"b28c8757a8c147838ec362764002cc21","name":"Start","expert_mode":false},{"type":"CustomNode","name":"CATALOG_ITEM_VA_CONTROL","mode":"input","generateDataFunction":"function execute() {\n    var variableValues = vaInputs.variablevalues.getValue();\n    if (JSUtil.notNil(variableValues) && gs.getProperty(ServiceCatalogConstantsSNC.PROPERTIES.SC_ENABLE_URL_PREFILL, \"true\") == \"true\" ) {\n        try {\n            variableValues = JSON.parse(variableValues);\n        } catch(e) {\n            variableValues = {};\n        }\n    } else {\n         variableValues = {};\n    }\n    if (gs.nil(vaInputs.requestedfor)) \n        return { ''sysId'': vaInputs.sysid.getValue(), ''forceCloseControl'': vaInputs.forceclosecontrol.getValue(), ''outputValue'': vaInputs.outputvalue.getValue(), ''catalogItemName'': vaVars.catalogItemName, ''bare'': true, ''variableValues'': variableValues };\n    else\n        return { ''sysId'': vaInputs.sysid.getValue(), ''requestedFor'': vaInputs.requestedfor.getValue(), ''forceCloseControl'': vaInputs.forceclosecontrol.getValue(), ''outputValue'': vaInputs.outputvalue.getValue(), ''catalogItemName'': vaVars.catalogItemName, ''bare'': true, ''variableValues'': variableValues  };\n}\n","messageTranscriptFunction":"function execute(controlData) {\n    return gs.getMessage(''The Custom Control Catalog item VA just rendered item: {0}'', controlData.catalogItemName);\n}","inputResponseHandlerFunction":"function execute(controlData, responseValue) {\n    if (responseValue && responseValue.status == \"SUCCESS\" && responseValue.requestTable == \"sc_request\" && responseValue.requestId != \"\") {\n        var gr = new GlideRecord(\"sc_req_item\");\n        gr.addEncodedQuery(\"request=\" + responseValue.requestId);\n        gr.query();\n        if (gr.next()) {\n            responseValue.requestTable = \"sc_req_item\";\n            responseValue.requestId = gr.getUniqueValue();\n        }\n    }\n    vaVars.responseFromComponent = JSON.stringify(responseValue);\n}\n","inputResponseMessageTranscriptFunction":"function execute(controlData, responseValue) {\n    if (responseValue.status == ''SUCCESS'')\n        return gs.getMessage(''Catalog item request completed'');\n    else if (responseValue.status == ''CANCELED'')\n        return gs.getMessage(''Catalog item request cancelled'');\n\n    return gs.getMessage(''Status for catalog item request is: {0}'', [responseValue.status]);\n}","skippable":{"type":"Applicability","mode":"script","value":"false"},"unsupportedDeviceMessage":{"type":"String","mode":"string","value":"Sorry, this channel is not supported."},"id":"2ab5e7535adf41d3999f6d67aa8a19e8","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"2cf6986802d049e297ef20fc8b390f76","name":"End","expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"SysID empty","expression":{"type":"Applicability","mode":"query","value":"sysidISEMPTY"},"id":"9a3918ee703646a3beeeb174b95bcaba","name":"SysID empty","expert_mode":false},{"type":"Branch","label":"SysID not empty","expression":{"type":"Applicability","mode":"query","value":"sysidISNOTEMPTY"},"id":"150d088032ea4648b97e88595225321f","name":"SysID not empty","expert_mode":false}],"id":"e60c9bdddc1d4e1fa4b485626b4daa6f","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.catalogItemName = \"\";\n    var item = GlideappCatalogItem.get(vaInputs.sysid.getValue());\n    if (item)\n        vaVars.catalogItemName = item.getName();\n})()\n","id":"29b73f5e2eaf430ca20fb02f3834c8ac","name":"Compute Item Name","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false}],"edges":[{"type":"Edge","source_node_id":"2ab5e7535adf41d3999f6d67aa8a19e8","target_node_id":"2cf6986802d049e297ef20fc8b390f76","id":"9520f9a1e21b415c86a5091934e5f6ee"},{"type":"Edge","source_node_id":"b28c8757a8c147838ec362764002cc21","target_node_id":"e60c9bdddc1d4e1fa4b485626b4daa6f","id":"a69479ae2c7a4f81897fb08669b8acbd"},{"type":"Edge","source_node_id":"e60c9bdddc1d4e1fa4b485626b4daa6f","target_node_id":"2cf6986802d049e297ef20fc8b390f76","branch_id":"9a3918ee703646a3beeeb174b95bcaba","id":"cbbb931af3df4a479f630da1a8afbb3d","name":"9a3918ee703646a3beeeb174b95bcaba"},{"type":"Edge","source_node_id":"e60c9bdddc1d4e1fa4b485626b4daa6f","target_node_id":"29b73f5e2eaf430ca20fb02f3834c8ac","branch_id":"150d088032ea4648b97e88595225321f","id":"1432a33cf78f4f5f8e917f9c1b9bddd0","name":"150d088032ea4648b97e88595225321f"},{"type":"Edge","source_node_id":"29b73f5e2eaf430ca20fb02f3834c8ac","target_node_id":"2ab5e7535adf41d3999f6d67aa8a19e8","id":"78c739591cfe45c6bc12ca66cee4adcb"}],"id":"primary"}],"script_variables":[{"type":"String","name":"responseFromComponent","value":{"type":"String","mode":"string"},"list":false,"id":"8d969f87e13b4cfe9807f68a133a0bf1","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"catalogItemName","value":{"type":"String","mode":"string"},"list":false,"id":"06d23bd9ea664b3cb381d5cb13eb9319","formatType":"text","secure":false,"sensitive":false,"aiInput":false}],"glide_variables":[{"type":"Reference","table":"sys_user","auto_select":false,"id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"sysid","list":false,"id":"09b180bfa63946e8899125a96110d2e6","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"requestedfor","list":false,"id":"083d4d2efd2e464aaf60180d2819fa3c","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"True/False","id":"813c26917e8d41da88b3c9071ff94d20","name":"forceclosecontrol","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"outputvalue","list":false,"id":"355a85aa4f9b41b284141fa31b5c37b3","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"variablevalues","list":false,"id":"fb065f1a62784e22a248e07f8de8ea2e","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"sysid","label":"sysId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"09b180bfa63946e8899125a96110d2e6","type":"String"},{"name":"requestedfor","label":"requestedFor","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"083d4d2efd2e464aaf60180d2819fa3c","type":"String"},{"name":"forceclosecontrol","label":"forceCloseControl","default-value":"false","required":false,"metadata":{"type":"True/False","list":false,"items":[],"use_items":false},"id":"813c26917e8d41da88b3c9071ff94d20","type":"True/False"},{"name":"outputvalue","label":"outputValue","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"355a85aa4f9b41b284141fa31b5c37b3","type":"String"},{"name":"variablevalues","label":"variableValues","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"fb065f1a62784e22a248e07f8de8ea2e","type":"String","hint":"Stringified key-value pairs of variable values."}],"return-values-mapping":[{"name":"responsefromcomponent","label":"responseFromComponent","value":{"type":"String","mode":"string","value":"{{vaVars.responseFromComponent}}"}}]},"domain":"global","topic_type":"CUSTOM_INPUT","channels":[],"dialog_acts_enabled":false,"id":"79ebbb3877700210c5c6b2a07b5a99a9","name":"Catalog Item VA Input Control","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"model_type":"nlu_keyword","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"Catalog Item VA Input Control","library":true,"csTopicId":"59bf3f3c77700210c5c6b2a07b5a994f","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 79ebbb3877700210c5c6b2a07b5a99a9
+graph: |-
+  {
+    "graph_api_version": "1.0.74",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "b28c8757a8c147838ec362764002cc21": {
+            "id": "b28c8757a8c147838ec362764002cc21",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "09b180bfa63946e8899125a96110d2e6",
+                "name": "sysId",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "083d4d2efd2e464aaf60180d2819fa3c",
+                "name": "requestedFor",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "True/False",
+                "value": "false",
+                "id": "813c26917e8d41da88b3c9071ff94d20",
+                "name": "forceCloseControl",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "355a85aa4f9b41b284141fa31b5c37b3",
+                "name": "outputValue",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "fb065f1a62784e22a248e07f8de8ea2e",
+                "name": "variableValues",
+                "hint": "Stringified key-value pairs of variable values.",
+                "referenced": false,
+                "disabled": true
+              }
+            ],
+            "variableIds": [
+              "09b180bfa63946e8899125a96110d2e6",
+              "083d4d2efd2e464aaf60180d2819fa3c",
+              "813c26917e8d41da88b3c9071ff94d20",
+              "355a85aa4f9b41b284141fa31b5c37b3",
+              "fb065f1a62784e22a248e07f8de8ea2e"
+            ]
+          },
+          "2ab5e7535adf41d3999f6d67aa8a19e8": {
+            "id": "2ab5e7535adf41d3999f6d67aa8a19e8",
+            "stepType": "CustomInput",
+            "name": "CATALOG_ITEM_VA_CONTROL",
+            "generateDataFunction": "function execute() {\n    var variableValues = vaInputs.variablevalues.getValue();\n    if (JSUtil.notNil(variableValues) && gs.getProperty(ServiceCatalogConstantsSNC.PROPERTIES.SC_ENABLE_URL_PREFILL, \"true\") == \"true\" ) {\n        try {\n            variableValues = JSON.parse(variableValues);\n        } catch(e) {\n            variableValues = {};\n        }\n    } else {\n         variableValues = {};\n    }\n    if (gs.nil(vaInputs.requestedfor)) \n        return { 'sysId': vaInputs.sysid.getValue(), 'forceCloseControl': vaInputs.forceclosecontrol.getValue(), 'outputValue': vaInputs.outputvalue.getValue(), 'catalogItemName': vaVars.catalogItemName, 'bare': true, 'variableValues': variableValues };\n    else\n        return { 'sysId': vaInputs.sysid.getValue(), 'requestedFor': vaInputs.requestedfor.getValue(), 'forceCloseControl': vaInputs.forceclosecontrol.getValue(), 'outputValue': vaInputs.outputvalue.getValue(), 'catalogItemName': vaVars.catalogItemName, 'bare': true, 'variableValues': variableValues  };\n}\n",
+            "messageTranscriptFunction": "function execute(controlData) {\n    return gs.getMessage('The Custom Control Catalog item VA just rendered item: {0}', controlData.catalogItemName);\n}",
+            "inputResponseHandlerFunction": "function execute(controlData, responseValue) {\n    if (responseValue && responseValue.status == \"SUCCESS\" && responseValue.requestTable == \"sc_request\" && responseValue.requestId != \"\") {\n        var gr = new GlideRecord(\"sc_req_item\");\n        gr.addEncodedQuery(\"request=\" + responseValue.requestId);\n        gr.query();\n        if (gr.next()) {\n            responseValue.requestTable = \"sc_req_item\";\n            responseValue.requestId = gr.getUniqueValue();\n        }\n    }\n    vaVars.responseFromComponent = JSON.stringify(responseValue);\n}\n",
+            "inputResponseMessageTranscriptFunction": "function execute(controlData, responseValue) {\n    if (responseValue.status == 'SUCCESS')\n        return gs.getMessage('Catalog item request completed');\n    else if (responseValue.status == 'CANCELED')\n        return gs.getMessage('Catalog item request cancelled');\n\n    return gs.getMessage('Status for catalog item request is: {0}', [responseValue.status]);\n}",
+            "unsupportedDeviceMessage": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Sorry, this channel is not supported."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "invocationType": "action",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "2cf6986802d049e297ef20fc8b390f76": {
+            "id": "2cf6986802d049e297ef20fc8b390f76",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": [
+              {
+                "key": "responseFromComponent",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.responseFromComponent}}",
+                          "displayValue": "Script Variables➛responseFromComponent"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true
+              }
+            ]
+          },
+          "e60c9bdddc1d4e1fa4b485626b4daa6f": {
+            "id": "e60c9bdddc1d4e1fa4b485626b4daa6f",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "29b73f5e2eaf430ca20fb02f3834c8ac": {
+            "id": "29b73f5e2eaf430ca20fb02f3834c8ac",
+            "name": "Compute Item Name",
+            "script": "(function execute() {\n    vaVars.catalogItemName = \"\";\n    var item = GlideappCatalogItem.get(vaInputs.sysid.getValue());\n    if (item)\n        vaVars.catalogItemName = item.getName();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "9520f9a1e21b415c86a5091934e5f6ee",
+            "edgeType": "Edge",
+            "source": "2ab5e7535adf41d3999f6d67aa8a19e8",
+            "target": "2cf6986802d049e297ef20fc8b390f76",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a69479ae2c7a4f81897fb08669b8acbd",
+            "edgeType": "Edge",
+            "source": "b28c8757a8c147838ec362764002cc21",
+            "target": "e60c9bdddc1d4e1fa4b485626b4daa6f",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "cbbb931af3df4a479f630da1a8afbb3d",
+            "edgeType": "Branch",
+            "source": "e60c9bdddc1d4e1fa4b485626b4daa6f",
+            "target": "2cf6986802d049e297ef20fc8b390f76",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.sysidISEMPTY",
+              "mode": "query"
+            },
+            "label": "SysID empty"
+          },
+          {
+            "id": "1432a33cf78f4f5f8e917f9c1b9bddd0",
+            "edgeType": "Branch",
+            "source": "e60c9bdddc1d4e1fa4b485626b4daa6f",
+            "target": "29b73f5e2eaf430ca20fb02f3834c8ac",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.sysidISNOTEMPTY",
+              "mode": "query"
+            },
+            "label": "SysID not empty"
+          },
+          {
+            "id": "78c739591cfe45c6bc12ca66cee4adcb",
+            "edgeType": "Edge",
+            "source": "29b73f5e2eaf430ca20fb02f3834c8ac",
+            "target": "2ab5e7535adf41d3999f6d67aa8a19e8",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "09b180bfa63946e8899125a96110d2e6": {
+        "id": "09b180bfa63946e8899125a96110d2e6",
+        "name": "sysid",
+        "label": "SysId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b28c8757a8c147838ec362764002cc21",
+        "isHidden": false
+      },
+      "083d4d2efd2e464aaf60180d2819fa3c": {
+        "id": "083d4d2efd2e464aaf60180d2819fa3c",
+        "name": "requestedfor",
+        "label": "RequestedFor",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b28c8757a8c147838ec362764002cc21",
+        "isHidden": false
+      },
+      "8d969f87e13b4cfe9807f68a133a0bf1": {
+        "id": "8d969f87e13b4cfe9807f68a133a0bf1",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "responseFromComponent",
+        "label": "responseFromComponent",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "813c26917e8d41da88b3c9071ff94d20": {
+        "id": "813c26917e8d41da88b3c9071ff94d20",
+        "name": "forceclosecontrol",
+        "label": "ForceCloseControl",
+        "defaultValue": "false",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b28c8757a8c147838ec362764002cc21",
+        "isHidden": false
+      },
+      "355a85aa4f9b41b284141fa31b5c37b3": {
+        "id": "355a85aa4f9b41b284141fa31b5c37b3",
+        "name": "outputvalue",
+        "label": "OutputValue",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b28c8757a8c147838ec362764002cc21",
+        "isHidden": false
+      },
+      "06d23bd9ea664b3cb381d5cb13eb9319": {
+        "id": "06d23bd9ea664b3cb381d5cb13eb9319",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "catalogItemName",
+        "label": "catalogItemName",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "fb065f1a62784e22a248e07f8de8ea2e": {
+        "id": "fb065f1a62784e22a248e07f8de8ea2e",
+        "name": "variablevalues",
+        "label": "VariableValues",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b28c8757a8c147838ec362764002cc21",
+        "isHidden": false
+      }
+    }
+  }
+name: Catalog Item VA Input Control
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

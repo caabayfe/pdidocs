@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g2:evaluate jelly="true">
+	var breadCrumb = kbViewModel.getBreadcrumb();
+	var escape_text = gs.getProperty('glide.ui.escape_text',"false");
+</g2:evaluate>
+	<ol class="breadcrumb kb_view_breadcrumb">
+		<j:if test="${isMobileView == true || readOnlyPage}">
+			<li>
+				${gs.getMessage('Home')}
+			</li>
+		</j:if>
+		<j:if test="${isMobileView != true &amp;&amp; !readOnlyPage }">
+			<li>
+				<a href="knowledge_home_launcher.do">${gs.getMessage('Home')}</a>
+			</li>
+		</j:if>
+
+		<j2:if test="$[!jvar_isMSIE7]"> <!-- do not render links to angular pages when an old IE is used -->
+			<j2:if test="$[!jvar_isMSIE8]">
+				<j2:if test="$[!jvar_isMSIE9]">
+					<j2:forEach items="$[breadCrumb]" var="jvar_obj">
+						<g2:evaluate var="jvar_name" jelly="true">
+							jelly.jvar_obj.name;
+							if(escape_text == "false")
+								GlideStringUtil.escapeHTML(jelly.jvar_obj.name);
+						</g2:evaluate>
+						<g2:evaluate var="jvar_value" jelly="true">
+							jelly.jvar_obj.value;
+						</g2:evaluate>
+						<g2:evaluate var="jvar_kb" jelly="true">
+							jelly.jvar_obj.knowledge_base;
+						</g2:evaluate>
+						<j:if test="${isMobileView == true || readOnlyPage}">
+							<li>$[jvar_name]</li>
+						</j:if>
+						<j:if test="${isMobileView != true &amp;&amp; !readOnlyPage}">
+							<li><a href="knowledge_home_launcher.do?sysparm_kb=$[jvar_kb]${AMP}sysparm_category=$[jvar_value]${AMP}browse_type=categories">$[jvar_name]</a></li>
+						</j:if>
+					</j2:forEach>
+					<li>${kb_desc}</li>
+				</j2:if>
+			</j2:if>
+		</j2:if>
+	</ol>
+</j:jelly>

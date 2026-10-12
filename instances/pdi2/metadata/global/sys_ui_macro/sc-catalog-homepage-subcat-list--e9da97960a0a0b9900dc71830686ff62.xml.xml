@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <j:set var="jvar_limit_reached" value="false"/>
+  <j:set var="jvar_limit" value="${gs.getProperty('glide.sc.max_items')}"/>
+  <j:set var="jvar_count" value="0"/>
+  <j:forEach items="${jvar_category.getSubCategories()}" var="jvar_subcat">
+     <j:if test="${jvar_count == jvar_limit}">
+        <j:set var="jvar_limit_reached" value="true"/>
+        <j:break/>
+     </j:if>
+     <j:if test="${jvar_count != jvar_limit}">
+        <j:if test="${jvar_subcat.canView()}">
+           <j:set var="jvar_count" value="${jvar_count + 1}"/>
+           <g:evaluate var="jvar_cat_url" jelly="true">
+				var params = {"sysparm_parent_sys_id":jelly.RP.getParameterValue("sysparm_parent_sys_id"), "sysparm_processing_hint":jelly.RP.getParameterValue("sysparm_processing_hint"), "sysparm_parent_table":jelly.RP.getParameterValue("sysparm_parent_table"), "sysparm_view":jelly.RP.getParameterValue("sysparm_view")};
+				var jvar_cat_url = GlideappCatalogURLGenerator.getHomepageCategoryLinkWithParams(jelly.jvar_catalog, jelly.jvar_catalog_view, jelly.jvar_subcat.getID(), params);
+              jvar_cat_url;
+           </g:evaluate>
+           <j:set var="jvar_href" value="${jvar_cat_url}" />
+           <g:set_if var="jvar_iconsrc" test="${jvar_subcat.getIconSRC() == ''}" true="images/icons/flatlayout.gifx" false="${jvar_subcat.getIconSRC()}" />
+           <g:sc_catalog_homepage_subcat />
+        </j:if>
+     </j:if>
+  </j:forEach>
+</j:jelly>

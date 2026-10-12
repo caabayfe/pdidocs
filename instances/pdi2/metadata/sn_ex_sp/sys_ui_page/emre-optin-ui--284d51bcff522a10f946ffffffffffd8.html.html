@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/angular_1.5.11/angular.min.js" includes="true" />
+    <style>
+        #main_container {
+            border: 1px solid #bdc0c4;
+            border-radius: 5px;
+            margin: 10px 20px 10px 10px;
+            padding: 30px;
+            position: relative;
+            overflow: auto;
+        }
+
+        header#main_header.modal-header {
+            border-bottom: none;
+        }
+
+        #main_content {
+            padding: 10px;
+            vertical-align: middle;
+        }
+
+        .note_content {
+            display: flex;
+            font-size: 1.4em;
+            margin: 20px 0 20px 0;
+        }
+
+        .brief_intro {
+            display: flex;
+            font-size: 1.4em;
+            margin: 20px 0 40px 0;
+        }
+
+        .optin-checkbox-section {
+            margin-left: 10px;
+            clear: both;
+        }
+
+        .optin-required-marker {
+            padding-left: 0px;
+            clear: both;
+        }
+
+        .required-marker:before {
+            padding: 0px !important;
+        }
+
+        .opt-in-button-padding {
+            padding-left: 10px;
+        }
+
+        span::after {
+            content: ' ';
+        }
+
+        html.rtl .checkbox-label:before {
+            margin-left: 5px
+        }
+
+        .required-label {
+            margin-right: 2px !important
+        }
+
+        .inline_message {
+            display: block;
+            font-size: 1.4em;
+            margin: 20px 0 40px 0;
+        }
+    </style>
+    <div ng-app="emreOptIn" ng-controller="emreOptInCtrl">
+        <div id="main_container">
+            <header id="main_header" class="modal-header">
+                <h1 id="alert1_title" class="modal-title" ng-hide="showOptInFeature()">${gs.getMessage("Opt in to the enhanced request experience?")}</h1>
+                <h1 id="alert2_title" class="modal-title" ng-hide="showOptOutFeature()">${gs.getMessage("Opt out of the enhanced request experience?")}</h1>
+            </header>
+            <div id="main_content">
+                <div id="opt_in_intro" ng-hide="showOptInFeature()">
+                    <span class="brief_intro">
+                        ${gs.getMessage("The enhanced request experience lets you easily filter and view your requests by type, status, and more. You can also set up custom filters and views to support your workflows.")}
+                    </span>
+                    <span class="note_content">
+                        ${gs.getMessage("Before opting in: ")}
+                    </span>
+                    <span class="inline_message">
+                        <strong>${gs.getMessage("If you have custom request tables - ")}</strong>
+                        ${gs.getMessage("Requests currently in custom tables aren't shown by default in the enhanced request experience. You'll need to review the source configuration settings to map custom tables to new filters before opting in. This will ensure all requests are shown to your team. ")}
+                    </span>
+                    <span class="inline_message">
+                        <strong>${gs.getMessage("If any of your request tables use caller restriction for cross scope read access - ")}</strong>
+                        ${gs.getMessage("Go to the restricted caller access (RCA) list page and approve any required RCAs that are generated.")}
+                    </span>
+                    <span class="brief_intro">
+                        ${gs.getMessage("You can opt out again at any time to return to the current experience.")}
+                    </span>
+
+                </div>
+                <div id="opt_out_intro" ng-hide="showOptOutFeature()">
+                    <span class="brief_intro">
+                        ${gs.getMessage("Opting out returns you to the previous request experience. Any customizations made in the enhanced experience remain but will be inactive unless you opt back in.")} </span>
+                    <span class="brief_intro">
+                        ${gs.getMessage("To use custom portals with the enhanced experience, you’ll need to add them to the configuration first.")}&#160; <a href="sp_page_route_map.do?sys_id=a661b335ff302210ac09ffffffffffa7">${gs.getMessage("View page route map")}</a>
+                    </span>
+                </div>
+
+            </div>
+            <div ng-hide="showOptInFeature()" class="optin-checkbox-section">
+                <div ng-class="(uiModel.agreement != true) ? 'form-group is-required col-xs-12': 'form-group is-prefilled col-xs-12'" class="optin-required-marker">
+                    <label for="field1" id="required_label" class="control-label required-label">
+                        <span id="req_marker" class="required-marker"></span>
+                    </label>
+                    <span class="input-group-checkbox">
+                        <input id="optin_checkbox" class="checkbox" type="checkbox" name="optin_checkbox" ng-model="uiModel.agreement" ng-checked="checkOptInCheckbox()" aria-labelledby="optin_checkbox_select"></input>
+                        <label for="optin_checkbox" id="optin_checkbox_select" class="checkbox-label">
+                            ${gs.getMessage('Yes, opt in to enhanced request experience')}
+                        </label>
+                    </span>
+                </div>
+            </div>
+            <div class="opt-in-button-padding">
+                <span>
+                    <button type="button" class="btn btn-primary" ng-click="optIn()" ng-disabled="disableOptInButton()" ng-hide="showOptInFeature()">${gs.getMessage("Opt-in")}</button>
+                </span>
+                <span>
+                    <button type="button" class="btn btn-primary" ng-click="optOut()" ng-hide="showOptOutFeature()">${gs.getMessage("Opt-out")}</button>
+                </span>
+            </div>
+        </div>
+    </div>
+</j:jelly>

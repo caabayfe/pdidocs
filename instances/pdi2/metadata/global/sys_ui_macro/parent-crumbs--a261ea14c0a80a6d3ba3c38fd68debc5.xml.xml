@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j2:if test="$[!${ref_parent}.isNewRecord() ${AND} !${ref_parent}.parent.nil() ${AND} ${ref_parent}.parent.getRefRecord().isValidRecord()]">
+        <g2:evaluate var="jvar_crumbs">
+            //get real glide record
+            var gr = new GlideRecord(${ref_parent}.getTableName());
+            gr.get(${ref_parent}.getUniqueValue());
+
+            //parent crumb functions - script include
+            var pc = new ParentCrumbs(gr);
+            var crumbs = pc.getCrumbs();
+            crumbs;
+        </g2:evaluate>
+        <j2:if test="$[!jvar_crumbs.nil()]">
+            <td class="breadcrumb_container">
+				<div style="overflow: visible">
+					<label for="" dir="ltr" class="${jvar_cols_label} control-label">
+						<span title="" class="label-text">${gs.getMessage("Parents")}</span>
+					</label>
+				</div>
+				<div class="${jvar_cols_field} form-field input_controls" style="overflow: visible">
+					<div class="parent-breadcrumbs-container">
+						<g2:no_escape>
+							$[jvar_crumbs]
+						</g2:no_escape>
+					</div>
+				</div>
+				<div class="${jvar_cols_addons}"></div>
+            </td>
+        </j2:if>
+    </j2:if>
+</j:jelly>

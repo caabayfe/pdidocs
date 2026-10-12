@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_vdr_risk_asmt_m2m_contact_vendor_engagement');

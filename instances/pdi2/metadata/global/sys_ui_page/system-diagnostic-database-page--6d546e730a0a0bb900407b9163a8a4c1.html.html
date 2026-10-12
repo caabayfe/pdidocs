@@ -1,0 +1,45 @@
+<g2:evaluate var="jvar_refresh" expression="$[gs.getProperty('diagnostics.autorefresh.page','0')]" />
+<j2:if test="$[jvar_refresh > 0]">
+   <meta http-equiv="refresh" content="$[jvar_refresh]" />
+</j2:if>
+
+<g2:evaluate var="the_dbd" object="true" expression="var the_dbd = new DatabaseDiagnostics(); the_dbd;"/>
+
+<table class="wide" cellspacing="1" border="1" cellpadding="2">
+   <tr class="header">
+      <td class="column_head" align="left" nowrap="true" colspan="99">${gs.getMessage('Information')}</td>
+   </tr>
+ <tr>
+  <td class="label_left">Type</td><td>$[the_dbd.getType()]</td>
+ </tr>
+ <tr>
+  <td class="label_left">Version</td><td>$[the_dbd.getVersion()]</td>
+ </tr>	
+ <tr>
+  <td class="label_left">Driver</td><td>$[the_dbd.getDriver()]</td>
+ </tr>
+ <tr>
+  <td class="label_left">JDBC</td><td>$[the_dbd.getJDBC()]</td>
+ </tr>
+</table>
+
+<table class="wide" cellspacing="1" border="1" cellpadding="2" style="margin-top: 10px;">
+   <tr class="header">
+      <td class="column_head" align="left" nowrap="true" colspan="99">${gs.getMessage('Connections')}</td>
+   </tr>
+
+   <j2:set var="jvar_now_count" value="0" />
+   <g2:evaluate var="jvar_total_count" object="true" expression="the_dbd.getConnectionsCount();"/>
+   <g2:evaluate var="db_connections" object="true" expression="db_connections = the_dbd.getConnections(); db_connections;"/>
+
+   <j2:while test="$[jvar_now_count &lt; jvar_total_count]">
+       <g2:evaluate var="condetails" object="true" jelly="true" expression="condetails = the_dbd.getConnectionDetails(jelly.db_connections, jelly.jvar_now_count); condetails;"/>
+
+       <tr><td>$[jvar_now_count]</td><td nowrap="true">$[condetails.status]</td><td colspan="2">$[condetails.sql]</td></tr>
+
+       <j2:set var="jvar_now_count" value="$[jvar_now_count + 1]" />
+   </j2:while>
+
+</table>
+
+$[the_dbd.destroy()]

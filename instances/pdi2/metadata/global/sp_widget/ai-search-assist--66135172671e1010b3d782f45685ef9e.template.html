@@ -1,0 +1,39 @@
+<sp-panel class="aisa-results-panel" ng-show="c.data.useAISA && resultsPageIndex >= 0">
+	<div class="aisa-results-title-bar" ng-if="ALLOW_EXPAND_COLLAPSE" ng-click="toggleContainer()"
+	    ng-attr-aria-expanded="{{!isContainerCollapsed}}" ng-attr-aria-disabled="false" ng-attr-tabindex="0"
+		aria-label="{{HEADER_TEXT}}">
+		<span class="aisa-results-title">
+			{{HEADER_TEXT}} &nbsp;
+			<i ng-class="['aisa-ec-chevron','fa',{'fa-chevron-down': isContainerCollapsed, 'fa-chevron-up': !isContainerCollapsed}]" ng-if="ALLOW_EXPAND_COLLAPSE"></i>
+		</span>
+	</div>
+  <div class="aisa-results-title-bar" ng-if="!ALLOW_EXPAND_COLLAPSE">
+		<span class="aisa-results-title">
+			{{HEADER_TEXT}}
+		</span>
+	</div>
+  <!-- Display Search Result List -->
+  <div class="aisa-results" ng-if="!isContainerCollapsed && detailResultIndex < 0">
+		<div ng-if="checkResultType(result)" ng-repeat="result in searchAPIResponse.searchResults | limitTo:getResultsLimit()" class="m-b">
+      <ng-include src="getResultTemplate(result)" />
+		</div>
+    <div class="row aisa-results-button-bar col-md-12" ng-if="hasMoreResults()">
+      <button class="btn btn-default" ng-click="getMoreResults()" aria-label="${Shows more search results}">${Show more}</button>
+    </div>
+    <!-- Display message if no Search Results returned -->
+    <div ng-if="!searchAPIResponse.searchResults || searchAPIResponse.searchResults.length === 0">
+      ${No matching results found for {{searchAPIResponse.term}}}
+    </div>
+	</div>
+  <!-- Display Search Result Detail -->
+  <div ng-if="!isContainerCollapsed && detailResultIndex >= 0">
+    <div><ng-include src="'aisa-detail-header'" /></div>
+    <div class="row col-md-12">
+  		<ng-include src="getDetailTemplate()" />
+   	</div>
+	</div>
+</sp-panel>
+<!-- Start - Accessibility specific DOM -->
+<div id="sp_cxs_aisa_aria_status" aria-live="assertive" aria-atomic = "true">
+</div>
+<!--End - Accessibility specific DOM -->

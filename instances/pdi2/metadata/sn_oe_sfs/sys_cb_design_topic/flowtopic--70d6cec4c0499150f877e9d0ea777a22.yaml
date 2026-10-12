@@ -1,0 +1,744 @@
+_meta:
+  hash: 0fb8d04bcd51ea8ac21377a45e91cd3005444f01ee26e61e8d1f8a3de2c3bd23
+  hash_version: 1
+  scope: sn_oe_sfs
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: maint
+  sys_created_on: 2022-07-27 18:46:04
+  sys_domain: global
+  sys_id: 70d6cec4c0499150f877e9d0ea777a22
+  sys_mod_count: '20'
+  sys_package: 53b1b0e79761011018b2fa98c253afcc
+  sys_scope: 53b1b0e79761011018b2fa98c253afcc
+  sys_update_name: sys_cb_design_topic_70d6cec4c0499150f877e9d0ea777a22
+  sys_updated_by: admin
+  sys_updated_on: 2022-09-13 15:16:26
+compiled_topic: 38d6cec4c0499150f877e9d0ea777a1b
+design_definition: '{"type":"FlowTopic","type":"FlowTopic","triggers":[{"type":"Trigger","name":"cb4997b03b6841b6a6756380396c70b3","triggerType":"request","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"id":"cb4997b03b6841b6a6756380396c70b3"}],"goals":[{"name":"primary","trigger_id":"cb4997b03b6841b6a6756380396c70b3","nodes":[{"type":"StartGoal","type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"4a0a528f521b458c8bc47d2ddbd06d0c","name":"Start"},{"type":"TerminateGoal","type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"d6949f2427b84faf894e7b7498997ade","name":"End"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"a989eaca2d1840c6a7602e03fad56f3d","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Please enter the incident/case number.\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"5b4a4854f67a46ec926e8a34d10cbcb1","name":"Task number","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return gs.nil(vaVars.global_task_number);\n})()\n"},"formatType":"Text","validationScript":""},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    if (!gs.nil(vaVars.global_task_number)) {\n        vaInputs.task_number = vaVars.global_task_number;\n        vaVars.global_task_number = \"\";\n    }\n    var task = sn_oe_sfs.IARIssueNotAssignedDiagnostic.findTask(vaInputs.task_number);\n    if (!gs.nil(task)) {\n        vaVars.task_number_found = true;\n        vaVars.task_sys_id = task[\"sys_id\"];\n        vaVars.config_name = task[\"config_table_name\"];\n    }\n})()\n","id":"f550de1f7de8427a8413e37037984074","name":"Find task","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Task number not found","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.task_number_found;\n})()\n"},"id":"24242b8b1ea841eb9e0c3ade27da397c","name":"Task number not found"},{"type":"Branch","type":"Branch","label":"Task number found","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.task_number_found;\n})()\n"},"id":"5da0819f5b5a4c26a24b29223f22065b","name":"Task number found"}],"id":"9dd27ab0c12c4cb28dd16531fa58b68a","goal_id":"primary"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var config = sn_oe_sfs.IARIssueNotAssignedDiagnostic.findConfig(vaVars.config_name);\n    if (!gs.nil(config)) {\n        vaVars.task_config_found = true;\n        vaVars.config_sys_id = config;\n    }\n})()","id":"ad4dea1e1aa944b79bb0b52c51c4ce31","name":"Find IAR configuration for task","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Task Config Not Found","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.task_config_found;\n})()\n"},"id":"c7d32add7d2a41f5a460214f1a3d42f3","name":"Task Config Not Found"},{"type":"Branch","type":"Branch","label":"Task Config Found","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.task_config_found;\n})()\n"},"id":"3eb2a27741634017940ec9cbe70cf7e6","name":"Task Config Found"}],"id":"a341495e164e4e8f8eff85cd2d254f33","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"IAR invocation failed because there is no IAR configuration for this task.\", vaContext.getRequesterLang())"}],"id":"8eaa1f219d7f43eca1bf7bb4b274ca38","name":"No config for task","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"ChoiceInputPrompt","type":"ChoiceInputPrompt","expression_mode":"simple","metadataScript":"","cardName":"","cardFields":[],"id":"8de3469013ab4d3ab6e3c017c400c70c","name":"Task confirmation","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"variable_id":"4a6acad144d34b8292780fda066df1f4","message":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    return \"I found the task with number \" + vaInputs.task_number + \". Are you sure this is the task you are looking for?\";\n})()\n"},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Correct task found","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"task_confirmation=correct_task"},"id":"a36f4fac104044dd82928fa615e3b988","name":"Correct task found"},{"type":"Branch","type":"Branch","label":"Incorrect task found","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"task_confirmation=incorrect_task"},"id":"4c4933f4d8bb40fbad3bf40cdf57fd63","name":"Incorrect task found"}],"id":"44d87b0ae6bb42dfbfec74239f70f657","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    return \"I have found an Auto-Resolution configuration for \" + vaVars.config_name + \".\";\n})()"}],"id":"f786e492543a46b884f92682da48c008","name":"IAR configuration name","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Retried < 3 times","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    vaVars.retry_task_search_count += 1;\n    return vaVars.retry_task_search_count < 3;\n})()\n"},"id":"8b8a10bdd0c14cf5badba894394447e0","name":"Retried < 3 times"},{"type":"Branch","type":"Branch","label":"Retried 3 times","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.retry_task_search_count == 3;\n})()\n"},"id":"7ea4ab5b3d404a5398f0e271eff0463c","name":"Retried 3 times"}],"id":"eb392a3078d54509bc3c30c1aea28f8d","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    return \"Unable to find the task with number \" + vaInputs.task_number + \". Please try again.\";\n})()\n"}],"id":"9afe98a9b8144656b59a3607418501da","name":"Retry task search","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    return \"Sorry, I am not able to find the task with the number \" + vaInputs.task_number + \".\";\n})()\n"}],"id":"2b6f2f4ddafe4ef3af2f7c9529a9a4fa","name":"Unable to find task","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"IAR invocation failed","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.iar_invocation_succeeded;\n})()\n"},"id":"97eb870171784650ac099a3593d11c4d","name":"IAR invocation failed"},{"type":"Branch","type":"Branch","label":"IAR invocation succeeded","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.iar_invocation_succeeded;\n})()\n"},"id":"3b5d079c092d4bf1819bb334da4292e8","name":"IAR invocation succeeded"}],"id":"25cd2099525e4179a3d65d08750666a6","goal_id":"primary"},{"type":"ChoiceInputPrompt","type":"ChoiceInputPrompt","expression_mode":"simple","metadataScript":"","cardName":"","cardFields":[],"id":"bd9e71c6074d488ea529c08fbd58d8f4","name":"Reroute confirmation","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"variable_id":"d94a19fbc23d4881b00817009b354d12","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Since the task was assigned to a bot user and IAR invocation succeeded, I can reroute you to the Diagnose IAR Flow Failure topic. Would you like to proceed?\", vaContext.getRequesterLang())"},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true}},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_task_number = vaInputs.task_number;\n    vaSystem.switchTopicById(\"c3bc9400c09d5190f877e9d0ea777a39\");\n})()\n","id":"84a9b0145a364bb98d434f851e0cecfb","name":"Reroute to Flow Failure topic","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"query","value":"reroute_confirmation=reroute"}},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var grConfig = new GlideRecord(\"sys_cs_auto_resolution_configuration\");\n    grConfig.get(vaVars.config_sys_id);\n    var errors = JSON.parse(vaVars.errors);\n    \n    if (grConfig.iar_invocation == \"api\") {\n        // check that if business rule exists, it is inactive\n        var configBr = sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrExists(vaVars.config_sys_id);\n        if (!gs.nil(configBr) && sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrActive(configBr)) {\n            errors.push(\"Configuration trigger is set to on demand, but it has an active business rule\");\n        }\n    }\n    else if (grConfig.iar_invocation == \"business_rule\") {\n        // check that business rule exists\n        var configBr = sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrExists(vaVars.config_sys_id);\n        if (gs.nil(configBr)) {\n            errors.push(\"No business rule exists for this Auto-resolution configuration\");\n        }\n        \n        else {\n            // check that business rule is active\n            if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrActive(configBr))\n                errors.push(\"Business rule is not active\");\n            \n            // check that business rule order is highest\n            if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrOrderIsHighest(configBr)) \n                errors.push(\"Business rule order is not the highest\");\n            \n            // check that there is only 1 trigger business rule associated with the configuration\n            if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkConfigHasOneBr(configBr, vaVars.config_name)) \n                errors.push(\"There is more than 1 trigger business rule associated with this Auto-resolution configuration\");\n        }      \n    }\n\n    // check that config conditions match incident condition\n    if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkTaskAndConfigConditionsMatch(vaVars.task_sys_id, vaVars.config_sys_id, vaVars.config_name)) {\n        errors.push(\"Task created does not match the entry conditions on Auto-resolution configuration\")\n    }\n    \n    vaVars.errors = JSON.stringify(errors);\n})()","id":"9b1971d1f9c94c0ea39a7cfb6e38d2fb","name":"Run checks","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    var errors = JSON.parse(vaVars.errors);\n    if (errors.length == 0) {\n        vaVars.iar_invocation_succeeded = true;\n        var assignedTo = sn_oe_sfs.IARIssueNotAssignedDiagnostic.getTaskAssignedTo(vaVars.config_sys_id);\n        return \"After running checks, IAR invocation succeeded and the task should be assigned to \" + assignedTo + \".\";\n    }\n    else {\n        var result = \"After running checks, IAR invocation failed. The error(s) are as follows:\\n\";\n        while (errors.length != 0) {\n            result += \"- \" + errors.shift();\n            if (errors.length != 0) {\n                result += \"\\n\";\n            }\n        }\n        return result;\n    }\n})()"}],"id":"d84aefe43b434ee1b2f88a497433f17a","name":"Result","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false}],"edges":[{"type":"Edge","source_node_id":"4a0a528f521b458c8bc47d2ddbd06d0c","target_node_id":"5b4a4854f67a46ec926e8a34d10cbcb1","id":"205a7f4c590c41658fd2d69676865df9"},{"type":"Edge","source_node_id":"84a9b0145a364bb98d434f851e0cecfb","target_node_id":"d6949f2427b84faf894e7b7498997ade","id":"2399d95c7c1f4a698fbf985827d15d83"},{"type":"Edge","source_node_id":"f786e492543a46b884f92682da48c008","target_node_id":"9b1971d1f9c94c0ea39a7cfb6e38d2fb","id":"93936f321a364df588e9aec388ce396f"},{"type":"Edge","source_node_id":"9dd27ab0c12c4cb28dd16531fa58b68a","target_node_id":"eb392a3078d54509bc3c30c1aea28f8d","branch_id":"24242b8b1ea841eb9e0c3ade27da397c","id":"59609a0dbf21432e9501e5daca7dba27","name":"24242b8b1ea841eb9e0c3ade27da397c"},{"type":"Edge","source_node_id":"f550de1f7de8427a8413e37037984074","target_node_id":"9dd27ab0c12c4cb28dd16531fa58b68a","id":"cba27289643e449ab235ff563c68eab8"},{"type":"Edge","source_node_id":"5b4a4854f67a46ec926e8a34d10cbcb1","target_node_id":"f550de1f7de8427a8413e37037984074","id":"c0d0d1e6c441403d9d7fc366a8421feb"},{"type":"Edge","source_node_id":"ad4dea1e1aa944b79bb0b52c51c4ce31","target_node_id":"a341495e164e4e8f8eff85cd2d254f33","id":"99fc38cabb85476dba5b63e4ea8cb71a"},{"type":"Edge","source_node_id":"a341495e164e4e8f8eff85cd2d254f33","target_node_id":"8eaa1f219d7f43eca1bf7bb4b274ca38","branch_id":"c7d32add7d2a41f5a460214f1a3d42f3","id":"1b2f448f3d76403ab9f73bc9a3d504b5","name":"c7d32add7d2a41f5a460214f1a3d42f3"},{"type":"Edge","source_node_id":"8eaa1f219d7f43eca1bf7bb4b274ca38","target_node_id":"d6949f2427b84faf894e7b7498997ade","id":"fea155cf25e34fc382ce99ae3336e71d"},{"type":"Edge","source_node_id":"9dd27ab0c12c4cb28dd16531fa58b68a","target_node_id":"8de3469013ab4d3ab6e3c017c400c70c","branch_id":"5da0819f5b5a4c26a24b29223f22065b","id":"bf07ceb8a9134bdd9adebe0e3257ce8f","name":"5da0819f5b5a4c26a24b29223f22065b"},{"type":"Edge","source_node_id":"8de3469013ab4d3ab6e3c017c400c70c","target_node_id":"44d87b0ae6bb42dfbfec74239f70f657","id":"b7f58587c16b402eb8777c8840133871"},{"type":"Edge","source_node_id":"44d87b0ae6bb42dfbfec74239f70f657","target_node_id":"ad4dea1e1aa944b79bb0b52c51c4ce31","branch_id":"a36f4fac104044dd82928fa615e3b988","id":"6ea309592690423fa940fc2d5bbb93f4","name":"a36f4fac104044dd82928fa615e3b988"},{"type":"Edge","source_node_id":"44d87b0ae6bb42dfbfec74239f70f657","target_node_id":"5b4a4854f67a46ec926e8a34d10cbcb1","branch_id":"4c4933f4d8bb40fbad3bf40cdf57fd63","id":"2f4e082612e34e9aaf03990391b4e109","name":"4c4933f4d8bb40fbad3bf40cdf57fd63"},{"type":"Edge","source_node_id":"a341495e164e4e8f8eff85cd2d254f33","target_node_id":"f786e492543a46b884f92682da48c008","branch_id":"3eb2a27741634017940ec9cbe70cf7e6","id":"3c7318e0af86438ba04a19275fe9dee3","name":"3eb2a27741634017940ec9cbe70cf7e6"},{"type":"Edge","source_node_id":"eb392a3078d54509bc3c30c1aea28f8d","target_node_id":"9afe98a9b8144656b59a3607418501da","branch_id":"8b8a10bdd0c14cf5badba894394447e0","id":"f8480e35971d448f81596039ed7960fc","name":"8b8a10bdd0c14cf5badba894394447e0"},{"type":"Edge","source_node_id":"9afe98a9b8144656b59a3607418501da","target_node_id":"5b4a4854f67a46ec926e8a34d10cbcb1","id":"9eb7c9bc04a940c98c0fa05a5a8ee4ab"},{"type":"Edge","source_node_id":"eb392a3078d54509bc3c30c1aea28f8d","target_node_id":"2b6f2f4ddafe4ef3af2f7c9529a9a4fa","branch_id":"7ea4ab5b3d404a5398f0e271eff0463c","id":"9bdd1fff7bb04f19bcaec0c1c2c95584","name":"7ea4ab5b3d404a5398f0e271eff0463c"},{"type":"Edge","source_node_id":"2b6f2f4ddafe4ef3af2f7c9529a9a4fa","target_node_id":"d6949f2427b84faf894e7b7498997ade","id":"2c3af55888fa4fcf9fc9cc22924a2565"},{"type":"Edge","source_node_id":"25cd2099525e4179a3d65d08750666a6","target_node_id":"d6949f2427b84faf894e7b7498997ade","branch_id":"97eb870171784650ac099a3593d11c4d","id":"9f70b4fa7ff446c180974ba7ddc1968c","name":"97eb870171784650ac099a3593d11c4d"},{"type":"Edge","source_node_id":"25cd2099525e4179a3d65d08750666a6","target_node_id":"bd9e71c6074d488ea529c08fbd58d8f4","branch_id":"3b5d079c092d4bf1819bb334da4292e8","id":"453b0ba133a0443492e81c2b7e4286f8","name":"3b5d079c092d4bf1819bb334da4292e8"},{"type":"Edge","source_node_id":"bd9e71c6074d488ea529c08fbd58d8f4","target_node_id":"84a9b0145a364bb98d434f851e0cecfb","id":"f2e1e37f20054b7cb63f65fd1fa5b108"},{"type":"Edge","source_node_id":"9b1971d1f9c94c0ea39a7cfb6e38d2fb","target_node_id":"d84aefe43b434ee1b2f88a497433f17a","id":"562463cecc9043c29885db6c1f41d991"},{"type":"Edge","source_node_id":"d84aefe43b434ee1b2f88a497433f17a","target_node_id":"25cd2099525e4179a3d65d08750666a6","id":"5dfb63ba81064a2eb2fdd59d85814abf"}],"id":"primary"}],"script_variables":[{"type":"VariableDto","type":"String","name":"task_number_found","value":{"type":"String","type":"String","mode":"string","value":"false"},"list":false,"id":"dfb2a00e40be444fbde7a3e7f6f1eb34","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"task_config_found","value":{"type":"String","type":"String","mode":"string","value":"false"},"list":false,"id":"a0464d4721a54d8a8c5a11026ea3a7a9","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"config_name","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"7082bb74102b4834add344bf7ce2b963","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"config_sys_id","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"a6fd108c84da4545ac7e081a93da1655","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"task_sys_id","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"9d9b063bdde44a8c8a7ef2f044c755c9","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"errors","value":{"type":"String","type":"String","mode":"string","value":"[]"},"list":false,"id":"d63c5d37f1774d5f97059edad6d206e9","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"retry_task_search_count","value":{"type":"String","type":"String","mode":"string","value":"0"},"list":false,"id":"b5029559c50a4eadaddbd22743db6829","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"iar_invocation_succeeded","value":{"type":"String","type":"String","mode":"string","value":"false"},"list":false,"id":"6660d9180aac4d3f887bd459b7aa0216","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"global_task_number","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"b6b6f4c828f64867822831743fe04bb8","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"task_number","list":false,"id":"a989eaca2d1840c6a7602e03fad56f3d","formatType":"Text","validationScript":"","secure":false,"sensitive":false},{"type":"Choice","type":"Choice","choices":[{"name":"Yes","element":"correct_task"},{"name":"No","element":"incorrect_task"}],"id":"4a6acad144d34b8292780fda066df1f4","name":"task_confirmation","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Choice","type":"Choice","choices":[{"name":"Yes","element":"reroute"},{"name":"No","element":"do_not_reroute"}],"id":"d94a19fbc23d4881b00817009b354d12","name":"reroute_confirmation","formatType":"text","secure":false,"sensitive":false,"list":false}],"applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"53b1b0e79761011018b2fa98c253afcc","domain":"global","topic_type":"STANDARD","channels":[],"id":"aefc0937c0f45150f877e9d0ea777a15","name":"Diagnose IAR Issue Not Assigned","key_phrases":["Diagnose IAR Issue Not Assigned"],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"library":false,"csTopicId":"38d6cec4c0499150f877e9d0ea777a1b","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: aefc0937c0f45150f877e9d0ea777a15
+graph: |-
+  {
+    "graph_api_version": "1.0.41",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "4a0a528f521b458c8bc47d2ddbd06d0c": {
+            "id": "4a0a528f521b458c8bc47d2ddbd06d0c",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "d6949f2427b84faf894e7b7498997ade": {
+            "id": "d6949f2427b84faf894e7b7498997ade",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "5b4a4854f67a46ec926e8a34d10cbcb1": {
+            "id": "5b4a4854f67a46ec926e8a34d10cbcb1",
+            "stepType": "Prompt",
+            "name": "Task number",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Please enter the incident/case number."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    return gs.nil(vaVars.global_task_number);\n})()\n"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "a989eaca2d1840c6a7602e03fad56f3d",
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            }
+          },
+          "f550de1f7de8427a8413e37037984074": {
+            "id": "f550de1f7de8427a8413e37037984074",
+            "name": "Find task",
+            "script": "(function execute() {\n    if (!gs.nil(vaVars.global_task_number)) {\n        vaInputs.task_number = vaVars.global_task_number;\n        vaVars.global_task_number = \"\";\n    }\n    var task = sn_oe_sfs.IARIssueNotAssignedDiagnostic.findTask(vaInputs.task_number);\n    if (!gs.nil(task)) {\n        vaVars.task_number_found = true;\n        vaVars.task_sys_id = task[\"sys_id\"];\n        vaVars.config_name = task[\"config_table_name\"];\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "9dd27ab0c12c4cb28dd16531fa58b68a": {
+            "id": "9dd27ab0c12c4cb28dd16531fa58b68a",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "ad4dea1e1aa944b79bb0b52c51c4ce31": {
+            "id": "ad4dea1e1aa944b79bb0b52c51c4ce31",
+            "name": "Find IAR configuration for task",
+            "script": "(function execute() {\n    var config = sn_oe_sfs.IARIssueNotAssignedDiagnostic.findConfig(vaVars.config_name);\n    if (!gs.nil(config)) {\n        vaVars.task_config_found = true;\n        vaVars.config_sys_id = config;\n    }\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "a341495e164e4e8f8eff85cd2d254f33": {
+            "id": "a341495e164e4e8f8eff85cd2d254f33",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "8eaa1f219d7f43eca1bf7bb4b274ca38": {
+            "id": "8eaa1f219d7f43eca1bf7bb4b274ca38",
+            "stepType": "TextOutput",
+            "name": "No config for task",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "IAR invocation failed because there is no IAR configuration for this task."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "24075b118c704ac8911d218991199156"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "8de3469013ab4d3ab6e3c017c400c70c": {
+            "stepType": "ChoicePrompt",
+            "name": "Task confirmation",
+            "prompt": {
+              "value": "(function execute() {\n    return \"I found the task with number \" + vaInputs.task_number + \". Are you sure this is the task you are looking for?\";\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "4a6acad144d34b8292780fda066df1f4",
+            "id": "8de3469013ab4d3ab6e3c017c400c70c",
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false
+          },
+          "44d87b0ae6bb42dfbfec74239f70f657": {
+            "id": "44d87b0ae6bb42dfbfec74239f70f657",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "f786e492543a46b884f92682da48c008": {
+            "id": "f786e492543a46b884f92682da48c008",
+            "stepType": "TextOutput",
+            "name": "IAR configuration name",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    return \"I have found an Auto-Resolution configuration for \" + vaVars.config_name + \".\";\n})()",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "eb392a3078d54509bc3c30c1aea28f8d": {
+            "id": "eb392a3078d54509bc3c30c1aea28f8d",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "9afe98a9b8144656b59a3607418501da": {
+            "id": "9afe98a9b8144656b59a3607418501da",
+            "stepType": "TextOutput",
+            "name": "Retry task search",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    return \"Unable to find the task with number \" + vaInputs.task_number + \". Please try again.\";\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "2b6f2f4ddafe4ef3af2f7c9529a9a4fa": {
+            "id": "2b6f2f4ddafe4ef3af2f7c9529a9a4fa",
+            "stepType": "TextOutput",
+            "name": "Unable to find task",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    return \"Sorry, I am not able to find the task with the number \" + vaInputs.task_number + \".\";\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "25cd2099525e4179a3d65d08750666a6": {
+            "id": "25cd2099525e4179a3d65d08750666a6",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "bd9e71c6074d488ea529c08fbd58d8f4": {
+            "stepType": "ChoicePrompt",
+            "name": "Reroute confirmation",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Since the task was assigned to a bot user and IAR invocation succeeded, I can reroute you to the Diagnose IAR Flow Failure topic. Would you like to proceed?"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "d94a19fbc23d4881b00817009b354d12",
+            "id": "bd9e71c6074d488ea529c08fbd58d8f4",
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false
+          },
+          "84a9b0145a364bb98d434f851e0cecfb": {
+            "id": "84a9b0145a364bb98d434f851e0cecfb",
+            "name": "Reroute to Flow Failure topic",
+            "script": "(function execute() {\n    vaVars.global_task_number = vaInputs.task_number;\n    vaSystem.switchTopicById(\"c3bc9400c09d5190f877e9d0ea777a39\");\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "vaInputs.reroute_confirmation=reroute",
+              "mode": "query"
+            }
+          },
+          "9b1971d1f9c94c0ea39a7cfb6e38d2fb": {
+            "id": "9b1971d1f9c94c0ea39a7cfb6e38d2fb",
+            "name": "Run checks",
+            "script": "(function execute() {\n    var grConfig = new GlideRecord(\"sys_cs_auto_resolution_configuration\");\n    grConfig.get(vaVars.config_sys_id);\n    var errors = JSON.parse(vaVars.errors);\n    \n    if (grConfig.iar_invocation == \"api\") {\n        // check that if business rule exists, it is inactive\n        var configBr = sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrExists(vaVars.config_sys_id);\n        if (!gs.nil(configBr) && sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrActive(configBr)) {\n            errors.push(\"Configuration trigger is set to on demand, but it has an active business rule\");\n        }\n    }\n    else if (grConfig.iar_invocation == \"business_rule\") {\n        // check that business rule exists\n        var configBr = sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrExists(vaVars.config_sys_id);\n        if (gs.nil(configBr)) {\n            errors.push(\"No business rule exists for this Auto-resolution configuration\");\n        }\n        \n        else {\n            // check that business rule is active\n            if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrActive(configBr))\n                errors.push(\"Business rule is not active\");\n            \n            // check that business rule order is highest\n            if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkBrOrderIsHighest(configBr)) \n                errors.push(\"Business rule order is not the highest\");\n            \n            // check that there is only 1 trigger business rule associated with the configuration\n            if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkConfigHasOneBr(configBr, vaVars.config_name)) \n                errors.push(\"There is more than 1 trigger business rule associated with this Auto-resolution configuration\");\n        }      \n    }\n\n    // check that config conditions match incident condition\n    if (!sn_oe_sfs.IARIssueNotAssignedDiagnostic.checkTaskAndConfigConditionsMatch(vaVars.task_sys_id, vaVars.config_sys_id, vaVars.config_name)) {\n        errors.push(\"Task created does not match the entry conditions on Auto-resolution configuration\")\n    }\n    \n    vaVars.errors = JSON.stringify(errors);\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "d84aefe43b434ee1b2f88a497433f17a": {
+            "id": "d84aefe43b434ee1b2f88a497433f17a",
+            "stepType": "TextOutput",
+            "name": "Result",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var errors = JSON.parse(vaVars.errors);\n    if (errors.length == 0) {\n        vaVars.iar_invocation_succeeded = true;\n        var assignedTo = sn_oe_sfs.IARIssueNotAssignedDiagnostic.getTaskAssignedTo(vaVars.config_sys_id);\n        return \"After running checks, IAR invocation succeeded and the task should be assigned to \" + assignedTo + \".\";\n    }\n    else {\n        var result = \"After running checks, IAR invocation failed. The error(s) are as follows:\\n\";\n        while (errors.length != 0) {\n            result += \"- \" + errors.shift();\n            if (errors.length != 0) {\n                result += \"\\n\";\n            }\n        }\n        return result;\n    }\n})()",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "205a7f4c590c41658fd2d69676865df9",
+            "edgeType": "Edge",
+            "source": "4a0a528f521b458c8bc47d2ddbd06d0c",
+            "target": "5b4a4854f67a46ec926e8a34d10cbcb1",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "2399d95c7c1f4a698fbf985827d15d83",
+            "edgeType": "Edge",
+            "source": "84a9b0145a364bb98d434f851e0cecfb",
+            "target": "d6949f2427b84faf894e7b7498997ade",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "93936f321a364df588e9aec388ce396f",
+            "edgeType": "Edge",
+            "source": "f786e492543a46b884f92682da48c008",
+            "target": "9b1971d1f9c94c0ea39a7cfb6e38d2fb",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "59609a0dbf21432e9501e5daca7dba27",
+            "edgeType": "Branch",
+            "source": "9dd27ab0c12c4cb28dd16531fa58b68a",
+            "target": "eb392a3078d54509bc3c30c1aea28f8d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.task_number_found;\n})()\n"
+            },
+            "label": "Task number not found"
+          },
+          {
+            "id": "cba27289643e449ab235ff563c68eab8",
+            "edgeType": "Edge",
+            "source": "f550de1f7de8427a8413e37037984074",
+            "target": "9dd27ab0c12c4cb28dd16531fa58b68a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "c0d0d1e6c441403d9d7fc366a8421feb",
+            "edgeType": "Edge",
+            "source": "5b4a4854f67a46ec926e8a34d10cbcb1",
+            "target": "f550de1f7de8427a8413e37037984074",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "99fc38cabb85476dba5b63e4ea8cb71a",
+            "edgeType": "Edge",
+            "source": "ad4dea1e1aa944b79bb0b52c51c4ce31",
+            "target": "a341495e164e4e8f8eff85cd2d254f33",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "1b2f448f3d76403ab9f73bc9a3d504b5",
+            "edgeType": "Branch",
+            "source": "a341495e164e4e8f8eff85cd2d254f33",
+            "target": "8eaa1f219d7f43eca1bf7bb4b274ca38",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.task_config_found;\n})()\n"
+            },
+            "label": "Task Config Not Found"
+          },
+          {
+            "id": "fea155cf25e34fc382ce99ae3336e71d",
+            "edgeType": "Edge",
+            "source": "8eaa1f219d7f43eca1bf7bb4b274ca38",
+            "target": "d6949f2427b84faf894e7b7498997ade",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "bf07ceb8a9134bdd9adebe0e3257ce8f",
+            "edgeType": "Branch",
+            "source": "9dd27ab0c12c4cb28dd16531fa58b68a",
+            "target": "8de3469013ab4d3ab6e3c017c400c70c",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.task_number_found;\n})()\n"
+            },
+            "label": "Task number found"
+          },
+          {
+            "id": "b7f58587c16b402eb8777c8840133871",
+            "edgeType": "Edge",
+            "source": "8de3469013ab4d3ab6e3c017c400c70c",
+            "target": "44d87b0ae6bb42dfbfec74239f70f657",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6ea309592690423fa940fc2d5bbb93f4",
+            "edgeType": "Branch",
+            "source": "44d87b0ae6bb42dfbfec74239f70f657",
+            "target": "ad4dea1e1aa944b79bb0b52c51c4ce31",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.task_confirmation=correct_task",
+              "mode": "query"
+            },
+            "label": "Correct task found"
+          },
+          {
+            "id": "2f4e082612e34e9aaf03990391b4e109",
+            "edgeType": "Branch",
+            "source": "44d87b0ae6bb42dfbfec74239f70f657",
+            "target": "5b4a4854f67a46ec926e8a34d10cbcb1",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.task_confirmation=incorrect_task",
+              "mode": "query"
+            },
+            "label": "Incorrect task found"
+          },
+          {
+            "id": "3c7318e0af86438ba04a19275fe9dee3",
+            "edgeType": "Branch",
+            "source": "a341495e164e4e8f8eff85cd2d254f33",
+            "target": "f786e492543a46b884f92682da48c008",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.task_config_found;\n})()\n"
+            },
+            "label": "Task Config Found"
+          },
+          {
+            "id": "f8480e35971d448f81596039ed7960fc",
+            "edgeType": "Branch",
+            "source": "eb392a3078d54509bc3c30c1aea28f8d",
+            "target": "9afe98a9b8144656b59a3607418501da",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    vaVars.retry_task_search_count += 1;\n    return vaVars.retry_task_search_count < 3;\n})()\n"
+            },
+            "label": "Retried < 3 times"
+          },
+          {
+            "id": "9eb7c9bc04a940c98c0fa05a5a8ee4ab",
+            "edgeType": "Edge",
+            "source": "9afe98a9b8144656b59a3607418501da",
+            "target": "5b4a4854f67a46ec926e8a34d10cbcb1",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9bdd1fff7bb04f19bcaec0c1c2c95584",
+            "edgeType": "Branch",
+            "source": "eb392a3078d54509bc3c30c1aea28f8d",
+            "target": "2b6f2f4ddafe4ef3af2f7c9529a9a4fa",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.retry_task_search_count == 3;\n})()\n"
+            },
+            "label": "Retried 3 times"
+          },
+          {
+            "id": "2c3af55888fa4fcf9fc9cc22924a2565",
+            "edgeType": "Edge",
+            "source": "2b6f2f4ddafe4ef3af2f7c9529a9a4fa",
+            "target": "d6949f2427b84faf894e7b7498997ade",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9f70b4fa7ff446c180974ba7ddc1968c",
+            "edgeType": "Branch",
+            "source": "25cd2099525e4179a3d65d08750666a6",
+            "target": "d6949f2427b84faf894e7b7498997ade",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.iar_invocation_succeeded;\n})()\n"
+            },
+            "label": "IAR invocation failed"
+          },
+          {
+            "id": "453b0ba133a0443492e81c2b7e4286f8",
+            "edgeType": "Branch",
+            "source": "25cd2099525e4179a3d65d08750666a6",
+            "target": "bd9e71c6074d488ea529c08fbd58d8f4",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.iar_invocation_succeeded;\n})()\n"
+            },
+            "label": "IAR invocation succeeded"
+          },
+          {
+            "id": "f2e1e37f20054b7cb63f65fd1fa5b108",
+            "edgeType": "Edge",
+            "source": "bd9e71c6074d488ea529c08fbd58d8f4",
+            "target": "84a9b0145a364bb98d434f851e0cecfb",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "562463cecc9043c29885db6c1f41d991",
+            "edgeType": "Edge",
+            "source": "9b1971d1f9c94c0ea39a7cfb6e38d2fb",
+            "target": "d84aefe43b434ee1b2f88a497433f17a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "5dfb63ba81064a2eb2fdd59d85814abf",
+            "edgeType": "Edge",
+            "source": "d84aefe43b434ee1b2f88a497433f17a",
+            "target": "25cd2099525e4179a3d65d08750666a6",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "a989eaca2d1840c6a7602e03fad56f3d": {
+        "id": "a989eaca2d1840c6a7602e03fad56f3d",
+        "name": "task_number",
+        "label": "Task Number",
+        "varType": "string",
+        "secure": false,
+        "category": "vaInputs",
+        "encryptionHashFunction": "SHA-256",
+        "encryptionSalt": {
+          "value": "MTY1ODg2OTgxMTc0MSBWQSBEZXNpZ25lciBpcyBhd2Vzb21l",
+          "mode": "simple"
+        },
+        "nodeId": "5b4a4854f67a46ec926e8a34d10cbcb1",
+        "isHidden": false
+      },
+      "dfb2a00e40be444fbde7a3e7f6f1eb34": {
+        "id": "dfb2a00e40be444fbde7a3e7f6f1eb34",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "task_number_found",
+        "label": "task_number_found",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "a0464d4721a54d8a8c5a11026ea3a7a9": {
+        "id": "a0464d4721a54d8a8c5a11026ea3a7a9",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "task_config_found",
+        "label": "task_config_found",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "7082bb74102b4834add344bf7ce2b963": {
+        "id": "7082bb74102b4834add344bf7ce2b963",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "config_name",
+        "label": "config_name",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "a6fd108c84da4545ac7e081a93da1655": {
+        "id": "a6fd108c84da4545ac7e081a93da1655",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "config_sys_id",
+        "label": "config_sys_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4a6acad144d34b8292780fda066df1f4": {
+        "id": "4a6acad144d34b8292780fda066df1f4",
+        "name": "task_confirmation",
+        "label": "Task Confirmation",
+        "varType": "choice",
+        "choices": [
+          {
+            "label": "Yes",
+            "value": "correct_task"
+          },
+          {
+            "label": "No",
+            "value": "incorrect_task"
+          }
+        ],
+        "category": "vaInputs",
+        "nodeId": "8de3469013ab4d3ab6e3c017c400c70c",
+        "isHidden": false
+      },
+      "9d9b063bdde44a8c8a7ef2f044c755c9": {
+        "id": "9d9b063bdde44a8c8a7ef2f044c755c9",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "task_sys_id",
+        "label": "task_sys_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "d63c5d37f1774d5f97059edad6d206e9": {
+        "id": "d63c5d37f1774d5f97059edad6d206e9",
+        "value": {
+          "mode": "simple",
+          "value": "[]"
+        },
+        "name": "errors",
+        "label": "errors",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "b5029559c50a4eadaddbd22743db6829": {
+        "id": "b5029559c50a4eadaddbd22743db6829",
+        "value": {
+          "mode": "simple",
+          "value": "0"
+        },
+        "name": "retry_task_search_count",
+        "label": "retry_task_search_count",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "6660d9180aac4d3f887bd459b7aa0216": {
+        "id": "6660d9180aac4d3f887bd459b7aa0216",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "iar_invocation_succeeded",
+        "label": "iar_invocation_succeeded",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "d94a19fbc23d4881b00817009b354d12": {
+        "id": "d94a19fbc23d4881b00817009b354d12",
+        "name": "reroute_confirmation",
+        "label": "Reroute Confirmation",
+        "varType": "choice",
+        "choices": [
+          {
+            "label": "Yes",
+            "value": "reroute"
+          },
+          {
+            "label": "No",
+            "value": "do_not_reroute"
+          }
+        ],
+        "category": "vaInputs",
+        "nodeId": "bd9e71c6074d488ea529c08fbd58d8f4",
+        "isHidden": false
+      },
+      "b6b6f4c828f64867822831743fe04bb8": {
+        "id": "b6b6f4c828f64867822831743fe04bb8",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "global_task_number",
+        "label": "global_task_number",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+name: Diagnose IAR Issue Not Assigned
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

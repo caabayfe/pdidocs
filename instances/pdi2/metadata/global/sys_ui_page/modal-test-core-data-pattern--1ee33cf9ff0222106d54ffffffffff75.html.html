@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate jelly="true">
+        var labelTest = sn_i18n.Message.getMessage('Test{? used as a verb}', 'Test{? used as a verb}');
+        var labelCancel = gs.getMessage('Cancel');
+        var labelExpression = sn_i18n.Message.getMessage('Expression', 'Expression');
+        var labelTestValue = gs.getMessage('Test value');
+        var labelCloseAria = sn_i18n.Message.getMessage('Close notification', 'Close notification');
+        var msgDiscovered = gs.getMessage('The pattern was discovered.');
+        var msgNotDiscovered = gs.getMessage('The pattern was not discovered.');
+        var msgLuhnFailed = gs.getMessage('Pattern matched but failed Luhn validation (invalid credit card number).');
+        var labelKeyword = sn_i18n.Message.getMessage('Keywords', 'Keywords');
+        var labelKeywordProximity = sn_i18n.Message.getMessage('Keyword proximity', 'Keyword proximity');
+        var type = jelly.sysparm_type;
+        var styleDisplayNone = (type == 'model') ? 'display: none;' : ''; // (type === 'model')
+    </g:evaluate>
+    <g2:evaluate jelly="true">
+        var defaultExpression = jelly.sysparm_default_expression;
+        var keyword = jelly.sysparm_keyword;
+
+        var keywordProximity = jelly.sysparm_keyword_proximity;
+        var patternId = jelly.sysparm_pattern_id;
+
+    </g2:evaluate>
+    <!-- In a dialog window, we are already in modal-content block of the modal window. However, the footer section still renders OK? -->
+    <div class="notification notification-error" id="notification-error" style="display: none;">
+        <span class="icon icon-alert" style="margin-right: 5px;">
+            <span class="sr-only">Error Message</span>
+        </span>
+        <span id="notification-error-message" role="status" aria-live="assertive">Negative Notification</span>
+        <button onclick="clearNotificationsMessages()" class="btn-icon close icon-cross">
+            <span class="sr-only" aria-label="${labelCloseAria}">Close</span>
+        </button>
+    </div>
+    <div class="notification notification-warning" id="notification-warning" style="display: none;">
+        <span class="icon icon-alert" style="margin-right: 5px;">
+            <span class="sr-only">Warning Message</span>
+        </span>
+        <span id="notification-warning-message" role="status" aria-live="assertive">${msgNotDiscovered}</span>
+        <button onclick="clearNotificationsMessages()" class="btn-icon close icon-cross">
+            <span class="sr-only" aria-label="${labelCloseAria}">Close</span>
+        </button>
+    </div>
+    <div class="notification notification-success" id="notification-success" style="display: none;">
+        <span class="icon icon-alert" style="margin-right: 5px;">
+            <span class="sr-only">Success Message</span>
+        </span>
+        <span id="notification-success-message" role="status" aria-live="assertive">${msgDiscovered}</span>
+        <button onclick="clearNotificationsMessages()" class="btn-icon close icon-cross">
+            <span class="sr-only" aria-label="${labelCloseAria}">Close</span>
+        </button>
+    </div>
+    <div class="notification notification-warning" id="notification-luhn-failed" style="display: none;">
+        <span class="icon icon-alert" style="margin-right: 5px;">
+            <span class="sr-only">Luhn Validation Failed</span>
+        </span>
+        <span id="notification-luhn-failed-message" role="status" aria-live="assertive">${msgLuhnFailed}</span>
+        <button onclick="clearNotificationsMessages()" class="btn-icon close icon-cross">
+            <span class="sr-only" aria-label="${labelCloseAria}">Close</span>
+        </button>
+    </div>
+    <div class="form-group is-required" style="${styleDisplayNone}">
+        <label for="expression" class="control-label"><span class="required-marker" />${labelExpression}</label>
+        <span class="form-field">
+            <textarea id="expression" name="expression" class="form-control" required="required" type="text" aria-required="true" aria-label="${labelExpression}">
+				$[defaultExpression]
+			</textarea>
+        </span>
+
+    </div>
+    <div class="form-group is-required" style="display: none;">
+        <span class="form-field">
+            <textarea id="type" name="type" class="form-control" required="required" type="text">
+				$[type]
+			</textarea>
+        </span>
+    </div>
+    <div class="form-group" style="display: none;">
+        <span class="form-field">
+            <input id="patternId" name="patternId" class="form-control" value="$[patternId]" type="text" />
+        </span>
+    </div>
+    <div class="form-group" style="${styleDisplayNone}">
+        <label for="keyword" class="control-label">${labelKeyword}</label>
+        <span class="form-field">
+            <input id="keyword" name="keyword" class="form-control" value="$[keyword]" type="text" aria-required="true" aria-label="${labelKeyword}" />
+        </span>
+    </div>
+    <div class="form-group" style="${styleDisplayNone}">
+        <label for="keywordProximity" class="control-label">${labelKeywordProximity}</label>
+        <span class="form-field">
+            <input id="keywordProximity" name="keywordProximity" class="form-control" value="$[keywordProximity]" type="text" aria-required="true" aria-label="${labelKeywordProximity}" />
+        </span>
+    </div>
+    <div class="form-group is-required">
+        <label for="testValue" class="control-label"><span class="required-marker" />${labelTestValue}</label>
+        <span class="form-field">
+            <textarea id="testValue" name="testValue" class="form-control" required="required" type="text" aria-required="true" aria-label="${labelTestValue}" />
+        </span>
+    </div>
+    <footer class="modal-footer">
+        <button class="btn btn-default" id="cancelBtn" data-dismiss="modal" aria-label="${labelCancel}">${labelCancel}</button>
+        <button class="btn btn-primary" id="testBtn" onclick="testExpression()" aria-label="${labelTest}">${labelTest}</button>
+    </footer>
+    <script>
+        var focusElementId = trim($("expression").value) ? "testValue" : "expression";
+        document.getElementById(focusElementId).focus();
+    </script>
+</j:jelly>

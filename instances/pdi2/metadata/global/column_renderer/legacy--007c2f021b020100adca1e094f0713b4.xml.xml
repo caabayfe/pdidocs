@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<j:set var="jvar_renderer" value="Legacy"/>
+
+<g:choice_list ref="$[jvar_ref]"/>
+<j:set var="jvar_workflow_icons" value="WorkflowIcons"/>
+
+<g:evaluate var="jvar_hasicons"   expression="$[SAFE:jvar_ref].hasAttribute('icons');" />
+<g:evaluate var="jvar_icons"      expression="$[SAFE:jvar_ref].getAttribute('icons');" />
+
+<j:if test="$[jvar_hasicons]" >
+    <j:set var="jvar_workflow_icons" value="$[jvar_icons]" />
+</j:if>
+	
+<g:evaluate var="jvar_is_accessibility_enabled" expression="gs.getPreference('glide.ui.accessibility', 'false')" />
+
+<j:set var="jvar_high_contrast" value=""/>
+<j:if test="$[jvar_is_accessibility_enabled]">
+		<j:set var="jvar_high_contrast" value="_high_contrast"/>
+</j:if>
+
+<g:evaluate var="jvar_choices" jelly="true" object="true">
+    var choices = jelly.jvar_choices;
+
+    // Use the API to translate
+    var api = new SNC.RendererAPI('$[jvar_renderer]');
+    api.internationalizeChoices(choices);
+
+    try {
+        var wfw = new $[SAFE:jvar_workflow_icons]('$[jvar_ref]');
+        choices = wfw.process(jelly.jvar_choices);
+    } catch (e) {
+        // could have an issue during the first upgrade
+        // before it gets this widget
+    }
+
+    choices;
+</g:evaluate>
+
+<g:evaluate var="jvar_expand_id" jelly="true">
+    // Create a unique id across multiple workflow columns in the same table.
+    var expand_id = jelly.jvar_workflow_id + '_' + jelly.jvar_ref;
+    var parts = jelly.jvar_ref.split('.');
+    if (parts.length >= 2) {
+        parts[0] = '';
+        expand_id = jelly.jvar_workflow_id + parts.join('_');
+    }
+    expand_id;
+</g:evaluate>
+
+<!-- called when you have successfully ordered an item from service catalog -->
+<j:set var="jvar_t" value="$[jvar_ref]" />
+<table id="workflow.$[jvar_expand_id]" border="0" cellpadding="0" cellspacing="0"
+       style="margin-top: 2px; background-color: transparent;" >
+
+  <tr id="$[jvar_expand_id]">
+
+  <!-- +/- expander box  -->
+  <td valign="top" style="background:transparent">
+    <span id="renderer" style="display:none" >$[jvar_renderer]</span>
+    <span id="workflowfilter.$[jvar_expand_id]" >
+      <a tabindex="0" id="toggle-button-$[jvar_expand_id]" role="button" onkeypress="toggleItemsEventHandler(event,'$[jvar_expand_id]');" onclick="togglePreference('$[jvar_expand_id]');"  aria-controls="$[jvar_expand_id]" aria-label="${gs.getMessage('Toggle stage state display')}" title="${gs.getMessage('Expand')}" >
+        <img id="filterimg.$[jvar_expand_id]" src="images/filter_hide16.gifx" alt="${gs.getMessage('Expand')}"
+             border="0" title="${gs.getMessage('Expand')}"
+             style="margin-top: 1px; margin-bottom: 1px;"/>
+      </a>
+  </span>
+  </td>
+  <td nowrap="true" style="background-color:transparent">
+  <g:set_if test="$[GlideMobileExtensions.runningTablet() || gs.getProperty('glide.ui.doctype') == 'true']" var="jvar_display_type"
+                true="inline-block" false="inline" />
+	  <ol style="list-style-type: $[jvar_display_type]; padding-left:0;">
+	  <j:forEach var="jvar_choice" items="$[jvar_choices]">
+	    <g:evaluate var="jvar_item_idx" jelly="true">
+	        var itemIdx = jelly.jvar_item_idx;
+	        if (itemIdx == '' || typeof itemIdx == "undefined")
+	            itemIdx = 1;
+	        else
+	            itemIdx = parseInt(itemIdx) + 1;
+	        itemIdx;
+	    </g:evaluate>
+	    <g:evaluate var="jvar_choice_visible" jelly="true">
+	        var isVisible = true; //jelly.jvar_choice.getParameter('visible')+'' == 'true';
+	        if (jelly.jvar_choice.value == '')
+	           isVisible = false;
+	        isVisible;
+	    </g:evaluate>
+
+	    <!-- we only want to display values that are not empty and are 'visible' -->
+	    <j:if test="$[jvar_choice_visible]">
+	      <g:evaluate var="jvar_image" jelly="true">
+			  var imgsrc = (jelly.jvar_choice.image+'').split(' ');
+			  imgsrc = imgsrc.length ? imgsrc[0] : imgsrc;
+			  
+			  <!-- no image, provide default -->
+			  if (jelly.jvar_choice.image == '') {
+				if (jelly.jvar_choice.selected) {
+					imgsrc = 'icon-check-circle';
+				} else {
+					imgsrc = 'icon-empty-circle';
+				}
+			  }
+			  imgsrc += jelly.jvar_high_contrast;
+
+			  imgsrc;
+		  </g:evaluate>
+
+		  <g:set_if var="jvar_title" test="$[jvar_choice.getParameter('title') == undefined]" true="$[jvar_choice.label]" false="$[jvar_choice.getParameter('title')]" />
+
+	      <span id="stage.$[jvar_item_idx].$[jvar_expand_id].$[jvar_choice.value]" stage="true" selected="$[jvar_choice.selected]" aria-expanded="false">
+	      	  <li style="padding:2px; padding-bottom: 5px; display: $[jvar_display_type];" tabindex="-1" aria-label="$[jvar_title] ($[jvar_choice.label])" title="$[jvar_title]">
+	      		<g:set_if test="$[GlideMobileExtensions.runningTablet() || gs.getProperty('glide.ui.doctype') == 'true']" var="jvar_display_type"
+	                	true="inline-block" false="inline" />
+	                <img id="stage.$[jvar_item_idx].$[jvar_expand_id].$[jvar_choice.value].image" title="$[jvar_title]"
+	                     class="nopadding" src="images/heisenberg_icons/stage_icons/$[jvar_image].png" alt="$[jvar_choice.label]"/>
+	                <span id="stage.$[jvar_item_idx].$[jvar_expand_id].$[jvar_choice.value].text" style="display:none; padding: 6px;">$[jvar_title] ($[jvar_choice.label])</span>
+	      	  </li>
+	      </span>
+	    </j:if>
+	  </j:forEach>
+	  </ol>
+  </td>
+</tr>
+</table>
+
+<g:evaluate var="jvar_expanded_pref" expression="gs.getPreference('workflow.expanded.$[jvar_ref_parent]')" />
+
+<j:if test="$[jvar_expanded_pref]">
+    <script>toggleItems('$[jvar_expand_id]');</script>
+</j:if>
+	
+<script>
+	// accessibility for toggle buttons
+	$j('[id="toggle-button-$[jvar_expand_id]"').on('click keypress', function() {
+		if (this.children[0].src.indexOf('hide') > -1)
+			this.setAttribute('aria-expanded', false);
+		else
+			this.setAttribute('aria-expanded', true);
+	});
+</script>
+		
+
+
+</j:jelly>

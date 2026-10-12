@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">	
+	<g:evaluate jelly="true" >
+		var rest_var_count = 0;
+		if (jelly.sysparm_rest_service !== undefined ${AND} jelly.sysparm_rest_method !== undefined) {
+			var restClient = new sn_ws.RESTMessageV2(jelly.sysparm_rest_service, jelly.sysparm_rest_method);
+			var rest_vars = restClient.getVariables();
+			rest_var_count = rest_vars.length;
+		
+			var tableName = jelly.sysparm_table;
+		}
+	</g:evaluate>
+	<j:choose>	
+		<j:when test="${rest_var_count &gt; 0}"> 
+			<div class="sub-section-header" style="border-bottom: 1px solid #bdc0c4; padding-bottom: 15px; margin-bottom: 25px">
+				<b>Variable Substitions</b>
+			</div>
+			<j:forEach var="jvar_rest_var" items="${rest_vars}">				
+				<j:set var="jvar_rest_var_hashed" value="${jvar_rest_var.hashCode()}"/>
+				
+				<div style="direction:ltr;" class="form-group">
+					<div nowrap="true" class="form-field-addons">
+						<label id="${jvar_rest_var_hashed}_rest_var_variable" for="${jvar_rest_var_hashed}" data-rest-var-name="${jvar_rest_var}" class="col-xs-12 col-md-1_5 col-lg-2 control-label">${jvar_rest_var}</label>
+					</div>
+					<div class="col-xs-4 col-md-2 col-lg-2 form-field-addons">
+						<select id="${jvar_rest_var_hashed}_rest_var_operator" class="form-control select2" onchange="businessRuleREST.toggleTextboxWithSelect('${tableName}', '${jvar_rest_var_hashed}')">
+							<option value="EQUALTO">To</option>
+							<option value="SAMEAS">Same as</option>
+						</select>
+					</div>
+					<div class="col-xs-8 col-md-8 col-lg-4 form-field-addons">
+						<input id="${jvar_rest_var_hashed}_rest_var_text" placeholder="Enter value for ${jvar_rest_var}" name="${jvar_rest_var_hashed}_text" class="form-control" type="text" aria-required="true" />    
+						<g:inline template="business_rule_outbound_rest_variable_value" label="${jvar_rest_var}" label_for="${jvar_rest_var_hashed}" >
+						</g:inline>
+					</div>
+				</div>
+			</j:forEach>
+		</j:when>
+		<j:otherwise> 
+			No variables for REST Method
+		</j:otherwise>
+	</j:choose>
+</j:jelly>

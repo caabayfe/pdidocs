@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		#report-${jvar_report_id}-${jvar_uid} .list_nav_top.list_nav.list_nav_spacer {
+		   margin-top: 0px !important;
+		}
+		#report-${jvar_report_id}-${jvar_uid} .navbar.navbar-default.list_nav.list_nav_top.list_nav_top_border {
+		   display: none !important;
+		}
+		.sn-ac-loading-report {
+			line-height: 200px;
+			text-align: center;
+			height: 200px;
+		}
+		.sn-ac-loading-report .icon-loading {
+				font-size: 4rem !important;
+				width: 4rem !important;
+				height: 4rem !important;
+		}
+	</style>
+	<div id="report-${jvar_report_id}-${jvar_uid}"></div>
+	<div class="sn-ac-loading-report" id="sn-ac-loading-report-${jvar_report_id}-${jvar_uid}">
+		<div class="icon icon-loading"></div>
+	</div>
+	<script>
+		(function() {
+			var reportId = "${jvar_report_id}";
+			var reportRemoved = false;
+			var reportContainer = $j("#report-" + reportId + "-${jvar_uid}");
+			var reportLoadingContainer = $j("#sn-ac-loading-report-" + reportId + "-${jvar_uid}");
+			var renderer = "${jvar_renderer}";
+		    var targetTable = "${jvar_target_table}";
+			var isCanvas = window.SNC $[AMP]$[AMP] SNC.canvas $[AMP]$[AMP] SNC.canvas.eventbus;
+		    var recordType = "${jvar_record_type}";
+			var sysparmProcessor = "${jvar_sysparm_processor}";
+			var appliedField = "${jvar_applied_field}";
+			var lastAppliedFilter = [];
+			var filterOnTablesToListen = {
+				'pa_m2m_dashboard_tabs': 'xmlhttp.do?sysparm_scope=global$[AMP]sysparm_want_session_messages=true$[AMP]sysparm_processor=PAAdminConsoleUtil$[AMP]sysparm_filter_table=pa_dashboards$[AMP]sysparm_filter_table_id=',
+				'pa_dashboards': 'xmlhttp.do?sysparm_scope=global$[AMP]sysparm_want_session_messages=true$[AMP]sysparm_processor=PAAdminConsoleUtil$[AMP]sysparm_filter_table=pa_dashboards_group$[AMP]sysparm_filter_table_id='
+			};
+			var timeout = null;
+			var xhrCall = null;
+			function renderReport(filters) {
+			   if(reportRemoved)
+					return;
+		       var config = { "jvar_report_id": reportId };
+			   var interactiveReport = {};
+			   var additionGroupBy = reportContainer.find("[name='additional-groupby']");
+			   if(additionGroupBy.length)
+					interactiveReport["groupby"] = additionGroupBy[0].value;
+			   if(filters $[AMP]$[AMP] Array.isArray(filters) $[AMP]$[AMP] filters.length)
+					interactiveReport["additional_filters"] = filters;
+			   lastAppliedFilter = filters;
+			   config["sysparm_interactive_report"] = JSON.stringify(interactiveReport);
+			   reportContainer.html(reportLoadingContainer.clone());
+			   reportLoadingContainer.hide();
+			   reportContainer.show();
+			   embedReportByParams(reportContainer, config);
+			   setTimeout(function(){
+			    	try {
+						runAfterAllLoaded(); // warning: runAfterAllLoaded is unreliable, 3rd party bugs may be triggered and fail the whole page.
+					    additionGroupBy = reportContainer.find("[name='additional-groupby']");
+					    if(additionGroupBy.length) {
+							additionGroupBy.attr("onchange", "");
+							additionGroupBy.change(function() {
+								 renderReport(lastAppliedFilter);
+							});
+					    }
+					} catch(e) {
+						// NoOp
+					}
+			   },400)
+			}
+			function getWidgets(url, callback) {
+				return $j.ajax({
+					url: url,
+					headers: {'X-UserToken': window.g_ck},
+					contentType: "application/json;charset=utf-8"
+				}).done(callback);
+			};
+			
+			function debounceAndRender(filters) {
+				clearTimeout(timeout);
+				timeout = setTimeout(function() {
+					renderReport(filters);
+				}, 100);
+			}
+				
+			function onInteractiveFilterChange() {
+				var allFilters = [];
+				var interestedFilters = [];
+				if(isCanvas)
+					allFilters = getFilters(SNC.canvas.interactiveFilters.defaultValues);
+				else
+					allFilters = interactiveFilterMessageHandler.getCurrentFilters();
+				reportLoadingContainer.show();
+				reportContainer.hide();
+				allFilters.filter(function(filterItem) {
+					filterItem.filter(function(filterForATarget) {
+						if (filterOnTablesToListen[filterForATarget.table]) {
+							interestedFilters.push(filterForATarget);
+							var value = getSysIDsFromFilter(filterForATarget.filter);
+							var url = filterOnTablesToListen[filterForATarget.table] + value+ "$[AMP]sysparm_name=" + sysparmProcessor + "$[AMP]sysparm_record_type=" + recordType;
+							xhrCall = getWidgets(url, function(data){
+								var result = $j(data).find("result").first();
+								var defaultValues;
+								var widgets = [];
+								if(result.attr(recordType)){
+									widgets = JSON.parse(result.attr(recordType));
+								}
+								var widgetIds = [];
+								for(var i = 0 ; i != widgets.length; i++) {
+									var widget = widgets[i];
+									if(renderer $[AMP]$[AMP] renderer != "") {
+										if(widget.renderer === renderer $[AMP]$[AMP] widgetIds.indexOf(widget.id) == -1)
+											widgetIds.push(widget.id);
+									}
+									else if(widgetIds.indexOf(widget.id) == -1)
+										widgetIds.push(widget.id);
+								}
+								var condition;
+		                        if (widgetIds.length > 0) {
+									condition = "IN" + widgetIds.join(",");
+		                        } else {
+								   condition = "ISEMPTY";
+								}
+								var tempFilter = appliedField.replace("_filter_",condition );
+								var matchingFilterItems = filterItem.filter(function(item) {
+									return item $[AMP]$[AMP] item.table === targetTable;
+								});
+		
+								if (!matchingFilterItems.length) {
+								    filterItem.push({
+										table: targetTable,
+										filter: tempFilter
+									});
+								}
+								debounceAndRender(allFilters);
+							});
+						}
+					})
+				});
+				if(interestedFilters.length === 0) {
+					debounceAndRender(allFilters);
+				}
+			}
+			function getFilters(allFilters) {
+				var filters = [];
+				for (var key in allFilters) {
+					if (allFilters.hasOwnProperty(key)) {
+						filters.push(allFilters[key]);
+					}
+				}
+				return filters;
+			}
+			function removeListeners() {
+				if (interactiveFilterMessageHandler) {
+					interactiveFilterMessageHandler._unsubscribeFromEvents();
+					interactiveFilterMessageHandler = null;
+					clearTimeout(timeout);
+					if(xhrCall $[AMP]$[AMP] xhrCall.abort) {
+						xhrCall.onreadystatechange = null;
+						xhrCall.abort();
+					}
+				}
+				reportRemoved = true;
+			};
+			function getSysIDsFromFilter(filterStr) {
+				if (filterStr $[AMP]$[AMP] filterStr.indexOf("^OR") > -1) {
+					var splitFilters = filterStr.split("^OR");
+
+				var sysIDArr = [];
+				if (splitFilters.length) {
+					splitFilters.forEach(function (item) {
+						sysIDArr.push(item.split("=")[1]);
+				});
+			}
+				return sysIDArr.join(",");
+			}
+			return filterStr $[AMP]$[AMP] filterStr.split("=")[1];
+		};
+
+			var uuidOfWidget = reportContainer.closest('[data-uuid]').attr('data-uuid');
+			if(!uuidOfWidget) {
+				uuidOfWidget = reportContainer.closest('.widget_body').attr('id');
+			}
+			var interactiveFilterMessageHandler = new DashboardMessageHandler(uuidOfWidget , function() { setTimeout(onInteractiveFilterChange);} );
+			onInteractiveFilterChange();
+			if (isCanvas) {
+				SNC.canvas.eventbus.subscribe(uuidOfWidget, function(event) {
+					if (event.action === "destroy") {
+						removeListeners()
+					}
+				})
+			}
+			reportContainer.on("remove", removeListeners);
+		})();
+	</script>
+</j:jelly>

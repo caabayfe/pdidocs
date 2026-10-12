@@ -1,0 +1,93 @@
+<div class="todos-widget" ng-class="{'todos-widget-mobile': !c.data.onTicketPage && c.mobileDevice}">
+  <h2 class="page-title" ng-if="( (!data.onTicketPage && !c.mobileDevice) || (!data.onTicketPage && c.mobileDevice && c.data.todoSummaryLeftPanel))" ng-bind="::c.data.txt.title"></h2>
+  <div ng-if="!data.onTicketPage">
+    <sp-widget widget="c.data.todosFilters"></sp-widget>
+  </div>
+  <div class="visible-xs back-button-mobile padder-b" ng-if="(c.mobileDevice && !c.data.todoSummaryLeftPanel && !isSignPadVisible)">
+    <a ng-click="c.openTodosSummaryList()" href class="close-task"><i class="fa fa-chevron-left" ng-class="{'back-padding': !c.data.onTicketPage, 'ticket-back-padding': c.data.onTicketPage}"></i>${Back}</a>
+    <div class="pull-right" ng-if="c.todoDisplayed[c.currentTab].length > 1">
+      <a href ng-click="c.getPreviousTodo()" ng-class="{'isDisabled':!c.hasPreviousTodo()}" data-toggle="tooltip" title="Open Previous To-do" aria-label="Open Previous Todo" class="arrow-mobile" tabindex="{{c.hasPreviousTodo() ? '0' : '-1'}}"><i class="fa fa-arrow-up"></i></a>
+      <a href ng-click="c.getNextTodo()" ng-class="{'isDisabled':!c.hasNextTodo()}" data-toggle="tooltip" title="Open Next To-do" aria-label="Open Next Todo" class="arrow-mobile" tabindex="{{c.hasNextTodo() ? '0' : '-1'}}"><i class="fa fa-arrow-down"></i></a>
+    </div>
+  </div>
+  <div class="visible-xs back-button-mobile padder-b" ng-if="(c.mobileDevice && isSignPadVisible)">
+    <a ng-click="showSignPad()" href="javascript:void(0)" class="close-task"><i class="fa fa-chevron-left" ng-class="{'back-padding': !data.onTicketPage, 'ticket-back-padding': data.onTicketPage}"></i>${Back}</a>
+
+  </div>
+  <div id="todo-panel" class="content-wrap b row-eq-height" ng-class="{'mobile-todo-panel': c.mobileDevice}">
+    <div id="todo-left-panel" class="col-md-3 col-sm-3 col-lg-3 col-xs-12 no-padder todo-left-panel" ng-show="(!c.mobileDevice || c.mobileDevice && c.data.todoSummaryLeftPanel)">
+      <div ng-if="c.data.onTicketPage" class="panel-heading panel-border-bottom">
+        <h4><a ng-click="c.backToTaskList()" ng-keydown="backToListKeyDown($event)" class="back-to-tasklist" aria-label="{{data.activitySetAriaLabel}}" tabindex="0" href="javascript:void(0)">
+          <i class="fa fa-chevron-left m-r-sm"></i> {{data.activitySetName}}
+          </a></h4>
+      </div>
+      <div>
+        <ul class="nav nav-tabs" ng-if="!c.data.onTicketPage" role="tablist" aria-label="${my tasks}">
+          <li ng-class="{'active': (c.currentTab == tab.name)}" ng-repeat="tab in ::c.data.tabs" ng-click="c.onTabClick(tab)" class="tab" role="presentation">
+            <a id="tab{{$index}}" data-toggle="tab" data-target="#{{::tab.name}}, #{{::tab.name}}-content" role="tab" ng-bind="tab.label" aria-controls="{{::tab.name}}" aria-label="{{::tab.name}}" tabindex="{{(c.currentTab == tab.name) ? 0 : -1}}" aria-selected="{{(c.currentTab == tab.name) ? 'true' : 'false'}}"></a>
+          </li>
+        </ul>
+        <div class="tab-content clearfix" ng-class="{'large-nav': c.data.onTicketPage || c.navBarScrollable}" tabindex="-1">
+          <ul id="{{::tab.name}}" 
+              class="tab-pane" 
+              ng-class="{'in active': (c.currentTab == tab.name)}" 
+              ng-repeat="tab in ::c.data.tabs" 
+              role="list" 
+              aria-labelledby="tab{{$index}}" 
+              aria-hidden="{{(c.currentTab == tab.name) ? 'false' : 'true'}}"
+              ng-keydown="onListKeyDown($event)">
+            <li ng-repeat="todo in c.todoDisplayed[tab.name]" role="presentation" 
+                ng-click="c.openTodo(todo.sysId, tab.name);" tabindex="-1" 
+                ng-class="{'todos-list': !c.accessibility, 'todos-list-accessibility': c.accessibility, selected: (!c.mobileDevice && todo.isOpen),'completed-to-do': (data.onTicketPage && todo.isCompleted && !todo.isOpen)}" 
+                id="{{todo.sysId}}_task_lineitem_summary">
+              <div ng-if="todo.delegates.length > 0 || (todo.delegator && todo.delegator.name)" 
+                   class="todo-summary-delegates">
+                <span tabindex="0"
+                      aria-label="{{ (todo.delegator && todo.delegator.name) ? c.getDelegatedByText(todo.delegator.name) : todo.delegates }}"
+                      uib-tooltip="{{ (todo.delegator && todo.delegator.name) ? c.getDelegatedByText(todo.delegator.name) : todo.delegates }}"
+                      tooltip-placement="top"
+                      tooltip-append-to-body="true">
+                  <i class="fa fa-sm"
+                     ng-class="(todo.delegator && todo.delegator.name) ? 'fa-arrow-circle-o-left' : 'fa-arrow-circle-o-right'"></i>
+                  <span ng-bind="::data.i18n.DELEGATED"></span>
+                </span>
+              </div>
+              <button tabindex="-1" class="todo-item-button" aria-pressed="{{todo.isOpen}}" ng-include="'hrm-todos-header-widget.html'"></button>
+            </li>
+            <li ng-if="c.loadingMore[tab.name] || !c.loaded[tab.name]" class="loading-indicator-fetchmore">
+              <span class="fa fa-spinner fa-spin" aria-hidden="true" name="spinner" spin="true"></span>
+              ${Loading}...
+            </li>
+            <li role="listitem" ng-if="c.loaded[tab.name] && !c.stopLoadMore[tab.name] && !c.data.onTicketPage && c.todoDisplayed[tab.name].length > c.limit" class="load-more-button">
+              <button tabindex="-1" ng-click="c.fetchMoreRecords(tab.name, $event);" class="btn btn-default">${Show more}</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div id="todo-right-panel" class="col-md-9 col-sm-9 col-lg-9 col-xs-12 b-l no-padder" ng-class="{'todo-right-native':!c.mobileDevice}" ng-if="!c.mobileDevice || (c.mobileDevice && !c.data.todoSummaryLeftPanel) || (c.mobileDevice && (!c.todoDisplayed || !c.todoDisplayed[c.currentTab] || c.todoDisplayed[c.currentTab].length == 0))">
+      <div id="{{::tab.name}}-content" class="tab-pane" ng-class="{'in active': (c.currentTab == tab.name)}" ng-repeat="tab in ::c.data.tabs" tab-index="0" aria-labelledby="{{tab.name}}" aria-hidden="false">
+        <div ng-if="!c.selectedFiltersFromTodoPage.applyFilters && !c.loadingMore[tab.name] && !c.todoDisplayed[tab.name].length && c.loaded[tab.name]" class="panel-heading text-center empty-message">
+          <p><i class="fa fa-3x fa-check-circle success empty-state-icon"></i></p>
+          <h3 class= "empty-state-title" ng-if="!c.todoDisplayed[tab.name].length" ng-bind="c.data.txt.empty[tab.name] ? c.data.txt.empty[tab.name].title : c.data.txt.empty[data.defaultTab].title"></h3>
+          <h4 class= "empty-state-title" ng-if="c.todoDisplayed[tab.name].length" ng-bind="c.data.txt.onComplete"></h4>
+        </div>
+        <div ng-if="c.selectedFiltersFromTodoPage.applyFilters && !c.loadingMore[tab.name] && !c.todoDisplayed[tab.name].length && c.loaded[tab.name]" class="panel-heading text-center empty-message">
+          <p><i class="fa fa-3x fa-times-circle-o empty-state-icon"></i></p>
+          <h3 class= "empty-state-title" ng-if="!c.todoDisplayed[tab.name].length">${No results match your criteria}</h3>
+          <h4 class= "empty-state-title" ng-if="c.todoDisplayed[tab.name].length" ng-bind="c.data.txt.onComplete"></h4>
+          <p ng-if="!c.todoDisplayed[tab.name].length && !c.data.onTicketPage" class= "empty-state-message status">${Try removing some filters}</p>
+        </div>
+        <div ng-if="c.todoDisplayed[tab.name].length && todoLine.isOpen" class="task-content" ng-repeat="todoLine in c.todoDisplayed[tab.name]">
+          <div ng-if="todoLine.todoLineWidget">
+            <sp-widget widget="todoLine.todoLineWidget"></sp-widget>
+          </div>
+          <div class="loading-indicator" ng-if="!todoLine.todoLineWidget">
+            <span class="fa fa-spinner fa-spin" aria-hidden="true" name="spinner" spin="true"></span>
+            ${Loading}...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_testEmbeddedQueries">
+		var shouldCheckEmbeddedQueries = current.isNewRecord() ${AND} !gs.nil(current.getValue('source'));
+		shouldCheckEmbeddedQueries;
+	</g2:evaluate>
+	
+	<j2:if test='$[jvar_testEmbeddedQueries]'>
+		<g2:evaluate var="jvar_embeddedQueries">
+			var queries = new global.KMRecordPageUtils().getEmbeddedQueries(current.getValue('source'));
+			JSON.stringify(queries);
+		</g2:evaluate>
+		<g2:evaluate var="jvar_urlQueries">
+			var queries = gs.action.getGlideURI().toString();
+			queries;
+		</g2:evaluate>
+		<script>
+			function applyQueries() {
+				try {
+					var embeddedQueries = JSON.parse('$[jvar_embeddedQueries]');
+					var urlQueries = '$[jvar_urlQueries]';
+
+					for (var field in embeddedQueries) {
+						var fieldKey1 = '%5e' + field + '%3d';
+						var fieldKey2 = '=' + field + '%3d';
+						if (urlQueries.indexOf(fieldKey1) > -1 || urlQueries.indexOf(fieldKey2) > -1)
+							continue;
+						g_form.setValue(field, embeddedQueries[field]);
+					}
+				} catch (error) {
+					console.error('Failed to apply embedded queries' + error);
+				}
+			};
+
+			jQuery(window).load(function(){
+				addAfterPageLoadedEvent(function() { applyQueries(); });
+			});
+		</script>
+	</j2:if>
+</j:jelly>

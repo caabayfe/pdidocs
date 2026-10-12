@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <script language="javascript">
+        addMacroEventListeners('sysparm_personal_id_${JS,HTML:sysparm_verification_id}');
+    </script>
+
+    <g:evaluate var="jvar_personal_data_label" object="true" jelly="true">
+        new global.PwdCommonVerificationHandler().getPersonalDataLabel(jelly.sysparm_verification_id);
+    </g:evaluate>
+	
+	<g:evaluate var="jvar_verification_label" object="true" jelly="true">
+	var resetUtil = new global.PasswordResetUtil();
+	resetUtil.getVerificationLabel(jelly.sysparm_verification_id);
+	</g:evaluate>
+
+    <j:choose>
+        <!-- Polarisberg -->
+        <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+            <h1 class="pwd-title" id="personal-data-title">${jvar_verification_label}</h1>
+
+            <div class="login-form-field is-required" id="personal_data_form_group_${JS,HTML:sysparm_verification_id}">    
+                <label class="control-label" id="personal-data-label" aria-label="${gs.getMessage('Enter your')} ${jvar_personal_data_label}">
+			${jvar_personal_data_label}
+			<span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${jvar_personal_data_label} ${gs.getMessage('Required')}"></span>  
+                </label>
+                <input id="sysparm_personal_id_${JS,HTML:sysparm_verification_id}" maxlength="256" name="sysparm_personal_name_${JS,HTML:sysparm_verification_id}" class="form-control pwd-form-control" autocomplete="off" type="text" required="required" aria-labelledby="personal-data-title personal-data-label" oninput="updateMandatoryMarker(this, 'personal_data_form_group_${JS,HTML:sysparm_verification_id}'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');"/>
+            </div>
+        </j:when>
+        <!-- Heisenberg -->
+        <j:otherwise>
+            <h2 class="pwd-title" id="personal-data-title">${jvar_verification_label}</h2>
+
+            <div class="form-group is-required" id="personal_data_form_group_${JS,HTML:sysparm_verification_id}">
+                <label class="control-label col-sm-12" id="personal-data-label" aria-label="${gs.getMessage('Enter your')} ${jvar_personal_data_label}">
+		    <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${jvar_personal_data_label} ${gs.getMessage('Required')}"></span> 
+                    ${jvar_personal_data_label}
+                </label>
+                <span class="col-sm-12">
+                    <input id="sysparm_personal_id_${JS,HTML:sysparm_verification_id}" maxlength="256" name="sysparm_personal_name_${JS,HTML:sysparm_verification_id}" class="form-control pwd-form-control" autocomplete="off" type="text" required="required" aria-labelledby="personal-data-title personal-data-label" oninput="updateMandatoryMarker(this, 'personal_data_form_group_${JS,HTML:sysparm_verification_id}'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');"/>
+                </span>
+            </div>
+        </j:otherwise>
+    </j:choose>
+
+</j:jelly>

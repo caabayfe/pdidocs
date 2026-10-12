@@ -1,0 +1,274 @@
+<div>
+  <div class="cm-subs-noti-pref row" ng-if="data.modules.length">
+    <div class="col-xs-12 cm-notif-pref-header">
+      <div class="row">
+        <header class="cm-widget-header col-xs-12 col-md-9">
+          <h2 class="main-header">${Notifications and Subscriptions}</h2>
+          <p class="sub-header">${Manage your notification and subscription preferences here.}</p>
+        </header>
+        <div class="cm-recv-notif col-md-3 text-right hidden-xs hidden-sm">
+          <div class="input-switch ">
+            <label class="input-switch-label" for="switch_0{{::subObj.sys_id}}">${All Notifications}</label>
+            <input data-ng-click="c.toggleGlobalNotifications()"
+                   id="switch_0{{::subObj.sys_id}}" 
+                   type="checkbox" 
+                   checked="checked" 
+                   name="switch_0{{subObj.sys_id}}" 
+                   ng-keydown="c.checkInputCheckBox($event)"
+                   data-ng-model="c.enableNotifications"
+                   aria-invalid="false">
+            <span ng-click="c.checkInputCheckBox($event)" class="switch" role="presentation"></span>
+          </div>
+        </div>
+        <div class="cm-recv-notif-mob col-xs-12 text-right visible-xs visible-sm">
+          <div class="input-switch inline-b">
+			<label class="input-switch-label" for="switch_mob_0{{::subObj.sys_id}}">${All Notifications}</label>
+            <input data-ng-click="c.toggleGlobalNotifications()"
+                   id="switch_mob_0{{::subObj.sys_id}}" 
+                   type="checkbox" 
+                   checked="checked" 
+                   name="switch_mob_0{{subObj.sys_id}}" 
+                   ng-keydown="c.checkInputCheckBox($event)"
+                   data-ng-model="c.enableNotifications">
+            <span aria-hidden="true" ng-click="c.checkInputCheckBox($event)" class="switch" role="none"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 cm-widget-tabs cm-module-tabs">
+      <ul class="moduletablist nav nav-tabs hidden-sm hidden-xs"
+          role="tablist"
+          ng-keydown="c.tablistKeydown($event,'module')"
+          aria-label="${Modules}">
+        <li class="text-center" id="mod_{{mod.sys_id}}" 
+            ng-class="c.selectedModule.sys_id == mod.sys_id ? 'active':''" 
+            ng-repeat="mod in data.modules | limitTo: c.options.max_modules track by $index"
+            ng-click="c.changeModule(mod, $event)" 
+            data-toggle="tab"
+            aria-selected="{{c.selectedModule.sys_id == mod.sys_id}}"
+            tabindex="{{c.selectedModule.sys_id == mod.sys_id ? 0:-1}}"
+            role="tab">
+          {{mod.name}}
+        </li>
+        <li id="mod_more_option" class="dropdown pull-right" ng-show="data.modules.length > c.options.max_modules">
+          <button class="dropdown-toggle transparent-button" type="button" data-toggle="dropdown">
+            <span ng-hide="c.hideMoreText">${More}</span>
+            <span ng-show="c.hideMoreText">{{c.selectedModule.name}}</span>
+            <span class="caret" aria-hidden="true"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li ng-repeat="mod in data.modules | limitTo: (c.options.max_modules - data.modules.length) track by $index" ng-click="c.changeModule(mod, $event, true)" role="presentation">
+              <a data-toggle="tab" href="">{{mod.name}}</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <ul class="nav nav-tabs visible-sm visible-xs">
+        <li class="text-center" id="mod1_{{mod.sys_id}}" ng-class="c.selectedModule.sys_id == mod.sys_id ? 'active':''" ng-repeat="mod in data.modules | limitTo: c.options.max_modules_mobile track by $index" role="presentation">
+          <button ng-click="c.changeModule(mod, $event)" data-toggle="tab" class="transparent-button">{{mod.name}}</button>
+        </li>
+        <li id="mod1_more_option" class="dropdown pull-right" ng-show="data.modules.length > c.options.max_modules_mobile">
+          <button class="dropdown-toggle transparent-button" data-toggle="dropdown">
+            <span ng-hide="c.hideMoreText">${More}</span>
+            <span ng-show="c.hideMoreText">{{c.selectedModule.name}}</span>
+            <span class="caret" aria-hidden="true"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li ng-repeat="mod in data.modules | limitTo: c.diff track by $index" 
+                ng-click="c.changeModule(mod, $event, true)" 
+                role="listitem">
+              <a data-toggle="tab" href="">{{mod.name}}</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div class="col-md-2 cm-left-pane hidden-sm hidden-xs" data-ng-if="c.subObjects.length > 1">
+      <ul class="submoduletablist list-unstyled" 
+          role="tablist" 
+          id="submodules_{{c.selectedModule.name}}"
+          aria-orientation="vertical"
+          ng-keydown="c.tablistKeydown($event,'subModule')">
+        <li class="cm-list-item" 
+            data-ng-repeat="subObj in c.subObjects track by $index"  
+            data-ng-class="subObj == c.selectedSubObject ? 'active':''"
+            tabindex="{{subObj == c.selectedSubObject ? 0 : -1}}"
+            aria-selected="{{subObj == c.selectedSubObject}}" 
+            data-ng-click="c.selectSubObject(subObj, $event)"
+            role="tab">
+			{{subObj.name}}
+        </li>
+      </ul>
+    </div>
+    <div class="col-xs-12 cm-right-pane" ng-class="c.subObjects.length > 1 ? 'col-md-10': ''">
+      <div class="panel panel-{{::options.panel_type}} widget-toggle csm-widget">
+        <div class="panel-heading cm-widget-tabs" >
+          <ul class="subcattablist nav nav-tabs" 
+              ng-keydown="c.tablistKeydown($event,'category')"
+              role="tablist">
+            <li role="tab" 
+                class="cm-noti-tab de-hover active" 
+                tabindex="{{c.showNotifications?0:-1}}"
+                data-ng-click="c.showTab('n', $event)" 
+                aria-selected="{{c.showNotifications}}"><!--data-ng-show="c.enableNotifications"-->
+              ${Notifications}
+            </li>
+            <li role="tab"
+                class="cm-subs-tab de-hover"
+                tabindex="{{!c.showNotifications?0:-1}}"
+                data-ng-click="c.showTab('s', $event)" 
+                data-ng-hide="c.selectedSubObject.framework == 'legacy'" 
+                aria-selected="{{!c.showNotifications}}">
+              ${Subscriptions}
+            </li>
+          </ul>
+        </div>
+        <div class="panel-body cm-widget-body wrapper-md hidden-sm hidden-xs">
+          <div class="cm-tab-content" data-ng-hide="c.showNotifications">
+            <div class="panel panel-default csm-tile csm-widget cm-subs m-b-none">
+              <div class="panel-body" data-ng-show="c.selectedSubObject.subscriptions.length">
+                <ul class="list-unstyled cm-subs-list" role="presentation">
+                  <li class="row cm-subs-list-item" data-ng-repeat="sub in c.selectedSubObject.subscriptions track by $index"
+                      data-ng-include="c.getSubTemplate(sub,'dt')" role="presentation"></li>
+                </ul>
+              </div>
+              <div class="panel-body padder-md cm-no-sub" data-ng-if="!c.selectedSubObject.subscriptions.length 
+                                                                      && c.selectedSubObject.sys_id != '46f9d003db723200624273c8f0b8f54c'">
+                <p class="cm-message-text">
+                  ${No subscriptions to display.}
+                </p>
+              </div>
+              <div class="panel-body padder-md cm-no-sub cm-network-tab" data-ng-show="c.selectedSubObject.sys_id == '46f9d003db723200624273c8f0b8f54c'">
+                <p class="cm-message-text">
+                  ${You can manage your network on your profile.}
+                </p>
+                <button ng-click="c.viewNetwork()" class="btn btn-primary hidden-xs cm-network-btn">${View Network}
+                </button>
+
+              </div>              
+            </div>
+          </div>
+          <div class="cm-tab-content" data-ng-if="c.showNotifications"><!-- && c.enableNotifications-->
+            <div class="panel panel-default csm-tile csm-widget cm-settings m-b-none">
+              <div class="panel-body no-padder r-2x">
+                <div class="cm-settings-header ng-hide">
+                  <div class="input-switch">
+                    <input id="switch_0{{::c.selectedSubObject.sys_id}}" type="checkbox" checked="checked" name="switch_0{{::c.selectedSubObject.sys_id}}" data-ng-model="c.enableNotifications" data-ng-click="c.showSettingsPanel($event)">
+                    <label aria-hidden="true" class="switch" for="switch_0{{::c.selectedSubObject.sys_id}}">&#8203;</label>
+                  </div>
+                </div>
+                <div class="cm-settings-panel">
+                  <div class="cm-settings-body" data-ng-include="'actsub_pref_base_template'"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cm-list-pagination" data-ng-if="c.hasMoreRecords && !c.showNotifications"> 
+            <button class="btn btn-default" name="Load More" data-ng-click="c.showMore()" role="button" aria-hidden="false">${Show More}</button>
+          </div>          
+        </div>
+        <div class="panel-body cm-widget-body cm-mobile visible-sm visible-xs">
+          <div class="cm-settings-parent padder-md" data-ng-repeat="subObj in c.subObjects">
+            <div>
+              <h3 class="cm-settings-name h4">
+                <button aria-expanded="true"
+                  class="sub-obj-button"
+                  data-ng-click="c.selectSubObject(subObj, $event)"      
+                  id="subObjId_{{$index}}">
+                  <span class="sub-obj-title">
+                    {{subObj.name}}
+                    <span class="accordion-icon">
+                      <span class="pull-right cm-toggle-icon">
+                        <i class="fa fa-plus" aria-hidden="true"></i>
+                      </span>
+                      <span class="pull-right cm-toggle-icon cm-display-none">
+                        <i class="fa fa-minus" aria-hidden="true"></i>
+                      </span>
+                    </span>
+                  </span>
+                </button>
+              </h3>
+            </div>
+            <div class="cm-settings-main cm-display-none">
+              <div class="cm-tab-content" data-ng-hide="c.showNotifications">
+                <div class="panel panel-default csm-tile csm-widget cm-subs m-b-none">
+                  <div class="panel-body padder" data-ng-show="subObj.subscriptions.length">
+                    <ul class="list-unstyled cm-subs-list" role="presentation">
+                      <li class="row cm-subs-list-item" data-ng-repeat="sub in subObj.subscriptions" 
+                          data-ng-include="c.getSubTemplate(sub,'mb')" role="presentation"></li>
+                    </ul>
+                  </div>
+                  <div class="panel-body padder-md cm-no-sub" 
+                       data-ng-class=" subObj.sys_id == '46f9d003db723200624273c8f0b8f54c' ? 'cm-network-tab': ''" 
+                       data-ng-hide="subObj.subscriptions.length">
+                    <p class="cm-message-text" data-ng-hide="subObj.sys_id == '46f9d003db723200624273c8f0b8f54c'">
+                      ${No Subscriptions to display.}
+                    </p>
+                    <p class="cm-message-text" data-ng-show="subObj.sys_id == '46f9d003db723200624273c8f0b8f54c'">
+                      ${You can manage your network on your profile.}
+                    </p>
+                    <button ng-click="c.viewNetwork()" data-ng-show="subObj.sys_id == '46f9d003db723200624273c8f0b8f54c'" class="btn btn-primary cm-network-btn">${View Network}</button>
+                  </div>            
+                </div>
+                <div class="cm-list-pagination" data-ng-if="c.hasMoreRecords && !c.showNotifications"> 
+                  <button class="btn btn-default" name="Load More" data-ng-click="c.showMore()" role="button" aria-hidden="false">${Show More}</button>
+                </div>                
+              </div>
+              <div class="cm-tab-content" data-ng-show="c.showNotifications">
+                <div class="panel panel-default csm-tile csm-widget cm-settings">
+                  <div class="panel-body padder-t-none padder-b-none r-2x">
+                    <div class="cm-settings-header ng-hide">
+                      <div class="input-switch">
+                        <input id="switch_1{{subObj.sys_id}}" type="checkbox" checked="checked" name="switch_1{{subObj.sys_id}}" data-ng-model='c.enableNotifications' data-ng-click="c.showSettingsPanel($event)">
+                        <label aria-hidden="true" class="switch" for="switch_1{{subObj.sys_id}}">&#8203;</label>
+                      </div>
+                    </div>
+                    <div class="cm-settings-panel">
+                      <div class="cm-settings-body" data-ng-include="'actsub_pref_base_template'"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12 cm-noti-actions hidden-sm hidden-xs" ng-show="c.showNotifications">
+      <div class="cm-btn-container">
+        <div class="pull-right text-right">
+          <button type="cancel" class="btn btn-default" ng-disabled="!c.changedPrefsArray.length" ng-disabled="!c.changedPrefsArray.length" ng-click="c.cancelPreferences()">${Cancel}</button>
+          <button type="submit" class="btn btn-primary" ng-disabled="!c.changedPrefsArray.length" ng-click="c.savePreferences()">${Save}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div ng-if="!data.modules.length">
+    <div class="alert alert-danger no-data-alert">
+      <i class="fa fa-exclamation-triangle"></i> 
+      <div class="main-text">
+        ${The contents of this page cannot be displayed right now. It may be temporarily unavailable or you may not have permission to view.}
+      </div>
+    </div>
+    <div class="alert alert-info no-data-alert">
+      <i class="fa fa-info-circle"></i> 
+      <div class="sub-text">
+        ${Note: If you are visiting this page for the first time and do not see any content, please logout and login again.}
+      </div>
+    </div>
+  </div>
+  <style>
+    @media (max-width: 420px){
+      .cm-subs-noti-pref .cm-right-pane .cm-widget-tabs .nav-tabs > li {
+        padding: 0px 1.2rem !important;
+        font-size: 1.7rem !important;
+      }
+    }
+    @media (max-width: 350px){
+      .cm-subs-noti-pref .cm-right-pane .cm-widget-tabs .nav-tabs > li {
+        padding: 0px 0.6rem !important;
+        font-size: 1.4rem !important;
+      }
+    }
+  </style>
+</div>

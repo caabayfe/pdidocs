@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:evaluate var="jvar_table_exists" jelly="true">
+	var tableExistsAnswer = true;
+	var grTable = new GlideRecord(jelly.jvar_table);
+	if (!grTable.isValid() || !GlideSecurityManager.tableLevelACLAllow(grTable, "read"))
+		tableExistsAnswer = false;
+	tableExistsAnswer;
+</g:evaluate>
+
+<j:if test="${jvar_table_exists}">
+
+	<g:list_default table="${jvar_table}" view="" />
+
+	<!-- Set up ListProperties for the list -->
+	<g:evaluate jelly="true">
+		ListProperties.setHasTopNav(true);
+		ListProperties.setHasTitle(true);
+		ListProperties.setHasTitleContextMenu(true);
+		ListProperties.setHasFilter(true);
+		ListProperties.setHasBreadcrumbs(true);
+		ListProperties.setHasSearch(true);
+		ListProperties.setHasTopVCR(true);
+		ListProperties.setHasHeader(true);
+		ListProperties.setHasHeaderContextMenu(true);
+		ListProperties.setHasListMechanic(true);
+		ListProperties.setHasRowContextMenu(true);
+		ListProperties.setShowLinks(true);
+		ListProperties.setHasPopup(true);
+		ListProperties.setShowEmpty(true);
+		ListProperties.setHasBottomNav(true);
+		ListProperties.setHasActions(true);
+		ListProperties.setHasBottomVCR(true);
+		ListProperties.setCanChangeView(true);
+		ListProperties.setCanGroup(true);
+		if (((jelly.jvar_table || '') + '') == 'sys_hub_flow') {
+			var sysIds = ((jelly.jvar_source || '') + '');
+			var sysIdList = sysIds.split(',');
+			var collectionQuery = '';
+			var queryGen = new GlideCollectionQueryCalculator();
+			var collectionQuery = queryGen.buildQueryClause('true', 'active') + '^';
+			sysIdList.forEach( function(id, index, arr) {
+				collectionQuery += queryGen.buildQueryClause(id, (jelly.jvar_table_field || '') + '');
+				if (index != arr.length - 1)
+					collectionQuery += '^OR';
+			});
+		}
+		else if (((jelly.jvar_table || '') + '') == 'sys_security_acl') {
+			var queryGen = new GlideSecurityQueryCalculator();
+			var collectionQuery = queryGen.calculate((jelly.jvar_source || '') + '');
+		}
+		else if ((((jelly.jvar_table || '') + '') == 'sys_dictionary' || ((jelly.jvar_table || '') + '') == 'sys_dictionary_override') &amp;&amp; 
+					((jelly.jvar_table_field || '') + '') == 'name') {
+			var queryGen = new GlideCollectionQueryCalculator();
+			var collectionQuery = queryGen.buildDictionaryQueryClause((jelly.jvar_source || '') + '');
+		} else {
+			var queryGen = new GlideCollectionQueryCalculator();
+			var collectionQuery = queryGen.buildQueryClause((jelly.jvar_source || '') + '', (jelly.jvar_table_field || '') + '');
+		}    
+	</g:evaluate>
+
+	<j2:set var="sysparm_query" value="${collectionQuery}" />
+	<!-- register for list printing -->
+	<j:set var="jvar_handle_list_printing" value="true" />
+
+	<!-- and build the list output -->
+	<g:inline template="list2_default.xml" />
+
+</j:if>
+
+</j:jelly>

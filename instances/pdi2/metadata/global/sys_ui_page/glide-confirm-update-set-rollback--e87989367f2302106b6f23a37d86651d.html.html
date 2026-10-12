@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate>
+		var usSysId = "${RP.getWindowProperties().get('update_set_sys_id')}";
+		var x = new UpdateSetAPI().isRollbackable(usSysId);
+		var ctx = GlideUpdateSet.getRollbackContext(usSysId);
+		var rollbackContextId;
+		var hasInstalledItems = false;
+		if (ctx != null) {
+			hasInstalledItems = ctx.isRollbackable();
+			rollbackContextId = ctx.contextId;
+			var installedItems = ctx.items;
+		}  
+	</g2:evaluate>
+	<div class="row">
+		<input id="rcid" class="text" type="hidden" name="rcid" value="$[rollbackContextId]"/>
+		<div class="col-sm-12" role="alert">
+			<p>${gs.getMessage("The process will rollback the following installs: ");}</p>
+		</div>
+		<j2:if test="$[hasInstalledItems]">
+			<ul style="padding-bottom: 0px; padding-left: 20px;">
+				<j2:while test="$[installedItems.next()]">
+					<li>$[installedItems.name] - v$[installedItems.version]</li>
+				</j2:while>
+			</ul>
+		</j2:if>
+	</div>
+	<div class="modal-footer" id="to_move_up">
+		<div class="row">
+			<div class="col-sm-12">
+				<g:dialog_buttons_ok_cancel ok="invokePromptCallBack('ok');" ok_type="button"
+								 ok_text="${gs.getMessage('Proceed with Rollback');}" ok_style_class="btn btn-destructive"
+								 cancel="invokePromptCallBack('cancel')" cancel_type="button"/>
+			</div>
+		</div>
+	</div>
+</j:jelly>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g2:evaluate var="jvar_sso_records" jelly="true">
+        var isShowLoginWithIdps = false;
+        var isMultiSSOActive = GlideProperties.getBoolean('glide.authenticate.multisso.enabled');
+        var isMutualActive = GlideProperties.getBoolean('glide.authenticate.mutual.enabled');
+        var isCertUiLoginEnabled = GlideProperties.getBoolean('glide.authenticate.cert.ui.login.enabled');
+        var gr = new GlideRecord("sso_properties");
+        if (isMultiSSOActive $[AMP]$[AMP] gr.isValid()) {
+        	var ssoUtil = new MultiSSO_OidcUtil();
+        	var oidcRecords = ssoUtil.getSSORecords();
+        	isShowLoginWithIdps = (oidcRecords.length > 0);
+        }
+    </g2:evaluate>
+    <j2:if test="$[isShowLoginWithIdps || (isMutualActive &amp;&amp; isCertUiLoginEnabled)]">
+        <!-- UI16, non-Polarisberg specific changes, keep classic as classic -->
+        <style>
+            .separator_bar {
+                width: 100%;
+                text-align: center;
+                border-bottom: 1px solid RGB(var(--now-color_divider--primary, 133, 144, 149));
+                line-height: 0.1em;
+                margin: 20px 0 20px;
+            }
+            .separator_bar span {
+                background: #ffff;
+                padding: 0 10px;
+                font-size: 13px;
+            }
+        </style>
+        <!-- changes specific to polarisberg, keeping the logical sequence same as earlier -->
+        <j:if test="${sn_ui.PolarisUI.canUsePolarisTemplates()}">
+            <style>
+                .separator_bar span {
+                    color: RGB(var(--now-color_text--tertiary, 79, 92, 98));
+                    font-weight: 700;
+                    font-size: var(--now-global-font-size--sm, 12px);
+                }
+            </style>
+        </j:if>
+        <p class="separator_bar"><span>${gs.getMessage('Or log in with')}</span></p>
+    </j2:if>
+</j:jelly>

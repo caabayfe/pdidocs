@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${showPillBox}">
+	<g:inline template="kb_view_common_header_toolbar" />
+	</j:if>
+
+	<div class="kb-view-content-wrapper">
+		<g:inline template="kb_view_notification" />
+		<j:if test="${versioningInfo.isInstalled}">
+			<g:inline template="kb_view_version_warning"/>
+		</j:if>
+		<j:if test="${replacementArticleId &amp;&amp; replacementArticleId != ''}">
+			<g:inline template="kb_view_replacement_alert"/>
+		</j:if>
+		<g:inline template="kb_view_common_header_banner_image" />
+		<g:inline template="kb_view_common_content"/>
+	</div>
+	<g:inline template="kb_view_common_footer"/>  
+	  <script>
+	var params = new URLSearchParams(window.location.search);
+	var highlightData = params.get('sysparam_citation');
+	if(highlightData){
+		addLoadEvent(function() {
+				setTimeout(function() {
+					
+						var value = JSON.parse(highlightData);
+						var hash = "#:~:text=";
+						if(value.prefix){
+							var prefix = encodeURIComponent(value.prefix);
+							prefix = prefix.replace(/-/g, '%2D');
+							hash = hash + prefix + "-" + ",";
+						}
+						if(value.start){
+							var start = encodeURIComponent(value.start);
+							start = start.replace(/-/g, '%2D');
+							hash = hash + start;
+						}
+						if(value.end){
+							var end = encodeURIComponent(value.end);
+							end = end.replace(/-/g, '%2D');
+							hash = hash + "," + end;
+						}
+						if(value.suffix){
+							var suffix = encodeURIComponent(value.suffix);
+							suffix = suffix.replace(/-/g, '%2D');
+							hash = hash + "," + "-" + suffix;
+						}
+						
+						window.location.hash = hash;
+						const url = new URL(window.location.href);
+						url.searchParams.delete('sysparam_citation');
+						history.replaceState(null, '', url.toString());
+				}, 1500);
+			});
+	}
+			
+		</script><style type="text/css">
+		
+
+		::target-text {
+			background-color: rgba(var(--now-color--focus-1), 0.4);
+		}
+		</style>
+		
+		</j:jelly>

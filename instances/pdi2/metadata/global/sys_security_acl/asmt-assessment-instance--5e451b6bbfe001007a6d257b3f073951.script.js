@@ -1,0 +1,1 @@
+(current.user == gs.getUserID()) ||  (new AssessmentUtils().hasAssessmentRoles(current.metric_type.roles)) || (new SNC.AssessmentCreation().isGuestUserTakingPublicSurvey(current.metric_type.sys_id, gs.getUserId()));

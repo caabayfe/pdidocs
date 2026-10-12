@@ -1,0 +1,525 @@
+_meta:
+  hash: a59ef6bd088c5c83b5f863a8f7889a569a16e2450703a66d0fd4b6c0a3a21513
+  hash_version: 1
+  scope: sn_oe_sfs
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: maint
+  sys_created_on: 2022-07-22 17:44:11
+  sys_domain: global
+  sys_id: 6db8406ec0781d10f877e9d0ea777a84
+  sys_mod_count: '10'
+  sys_package: 53b1b0e79761011018b2fa98c253afcc
+  sys_scope: 53b1b0e79761011018b2fa98c253afcc
+  sys_update_name: sys_cb_design_topic_6db8406ec0781d10f877e9d0ea777a84
+  sys_updated_by: maint
+  sys_updated_on: 2022-08-31 22:49:54
+compiled_topic: e1b8406ec0781d10f877e9d0ea777a80
+design_definition: '{"type":"FlowTopic","type":"FlowTopic","triggers":[{"type":"Trigger","name":"683359f7d6a8433b9016deb8daae780c","triggerType":"request","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"id":"683359f7d6a8433b9016deb8daae780c"}],"goals":[{"name":"primary","trigger_id":"683359f7d6a8433b9016deb8daae780c","nodes":[{"type":"StartGoal","type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"617b84f27732429db094912ed8a43cc4","name":"Start"},{"type":"TerminateGoal","type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"If tests have passed and you''re still having trouble, please proceed with a topic flow.\", vaContext.getRequesterLang())"},"id":"82992a076ffe431a80ea5c7701ba939a","name":"End"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"The health check report for each configuration will show below.\", vaContext.getRequesterLang())"}],"id":"078d33ed65c74fd092e625ff45129151","name":"Configuration health check confirmation","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"No config reports left","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    return (iar_config_list.length == 0);\n})()"},"id":"3ff54d2539b74214bea1972c8afa43f8","name":"No config reports left"},{"type":"Branch","type":"Branch","label":"Config reports left","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    return (iar_config_list.length > 0);\n})()"},"id":"abf88d795dd646309080a0162e2a044c","name":"Config reports left"}],"id":"3a0250fd6ac940da9b9a8a60a85742e1","goal_id":"primary"},{"type":"TableOutput","type":"TableOutput","mode":"external","conditionType":"simple","query":"(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    var currConfig = iar_config_list.shift();\n    vaVars.iar_config_list = JSON.stringify(iar_config_list);\n    var grConfig = new GlideRecord(\"sys_cs_auto_resolution_configuration\");\n    grConfig.get(currConfig);\n\n    // check that configuration is active\n    var isActive = sn_oe_sfs.IARHealthCheck.checkConfigActive(currConfig) ? \"PASSED\" : \"FAILED\";\n    \n    // check that language configuration is active\n    var configLanguageActive = sn_oe_sfs.IARHealthCheck.checkConfigLanguageActive(currConfig) ? \"PASSED\" : \"FAILED\";\n\n    // check for there is an active response channel\n    var responseChannelActive = sn_oe_sfs.IARHealthCheck.checkReponseChannelActive(currConfig) ? \"PASSED\" : \"FAILED\";\n\n    // check for active intent topic map if incident\n    var incidentIntentTopicMapActive = null;\n    if (grConfig.target_table_name == \"incident\") {\n        incidentIntentTopicMapActive = sn_oe_sfs.IARHealthCheck.checkIntentTopicMapActive(currConfig) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var aiSearchEnabled = null;\n    var hrSlaEngine = null;\n    if (global.AutoResolutionAPI.isHRCaseTable(grConfig.target_table_name.toString())) {\n        // check that AI search is enabled if HR case\n        aiSearchEnabled = sn_oe_sfs.IARHealthCheck.checkAISearchEnabled(currConfig) ? \"PASSED\" : \"FAILED\";\n\n        // check that \"Use SLA Engine\" field is checked if HR case\n        hrSlaEngine = sn_oe_sfs.IARHealthCheck.checkUseSLA(currConfig) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var headers = [];\n    var rows = [];\n    rows.push([\n        \"Configuration is active\", isActive\n    ]);\n    rows.push([\n        \"Language configuration is active\", configLanguageActive\n    ]);\n    rows.push([\n        \"There is an active response channel\", responseChannelActive\n    ]);\n    if (incidentIntentTopicMapActive) {\n        rows.push([\n            \"There is an active intent topic map for incident configuration\", incidentIntentTopicMapActive\n        ]);\n    }\n    if (aiSearchEnabled) {\n        rows.push([\n            \"AI search is enabled for HR configuration\", aiSearchEnabled\n        ]);\n    }\n    if (hrSlaEngine) {\n        rows.push([\n            \"SLA engine is used for HR configuration\", hrSlaEngine\n        ]);\n    }\n\n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()","title":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    var iar_config_names = JSON.parse(vaVars.iar_config_names);\n    var config = iar_config_names.shift();\n    vaVars.iar_config_names = JSON.stringify(iar_config_names);\n    return config;\n})()"},"columns":[],"showColumnHeaders":true,"noResultsMessage":{"type":"String","type":"String","mode":"string","value":"Unable to run the health check on this configuration."},"id":"6cd5eb4df08d405d95b1f153957c2a83","name":"Config health check report","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"ReferenceChoiceInputPrompt","type":"ReferenceChoiceInputPrompt","mode":"external","id":"e597cc2b3e304a1ebdba4eece6454ce7","name":"Choose table for health check","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"variable_id":"f1be52bb310d407bb548b264dcff2ad0","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"I found IAR configurations that I can run a health check on for the following related tables. Which table is the issue/case in? If you are unsure, you can run health check on all configurations.\", vaContext.getRequesterLang())"},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var configs = sn_oe_sfs.IARHealthCheck.getIARConfigurations();\n    configs.map(function(config){\n        options.push({\n            ''value'': config[\"sys_id\"], ''label'': config[\"table_display_value\"], ''render_style'': ''data'' \n        });\n    });\n    options.push({\n        ''value'': ''all_configs'', ''label'': gs.getMessageLang(''Run health check on all configurations'', vaContext.getRequesterLang()), ''render_style'': ''data'' \n    });\n    return options;\n})()\n","metadataScript":"","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"There are no IAR configurations.\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var options = [];\n    var configs = sn_oe_sfs.IARHealthCheck.getIARConfigurations();\n    configs.map(function(config){\n        options.push({\n            ''value'': config[\"sys_id\"], ''label'': config[\"table_display_value\"], ''render_style'': ''data'' \n        });\n    });\n    options.push({\n        ''value'': ''all_configs'', ''label'': gs.getMessageLang(''Run health check on all configurations'', vaContext.getRequesterLang()), ''render_style'': ''data'' \n    });\n    return options;\n})()\n"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Show all configs","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.choose_table_for_health_check == ''all_configs'';\n})()\n"},"id":"f0a7c03fac144fe8b2bb425587fc7a95","name":"Show all configs"},{"type":"Branch","type":"Branch","label":"Show specific configuration","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.choose_table_for_health_check != ''all_configs'';\n})()\n"},"id":"4779a482da3b4e3bb7cadf7e7cac6267","name":"Show specific configuration"}],"id":"eeb1e3f16c04413eb26b215a63f14c2a","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    return ''The health check report for the configuration with the related list '' + vaInputs.choose_table_for_health_check.getDisplayValue() + '' will show below.'';\n})()\n"}],"id":"15e937f28a0d4e41bf1d728eb0578e6c","name":"Configuration health check confirmation","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Here is the report for the general IAR configuration health check.\", vaContext.getRequesterLang())"}],"id":"481394011558461aa9b301bac4b21fea","name":"Health check confirmation","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TableOutput","type":"TableOutput","mode":"external","conditionType":"simple","query":"(function execute() {\n    gs.info(\"1--- \" + vaVars.iar_config_list);\n    gs.info(\"1--- \" + vaVars.iar_config_names);\n    // check if prediction server is up\n    var predictionServerUp = sn_oe_sfs.IARHealthCheck.checkIsPredictionServerUp() ? \"PASSED\" : \"FAILED\";\n\n    // check for existing configurations\n    var configsExist = sn_oe_sfs.IARHealthCheck.checkConfigsExist() ? \"PASSED\" : \"FAILED\";\n\n    // check for active configurations\n    var configsActive = sn_oe_sfs.IARHealthCheck.checkActiveConfigExists() ? \"PASSED\" : \"FAILED\";\n\n    var headers = [\n        ''Test'',\n        ''Result''\n    ];\n    var rows = [];\n    rows.push([\n        ''Prediction server is up'', predictionServerUp\n    ]);\n    rows.push([\n        ''There are existing IAR configurations'', configsExist\n    ]);\n    rows.push([\n        ''There is an active IAR configuration'', configsActive\n    ]);\n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()","title":{"type":"String","type":"String","mode":"string","value":"IAR Health Check"},"columns":[],"showColumnHeaders":true,"noResultsMessage":{"type":"String","type":"String","mode":"string","value":"Unable to run health check on IAR configurations."},"id":"94359dc2aa61412993f2566c54094e06","name":"Health check report","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"TableOutput","type":"TableOutput","mode":"external","conditionType":"simple","query":"(function execute() {\n    var configSysID = vaInputs.choose_table_for_health_check;\n    var grConfig = new GlideRecord(\"sys_cs_auto_resolution_configuration\");\n    grConfig.get(configSysID);\n\n    // check that configuration is active\n    var isActive = sn_oe_sfs.IARHealthCheck.checkConfigActive(configSysID) ? \"PASSED\" : \"FAILED\";\n    \n    // check that language configuration is active\n    var configLanguageActive = sn_oe_sfs.IARHealthCheck.checkConfigLanguageActive(configSysID) ? \"PASSED\" : \"FAILED\";\n\n    // check for there is an active response channel\n    var responseChannelActive = sn_oe_sfs.IARHealthCheck.checkReponseChannelActive(configSysID) ? \"PASSED\" : \"FAILED\";\n\n    // check for active intent topic map if incident\n    var incidentIntentTopicMapActive = null;\n    if (grConfig.target_table_name == \"incident\") {\n        incidentIntentTopicMapActive = sn_oe_sfs.IARHealthCheck.checkIntentTopicMapActive(configSysID) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var aiSearchEnabled = null;\n    var hrSlaEngine = null;\n    if (global.AutoResolutionAPI.isHRCaseTable(grConfig.target_table_name.toString())) {\n        // check that AI search is enabled if HR case\n        aiSearchEnabled = sn_oe_sfs.IARHealthCheck.checkAISearchEnabled(configSysID) ? \"PASSED\" : \"FAILED\";\n\n        // check that \"Use SLA Engine\" field is checked if HR case\n        hrSlaEngine = sn_oe_sfs.IARHealthCheck.checkUseSLA(configSysID) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var headers = [];\n    var rows = [];\n    rows.push([\n        \"Configuration is active\", isActive\n    ]);\n    rows.push([\n        \"Language configuration is active\", configLanguageActive\n    ]);\n    rows.push([\n        \"There is an active response channel\", responseChannelActive\n    ]);\n    if (incidentIntentTopicMapActive) {\n        rows.push([\n            \"There is an active intent topic map for incident configuration\", incidentIntentTopicMapActive\n        ]);\n    }\n    if (aiSearchEnabled) {\n        rows.push([\n            \"AI search is enabled for HR configuration\", aiSearchEnabled\n        ]);\n    }\n    if (hrSlaEngine) {\n        rows.push([\n            \"SLA engine is used for HR configuration\", hrSlaEngine\n        ]);\n    }\n\n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()\n","title":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    return vaInputs.choose_table_for_health_check.getDisplayValue();\n})()\n"},"columns":[],"showColumnHeaders":true,"noResultsMessage":{"type":"String","type":"String","mode":"string","value":"Unable to run the health check on this configuration."},"id":"1d1ab5891d864ed186da2634bc743d83","name":"Config health check report","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    var iar_config_names = JSON.parse(vaVars.iar_config_names);\n\n    var configs = sn_oe_sfs.IARHealthCheck.getIARConfigurations();\n    configs.map(function(config){\n        iar_config_list.push(config[\"sys_id\"]);\n        iar_config_names.push(config[\"table_display_value\"]);\n    });\n\n    vaVars.iar_config_list = JSON.stringify(iar_config_list);\n    vaVars.iar_config_names = JSON.stringify(iar_config_names);\n})()\n","id":"819e7cace6de4c7bad90e24aa61dae74","name":"Get all configurations","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}}],"edges":[{"type":"Edge","source_node_id":"3a0250fd6ac940da9b9a8a60a85742e1","target_node_id":"82992a076ffe431a80ea5c7701ba939a","branch_id":"3ff54d2539b74214bea1972c8afa43f8","id":"a612fad9e58c459890787929bb13f5fa","name":"3ff54d2539b74214bea1972c8afa43f8"},{"type":"Edge","source_node_id":"eeb1e3f16c04413eb26b215a63f14c2a","target_node_id":"078d33ed65c74fd092e625ff45129151","branch_id":"f0a7c03fac144fe8b2bb425587fc7a95","id":"a38d0d10ddb94403a6a94aed38d9a71c","name":"f0a7c03fac144fe8b2bb425587fc7a95"},{"type":"Edge","source_node_id":"617b84f27732429db094912ed8a43cc4","target_node_id":"e597cc2b3e304a1ebdba4eece6454ce7","id":"c612aa213736422da73f7d265807cf6f"},{"type":"Edge","source_node_id":"3a0250fd6ac940da9b9a8a60a85742e1","target_node_id":"6cd5eb4df08d405d95b1f153957c2a83","branch_id":"abf88d795dd646309080a0162e2a044c","id":"fa3d58f766114e4c8b5d80d4a4b4802d","name":"abf88d795dd646309080a0162e2a044c"},{"type":"Edge","source_node_id":"6cd5eb4df08d405d95b1f153957c2a83","target_node_id":"3a0250fd6ac940da9b9a8a60a85742e1","id":"7df03aa908a942899803ce71e9178376"},{"type":"Edge","source_node_id":"eeb1e3f16c04413eb26b215a63f14c2a","target_node_id":"15e937f28a0d4e41bf1d728eb0578e6c","branch_id":"4779a482da3b4e3bb7cadf7e7cac6267","id":"3673e174d79c4498bbb6ff70980f41e3","name":"4779a482da3b4e3bb7cadf7e7cac6267"},{"type":"Edge","source_node_id":"e597cc2b3e304a1ebdba4eece6454ce7","target_node_id":"481394011558461aa9b301bac4b21fea","id":"05288161a7424cdbb82c36494f332388"},{"type":"Edge","source_node_id":"481394011558461aa9b301bac4b21fea","target_node_id":"94359dc2aa61412993f2566c54094e06","id":"aafc8bbd2138441dadf7d2e487fbd5f4"},{"type":"Edge","source_node_id":"94359dc2aa61412993f2566c54094e06","target_node_id":"eeb1e3f16c04413eb26b215a63f14c2a","id":"bf8094d51ee54610b401a01ff3e37ebf"},{"type":"Edge","source_node_id":"15e937f28a0d4e41bf1d728eb0578e6c","target_node_id":"1d1ab5891d864ed186da2634bc743d83","id":"b493aacdd1324bbc95eac78e6ffd2a29"},{"type":"Edge","source_node_id":"1d1ab5891d864ed186da2634bc743d83","target_node_id":"82992a076ffe431a80ea5c7701ba939a","id":"0eaac076c5ad4b718a12a9b33c8e3d36"},{"type":"Edge","source_node_id":"078d33ed65c74fd092e625ff45129151","target_node_id":"819e7cace6de4c7bad90e24aa61dae74","id":"7885d6e4451c46c386ff8bb9825caf3f"},{"type":"Edge","source_node_id":"819e7cace6de4c7bad90e24aa61dae74","target_node_id":"3a0250fd6ac940da9b9a8a60a85742e1","id":"35e1ac562902455d8158ba7145abc5a3"}],"id":"primary"}],"script_variables":[{"type":"VariableDto","type":"String","name":"iar_config_list","value":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    /* return ''a default value''; */\n    return [];\n})()\n"},"list":false,"id":"40ae26c1821440f4ab40b0f96300bf71","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"iar_config_names","value":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    /* return ''a default value''; */\n    return [];\n})()\n"},"list":false,"id":"5527aed663e9435a9d95e605ad66187b","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Choice","type":"Choice","choices":[],"id":"f1be52bb310d407bb548b264dcff2ad0","name":"choose_table_for_health_check","formatType":"text","secure":false,"sensitive":false,"list":false,"table":"sys_cs_auto_resolution_configuration"}],"applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"53b1b0e79761011018b2fa98c253afcc","domain":"global","topic_type":"STANDARD","channels":[],"id":"ef710f42c0f4d910f877e9d0ea777a61","name":"IAR Health Check","key_phrases":["IAR Health Check"],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"library":false,"readOnly":false,"nluMapping":"[]"}'
+design_topic_id: ef710f42c0f4d910f877e9d0ea777a61
+graph: |-
+  {
+    "graph_api_version": "1.0.41",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "617b84f27732429db094912ed8a43cc4": {
+            "id": "617b84f27732429db094912ed8a43cc4",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "82992a076ffe431a80ea5c7701ba939a": {
+            "id": "82992a076ffe431a80ea5c7701ba939a",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "If tests have passed and you're still having trouble, please proceed with a topic flow."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            }
+          },
+          "078d33ed65c74fd092e625ff45129151": {
+            "id": "078d33ed65c74fd092e625ff45129151",
+            "stepType": "TextOutput",
+            "name": "Configuration health check confirmation",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "The health check report for each configuration will show below."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "01f9e81bb589449aa74d7b86d460ad11"
+              }
+            ],
+            "applicability": {
+              "mode": "query",
+              "value": ""
+            }
+          },
+          "3a0250fd6ac940da9b9a8a60a85742e1": {
+            "id": "3a0250fd6ac940da9b9a8a60a85742e1",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "6cd5eb4df08d405d95b1f153957c2a83": {
+            "id": "6cd5eb4df08d405d95b1f153957c2a83",
+            "stepType": "TableOutput",
+            "name": "Config health check report",
+            "header": {
+              "value": "(function execute() {\n    var iar_config_names = JSON.parse(vaVars.iar_config_names);\n    var config = iar_config_names.shift();\n    vaVars.iar_config_names = JSON.stringify(iar_config_names);\n    return config;\n})()",
+              "mode": "script"
+            },
+            "displayColumnHeaders": true,
+            "dataSourceType": "script",
+            "script": "(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    var currConfig = iar_config_list.shift();\n    vaVars.iar_config_list = JSON.stringify(iar_config_list);\n    var grConfig = new GlideRecord(\"sys_cs_auto_resolution_configuration\");\n    grConfig.get(currConfig);\n\n    // check that configuration is active\n    var isActive = sn_oe_sfs.IARHealthCheck.checkConfigActive(currConfig) ? \"PASSED\" : \"FAILED\";\n    \n    // check that language configuration is active\n    var configLanguageActive = sn_oe_sfs.IARHealthCheck.checkConfigLanguageActive(currConfig) ? \"PASSED\" : \"FAILED\";\n\n    // check for there is an active response channel\n    var responseChannelActive = sn_oe_sfs.IARHealthCheck.checkReponseChannelActive(currConfig) ? \"PASSED\" : \"FAILED\";\n\n    // check for active intent topic map if incident\n    var incidentIntentTopicMapActive = null;\n    if (grConfig.target_table_name == \"incident\") {\n        incidentIntentTopicMapActive = sn_oe_sfs.IARHealthCheck.checkIntentTopicMapActive(currConfig) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var aiSearchEnabled = null;\n    var hrSlaEngine = null;\n    if (global.AutoResolutionAPI.isHRCaseTable(grConfig.target_table_name.toString())) {\n        // check that AI search is enabled if HR case\n        aiSearchEnabled = sn_oe_sfs.IARHealthCheck.checkAISearchEnabled(currConfig) ? \"PASSED\" : \"FAILED\";\n\n        // check that \"Use SLA Engine\" field is checked if HR case\n        hrSlaEngine = sn_oe_sfs.IARHealthCheck.checkUseSLA(currConfig) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var headers = [];\n    var rows = [];\n    rows.push([\n        \"Configuration is active\", isActive\n    ]);\n    rows.push([\n        \"Language configuration is active\", configLanguageActive\n    ]);\n    rows.push([\n        \"There is an active response channel\", responseChannelActive\n    ]);\n    if (incidentIntentTopicMapActive) {\n        rows.push([\n            \"There is an active intent topic map for incident configuration\", incidentIntentTopicMapActive\n        ]);\n    }\n    if (aiSearchEnabled) {\n        rows.push([\n            \"AI search is enabled for HR configuration\", aiSearchEnabled\n        ]);\n    }\n    if (hrSlaEngine) {\n        rows.push([\n            \"SLA engine is used for HR configuration\", hrSlaEngine\n        ]);\n    }\n\n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()",
+            "tableName": "",
+            "sortByColumns": [],
+            "tableCondition": {
+              "value": "",
+              "mode": "glide_query"
+            },
+            "columns": [
+              {
+                "key": "",
+                "value": "",
+                "label": ""
+              }
+            ],
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Unable to run the health check on this configuration."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "e597cc2b3e304a1ebdba4eece6454ce7": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Choose table for health check",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "I found IAR configurations that I can run a health check on for the following related tables. Which table is the issue/case in? If you are unsure, you can run health check on all configurations."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "f1be52bb310d407bb548b264dcff2ad0",
+            "id": "e597cc2b3e304a1ebdba4eece6454ce7",
+            "mode": "external",
+            "script": "(function execute() {\n    var options = [];\n    var configs = sn_oe_sfs.IARHealthCheck.getIARConfigurations();\n    configs.map(function(config){\n        options.push({\n            'value': config[\"sys_id\"], 'label': config[\"table_display_value\"], 'render_style': 'data' \n        });\n    });\n    options.push({\n        'value': 'all_configs', 'label': gs.getMessageLang('Run health check on all configurations', vaContext.getRequesterLang()), 'render_style': 'data' \n    });\n    return options;\n})()\n",
+            "metadataScript": "",
+            "cardData": {},
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "There are no IAR configurations."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var options = [];\n    var configs = sn_oe_sfs.IARHealthCheck.getIARConfigurations();\n    configs.map(function(config){\n        options.push({\n            'value': config[\"sys_id\"], 'label': config[\"table_display_value\"], 'render_style': 'data' \n        });\n    });\n    options.push({\n        'value': 'all_configs', 'label': gs.getMessageLang('Run health check on all configurations', vaContext.getRequesterLang()), 'render_style': 'data' \n    });\n    return options;\n})()\n",
+              "mode": "external_script"
+            },
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false
+          },
+          "eeb1e3f16c04413eb26b215a63f14c2a": {
+            "id": "eeb1e3f16c04413eb26b215a63f14c2a",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "15e937f28a0d4e41bf1d728eb0578e6c": {
+            "id": "15e937f28a0d4e41bf1d728eb0578e6c",
+            "stepType": "TextOutput",
+            "name": "Configuration health check confirmation",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    return 'The health check report for the configuration with the related list ' + vaInputs.choose_table_for_health_check.getDisplayValue() + ' will show below.';\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "481394011558461aa9b301bac4b21fea": {
+            "id": "481394011558461aa9b301bac4b21fea",
+            "stepType": "TextOutput",
+            "name": "Health check confirmation",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "Here is the report for the general IAR configuration health check."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "11c2c82af93f40fbb57e162e3a6c5d19"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "94359dc2aa61412993f2566c54094e06": {
+            "id": "94359dc2aa61412993f2566c54094e06",
+            "stepType": "TableOutput",
+            "name": "Health check report",
+            "header": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "IAR Health Check"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "displayColumnHeaders": true,
+            "dataSourceType": "script",
+            "script": "(function execute() {\n    gs.info(\"1--- \" + vaVars.iar_config_list);\n    gs.info(\"1--- \" + vaVars.iar_config_names);\n    // check if prediction server is up\n    var predictionServerUp = sn_oe_sfs.IARHealthCheck.checkIsPredictionServerUp() ? \"PASSED\" : \"FAILED\";\n\n    // check for existing configurations\n    var configsExist = sn_oe_sfs.IARHealthCheck.checkConfigsExist() ? \"PASSED\" : \"FAILED\";\n\n    // check for active configurations\n    var configsActive = sn_oe_sfs.IARHealthCheck.checkActiveConfigExists() ? \"PASSED\" : \"FAILED\";\n\n    var headers = [\n        'Test',\n        'Result'\n    ];\n    var rows = [];\n    rows.push([\n        'Prediction server is up', predictionServerUp\n    ]);\n    rows.push([\n        'There are existing IAR configurations', configsExist\n    ]);\n    rows.push([\n        'There is an active IAR configuration', configsActive\n    ]);\n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()",
+            "tableName": "",
+            "sortByColumns": [],
+            "tableCondition": {
+              "value": "",
+              "mode": "glide_query"
+            },
+            "columns": [
+              {
+                "key": "",
+                "value": "",
+                "label": ""
+              }
+            ],
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Unable to run health check on IAR configurations."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "1d1ab5891d864ed186da2634bc743d83": {
+            "id": "1d1ab5891d864ed186da2634bc743d83",
+            "stepType": "TableOutput",
+            "name": "Config health check report",
+            "header": {
+              "value": "(function execute() {\n    return vaInputs.choose_table_for_health_check.getDisplayValue();\n})()\n",
+              "mode": "script"
+            },
+            "displayColumnHeaders": true,
+            "dataSourceType": "script",
+            "script": "(function execute() {\n    var configSysID = vaInputs.choose_table_for_health_check;\n    var grConfig = new GlideRecord(\"sys_cs_auto_resolution_configuration\");\n    grConfig.get(configSysID);\n\n    // check that configuration is active\n    var isActive = sn_oe_sfs.IARHealthCheck.checkConfigActive(configSysID) ? \"PASSED\" : \"FAILED\";\n    \n    // check that language configuration is active\n    var configLanguageActive = sn_oe_sfs.IARHealthCheck.checkConfigLanguageActive(configSysID) ? \"PASSED\" : \"FAILED\";\n\n    // check for there is an active response channel\n    var responseChannelActive = sn_oe_sfs.IARHealthCheck.checkReponseChannelActive(configSysID) ? \"PASSED\" : \"FAILED\";\n\n    // check for active intent topic map if incident\n    var incidentIntentTopicMapActive = null;\n    if (grConfig.target_table_name == \"incident\") {\n        incidentIntentTopicMapActive = sn_oe_sfs.IARHealthCheck.checkIntentTopicMapActive(configSysID) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var aiSearchEnabled = null;\n    var hrSlaEngine = null;\n    if (global.AutoResolutionAPI.isHRCaseTable(grConfig.target_table_name.toString())) {\n        // check that AI search is enabled if HR case\n        aiSearchEnabled = sn_oe_sfs.IARHealthCheck.checkAISearchEnabled(configSysID) ? \"PASSED\" : \"FAILED\";\n\n        // check that \"Use SLA Engine\" field is checked if HR case\n        hrSlaEngine = sn_oe_sfs.IARHealthCheck.checkUseSLA(configSysID) ? \"PASSED\" : \"FAILED\";\n    }\n\n    var headers = [];\n    var rows = [];\n    rows.push([\n        \"Configuration is active\", isActive\n    ]);\n    rows.push([\n        \"Language configuration is active\", configLanguageActive\n    ]);\n    rows.push([\n        \"There is an active response channel\", responseChannelActive\n    ]);\n    if (incidentIntentTopicMapActive) {\n        rows.push([\n            \"There is an active intent topic map for incident configuration\", incidentIntentTopicMapActive\n        ]);\n    }\n    if (aiSearchEnabled) {\n        rows.push([\n            \"AI search is enabled for HR configuration\", aiSearchEnabled\n        ]);\n    }\n    if (hrSlaEngine) {\n        rows.push([\n            \"SLA engine is used for HR configuration\", hrSlaEngine\n        ]);\n    }\n\n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()\n",
+            "tableName": "",
+            "sortByColumns": [],
+            "tableCondition": {
+              "value": "",
+              "mode": "glide_query"
+            },
+            "columns": [
+              {
+                "key": "",
+                "value": "",
+                "label": ""
+              }
+            ],
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Unable to run the health check on this configuration."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "819e7cace6de4c7bad90e24aa61dae74": {
+            "id": "819e7cace6de4c7bad90e24aa61dae74",
+            "name": "Get all configurations",
+            "script": "(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    var iar_config_names = JSON.parse(vaVars.iar_config_names);\n\n    var configs = sn_oe_sfs.IARHealthCheck.getIARConfigurations();\n    configs.map(function(config){\n        iar_config_list.push(config[\"sys_id\"]);\n        iar_config_names.push(config[\"table_display_value\"]);\n    });\n\n    vaVars.iar_config_list = JSON.stringify(iar_config_list);\n    vaVars.iar_config_names = JSON.stringify(iar_config_names);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "a612fad9e58c459890787929bb13f5fa",
+            "edgeType": "Branch",
+            "source": "3a0250fd6ac940da9b9a8a60a85742e1",
+            "target": "82992a076ffe431a80ea5c7701ba939a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    return (iar_config_list.length == 0);\n})()"
+            },
+            "label": "No config reports left"
+          },
+          {
+            "id": "a38d0d10ddb94403a6a94aed38d9a71c",
+            "edgeType": "Branch",
+            "source": "eeb1e3f16c04413eb26b215a63f14c2a",
+            "target": "078d33ed65c74fd092e625ff45129151",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.choose_table_for_health_check == 'all_configs';\n})()\n"
+            },
+            "label": "Show all configs"
+          },
+          {
+            "id": "c612aa213736422da73f7d265807cf6f",
+            "edgeType": "Edge",
+            "source": "617b84f27732429db094912ed8a43cc4",
+            "target": "e597cc2b3e304a1ebdba4eece6454ce7",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "fa3d58f766114e4c8b5d80d4a4b4802d",
+            "edgeType": "Branch",
+            "source": "3a0250fd6ac940da9b9a8a60a85742e1",
+            "target": "6cd5eb4df08d405d95b1f153957c2a83",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var iar_config_list = JSON.parse(vaVars.iar_config_list);\n    return (iar_config_list.length > 0);\n})()"
+            },
+            "label": "Config reports left"
+          },
+          {
+            "id": "7df03aa908a942899803ce71e9178376",
+            "edgeType": "Edge",
+            "source": "6cd5eb4df08d405d95b1f153957c2a83",
+            "target": "3a0250fd6ac940da9b9a8a60a85742e1",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3673e174d79c4498bbb6ff70980f41e3",
+            "edgeType": "Branch",
+            "source": "eeb1e3f16c04413eb26b215a63f14c2a",
+            "target": "15e937f28a0d4e41bf1d728eb0578e6c",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.choose_table_for_health_check != 'all_configs';\n})()\n"
+            },
+            "label": "Show specific configuration"
+          },
+          {
+            "id": "05288161a7424cdbb82c36494f332388",
+            "edgeType": "Edge",
+            "source": "e597cc2b3e304a1ebdba4eece6454ce7",
+            "target": "481394011558461aa9b301bac4b21fea",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "aafc8bbd2138441dadf7d2e487fbd5f4",
+            "edgeType": "Edge",
+            "source": "481394011558461aa9b301bac4b21fea",
+            "target": "94359dc2aa61412993f2566c54094e06",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "bf8094d51ee54610b401a01ff3e37ebf",
+            "edgeType": "Edge",
+            "source": "94359dc2aa61412993f2566c54094e06",
+            "target": "eeb1e3f16c04413eb26b215a63f14c2a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b493aacdd1324bbc95eac78e6ffd2a29",
+            "edgeType": "Edge",
+            "source": "15e937f28a0d4e41bf1d728eb0578e6c",
+            "target": "1d1ab5891d864ed186da2634bc743d83",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0eaac076c5ad4b718a12a9b33c8e3d36",
+            "edgeType": "Edge",
+            "source": "1d1ab5891d864ed186da2634bc743d83",
+            "target": "82992a076ffe431a80ea5c7701ba939a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "7885d6e4451c46c386ff8bb9825caf3f",
+            "edgeType": "Edge",
+            "source": "078d33ed65c74fd092e625ff45129151",
+            "target": "819e7cace6de4c7bad90e24aa61dae74",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "35e1ac562902455d8158ba7145abc5a3",
+            "edgeType": "Edge",
+            "source": "819e7cace6de4c7bad90e24aa61dae74",
+            "target": "3a0250fd6ac940da9b9a8a60a85742e1",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "40ae26c1821440f4ab40b0f96300bf71": {
+        "id": "40ae26c1821440f4ab40b0f96300bf71",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    /* return 'a default value'; */\n    return [];\n})()\n"
+        },
+        "name": "iar_config_list",
+        "label": "iar_config_list",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "5527aed663e9435a9d95e605ad66187b": {
+        "id": "5527aed663e9435a9d95e605ad66187b",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    /* return 'a default value'; */\n    return [];\n})()\n"
+        },
+        "name": "iar_config_names",
+        "label": "iar_config_names",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "f1be52bb310d407bb548b264dcff2ad0": {
+        "id": "f1be52bb310d407bb548b264dcff2ad0",
+        "name": "choose_table_for_health_check",
+        "label": "Choose Table For Health Check",
+        "varType": "reference",
+        "table": "sys_cs_auto_resolution_configuration",
+        "category": "vaInputs"
+      }
+    }
+  }
+name: IAR Health Check
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

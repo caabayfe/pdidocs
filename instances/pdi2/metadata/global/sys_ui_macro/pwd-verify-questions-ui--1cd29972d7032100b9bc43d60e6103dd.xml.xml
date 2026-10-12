@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+  <script language="javascript">
+	  addMacroEventListeners('sysparm_answer_0');
+  </script>
+
+  <g:evaluate var="jvar_questions_obj" object="true" jelly="true">
+    var verification_id = jelly.sysparm_verification_id;
+    var sys_user_id = jelly.sysparm_sys_user_id;
+    var request_id = jelly.sysparm_request_id;
+    var randomQuestions = new global.PwdCommonVerificationHandler().getRandomQuestions(request_id, sys_user_id, verification_id);
+    randomQuestions;
+  </g:evaluate>
+
+  <g:evaluate var="jvar_question_ids" object="true" jelly="true" expression="jelly.jvar_questions_obj.q_id" />
+
+  <g:evaluate var="jvar_questions" object="true" jelly="true" expression="jelly.jvar_questions_obj.q" />
+	
+<g:evaluate var="jvar_verification_label" object="true" jelly="true">
+	var resetUtil = new global.PasswordResetUtil();
+	resetUtil.getVerificationLabel(jelly.sysparm_verification_id);
+</g:evaluate>
+
+  <div id="qa_verification_form">
+    <j:choose>
+      <!-- Polarisberg -->
+      <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+        <h1 class="pwd-title default-focus-outline" id="questions-title">${jvar_verification_label}</h1>
+        <j:forEach items="${jvar_question_ids}" var="jvar_question_id" begin="0" indexVar="jvar_select_index">
+          <g:evaluate var="jvar_question_txt" jelly="true" expression="jelly.jvar_questions[jelly.jvar_select_index];"/>
+          <g:evaluate var="jvar_answer_txt" jelly="true" expression=""/>
+
+          <input type="hidden" name="sysparm_question_${jvar_select_index}" id="sysparm_question_${jvar_select_index}" value="${jvar_question_id}"/>
+          <div class="login-form-field is-required" id="qa_verify_form_group_${jvar_select_index}">
+            <label class="control-label" id="sysparm_question_label_${jvar_select_index}" aria-label="${gs.getMessage('Please enter answer for')}, ${jvar_question_txt}">
+              ${jvar_question_txt}
+              <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Required question')} ${jvar_select_index + 1}"></span>
+            </label>
+            <div>
+              <input type="password" size="30" maxlength="256" name="sysparm_answer_${jvar_select_index}" id="sysparm_answer_${jvar_select_index}" value="" autocomplete="off" required="required" class="form-control pwd-form-control ${JS,HTML:sysparm_answer_class}" oninput="updateMandatoryMarker(this, 'qa_verify_form_group_${jvar_select_index}'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');" aria-labelledby="questions-title sysparm_question_label_${jvar_select_index}"/>
+            </div>
+          </div>
+        </j:forEach>
+      </j:when>
+      <!-- Heisenberg -->
+      <j:otherwise>
+        <h2 class="pwd-title default-focus-outline" id="questions-title">${jvar_verification_label}</h2>
+        <div role="group">
+          <j:forEach items="${jvar_question_ids}" var="jvar_question_id" begin="0" indexVar="jvar_select_index">
+            <g:evaluate var="jvar_question_txt" jelly="true" expression="jelly.jvar_questions[jelly.jvar_select_index];"/>
+            <g:evaluate var="jvar_answer_txt" jelly="true" expression=""/>
+
+            <input type="hidden" name="sysparm_question_${jvar_select_index}" id="sysparm_question_${jvar_select_index}" value="${jvar_question_id}"/>
+            <div class="form-group is-required" id="qa_verify_form_group_${jvar_select_index}">
+              <span class="col-sm-12">
+                <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Required, question')} ${jvar_select_index + 1}"></span> 
+                <label class="control-label" id="sysparm_question_label_${jvar_select_index}" aria-label="${gs.getMessage('Please enter answer for')}, ${jvar_question_txt}">${jvar_question_txt}</label>
+              </span>
+              <span class="col-sm-12">
+                <input type="password" size="30" maxlength="256" name="sysparm_answer_${jvar_select_index}" id="sysparm_answer_${jvar_select_index}" value="" autocomplete="off" required="required" class="form-control pwd-form-control ${JS,HTML:sysparm_answer_class}" oninput="updateMandatoryMarker(this, 'qa_verify_form_group_${jvar_select_index}'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');" aria-labelledby="questions-title sysparm_question_label_${jvar_select_index}"/>
+              </span>
+            </div>
+          </j:forEach>
+        </div>
+      </j:otherwise>
+    </j:choose>
+  </div>
+</j:jelly>

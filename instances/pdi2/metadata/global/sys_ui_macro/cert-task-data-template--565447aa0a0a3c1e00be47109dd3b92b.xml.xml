@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:requires name="classes/GlideFilter.js" />
+  <g:requires name="GlideFilterCurrency.js" />
+   <g:evaluate>
+      var certTask = new GlideRecord("cert_task");
+      certTask.get("${jvar_cert_task}");
+   </g:evaluate>
+   <g:evaluate var="jvar_can_see_cert_list">
+      if (certTask.assigned_to == gs.getUserID() || gs.hasRole("certification_admin") || gs.getUser().isMemberOf(certTask.assignment_group))
+      {
+         "true";
+      }
+      else {
+    var assignedTo   = new GlideRecord('sys_user');
+         var retrieveUser = assignedTo.get(certTask.assigned_to );
+
+
+         if ( retrieveUser ) {
+            // Is the task assignee's manager the current user?
+       if ( assignedTo.manager == gs.getUserID() ) {
+                 "true";
+            } else
+                 "false"
+         } else
+            "false";
+
+
+      }
+   </g:evaluate>
+<j:if test="${jvar_can_see_cert_list}">
+   <g:requires name="CertificationTaskScript.jsdbx"/>
+   <g:inline template="tabs2.xml" />
+   <j:set var="sysparm_fixed_query" value="${jvar_fixed_query}"/>
+   <j:set var="sysparm_query" value="${jvar_query}"/>
+   <j:set var="sysparm_cert_list" value="true"/>
+   <j:set var="sysparm_view" value="${jvar_view}"/>
+
+   <tr><td colspan="2" id="cert_td">
+      <g:inline template="cert_task_data_button_row.xml"/>
+      <TABLE id="testtable" width="100%" cellSpacing="0" cellPadding="0" border="0">
+         <TR>
+            <TD valign="top">
+            <input type="HIDDEN" id="sysparm_cert_task" name="sysparm_cert_task" value="${jvar_cert_task}"/>
+            <input type="HIDDEN" id="sysparm_fields" name="sysparm_fields" value="${jvar_fields}"/>
+            <input type="HIDDEN" id="cert_active" value="${jvar_cert_task_active}"/>
+            <input type="HIDDEN" id="sysparm_table_name" value="${jvar_table}" />
+
+               <!-- tabstrip for related lists -->
+               <!-- <div class="tabs2_strip" id="tabs2_list">
+                  //hack for IE bug when tab strip causes a horizontal scroll bar to appear
+                  <img src="images/s.gifx" alt="" height="1px" width="1px" style="margin-right: 0px;" />
+               </div>-->
+               <!-- Start with the lists not displayed -->
+               <span id="cardboard_span" style="display:none">
+                  <j:set var="jvar_use_name_for_list_id" value="true" />
+                  <g:list_custom table="${jvar_table}" view="${jvar_view}" elements="${jvar_display_fields},${jvar_fields}"/>
+
+                  <!-- Set up ListProperties for the list -->
+                  <g:evaluate>
+                     ListProperties.setHasTopNav(false);
+                     ListProperties.setHasTitle(true);
+                     ListProperties.setHasTitleContextMenu(true);
+                     ListProperties.setHasFilter(true);
+                     ListProperties.setHasBreadcrumbs(true);
+                     ListProperties.setHasSearch(true);
+                     ListProperties.setHasTopVCR(true);
+                     ListProperties.setHasHeader(true);
+                     ListProperties.setHasHeaderContextMenu(true);
+                     ListProperties.setHasListMechanic(false);
+                     ListProperties.setHasRowContextMenu(true);
+                     ListProperties.setShowLinks(true);
+                     ListProperties.setHasPopup(true);
+                     ListProperties.setShowEmpty(true);
+                     ListProperties.setHasBottomNav(true);
+                     ListProperties.setHasActions(true);
+                     ListProperties.setHasBottomVCR(true);
+                     ListProperties.setCanChangeView(false);
+                     ListProperties.setCanGroup(true);
+                ListProperties.setEmbedded(false);
+             </g:evaluate>
+
+                  <j:if test="${jvar_cert_task_active}">
+                     <g:evaluate>
+                        ListProperties.setParameter("certification", "true");
+                     </g:evaluate>
+                  </j:if>
+
+                  <!-- register for list printing -->
+                  <j:set var="jvar_handle_list_printing" value="true" />
+
+                  <j:set var="sysparm_report_list" value="true" />
+
+                  <!-- and build the list output -->
+                  <g:inline template="list2_default.xml" />
+
+                  <!-- emit g_user support -->
+                  <g2:client_script type="user" />
+               </span>
+            </TD>
+
+            <TD align="center" rowspan="2" width="2%">
+            </TD>
+            
+         </TR>
+      </TABLE>
+
+   </td></tr>
+</j:if>
+
+</j:jelly>

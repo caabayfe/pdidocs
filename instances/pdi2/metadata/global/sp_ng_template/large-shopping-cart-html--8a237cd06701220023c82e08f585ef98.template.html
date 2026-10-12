@@ -1,0 +1,105 @@
+<div>
+  <h1 ng-show="c.data.cartItems.length > 0" class="h3">${Your Cart}</h1>
+  <div ng-show="c.data.cartItems.length > 0" class="panel panel-primary b">
+    <table id="cart" class="table table-hover table-condensed">
+      <thead>
+        <tr>
+          <th style="width: 52%;">${Product}</th>
+          <th style="width: 10%;">${Price}</th>
+          <th style="width: 8%;">${Quantity}</th>
+          <th style="width: 10%;">${Subtotal}</th>
+          <th style="width: 10%;"><span style="visibility: hidden;">${Item Controls}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="item in c.data.cartItems track by item.sys_id | orderBy: 'order'">
+          <td data-th="Product">
+            <div class="row">
+              <div class="col-sm-2 hidden-xs"><img ng-show="item.picture" ng-src="{{item.picture}}" alt="{{item.name}}" class="img-responsive item-image"/></div>
+              <div class="col-sm-10">
+                <h2 class="nomargin h4"><a ng-href="?id=sc_cat_item&sys_id={{item.item_id}}">{{item.name}}</a></h2>
+                <p class="hidden-xs">{{item.short_description}}</p>
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong>{{item.display_price}}</strong>
+            <div ng-show="item.recurring_price > 0">+ {{item.display_recurring_price}} {{item.recurring_frequency_display}}</div>
+          </td>
+          <td data-th="Quantity">
+            <input type="number"
+                   title="${Quantity}"
+                   ng-if="item.show_quantity"
+                   class="form-control text-center"
+                   ng-model="item.quantity"
+                   min="1"
+                   max="99"
+                   ng-model-options="{ updateOn: 'blur' }"
+                   ng-change="c.updateQuantity(item)">
+            <span ng-if="!item.show_quantity">-</span>
+          </td>
+          <td>
+            <strong>{{item.subtotal_price}}</strong>
+            <div ng-show="item.recurring_subtotal > 0">+ {{item.recurring_subtotal_price}} {{item.recurring_frequency_display}}</div>
+          </td>
+          <td class="actions" data-th="">
+            <button class="btn btn-info btn-sm" aria-label="${Edit Item} {{item.name}}" ng-show="item.has_options" ng-click="c.editItem(item.sys_id)"><i class="fa fa-pencil"></i></button>
+            <button class="btn btn-danger btn-sm" aria-label="${Remove Item From Cart} {{item.name}}" ng-click="c.removeItem($event, item)"><i class="fa fa-trash-o"></i></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="panel-footer clearfix">
+      <div class="pull-right">
+        <div class="h4 text-bold">${Total price}: {{c.data.cart.display_subtotal}}</div>
+        <div class="h5 text-bold" ng-repeat="(key, value) in c.data.cart.recurring_subtotals">+ {{value}} {{key}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel b" ng-show="c.data.cartItems.length > 0">
+    <div class="order-details-container form-group">
+      <div class="order-details requested-for-details col-xs-12 col-sm-6">
+        <div>
+          <label for="requested-for">${Requested For}</label>
+          <sn-record-picker id="requested-for" field="c.requestedFor" table="'sys_user'" display-field="'name'" value-field="'sys_id'" search-fields="'name'" page-size="100" ></sn-record-picker>
+        </div>
+        <div>
+          <label for="deliver-to">${Deliver To}</label>
+          <textarea class="form-control" ng-model="c.deliverTo" id="deliver-to"></textarea>
+        </div>
+      </div>
+      <div class="order-details special-instructions-details col-xs-12 col-sm-6">
+        <label for="special-instructions">${Special Instructions}</label>
+        <textarea class="form-control" ng-model="c.additionalDetails" id="special-instructions"></textarea>
+      </div>
+    </div>
+    <div class="panel-footer">
+      <a href="?id=sc_home" name="submit" ng-click="triggerOnSubmit()" class="btn btn-default m-r-xs">${Continue Shopping}</a>
+      <button class="btn btn-default"
+         ng-click="c.saveBundle()">${Save as Bundle}</button>
+      <button class="btn btn-default"
+         ng-click="c.clearCart()">${Clear Cart}</button>
+      <button ng-disabled="c.checkoutInProgress" name="submit" ng-click="c.triggerCheckout($event)" class="btn btn-primary m-l-xs pull-right hidden-xs">
+        <span ng-show="!c.checkoutInProgress">${Checkout}</span>
+        <span ng-show="c.checkoutInProgress">${Ordering...}</span>
+      </button>
+      <button ng-disabled="c.checkoutInProgress" name="submit" ng-click="c.triggerCheckout($event)" class="btn btn-primary m-l-xs visible-xs large-checkout">
+        <span ng-show="!c.checkoutInProgress">${Checkout}</span>
+        <span ng-show="c.checkoutInProgress">${Ordering...}</span>
+      </button>
+    </div>
+  </div>
+
+  <div ng-show="c.data.cartItems.length == 0" class="panel panel-default b">
+    <div class="panel-body">
+      <div class="empty-state-content">
+        <span class="fa fa-shopping-cart" aria-label="${Shopping cart icon}"></span>
+        <h2 class="h3">${Your shopping cart is empty}</h2>
+        <p>${Once you have added items to your shopping cart, you can check out from here.}</p>
+        <a class="btn btn-primary" href="?id=sc_home">${View the Catalog}</a>
+      </div>
+    </div>
+  </div>
+</div>

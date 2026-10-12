@@ -1,0 +1,202 @@
+- document: sys_hub_step_instance
+  document_key: b481972f9f9202107c0e2305fa0a1cbd
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-05-27 13:03:04
+  sys_id: 3081972f9f9202107c0e2305fa0a1ccd
+  sys_mod_count: '14'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-07-16 12:56:32
+  value: |-
+    (function execute(inputs, outputs) {
+        var input = {};
+        input.params = {};
+        input.init_params = {};
+
+        var capabilityId = inputs.inputs._meta.capability || "";
+        input.capabilityId = capabilityId;
+        var definitionMeta = inputs.inputs._meta.__global_tool_executor_definition_metadata__ || "{}";
+        
+        if (global.JSUtil.notNil(definitionMeta)) {
+            input.provider_api = JSON.parse(definitionMeta).scriptFunctionName || "";
+            input.scriptId = JSON.parse(definitionMeta).scriptId || "";
+        }
+
+        var capabilityAttributes = sn_one_extend.OneExtendUtil.getCapabilityAttributes(capabilityId) || [];
+
+        function extractAndGroupAttributes(obj) {
+            var groupedAttributes = {
+                INPUT_NAMES: [],
+                INPUT_IDS: [],
+                OUTPUT_NAMES: [],
+                OUTPUT_IDS: [],
+                INIT_INPUT_NAMES: [],
+                INIT_INPUT_IDS: []
+            };
+
+            function processAttributes(attributes, type) {
+                attributes.forEach(function(attribute) {
+                    if (attribute.attributeName && attribute.attributeId) {
+                        var attributeName = attribute.attributeName;
+                        var attributeId = attribute.attributeId;
+                        if (type === 'INPUT') {
+                            if (attributeName.startsWith('__init__')) {
+                                groupedAttributes.INIT_INPUT_NAMES.push(attributeName.replace('__init__', ''));
+                                groupedAttributes.INIT_INPUT_IDS.push(attributeId);
+                            } else {
+                                groupedAttributes.INPUT_NAMES.push(attributeName);
+                                groupedAttributes.INPUT_IDS.push(attributeId);
+                            }
+                        } else if (type === 'OUTPUT') {
+                            groupedAttributes.OUTPUT_NAMES.push(attributeName);
+                            groupedAttributes.OUTPUT_IDS.push(attributeId);
+                        }
+                    }
+                });
+            }
+
+            if (obj.inputs) {
+                processAttributes(obj.inputs, 'INPUT');
+            }
+            if (obj.outputs) {
+                processAttributes(obj.outputs, 'OUTPUT');
+            }
+
+            return groupedAttributes;
+        }
+
+        var result = extractAndGroupAttributes(capabilityAttributes) || {};
+        input.params.names = result.INPUT_NAMES || [];
+        input.params.ids = result.INPUT_IDS || [];
+        input.init_params.names = result.INIT_INPUT_NAMES || [];
+        input.init_params.ids = result.INIT_INPUT_IDS || [];
+        var methodName = input.provider_api || "";
+
+        var scriptGr = new GlideRecord('sys_script_include');
+        scriptGr.addQuery('sys_id', input.scriptId);
+        scriptGr.query();
+
+        if (scriptGr.next()) {
+            var attributeValue = scriptGr.getValue('api_name');
+            input.script_include_name = attributeValue;
+        }
+
+        input.params.values = [];
+        input.init_params.values = [];
+
+        for (var i = 0; i < input.params.ids.length; i++) {
+            var sysId = input.params.ids[i];
+
+            var gr = new GlideRecord('sys_one_extend_resource_attribute_mapping');
+            gr.addQuery('resource_attribute_name', sysId);
+            gr.query();
+
+            if (gr.next()) {
+                var attributeName = gr.resource_attribute_name.name;
+                input.params.values.push(inputs.inputs[attributeName]);
+            } else {
+                input.params.values.push(null);
+            }
+        }
+
+        for (var i = 0; i < input.init_params.ids.length; i++) {
+            var sysId = input.init_params.ids[i];
+
+            var gr = new GlideRecord('sys_one_extend_resource_attribute_mapping');
+            gr.addQuery('resource_attribute_name', sysId);
+            gr.query();
+
+            if (gr.next()) {
+                var attributeName = gr.resource_attribute_name.name;
+                input.init_params.values.push(inputs.inputs[attributeName]);
+            } else {
+                input.init_params.values.push(null);
+            }
+        }
+
+
+        function reorderBasedOnOriginalParams(params, originalParams) {
+            var nameIndexMap = {};
+
+            params.names.forEach(function(name, index) {
+                nameIndexMap[name] = index;
+            });
+
+            var reorderedNames = [];
+            var reorderedIds = [];
+            var reorderedValues = [];
+
+            originalParams.forEach(function(name) {
+                var index = nameIndexMap[name];
+                reorderedNames.push(params.names[index]);
+                reorderedIds.push(params.ids[index]);
+                reorderedValues.push(params.values[index]);
+            });
+
+            params.names = reorderedNames;
+            params.ids = reorderedIds;
+            params.values = reorderedValues;
+        }
+
+
+        var funcParamsWithInit = new global.ScriptDetails().getFuncParamsWithInitParams(input.scriptId, input.provider_api) || [];
+        var originalParams = funcParamsWithInit.funcParams || [];
+        var originalInitParams = funcParamsWithInit.initializeFuncParams || [];
+        
+        originalParams = originalParams.map((originalParam) => originalParam.toLowerCase());
+        reorderBasedOnOriginalParams(input.params, originalParams);
+
+        originalInitParams = originalInitParams.map((originalInitParam) => originalInitParam.toLowerCase());
+        reorderBasedOnOriginalParams(input.init_params, originalInitParams);
+
+        var params = input.params.values;
+        var initializationParams = input.init_params.values;
+
+        var scriptIncludeName = input.script_include_name;
+        
+        outputs.output = sn_one_extend.OneExtendUtil.globalToolsExecutor(scriptIncludeName || "", input.provider_api || "", initializationParams.map(function(param) { return JSON.stringify(param === undefined ? null : param); }).join(','), params.map(function(param) { return JSON.stringify(param === undefined ? null : param); }).join(','));
+        return outputs;
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: 4d9a83679f9202107c0e2305fa0a1c8c
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-05-27 13:03:04
+  sys_id: 8581972f9f9202107c0e2305fa0a1cdc
+  sys_mod_count: '9'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-07-16 12:54:34
+  value: '{"version":"1.0","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"794bc342-9c9d-444b-a3f2-dd4b6a5a0173\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON"}'
+  variable: 3881972f9f9202107c0e2305fa0a1ccf
+- document: sys_hub_action_type_definition
+  document_key: 4d9a83679f9202107c0e2305fa0a1c8c
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-05-27 13:03:04
+  sys_id: c181972f9f9202107c0e2305fa0a1cdc
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-05-27 13:03:04
+  value: '0'
+  variable: 4581972f9f9202107c0e2305fa0a1cd4
+- document: sys_hub_step_instance
+  document_key: b481972f9f9202107c0e2305fa0a1cbd
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-05-27 13:03:04
+  sys_id: f481972f9f9202107c0e2305fa0a1ccc
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-05-27 13:03:04
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4

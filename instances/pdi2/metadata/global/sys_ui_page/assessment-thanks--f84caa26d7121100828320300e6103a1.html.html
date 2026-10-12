@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate var="jvar_assessment_type" jelly="true">
+		var metricGR = new GlideRecord("asmt_metric_type");
+		metricGR.addQuery('sys_id', jelly.sysparm_assessable_type);
+		metricGR.query();
+		var evaluation_type = gs.getMessage('assessment');
+		if (metricGR.next())
+			evaluation_type = metricGR.evaluation_method.getChoiceValue().toLowerCase();
+		else
+			evaluation_type = jelly.sysparm_assessment_type ? jelly.sysparm_assessment_type : evaluation_type;
+		gs.addInfoMessage(gs.getMessage('You have completed this {0}', GlideStringUtil.escapeHTML(evaluation_type)));
+		evaluation_type;
+	</g:evaluate>
+	<g:requires name="styles/assessment.css" />
+	<div class="end-note" data-form-title="$[gs.getMessage('You have completed this {0}', '${jvar_assessment_type}')]">
+		<g2:evaluate var="jvar_item" jelly="true" expression="
+			gr = new GlideRecord('asmt_metric_type');
+			gr.addQuery('sys_id', jelly.sysparm_assessable_type);
+			gr.query();
+		" />	
+		<j2:if test="$[gr.next()]">
+			<!-- end_note may contain HTML formatting -->
+			<g2:no_escape>$[NS:gr.end_note]</g2:no_escape>
+		</j2:if>
+	</div>
+</j:jelly>

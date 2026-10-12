@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <link rel="stylesheet" type="text/css" href="styles/process_flow_formatter.cssx"></link>
+  <tr>
+    <td colspan="2" width="100%" nowrap="true">
+      <div>
+	<table cellpadding="0" cellspacing="0" style="width: 100%;border:none;border-collapse:collapse" class="process_flow_formatter" role="listbox">
+	  <tr role="presentation">
+	    <g2:flow_formatter var="jvar_flows" table="$[${ref_parent}.getRecordClassName()]" current="$[${ref_parent}]" />
+            <g2:evaluate var="jvar_width" jelly="true">
+                   var size= jelly.jvar_flows.size();
+                   if(size)
+                   Math.floor(100/size);
+            </g2:evaluate>
+	    <j2:forEach items="$[jvar_flows]" var="jvar_flow">
+	    <g2:set_if var="jvar_step_status" test="$[jvar_flow.getParameter('state') == 'current']" true="step" false="false" />
+	      <td style="width:$[jvar_width]%" class="process_flow $[jvar_flow.getParameter('state')]" role="option" aria-current="$[jvar_step_status]" aria-selected="$[jvar_flow.getParameter('state') == 'current']">
+		  	  <a role="presentation" aria-disabled="true" aria-label="$[jvar_flow.getLabel()]">$[jvar_flow.getLabel()]</a>
+	      </td>
+	      <td width="16" height="100%"  aria-hidden="true">
+                  <img style="margin:0; padding:0px;" alt="" aria-hidden="true"
+		     src="images/chevron_$[jvar_flow.getParameter('state')]_$[jvar_flow.getParameter('next_state')].pngx" />
+	      </td>
+	    </j2:forEach>
+	  </tr>
+	</table>
+      </div>
+    </td>
+  </tr>
+</j:jelly>

@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<style>
+		input[type="radio"] {
+		border:none !important;
+		}
+	</style>
+
+	<j:if test="${GlideMobileExtensions.getDeviceType() != 'doctype'}">
+		<g:requires name="scripts/lib/jquery_includes.js" />
+	</j:if>
+	<g:requires name="scripts/json2.jsx" />
+	<g:evaluate var='jvar_hasrole'>
+		var hasrole;
+		if(gs.isLoggedIn()){
+			hasrole = gs.hasRole('survey_admin');
+		}else{
+			hasrole = false;
+		}
+		hasrole;
+	</g:evaluate>
+	<input type="hidden" id="loadpage" value="${jvar_hasrole}"/>
+	<j:if test="${jvar_hasrole==false}">
+		${gs.getMessage("You do not have permission to use the Survey Creator")}
+	</j:if>
+	<j:if test="${jvar_hasrole==true}">
+	<g:ui_form id="survey_creator">
+		<j:set var='jvar_question_show_help' value='true' />
+		<j:set var='jvar_section508' value='true' />
+
+		<g:evaluate var='jvar_survey_record' object='true'>
+			var surveyRecord = new GlideRecord('asmt_metric_type');
+			if ('${sysparm_survey_sysid}' != '') {
+				var recordExists = surveyRecord.get('${sysparm_survey_sysid}');
+				if (!recordExists) {
+					surveyRecord.initialize();
+					surveyRecord.setNewGuid();
+				}
+			}
+			else {
+				surveyRecord.initialize();
+				surveyRecord.setNewGuid();
+			}
+			surveyRecord;
+		</g:evaluate>
+
+		<g:evaluate var='jvar_datatypelist' object='true'>
+			var dataTypeRecord = new GlideRecord('sys_choice');
+			dataTypeRecord.addQuery('name', 'asmt_metric');
+			dataTypeRecord.addQuery('element','datatype');
+			dataTypeRecord.addQuery('language', session.getLanguage());
+			dataTypeRecord.orderBy('label');
+			dataTypeRecord.query();
+		</g:evaluate>
+
+		<g:evaluate var='jvar_templatelist' object='true'>
+			var templateRecord = new GlideRecord('asmt_template');
+			templateRecord.orderBy('name');
+			templateRecord.query();
+		</g:evaluate>
+
+		<g:evaluate var='jvar_path' object='true'>
+			// Get the Survey URL from the survey record being built here
+			path = new AssessmentUtils().getAssessmentTypeURL(surveyRecord.sys_id);
+			path;
+		</g:evaluate>
+
+		<g:requires name='styles/assessment.css' />
+		<input type="hidden" id="metricType_sysID" name="metricType_sysID" value="${sysparm_survey_sysid}"></input>
+
+		<j:set var='jvar_survey_name' value='${jvar_survey_record.getValue("name")}' />
+		<j:set var='jvar_survey_description' value='${jvar_survey_record.getValue("description")}' />
+		<j:set var='jvar_mandatory' value='false' />
+
+		<span id="SurveyRecord">
+			<div class="caption" style="margin-top: 2px;">
+				<img src="images/context.gifx"></img>${gs.getMessage('Survey Creator')}
+			</div>
+			<table>
+				<j:set var='jvar_question_name' value='surveyName' />
+				<tr class="io_label">
+					<g:ui_input_field name="surveyName" id="surveyNameId"
+									  label="${gs.getMessage('Name')}" style="width: 100%; direction:ltr;"
+									  maxlength="255" value="" mandatory="true" onchange="updateMandatory(this.id);"
+									  alt="${gs.getMessage('Enter a name that will identify this survey')}" />
+				</tr>
+				<tr>
+					<g:ui_multiline_input_field name="surveyDescription"
+												rows="4" size="100%" label="${gs.getMessage('Description')}"
+												value="" mandatory="false"
+												alt="${gs.getMessage('Enter an optional description to explain the purpose of this survey and any other relevant information')}" />
+				</tr>
+			</table>
+		</span>
+		<!--
+				<span id="CategoryRecord">
+					<div class="caption" style="margin-top: 2px;">
+						<img src="images/context.gifx"></img>${gs.getMessage('Category Set')}
+					</div>
+					<table>
+						<tr>
+							<g:ui_input_field name="categoryName_0"
+								label="${gs.getMessage('Category name')}" size="123" value=""
+								mandatory="true"
+								alt="${gs.getMessage('Enter a category for this survey. By default, this is the name of the survey.')}" />
+						</tr>
+						<tr>
+							<g:ui_multiline_input_field name="categoryDescription"
+								rows="4" size="121" label="${gs.getMessage('Category description')}"
+								value="" mandatory="false"
+								alt="${gs.getMessage('Enter an optional description to explain the purpose of this survey category.')}" />
+						</tr>
+					</table>
+				</span>
+		-->
+		<span id="QuestionSet_1">
+			<div class="caption" style="margin-top: 2px;">
+				<img src="images/context.gifx"></img>${gs.getMessage('Survey Questions')}
+			</div>
+			<table>
+				<tr>
+					<td class="survey_creator_description" colspan="2" style="padding: 2px; padding-top: 10px; list-style-position: inside;">
+						<table border="0" padding="0" style="border-collapse: collapse; width: 100%;" margin="0">
+							<tbody><tr><td style="vertical-align: top; width: 100%;">
+								<p>${gs.getMessage('Enter at least one question and select an answer data type for each one. Additional required fields appear for some data types.')}</p>
+								<p><g2:no_escape>
+									$[gs.getMessage('For ${AMP}lt;strong>Choice${AMP}lt;/strong> and ${AMP}lt;strong>Likert scale${AMP}lt;/strong> data types, enter at least two answer options. Blank questions are not used.')]
+								</g2:no_escape></p>
+							</td></tr></tbody>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td />
+					<td id="QuestionArea" style="margin-top: 2px; width: 100%;">
+						<span id="QuestionGroup_Template" style="display: none;" >
+							<table class="io_table" style="margin-top: 2px; width: 100%;">
+								<tr style="margin-top: 2px; width: 100%;">
+
+									<td nowrap="true" class="label" >
+										<g:form_label for="Question_0_0">
+											Question 0
+											<j2:if test="$[GlideMobileExtensions.getDeviceType() != 'doctype']">:</j2:if>
+										</g:form_label>
+									</td>
+									<td valign="top" style="width: 100%; direction:ltr;">
+										<input class="question_text" type="text" size="100%"
+											   style="width: 100%; direction:ltr;"
+											   id="Question_0_0"
+											   onkeypress="addNewQuestion(event, this);"
+											   onchange="addNewQuestion(event, this);"
+											   onBlur="showOrHideButtons();"
+											   alt="${gs.getMessage('Enter the text for the question to be asked.')}" />
+									</td>
+									<!--
+
+																		<td rowspan="2" valign="top" style="width: 100%; direction:ltr;">
+																			<span id="advanced_question_fields" style="display: block;">
+																				<table>
+																					<tr>
+																						<td valign="top" style="width: 100%; direction:ltr;">
+																							<input type="checkbox" id="mandatory_0_0" onclick="loadGroups(this.checked);">
+																								${gs.getMessage('Question is Mandatory')}
+																							</input>
+																						</td>
+																					</tr>
+																					<tr>
+																						<td valign="top" style="width: 100%; direction:ltr;" >
+																							<input type="checkbox" id="allow_na_0_0" onclick="loadGroups(this.checked);">
+																								${gs.getMessage('Allow N/A as option')}
+																							</input>
+																						</td>
+																					</tr>
+																					<tr>
+																						<td valign="top" style="width: 100%; direction:ltr;">
+																							<label for="question_hover_hint_0_0">${gs.getMessage('Question Hover Hint:')}</label>
+																							<input id="question_hover_hint_0_0" type="text" style="width:150px;" autocomplete="on" onKeyUp="ac.onKeyUp(event)" />
+																						</td>
+																					</tr>
+																				</table>
+																			</span>
+																		</td>
+									-->
+								</tr>
+								<tr>
+									<td valign="top">
+										$[SP]
+									</td>
+									<td valign="top">
+										<select id="DataType_0_0" onchange="showDataTypeFields(0, 0);"
+												alt="${gs.getMessage('Select the answer format expected in the answer.')}"  style="display: block;">
+											<option value=''>${gs.getMessage('(Pick an answer data type)')}</option>
+											<j:while test='${dataTypeRecord.next()}'>
+												<j:set var='jvar_dataTypeValue' value='${dataTypeRecord.getValue("value")}' />
+												<g:evaluate var='jvar_dataTypeForSurvey' jelly='true'>
+													if (jelly.jvar_dataTypeValue.equals("duration")
+													|| jelly.jvar_dataTypeValue.equals("rating"))
+													"false";
+													else
+													"true";
+												</g:evaluate>
+												<g:evaluate var='jvar_dataTypeDefault' jelly='true'>
+													if (jelly.jvar_dataTypeValue.equals("string"))
+													"true";
+													else
+													"false";
+												</g:evaluate>
+												<j:if test='${jvar_dataTypeForSurvey}'>
+													<option value='${jvar_dataTypeValue}'>${dataTypeRecord.getValue("label")}</option>
+												</j:if>
+											</j:while>
+										</select>
+										<span id="DataType_String_0_0" style="display: none;" >
+											<table>
+												<tr>
+													<td nowrap="true" class="label" >
+														<g:form_label for="DataType_String_TextSize_0_0">
+															${gs.getMessage('String option')}
+															<j2:if test="$[GlideMobileExtensions.getDeviceType() != 'doctype']">:</j2:if>
+														</g:form_label>
+													</td>
+													<td>
+														<select id="DataType_String_TextSize_0_0">
+															<option id="DataType_String_TextSize_Short_0_0" value="short">${gs.getMessage('Single line')}</option>
+															<option id="DataType_String_TextSize_Wide_0_0" value="wide">${gs.getMessage('Single line wide')}</option>
+															<option id="DataType_String_TextSize_Multiline_0_0" value="multiline">${gs.getMessage('Multiline')}</option>
+														</select>
+													</td>
+												</tr>
+											</table>
+										</span>
+										<span id="DataType_Template_0_0" style="display: none;" >
+											<table>
+												<tr>
+													<td nowrap="true" class="label" >
+														<g:form_label for="DataType_Template_Answer_0_0">
+															${gs.getMessage('Template option')}
+															<j2:if test="$[GlideMobileExtensions.getDeviceType() != 'doctype']">:</j2:if>
+														</g:form_label>
+													</td>
+													<td>
+														<select id="DataType_Template_Answer_0_0">
+															<j:while test='${templateRecord.next()}'>
+																<j:set var='jvar_templateValue' value='${templateRecord.getValue("sys_id")}' />
+																<option id = 'Datatype_Template_Answer_0_0' value='${jvar_templateValue}'>${templateRecord.getValue("name")} </option>
+															</j:while>
+														</select>
+													</td>
+												</tr>
+											</table>
+										</span>
+										<span id="DataType_Number_0_0" style="display: none;" >
+											<g:ui_input_field label="Min" name="DataType_Number_Answer_0_0_1"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  value="0" size="4" />
+											<g:ui_input_field label="Max" name="DataType_Number_Answer_0_0_2"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  value="10" size="4" />
+										</span>
+										<span id="DataType_NumericScale_0_0" style="display: none;" >
+											<g:ui_input_field label="Min" name="DataType_NumericScale_Answer_0_0_1"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  value="0" size="4" />
+											<g:ui_input_field label="Max" name="DataType_NumericScale_Answer_0_0_2"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  value="5" size="4" />
+										</span>
+										<span id="DataType_Percentage_0_0" style="display: none;" >
+											<g:ui_input_field label="Min" name="DataType_Percentage_Answer_0_0_1"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  value="0"  size="4" />
+											<g:ui_input_field label="Max" name="DataType_Percentage_Answer_0_0_2"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  value="100" size="4" />
+										</span>
+										<span id="DataType_Choice_0_0" style="display: none;" >
+											<g:ui_input_field label="1" name="DataType_Choice_Answer_0_0_1"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  onkeyup="addNewAnswer(event, 'Choice', 1, 1, 2);"
+															  value="" size="100" />
+											<g:ui_input_field label="2" name="DataType_Choice_Answer_0_0_2"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  onkeyup="addNewAnswer(event, 'Choice', 1, 1, 3);"
+															  value="" size="100" />
+										</span>
+										<span id="DataType_Scale_0_0" style="display: none;" >
+											<g:ui_input_field label="1" name="DataType_Scale_Answer_0_0_1"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  onkeyup="addNewAnswer(event, 'Scale', 1, 1, 2);"
+															  value="" size="100" />
+											<g:ui_input_field label="2" name="DataType_Scale_Answer_0_0_2"
+															  onchange="updateMandatory(this.id);" mandatory="true"
+															  onkeyup="addNewAnswer(event, 'Scale', 1, 1, 3);"
+															  value="" size="100" />
+										</span>
+										<span id="DataType_YesNo_0_0" style="display: none;" ><!-- no creation fields needed -->
+										</span>
+										<span id="DataType_Checkbox_0_0" style="display: none;" ><!-- no creation fields needed -->
+										</span>
+										<span id="DataType_Date_0_0" style="display: none;" ><!-- no creation fields needed -->
+										</span>
+										<span id="DataType_DateTime_0_0" style="display: none;" ><!-- no creation fields needed -->
+										</span>
+										<span id="DataType_Default_0_0" style="display: none;" ><!-- please contact admin? -->
+										</span>
+									</td>
+								</tr>
+							</table>
+						</span>
+					</td>
+				</tr>
+			</table>
+			<div class="surveyButtonRow">
+				<button class="button listactions" style='display:none;' type="button" onClick="submitSurvey('preview');"
+						id="survey_creator_preview" name="survey_creator_preview">${gs.getMessage('upper_preview')}</button>
+			</div>
+		</span>
+		<span id="SurveyRecipientBlock">
+			<div class="caption" style="margin-top: 2px;">
+				<img src="images/context.gifx"></img>
+				${gs.getMessage('Survey User Access')}
+			</div>
+			<table>
+				<tr>
+					<td class="survey_creator_description" colspan="2" style="padding: 2px; padding-top: 10px; list-style-position: inside;">
+						<table border="0" padding="0" style="border-collapse: collapse; width: 100%;" margin="0">
+							<tbody><tr><td style="vertical-align: top; width: 100%;">
+								<p>${gs.getMessage('Select the type of access for this survey. If applicable, select recipients.')}   </p>
+							</td></tr></tbody>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type="radio" name="survey_delivery" value="all" checked="true" onclick="showRecipientBlock('survey_delivery_public')" />
+						$[SP]${gs.getMessage('Any user who opens the Survey URL can take this survey')}
+						<span id="survey_delivery_public" style="display: none;" >
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+
+						<input type="radio" name="survey_delivery" value="invite" onclick="showRecipientBlock('survey_delivery_invite')" />
+						$[SP]${gs.getMessage('Selected users can take this survey')}
+						<span id="survey_delivery_invite" style="display: none;" >
+							<div>
+								<table class="io_table" width="100%">
+									<tr id="relationship_slushbucket2">
+										<td colspan="2">
+											<j:set var="jvar_collection_key" value="not_important" />
+											<j:set var="jvar_collection_related_file" value="sys_user" />
+											<j:set var="jvar_ref_table" value="sys_user" />
+											<g:evaluate var="jvar_display_col2" expression="gs.getDisplayColumn('sys_user')" />
+											<j:set var="jvar_suppress_buttons" value="true" />
+											<j:set var="jvar_m2m_select_0" value="select_0" />
+											<j:set var="jvar_m2m_select_1" value="select_1" />
+											<j:set var="jvar_m2m_lcodes_0" value="lcodes_0" />
+											<j:set var="jvar_m2m_lcodes_1" value="lcodes_1" />
+											<j:set var="jvar_list_entries" value="" />
+											<j:set var="jvar_include_apply" value="false" />
+											<j:set var="jvar_on_sel_change" value="" />
+											<j:set var="jvar_quick_filters" value="true" />
+											<j:set var="jvar_quick_filter_list" value="sys_user" />
+											<j:set var="jvar_no_preload" value="false" />
+
+											<g:inline template="sys_m2m_body.xml" />
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2">${jvar_list_entries}</td>
+									</tr>
+								</table>
+							</div>
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type="radio" name="survey_delivery" value="group" onclick="showRecipientBlock('survey_delivery_group')" />
+						$[SP]${gs.getMessage('Members of the selected groups can take this survey')}
+						<span id="survey_delivery_group" style="display: none;" >
+							<div>
+								<table class="io_table" width="100%">
+									<tr>
+										<td>
+											<label for="search">${gs.getMessage('Search by name:')}</label>
+											<input id="search" type="text" style="width:150px;" autocomplete="on" onKeyUp="ac.onKeyUp(event)" />
+
+											<g:ui_spacer pixels="20" />
+
+											<input type="checkbox" id="show_all_groups" onclick="loadGroups(this.checked);">
+												${gs.getMessage('Show all groups')}
+											</input>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<g:ui_slushbucket up_down="false" />
+										</td>
+									</tr>
+								</table>
+							</div>
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type="radio" name="survey_delivery" value="triggered" onclick="showRecipientBlock('survey_delivery_triggered')" />
+						$[SP]${gs.getMessage('Certain users can take this survey, based on conditions')}
+						<span id="survey_delivery_triggered" style="display: none;" >
+							<p>${gs.getMessage('Click Save as Draft or Publish to open the Trigger Condition form')}</p>
+						</span>
+					</td>
+				</tr>
+
+			</table>
+		</span>
+
+		<div class="caption" style="margin-top: 4px;">
+			<img src="images/context.gifx"></img>
+			${gs.getMessage('Next Steps')}
+		</div>
+		<table>
+			<tr>
+				<td class="survey_creator_description" colspan="2" style="padding: 2px; padding-top: 10px; list-style-position: inside;">
+					<table border="0" padding="0" style="border-collapse: collapse; width: 100%;" margin="0">
+						<tbody><tr><td style="vertical-align: top; width: 100%;">
+							<p><g2:no_escape>
+								$[gs.getMessage('${AMP}lt;strong>Publish${AMP}lt;/strong> will create survey instances assigned to the selected recipients. ${AMP}lt;strong>Save as Draft${AMP}lt;/strong> will not.')]
+							</g2:no_escape></p>
+							<p><g2:no_escape>
+								$[gs.getMessage('Distribute the ${AMP}lt;strong>Survey URL${AMP}lt;/strong> to users you want to take the survey. If the survey is not public for all users, only users with the necessary access can use the URL.')]
+							</g2:no_escape></p>
+						</td></tr></tbody>
+					</table>
+				</td>
+			</tr>
+		</table>
+		<span id="export_URL">
+			<g:ui_input_field name="view_survey_url" label="${gs.getMessage('Survey URL')}" size="123" value="${jvar_path}" readonly="true" />
+		</span>
+
+		<input type="hidden" name="surveyId" id="surveyId" value="${surveyRecord.sys_id}" />
+		<input type="hidden" name="previewTypeId" id="previewTypeId" value="" />
+		<input type="hidden" name="previewInstanceId" id="previewInstanceId" value="" />
+		<input type="hidden" name="surveyInfo" id="surveyInfo" />
+		<input type="hidden" name="userId" id="userId" />
+		<input type="hidden" name="groupUserId" id="groupUserId" />
+		<input type="hidden" name="buttonClicked" id="buttonClicked" />
+
+		<hr />
+
+		<div class="surveyButtonRow">
+			<button class="button listactions" type="button" onClick="submitSurvey('draft');"
+					id="survey_creator_draft" name="survey_creator_draft">${gs.getMessage('Save as Draft')}</button>
+			<button class="button listactions" style='display:none;' type="button" onClick="submitSurvey('publish');"
+					id="survey_creator_publish" name="survey_creator_publish">${gs.getMessage('Publish')}</button>
+			<button class="button listactions" type="submit" onClick="submitSurvey('cancel');"
+					id="survey_creator_cancel" name="survey_creator_cancel">${gs.getMessage('Cancel')}</button>
+		</div>
+	</g:ui_form>
+	</j:if>
+	<g:requires name="scripts/asmt_assessment_form.js" includes="true" />
+</j:jelly>

@@ -1,0 +1,59 @@
+<g:ui_form>
+    <table cellpadding="0" cellspacing="0" width="500px">
+        <g:ui_progress_worker worker_id="${sysparm_pworker_sysid}" show_cancel="false" />
+        <tr>
+            <td>
+                <table id="completed_links" style="display: none">
+                    <tr>
+                        <td>
+                            <hr />
+                            <div class="caption sc_caption">Next steps...</div>
+                        </td>
+                    </tr>
+                    <tr id="catalog_link">
+                        <td style="padding: 1px">
+                            <g:evaluate jelly="true">
+                                var backToCatalogAction = GlideappCatalogURLGenerator.getHomeAction(jelly.sysparm_catalog, jelly.sysparm_catalog_view, "");
+                            </g:evaluate>
+                            <g:sc_button id="clone_cart_back_home" onclick="${backToCatalogAction}" label="Back to Catalog" title="Back to Catalog"/>
+						</td>
+						<td>
+							$[SP] Return to Catalog
+                        </td>
+                    </tr>
+                    <tr id="request_link">
+                        <td style="padding: 1px">
+                           <g2:evaluate jelly="true">
+                                var requestPageAction = GlideappCatalogURLGenerator.getRequestPageAction(jelly.sysparm_sys_id,  jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+                            </g2:evaluate>
+                            <g2:sc_button id="clone_cart_request" onclick="$[requestPageAction]" label="Request" title="Request"/>
+						</td>
+						<td>
+							$[SP] Return to Request: ${sysparm_request_id}
+                        </td>
+                    </tr>
+                    <tr id="request_link">
+                        <td style="padding: 1px">
+							<g:evaluate var="jvar_req_ids" jelly="true">
+							    var jvar_req_ids = new GlideCatalogCloneWorker().getGeneratedIDs();
+                                var requestListAction = GlideappCatalogURLGenerator.getRequestListAction(pgr.output_summary, 'number');
+                                jvar_req_ids;
+                            </g:evaluate>
+                            <g:sc_button id="clone_cart_request_list" onclick="${requestListAction}" label="View Cloned Requests" title="View Cloned Requests"/>
+						</td>
+						<td>
+							$[SP] Go to list of New Requests
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <j:if test='${pgr.state == "complete"}'>
+        <script>
+            var el = gel("completed_links");
+            el.style.display = "";
+            refreshNav();
+        </script>
+    </j:if>
+</g:ui_form>

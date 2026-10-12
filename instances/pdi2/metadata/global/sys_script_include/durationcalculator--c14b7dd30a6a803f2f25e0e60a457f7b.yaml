@@ -1,0 +1,97 @@
+_meta:
+  hash: e6c856085a4d8c5527a8eba34cee967204f426364f33d67b4bd357ad551805ba
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: glide.maint
+  sys_created_on: 2008-11-21 23:04:09
+  sys_id: c14b7dd30a6a803f2f25e0e60a457f7b
+  sys_mod_count: '290'
+  sys_package: 52a4f2378c5503100a22deb6dd2b4e2d
+  sys_scope: global
+  sys_update_name: sys_script_include_c14b7dd30a6a803f2f25e0e60a457f7b
+  sys_updated_by: maint
+  sys_updated_on: 2025-02-24 18:13:41
+access: package_private
+active: 'true'
+api_name: global.DurationCalculator
+caller_access: ''
+client_callable: 'false'
+description: |-
+  There are currently a few places in the system where the user needs to specify when something is due.
+  Often defining when something is due is really indicating the amount of work time that is required
+  for completion.
+
+  SLAs and Workflow tasks and approvals are places that require specifying amount of work or when something
+  is due.
+
+  Expressing how much work is required is often restricted by a calendar and time zone such that only part
+  of the day is considered when determining when the work is to be performed.  For example,
+
+  	Consider work that is due in 10 hours, but we are restricted to a business day
+  	schedule. The 10 hours of work can only be done at most 8 hours each day, so if
+  	this work starts at 10am on Monday, it is expected to complete, or be due, on Tuesday
+  	at 12pm:
+  	
+  	    10am-5pm on Monday (6 hours)
+  	  + 8am-12pm on Tuesday (4 hours)
+  	
+  Expressing when something is due or how much work is required may also need to be specified
+  as a 'relative duration'.  Examples of relative durations include:
+
+  	Next business day by 4pm
+  	2 business days by 10:30am
+  	
+  Determining the expected due date and time is relative to the starting time and the calendar
+  and time zone being used.  The calendar is used to determine what 'next business day' means since
+  it is the calendar that defines which days are valid days for work to be performed.  As an example,
+  consider 'Next business day by 4pm':
+
+  	If it is Monday at 12pm:
+  		Next business day by 4pm => Tuesday at 4pm
+  		
+  	If it is Friday at 2pm:
+  		Next business day by 4pm => the following Monday at 4pm
+  		
+  Note: Next business day is often defined with a starting time day (Next business day 
+  at 4pm if before 2pm).  This is used to indicate that if we are after 2pm on a business
+  day, then 'Next business day' really means 2 business days since today does not count.
+
+  Usage:
+
+     var dc = new DurationCalculator();
+
+     // Settings for calculations
+     // (optional: specify the Schedule to use for the following calculations)
+     dc.setSchedule(/* String cmn_schedule.sys_id */ scheduleId, /* String */ timezone);
+     // (optional: specify a different timezone to use)
+     dc.setTimeZone(/* String */ timezone);
+     // (optional: otherwise current time is assumed)
+     dc.setStartDateTime(/* GlideDateTime or UTC Time String */, start);
+
+     // Calculate end time, from number of seconds required in the schedule
+     dc.calcDuration(t);
+
+     // Calculate a relative duration end time, seconds until end time
+     // (evaluates the relative duration script - http://docs.servicenow.com/?context=Defining_Relative_Durations)
+     dc.calcRelativeDuration(/* String cmn_relative_duration.sys_id */ relativeDurationId);
+
+     // Calculate the number of seconds, in the specified schedule, between two times
+     // NB. returns 0 if endTime is before startTime
+     dc.calcScheduleDuration(/* GlideDateTime or UTC Time String */ startTime, /* GlideDateTime or UTC Time String */ endTime);
+
+     // retrieve results
+     // (the ending time, after t seconds)
+     var endTime = dc.getEndDateTime();
+     // (the number of seconds, inside the schedule)
+     var seconds = dc.getSeconds;
+     // (the total number of seconds until the endTime) 
+     var totalSeconds = dc.getTotalSeconds();
+
+     // other useful methods
+     var isAfter = dc.isAfter(/*GlideDateTime*/ dateTime, /*String hh:mm:ss*/ time);
+mobile_callable: 'false'
+name: DurationCalculator
+sandbox_callable: 'false'
+sys_name: DurationCalculator
+sys_policy: ''

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:ui_form>
+
+        <g:evaluate>
+            var table = RP.getWindowProperties().get('sysparm_table_name');
+            var gr = new GlideRecord('sys_dictionary');
+            gr.addQuery('name', table);
+            gr.addActiveQuery();
+            gr.query();
+        </g:evaluate>
+
+        <table width="100%">
+            <tr>
+                <td>${gs.getMessage('Statistic Name')}</td>
+                <td><input type="text" name="stat_name" id="stat_name" /></td>
+            </tr>
+            <tr>
+                <td>${gs.getMessage('Table')}</td>
+                <td><input type="text" name="table" id="table" value="${table}" readonly="true" /></td>
+            </tr>
+            <tr>
+                <td>${gs.getMessage('Statistic Types')}</td>
+                <td>
+                    <table>
+                        <tr>
+                            <td><input type="checkbox" value="ALL" name="stat_option" id="type_all" /><label for="type_all">ALL</label></td>
+                            <td><input type="checkbox" value="mcv" name="stat_option" id="type_mcv" /><label for="type_mcv">MCV</label></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" value="ndistinct" name="stat_option" id="type_ndistinct" /><label for="type_ndistinct">N-DISTINCT</label></td>
+                            <td><input type="checkbox" value="dependencies" name="stat_option" id="type_dependencies" /><label for="type_dependencies">DEPENDENCIES</label></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <g:ui_slushbucket name="columns" left_header="Available Columns" right_header="Selected Columns">
+                        <j:while test="${gr.next()}">
+                            <j:if test="${gr.element.toString() != ''}">
+                                <option value="${gr.element.toString()}"> ${gr.element.toString()} </option>
+                            </j:if>
+                        </j:while>
+                    </g:ui_slushbucket>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" align="right">
+                    <g:dialog_buttons_ok_cancel ok="saveStats(event);" />
+                </td>
+            </tr>
+        </table>
+    </g:ui_form>
+</j:jelly>

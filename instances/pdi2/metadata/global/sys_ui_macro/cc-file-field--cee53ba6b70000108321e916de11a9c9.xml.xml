@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:evaluate var="jvar_field" object="true" jelly="true">
+		var fields = jelly.jvar_cc_file_field;
+        fields;
+	</g:evaluate>
+	<g:evaluate var="jvar_field_name" object="true" jelly="true">
+			var prefix = "";
+			prefix = jelly.jvar_cc_prefix;
+			var name = (gs.nil(prefix) ? jelly.jvar_field.name : (prefix + "-" + jelly.jvar_field.name));
+			name;
+	</g:evaluate>
+	<g:evaluate var="jvar_b64_name" object="true" jelly="true">
+		var fieldName = jelly.jvar_field_name;
+		var b64Name = "b64-" + fieldName;
+		b64Name;
+	</g:evaluate>
+	<g:evaluate var="jvar_cc_click" object="true" jelly="true">
+		var id = jelly.jvar_field_name
+		var script = "document.getElementById('" + id + "').click()";
+		script;
+	</g:evaluate>
+	<g:evaluate var="jvar_display_id" object="true" jelly="true">
+		var id = jelly.jvar_field_name
+		var display = "fileName-" + id;
+		display;
+	</g:evaluate>
+	<g:evaluate var="jvar_onchange" object="true" jelly="true">
+		var displayId = jelly.jvar_display_id;
+		var onchange = "_cc_processFile('" + jelly.jvar_field_name + "', '" + displayId + "')"; 
+		onchange;
+	</g:evaluate>
+	<g:evaluate var="jvar_mandatory_fields" object="true" jelly="true">
+		var fields = {};
+		fields.className = "";
+	    var mandatory = typeof jelly.jvar_field.mandatory === 'undefined' || jelly.jvar_field.mandatory;
+		fields.mandatory = "false";
+		if (mandatory) {
+		    fields.className = gs.nil(jelly.jvar_field.defaultValue) ? "icon-required required-padding required-field" : "required-padding icon-required";
+		fields.mandatory = "true";
+		}
+		fields;
+	</g:evaluate>
+	<div>
+	<g:evaluate var="jvar_i18n_file_label" jelly="true">gs.getMessage("{0}", jelly.jvar_field.label);</g:evaluate>
+		<label for="${jvar_field_name}" aria-label="${jvar_i18n_file_label}">
+			<span class="${jvar_mandatory_fields.className}" id="label_span_icon_${jvar_field_name}" />
+			${jvar_i18n_file_label}:
+		</label>
+
+	<br/>
+	<input class="btn btn-default" type="button" onclick="${jvar_cc_click}" value="${gs.getMessage('Choose File')}" aria-label="${jvar_field.label}" aria-required="${jvar_mandatory_fields.mandatory}" />
+	<span id="${jvar_display_id}"></span>
+	<input class="hidden" type="file" name="${jvar_field.name}" id="${jvar_field_name}" onchange="updateMandatoryMarker('${jvar_field_name}', 'label_span_icon_${jvar_field_name}');${jvar_onchange}" />
+		<br/>
+	<input class="hidden" type="button" name="${jvar_b64_name}" id="${jvar_b64_name}" />
+		<br/>	
+	<script>
+	
+		function _cc_processFile(inputId, displayId) {
+		    var files = gel(inputId).files;
+			
+		    if ((!files || !files[0])) {
+			
+			} else {
+				fileName = files[0].name;
+				gel(displayId).textContent = " " + fileName;
+		
+				_cc_getBase64(files[0]).then(function(b64) {
+					gel("b64-" + inputId).value = b64;
+				});
+			}
+		
+			
+			
+		}
+		
+		function _cc_getBase64(file) {
+			return new Promise(function(resolve, reject) {
+
+				var reader = new FileReader();
+				reader.readAsDataURL(file);
+				reader.onload = function() {
+					var encoded = reader.result.replace(/^data:(.*;base64,)?/, '');
+					if ((encoded.length % 4) > 0) {
+						encoded += '='.repeat(4 - (encoded.length % 4));
+					}
+					resolve(encoded);
+				};
+				reader.onerror = function(error) {
+					reject(error);
+				};
+			});
+		}
+	</script>
+	</div>
+</j:jelly>

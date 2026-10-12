@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide">
+	<!-- This should only be executed in phase 2 and the output should not be cached -->
+	<g:evaluate var="jvar_path" jelly="true">
+		var path = ['/polarisberg_theme_variables.do?c=' + encodeURIComponent(sn_ui.PolarisUI.getThemeVariableCssCacheKey())];
+		if (jelly.jvar_exclude_dark === true || jelly.jvar_exclude_dark === 'true' || jelly.sysparm_exclude_dark === 'true')
+			path.push('exclude_dark=true');
+		
+		// set in polarisberg_output.xml
+		if (JSUtil.notNil(jelly.jvar_theme_id))
+			path.push('theme_id=' + jelly.jvar_theme_id);
+
+		// set in polarisberg_output.xml
+		if (JSUtil.notNil(jelly.jvar_theme_variant_id))
+			path.push('theme_variant_id=' + jelly.jvar_theme_variant_id);
+		
+		path.join('&amp;');
+	</g:evaluate>
+	<j:choose>
+		<j:when test="${sysparm_path_only}">
+			${jvar_path}
+		</j:when>
+		<j:otherwise>
+			<!-- This calls PolarisThemeVariableProcessor -->
+			<link type="text/css" rel="stylesheet" href="${jvar_path}" id="polarisberg_theme_variables"/>
+		</j:otherwise>
+	</j:choose>
+</j:jelly>

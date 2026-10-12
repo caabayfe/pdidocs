@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <!-- Checking if csrf security violation has happened or not. -->
+    <g:macro_invoke macro="$pwd_csrf_validation" />
+
+    <g:evaluate var="jvar_show_header_footer" jelly="true">
+        var showHeaderFooter = gs.getSession().getProperty('show_custom_header_footer');
+        gs.getSession().clearProperty('show_custom_header_footer');
+        showHeaderFooter;
+    </g:evaluate>
+
+    <g:evaluate var="sysparm_sys_user_id" jelly="true">
+        var userId = gs.getSession().getProperty('sysparm_sys_user_id');
+        if (!userId)
+        userId = jelly.sysparm_sys_user_id;
+        userId;
+    </g:evaluate>
+    <g:evaluate var="sysparm_request_id" jelly="true">
+        var requestId = gs.getSession().getProperty('sysparm_request_id');
+        if (!requestId)
+        requestId = jelly.sysparm_request_id;
+        requestId;
+    </g:evaluate>
+    }
+    <g:evaluate var="jvar_isAsync" jelly="true">
+        var isAsync = gs.getSession().getProperty('async_pwd_request') == 'true';
+        gs.getSession().clearProperty("async_pwd_request");
+        isAsync;
+    </g:evaluate>
+    <j:if test="${jvar_is_secure}">
+        <g:evaluate jelly="true">
+            var isCompleted = new SNC.PwdTrackingManager().requestSuccess(jelly.sysparm_request_id);
+            if(!isCompleted){
+            new SNC.PwdUtil().redirect('/$pwd_error.do?redirect_from_success');
+            }
+        </g:evaluate>
+        <g:evaluate var="sysparm_process_id" jelly="true">
+            new SNC.PwdTrackingManager().getProcessIdByRequestId(jelly.sysparm_request_id);
+        </g:evaluate>
+        <g:evaluate var="jvar_display_add_on" jelly="true">
+            var ret = '';
+            gr = new GlideRecord("pwd_process");
+            if (gr.get(jelly.sysparm_process_id)) {
+            ret = gr.getDisplayValue('user_experience_success');
+            }
+            ret;
+        </g:evaluate>
+        <!-- ACTUAL PAGE STARTS HERE -->
+        <main>
+            <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+            <g:include_script src="pwd_mobile.jsdbx" />
+            <g:macro_invoke macro="$pwd_reset_stylesheet" />
+            <j:choose>
+                <!-- Polarisberg (external/stylized auth) -->
+                <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+                    <!-- Box override via margin because the frame has padding baked in -->
+                    <div class="login-wrapper">
+                        <g:inline template="polarisberg_login_wrapper_svg.xml" />
+                        <div class="login-container">
+                            <div class="login-logo">
+                                <g:inline template="polarisberg_login_logo.xml" />
+                            </div>
+                            <!-- Process custom header -->
+                            <j:if test="${jvar_show_header_footer}">
+                                <!-- Pulled from from $pwd_process_flow (UI macro); we don't need the whole thing -->
+                                <j:if test="${!empty(sysparm_process_id)}">
+                                    <g:evaluate var="jvar_custom_header_name" jelly="true">
+                                        var customHeaderMacroName;
+                                        var p = new SNC.PwdProcess(jelly.sysparm_process_id);
+                                        if (p.exists())
+                                        customHeaderMacroName = p.getHeaderMacroName();
+                                        customHeaderMacroName;
+                                    </g:evaluate>
+                                    <j:if test="${!empty(jvar_custom_header_name)}">
+                                        <div class="login-card login-card-custom-header">
+                                            <g:macro_invoke macro="${jvar_custom_header_name}" stage="1" />
+                                        </div>
+                                    </j:if>
+                                </j:if>
+                            </j:if>
+                            <div class="login-card ${jvar_hide_illustrations}">
+                                <div class="login-form">
+                                    <ol class="login-forgot-password-steps" role="list">
+                                        <li>
+                                            <span class="step-circle" aria-hidden="true">1</span>
+                                            <span class="step-label">Identify</span>
+                                        </li>
+                                        <li class="stepper-separator" aria-hidden="true"></li>
+                                        <li>
+                                            <span class="step-circle" aria-hidden="true">2</span>
+                                            <span class="step-label">Verify</span>
+                                        </li>
+                                        <li class="stepper-separator" aria-hidden="true"></li>
+                                        <li class="current" aria-current="step">
+                                            <span class="step-circle" aria-hidden="true">3</span>
+                                            <span class="step-label">Reset</span>
+                                        </li>
+                                    </ol>
+                                    <j:if test="${!jvar_isAsync}">
+                                        <h1 class="pwd-title">${gs.getMessage("Account Unlock Success")}</h1>
+                                        <h2 class="pwd-subtitle">${gs.getMessage('Account was unlocked successfully.')}</h2>
+                                    </j:if>
+                                    <j:if test="${jvar_isAsync}">
+                                        <h1 class="pwd-title">${gs.getMessage("We have initiated your account unlock request. You will get a confirmation once the request is completed.")}</h1>
+                                    </j:if>
+                                    <j:if test="${!empty(jvar_display_add_on)}">
+                                        <g:macro_invoke macro="${jvar_display_add_on}" />
+                                    </j:if>
+                                </div>
+                                <j:if test="${gs.getProperty('glide.ui.branding.works_with.is_visible', 'false') == 'true'}">
+                                    <g:macro_invoke macro="ShowSNBrandTaglineOnLoginPage" />
+                                </j:if>
+                            </div>
+                            <!-- Process custom footer -->
+                            <j:if test="${jvar_show_header_footer}">
+                                <g:macro_invoke macro="$pwd_process_footer" stage="1" process="${sysparm_process_id}" use_polaris="true" />
+                            </j:if>
+                        </div>
+                    </div>
+                </j:when>
+                <!-- Heisenberg -->
+                <j:otherwise>
+                    <g:macro_invoke macro="$pwd_process_flow" stage="4" process="${sysparm_process_id}" show_custom_header="${jvar_show_header_footer}" />
+                    <center>
+                        <div class="pwd-notification-box" style="text-align:center">
+                            <i class="icon-success pwd-icon pwd-icon-success" />
+                            <j:if test="${!jvar_isAsync}">
+                                <h1 class="pwd-title">${gs.getMessage("Account Unlock Success")}</h1>
+                                <h2 class="pwd-subtitle">${gs.getMessage('Account was unlocked successfully.')}</h2>
+                            </j:if>
+                            <j:if test="${jvar_isAsync}">
+                                <h1 class="pwd-title">${gs.getMessage("We have initiated your account unlock request. You will get a confirmation once the request is completed.")}</h1>
+                            </j:if>
+                            <j:if test="${!empty(jvar_display_add_on)}">
+                                <div class="pwd-additional-info">
+                                    <g:macro_invoke macro="${jvar_display_add_on}" />
+                                </div>
+                            </j:if>
+                        </div>
+                    </center>
+                    <j:if test="${jvar_show_header_footer}">
+                        <g:macro_invoke macro="$pwd_process_footer" stage="4" process="${sysparm_process_id}" />
+                    </j:if>
+                </j:otherwise>
+            </j:choose>
+        </main>
+    </j:if>
+</j:jelly>

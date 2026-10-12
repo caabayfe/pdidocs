@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+                <j:if test="${ListProperties.hasListMechanic()}">
+                    <!-- When glide.ui.related_list_mechanic property set to false, don't show list mechanic for related list-->
+                    <g:set_if var="jvar_show_list_mechanic" test="${ListProperties.isRelatedList() == true &amp;&amp; gs.getProperty('glide.ui.related_list_mechanic', 'true') == 'false'}"
+                    true="false"
+                    false="true" />
+
+                    <j:set var="jvar_dialog_title" value="${gs.getMessage('Personalize List Columns')}" />
+
+                    <j:if test="${ListProperties.isUserList() == true}" >
+                        <j:set var="jvar_gear_image" value="images/gear_customize.gifx"/>
+                        <j:set var="jvar_gear_icon" value="icon-cog-changes btn btn-icon table-btn-lg"/>
+                        <j:set var="jvar_gear_title" value="${gs.getMessage('Update Personalized List')}"/>
+                    </j:if>
+                    <j:if test="${ListProperties.isUserList() != true}" >
+                        <j:set var="jvar_gear_image" value="images/gear.gifx?v=2"/>
+                        <j:set var="jvar_gear_title" value="${gs.getMessage('Personalize List')}"/>
+                        <g:if_polaris>
+                            <g:then>
+                                <g2:set_if var="jvar_button_size_class" test="${jvar_is_report_or_portal}" true="btn-sm" false=" " />
+                                <j:set var="jvar_gear_icon" value="icon-cog btn btn-icon $[jvar_button_size_class]"/>
+                            </g:then>
+                            <g:else>
+                                <j:set var="jvar_gear_icon" value="icon-cog btn btn-icon table-btn-lg"/>
+                            </g:else>
+                        </g:if_polaris>
+                    </j:if>
+                    <j:if test="${jvar_show_list_mechanic == true}">
+                        <j:if test="${GlideMobileExtensions.getDeviceType() != 'doctype'}">
+                            <a data-type="list_mechanic2_open"
+                            data-list_id="$[sysparm_list_id]"
+                            data-table='${ListProperties.getTable()}'
+                            data-parent-id='$[ListProperties.getParentID()]'
+                            data-parent-table='${ListProperties.getParentTable()}'
+                            data-view='${JS,HTML:sysparm_view}'
+                            data-relationship='${ListProperties.getRelationship()}'
+                            data-title='${JS,HTML:jvar_dialog_title}'
+                            role="button"
+                            tabindex='0'>
+                                <img src="${jvar_gear_image}"
+                                alt="${JS,HTML:jvar_gear_title}"
+                                title="${JS,HTML:jvar_gear_title}"/>
+                            </a>
+                        </j:if>
+                        <j:if test="${GlideMobileExtensions.getDeviceType() == 'doctype'}">
+                            <i data-type="list_mechanic2_open"
+                            data-list_id="$[sysparm_list_id]"
+                            data-table='${ListProperties.getTable()}'
+                            data-parent-id='$[ListProperties.getParentID()]'
+                            data-parent-table='${ListProperties.getParentTable()}'
+                            data-view='${JS,HTML:sysparm_view}'
+                            data-relationship='${ListProperties.getRelationship()}'
+                            data-title='${JS,HTML:jvar_dialog_title}'
+                            class="${jvar_gear_icon}"
+                            title="${JS,HTML:jvar_gear_title}"
+                            aria-label="${JS,HTML:jvar_gear_title}"
+                            role="button"
+                            tabindex='0'>
+                                <span class="sr-only">
+                                ${JS,HTML:jvar_gear_title}
+                                </span>
+                            </i>
+                        </j:if>
+                    </j:if>
+                </j:if>
+</j:jelly>

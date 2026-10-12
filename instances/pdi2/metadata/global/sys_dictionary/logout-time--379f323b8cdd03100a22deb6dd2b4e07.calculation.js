@@ -1,0 +1,1 @@
+(function calculatedSessionLogoutTime(current) {         if (current.logout_time.nil() && !current.session_token_expiry_time.nil() &&          new GlideDateTime().after(new GlideDateTime(current.session_token_expiry_time))) {             return current.session_token_expiry_time;         }         return current.logout_time;         })(current);

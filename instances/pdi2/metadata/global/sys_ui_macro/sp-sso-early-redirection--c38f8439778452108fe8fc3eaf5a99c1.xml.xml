@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null">
+
+    <g2:evaluate var="jvar_default_idp" jelly="true">
+        var default_idp = gs.getProperty('glide.authenticate.sso.redirect.idp', '');
+        var isPortaAuthConfigured = spGR.getValue('enable_portal_authentication') == '1'
+		if (isPortaAuthConfigured) {
+			var localLoginEnabled = spGR.getValue('enable_local_login') == '1';
+			var idpListRaw = spGR.getValue('portal_identity_providers');
+			var idpList = [];
+			if (idpListRaw)
+				idpList = idpListRaw.split(',');
+
+			if (localLoginEnabled $[AND] idpList.length == 0) //Only local login enabled
+				default_idp = '';
+			if (idpList.length == 1)
+				default_idp = idpList[0];
+		}
+
+        var customURL = gs.getProperty('glide.customurl.enabled', "false");
+		var multisso_enabled = gs.getProperty("glide.authenticate.multisso.enabled", "false");
+		if (customURL == "true" $[AND]  multisso_enabled == "true") {
+            var idp = SNC.CustomURLSPUtil.getAutoRedirectIDPForCustomURLWithPortal();
+            if(GlideStringUtil.notNil(idp))
+                default_idp = idp;
+        }
+
+        default_idp;
+    </g2:evaluate>
+
+    <j2:if test="$[jvar_default_idp != '']">
+        <g2:evaluate>
+            var gs_nav_to = session.getProperty("nav_to");
+            var pageURI = new GlideSPUtil().getPageUri();
+            session.putProperty("nav_to", null);
+            if (pageURI) {
+                session.putProperty("is_direct_redirect", "true");
+                session.putProperty("starting_page", pageURI);
+            }
+            else if (!session.getProperty("starting_page") $[AND] gs_nav_to)
+                session.putProperty("starting_page", gs_nav_to);
+        </g2:evaluate>
+
+        <html>
+            <head>
+                <script>
+                    var hashValue = window.location.hash.substring(1);
+                    if (hashValue)
+                        window.sessionStorage.setItem('sn.sp.url_before_SSO', window.location.href);
+                        window.location = "/login_with_sso.do?glide_sso_id=$[jvar_default_idp]";
+                </script>
+            </head>
+            <body></body>
+        </html>
+    </j2:if>
+</j:jelly>

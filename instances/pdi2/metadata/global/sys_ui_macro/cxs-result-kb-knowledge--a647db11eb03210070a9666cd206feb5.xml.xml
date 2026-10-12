@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+     <g:evaluate jelly="true">
+		function toInt(value) {
+			var parsedValue = parseInt(value, 10);
+			if (!isNaN(parsedValue))
+				return parsedValue;
+			return 0;
+		};
+
+        var is_doctype = jelly.jvar_cxs_doctype;
+        var index = jelly.jvar_cxs_index;
+
+        var docIdArray = jelly.jvar_cxs_result.id.split(":");
+        var recordId = docIdArray[1];
+
+        var title = jelly.jvar_cxs_result.title;
+        title = GlideStringUtil.escapeHTML(title);
+        var snippet = jelly.jvar_cxs_result.snippet;
+        var itemLink = jelly.jvar_cxs_result.link + "${AMP}sysparm_stack=no${AMP}sysparm_context=popup${AMP}sysparm_no_create=true${AMP}sysparm_no_update=true${AMP}sysparm_no_info=true${AMP}sysparm_no_history=true${AMP}sysparm_no_suggest=true${AMP}sysparm_no_create_incident=true${AMP}sysparm_no_rating=true";
+        var knowledgeBase = GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.knowledgeBase);
+        var rating = toInt(jelly.jvar_cxs_result.meta.rating);
+        var viewCount = toInt(jelly.jvar_cxs_result.meta.viewCount);
+        var number = GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.number);
+        var author = GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.author);
+        var published = GlideStringUtil.escapeHTML(jelly.jvar_cxs_result.meta.published);
+        var score = parseInt(jelly.jvar_cxs_result.meta.score, 10).toString();
+        var publication = jelly.jvar_cxs_result.meta.publication;
+        var publication_style = JSUtil.nil(publication) ? "display:none" : "";
+        var category = jelly.jvar_cxs_result.meta.category;
+        var dir = GlideI18NStyle.getDirection();
+        var catDelimiter = (dir == 'ltr') ? " &gt; " : " &lt; ";
+        var categoryStyle = 'display:none';
+        if(!JSUtil.nil(jelly.jvar_cxs_result.meta.parentCategories)) {
+            categoryStyle = '';
+            category = jelly.jvar_cxs_result.meta.parentCategories.reverse().join(catDelimiter);
+        }
+		category = GlideStringUtil.escapeHTML(category);
+
+        var tag = jelly.jvar_cxs_result.tag;
+        var tag_style = JSUtil.nil(tag) ? "display:none" : '';
+        var pinned_class = (jelly.jvar_cxs_result.meta.source == "pinned" ? "pinned" : "");
+        var pinnedStyle = (jelly.jvar_cxs_result.meta.source == "pinned" ? "" : "display:none");
+		
+        var thisHelpedActionLabel = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.this_helped) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.this_helped).actionLabel : '';
+        var thisHelpedActionValue = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.this_helped) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.this_helped).actionValue : '';
+        var dataType = jelly.jvar_cxs_result.meta.attachmentType;
+
+        if (jelly.jvar_cxs_result.meta.direct)
+            itemLink += jelly.AMP + "view=true";
+
+        var lastModified = jelly.jvar_cxs_result.meta.modified;
+        if (lastModified){
+            var gdt = new GlideDateTime();
+            gdt.setValue(lastModified);
+            lastModified = gdt.getDate().getDisplayValue();
+        }
+
+        var show = {
+            "knowledgeBase": (gs.getProperty("glide.knowman.search.show_knowledgebase", "true") == "true" ? true : false),
+            "rating": (gs.getProperty("glide.knowman.search.show_rating", "true") == "true" ? true : false),
+            "viewCount": (gs.getProperty("glide.knowman.search.show_view_count", "true") == "true" ? true : false),
+            "category": (gs.getProperty("glide.knowman.search.show_category", "true") == "true" ? true : false),
+            "number": (gs.getProperty("glide.knowman.search.show_article_number", "true") == "true" ? true : false),
+            "author": (gs.getProperty("glide.knowman.search.show_author", "true") == "true" ? true : false),
+            "published": (gs.getProperty("glide.knowman.search.show_published", "true") == "true" ? true : false),
+            "relevance": (gs.getProperty("glide.knowman.search.show_relevancy", "true") == "true" ? true : false),
+            "lastModified": (gs.getProperty("glide.knowman.search.show_last_modified", "true") == "true" ? true : false)
+        };
+
+        if(JSUtil.nil(lastModified))
+            show.lastModified = false;
+
+		var ratingCounter = 0;
+		var ratingDesc = "";
+
+		if(JSUtil.nil(rating))
+			rating = 0;
+
+		rating = Math.round(rating);
+		if(rating > 0)
+			ratingDesc = gs.getMessage("{0} star rating", (rating + ""));
+		else
+			ratingDesc = gs.getMessage("No rating");
+		if(JSUtil.nil(viewCount))
+			show.viewCount = false;
+		else {
+			if(viewCount == 0)
+				show.viewCount = false;
+			else {
+				if(viewCount == 1)
+					strViewCount = gs.getMessage("{0} View", (viewCount + ""));
+				else
+					strViewCount = gs.getMessage("{0} Views", (viewCount + ""));
+			}
+		}
+    </g:evaluate>
+
+    <g:evaluate var="jvar_helped" jelly="true">
+        var feedbackClass = "cxs_hide_pill";
+
+        if (jelly.jvar_cxs_result.meta.relevance ${AMP}${AMP} jelly.jvar_cxs_result.meta.relevance[jelly.jvar_cxs_action_value])
+            feedbackClass = "cxs_show_pill";
+
+        feedbackClass;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_attached" jelly="true">
+        var attachClass = "cxs_hide_pill";
+        if (jelly.jvar_cxs_result.meta.relevance ${AMP}${AMP} jelly.jvar_cxs_result.meta.relevance.attach)
+            attachClass = "cxs_show_pill";
+
+        attachClass;
+    </g:evaluate>
+
+    <div class="${recordId} ${pinned_class}">
+        <h4 class="cxs_result_title">
+            <a data-index="${index}" class="cxs_result" href="${itemLink}" data-type="${dataType}">${title}</a>
+        </h4>
+        <div class="cxs_meta_row">
+            <span class="breadcrumbs">
+                <span style="${publication_style}">${publication} ></span>
+                <j:if test="${show.knowledgeBase}"><span>${gs.getMessage('Knowledge Base')}: ${HTML:knowledgeBase}</span></j:if>
+                <j:if test="${show.knowledgeBase &amp;&amp; show.category}"><span style="${categoryStyle}" role="separator" aria-orientation="vertical">|</span></j:if>
+                <j:if test="${show.category}"><span style="${categoryStyle}">${gs.getMessage("Category")}: ${category}</span></j:if>
+            </span>
+        </div>
+        <div class="cxs_meta_row">
+            <j:choose>
+                <j:when test="${is_doctype =='true'}">
+                    <ul class="cxs_article_info">
+
+                        <j:if test="${show.number}"><li><i class="icon-circle-solid" aria-hidden="true"></i>${SP}${number}</li></j:if>
+                        <j:if test="${show.author}"><li><i class="icon-user" aria-hidden="true"></i>${SP}${gs.getMessage("Author")}: ${author}</li></j:if>
+                        <j:if test = "${show.viewCount}"><li><i class="icon-circle-solid" aria-hidden = "true"></i>${SP}${strViewCount}</li></j:if>
+
+                        <j:if test="${show.lastModified}"><li><i class="icon-calendar" aria-hidden="true"></i>${SP}${gs.getMessage("Last modified")}: ${lastModified}</li>
+                        </j:if>
+
+                        <j:if test="${show.published}"><li><i class="icon-calendar" aria-hidden = "true"></i>${SP}${gs.getMessage("Published")}: ${published}</li>
+                        </j:if>
+
+                        <j:if test="${show.relevance}"><li><i class="icon-circle-solid" aria-hidden = "true"></i>${SP}${gs.getMessage("Relevance")}: ${score}</li>
+                        </j:if>
+
+                        <j:if test = "${show.rating}">
+							<li ><i class="icon-circle-solid" aria-hidden="true"></i><span class="cxs_rating_container" role='presentation'>${SP}${gs.getMessage("Rating")}: <span class='sr-only' role='presentation'>${ratingDesc}</span>
+									<div class="cxs_rating_readonly" aria-hidden = "true">
+										<j:while test = "${ratingCounter++ &lt; 5}">
+											<j:if test = "${ratingCounter &lt;= rating}">
+												<span aria-hidden = "true" class='active-star'>&#9733;</span>
+											</j:if>
+											<j:if test = "${!(ratingCounter &lt;= rating)}">
+												<span aria-hidden = "true" class='inactive-star'>&#9733;</span>
+											</j:if>
+										</j:while>
+									</div>
+								</span>
+							</li>
+                        </j:if>
+                        <li style="${tag_style}"><i class="icon-label"></i>${SP}${gs.getMessage("Tagged as")}: ${tag}</li>
+                    </ul>
+                </j:when>
+                <j:otherwise>
+                    <ul class="cxs_article_info">
+                        <j:if test="${show.number}"><li>${AMP}bull;${gs.getMessage("Number")}: ${number}${SP}</li></j:if>
+                        <j:if test="${show.author}"><li>${AMP}bull;${SP}${gs.getMessage("Author")}: ${author}${SP}</li></j:if>
+                        <j:if test = "${show.viewCount}"><li>${AMP}bull;${gs.getMessage("Viewcount")}: ${viewCount + ""}${SP}</li></j:if>
+                        <j:if test="${show.lastModified}"><li>${AMP}bull;${SP}${gs.getMessage("Last modified")}: ${lastModified}${SP}</li></j:if>
+                        <j:if test="${show.published}"><li>${AMP}bull;${SP}${gs.getMessage("Published")}: ${published}${SP}</li></j:if>
+                        <j:if test="${show.relevance}"><li>${AMP}bull;${SP}${gs.getMessage("Relevance")}: ${score}${SP}</li></j:if>
+                        <j:if test = "${show.rating}"><li>${AMP}bull;${gs.getMessage("Rating")}: ${rating + ""}${SP}</li></j:if>
+                        <li style="${tag_style}">${AMP}bull;${SP}${gs.getMessage("Tagged as")}: ${tag}${SP}</li>
+                    </ul>
+                </j:otherwise>
+            </j:choose>
+        </div>
+        <div>${snippet}</div>
+        <div class="cxs_result_action">
+            <span class="cxs_pill a11y_cxs_pill cxs_pinned" style="${pinnedStyle}">${gs.getMessage("Pinned")}</span>
+            <span class="cxs_pill a11y_cxs_pill cxs_helped ${jvar_helped}" data-index="${index}" action-value="${thisHelpedActionValue}">
+                ${thisHelpedActionLabel}<button class="cxs_close_button" id="cxs_result_action" data-index="${index}" action-value="${thisHelpedActionValue}" aria-label="${thisHelpedActionLabel}">
+                    <j:choose>
+                        <j:when test="${is_doctype == 'true'}">
+                            <div class="cxs_close_icon icon-button icon-cross" aria-hidden = "true" />
+                        </j:when>
+                        <j:otherwise>
+                            <div class="x_icon_cross" aria-hidden = "true" >X</div>
+                        </j:otherwise>
+                    </j:choose>
+                </button>
+            </span>
+            <span class="cxs_pill a11y_cxs_pill cxs_attached ${jvar_attached}" data-index="${index}" action-value="attach">
+                ${gs.getMessage("Attached")}<button class="cxs_close_button" id="cxs_attached" data-index="${index}" action-value="attach" aria-label = "${gs.getMessage('Attached')}" >
+                    <j:choose>
+                        <j:when test="${is_doctype == 'true'}">
+                            <div class="cxs_close_icon icon-button icon-cross" aria-hidden = "true" />
+                        </j:when>
+                        <j:otherwise>
+                            <div class="x_icon_cross" aria-hidden = "true">X</div>
+                        </j:otherwise>
+                    </j:choose>
+                </button>
+            </span>
+        </div>
+    </div>
+</j:jelly>

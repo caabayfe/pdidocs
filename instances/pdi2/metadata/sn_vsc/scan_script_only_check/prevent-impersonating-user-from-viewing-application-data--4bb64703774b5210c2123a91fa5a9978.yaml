@@ -1,0 +1,83 @@
+_meta:
+  hash: 3e335ee7c27fc16e62fb241f535b1fd0149330f776475089ba2fbe703bfa0a42
+  hash_version: 1
+  scope: sn_vsc
+  sys_class_name: scan_script_only_check
+  sys_created_by: admin
+  sys_created_on: 2025-01-17 01:58:04
+  sys_id: 4bb64703774b5210c2123a91fa5a9978
+  sys_mod_count: '8'
+  sys_package: a51d46e3f2014110366b10017c5ba675
+  sys_scope: a51d46e3f2014110366b10017c5ba675
+  sys_update_name: scan_script_only_check_4bb64703774b5210c2123a91fa5a9978
+  sys_updated_by: admin
+  sys_updated_on: 2025-08-04 21:17:57
+active: 'true'
+category: security
+description: |-
+  Use system properties to prevent an impersonating user from viewing application data.
+
+  Prevent admin level from accessing the application specific data belonging to that user when impersonating an account. This permission can be set at the application level by creating a system property specific to the application.
+
+  These system properties use the <scope>.impersonateCheck naming format (for example sn_hr_core.impersonateCheck). Create a system property with a value of true to prevent users from accessing the application-specific data belonging to another user when impersonating an account.
+
+  NOTE: Not all applications are designed to work in this configuration or have a System Properties [sys_properties] record for this purpose. The following scopes are configured to work with this property.
+
+  sn_opp_market
+  sn_jny
+  sn_imt_vaccine
+  sn_imt_health_test
+  sn_hr_core
+  sn_egd_goals
+  sn_egd_core
+  sn_egd_act
+  sn_em
+  sn_talent_aia
+
+  A value of "false" for these properties allows an admin level user to impersonate another user and access application data with the impersonated user's access. This may be undesirable or allow for unauthorized data access in specific application contexts.
+documentation_url: /api/now/v1/context_doc_url/sc-prevent-impersonating-user-from-viewing-application-data
+finding_type: scan_finding
+name: Prevent Impersonating User from Viewing Application Data
+priority: '4'
+resolution_details: |-
+  For each application with the <scope>.impersonateCheck property in the System Properties [sys_properties] table, ensure the property value is set to true.
+
+  These properties can only be modified by the scoped administrator for the specific application.
+
+  Use this script to find which properties need to be updated or created on the instance:
+
+  ***
+
+      var properties = [
+          'sn_opp_market.impersonateCheck',
+          'sn_jny.impersonateCheck',
+          'sn_imt_vaccine.impersonateCheck',
+          'sn_imt_health_test.impersonateCheck',
+          'sn_hr_core.impersonateCheck',
+          'sn_egd_goals.impersonateCheck',
+          'sn_egd_core.impersonateCheck',
+          'sn_egd_act.impersonateCheck',
+   'sn_em.impersonateCheck',
+   'sn_talent_aia.impersonateCheck'
+      ];
+
+      var pm = new GlidePluginManager();
+
+      for (var i = 0; i < properties.length; i++) {
+          var property = properties[i];
+          var application = property.split('.')[0];
+          var propertyValue = gs.getProperty(property, 'false');
+
+          if (pm.isActive(application) && propertyValue.toLowerCase() != 'true') {
+              gs.print(property);
+          }
+      }
+
+  ***
+run_condition: ''
+score_max: '100'
+score_min: '0'
+score_scale: '1'
+short_description: Prevent Impersonating User from Viewing Application Data
+sys_name: Prevent Impersonating User from Viewing Application Data
+sys_policy: read

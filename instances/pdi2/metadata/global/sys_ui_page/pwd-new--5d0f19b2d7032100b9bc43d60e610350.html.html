@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:include_script src="$pwd_util.jsdbx" />
+
+    <!--
+      Request could come from pwd_verify page or link clicking directly.
+      For request from verify page, we get parameters from session, otherwise we get them from url
+    -->
+    <g:evaluate var="sysparm_sys_user_id" jelly="true">
+        var userId = gs.getSession().getProperty('sysparm_sys_user_id');
+        if (!userId)
+        userId = jelly.sysparm_id;
+        userId;
+    </g:evaluate>
+
+    <g:evaluate var="sysparm_request_id" jelly="true">
+        var requestId = gs.getSession().getProperty('sysparm_request_id');
+        if (!requestId) {
+        requestId = jelly.sysparm_request_id;
+        gs.getSession().putProperty('sysparm_request_id', requestId);
+        }
+        requestId;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_gr_request" object="true" jelly="true">
+        var gr = new GlideRecord("pwd_reset_request");
+        gr.get(jelly.sysparm_request_id);
+        gr;
+    </g:evaluate>
+    <g:evaluate var="sysparm_process_id" jelly="true">
+        jelly.jvar_gr_request.process;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_gr_process" object="true" jelly="true">
+        var gr = new GlideRecord("pwd_process");
+        gr.get(jelly.sysparm_process_id);
+        gr;
+    </g:evaluate>
+    <g:evaluate var="jvar_redirect_url" object="true" jelly="true">
+        var redirect_url = gs.getSession().getProperty('pwd_redirect_url');
+        if(!redirect_url &amp;&amp; jelly.pwd_redirect_url) {
+        redirect_url = PwdResetHelper.getAllowedRedirectUrl(GlideSecurityUtils.cleanURL(jelly.pwd_redirect_url), jelly.sysparm_process_id);
+        }
+        redirect_url;
+    </g:evaluate>
+    <g:evaluate var="jvar_is_secure" jelly="true">
+        var isSecure = new global.PwdResetStageHandler().isResetSecure(jelly.jvar_gr_request, jelly.jvar_gr_process.email_password_reset_url, jelly.sysparm_sys_user_id, jelly.sysparm_token);
+        <!--  If not secure, redirect the page to the error page. -->
+        if(!isSecure) {
+        new SNC.PwdUtil().redirect('/$pwd_error.do?sysparm_error='+ encodeURIComponent("unauthorized_access"));
+        }
+        isSecure;
+    </g:evaluate>
+    <!--
+      Once security is clear, then create a new token.
+    -->
+    <g:evaluate var="jvar_csrf_token" jelly="true">
+        new SNC.PwdSecurityManager().generateSecureToken();
+    </g:evaluate>
+    <!--
+       End of Security check.
+    -->
+    <!--
+    common client script for CSRF handling on the client side.
+    -->
+    <g:include_script src="pwd_csrf_common_ui_script.jsdbx" />
+    <j:if test="${jvar_is_secure}">
+
+        <g:evaluate jelly="true">
+            var found = new SNC.PwdTrackingManager().requestVerified(jelly.sysparm_request_id);
+            // if the request is not found, then redirect the page to the error page.
+            if(!found) {
+            new SNC.PwdUtil().redirect('/$pwd_error.do?sysparm_error='+ encodeURIComponent("not_found"));
+            }
+        </g:evaluate>
+        <g:evaluate var="jvar_done_button_redrect_url" jelly="true">
+            new global.PwdResetStageHandler().getDoneButtonRedirectURL(jelly.jvar_gr_process);
+        </g:evaluate>
+        <g:set_if var="jvar_page" test="${empty(sysparm_page_text)}" true="${gs.getSession().getProperty('sysparm_page_text')}" false="${sysparm_page_text}" />
+        <g:include_script src="PwdUserUnlockManager.jsdbx" />
+        <g:include_script src="$PwdWfManager.jsdbx" />
+        <g:evaluate var="sysparm_lock_state" jelly="true">
+            jelly.jvar_gr_request.lock_state;
+        </g:evaluate>
+        <g:evaluate var="sysparm_accepts_password" jelly="true">
+            jelly.jvar_gr_process.cred_store.type.use_flow != true || jelly.jvar_gr_process.cred_store.type.password_delivery_mechanism == '' || jelly.jvar_gr_process.cred_store.type.password_delivery_mechanism == '0';
+        </g:evaluate>
+        <g:evaluate var="sysparm_get_lock_state_subflow_mapped" jelly="true">
+            var credStoreType = jelly.jvar_gr_process.cred_store.type;
+            var isGetLockStateMapped = credStoreType.use_flow != true || credStoreType.get_lock_state_flow != '';
+            isGetLockStateMapped;
+        </g:evaluate>
+        <g:evaluate var="sysparm_process_supports_unlock" jelly="true">
+            jelly.jvar_gr_process.unlock_account;
+        </g:evaluate>
+        <g:evaluate var="sysparm_process_supports_reset" jelly="true">
+            jelly.jvar_gr_process.reset;
+        </g:evaluate>
+        <g:evaluate var="sysparm_auto_gen_password" jelly="true">
+            new SNC.PwdProcessManager().isAutoGeneratPassword(jelly.sysparm_process_id);
+        </g:evaluate>
+        <g:evaluate var="sysparm_unlock" jelly="true">
+            var unlock;
+            if(jelly.jvar_gr_process.cred_store.type.use_flow)
+            unlock = jelly.jvar_gr_process.cred_store.type.unlock_user_flow;
+            else
+            unlock = jelly.jvar_gr_process.cred_store.type.unlock_user_wf;
+            unlock;
+        </g:evaluate>
+        <g:evaluate var="sysparm_enable_password_policy" jelly="true">
+            new SNC.PwdCredentialStoreManager().getEnablePasswordPolicy(jelly.sysparm_process_id);
+        </g:evaluate>
+        <j:if test="${sysparm_enable_password_policy == 'true' &amp;&amp; sysparm_process_supports_reset &amp;&amp; sysparm_accepts_password}">
+            <g:evaluate var="sysparm_password_policy_id" jelly="true">
+                var password_policy_id = new SNC.PwdCredentialStoreManager().getPasswordPolicyId(jelly.sysparm_process_id);
+                password_policy_id;
+            </g:evaluate>
+            <g:evaluate var="sysparm_password_policy_rule" jelly="true">
+                var rule = JSON.parse(new global.PwdResetStageHandler().getPasswordPolicyRuleHints(jelly.sysparm_process_id));
+                if (!rule)
+                new SNC.PwdUtil().redirect('/$pwd_error.do?sysparm_error=' + encodeURIComponent("password_policy_not_found"));
+                var rulesWithRegex = rule.rulesWithRegex;
+                var rulesWithoutRegex = rule.rulesWithoutRegex;
+                JSON.stringify(rulesWithRegex);
+            </g:evaluate>
+        </j:if>
+        <!-- ACTUAL PAGE STARTS HERE -->
+        <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+        <g:include_script src="pwd_mobile.jsdbx" />
+        <g:macro_invoke macro="$pwd_error_message" error_message="" />
+        <span class="sr-only" id="page_label">${gs.getMessage('ServiceNow Password Reset, Reset Page')}</span>
+        <g:evaluate var="jvar_show_header_footer" jelly="true">
+            var showHeaderFooter = gs.getSession().getProperty('show_custom_header_footer');
+            showHeaderFooter;
+        </g:evaluate>
+
+        <main>
+            <j:choose>
+                <g:macro_invoke macro="$pwd_reset_stylesheet" />
+                <!-- Polarisberg (external/stylized auth) -->
+                <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+                    <!-- Box override via margin because the frame has padding baked in -->
+                    <div id="$pwd_new" class="login-wrapper" style="margin: -5px;">
+                        <g:inline template="polarisberg_login_wrapper_svg.xml" />
+
+                        <div class="login-container">
+                            <div class="login-logo">
+                                <g:inline template="polarisberg_login_logo.xml" />
+                            </div>
+                            <!-- Process custom header -->
+                            <j:if test="${jvar_show_header_footer}">
+                                <!-- Pulled from from $pwd_process_flow (UI macro); we don't need the whole thing -->
+                                <j:if test="${!empty(sysparm_process_id)}">
+                                    <g:evaluate var="jvar_custom_header_name" jelly="true">
+                                        var customHeaderMacroName;
+                                        var p = new SNC.PwdProcess(jelly.sysparm_process_id);
+                                        if (p.exists())
+                                        customHeaderMacroName = p.getHeaderMacroName();
+                                        customHeaderMacroName;
+                                    </g:evaluate>
+                                    <j:if test="${!empty(jvar_custom_header_name)}">
+                                        <div class="login-card login-card-custom-header">
+                                            <g:macro_invoke macro="${jvar_custom_header_name}" stage="1" />
+                                        </div>
+                                    </j:if>
+                                </j:if>
+                            </j:if>
+                            <div class="login-card ${jvar_hide_illustrations}">
+                                <div class="login-form">
+                                    <ol class="login-forgot-password-steps" role="list">
+                                        <li>
+                                            <span class="step-circle" aria-hidden="true">1</span>
+                                            <span class="step-label">Identify</span>
+                                        </li>
+                                        <li class="stepper-separator" aria-hidden="true"></li>
+                                        <li>
+                                            <span class="step-circle" aria-hidden="true">2</span>
+                                            <span class="step-label">Verify</span>
+                                        </li>
+                                        <li class="stepper-separator" aria-hidden="true"></li>
+                                        <li class="current" aria-current="step">
+                                            <span class="step-circle" aria-hidden="true">3</span>
+                                            <span class="step-label">Reset</span>
+                                        </li>
+                                    </ol>
+
+                                    <input type="hidden" id="password_reset.wf.refresh_rate" value="${gs.getProperty('password_reset.wf.refresh_rate');}" />
+                                    <input type="hidden" id="password_reset.wf.timeout" value="${gs.getProperty('password_reset.wf.timeout');}" />
+                                    <input type="hidden" id="sysparm_auto_gen_password" value="${sysparm_auto_gen_password}" />
+                                    <input type="hidden" id="redirect_url" value="${jvar_redirect_url}" />
+                                    <input type="hidden" id="sysparm_process_supports_reset" value="${sysparm_process_supports_reset}" />
+                                    <input type="hidden" id="sysparm_accepts_password" value="${sysparm_accepts_password}" />
+                                    <input type="hidden" id="sysparm_get_lock_state_subflow_mapped" value="${sysparm_get_lock_state_subflow_mapped}" />
+                                    <g:set_if var="sysparm_error" test="${!empty(sysparm_retry)}" false="" true="${gs.getSession().getProperty('sysparm_error');}" />
+                                    <j:if test="${sysparm_process_supports_reset &amp;&amp; sysparm_auto_gen_password != 'true' &amp;&amp; sysparm_accepts_password}">
+
+                                        <g:evaluate var="jvar_pwd_rule" jelly="true">
+                                            new SNC.PwdCredentialStoreManager().getPasswordRule(jelly.sysparm_process_id);
+                                        </g:evaluate>
+                                        <j:if test="${sysparm_enable_password_policy == 'true'}">
+                                            <g:evaluate var="jvar_strength_rule" jelly="true">
+                                                SNC.PasswordPolicyEvaluator.getPasswordStrengthScript(jelly.sysparm_password_policy_id);
+                                            </g:evaluate>
+                                        </j:if>
+                                        <j:if test="${sysparm_enable_password_policy == 'false'}">
+                                            <g:evaluate var="jvar_strength_rule" jelly="true">
+                                                new SNC.PwdCredentialStoreManager().getStrengthRule(jelly.sysparm_process_id);
+                                            </g:evaluate>
+                                        </j:if>
+                                        <script type="text/javascript">
+                                            ${NOESC:jvar_pwd_rule}
+
+                                            ${NOESC:jvar_strength_rule}
+                                        </script>
+                                    </j:if>
+
+                                    <form>
+                                        <j:if test="${!sysparm_process_supports_reset &amp;&amp; sysparm_process_supports_unlock}">
+                                            <h1>${gs.getMessage('Unlock Account')}</h1>
+                                        </j:if>
+                                        <j:if test="${sysparm_process_supports_reset}">
+                                            <h1>${gs.getMessage('Pwd - Reset Password')}</h1>
+                                        </j:if>
+                                        <h2 id="user_lock_message" class="lock-message" />
+
+                                        <div class="login-form-reset-password-container">
+                                            <j:if test="${sysparm_process_supports_reset &amp;&amp; empty(jvar_page)}">
+                                                <j:if test="${sysparm_auto_gen_password == 'true' &amp;&amp; sysparm_accepts_password}">
+                                                    <div>
+                                                        ${gs.getMessage("To generate a password, select the Reset Password.")}
+                                                    </div>
+                                                </j:if>
+                                                <j:if test="${!sysparm_accepts_password}">
+                                                    <div>
+                                                        ${gs.getMessage("To reset your password, select the Reset Password.")}
+                                                    </div>
+                                                </j:if>
+                                            </j:if>
+
+                                            <j:if test="${!sysparm_process_supports_reset &amp;&amp; empty(jvar_page)}">
+                                                <div id="user_account_locked">
+                                                    ${gs.getMessage("To unlock your account, select the Unlock Account.")}
+                                                </div>
+                                                <div id="user_account_not_locked">
+                                                    ${gs.getMessage("You can sign in as your account isn't locked.")}
+                                                </div>
+                                            </j:if>
+
+                                            <j:if test="${sysparm_process_supports_reset &amp;&amp; sysparm_auto_gen_password != 'true' &amp;&amp; sysparm_accepts_password}">
+                                                <g:evaluate var="jvar_pwd_rule_desc" jelly="true">
+                                                    var passwordRule = new SNC.PwdCredentialStoreManager().getPasswordRuleDesc(jelly.sysparm_process_id);
+                                                    passwordRule.replace(/${AMP}nbsp;/g, "$[SP]");
+                                                </g:evaluate>
+                                                <div class="login-form-field is-required" id="password_form_group">
+                                                    <label for="sysparm_new_password" class="control-label text-right">
+                                                        ${gs.getMessage('New Password')}
+                                                        <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('New Password, Required')}"></span>
+                                                    </label>
+                                                    <div style="display: flex; flex-direction: row; height: 40px">
+                                                        <input type="password" id="sysparm_new_password" name="sysparm_new_password" class="form-control" maxlength="100" placeholder="" value="" required="required" autocomplete="off" onkeypress="keyPassword()" oninput="checkPasswordStrength(); updateRulesState(); checkPasswordsEquality(); updatePasswordMatchRule(); updateMandatoryMarker(this, 'password_form_group');" aria-required="true" aria-describedby="password_comment" aria-labelledby="page_label pwd_title user_lock_state pwd_rule_desc" aria-controls="password_strength_container" />
+                                                        <button id="mask_icon_new" type="button" class="btn btn-default icon-preview input-group-append mask_btn sn-tooltip-basic" onClick="renderMaskIcon(this, 'sysparm_new_password')" aria-label="${gs.getMessage('Show Password')}" tabindex="0" data-original-title="${gs.getMessage('Show password')}" />
+                                                    </div>
+                                                    <script>
+                                                        var l = gel('sysparm_new_password');
+                                                        if (l)
+                                                            l.focus();
+                                                    </script>
+                                                    <span id="password_comment" style="margin-top:5px;display:block;color:#c83c36"></span>
+                                                </div>
+                                                <g:evaluate var="jvar_enable_pwd_strength" jelly="true">
+                                                    new SNC.PwdCredentialStoreManager().getEnablePasswordStrength(jelly.sysparm_process_id);
+                                                </g:evaluate>
+                                                <j:if test="${jvar_enable_pwd_strength}">
+                                                    <div id="password_strength_container" class="pwd-reset-sub-body-new" style="display: flex;margin-bottom: auto;word-break: keep-all">
+                                                        <div class="progress strength-bar" style="min-width: 75%;">
+                                                            <div class="progress-bar progress-bar-danger" id="strength-meter" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="${gs.getMessage('Password strength bar')}" style="width: 0%;">
+                                                            </div>
+                                                        </div>
+                                                        <div id="pwd_strength_text" aria-live="polite" aria-atomic="true" style="margin-left: 10px;margin-top: -3px;float: right;">
+                                                            ${gs.getMessage('Strength')}
+                                                        </div>
+                                                    </div>
+                                                </j:if>
+                                                <j:if test="${sysparm_enable_password_policy == 'true' || !empty(jvar_pwd_rule_desc)}">
+                                                    <div id="pwd_rule_desc" class="pwd-reset-sub-body-new">
+                                                        <label class="sr-only">${gs.getMessage('Password rules are')}</label>
+                                                        <!-- Add an if clause over here for getting rules in different cases" -->
+                                                        <j:if test="${sysparm_enable_password_policy == 'false'}">
+                                                            <div class="pwd-rule">
+                                                                <g:no_escape>${NS:jvar_pwd_rule_desc}</g:no_escape>
+                                                            </div>
+                                                        </j:if>
+                                                        <j:if test="${sysparm_enable_password_policy == 'true'}">
+                                                            <j:forEach var="jvar_rule" items="${rulesWithRegex}">
+                                                                <div id="rule_${jvar_rule.hint}" class="pwd-rule">
+                                                                    <i id="rule_${jvar_rule.hint}_image" class="icon-cross-circle pwd-cross-icon" aria-hidden="true" style="padding-right: 5px;" />
+                                                                    <span id="rule_${jvar_rule.hint}_text">${jvar_rule.hint}</span>
+                                                                </div>
+                                                            </j:forEach>
+                                                            <j:if test="${rulesWithoutRegex.length > 0}">
+                                                                <div id="rule_separator" class="pwd-rule" style="font-weight:bold; font-size:14px; margin-top: 7px;">
+                                                                    <span>${gs.getMessage("We'll also check these requirements once you submit")}</span>
+                                                                </div>
+                                                                <ul style="margin-left: -25px;">
+                                                                    <j:forEach var="jvar_rule" items="${rulesWithoutRegex}">
+                                                                        <li id="rule_${jvar_rule.hint}" class="pwd-rule">${jvar_rule.hint}</li>
+                                                                    </j:forEach>
+                                                                </ul>
+                                                            </j:if>
+                                                        </j:if>
+                                                    </div>
+                                                </j:if>
+                                                <!-- retype_form_group -->
+                                                <div class="login-form-field is-required password-retype" id="retype_form_group">
+                                                    <label for="sysparm_retype_password" class="control-label text-right">
+                                                        ${gs.getMessage('Retype Password')}
+                                                        <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Retype Password, Required')}"></span>
+                                                    </label>
+                                                    <div style="display: flex; flex-direction: row;">
+                                                        <input type="password" id="sysparm_retype_password" name="sysparm_retype_password" class="form-control" maxlength="100" placeholder="" value="" required="required" autocomplete="off" onkeypress="keyRetype()" aria-required="true" aria-label="${gs.getMessage('Retype your new password')}" oninput="checkPasswordsEquality(); enablePasswordMatchHtml(); updatePasswordMatchRule(); updateMandatoryMarker(this, 'retype_form_group');" />
+                                                        <button id="mask_icon_retype" type="button" class="btn btn-default icon-preview input-group-append mask_btn sn-tooltip-basic" onClick="renderMaskIcon(this, 'sysparm_retype_password')" aria-label="${gs.getMessage('Show retype password')}" tabindex="0" data-original-title="${gs.getMessage('Show password')}" />
+                                                    </div>
+                                                </div>
+                                                <div class="pwd-reset-sub-body-new">
+                                                    <div id="pwd_match" style="display: none;">
+                                                        <i id="pwd_match_icon" class="icon-cross-circle pwd-cross-icon" aria-hidden="true" />
+                                                        <span id="pwd_match_rule" aria-live="polite">${gs.getMessage('Passwords must match')}</span>
+                                                    </div>
+                                                </div>
+                                            </j:if>
+                                        </div>
+                                        <j:if test="${sysparm_process_supports_reset}">
+                                            <button type="submit" name="not_important" id="sysverb_reset_password" class="btn btn-primary" onclick="return validatePassword('${sysparm_process_id}', '${sysparm_request_id}');" aria-disabled="true" tabindex="-1">
+                                                ${gs.getMessage('Pwd - Reset Password')}
+                                            </button>
+                                        </j:if>
+                                        <button name="sysverb_pwd_done" id="sysverb_pwd_done" onclick="return doneButtonRedirect()" class="btn btn-primary btn-pwd-submit default-focus-online">${gs.getMessage("Done")}</button>
+
+                                        <j:if test="${sysparm_process_supports_unlock}">
+                                            <j:if test="${!empty(sysparm_unlock)}">
+                                                <button name="not_important" id="sysverb_unlock_account" class="btn btn-primary" aria-disabled="false" onclick="return unlockAccount('${sysparm_process_id}', '${sysparm_request_id}');" tabindex="0">${gs.getMessage('Unlock Account')}</button>
+                                            </j:if>
+                                        </j:if>
+                                    </form>
+                                    <form id="pwd_master_form" name="pwd_master_form" method="post">
+                                        <input type="hidden" id="sysparm_error" name="sysparm_error" value="" />
+                                        <input type="hidden" id="sysparm_success" name="sysparm_success" value="" />
+                                        <input type="hidden" id="sysparm_page_text" name="sysparm_page_text" value="" />
+                                        <input type="hidden" id="sysparm_process_id" name="sysparm_process_id" value="${sysparm_process_id}" />
+                                        <input type="hidden" id="sysparm_lock_state" name="sysparm_lock_state" value="${sysparm_lock_state}" />
+                                        <input type="hidden" id="jvar_done_button_redrect_url" name="jvar_done_button_redrect_url" value="${jvar_done_button_redrect_url}" />
+                                        <input type="hidden" id="sysparm_request_id" name="sysparm_request_id" value="${sysparm_request_id}" />
+                                        <input type="hidden" id="sysparm_process_supports_unlock" name="sysparm_process_supports_unlock" value="${sysparm_process_supports_unlock}" />
+                                        <input type="hidden" id="sysparm_password_policy_rule" name="sysparm_password_policy_rule" value="${sysparm_password_policy_rule}" />
+                                        <input type="hidden" id="sysparm_enable_password_policy" name="sysparm_enable_password_policy" value="${sysparm_enable_password_policy}" />
+                                        <input type="hidden" id="pwd_csrf_token" name="pwd_csrf_token" value="${jvar_csrf_token}" />
+                                        <input type="hidden" id="jvar_page" name="jvar_page" value="${jvar_page}" />
+                                    </form>
+                                </div>
+                                <j:if test="${gs.getProperty('glide.ui.branding.works_with.is_visible', 'false') == 'true'}">
+                                    <g:macro_invoke macro="ShowSNBrandTaglineOnLoginPage" />
+                                </j:if>
+                            </div>
+                            <!-- Process custom footer -->
+                            <j:if test="${jvar_show_header_footer}">
+                                <g:macro_invoke macro="$pwd_process_footer" stage="1" process="${sysparm_process_id}" use_polaris="true" />
+                            </j:if>
+                        </div>
+                    </div>
+                    <style>
+                        .pwd-success-icon {
+                            color: ${$color-accent};
+                            padding-right: 8px;
+                        }
+
+                        .pwd-error-icon {
+                            color: ${$color-negative};
+                            padding-right: 8px;
+                        }
+
+                        .-polaris .pwd-error-icon {
+                            color: RGB(var(--now-color_alert--critical-3, 160, 48, 43));
+                        }
+
+                        .-polaris .pwd-success-icon {
+                            color: RGB(var(--now-color_alert--positive-3, 30, 105, 34));
+                        }
+
+                        .form-control {
+                            border: 1px solid #757575;
+                        }
+
+                        [aria-disabled="true"] {
+                            opacity: 0.5;
+                            cursor: not-allowed;
+                        }
+
+                        @media only screen and (max-width:992px) {
+
+                            #mask_icon_retype,
+                            #mask_icon_new {
+                                width: 50px;
+                            }
+                        }
+                    </style>
+                </j:when>
+                <!-- Heisenberg -->
+                <j:otherwise>
+                    <g:macro_invoke macro="$pwd_process_flow" stage="3" process="${sysparm_process_id}" show_custom_header="${jvar_show_header_footer}" />
+
+                    <center id="$pwd_new">
+                        <div class="pwd-reset-box-new">
+                            <input type="hidden" id="password_reset.wf.refresh_rate" value="${gs.getProperty('password_reset.wf.refresh_rate');}" />
+                            <input type="hidden" id="password_reset.wf.timeout" value="${gs.getProperty('password_reset.wf.timeout');}" />
+                            <input type="hidden" id="sysparm_auto_gen_password" value="${sysparm_auto_gen_password}" />
+                            <input type="hidden" id="redirect_url" value="${jvar_redirect_url}" />
+                            <input type="hidden" id="sysparm_process_supports_reset" value="${sysparm_process_supports_reset}" />
+                            <input type="hidden" id="sysparm_accepts_password" value="${sysparm_accepts_password}" />
+                            <input type="hidden" id="sysparm_get_lock_state_subflow_mapped" value="${sysparm_get_lock_state_subflow_mapped}" />
+                            <g:set_if var="sysparm_error" test="${!empty(sysparm_retry)}" false="" true="${gs.getSession().getProperty('sysparm_error');}" />
+                            <j:if test="${sysparm_process_supports_reset &amp;&amp; sysparm_auto_gen_password != 'true' &amp;&amp; sysparm_accepts_password}">
+
+                                <g:evaluate var="jvar_pwd_rule" jelly="true">
+                                    new SNC.PwdCredentialStoreManager().getPasswordRule(jelly.sysparm_process_id);
+                                </g:evaluate>
+                                <j:if test="${sysparm_enable_password_policy == 'true'}">
+                                    <g:evaluate var="jvar_strength_rule" jelly="true">
+                                        SNC.PasswordPolicyEvaluator.getPasswordStrengthScript(jelly.sysparm_password_policy_id);
+                                    </g:evaluate>
+                                </j:if>
+                                <j:if test="${sysparm_enable_password_policy == 'false'}">
+                                    <g:evaluate var="jvar_strength_rule" jelly="true">
+                                        new SNC.PwdCredentialStoreManager().getStrengthRule(jelly.sysparm_process_id);
+                                    </g:evaluate>
+                                </j:if>
+                                <script type="text/javascript">
+                                    ${NOESC:jvar_pwd_rule}
+
+                                    ${NOESC:jvar_strength_rule}
+                                </script>
+                            </j:if>
+
+                            <form>
+                                <div class="pwd-reset-header-new">
+                                    <j:if test="${!sysparm_process_supports_reset &amp;&amp; sysparm_process_supports_unlock}">
+                                        <div class="pwd-title-new">${gs.getMessage('Unlock Account')}</div>
+                                    </j:if>
+                                    <j:if test="${sysparm_process_supports_reset}">
+                                        <div class="pwd-title-new">${gs.getMessage('Pwd - Reset Password')}</div>
+                                    </j:if>
+                                    <div id="user_lock_message" class="lock-message" />
+                                </div>
+
+
+                                <div class="pwd-reset-body-new">
+                                    <j:if test="${sysparm_process_supports_reset &amp;&amp; empty(jvar_page)}">
+                                        <j:if test="${sysparm_auto_gen_password == 'true' &amp;&amp; sysparm_accepts_password}">
+                                            <div>
+                                                ${gs.getMessage("To generate a password, select the Reset Password.")}
+                                            </div>
+                                        </j:if>
+                                        <j:if test="${!sysparm_accepts_password}">
+                                            <div>
+                                                ${gs.getMessage("To reset your password, select the Reset Password.")}
+                                            </div>
+                                        </j:if>
+                                    </j:if>
+
+                                    <j:if test="${!sysparm_process_supports_reset &amp;&amp; empty(jvar_page)}">
+                                        <div id="user_account_locked">
+                                            ${gs.getMessage("To unlock your account, select the Unlock Account.")}
+                                        </div>
+                                        <div id="user_account_not_locked">
+                                            ${gs.getMessage("You can sign in as your account isn't locked.")}
+                                        </div>
+                                    </j:if>
+
+                                    <j:if test="${sysparm_process_supports_reset &amp;&amp; sysparm_auto_gen_password != 'true' &amp;&amp; sysparm_accepts_password}">
+                                        <g:evaluate var="jvar_pwd_rule_desc" jelly="true">
+                                            <j:if test="${sysparm_enable_password_policy == 'true'}">
+                                                rule;
+                                            </j:if>
+                                            <j:if test="${sysparm_enable_password_policy == 'false'}">
+                                                var passwordRule = new SNC.PwdCredentialStoreManager().getPasswordRuleDesc(jelly.sysparm_process_id);
+                                                passwordRule.replace(/${AMP}nbsp;/g, "$[SP]");
+                                            </j:if>
+                                        </g:evaluate>
+                                        <div class="form-group is-required" id="password_form_group">
+                                            <label for="sysparm_new_password" class="control-label text-right">
+                                                <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('New Password, Required')}"></span>
+                                                ${gs.getMessage('New Password')}
+                                            </label>
+                                            <div style="display: flex; flex-direction: row;">
+                                                <input type="password" id="sysparm_new_password" name="sysparm_new_password" class="form-control pwd-form-control pwd-reset-sub-body-new" maxlength="100" placeholder="" value="" required="required" autocomplete="off" onkeypress="keyPassword()" oninput="checkPasswordStrength(); updateRulesState(); checkPasswordsEquality(); updatePasswordMatchRule(); updateMandatoryMarker(this, 'password_form_group');" aria-required="true" aria-describedby="password_comment" aria-labelledby="page_label pwd_title user_lock_state pwd_rule_desc" aria-controls="password_strength_container" />
+                                                <button id="mask_icon_new" type="button" class="btn btn-default icon-preview input-group-append mask_btn sn-tooltip-basic pwd-reset-mask-button" onClick="renderMaskIcon(this, 'sysparm_new_password')" aria-label="${gs.getMessage('Show Password')}" tabindex="0" data-original-title="${gs.getMessage('Show password')}" />
+                                            </div>
+                                            <script>
+                                                var l = gel('sysparm_new_password');
+                                                if (l)
+                                                    l.focus();
+                                            </script>
+                                            <span id="password_comment" style="margin-top:5px;display:block;color:#c83c36"></span>
+                                        </div>
+                                        <g:evaluate var="jvar_enable_pwd_strength" jelly="true">
+                                            new SNC.PwdCredentialStoreManager().getEnablePasswordStrength(jelly.sysparm_process_id);
+                                        </g:evaluate>
+                                        <j:if test="${jvar_enable_pwd_strength}">
+                                            <div id="password_strength_container" class="pwd-reset-sub-body-new" style="display: flex;">
+                                                <div class="progress strength-bar">
+                                                    <div class="progress-bar progress-bar-danger" id="strength-meter" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="${gs.getMessage('Password strength bar')}" style="width: 0%">
+                                                    </div>
+                                                </div>
+                                                <div id="pwd_strength_text" aria-live="polite" aria-atomic="true" style="float:right;margin-left: 10px;margin-top: -2px;">
+                                                    ${gs.getMessage('Strength')}
+                                                </div>
+                                            </div>
+                                        </j:if>
+                                        <j:if test="${!empty(jvar_pwd_rule_desc)}">
+                                            <div id="pwd_rule_desc" class="pwd-reset-sub-body-new">
+                                                <label class="sr-only">${gs.getMessage('Password rules are')}</label>
+                                                <!-- Add an if clause over here for getting rules in different cases" -->
+                                                <j:if test="${sysparm_enable_password_policy == 'false'}">
+                                                    <div class="pwd-rule">
+                                                        <g:no_escape>${NS:jvar_pwd_rule_desc}</g:no_escape>
+                                                    </div>
+                                                </j:if>
+                                                <j:if test="${sysparm_enable_password_policy == 'true'}">
+                                                    <j:forEach var="jvar_rule" items="${rulesWithRegex}">
+                                                        <div id="rule_${jvar_rule.hint}" class="pwd-rule">
+                                                            <i id="rule_${jvar_rule.hint}_image" class="icon-cross-circle pwd-cross-icon" aria-hidden="true" />
+                                                            <span id="rule_${jvar_rule.hint}_text">${jvar_rule.hint}</span>
+                                                        </div>
+                                                    </j:forEach>
+                                                    <j:if test="${rulesWithoutRegex.length > 0}">
+                                                        <div id="rule_separator" class="pwd-rule" style="font-weight:bold; font-size:14px;">
+                                                            <span>${gs.getMessage("We'll also check these requirements once you submit")}</span>
+                                                        </div>
+                                                        <ul style="margin-left: -25px;">
+                                                            <j:forEach var="jvar_rule" items="${rulesWithoutRegex}">
+                                                                <li id="rule_${jvar_rule.hint}" class="pwd-rule">${jvar_rule.hint}</li>
+                                                            </j:forEach>
+                                                        </ul>
+                                                    </j:if>
+                                                </j:if>
+                                            </div>
+                                        </j:if>
+                                        <div class="form-group is-required password-retype" id="retype_form_group">
+                                            <label for="sysparm_retype_password" class="control-label text-right">
+                                                <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Retype Password, Required')}"></span>
+                                                ${gs.getMessage('Retype Password')}
+                                            </label>
+                                            <div style="display: flex; flex-direction: row;">
+                                                <input type="password" id="sysparm_retype_password" name="sysparm_retype_password" class="form-control pwd-form-control pwd-reset-sub-body-new" maxlength="100" placeholder="" value="" required="required" autocomplete="off" onkeypress="keyRetype()" aria-required="true" aria-label="${gs.getMessage('Retype your new password')}" oninput="checkPasswordsEquality(); enablePasswordMatchHtml(); updatePasswordMatchRule(); updateMandatoryMarker(this, 'retype_form_group');" />
+                                                <button id="mask_icon_retype" type="button" class="btn btn-default icon-preview input-group-append mask_btn sn-tooltip-basic pwd-reset-mask-button" onClick="renderMaskIcon(this, 'sysparm_retype_password')" aria-label="${gs.getMessage('Show retype password')}" tabindex="0" data-original-title="${gs.getMessage('Show password')}" />
+                                            </div>
+                                        </div>
+                                        <div class="pwd-reset-sub-body-new">
+                                            <div id="pwd_match" class="pwd-match" style="display: none;">
+                                                <i id="pwd_match_icon" class="icon-cross-circle pwd-cross-icon" aria-hidden="true" />
+                                                <span id="pwd_match_rule" aria-live="polite">${gs.getMessage('Passwords must match')}</span>
+                                            </div>
+                                        </div>
+                                    </j:if>
+                                </div>
+
+                                <div class="pwd-reset-footer-new">
+                                    <j:if test="${sysparm_process_supports_reset}">
+                                        <button name="not_important" id="sysverb_reset_password" class="btn btn-primary btn-pwd-submit" onclick="return validatePassword('${sysparm_process_id}', '${sysparm_request_id}');" aria-disabled="true" tabindex="-1">
+                                            ${gs.getMessage('Pwd - Reset Password')}
+                                        </button>
+                                    </j:if>
+
+                                    <button name="sysverb_pwd_done" id="sysverb_pwd_done" onclick="return doneButtonRedirect()" class="btn btn-primary btn-pwd-submit default-focus-online">${gs.getMessage("Done")}</button>
+
+                                    <j:if test="${sysparm_process_supports_unlock}">
+                                        <j:if test="${!empty(sysparm_unlock)}">
+                                            <button name="not_important" id="sysverb_unlock_account" class="btn btn-primary btn-pwd-submit" aria-disabled="false" onclick="return unlockAccount('${sysparm_process_id}', '${sysparm_request_id}');" tabindex="0">${gs.getMessage('Unlock Account')}</button>
+                                        </j:if>
+                                    </j:if>
+                                </div>
+                            </form>
+                            <form id="pwd_master_form" name="pwd_master_form" method="post">
+                                <input type="hidden" id="sysparm_error" name="sysparm_error" value="" />
+                                <input type="hidden" id="sysparm_success" name="sysparm_success" value="" />
+                                <input type="hidden" id="sysparm_page_text" name="sysparm_page_text" value="" />
+                                <input type="hidden" id="sysparm_process_id" name="sysparm_process_id" value="${sysparm_process_id}" />
+                                <input type="hidden" id="sysparm_lock_state" name="sysparm_lock_state" value="${sysparm_lock_state}" />
+                                <input type="hidden" id="jvar_done_button_redrect_url" name="jvar_done_button_redrect_url" value="${jvar_done_button_redrect_url}" />
+                                <input type="hidden" id="sysparm_request_id" name="sysparm_request_id" value="${sysparm_request_id}" />
+                                <input type="hidden" id="sysparm_process_supports_unlock" name="sysparm_process_supports_unlock" value="${sysparm_process_supports_unlock}" />
+                                <input type="hidden" id="sysparm_password_policy_rule" name="sysparm_password_policy_rule" value="${sysparm_password_policy_rule}" />
+                                <input type="hidden" id="sysparm_enable_password_policy" name="sysparm_enable_password_policy" value="${sysparm_enable_password_policy}" />
+                                <input type="hidden" id="pwd_csrf_token" name="pwd_csrf_token" value="${jvar_csrf_token}" />
+                                <input type="hidden" id="jvar_page" name="jvar_page" value="${jvar_page}" />
+                            </form>
+                        </div>
+                    </center>
+                    <j:if test="${jvar_show_header_footer}">
+                        <g:macro_invoke macro="$pwd_process_footer" stage="3" process="${sysparm_process_id}" />
+                    </j:if>
+                </j:otherwise>
+            </j:choose>
+        </main>
+    </j:if>
+</j:jelly>

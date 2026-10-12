@@ -1,0 +1,477 @@
+_meta:
+  hash: 328ecf958e2d24df8062eaefeb854637c3e7f4224a7536216a83df1f9d32f22a
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: will.swift
+  sys_created_on: 2015-05-22 20:49:43
+  sys_domain: global
+  sys_id: 24d0eaff370002000e4d03488e41f13b
+  sys_mod_count: '41'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_24d0eaff370002000e4d03488e41f13b
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-03 15:41:51
+active: 'true'
+checksum: ''
+description: ''
+directory: 'false'
+name: RegistryAPI.psm1
+parent: 0dc0eaff370002000e4d03488e41f11f
+script: |-
+  
+  <#
+  .SYNOPSIS
+      RegistryAPI - A cross-version helper to read Windows registry.
+  .DESCRIPTION
+      This module provides two alternative back-ends for reading registry information:
+
+      PowerShell Provider Path (Fast):
+      Get-RegistryDataPS
+      |--- Get-RegistryKeysPS
+      |--- Get-RegistryValuesPS
+      
+      WMI/CIM Path (Slow. To be used when PowerShell Provider is not available):
+      Get-RegistryDataWMI
+      |--- Get-RegistryKeysWMI
+      |--- Get-RegistryValuesWMI
+           |--- Get-RegistryValueTypeWMI
+           |--- Get-RegistryValueWMI
+                |--- Get-RegistryValueTypeWMI
+
+      Bulk Operations:
+      Get-MultipleRegistryDataPS
+  #>
+
+  function Get-RegistryDataPS {
+      param
+      (
+          [Parameter(Mandatory=$true)] $RegistryKey
+      )
+
+      $keys = Get-RegistryKeysPS $RegistryKey
+      $values = Get-RegistryValuesPS $RegistryKey
+
+      $data = @()
+      
+      if (($keys | Group-Object Collection -NoElement).Count -gt 0) {
+          $data += $keys
+      }
+
+      if (($values | Group-Object Collection -NoElement).Count -gt 0) {
+          $data += $values
+      }
+
+      if (test-path env:\SNC_remoteShell) {
+          return $data | format-list
+      }
+
+      return $data
+  }
+
+  function Get-RegistryValuesPS {
+      param
+      (
+          [Parameter(Mandatory=$true)] $RegistryKey
+      )
+
+      $data = @()
+
+      # lookup table to translate from given to actual reg types
+      $lt = @{
+          "System.String"                 = "REG_SZ";
+          "System.Int32"                  = "REG_DWORD";
+          "System.Int64"                  = "REG_QWORD";
+          "System.Byte[]"                 = "REG_BINARY";
+          "Deserialized.System.String[]"  = "REG_MULTI_SZ";
+      }
+
+      #get the properties of the given key
+      $key = Get-ItemProperty "Registry::$RegistryKey"
+      foreach($pr in $key.psobject.properties) {
+          if (!$pr.Name) {
+              continue
+          }
+
+          if ($pr.Name -eq "PSPath" -Or 
+              $pr.Name -eq "PSProvider" -Or 
+              $pr.Name -eq "PSParentPath" -Or 
+              $pr.Name -eq "PSChildName" -Or 
+              $pr.Name -eq "PSComputerName" -Or 
+              $pr.Name -eq "PSShowComputerName" -Or 
+              $pr.Name -eq "RunspaceId") {
+              continue
+          }
+          
+          $rv = 1 | Select-Object -Property Name, Type, Value
+          $rv.Name = $pr.Name
+          $rv.Type = $lt[$pr.TypeNameOfValue]
+          $rv.Value = [String]$pr.Value
+
+          $data += $rv
+      }
+
+      return $data
+  }
+
+  function Get-RegistryKeysPS {
+      param
+      (
+          [Parameter(Mandatory=$true)] $RegistryKey
+      )
+
+      $data = @()
+
+      #get the keys under the given key
+      $key = Get-ChildItem "Registry::$RegistryKey"
+      forEach ($pr in $key) {
+          if (!$pr.Name) {
+              continue
+          }
+
+          $tmp = 1 | Select-Object -Property Name, Type, Value
+          $tmp.Name = $pr.Name.split("\")[-1]
+          $tmp.Type = "KEY"
+
+          $data += $tmp
+      }
+
+      return $data
+  }
+
+  function Get-RegistryDataWMI {
+      param
+      (
+          [Parameter(Mandatory=$true)] $RegistryHive,
+          [Parameter(Mandatory=$true)] $RegistryKey
+      )
+
+      if ($PSVersionTable.PSVersion.Major -lt 6) {
+          $regProv = Get-WmiObject -List 'StdRegProv' -Namespace 'root\default' -ComputerName $computer -Credential $cred
+      } else {
+          if ($computer) {
+              $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+              $regProv = Get-CimClass -CimSession $cimSession -ClassName StdRegProv -Namespace 'root\default'
+          } else {
+              $regProv = Get-CimClass -ClassName StdRegProv -Namespace 'root\default'
+          }
+      }
+
+      $keys = Get-RegistryKeysWMI $regProv $RegistryHive $RegistryKey
+      $values = Get-RegistryValuesWMI $regProv $RegistryHive $RegistryKey
+
+      $data = @()
+
+      if (($keys | Group-Object Collection -NoElement).Count -gt 0) {
+          $data += $keys
+      }
+
+      if (($values | Group-Object Collection -NoElement).Count -gt 0) {
+          $data += $values
+      }
+
+      return $data | format-list
+  }
+
+  function Get-RegistryValuesWMI {
+      param
+      (
+          [Parameter(Mandatory=$true)] $regProv,  # System.Management.ManagementClass (PS5) or Microsoft.Management.Infrastructure.CimClass (PS7)
+          [Parameter(Mandatory=$true)] $RegistryHive,
+          [Parameter(Mandatory=$true)] $RegistryKey
+      )
+
+      $data = @()
+
+      if ($PSVersionTable.PSVersion.Major -lt 6) {
+          $reg = $regProv.EnumValues($RegistryHive, $RegistryKey) # $reg is System.Management.ManagementBaseObject
+      }
+      else {
+          if ($computer) {
+              $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+              $reg = Invoke-CimMethod -CimSession $cimSession -InputObject $regProv -MethodName 'EnumValues' -Arguments @{ hDefKey=$RegistryHive; sSubKeyName=$RegistryKey }
+          } else {
+              $reg = Invoke-CimMethod -InputObject $regProv -MethodName 'EnumValues' -Arguments @{ hDefKey=$RegistryHive; sSubKeyName=$RegistryKey }
+          }
+      }
+      
+      # Process results (same structure for both WMI and CIM)
+      # WMI: $reg is System.Management.ManagementBaseObject with sNames[] and Types[]
+      # CIM: $reg is Microsoft.Management.Infrastructure.CimMethodResult with sNames[] and Types[]
+      for ($i = 0; $i -lt $reg.sNames.Length; $i++) {
+          $rv = 1 | Select-Object -Property Name, Type, Value
+          $rv.Name = $reg.sNames[$i]
+          $rv.Value = Get-RegistryValueWMI $regProv $RegistryHive $RegistryKey $rv.Name (Get-RegistryValueTypeWMI $reg.Types[$i])
+          $rv.Type = Get-RegistryValueTypeWMI $reg.Types[$i] $true
+          $data += $rv
+      }
+
+      return $data
+  }
+
+  function Get-RegistryValueWMI {
+      param
+      (
+          [Parameter(Mandatory=$true)] $regProv,  # System.Management.ManagementClass (PS5) or Microsoft.Management.Infrastructure.CimInstance (PS7)
+          [Parameter(Mandatory=$true)] $RegistryHive,
+          [Parameter(Mandatory=$true)] $RegistryKey,
+          [Parameter(Mandatory=$true)] $ValueName,
+          [Parameter(Mandatory=$true)] $Type
+      )
+
+      if ($PSVersionTable.PSVersion.Major -lt 6) {
+          switch ($Type) {
+              REG_SZ { $tmp = $regProv.getStringValue($RegistryHive, $RegistryKey, $ValueName) | Select-Object -ExpandProperty sValue; break; }
+              REG_EXPAND_SZ { $tmp = $regProv.getExpandedStringValue($RegistryHive, $RegistryKey, $ValueName) | Select-Object -ExpandProperty sValue; break; }
+              REG_MULTI_SZ { $tmp = $regProv.getMultiStringValue($RegistryHive, $RegistryKey, $ValueName) | Select-Object -ExpandProperty sValue; break; }
+              REG_BINARY { $tmp = $regProv.getBinaryValue($RegistryHive, $RegistryKey, $ValueName) | Select-Object -ExpandProperty uValue; break; }
+              REG_DWORD { $tmp = $regProv.getDwordValue($RegistryHive, $RegistryKey, $ValueName) | Select-Object -ExpandProperty uValue; break; }
+              REG_QWORD { $tmp = $regProv.getQwordValue($RegistryHive, $RegistryKey, $ValueName) | Select-Object -ExpandProperty uValue; break; }
+          }
+          return [String]$tmp
+      }
+
+      # PS7 implementation: Use the same logic as PS5 for consistency
+      $cimArgs = @{ hDefKey=$RegistryHive; sSubKeyName=$RegistryKey; sValueName=$ValueName }
+      $invokeParams = @{
+          InputObject = $regProv
+          Arguments = $cimArgs
+      }
+
+      if ($computer) {
+          $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+          $invokeParams.CimSession = $cimSession
+      }
+
+      switch ($Type) {
+          REG_SZ { 
+              $raw = Invoke-CimMethod @invokeParams -MethodName 'GetStringValue'
+              $tmp = $raw.sValue
+              break
+          }
+          REG_EXPAND_SZ { 
+              $raw = Invoke-CimMethod @invokeParams -MethodName 'GetExpandedStringValue'
+              $tmp = $raw.sValue
+              break
+          }
+          REG_MULTI_SZ { 
+              $raw = Invoke-CimMethod @invokeParams -MethodName 'GetMultiStringValue'
+              $tmp = $raw.sValue
+              break
+          }
+          REG_BINARY { 
+              $raw = Invoke-CimMethod @invokeParams -MethodName 'GetBinaryValue'
+              $tmp = $raw.uValue
+              break
+          }
+          REG_DWORD { 
+              $raw = Invoke-CimMethod @invokeParams -MethodName 'GetDwordValue'
+              $tmp = $raw.uValue
+              break
+          }
+          REG_QWORD { 
+              $raw = Invoke-CimMethod @invokeParams -MethodName 'GetQwordValue'
+              $tmp = $raw.uValue
+              break
+          }
+      }
+      return [String]$tmp
+  }
+
+  Add-Type -TypeDefinition @"
+     public enum RegistryValueType
+     {
+          REG_SZ = 1,
+          REG_EXPAND_SZ = 2,
+          REG_BINARY = 3,
+          REG_DWORD = 4,
+          REG_MULTI_SZ = 7,
+          REG_QWORD = 11
+     }
+  "@
+
+  function Get-RegistryValueTypeWMI {
+      param
+      (
+          [Parameter(Mandatory=$true)] $IntType,
+          [Parameter(Mandatory=$false)] $ResolveToBasicType = $true
+      )
+
+      $regType = ""
+
+      foreach ($rvt in [System.Enum]::GetValues([RegistryValueType])) {
+          if ($rvt -eq $IntType) {
+              $regType = [String]$rvt
+              break
+          }
+      }
+
+      if (!$ResolveToBasicType) {
+          return $regType
+      }
+
+      $basicRegTypes = @{
+          "REG_SZ"        = "REG_SZ";
+          "REG_EXPAND_SZ" = "REG_SZ";
+          "REG_BINARY"    = "REG_BINARY";
+          "REG_DWORD"     = "REG_DWORD";
+          "REG_MULTI_SZ"  = "REG_MULTI_SZ";
+          "REG_QWORD"     = "REG_QWORD"
+      }
+
+      return [String]$basicRegTypes[$regType]
+  }
+
+  function Get-RegistryKeysWMI {
+      param
+      (
+          [Parameter(Mandatory=$true)] $regProv, # System.Management.ManagementClass (PS5) or Microsoft.Management.Infrastructure.CimInstance (PS7)
+          [Parameter(Mandatory=$true)] $RegistryHive,
+          [Parameter(Mandatory=$true)] $RegistryKey
+      )
+
+      $data = @()
+
+      if ($PSVersionTable.PSVersion.Major -lt 6) {
+          $reg = $regProv.EnumKey($RegistryHive, $RegistryKey)
+      }
+      else {
+          if ($computer) {
+              $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+              $reg = Invoke-CimMethod -CimSession $cimSession -InputObject $regProv -MethodName 'EnumKey' -Arguments @{ hDefKey=$RegistryHive; sSubKeyName=$RegistryKey }
+          } else {
+              $reg = Invoke-CimMethod -InputObject $regProv -MethodName 'EnumKey' -Arguments @{ hDefKey=$RegistryHive; sSubKeyName=$RegistryKey }
+          }
+      }
+      
+      # Process results (same structure for both WMI and CIM)
+      # WMI: $reg is System.Management.ManagementBaseObject with sNames[]
+      # CIM: $reg is Microsoft.Management.Infrastructure.CimMethodResult with sNames[]
+      for ($i = 0; $i -lt $reg.sNames.Length; $i++) {
+          $rv = 1 | Select-Object -Property Name, Type, Value
+          $rv.Name = $reg.sNames[$i]
+          $rv.Type = "KEY"
+
+          $data += $rv
+      }
+
+      return $data
+  }
+
+  function Get-MultipleRegistryDataPS {
+      param
+      (
+          [Parameter(Mandatory=$true)] [string]$RegistryKeys
+      )
+
+      $regHash = @{};
+      # Properties to ignore
+      $defaultProps = @("PSParentPath","PSChildName","PSProvider", "PSDrive","PSComputerName","PSShowComputerName","RunspaceId", "PSPath");
+      # Translation between Get-ItemProperty restuls types and expected types in sensor
+      $regTypes = @{
+          "System.String"                 = "REG_SZ";
+          "System.Int32"                  = "REG_DWORD";
+          "System.Int64"                  = "REG_QWORD";
+          "System.Byte[]"                 = "REG_BINARY";
+          "Deserialized.System.String[]"  = "REG_MULTI_SZ";
+      }
+      # Shorten PSDrive names as expected in Get-ItemProperty command
+      $driveNames = @{
+          "HKEY_LOCAL_MACHINE"  = "HKLM";
+          "HKEY_CLASSES_ROOT"   = "HKCR"
+          "HKEY_CURRENT_USER"   = "HKCU";
+          "HKEY_USERS"          = "HKU";
+          "HKEY_CURRENT_CONFIG" = "HKCC";
+      }
+
+      # Split input into an array
+      $regKeys = $RegistryKeys.split(",");
+
+      # Loop over all input values and create a hash of Registry bases to values.
+      # Input: HKEY_LOCAL_MACHINE/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*/DisplayName and HKEY_LOCAL_MACHINE/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*/InstallDate
+      # Output: regHash["HKLM:/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*"] = "DisplayName,InstallDate," (will get rid of the extra comma later)
+      foreach($regKey in $regKeys){
+          $regKey = $regKey.trim();
+          $lastSlash =$regKey.lastIndexOf("/");
+
+          $attr = $regKey.substring($lastSlash+1 , $regKey.length-$lastSlash -1);
+          $base = $regKey.substring(0, $lastSlash);
+          
+          $firstSlash = $base.indexOf("/");
+          $drive = $base.substring(0, $firstSlash);
+          
+          # Try and replace long name with short names
+          $drive = $driveNames[$drive];
+          if ($drive -ne $null -or $drive -ne ""){
+              $base = $drive + ":" + $base.substring($firstSlash, $base.length-$firstSlash);
+          }
+
+          $regHash[$base] += $attr + ",";
+      }
+      
+      # For every registry base, create a Get-ItemProperty command and run it.
+      # Input: regHash["HKLM:/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*"] = "DisplayName,InstallDate,"
+      # Command: Get-ItemProperty -Path 'HKLM:/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*' -Name DisplayName,InstallDate -EA SilentlyContinue;
+      foreach($regBase in $regHash.keys){
+          # Prepare the command
+          $query = $regHash[$regBase];
+          $query = $query.substring(0, $query.length-1);
+          $command = "Get-ItemProperty -Path ""$regBase"" -Name $query -EA SilentlyContinue;"
+          # Run the command
+          $items = iex $command;
+          
+          # If no results - continue
+          if ($items -eq $null){
+              continue;
+          }
+          
+          $printPath = "";
+          # Results is an array of Objects - loop over the array
+          foreach ($item in $items){
+              # can have nulls...
+              if ($item -eq $null -and $item.PSPath -eq $null){
+                  continue;
+              }
+              
+              # Only print path each time it is changing - This way we save transfer characters and processing
+              $path = $item.PSPath.replace("Microsoft.PowerShell.Core\Registry::","");
+              if ($path -ne $printPath){
+                  $printPath = $path;
+                  write-host "Path  :" $printPath;
+              }
+              # Loop over each object
+              foreach ($key in $item.PSObject.Properties){
+                  # In case we got nulls here too...
+                  if ($key -eq $null){
+                      continue;
+                  }
+                  $keyName = $key.Name;
+                      
+                  # Ignore default properties and dont print those out
+                  if ($defaultProps -notcontains $keyName){
+                      # Convert to known type
+                      # Input: System.String
+                      # Output: REG_SZ
+                      $type = $key.Value.GetType().FullName;
+                      $type = $regTypes[$type];
+                      if ($type -eq $null -or $type -eq ""){
+                          $type = $key.Value.GetType();
+                      }
+                      
+                      # Print values for same path
+                      write-host "Name  :" $keyName;
+                      write-host "Type  :" $type;
+                      write-host "Value :" $key.Value;
+                  }
+              }
+          }
+      }
+  }
+script_attachment: ''
+source: ''
+sys_name: RegistryAPI.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

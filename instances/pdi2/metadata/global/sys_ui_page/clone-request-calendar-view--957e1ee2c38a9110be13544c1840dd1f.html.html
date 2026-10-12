@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:set var="jvar_app" value="sn.clone_request.calendar_view" />	
+<j:set var="jvar_title" value="${gs.getMessage('Conflict Calendar')}" />
+<g2:evaluate var="jvar_time_format" jelly="true">
+	(new CalendarUtils()).getUserTimeFormat().replace(/\W*%s/, '');
+</g2:evaluate>
+<g2:evaluate var="jvar_valideTargetGr" jelly="true">
+	var gr = new GlideRecord("instance");
+	gr.addQuery('instance_id',RP.getParameterValue('sysparm_instanceId'));
+	gr.query();
+	gr.next();
+</g2:evaluate>   
+<g2:evaluate var="jvar_isWorkspace" jelly="true">
+	var isWorkspace = RP.getParameterValue("sysparm_subview");
+	isWorkspace;
+</g2:evaluate>
+<html ng-app="${jvar_app}" lang="$[gs.getSession().getLanguage()]">
+    <head >
+		<g:inline template="ng_head_inline_script.xml" />
+        <g:requires name="scripts/lib/jquery2_includes.js" includes="true" />
+        <g:requires name="scripts/angular_includes_1.5.11.js" includes="true" />
+		<g:requires name="scripts/sn/common/js_includes_common.js" includes="true" />
+		<g:requires name="scripts/js_includes_app.common.apps.calendar.js" includes="true" />
+        <g:requires name="scripts/angularjs-1.4/thirdparty/angular-ui-bootstrap/ui-bootstrap-tpls-1.1.2.js" includes="true" />
+		<g:include_script src="sn.itsm.common.accessibility.jsdbx" />
+		<!-- <g:requires name="scripts/bootstrap3/bootstrap.js" includes="true" /> -->
+		<g:requires name="scripts/js_includes_vcab_common.js" includes="true" />
+		<script src="CloneController.jsdbx" ></script>
+		<script>
+			var SHORT_IDS = {
+				"ACT": "Australia/Darwin",
+				"AET": "Australia/Sydney",
+				"AGT": "America/Argentina/Buenos_Aires",
+				"ART": "Africa/Cairo",
+				"AST": "America/Anchorage",
+				"BET": "America/Sao_Paulo",
+				"BST": "Asia/Dhaka",
+				"CAT": "Africa/Harare",
+				"CNT": "America/St_Johns",
+				"CST": "America/Chicago",
+				"CTT": "Asia/Shanghai",
+				"EAT": "Africa/Addis_Ababa",
+				"ECT": "Europe/Paris",
+				"IET": "America/Indiana/Indianapolis",
+				"IST": "Asia/Kolkata",
+				"JST": "Asia/Tokyo",
+				"MIT": "Pacific/Apia",
+				"NET": "Asia/Yerevan",
+				"NST": "Pacific/Auckland",
+				"PLT": "Asia/Karachi",
+				"PNT": "America/Phoenix",
+				"PRT": "America/Puerto_Rico",
+				"PST": "America/Los_Angeles",
+				"SST": "Pacific/Guadalcanal",
+				"VST": "Asia/Ho_Chi_Minh"
+			}; 
+			var rawTz = '$[JS_STRING:GlideSession.get().getTimeZoneName()]';	
+			// If user timezone uses old format, map it to the new
+			var g_tz = SHORT_IDS[rawTz] || rawTz;
+			var g_date_time_format = '$[JS_STRING:gs.getDateTimeFormat().replace(/y/g, "Y").replace(/d/g, "D")]';
+			var g_time_format = '$[JS_STRING:gs.getTimeFormat()]';
+			var g_first_day_of_week = '$[JS_STRING:gs.getProperty("glide.ui.date_format.first_day_of_week", 2)]'; // As per Docs, default first day of week is Monday, value 2
+		</script>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+	    
+		<j:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]"/>
+		<link href="42777ba45777130035ae4786cc94f9b8.cssdbx?c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" rel="stylesheet" type="text/css" />
+		<link href="68878fb0c31e1110be13544c1840dd2b.cssdbx? c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" rel="stylesheet" type="text/css" />
+		<g:requires name="/styles/css_includes_app.common.apps.calendar.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />		
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<g:requires name="styles/heisenberg/source_sans_pro.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<g:requires name="styles/retina_icons/retina_icons.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<g:requires name="styles/app.change_request.calendar/thirdparty/bootstrap-datetimepicker.min.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<g:requires name="styles/app.change_request.calendar/snCabToggle.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<g:requires name="styles/app.change_request.calendar/a11y.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<g:requires name="styles/app.change_request.calendar/page_overrides.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<g:requires name="/styles/app.change_request.calendar/icon-fonts/font-awesome-4.2.0/css/font-awesome.min.css" params="c=$[gs.getCssCacheVersionString()]" />
+		<j:if test="${GlideAccessibility.isEnabled()}">
+			<link href="6632e0385790230035ae4786cc94f91d.cssdbx?v=${gs.getProperty('glide.builddate')}" rel="stylesheet" type="text/css" />
+		</j:if>
+		<g:inline template="angular_template.xml" name="common_cal_dhtmlx_scheduler.xml" />
+		<script>
+			// below script files requires this module should be present
+			angular.module('sn.change_management.cab', []);
+		</script>
+		<script src="moment-timezone.js.jsdbx" />
+		<script src="clone_calendar_common.jsdbx" ></script>
+		<script src="clone_calendar_vcom.cancellablePromise.jsdbx" ></script>
+		<script src="clone_calendar_vcom.dataUtil.jsdbx" ></script>
+		<script src="clone_calendar_vcom.snCabToggle.jsdbx" ></script>
+		<script src="clone_calendar_vcom.snCabDateTimePicker.jsdbx" ></script>
+		<script src="clone_calendar_vcom.snCabLineClamp.jsdbx" ></script>
+		<script src="clone_calendar_vcom.vcabDataSource.jsdbx" ></script>
+		<script src="clone_request_calendar_notification.jsdbx" />
+		<script src="sn.itsm.vcab.calendar.js.jsdbx" ></script>
+		<script>
+			(function() {
+				moment.locale("$[gs.getSession().getLanguage()]");
+				var app = angular.module("${jvar_app}");
+				var data = {
+					canRead : true,
+					canWrite : false,
+					targetInstanceId: "$[JS_STRING:RP.getParameterValue('sysparm_instanceId')]",
+					timeFormat: "$[JS_STRING:jvar_time_format]",
+					dateTimeFormat: "$[JS_STRING:gs.getDateTimeFormat().replace(/y/g, "Y").replace(/d/g, "D")]",
+					start_date : "$[JS_STRING:RP.getParameterValue('sysparm_startDate')]",
+					end_date : "$[JS_STRING:RP.getParameterValue('sysparm_endDate')]",
+					isValidRecord : $[JS_STRING:jvar_valideTargetGr]
+					};
+					var instanceName = '';
+					var gr = new GlideRecord("instance");
+					gr.addQuery('instance_id',data.targetInstanceId);
+					gr.query();
+					if(gr.next()){
+						var instanceurl = gr.getValue('instance_name');
+						data.instanceName = instanceurl.substring(0,instanceurl.indexOf('.'));
+					}else{
+						data.instanceName = '';
+					}
+				app.value("CloneData",JSON.stringify(data));
+			})();
+		</script>
+		<script src="clone_calendar.vcal.snChangeCabCalendar.jsdbx" />
+    </head>
+    <body ng-controller="calendarController as c" ng-class="{'accessibility': c.isA11yEnabled, 'mobile': c.data.isMobile}" class="change_calendar">
+		<g:inline template="cab_workbench_common_translation.xml" />
+		<script>
+			var isA11yEnabled = $[JS_STRING:GlideAccessibility.isEnabled()];
+			var g_accessibility ="false";
+			if (isA11yEnabled)
+				g_accessibility = "true";
+		</script>
+		<sn-notification></sn-notification>
+		<j2:if test="$[jvar_valideTargetGr]">
+        <nav class="navbar">
+            <div class="container-fluid">
+				<div class="nav-bar-change-title">
+					<div class="change_calendar_text">${gs.getMessage("Conflict Calendar")}</div>
+					<div class="change_title">Clone Conflicts</div>
+				</div>
+            </div>
+		</nav>
+		<div ng-if="c.change" id='calendar-container'>
+			<sn-cab-change-calendar 
+									change = "c.change"
+									key-nav="{{c.keyNav}}"
+									on-warn="c.onWarn($msg)"
+									config-options="c.configOptions"
+									is-config-available="{{c.data.allowConfig}}"
+									auto-save-and-fetch-options-as-user-pref="true"
+									is-updatable="{{c.data.canWrite}}"
+									timeformat='c.data.timeFormat'
+									date-time-format="c.data.dateTimeFormat"
+									field-permission="c.data.fieldPermission"
+									instance-name="{{c.data.instanceName}}"></sn-cab-change-calendar>
+		</div>
+		</j2:if>
+		<j2:if test="$[!jvar_valideTargetGr]">
+			<div class="no-access-to-calendar">
+				${gs.getMessage("Invalid data found while accessing the Clone Request Calendar")}
+			</div>	
+		</j2:if>
+    </body>
+</html>
+</j:jelly>

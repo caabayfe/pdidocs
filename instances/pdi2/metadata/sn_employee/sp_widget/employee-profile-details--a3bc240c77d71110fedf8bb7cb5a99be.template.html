@@ -1,0 +1,47 @@
+<div id="profile_tabs">
+  <uib-tabset id="std-uib-tabset" ng-if="data.tabs && data.tabs.length > 0">
+    <uib-tab data-tabname="{{tab.name}}" class="profile-tab" data-toggle="tooltip" data-placement="top" title="{{tab.name.length > 15 ? tab.name : ''}}" ng-repeat="tab in data.tabs" index="$index" heading="{{tab.name.length>15?tab.name.substring(0,15)+'...':tab.name}}" ng-click="$event.stopPropagation();onTabClick(tab)" ng-keyup="c.keyUpOnTabs($event, tab.tabId)" select="setTabLoaded(tab.tabId)" deselect="onTabDeselect(tab.tabId)" active="tab.selected" add-uib-tab-accessibility>  
+      <div ng-if="isTabLoaded(tab.tabId)" class='tab-container' data-tab="{{tab.tabId}}" id="tab_container_{{tab.tabId}}" ng-init="setListeners()">
+         <ul class="sticky-container side-bar" ng-if="data.showSideScrollBar" ng-init="setStickyProperties($index)" >
+            <li class="side-bar-item" id="left_nav_panel_{{$index}}" data-tab="{{tab.tabId}}" ng-repeat="widget in getWidgets(tab.tabId)" ng-if="isWidgetVisible(widget.id)" index="{{$index}}"> 
+              <button ng-click="onSideBarItemClick($event, widget.id, $index)" ng-keyup="sideBarItemKeyUp($event,widget.id, $index)" role="tab" aria-selected="false" index="{{$index}}" id="side_bar_button_{{$index}}">
+              	{{widget.name}}
+              </button> 
+           	</li>
+          </ul>
+        <div class="main-container" id="main_container_{{tab.tabId}}">
+          <section id="profile_widget_{{widget.id}}" class="profile-widget" data-name="{{widget.name}}" data-tab="{{widget.tabId}}" ng-repeat="widget in getWidgets(tab.tabId)">
+            <sp-widget widget="widget.widgetData"></sp-widget>
+          </section>
+        </div>
+      </div>
+      <!--Skeleton Loader-->
+      <div ng-if="!isTabLoaded(tab.tabId)" class="skeleton-loading">
+        <ul class="sticky-container" ng-if="data.showSideScrollBar">
+           <li  ng-repeat="item in [1,2,3,4]" class="sticky-container-widget-name-loader skeleton-loader"></li>
+        </ul>
+        <div class="main-container">
+          <div ng-repeat="item in [1,2]" class="widget-loader">
+            <div class="widget-name">
+              <div class="widget-name-loader skeleton-loader"></div>
+            </div>
+            <div class="widget-content">
+              <div ng-repeat="item in [1,2,3]" class="widget-content-loader skeleton-loader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </uib-tab>
+    <li class="nav-item dropdown" id="moreDropdown" role="presentation">
+      <button aria-label="{{c.more_title}}" id="more-btn" class="options-btn pull-left nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="menu" aria-expanded="false" uib-tooltip="{{c.more_title}}" tooltip-enable="{{c.more_title.length > 15}}" tooltip-placement="top">
+        <span class="buttontext" id="more-btn-text">{{c.more_title.length > 15 ? c.more_title.substring(0,15)+"..." : c.more_title}}</span>
+        <span class="arrow-icon fa fa-caret-down"></span>
+      </button>
+      <div class="dropdown-menu" id="dropDownMenu" role="menu">
+        <uib-tab class="profile-more-tab" ng-repeat="tab in data.tabs" heading="{{tab.name}}" id="{{tab.name}}" ng-keyup="keyUpOnMoreTab($event,tab)" ng-click="$event.stopPropagation();tabSelectedInMore(tab)">
+        </uib-tab>
+      </div>
+    </li>
+  
+  </uib-tabset>
+</div>

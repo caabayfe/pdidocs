@@ -1,0 +1,200 @@
+<div ng-if="!data.isValid">
+        ${Record not found}
+        </div>
+        <div ng-if="data.isValid">
+        <div class="approval-header">
+            <h2>${Approval} {{::data.label}} - {{::data.record_number}}</h2>
+            <div class="approval-actions" ng-if="c.data.isMine && (c.data.approval_state == 'requested')">
+            <button type="button" class="btn btn-default" ng-disabled="c.approvalInProgress" ng-click="c.action('rejected')">${Reject}</button>
+            <button type="button" class="btn btn-primary" ng-disabled="c.approvalInProgress" ng-click="c.action('approved')">${Approve}</button>
+            </div>
+        </div>
+        <div class="panel panel-{{::options.color}} b">
+            
+            <div class="approval-body">
+            <!-- First Row with Created, Updated, and State -->
+            <div class="info-row first-row">
+                <div class="approval-field" ng-if="task.sys_created_on">
+                <div class="approval-field-label">${Created}</div>
+                <div class="approval-field-value"><sn-time-ago timestamp="::task.sys_created_on.value"></sn-time-ago></div>
+                </div>
+                
+                <div class="approval-field" ng-if="task.sys_updated_on">
+                <div class="approval-field-label">${Updated}</div>
+                <div class="approval-field-value"><sn-time-ago timestamp="::task.sys_updated_on.value"></sn-time-ago></div>
+                </div>
+
+                <div class="approval-field">
+                <div class="approval-field-label">${State}</div>
+                <div class="approval-field-value">{{data.approval_state}}</div>
+                </div>
+            </div>
+
+            <!-- Remaining Fields Grid -->
+            <div class="approval-grid">
+                <div class="approval-field" ng-repeat="fieldName in c.getVisibleFields()" ng-if="task[fieldName] && task[fieldName].display_value && fieldName !== 'state'">
+                <div class="approval-field-label">{{::task[fieldName].label}}</div>
+                <div class="approval-field-value">
+                    <!-- User reference fields with avatars -->
+                    <div ng-if="task[fieldName].type === 'reference' && (fieldName === 'opened_by' || fieldName === 'requested_by' || fieldName === 'assigned_to' || fieldName === 'requested_for')">
+                        <div class="avatar-container">
+                            <sn-avatar primary="task[fieldName].display_value" class="avatar-small"></sn-avatar>
+                            <span>{{::task[fieldName].display_value}}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Date/time fields -->
+                    <div ng-if="task[fieldName].type === 'glide_date_time'">
+                        <sn-time-ago timestamp="::task[fieldName].display_value"></sn-time-ago>
+                    </div>
+                    
+                    <!-- All non-reference and non-date/time fields -->
+                    <div ng-if="!(task[fieldName].type === 'glide_date_time' || (task[fieldName].type === 'reference' && (fieldName === 'opened_by' || fieldName === 'requested_by' || fieldName === 'assigned_to' || fieldName === 'requested_for')))" class="description-container">
+                        <!-- HTML and journal content -->
+                        <div ng-if="task[fieldName].type === 'html' || task[fieldName].type === 'translated_html' || task[fieldName].type === 'journal_input' || task[fieldName].type === 'journal' || task[fieldName].type === 'string'" 
+                             class="html-content" ng-class="{'truncate-text': !c.isFieldExpanded(fieldName)}" 
+                             ng-bind-html="::c.trustedHTML(task[fieldName].display_value)">
+                        </div>
+                        <!-- Plain text content -->
+                        <div ng-if="!(task[fieldName].type === 'html' || task[fieldName].type === 'translated_html' || task[fieldName].type === 'journal_input' || task[fieldName].type === 'journal' || task[fieldName].type === 'string')" 
+                             ng-class="{'truncate-text': !c.isFieldExpanded(fieldName)}">
+                            {{::task[fieldName].display_value}}
+                        </div>
+                        <button type="button" class="btn-link" ng-if="task[fieldName].display_value.length > 100" ng-click="c.toggleField(fieldName)" style="font-size: 12px; margin-left: 4px; border: none; background: none; text-decoration: underline; height: fit-content; line-height: 1;" aria-expanded="{{c.isFieldExpanded(fieldName)}}" aria-label="{{c.isFieldExpanded(fieldName) ? '${Show less}' : '${Show more}' }}">
+                            <span ng-if="!c.isFieldExpanded(fieldName)">${Show more}</span>
+                            <span ng-if="c.isFieldExpanded(fieldName)">${Show less}</span>
+                        </button>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- Catalog Variables Section -->
+            <div ng-if="data.variables.length > 0 && (c.showAll || c.shouldShowLimitedVariables())" class="catalog-variable-container">
+                <div class="catalog-heading">${Catalog variables}</div>
+                <div ng-if="c.shouldShowLimitedVariables() && data.variableSummarizerWidgetLimited">
+                <sp-widget widget="data.variableSummarizerWidgetLimited"></sp-widget>
+                </div>
+                <div ng-if="!c.shouldShowLimitedVariables() || !data.variableSummarizerWidgetLimited">
+                <sp-widget widget="data.variableSummarizerWidget"></sp-widget>
+                </div>
+            </div>
+
+            <!-- View More Link -->
+            <div class="view-more-link" ng-if="c.shouldShowViewMore()">
+                <button type="button" class="btn-link" ng-click="c.toggleShowAll()" style="border: none; background: none; color: $text-color-primary; text-decoration: underline; font-size: 14px;" aria-expanded="{{c.showAll}}" aria-label="{{!c.showAll ? '${Show more}' : '${Show less}' }}">
+                <span ng-if="!c.showAll">${Show more}</span>
+                <span ng-if="c.showAll">${Show less}</span>
+                </button>
+            </div>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <ul class="nav nav-tabs" role="tablist" ng-init="c.activeTab = data.items.length > 0 ? 'items' : (data.showActivityStream ? 'activity' : 'attachments')">
+                <li role="presentation" ng-if="data.items.length > 0" ng-class="{'active': c.activeTab === 'items'}">
+                    <a href="javascript:void(0)" id="items-tab" role="tab" data-toggle="tab" data-target=".tab-items" 
+                       ng-click="c.activeTab = 'items'" 
+                       ng-keydown="c.handleTabKeydown($event, 'items')" 
+                       aria-controls="items-panel" aria-selected="{{c.activeTab === 'items'}}" 
+                       aria-expanded="{{c.activeTab === 'items'}}">${Requested Items}</a>
+                </li>
+                <li role="presentation" ng-if="data.showActivityStream" ng-class="{'active': c.activeTab === 'activity'}">
+                    <a href="javascript:void(0)" id="activity-tab" role="tab" data-toggle="tab" data-target=".tab-activity" 
+                       ng-click="c.activeTab = 'activity'" 
+                       ng-keydown="c.handleTabKeydown($event, 'activity')" 
+                       aria-controls="activity-panel" aria-selected="{{c.activeTab === 'activity'}}" 
+                       aria-expanded="{{c.activeTab === 'activity'}}">${Activity stream}</a>
+                </li>
+                <li role="presentation" ng-class="{'active': c.activeTab === 'attachments'}">
+                    <a href="javascript:void(0)" id="attachments-tab" role="tab" data-toggle="tab" data-target=".tab-attachments" 
+                       ng-click="c.activeTab = 'attachments'" 
+                       ng-keydown="c.handleTabKeydown($event, 'attachments')" 
+                       aria-controls="attachments-panel" aria-selected="{{c.activeTab === 'attachments'}}" 
+                       aria-expanded="{{c.activeTab === 'attachments'}}">${Attachments}</a>
+                </li>
+                </ul>
+                
+                <div class="tab-content" style="margin-top: 20px;">
+                <div role="tabpanel" id="items-panel" class="tab-pane tab-items" ng-class="{'active': c.activeTab === 'items'}" ng-if="data.items.length > 0" aria-labelledby="items-tab">
+                    <div class="tab-content-inner">
+                    <div class="items-heading">
+                        <span role="heading" aria-level="2" aria-label="${Items in this Request}, {{data.items.length}} items">${Items in this Request}</span>
+                        <span class="badge" aria-hidden="true">{{data.items.length}}</span>
+                    </div>
+                    <div class="accordion" id="request-items-accordion">
+                        <div class="accordion-item request-item-card" ng-repeat="item in data.items">
+                            <button class="accordion-header request-item-grid" 
+                                    ng-click="item.isOpen = !item.isOpen"
+                                    aria-expanded="{{item.isOpen}}"
+                                    aria-controls="content-{{$index}}"
+                                    id="header-{{$index}}"
+                                    ng-attr-aria-label="{{item.itemValue + ' - ' + item.short_description + (item.isOpen ? ' (Click to collapse)' : ' (Click to expand)')}}"
+                                    ng-keydown="($event.which === 13 || $event.which === 32) && ($event.preventDefault() || (item.isOpen = !item.isOpen))">
+                                <div class="request-item-col">
+                                    <i class="fa fa-shopping-basket" aria-hidden="true"></i>
+                                    <span ng-if="item.itemValue">{{::item.itemValue}}</span>
+                                </div>
+                                <div class="request-item-col short-desc">
+                                    <span class="truncate-text" ng-if="item.short_description" title="{{::item.short_description}}" ng-bind-html="::c.trustedHTML(item.short_description)"></span>
+                                </div>
+                                <div class="request-item-col text-right" aria-hidden="true">
+                                    <i class="fa" ng-class="{'fa-chevron-down': !item.isOpen, 'fa-chevron-up': item.isOpen}"></i>
+                                </div>
+                            </button>
+                        
+                            <div class="accordion-content" 
+                                id="content-{{$index}}" 
+                                role="region" 
+                                aria-labelledby="header-{{$index}}"
+                                ng-show="item.isOpen"
+                                aria-hidden="{{!item.isOpen}}"
+                                ng-attr-aria-label="Details for {{item.itemValue}}">
+                                <div class="request-item-details">
+                                    <div class="request-item-info">
+                                        <div class="info-grid three-column">
+                                            <div class="info-col" ng-repeat="fieldName in item.displayFields" ng-if="item.allFields[fieldName] && (item.allFields[fieldName].value || item.allFields[fieldName].display_value) && fieldName !== 'short_description'">
+                                                <label>{{::item.allFields[fieldName].label}}</label>
+                                                <div ng-switch="item.allFields[fieldName].type">
+                                                    <div ng-switch-when="reference">
+                                                        {{::item.allFields[fieldName].display_value || item.allFields[fieldName].value}}
+                                                    </div>
+                                                    <div ng-switch-when="glide_date_time" ng-if="item.allFields[fieldName].value">
+                                                        <sn-time-ago timestamp="::item.allFields[fieldName].value"></sn-time-ago>
+                                                    </div>
+                                                    <div ng-switch-when="glide_date">
+                                                        {{::item.allFields[fieldName].display_value || item.allFields[fieldName].value}}
+                                                    </div>
+                                                    <div ng-switch-default>
+                                                        <span ng-bind-html="::c.trustedHTML(item.allFields[fieldName].display_value || item.allFields[fieldName].value || '-')"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div ng-if="item.variables.length > 0" class="catalog-variables">
+                                        <div class="text-muted">${Catalog variables}</div>
+                                        <sp-widget widget="item.variableSummarizerWidget"></sp-widget>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                    </div>
+                    </div>
+                </div>
+                
+                <div role="tabpanel" id="activity-panel" class="tab-pane tab-activity" ng-if="data.showActivityStream" ng-class="{'active': c.activeTab === 'activity'}" aria-labelledby="activity-tab">
+                    <div class="tab-content-inner">
+                    <sp-widget ng-if="data.ticketConversation" widget="data.ticketConversation"></sp-widget>
+                    </div>
+                </div>
+                
+                <div role="tabpanel" id="attachments-panel" class="tab-pane tab-attachments" ng-class="{'active': c.activeTab === 'attachments'}" aria-labelledby="attachments-tab">
+                    <div class="tab-content-inner">
+                    <sp-widget widget="data.attachmentWidget"></sp-widget>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>

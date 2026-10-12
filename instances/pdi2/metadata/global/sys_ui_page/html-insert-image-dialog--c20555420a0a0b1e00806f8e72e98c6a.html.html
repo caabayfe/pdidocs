@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div id="insert_image_dialog" style="text-align:center;">
+		<div id="standard_options" style="width:365px; display:inline-block; vertical-align:top; text-align:left;">
+			<div class="form-group" style="display:inline-block; width:100%">
+				<g:evaluate var="jvar_use_dbimage">
+					var imageGR = new GlideRecord('db_image');
+					imageGR.isValid();
+				</g:evaluate>
+				<g:evaluate var="jvar_write_dbimage">
+					imageGR.canWrite();
+				</g:evaluate>
+				<g:evaluate var="jvar_allow_db_image_default">
+					gs.getProperty("glide.ui.html.image.allow_db_image_default", "false");
+				</g:evaluate>
+				<g:evaluate var="jvar_use_url">
+					gs.getProperty("glide.ui.html.image.allow_url","true");
+				</g:evaluate>
+				<input type="hidden" id="ni.has_db_image" name="ni.has_db_image" value="${jvar_use_dbimage}"/>
+				<input type="hidden" id="ni.allow_db_image_default" name="ni.allow_db_image_default" value="${jvar_allow_db_image_default}"/>
+				<label class="col-sm-3 section-title-top control-label ng-scope"
+					   style="text-align: right; margin-top: 7px;" for="link_type">${gs.getMessage('Type')}</label>
+				<div class="col-sm-9" style="margin-bottom: 8px;">
+					<select name="link_type" id="link_type" onchange="changedLinkType();"
+							class="form-control ng-pristine ng-valid ng-touched" aria-label="${gs.getMessage('Type')}">
+						<j:set var="jvar_default_insert_image_type" value="attachment" />
+						<j:if test="${jvar_use_dbimage}">
+							<j:if test="${jvar_allow_db_image_default}">
+							<j:set var="jvar_default_insert_image_type" value="dbimage" />
+							</j:if>
+							<g:ui_select_option text="${gs.getMessage('Image Library (Public)')}" value="dbimage"
+												selected_value="${jvar_default_insert_image_type}" />
+						</j:if>
+						<g:ui_select_option text="${gs.getMessage('Attachment')}" value="attachment"
+											selected_value="${jvar_default_insert_image_type}" />
+						<j:if test="${jvar_use_url}">
+							<g:ui_select_option text="${gs.getMessage('URL')}" value="url" />
+						</j:if>
+					</select>
+				</div>
+			</div>
+
+			<div class="form-group" style="display:inline-block; width:100%;">
+				<g:evaluate var="jvar_image_label" jelly="true">
+					if (jvar_use_url)
+						"f_url";
+					else if (jvar_use_dbimage)
+						"sys_display.dbimage_list";
+					else
+						"attachment_list";
+				</g:evaluate>
+				<label class="col-sm-3 section-title-top control-label ng-scope"
+					   style="text-align: right; margin-top: 7px;" id="image_label" for="${jvar_image_label}">${gs.getMessage('Image')}</label>
+				<div class="col-sm-9" style="margin-bottom: 8px;">
+
+
+					<!-- URL -->
+					<j:if test="${jvar_use_url}">
+						<div id="type_url" style="white-space:nowrap">
+							<input class="form-control" type="text" name="url" id="f_url" onchange="onImageChange()"
+								   title="${gs.getMessage('Enter the image URL here')}" aria-label="${gs.getMessage('Enter the image URL here')}"/>
+						</div>
+					</j:if>
+					<!-- END URL -->
+
+
+					<!-- DB_IMAGE -->
+					<j:if test="${jvar_use_dbimage}">
+						<g:evaluate var="jvar_dbimages_exist">
+							var dbi = new GlideRecord("db_image");
+							dbi.query();
+							if (dbi.hasNext())
+							"inline";
+							else
+							"none";
+						</g:evaluate>
+						<div id="type_dbimage" style="white-space:nowrap">
+							<div id="dbimage_picker" style="display: flex; width: 219px;">
+								<div>
+									<j:set var="jvar_onchange" value="onImageChange()" />
+									<g:ui_reference id="dbimage_list" name="dbimage_list" label="${gs.getMessage('Image')}"
+													completer="AJAXTableCompleter"
+													columns="category"
+													order_by="name;category"
+													show_popup="false"
+													table="db_image"
+													value=""
+													displayValue="" />
+								</div>
+								<j:if test="${jvar_write_dbimage}">
+									<div style="width:100%">
+										<button type="button" id="new_db_image_button" style="margin-left: 5px; position: absolute;" onclick="showNewDbImage()"
+												title="${gs.getMessage('Upload a new image to the database')}" class="icon-paperclip"/>
+									</div>
+									<form id="new_dbimage_form" action="sys_user_image.do" enctype="multipart/form-data"
+										  method="post" onsubmit="return submitDbImage()" target="upload_target" style="display:none">
+										<input type="hidden" name="sysparm_table" value="db_image"/>
+										<input type="hidden" name="sysparm_fieldname" value="image"/>
+										<input type="hidden" name="sysparm_sys_id" value="new_db_image"/>
+										<input type="hidden" name="sysparm_nostack" value="yes"/>
+										<input type="hidden" name="sysparm_redirect"
+											   value="html_insert_image_uploaded.do?sysparm_nostack=yes"/>
+										<fieldset style="display:none">
+											<input type="text" name="db_image_name" id="db_image_name" size="50"
+												   maxlength="${jvar_db_image_name_len}" onkeypress="checkDbImageSubmitOK('name')"/>
+											<input type="file" name="attachFile" id="attachFile" size="41"
+												   onchange="checkDbImageSubmitOK('file')"/>
+											<button type="submit" id="new_dbimage_ok" style="display:none" disabled="true"
+													class="disabled"/>
+											<button type="button" id="new_dbimage_cancel" onclick="cancelDbImage()"
+													style="display:none;"/>
+											<img id="dbimage_please_wait" src="images/please_wait.gifx" style="display: none;"
+												 alt="${gs.getMessage('Please Wait')}"/>
+										</fieldset>
+									</form>
+								</j:if>
+							</div>
+						</div>
+					</j:if>
+					<!-- END DB_IMAGE -->
+
+
+					<!-- SYS_ATTACHMENT -->
+					<div id="type_attachment" style="white-space:nowrap; display:none; width:207px;">
+						<j:set var="jvar_show_link" value="true" />
+						<j:if test="${gs.getProperty('glide.ui.disable_attachment_view') == 'true'}">
+							<j:set var="jvar_show_link" value="false" />
+						</j:if>
+						<input type="hidden" id="ni.show_attachment_view" name="ni.show_attachment_view" value="${jvar_show_link}"/>
+						<j:set var="jvar_show_link_popup" value="true" />
+						<j:if test="${gs.getProperty('glide.ui.attachment_popup')=='false'}">
+							<j:set var="jvar_show_link_popup" value="false" />
+						</j:if>
+						<input type="hidden" id="ni.show_attachment_popup" name="ni.show_attachment_popup" value="${jvar_show_link_popup}" />
+						<select name="attachment_list" class="form-control ng-pristine ng-valid ng-touched" id="attachment_list"
+								onchange="onImageChange()" title="${gs.getMessage('Attachment')}" aria-label="${gs.getMessage('Attachment')}">$[SP]
+							<g2:evaluate jelly="true">
+								var sa = new GlideSysAttachment();
+								var targetTable = jelly.RP.getWindowProperties().get('target_table') ;
+								if (targetTable == 'ni') //For Catalog Form, table name is ni
+									targetTable = 'sc_cart_item';
+								var attachmentGR = sa.getAttachments((targetTable || '') + '',
+								(jelly.RP.getWindowProperties().get('target_sys_id') || '') + '');
+								var imageTypes = { "jpeg": true, "jpg": true, "gif": true, "bmp": true, "png": true };
+							</g2:evaluate>
+							<j2:while test="$[attachmentGR.next()]">
+								<g2:evaluate var="jvar_is_image">
+									var isImage = false;
+									var fileName = attachmentGR.getValue("file_name");
+									if (!gs.nil(fileName)) {
+										if (fileName.lastIndexOf(".") > 0) {
+											var lowerFileName = fileName.toLowerCase();
+											for(var key in imageTypes) {
+												if (lowerFileName.endsWith("." + key))
+													isImage = true;
+											}
+										}
+									}
+								</g2:evaluate>
+								<j2:if test="$[jvar_is_image]">
+									<j2:set var="jvar_file_name" value="$[HTML:attachmentGR.getValue('file_name')]"/>
+									<g2:ui_select_option text="$[jvar_file_name]" value="$[attachmentGR.getValue('sys_id')]" />
+								</j2:if>
+							</j2:while>
+						</select>
+
+						<button type="button" class="icon-paperclip" id="new_attachment_image_button" onclick="processAttachment()"
+								title="${gs.getMessage('Upload a new image as an attachment')}" style="margin-left: 5px"/>
+						<form id="new_attachmentimage" action="sys_user_image.do" enctype="multipart/form-data" style="display:none"
+							  method="post" onsubmit="return submitAttachmentImage()" target="upload_target">
+							<input type="hidden" name="sysparm_table" value="$[targetTable]"/>
+							<input type="hidden" name="sysparm_noprefix" value="true"/>
+							<input type="hidden" name="sysparm_sys_id" value="${RP.getWindowProperties().get('target_sys_id')}"/>
+							<input type="hidden" name="sysparm_nostack" value="yes"/>
+							<input type="hidden" name="sysparm_redirect" value="html_insert_image_uploaded.do?sysparm_nostack=yes"/>
+							<fieldset>
+								<input type="file" name="attachmentFile" id="attachmentFile" size="41" onchange="checkAttachmentSubmitOK()"/>
+								<button type="submit" id="new_attachmentimage_ok" style="display:none"/>
+								<button type="button" id="new_attachmentimage_cancel" onclick="cancelAttachmentImage()" style="display:none"/>
+								<img id="attachment_please_wait" src="images/please_wait.gifx" style="display: none;"
+									 alt="${gs.getMessage('Please Wait')}" />
+							</fieldset>
+						</form>
+					</div>
+					<!-- END SYS_ATTACHMENT -->
+
+				</div>
+				<j:if test="${jvar_use_dbimage}">
+					<g:evaluate var="jvar_dbimages_exist">
+						var dbi = new GlideRecord("db_image");
+						dbi.query();
+						if (dbi.hasNext())
+						"inline";
+						else
+						"none";
+					</g:evaluate>
+				</j:if>
+			</div>
+
+			<g:ui_table>
+				<tr>
+					<td align="center">
+						<div name="ipreview" id="ipreview" style="display:none;float:right;margin:0 10px 10px 0;" height="200" width="300">
+							<img id='preview_img' src='images/16square.gif' alt="" />
+						</div>
+					</td>
+				</tr>
+			</g:ui_table>
+
+			<div class="form-group" style="display:inline-block; width:100%;">
+				<label class="col-sm-3 section-title-top control-label ng-scope"
+					   style="text-align: right; margin-top: 7px;" for="f_title">${gs.getMessage('Tooltip')}</label>
+				<span class="col-sm-9" style="margin-bottom: 8px;">
+					<input type="text" name="title" id="f_title" class="form-control" aria-label="${gs.getMessage('Tooltip')}"/>
+				</span>
+			</div>
+
+			<div class="form-group" style="display:inline-block; width:100%;">
+				<label class="col-sm-3 section-title-top control-label ng-scope"
+					   style="text-align: right; margin-top: 7px;" for="f_alt">${gs.getMessage('Alt Text')}</label>
+				<span class="col-sm-9" style="margin-bottom: 8px;">
+					<input type="text" name="alt" id="f_alt" class="form-control" aria-label="${gs.getMessage('Alt Text')}"/>
+				</span>
+			</div>
+		</div>
+
+		<!-- Advanced Options -->
+		<g:evaluate var="jvar_advanced_display">
+			var p = gs.getPreference("image_select.advanced.options");
+			if (p == "true")
+			"inline-block";
+			else
+			"none";
+		</g:evaluate>
+		<div id="advanced_options_container" style="display:inline-block; text-align:left;">
+			<div id="advanced_options" style="display:${jvar_advanced_display}; width:260px; margin-left:60px;">
+
+				<!-- Layout Options -->
+				<div style="padding: 10px; border-style:solid; border-width:1px; border-color:#dfdfdf; background:#FAFAFA; color:#5e6062;">
+					${gs.getMessage('LAYOUT')}
+				</div>
+				<div id="layout_options" style="border-right-style:solid; border-left-style:solid; border-width:1px; border-color:#dfdfdf;">
+
+					<div class="form-group" style="display: inline-block; width:100%; margin:10px 0 3px 0;">
+						<g:evaluate var="jvar_alignment_msg" expression="gs.getMessage('Positioning of this image')"/>
+						<label class="col-sm-6 section-title-top control-label ng-scope" style="padding-left:10px; margin-top:7px;"
+							   for="f_align">${gs.getMessage('Alignment')}</label>
+						<select name="align" class="form-control" id="f_align" title="${jvar_alignment_msg}"
+								style="float:right; width:90px; margin-right:10px;">
+							<option value="">${gs.getMessage('Not set')}</option>
+							<option value="left">${gs.getMessage('Left')}</option>
+							<option value="right">${gs.getMessage('Right')}</option>
+							<option value="texttop">${gs.getMessage('Texttop')}</option>
+							<option value="absmiddle">${gs.getMessage('Absmiddle')}</option>
+							<option value="baseline" selected="1">${gs.getMessage('Baseline')}</option>
+							<option value="absbottom">${gs.getMessage('Absbottom')}</option>
+							<option value="bottom">${gs.getMessage('Bottom')}</option>
+							<option value="middle">${gs.getMessage('Middle')}</option>
+							<option value="top">${gs.getMessage('Top')}</option>
+						</select>
+					</div>
+
+					<div class="form-group" style="display: inline-block; width:100%;">
+						<g:evaluate var="jvar_border_thickness_msg" expression="gs.getMessage('Leave empty for no border')"/>
+						<label class="col-sm-6 section-title-top control-label ng-scope" style="padding-left:10px; margin-top:7px;"
+							   for="f_border">${gs.getMessage('Border Thickness')}</label>
+						<input type="text" name="border" class="form-control" id="f_border"
+							   style="float:right; width:60px; margin-right:10px;" title="${jvar_border_thickness_msg}" />
+					</div>
+				</div>
+
+				<!-- Spacing Options -->
+				<div style="padding: 10px; border-style:solid; border-width:1px; border-color:#dfdfdf; background:#FAFAFA; color:#5e6062;">
+					${gs.getMessage('SPACING')}
+				</div>
+				<div id="spacing_options" style="border-right-style:solid; border-left-style:solid; border-bottom-style:solid; border-width:1px; border-color:#dfdfdf;">
+
+					<div class="form-group" style="display: inline-block; width:100%; margin:10px 0 3px 0;">
+						<g:evaluate var="jvar_horiz_pad_msg" expression="gs.getMessage('Horizontal (hspace) image padding')"/>
+						<label class="col-sm-6 section-title-top control-label ng-scope" style="padding-left:10px; margin-top:7px;"
+							   for="f_horiz">${gs.getMessage('Horizontal')}</label>
+						<input type="text" name="border" class="form-control" id="f_horiz" style="float:right; width:70px; margin-right:10px;"
+							   title="${jvar_horiz_pad_msg}" />
+					</div>
+
+					<div class="form-group" style="display: inline-block; width:100%; margin-bottom: 3px;">
+						<g:evaluate var="jvar_vert_pad_msg" expression="gs.getMessage('Vertical (vspace) image padding')"/>
+						<label class="col-sm-6 section-title-top control-label ng-scope" style="padding-left:10px; margin-top:7px;"
+							   for="f_vert">${gs.getMessage('Vertical')}</label>
+						<input type="text" name="border" class="form-control" id="f_vert" style="float:right; width:70px; margin-right:10px;"
+							   title="${jvar_vert_pad_msg}" />
+					</div>
+				</div>
+
+				<!-- Size Options -->
+				<div style="padding: 10px; border-style:solid; border-width:1px; border-color:#dfdfdf; background:#FAFAFA; color:#5e6062;">
+					${gs.getMessage('SIZE')}
+				</div>
+				<div id="size_options" style="border-right-style:solid; border-left-style:solid; border-width:1px; border-color:#dfdfdf;">
+
+					<div class="form-group" style="display: inline-block; width:100%; margin:10px 0 3px 0;">
+						<g:evaluate var="jvar_width_msg" expression="gs.getMessage('Image Width')"/>
+						<label class="col-sm-6 section-title-top control-label ng-scope" style="padding-left:10px; margin-top:7px;"
+							   for="f_width">${gs.getMessage('Width (pixels)')}</label>
+						<input type="text" name="border" class="form-control" id="f_width" style="float:right; width:70px; margin-right:10px;"
+							   title="${jvar_width_msg}" />
+					</div>
+
+					<div class="form-group" style="display: inline-block; width:100%; margin-bottom: 3px;">
+						<g:evaluate var="jvar_height_msg" expression="gs.getMessage('Image Height')"/>
+						<label class="col-sm-6 section-title-top control-label ng-scope" style="padding-left:10px; margin-top:7px;"
+							   for="f_height">${gs.getMessage('Height (pixels)')}</label>
+						<input type="text" name="border" class="form-control" id="f_height"
+							   style="float:right; width:70px; margin-right:10px;" title="${jvar_height_msg}" />
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div style="border-top: 1px solid #dfdfdf; padding:6px;align:right;">
+			<span style="float:right;padding-bottom:4px;">
+				<g:dialog_button onclick="return onOK()" class="disabled" id="save_button">${gs.getMessage('Save')}</g:dialog_button>
+			</span>
+		</div>
+	</div>
+<iframe id="upload_target" name="upload_target" title="${gs.getMessage('Insert/Modify Image')}" src="blank.do" style="width:0;height:0;border:0px solid #fff;" alt="" tabindex="-1">$[SP]</iframe>
+</j:jelly>

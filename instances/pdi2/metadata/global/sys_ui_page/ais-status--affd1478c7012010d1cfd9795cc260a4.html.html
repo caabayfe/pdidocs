@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_ais_enabled" object="true">
+		new sn_ais.StatusApi().isAisEnabled();
+	</g:evaluate>
+	<g:evaluate var="jvar_ais_initialized" object="true">
+		new sn_ais.StatusApi().isAisInitialized();
+	</g:evaluate>
+	<g:evaluate var="jvar_ais_service" object="true">
+		var grS = new GlideAggregate('sys_service');
+		grS.addQuery('name', 'AISearch');
+		grS.getCount() > 0;
+	</g:evaluate>
+	<style>
+		#ais-status {
+		  padding: 0 50px 0 50px;
+		}
+		
+		#ais-request {
+		  text-align: center;
+		}
+		
+		i {
+		  font-size: 4em;
+		}
+		.icon-check-circle {
+		  color: #48c891;
+		}
+		
+		.icon-alert {
+		  color: #c83c36;
+		}
+		
+		.icon-info {
+		  color: #bfbc45;
+		}
+		
+		.status-icon-holder {
+		  text-align: center;
+		}
+		
+		h1 {
+		  margin-bottom: 30px;
+		  text-align: center;
+		}
+		
+		h3 {
+		  text-align: center;
+		}
+		
+		em {
+		  margin-left: 5px;
+		}
+		
+	</style>
+	
+	<div id="ais-status">
+		<j:choose>
+		<j:when test="${jvar_ais_enabled}">
+			<j:choose>
+				<j:when test="${jvar_ais_initialized}">
+					<div class="status-icon-holder"><i class="icon-check-circle"></i></div>
+					<h1>${gs.getMessage("AI Search is ready")}</h1>
+					<h3>${gs.getMessage("Congratulations! AI Search is activated and ready for use!")}</h3>
+					<hr style="margin:25px;"/>
+					<h4>${gs.getMessage("Next Steps")}</h4>
+					<ul>
+						<li>${gs.getMessage("Review the")} <a href="/$guided_setup.do#/content/d585222f5b4310100977ca225681c72f" style="margin-left:.2em">${gs.getMessage("Guided Setup")}</a></li>
+						<li>${gs.getMessage("Install")} <a href="https://store.servicenow.com/sn_appstore_store.do#!/store/application/3f115144c33310109f1ed23d2840dd4c/" target="_blank" style="margin-left:.2em;margin-right:.2em">${gs.getMessage("Advanced AI Search Management Tools")}</a> ${gs.getMessage("from the ServiceNow Store.")}</li>
+					</ul>
+				</j:when>
+				<j:otherwise>
+					<div class="status-icon-holder"><i class="icon-info"></i></div>
+					<h1>${gs.getMessage("AI Search is enabled")}</h1>
+					<h4>${gs.getMessage("The AI Search application is activated on this instance, and we have started the automatic process that configures it. AI Search will be ready once this process completes.")}</h4>
+					<h4>${gs.getMessage("More information can be found")} <a href='${gs.getProperty("glide.management.host") + "kb_view.do?sysparm_article=" + gs.getProperty("glide.ais.status.article")}' target="_blank" style="margin-left:.2em">${gs.getMessage("here")}</a></h4>
+				</j:otherwise>
+			</j:choose>
+		</j:when>
+		<j:otherwise>
+			<j:choose>
+				<j:when test="${jvar_ais_service}">
+					<div class="status-icon-holder"><i class="icon-info"></i></div>
+					<h1>${gs.getMessage("AI Search is requested")}</h1>
+					<h4>${gs.getMessage("We are working on your AI Search activation request. Please note that it may take some time for the AI Search application to be activated.")}</h4>
+					<h4>${gs.getMessage("More information can be found")} <a href='${gs.getProperty("glide.management.host") + "kb_view.do?sysparm_article=" + gs.getProperty("glide.ais.status.article")}' target="_blank" style="margin-left:.2em">${gs.getMessage("here")}</a></h4>
+				</j:when>
+				<j:otherwise>
+					<div class="status-icon-holder"><i class="icon-alert"></i></div>
+					<h1>${gs.getMessage("AI Search is not enabled")}</h1>
+					<h4>${gs.getMessage("The AI Search application is not available on this instance. Click the Request AI Search button below to trigger the automatic activation process for AI Search on this instance.")}</h4>
+					<h4>${gs.getMessage("More information can be found")} <a href='${gs.getProperty("glide.management.host") + "kb_view.do?sysparm_article=" + gs.getProperty("glide.ais.status.article")}' target="_blank" style="margin-left:.2em">${gs.getMessage("here")}</a></h4>
+					<g:ui_form>
+						<div id="ais-request">
+							<input type="submit" value='${gs.getMessage("Request AI Search")}' />
+						</div>
+					</g:ui_form>
+				</j:otherwise>
+			</j:choose>
+		</j:otherwise>
+	</j:choose>
+	</div>
+</j:jelly>

@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_ais_admin_tools_ai_search_analytics_dashboard_average_click_position');

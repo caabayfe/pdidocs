@@ -1,0 +1,1 @@
+answer =(function calculatedFieldValue(current) {          if(current.metadata){          var metadataString = current.metadata.getDisplayValue();          return metadataString.length;          }          else{           return 0;          }         })(current);

@@ -1,0 +1,1 @@
+current.isNewRecord() || current.request.opened_by == gs.getUserID() || current.opened_by == gs.getUserID() || current.request.requested_for == gs.getUserID() || current.requested_for == gs.getUserID() || gs.hasRole('itil,sn_request_write');

@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide"
+	xmlns:j2="null" xmlns:g2="null">
+<g:requires name="styles/plugin_mgr.css" />
+<j2:if test="$[gs.hasRole('admin')]">
+	<g:ui_form>
+		<input type="hidden" id="cancelled" name="cancelled" value="false" />
+
+		<g2:evaluate jelly="true">
+			var plugin = new GlideRecord("v_plugin");
+			plugin.addQuery("sys_id", jelly.sysparm_plugin_id);
+			plugin.query();
+			if (plugin.getRowCount() == 0) {
+				plugin = new GlideRecord("v_plugin");
+				plugin.addEncodedQuery("scopeLIKE" + jelly.sysparm_plugin_scope);
+				plugin.query();
+			}
+
+			if (plugin.getRowCount() > 1) {
+				//try strategies to get down to 1 record
+				var foundPlugin = false;
+				var storeGR = GlideRecord("sys_store_app");
+				storeGR.get("scope", jelly.sysparm_plugin_scope);
+				var sysCode = JSUtil.notNil(storeGR.getValue("sys_code")) ? storeGR.getValue("sys_code") : "";
+
+				while (plugin.next()) {
+					//Is exact scope or plugin id match?
+					if (plugin.getValue('scope') == jelly.sysparm_plugin_scope || sysCode == plugin.getValue('id')) {
+						foundPlugin = true;
+						break;
+					}
+				}
+
+				//No high confidence matches so treat like not found since we have multiple
+				if (!foundPlugin)
+					plugin = new GlideRecord('v_plugin');
+
+			} else if (plugin.hasNext())
+				plugin.next();
+
+            plugin;
+		</g2:evaluate>
+
+		<g2:evaluate object="true" jelly="true" var="jvar_isPluginInstallationAllowed" >
+			var isPluginInstallationAllowed = new PluginActivationVisible().isInstallationAllowed();
+			isPluginInstallationAllowed;
+		</g2:evaluate>
+		<input type="hidden" id="plugin_installation_allowed" name="plugin_installation_allowed" value="$[jvar_isPluginInstallationAllowed.installationAllowed]" />
+
+		<g2:evaluate jelly="true" var="jvar_customizedVersion">
+		    var custVer = "none";
+            var scopeGr = new GlideRecord("sys_scope");
+            scopeGr.addQuery("scope", plugin.scope);
+            scopeGr.addQuery("scope", "!=", "global");
+            scopeGr.query();
+
+            var sysId = null;
+            if (scopeGr.next())
+                sysId = scopeGr.sys_id;
+
+            if (sysId != null) {
+                var customGr = new GlideRecord("sys_app_customization");
+                customGr.addQuery("vendor_app", sysId);
+                customGr.query();
+                if (customGr.next()) {
+                    var version = customGr.getValue("version");
+                    if (version != 'none')
+                        custVer = version;
+                }
+            }
+
+			custVer;
+		</g2:evaluate>
+
+		<g2:evaluate jelly="true" var="jvar_licUrl">
+			var tableName = sn_lef.GlideEntitlement.canRouteToEMS() ? "subscription_entitlement" : "license_details";
+			var licUrl = tableName + '_list.do?sysparm_query=end_date$[AMP]gt;=javascript:gs.beginningOfToday()^start_date$[AMP]lt;=javascript:gs.endOfToday()';
+			licUrl;
+		</g2:evaluate>
+		<g2:evaluate jelly="true" var="jvar_is_schedule_install">
+			jelly.sysparm_is_schedule_install;
+		</g2:evaluate>
+		<g2:evaluate jelly="true" var="jvar_schedule_start_date_time">
+			jelly.sysparm_schedule_start_date_time;
+		</g2:evaluate>
+		<g2:evaluate jelly="true" var="jvar_failure_strategy_options" object="true">
+			JSON.parse(jelly.sysparm_failure_strategy_options);
+		</g2:evaluate>
+		<g2:evaluate jelly="true" var="jvar_selected_failure_strategy" object="true">
+			JSON.parse(jelly.sysparm_selected_failure_strategy);
+		</g2:evaluate>
+		<g2:evaluate jelly="true" var="jvar_customized_version_label">
+			jelly.sysparm_customized_version_label;
+		</g2:evaluate>
+		<g2:evaluate jelly="true" var="jvar_install_start_time">
+			new GlideDateTime().getValue();
+		</g2:evaluate>
+		<g2:evaluate jelly="true" var="jvar_is_plugin_schedule_allowed" object="true">
+			var isPluginScheduleAllowed = {};
+			isPluginScheduleAllowed.scheduleAllowed = true;
+
+			if(!$[plugin.state == 'published']) {
+				isPluginScheduleAllowed.scheduleAllowed = false;
+				isPluginScheduleAllowed.message = gs.getMessage("Plugin cannot be scheduled as it is not published");
+			} else if (!$[jvar_isPluginInstallationAllowed.installationAllowed] $[AMP]$[AMP] !$[jvar_isPluginInstallationAllowed.id == 'SYSTEM_BUSY']) {
+				isPluginScheduleAllowed.scheduleAllowed = false;
+				isPluginScheduleAllowed.message = '$[jvar_isPluginInstallationAllowed.message]';
+			}
+			isPluginScheduleAllowed;
+		</g2:evaluate>
+
+        <input type="hidden" id="customized_version" name="customized_version" value="$[jvar_customizedVersion]" />
+
+		<j2:if test="$[!plugin.isValidRecord()]">
+			<div class="notification notification-danger">
+				<span class="notification-icon icon-cross-circle"></span>
+				${gs.getMessage("ERROR")} $[SP] '${sysparm_plugin_id}': ${gs.getMessage("Plugin not found")}
+		   </div>
+		</j2:if>
+
+		<j2:if test="$[plugin.isValidRecord()]">
+		<input type="hidden" id="plugin_id" name="plugin_id" value="$[plugin.id]" />
+		<input type="hidden" id="plugin_name" name="plugin_name" value="$[plugin.name]" />
+		<input type="hidden" id="plugin_sys_id" name="plugin_sys_id" value="$[plugin.sys_id]" />
+		<input type="hidden" id="list_view" name="list_view" value="${sysparm_list_view}" />
+		<input type="hidden" id="is_schedule_install" name="is_schedule_install" value="$[jvar_is_schedule_install]" />
+		<input type="hidden" id="schedule_start_date_time" name="schedule_start_date_time" value="$[jvar_schedule_start_date_time]" />
+		<input type="hidden" id="is_plugin_schedule_allowed" name="is_plugin_schedule_allowed" value="$[jvar_is_plugin_schedule_allowed.scheduleAllowed]" />
+		<input type="hidden" id="customized_version_label" name="customized_version_label" value="$[jvar_customized_version_label]" />
+		<input type="hidden" id="install_start_time" name="install_start_time" value="$[jvar_install_start_time]" />
+
+			<g2:evaluate jelly="true" var="jvar_pluginName">
+				var pluginName = plugin.name.replace(/'/g, "\\'");
+				pluginName;
+			</g2:evaluate>
+
+			<g2:evaluate jelly="true" var="jvar_licCheckRequired">
+				var checkLic = sn_lef.GlideEntitlement.isLicenseCheckRequired(plugin.id);
+				checkLic;
+			</g2:evaluate>
+
+			<g2:evaluate jelly="true" var="jvar_hasLicense">
+				var hasLic = sn_lef.GlideEntitlement.hasLicenseForApp(plugin.id);
+				hasLic;
+			</g2:evaluate>
+			<g2:evaluate jelly="true" var="jvar_getPluginActivationMode">
+				var activationMode = sn_lef.GlideEntitlement.getPluginActivationMode();
+				activationMode;
+			</g2:evaluate>
+			<g2:evaluate jelly="true" var="jvar_hasLicenseForPlugin">
+				var hasLicForPlugin = sn_lef.GlideEntitlement.checkLicenseForPlugin(plugin.id, false);
+				hasLicForPlugin;
+			</g2:evaluate>
+			<g2:evaluate jelly="true" var="jvar_showUninstallBlockedWarning">
+				var showUninstallBlockedWarning = !sn_app_api.AppStoreAPI.canUninstall(plugin.scope, plugin.id) $[AMP]$[AMP] plugin.active == 'inactive';
+			    showUninstallBlockedWarning;
+			</g2:evaluate>
+			<g2:evaluate jelly="true" var="jvar_should_redirect">
+				var shouldRedirect = false;
+				var redirectAppName;
+				if (plugin.active == 'active' $[AMP]$[AMP] plugin.scope != 'global' $[AMP]$[AMP]
+					(sn_app_api.AppStoreAPI.isAppstorePlugin(plugin.scope) || sn_jumbo_app.JumboAppAPI.isJumboPlugin(plugin.id))) {
+						shouldRedirect = true;
+						var appGr = new GlideRecord('sys_store_app');
+						appGr.get(scopeGr.getUniqueValue())
+						redirectAppId = JSUtil.nil(appGr.getValue('parent_app')) ? appGr.getUniqueValue() : appGr.getValue('parent_app');
+						redirectAppName = JSUtil.nil(appGr.getValue('parent_app')) ? appGr.getValue('name') : appGr.getDisplayValue('parent_app');
+				}
+
+				shouldRedirect;
+			</g2:evaluate>
+			<g2:evaluate var="jvar_show_activate_button">
+				(plugin.active == 'active' || gs.getXMLText(plugin.definition, "//no_activate") != "true") $[AMP]$[AMP] !plugin.block_install $[AMP]$[AMP] !shouldRedirect;
+			</g2:evaluate>
+
+			<g2:set_if var="jvar_plugin_desc" test="$[plugin.description != '']"
+				true="$[plugin.description]" false="${gs.getMessage('No description available')}" />
+
+			<g2:set_if var="jvar_action" test="$[plugin.active == 'active']"
+				true="${gs.getMessage('Repair')}" false="${gs.getMessage('Activate')}" />
+
+			<j2:if test="$[jvar_should_redirect]">
+				<div class="notification notification-info">
+					<span class="notification-icon icon-info"></span>
+					${gs.getMessage("Please repair store applications from the store app or parent app record.")} $[SP] <a  href="javascript:void(0)" onclick="window.open('/sys_store_app.do?sys_id=$[redirectAppId]', '_self'); return false">$[redirectAppName]</a>
+				</div>
+		    </j2:if>
+			<j2:if test="$[plugin.block_install]">
+				<div class="notification notification-danger">
+					<span class="notification-icon icon-cross-circle"></span>
+					${gs.getMessage("Activation of plugin isn't supported in the current environment.")}
+				</div>
+		    </j2:if>
+			<j2:if test="$[jvar_getPluginActivationMode == 'WARN' &amp;&amp; !jvar_hasLicenseForPlugin]">
+				<div class="row">
+				  <div class="col-sm-12">
+					 <div class="notification notification-warning" style="display: table;">
+						<span class="notification-icon icon-alert" style="display: table-cell;"></span>
+						<span class="outputmsg_text" style="display: table-cell;padding-left:10px;">${gs.getMessage("You do not currently have a valid subscription for this plugin. You may activate this plugin without a valid subscription for evaluation purposes; however, for a production environment, you must have a valid subscription.")}</span>
+					 </div>
+				  </div>
+			   </div>
+			</j2:if>
+
+			<j2:if test="$[jvar_showUninstallBlockedWarning &amp;&amp; jvar_show_activate_button]">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="notification notification-warning">
+							<span class="notification-icon icon-alert"></span>
+								${gs.getMessage('Plugin Uninstall Blocked')}
+						</div>
+					</div>
+				</div>
+			</j2:if>
+
+			<j2:if test="$[!jvar_isPluginInstallationAllowed.installationAllowed &amp;&amp; !jvar_is_schedule_install]">
+				 <div class="row">
+						<div class="col-sm-12">
+							<div class="notification notification-info">
+							<span class="notification-icon icon-info"></span>
+							$[jvar_isPluginInstallationAllowed.message]
+						</div>
+					   </div>
+				  </div>
+			 </j2:if>
+
+			<j2:if test="$[jvar_is_schedule_install &amp;&amp; !jvar_is_plugin_schedule_allowed.scheduleAllowed]">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="notification notification-warning">
+							<span class="notification-icon icon-alert"></span>
+							$[jvar_is_plugin_schedule_allowed.message]
+						</div>
+					</div>
+				</div>
+			</j2:if>
+
+			<j2:if test="$[jvar_is_schedule_install &amp;&amp; jvar_is_plugin_schedule_allowed.scheduleAllowed]">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="notification notification-info">
+							<span class="notification-icon icon-info"></span>
+							<j2:if test="$[jvar_customized_version_label != '']">
+								${gs.getMessage('The installation for customized version')} $[jvar_customized_version_label] ${gs.getMessage('will start after')} $[jvar_schedule_start_date_time]
+							</j2:if>
+							<j2:if test="$[jvar_customized_version_label == '']">
+								${gs.getMessage('The installation will start after ')} $[jvar_schedule_start_date_time]
+							</j2:if>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="retry_option_list" class="control-label">
+						${gs.getMessage('If the installation does not complete within scheduled period:')}
+					</label>
+					<select name="retry_option_list"
+							id="retry_option_list"
+							class="select2 form-control">
+						<j2:forEach items="$[jvar_failure_strategy_options]" var="jvar_strategy_option">
+							<option value="$[jvar_strategy_option.id]">
+								$[jvar_strategy_option.label]
+							</option>
+						</j2:forEach>
+					</select>
+				</div>
+			 </j2:if>
+
+				<div class="row">
+					 <div class="col-sm-1 padding-lr-5 text-center">
+                        <g:if_polaris>
+                            <g:then>
+                              <svg class="now-icon -xl" aria-hidden="true" viewBox="0 0 32 32"><path d="M4 6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v4h4V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v4h2a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h2V6zm-1 6v13h26V12H3zm23-2V7h-6v3h6zM12 7v3H6V7h6z"></path></svg>
+                            </g:then>
+                            <g:else>
+                              <img src="images/plugin_activate.gifx" alt="${gs.getMessage('Activate/Repair')}" class="logo-img padding-5" />
+                            </g:else>
+                        </g:if_polaris>
+					</div>
+					<div class="col-sm-11">
+						<p>
+							<h5 class="header-font">$[plugin.name]
+							<j2:if test="$[plugin.active == 'active']">
+								$[SP](${gs.getMessage('currently installed')})
+							</j2:if>
+							</h5>
+						</p>
+						<p> $[jvar_plugin_desc] </p>
+          		   </div>
+         	  </div>
+				<j2:if test="$[jvar_licCheckRequired]">
+					<div class="row mt-10">
+						<div class="col-sm-12">
+								${gs.getMessage('This plugin is associated with a for-fee subscription.')} $[SP] <a  href="javascript:void(0)" onclick="window.open('http://docs.servicenow.com/?context=CSHelp:Subscription-Plugins', '_blank'); trackPlugin('$[plugin.id]', '$[jvar_pluginName]', '$[jvar_licCheckRequired]', '$[jvar_hasLicense]', 'subscription_plugins_doc_viewed'); return false">${gs.getMessage('More info')}</a>
+						</div>
+						<div class="col-sm-12">
+								${gs.getMessage('You can view the list of your subscriptions on your production instance.')} $[SP] <a href="javascript:void(0)" onclick="window.open('$[jvar_licUrl]', '_blank'); trackPlugin('$[plugin.id]', '$[jvar_pluginName]', '$[jvar_licCheckRequired]', '$[jvar_hasLicense]', 'subscription_list_viewed'); return false">${gs.getMessage('Click here')}</a>
+						</div>
+					 </div>
+				</j2:if>
+						<j2:if test="$[plugin.requires.toString().length > 0 &amp;&amp; !plugin.block_install] &amp;&amp; !jvar_should_redirect">
+								<g2:evaluate var="jvar_req">
+									var req = new GlideRecord("v_plugin");
+									req.addQuery("id", "IN", plugin.requires);
+									req.query();
+									req;
+								</g2:evaluate>
+								<j2:if test="$[req.hasNext()]">
+									<div class="row mt-10">
+                                      <div class="col-sm-12"><h5 class="header-font">$[gs.getMessage('Plugin dependency status')]</h5></div>
+									</div>
+									<j2:while test="$[req.next()]">
+                                      <div class="row">
+										  <div class="col-sm-12">
+												<j2:if test="$[req.active == 'active']">
+													<a onclick="popListDiv(event, 'v_plugin', '$[req.sys_id]','')"
+													   tabindex="0" target="_blank" class="modal-dependancy-text">$[req.name]</a>
+													<span class="pull-right">${gs.getMessage('currently installed')}</span>
+												</j2:if>
+												<j2:if test="$[req.active != 'active']">
+													<a onclick="popListDiv(event, 'v_plugin', '$[req.sys_id]','')" 
+														tabindex="0" target="_blank" class="modal-dependancy-text">$[req.name]</a>
+													<span class="pull-right">${gs.getMessage('will be activated')}</span>
+
+												</j2:if>
+                                    		</div>
+										</div>
+									</j2:while>
+								</j2:if>
+							</j2:if>
+
+							<g2:evaluate var="jvar_conditional_plugins">
+								var gr_inactive_plugins = GlidePluginManager.getUninstalledConditionalPlugins(plugin.id);
+								gr_inactive_plugins.query();
+								gr_inactive_plugins;
+							</g2:evaluate>
+
+							<j2:if test="$[gr_inactive_plugins.hasNext()]">
+								<div class="row mt-10">
+									<div class="col-sm-12">
+										<h5 class="header-font">$[gs.getMessage('Some files will not be loaded because these plugins are inactive:')]</h5>
+									</div>
+								</div>
+								<j2:while test="$[gr_inactive_plugins.next()]">
+									<div class="row">
+										  <div class="col-sm-12">
+												<a onclick="popListDiv(event, 'v_plugin', '$[gr_inactive_plugins.sys_id]','')"  target="_blank">$[gr_inactive_plugins.name]</a>
+											</div>
+									</div>
+								</j2:while>
+							</j2:if>
+
+							<j2:if test="$[plugin.help != '']">
+								<div class=" row mt-10">
+									<div class="col-sm-12"><a  href="$[plugin.help]" target="_new">${gs.getMessage('Learn more')}</a></div>
+								</div>
+							</j2:if>
+
+							<j2:if test="$[jvar_show_activate_button]">
+							   <j2:if test="$[plugin.has_demo_data == true]">
+								<div class="mt-10">
+                                     <label>
+										<g2:ui_checkbox id="load_demo" name="load_demo"	value="false" />${gs.getMessage('Load demo data')}
+									</label>
+								</div>
+							   </j2:if>
+							</j2:if>
+					<div class="row">
+						<div class="col-sm-12">
+							<g:macro ok="onSubmit()"
+								cancel="onCancel()"
+								ok_id="ok_button" cancel_id="cancel_button" ok_type="button"
+								cancel_type="button" />
+							<j2:if test="$[jvar_show_activate_button &amp;&amp; !jvar_is_schedule_install]">
+								<g:dialog_button id="${jvar_ok_id}" type="${jvar_ok_type}" style_class="btn btn-primary ml-5 pull-right" onclick="${jvar_ok}; trackPlugin('$[plugin.id]', '$[jvar_pluginName]', '$[jvar_licCheckRequired]', '$[jvar_hasLicense]', '$[jvar_action]')">$[jvar_action]</g:dialog_button>
+							</j2:if>
+							<j2:if test="$[jvar_is_schedule_install]">
+								<g:dialog_button id="submit_schedule" type="${jvar_submit_type}" style_class="btn btn-primary ml-5 pull-right"
+												 onclick="trackPlugin('$[plugin.id]', '$[jvar_pluginName]', '$[jvar_licCheckRequired]', '$[jvar_hasLicense]', 'Schedule')">
+									${gs.getMessage('Submit')}
+								</g:dialog_button>
+							</j2:if>
+							<j2:if test="$[jvar_should_redirect]">
+								<g:dialog_button id="contiue_to_app" type="${jvar_submit_type}" style_class="btn btn-primary ml-5 pull-right"
+												 onclick="continueToApp('/sys_store_app.do?sys_id=$[redirectAppId]'); return false">
+									${gs.getMessage('Continue to Application')}
+								</g:dialog_button>
+							</j2:if>
+							<g:dialog_button id="${jvar_cancel_id}" type="${jvar_cancel_type}" style_class="btn btn-default ml-5 pull-right" onclick="${jvar_cancel}; trackPlugin('$[plugin.id]', '$[jvar_pluginName]', '$[jvar_licCheckRequired]', '$[jvar_hasLicense]', 'Cancel')" >${gs.getMessage('Cancel')}</g:dialog_button>
+						</div>
+					</div>
+			</j2:if>
+	</g:ui_form>
+</j2:if>
+</j:jelly>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:evaluate jelly="true" >
+	var req_parent_id = jelly.RP.getParameterValue('sysparm_parent_sys_id');
+	var req_table_name = jelly.RP.getParameterValue('sysparm_parent_table');
+	if(JSUtil.notNil(req_parent_id) &amp;&amp; JSUtil.notNil(req_table_name)) {
+		var recGR = new GlideRecord(req_table_name);
+		var recFound;
+		if(recGR.isValid())
+			recFound = recGR.get(req_parent_id);
+		else
+			gs.addErrorMessage(gs.getMessage('Invalid table in URL parameter'));
+		if(recFound) {
+			var tableLabel =  recGR.getLabel();
+			var recDisplayVal =  recGR.getDisplayValue();
+			var displayLink = "&lt;a href ='/" + req_table_name + ".do?sys_id=" + req_parent_id + "'&gt;" + recDisplayVal + "&lt;/a&gt;"
+			var notificationMsg = gs.getMessage("To View {0}, Click {1}", [tableLabel, displayLink]);
+			gs.addInfoMessage(notificationMsg);
+		}
+	}
+</g:evaluate>
+</j:jelly>

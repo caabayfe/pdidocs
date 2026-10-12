@@ -1,0 +1,71 @@
+- document: sys_atf_step
+  document_key: fdb559468f7a3300e7e16c7827bdee86
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-07-23 19:03:26
+  sys_id: 52f55d468f7a3300e7e16c7827bdee15
+  sys_mod_count: '8'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-07-23 20:14:31
+  value: |-
+    (function(outputs, steps, stepResult, assertEqual) {
+        // add test script here
+    	var prevID = '6a39acb58f723300e7e16c7827bdee25';
+    	var metricTypeId = steps(prevID).record_id;
+    	var prevCatId = "1b86f0c28f3a3300e7e16c7827bdeeb3";
+    	var metricCatId = steps(prevCatId).record_id;
+    	var assessableSysID;
+    	var catUserSysId;
+    	var stakeSysId;
+    	
+    	describe("Update the stake holder for assesasble record", function() {
+    	
+            it("Update stake holder for assessable record", function() {
+    			gs.info("The metric type instep 16 " +  metricTypeId);
+    			gs.info("The category type in step 16" + metricCatId);
+    			var agr = new GlideRecord('asmt_assessable_record');
+    			agr.addQuery("metric_type",metricTypeId);
+    			agr.query();
+    			gs.info("The row count will be  :: " + agr.getRowCount());
+    			agr.next();
+    			assessableSysID= agr.getUniqueValue();
+    			gs.info("The sys ID of  assessable record is " + assessableSysID);
+    			//Now Query  for the category user 
+    			var catuser = new GlideRecord('asmt_m2m_category_user');
+    			catuser.addQuery("metric_category",metricCatId);
+    			catuser.query();
+    			gs.info("The row count will be  catuser :: " + catuser.getRowCount());
+    			catuser.next();
+    			catUserSysId = catuser.getUniqueValue();
+    			
+    			var insertGr = new GlideRecord('asmt_m2m_stakeholder');
+    			insertGr.setValue("assessment_record",assessableSysID);
+    			insertGr.setValue("category_user",catUserSysId);
+    			stakeSysId = insertGr.insert();
+    			expect(stakeSysId).not.toBe(null);
+    			gs.info("The sys ID of  stakeSysId record is " + stakeSysId);
+    			return true;
+            });
+
+        });
+    		
+
+    })(outputs, steps, stepResult, assertEqual);
+    // uncomment the next line to execute this script as a jasmine test
+    jasmine.getEnv().execute();
+  variable: 989d9e235324220002c6435723dc3484
+- document: sys_atf_step
+  document_key: fdb559468f7a3300e7e16c7827bdee86
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-07-23 19:03:26
+  sys_id: 5af55d468f7a3300e7e16c7827bdee14
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-07-23 19:03:26
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777

@@ -1,0 +1,318 @@
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '25'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 0a3d9490776730104b68b0fabe5a99c8
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: '{"type":"ADV_NV","value":[]}'
+  variable: 4328e2fb47222200b4fad7527c9a7164
+- document: sys_hub_step_instance
+  document_key: 313d9490776730104b68b0fabe5a998a
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:48
+  sys_id: 0e3d9490776730104b68b0fabe5a99af
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:48
+  value: |-
+    (function execute(inputs, outputs) {
+    	inputs = new DockerUtils().trimStringInputs(inputs);
+
+    	var json_data = {};
+    	var Spec = {};
+
+    	json_data['ListenAddr'] = inputs.ListenAddr ? inputs.ListenAddr : undefined;
+
+    	var DefaultAddrPool = inputs.DefaultAddrPool;
+    	if (DefaultAddrPool.length <= 1 && DefaultAddrPool[0] != "") {
+    		json_data['DefaultAddrPool'] = [];
+    		for (var i in DefaultAddrPool)
+    			json_data.DefaultAddrPool.push(DefaultAddrPool[i]);
+    	}
+
+    	Spec['Name'] = inputs.Spec.Name ? inputs.Spec.Name : undefined;
+
+    	var Labels = {};
+    	var LabelFlag = false;
+    	for (var i in inputs.Spec.Labels)
+    		if (inputs.Spec.Labels[i].key) {
+    			Labels[inputs.Spec.Labels[i].key] = inputs.Spec.Labels[i].value;
+    			LabelFlag = true;
+    		}
+    	Spec['Labels'] = Labels;
+
+    	if (inputs.Spec.Orchestration.TaskHistoryRetentionLimit) {
+    		var Orchestration = {};
+    		Orchestration['TaskHistoryRetentionLimit'] = inputs.Spec.Orchestration.TaskHistoryRetentionLimit ?
+    			parseInt(inputs.Spec.Orchestration.TaskHistoryRetentionLimit) : undefined;
+    		Spec['Orchestration'] = Orchestration;
+    	}
+
+    	var RaftFlag = false;
+    	if (inputs.Spec.Raft.SnapshotInterval || inputs.Spec.Raft.KeepOldSnapshots || inputs.Spec.Raft
+    		.LogEntriesForSlowFollowers || inputs.Spec.Raft.ElectionTick || inputs.Spec.Raft.HeartbeatTick) {
+    		var Raft = {};
+    		Raft['SnapshotInterval'] = inputs.Spec.Raft.SnapshotInterval ? parseInt(inputs.Spec.Raft
+    			.SnapshotInterval) : undefined;
+    		Raft['KeepOldSnapshots'] = inputs.Spec.Raft.KeepOldSnapshots ? parseInt(inputs.Spec.Raft
+    			.KeepOldSnapshots) : undefined;
+    		Raft['LogEntriesForSlowFollowers'] = inputs.Spec.Raft.LogEntriesForSlowFollowers ? parseInt(inputs
+    			.Spec.Raft.LogEntriesForSlowFollowers) : undefined;
+    		Raft['ElectionTick'] = inputs.Spec.Raft.ElectionTick ? parseInt(inputs.Spec.Raft.ElectionTick) :
+    			undefined;
+    		Raft['HeartbeatTick'] = inputs.Spec.Raft.HeartbeatTick ? parseInt(inputs.Spec.Raft
+    			.HeartbeatTick) : undefined;
+    		RaftFlag = true;
+    		Spec['Raft'] = Raft;
+    	}
+
+    	if (inputs.Spec.Dispatcher.HeartbeatPeriod) {
+    		var Dispatcher = {};
+    		Dispatcher['HeartbeatPeriod'] = inputs.Spec.Dispatcher.HeartbeatPeriod ? parseInt(inputs.Spec
+    			.Dispatcher.HeartbeatPeriod) : undefined;
+    		Spec['Dispatcher'] = Dispatcher;
+    	}
+
+    	var CAConfig = {};
+    	CAConfig['NodeCertExpiry'] = inputs.Spec.CAConfig.NodeCertExpiry ? parseInt(inputs.Spec.CAConfig
+    		.NodeCertExpiry) : undefined;
+    	CAConfig['SigningCACert'] = inputs.Spec.CAConfig.SigningCACert ? inputs.Spec.CAConfig.SigningCACert :
+    		undefined;
+    	CAConfig['SigningCAKey'] = inputs.Spec.CAConfig.SigningCAKey ? inputs.Spec.CAConfig.SigningCAKey :
+    		undefined;
+    	CAConfig['ForceRotate'] = inputs.Spec.CAConfig.ForceRotate ? parseInt(inputs.Spec.CAConfig
+    		.ForceRotate) : undefined;
+    	CAConfig['ExternalCAs'] = [];
+    	var ExternalCAsFlag = false;
+    	for (var i in inputs.Spec.CAConfig.ExternalCAs) {
+    		var ExternalCA = {};
+    		ExternalCA.Protocol = inputs.Spec.CAConfig.ExternalCAs[i].Protocol ? inputs.Spec.CAConfig
+    			.ExternalCAs[i].Protocol : undefined;
+    		ExternalCA.URL = inputs.Spec.CAConfig.ExternalCAs[i].URL ? inputs.Spec.CAConfig.ExternalCAs[i]
+    			.URL : undefined;
+    		ExternalCA.CACert = inputs.Spec.CAConfig.ExternalCAs[i].CACert ? inputs.Spec.CAConfig.ExternalCAs[
+    			i].CACert : undefined;
+
+    		var ExternalCAOptions = {};
+    		var ExternalCAOptionsFlag = false;
+    		for (var j in inputs.Spec.CAConfig.ExternalCAs[i].Options)
+    			if (inputs.Spec.CAConfig.ExternalCAs[i].Options[j].key) {
+    				ExternalCAOptions[inputs.Spec.CAConfig.ExternalCAs[i].Options[j].key] = inputs.Spec
+    					.CAConfig.ExternalCAs[i].Options[j].value;
+    				ExternalCAOptionsFlag = true;
+    			}
+    		if (ExternalCAOptionsFlag == true)
+    			ExternalCA['Options'] = ExternalCAOptions;
+
+    		if (ExternalCA.Protocol || ExternalCA.URL || ExternalCA.CACert || ExternalCAOptionsFlag == true) {
+    			ExternalCAsFlag = true;
+    			CAConfig.ExternalCAs.push(ExternalCA);
+    		}
+    	}
+    	var CAConfig = false;
+    	if (inputs.Spec.CAConfig.NodeCertExpiry || inputs.Spec.CAConfig.SigningCACert || inputs.Spec.CAConfig
+    		.SigningCAKey || inputs.Spec.CAConfig.ForceRotate || ExternalCAsFlag == true) {
+    		Spec['CAConfig'] = CAConfig;
+    		CAConfig = true;
+    	}
+
+    	var EncryptionConfig = {};
+    	EncryptionConfig['AutoLockManagers'] = new DockerUtils().checkBooleanValue(inputs.Spec
+    		.EncryptionConfig.AutoLockManagers);
+    	Spec['EncryptionConfig'] = EncryptionConfig;
+
+    	var TaskDefaults = {};
+    	var LogDriver = {};
+    	LogDriver['Name'] = inputs.Spec.TaskDefaults.LogDriver.Name ? inputs.Spec.TaskDefaults.LogDriver
+    		.Name : undefined;
+
+    	var LogDriverOptions = {};
+    	var LogDriverOptionsFlag = false;
+    	for (var i in inputs.Spec.TaskDefaults.LogDriver.Options)
+    		if (inputs.Spec.TaskDefaults.LogDriver.Options[i].key) {
+    			LogDriverOptions[inputs.Spec.TaskDefaults.LogDriver.Options[i].key] = inputs.Spec.TaskDefaults
+    				.LogDriver.Options[i].value;
+    			LogDriverOptionsFlag = true;
+    		}
+    	if (LogDriverOptionsFlag == true)
+    		LogDriver['Options'] = LogDriverOptions;
+
+    	var TaskDefaultsFlag = false;
+    	if (inputs.Spec.TaskDefaults.LogDriver.Name || LogDriverOptionsFlag == true) {
+    		TaskDefaults['LogDriver'] = LogDriver;
+    		Spec['TaskDefaults'] = TaskDefaults;
+    		TaskDefaultsFlag = true;
+    	}
+
+    	if (inputs.Spec.Name || LabelFlag == true || inputs.Spec.Orchestration.TaskHistoryRetentionLimit ||
+    		RaftFlag == true || inputs.Spec.Dispatcher.HeartbeatPeriod || CAConfig == true || Spec
+    		.EncryptionConfig.AutoLockManagers || TaskDefaultsFlag == true)
+    		json_data['Spec'] = Spec;
+
+    	if (inputs.additional_fields)
+    		json_data = new DockerUtils().parseAdditionalFields(inputs.additional_fields,
+    			json_data);
+
+    	outputs.payload = JSON.stringify(json_data);
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '30'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 0e3d9490776730104b68b0fabe5a99c7
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: '{"type":"ADV_NV","value":[{"attributes":{},"name":"Accept","value":"application/json"},{"attributes":{},"name":"Content-Type","value":"application/json"}]}'
+  variable: 371837f1c71003007b237f48cb9763b0
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '12'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 463d9490776730104b68b0fabe5a99c8
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f11ebf865f101300a09a2abd7f466652
+- document: sys_hub_step_instance
+  document_key: 313d9490776730104b68b0fabe5a998a
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:48
+  sys_id: 4a3d9490776730104b68b0fabe5a99af
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:48
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '20'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 4a3d9490776730104b68b0fabe5a99c7
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: swarm/init
+  variable: 3d090af03b23320057a4a2e334efc455
+- document: sys_hub_step_instance
+  document_key: 063d9490776730104b68b0fabe5a99cc
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 5e3d9490776730104b68b0fabe5a99f1
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: |-
+    (function execute(inputs, outputs) {
+      if (inputs.status_code == 200) {
+        outputs.status = "Success";
+        outputs.node_id = inputs.response.replace(/['"]+/g, '');
+      } else {
+        outputs.status = "Error";
+        outputs = new DockerErrorHandler().initSwarmErrorHandler(inputs,outputs);       
+      }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '15'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 823d9490776730104b68b0fabe5a99c8
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: http://54.74.21.190:2375
+  variable: a67a8ef03b23320057a4a2e334efc472
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '10'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 863d9490776730104b68b0fabe5a99c7
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: adf80925db0bd300dd14596e5e96198c
+  variable: 262882f03b23320057a4a2e334efc4f0
+- document: sys_hub_step_instance
+  document_key: 063d9490776730104b68b0fabe5a99cc
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: 9a3d9490776730104b68b0fabe5a99f1
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '25'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: c23d9490776730104b68b0fabe5a99c7
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: post
+  variable: e85b7ebf47222200b4fad7527c9a71e3
+- document: sys_hub_step_instance
+  document_key: 863d9490776730104b68b0fabe5a99b3
+  order: '13'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:49
+  sys_id: ce3d9490776730104b68b0fabe5a99c7
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:49
+  value: 18409d8007482000dada43c0d1021e8f
+  variable: c30a451d2f201300a09a839fb18c95b4
+- document: sys_hub_action_type_definition
+  document_key: fd3d9490776730104b68b0fabe5a9956
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-10-27 19:57:50
+  sys_id: de3dd490776730104b68b0fabe5a990f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-10-27 19:57:50
+  value: ''
+  variable: d63d9490776730104b68b0fabe5a99f5

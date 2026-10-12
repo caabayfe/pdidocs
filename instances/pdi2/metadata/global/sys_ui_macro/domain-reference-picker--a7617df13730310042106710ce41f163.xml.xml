@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null">
+	<j:if test="${gs.getProperty('glide.sys.domain.enabled')=='true' || gs.getProperty('glide.sys.domain.partitioning')=='true' ||
+gs.getProperty('glide.sys.domain.delegated_administration')=='true'}">
+		<j:set var="jvar_id" value="domain_reference"/>
+		<!-- DomainPicker.js hides this element if the user does not have access to the picker -->
+		<div id="gsft_${jvar_id}">
+		<!-- Add a domain changer -->
+		<script language="javascript" src="scripts/DomainPicker.jsx?v=${gs.getProperty('glide.builddate')}"/>
+		<legend>${gs.getMessage('Domain')}</legend><ul>
+		<li class="row form-control-row one-control">
+			<j:set var="jvar_onchange" value="dp.changeChoice();"/>
+			<input id="sysparm_domain" value="picker" type="HIDDEN" name="sysparm_domain"></input>
+
+			<g:ui_reference id="${jvar_id}" name="${jvar_id}"
+							table="${GlideDomainSupport.getDomainTable();}"
+							value="${gs.getUser().getDomainID();}"
+							displayValue="${gs.getUser().getDomainDisplayValue();}"
+							show_popup="false"/>
+			<a title="${gs.getMessage('Reset to default Domain')}" onclick="dp.setDefaultDomain();return false;" class="btn btn-icon icon-clear-cache">
+					<span class="sr-only">
+						${gs.getMessage('Reset to default Domain')}
+					</span>
+			</a>
+			<script language="javascript">
+				var dp = new DomainPicker("${jvar_id}", "itil", "DomainReference","Domain");
+			</script>
+		</li></ul>
+		</div>
+	</j:if>
+</j:jelly>

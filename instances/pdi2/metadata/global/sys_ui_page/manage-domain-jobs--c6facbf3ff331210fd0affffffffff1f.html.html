@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate jelly="true">
+        var labelCancel = gs.getMessage('Cancel');
+        var labelSave = gs.getMessage('Save');
+        var labelState = gs.getMessage('Job State');
+        var labelType = gs.getMessage('Job Type');
+        var labelActive = gs.getMessage('Active');
+        var labelPaused = gs.getMessage('Paused');
+        var labelAutoResume = gs.getMessage('Auto Resume in 1 Hour');
+        var hierarchyChangeJobType = gs.getMessage('Hierarchy Change');
+        var hierarchyChangeJobAPI = SNC.DomainJobTypes.getAPIName('Hierarchy Change');
+    </g:evaluate>
+    <g:evaluate var="jvar_state_active" jelly="true">
+        new SNC.DomainJobTypes(hierarchyChangeJobAPI).isActiveJobType();
+    </g:evaluate>
+    <div class="form-group">
+        <label for="job_type" class="control-label" aria-required="true" aria-label="${labelType}">${labelType}</label><br />
+        <select id="job_type" name="job_type" class="form-control">
+            <option value="${hierarchyChangeJobAPI}">${hierarchyChangeJobType}</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="job_active" class="control-label" aria-required="true" aria-label="${labelState}">$[labelState]</label><br />
+        <select id="job_active" name="job_active" class="form-control" aria-required="true" aria-label="${labelState}" onchange="jobStateChanged()">
+            <j:if test="${jvar_state_active == true}">
+                <option selected="true" value="active">${labelActive}</option>
+                <option value="paused">${labelPaused}</option>
+            </j:if>
+            <j:if test="${jvar_state_active != true}">
+                <option value="active">${labelActive}</option>
+                <option selected="true" value="paused">${labelPaused}</option>
+            </j:if>
+        </select>
+    </div>
+    <div class="input-group-checkbox" style="margin-top: 25px; visibility: hidden;">
+        <label id="auto_resume_label" type="checkbox-label" for="auto_resume">
+            <input type="checkbox" name="auto_resume" id="auto_resume" checked="true" onclick="jobStateChanged();" style="margin: 0px 5px 0px 0px;" />$[labelAutoResume]
+        </label>
+    </div>
+    <footer class="modal-footer">
+        <button id="button_id_cancel" class="btn btn-default" role="button" data-action="discard" type="button" data-dismiss="modal" aria-required="true" aria-label="${labelCancel}" onclick="return cancel()">
+            $[labelCancel]
+        </button>
+        <button id="button_id_save" class="btn btn-primary" role="button" data-action="save" type="button" data-dismiss="modal" aria-required="true" aria-label="${labelSave}" onclick="return updateJobState()" disabled="true">
+            $[labelSave]
+        </button>
+    </footer>
+</j:jelly>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate var="jvar_parentSysID">
+		var vct = new VClusterTransaction('v_cluster_transaction');
+		vct.deleteTransactions();
+		var id = vct.informOtherNodes();
+		vct.refreshTransactions(GlideSession.get().getSessionID());
+		if (id == null)
+			gs.addErrorMessage(gs.getMessage("Can't show transactions from other nodes, check if you have right permissions"));
+		id;
+	</g:evaluate>
+
+    <g:evaluate var="jvar_timeout">
+        var timeOut = GlideProperty("glide.cluster_transaction.query.timeout", 35000);
+        timeOut;
+    </g:evaluate>
+
+	<script>
+		var directLocation = "v_cluster_transaction_list.do?sysparm_query=%5EGROUPBYnode_id";
+		var executionID = '${jvar_parentSysID}';
+		if (executionID == null || executionID == "null") {
+			window.location = directLocation;
+		} else {
+			var dialogClass = window.GlideModal ? GlideModal : GlideDialogWindow;
+
+			var dd = new dialogClass("hierarchical_progress_viewer", true, "40em", "10em");
+			dd.on("beforeclose", function() {
+				refreshNav();
+				reloadWindow(window);
+			});
+			dd.setTitle(getMessage("Loading Transactions"));
+			dd.setPreference("sysparm_renderer_execution_id", executionID);
+			dd.setPreference('sysparm_renderer_expanded_levels', '0');
+			dd.on("executionComplete", function() {
+				window.location = directLocation;
+			});
+			dd.render();
+			setTimeout(setStatus, '${jvar_timeout}');
+		}
+
+		function setStatus() {
+			var ga = new GlideAjax('AJAXSetProgressStatus');
+			ga.addParam('sysparm_name', 'setProgressStatus');
+			ga.addParam('sysparm_execution_id', executionID);
+			ga.getXML(redirect);
+			function redirect(response) {
+				setTimeout(function() {window.location = directLocation;}, 2000);
+			}
+		}
+	</script>
+</j:jelly>

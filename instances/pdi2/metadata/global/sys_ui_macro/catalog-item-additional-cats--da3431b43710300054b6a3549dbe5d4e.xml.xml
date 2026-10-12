@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:if test="${gs.getProperty('glide.sc.show_additional_cats') == 'true'}">
+	<table style="border-collapse: collapse; width: 100%;" data-sn-macro-sys-id="${jvar_macro_sys_id}">
+			<g2:evaluate var="arr" jelly="true">
+				var arr = GlideappCatalogItem.get(sc_cat_item.sys_id + "").getAdditionalCategories(jelly.sysparm_parent, jelly.sysparm_cart_edit, jelly.sysparm_catalog);
+				arr;
+			</g2:evaluate>
+			<tr>
+				<td nowrap="true">
+					$[AMP]nbsp;
+				</td>
+			</tr>
+			<j2:if test="$[arr.length != 0]">
+				<tr>
+					<td nowrap="true">
+						<table style="border-collapse: collapse;">
+							<tr>
+                            	<td>
+                            		<j2:set var="jvar_doctype" value="$[SNC.CatalogStyleService.useDoctype()]" />
+										<j2:if test="$[jvar_doctype == 'true']">
+											<g:evaluate var="iconClass" jelly="true">
+												var iconClass = "right";
+												if (GlideI18NStyle.getDirection() == "rtl")
+													iconClass = "left";
+												iconClass
+											</g:evaluate>
+											<button id="toggle_categories" class="item_category_toggle icon-vcr-${iconClass} btn btn-default" onclick="toggleCategories(this);" alt="${gs.getMessage('Collapse/Expand')}" aria-expanded="false" aria-label="${gs.getMessage('Toggle categories')}"></button>
+										</j2:if>
+                            		<j2:if test="$[jvar_doctype != 'true']">
+                            			<script>
+											function toggleCategories(elem) {
+												if ("${gs.getMessage('Collapse')}" == elem.alt) {
+													elem.alt = "${gs.getMessage('Expand')}";
+													elem.src = "./images/filter_hide.gifx";
+												} else {
+													elem.alt = "${gs.getMessage('Collapse')}";
+													elem.src = "./images/filter_reveal.gifx";
+												}
+												$("additional_categories").toggle();
+												_frameChanged();
+											}
+								   		</script>
+	                                	<img onclick="toggleCategories(this);" src="./images/filter_hide.gifx" alt="${gs.getMessage('Expand')}" style="vertical-align: top; cursor: pointer;"/>
+                            		</j2:if>
+             					</td>
+                                <td>
+                                	<div class="additional_cats_msg">
+										${gs.getMessage("Exists in categories")}
+						    		</div>
+                                </td>
+                            </tr>
+						</table>
+					</td>
+				</tr>
+				<tr style="display: none" id="additional_categories">
+					<td style="padding-left: 4px;">
+						<table style="border-collapse: collapse;">
+							<j2:forEach items="$[arr]" var="jvar_parent">
+								<tr>
+									<td>
+                                        <ul role="navigation" class="breadcrumb sc_breadcrumb" aria-label="${gs.getMessage('Catalog item categories')}">
+    										<g2:com.glideapp.servicecatalog_breadcrumb 
+    											view="$[sysparm_view]" catalogview="$[sysparm_catalog_view]"
+    											nc="$[sysparm_no_checkout]" st="false" 
+    											search="false"
+    											term="" ignore="true" pid="$[jvar_parent]" 
+    											lc="search_breadcrumb_link" cms="$[SNC.CatalogCMS.isRenderBlock(RP)]" />
+                                        </ul>
+									</td>
+								</tr>
+							</j2:forEach>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td nowrap="true">
+						$[AMP]nbsp;
+					</td>
+				</tr>
+			</j2:if>
+	</table>
+</j:if>
+</j:jelly>

@@ -1,0 +1,1 @@
+new DictionaryUtils().isDeletable(current)

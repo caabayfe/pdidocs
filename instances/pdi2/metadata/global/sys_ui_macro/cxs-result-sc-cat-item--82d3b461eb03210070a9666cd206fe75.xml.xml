@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate jelly="true">
+		
+         var isDoctype = jelly.jvar_cxs_doctype;
+         var idParts = jelly.jvar_cxs_result.id.split(":");
+         var recordId = "";
+         var sc_cat_item = null;
+         if (idParts.length > 1) {
+             recordId = idParts[1];
+             var sc_cat_item = new GlideRecord("sc_cat_item");
+             sc_cat_item.get(recordId);
+         }
+         
+         var title = jelly.jvar_cxs_result.title;
+         var snippet = jelly.jvar_cxs_result.snippet;
+         var description = jelly.jvar_cxs_result.meta.description;
+         var index = jelly.jvar_cxs_index;
+
+         var itemLinkTarget = JSUtil.notNil(jelly.jvar_cxs_result.link_target) ? jelly.jvar_cxs_result.link_target : "";
+         var itemLink = "";
+         if (jelly.jvar_cxs_result.link) {
+             var url = new GlideURL(jelly.jvar_cxs_result.link);
+             if (itemLinkTarget === "")
+                 url.set("sysparm_stack", "no");
+             itemLink = url.toString();
+         }
+
+         var image = jelly.jvar_cxs_result.image.link;
+         var thumbImage = jelly.jvar_cxs_result.image.thumbnail.link;
+         
+         //function to get the action details based on the actionId, actions are added to each search result in SearchServiceImple
+		 function getActionDetails(actionID) {
+			if(jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions[actionID])
+				return JSON.parse(jelly.jvar_cxs_result.searchResultActions[actionID]);
+				
+			return null;
+		 }
+		
+		 // this_helped : the action id will never change, this is used to show the checked pill if user clicked this helped
+		 var thisHelpedActionDetails = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.this_helped) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.this_helped) : null;
+		
+		 // order Action details : the action id will never change
+		 var orderActionDetails = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.order) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.order) : null;
+         
+         var score = parseInt(jelly.jvar_cxs_result.meta.score, 10).toString();
+         var show = {
+             "relevance": (gs.getProperty("glide.knowman.search.show_relevancy", "true") == "true" ? true : false)
+         }
+		var tabIndex = -1;
+		if(GlideAccessibility.isEnabled())
+			tabIndex = 0;
+		var ariaPresentation = "presentation";
+     </g:evaluate>
+	 
+     <g:evaluate jelly="true" var="jvar_links">
+         var links = "";
+         
+         if (jelly.jvar_cxs_result.related_links) {
+            for (var i = 0; i != jelly.jvar_cxs_result.related_links.length; i++) {
+				var relatedLink = jelly.jvar_cxs_result.related_links[i];
+				var linkTitle = "";
+				var ariaCat = "";
+				if (!JSUtil.nil(relatedLink)  ${AMP}${AMP} !JSUtil.nil(orderActionDetails)) {
+					linkTitle = orderActionDetails.actionLabel;
+					var ariaCat = gs.getMessage("Navigates to {0} catalog page", linkTitle);
+						links += '<button aria-label = "' + ariaCat + '" onclick="return false;" data-url="' + relatedLink.link + '" class="request_catalog_button_with_icon btn btn-default" data-index="${index}" action-value="${orderActionDetails.actionValue}" >';
+						links += '<span class="order">' + linkTitle + '</span>';
+						links += '</button>';
+				 }
+            }
+		 }
+         links;
+        
+    </g:evaluate>
+
+    <g:evaluate var="jvar_item" object="true">
+        var catItem = GlideappCatalogItem.get(recordId);
+        catItem;
+    </g:evaluate>
+
+	<g:evaluate var="jvar_item_name" object="true">
+		var catName = GlideStringUtil.escapeHTML(GlideappCatalogItem.get(recordId));
+		catName;
+	</g:evaluate>
+
+    <g:evaluate var="jvar_helped" jelly="true">
+        var feedbackClass = "cxs_hide_pill";
+  
+         if (jelly.jvar_cxs_result.meta.relevance &amp;&amp; jelly.jvar_cxs_result.meta.relevance[thisHelpedActionDetails.actionValue])
+            feedbackClass = "cxs_show_pill";
+  
+        feedbackClass;
+    </g:evaluate>
+  
+    <g:evaluate var="jvar_attached" jelly="true">
+        var attachClass = "cxs_hide_pill";
+        if (jelly.jvar_cxs_result.meta.relevance &amp;&amp; jelly.jvar_cxs_result.meta.relevance.attach)
+            attachClass = "cxs_show_pill";
+  
+        attachClass;
+    </g:evaluate>
+
+    <j:if test="${thumbImage == ''}">
+        <j:set var="jvar_icon" value="images/service_catalog/generic_small.gifx" />
+    </j:if>
+    <j:set var="jvar_target" value="${jvar_item.getTarget()}" />
+    <g:evaluate var="jvar_item_url" jelly="true">
+        var jvar_item_url = GlideappCatalogURLGenerator.getItemBaseURL(jelly.jvar_item);
+        jvar_item_url;
+    </g:evaluate>
+    <j:set var="jvar_href" value="${jvar_item_url}"/>
+    <g:evaluate var="jvar_show_expanded">
+        var jvar_show_expanded = false;
+        jvar_show_expanded;
+    </g:evaluate>
+    <g:evaluate var="jvar_use_popup" jelly="true">
+        var jvar_use_popup = gs.getProperty('glide.sc.cat_view_use_popup_for_details') == 'true';
+        jvar_use_popup;
+    </g:evaluate>
+    <g:inline template="com.glideapp.servicecatalog_show_price_function.xml" />
+    <j:if test="${jvar_target.equals('internal')}">
+        <j:set var="jvar_target" value="" />
+    </j:if>
+    
+    <div class="${recordId}">
+        <h4 class="cxs_result_title">
+            <g:no_escape>
+                <a id="item_link_${jvar_item.getID()}" href="${itemLink}" target="${itemLinkTarget}" data-index="${index}" class="cxs_result service_catalog">${jvar_item_name}</a>
+           </g:no_escape>
+			<j:if test="${jvar_links != 'null'}">
+				<span class="cxs_result_cat_item_link">${jvar_links}</span>
+			</j:if>
+        </h4>
+        <div class="cxs_meta_row">
+            <span>
+                <j:if test="${isDoctype =='true'}">
+                    <j:if test="${show.relevance}"><span class="cxs_article_info"><i class="icon-circle-solid"></i>${SP}Relevance: ${score}</span></j:if>
+                </j:if>
+                <j:if test="${isDoctype != 'true'}">
+                    <ul class="cxs_article_info">
+                        <j:if test="${show.relevance}"><li>${AMP}bull;${SP}Relevance: ${score}${SP}</li></j:if>
+                    </ul>
+                </j:if>
+            </span>
+		</div>
+        <div>
+            <g:no_escape>
+                <g:highlighter search="${sysparm_search}">
+                    ${jvar_item.getShortDescription()}    
+                </g:highlighter>
+            </g:no_escape>
+        </div>
+        <j:if test="${jvar_item.getDescription().trim().length() != 0}">
+            <g:evaluate var="jvar_search_display" jelly="true">
+                var jvar_search_display = "block";
+                if (jvar_show_expanded ${AMP}${AMP} !jvar_use_popup)
+                        jvar_search_display = "none";
+                        
+                jvar_search_display;
+            </g:evaluate>
+            <div style="display: ${jvar_search_display}; padding: 1px 0px 0px 1px;" class="no_underline_table" id="search_detail_${jvar_item.getID()}">
+                <table cellspacing="0" cellpadding="0" role = "${ariaPresentation}">
+                    <tr>
+                        <j:choose>
+                            <j:when test="${isDoctype =='true'}">
+                                <td>
+                                    <span class="icon-vcr-right moreInfo" id = "cxs_cat_item_preview_${jvar_item.getID()}" role = "button" aria-controls = "full_detail_${jvar_item.getID()}" aria-expanded = "false" tabindex = "${tabIndex}">
+                                        <strong>${gs.getMessage('upper_preview')}</strong>
+                                    </span>
+                                </td>
+                            </j:when>
+                            <j:otherwise>
+                                <td>
+                                    <img role = "${ariaPresentation}" height="12" width="16" src="images/filter_hide16.gifx" class="detail_toggle_img_search" id="expand_${jvar_item.getID()}" alt="${gs.getMessage('Expand')}" onclick="Event.stop(event); var id = '${jvar_item.getID()}'; $('full_detail_' + id).toggle(); $('expand_' + id).toggle(); $('collapse_' + id).toggle(); return false;" />
+                                    <img role = "${ariaPresentation}" height="12" width="16" src="images/filter_reveal16.gifx" class="detail_toggle_img_search" style="display: none;" id="collapse_${jvar_item.getID()}" alt="${gs.getMessage('Collapse')}" onclick="Event.stop(event); var id = '${jvar_item.getID()}'; $('full_detail_' + id).toggle(); $('expand_' + id).toggle(); $('collapse_' + id).toggle(); return false;" />
+                                </td>
+                                <td>
+                                    <span  id = "cxs_cat_item_preview_${jvar_item.getID()}" class="moreInfo" role = "button" aria-controls = "full_detail_${jvar_item.getID()}" aria-expanded = "false" tabindex = "${tabIndex}">
+                                        <strong>${gs.getMessage('More Information')}</strong>
+                                    </span>
+                                </td>
+                            </j:otherwise>
+                        </j:choose>
+                    </tr>
+                </table>
+            </div>
+        </j:if>
+        <j:if test="${!jvar_use_popup}">
+            <g:evaluate var="jvar_has_image" jelly="true">
+                var image_src = jelly.jvar_item.getPicture();
+                var has_image = image_src != null ${AMP}${AMP} image_src != '';
+                has_image;
+            </g:evaluate>
+            <g:evaluate var="jvar_full_display" jelly="true">
+                var jvar_full_display = "none";
+                jvar_full_display;
+            </g:evaluate>
+            <g:evaluate var="jvar_full_content_display" jelly="true">
+                var jvar_full_content_display = jvar_show_expanded ? "table-row" : "none";
+                jvar_full_content_display;
+            </g:evaluate>
+            <div style="display: ${jvar_full_display}; padding: 3px 0px 0px 2px;" id="full_detail_${jvar_item.getID()}" class="no_underline_table">
+                <div id="detail_${jvar_item.getID()}" class="sc_item_details cxs_result_cat_item_detail">
+                    <table>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                <j:if test="${jvar_has_image}">
+                                    <div style="margin-left: 5px; margin-right: 5px;">
+                                        <img src="${image_src}" alt = "${jvar_item_name}" title = "${jvar_item_name}"/>
+                                    </div>
+                                </j:if>
+                            </td>
+                            <td style="vertical-align: top;">
+                                <g:no_escape>        
+                                    ${NS:jvar_item.getDescription()}
+                                </g:no_escape>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </j:if>
+        <div class="cxs_result_action">
+            <span class="cxs_pill a11y_cxs_pill cxs_helped ${jvar_helped}" data-index="${index}" action-value="${thisHelpedActionDetails.actionValue}">
+                ${thisHelpedActionDetails.actionLabel}<button class="cxs_close_button" id="cxs_result_action" data-index="${index}" action-value="${thisHelpedActionDetails.actionValue}" aria-label = "${thisHelpedActionDetails.actionLabel}">
+                    <j:choose>
+                        <j:when test="${isDoctype =='true'}">
+                            <div class="cxs_close_icon icon-button icon-cross" aria-hidden = "true"/>
+                        </j:when>
+                        <j:otherwise>
+                            <div class="x_icon_cross" aria-hidden = "true">X</div>
+                        </j:otherwise>
+                    </j:choose>
+                </button>
+            </span>
+        </div>
+    </div>
+</j:jelly>

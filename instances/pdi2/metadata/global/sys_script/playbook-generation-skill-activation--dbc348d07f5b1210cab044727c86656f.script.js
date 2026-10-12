@@ -1,0 +1,1 @@
+sn_workflow_studio.WFStudioAISUtil.activateAllWFSDataSources();

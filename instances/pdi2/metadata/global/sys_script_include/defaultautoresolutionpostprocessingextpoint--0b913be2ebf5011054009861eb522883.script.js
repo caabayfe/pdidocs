@@ -1,0 +1,180 @@
+var DefaultAutoResolutionPostProcessingExtPoint = Class.create();
+
+DefaultAutoResolutionPostProcessingExtPoint.prototype = {
+	
+	STATUS_SUCCESS : global.AutoResolutionConstants.STATUS_SUCCESS, 
+	STATUS_ERROR : global.AutoResolutionConstants.STATUS_ERROR,
+	
+	// criticality states
+	CRITICALITY_NON_CRITICAL: global.AutoResolutionConstants.CRITICALITY_NON_CRITICAL,
+	CRITICALITY_CRITICAL: global.AutoResolutionConstants.CRITICALITY_CRITICAL,
+	CRITICALITY_INCONCLUSIVE: global.AutoResolutionConstants.CRITICALITY_INCONCLUSIVE,
+    
+	initialize: function() {
+	},
+
+	/**
+	*  Return the normalized prediction results to update the prediction table - sys_cs_auto_resolution_prediction
+	* 
+	* @param logger 
+	* @param parameterBag : The keys in the bag:  language_x_result, ar_config_id
+	*       
+	*        eg: {
+	*				"language_x_result" : <object>,                   	// the result from the languageX. see below.
+	*		 	    "ar_config_id" : "a0ff3e68533101105400ddeeff7b12e8" // Auto resolution configuration sys Id
+	*            }
+	*
+	*		 where language_x_result object looks like this - 
+	*
+	*			{
+	*				"schemaVersion": "1.0",
+	*               "status": {
+	*                   "code": 200,
+	*                   "message": "SUCCESS"
+	*               },
+	*               "result": [
+	*                   {
+	*                       "input": {
+	*                           "id": "feda6b70072120109c3e59bf1ad30010",
+	*                           "tableName": "hr_core_case",
+	*                            "fields": {
+	*                                "description": "I have received incorrect salary amount"
+	*                            }
+	*                        },
+	*                        "output": [
+	*                           {
+	*                               "service": "languageDetection",
+	*                               "serviceOutput": "en",
+	*                               "serviceOutputScore": 0.9963439,
+	*                               "serviceOutputDetails": ""
+	*                           },
+	*    						{
+	*      							"service": "criticalityDetection",
+	*      							"serviceOutput": "PayContributions-Critical",
+	* 								"serviceOutputScore": 0.94924694,
+	*     							"serviceOutputDetails": "{\"status\":\"success\",\"response\":{\"utterance\":\"I have received incorrect salary amount\",\"intents\":[{\"intentName\":\"PayContributions-Critical\",\"nluModelName\":\"ml_x_snc_global_global_087ad49d1b9eb0101115da01b24bcb70\",\"score\":0.94924694,\"intents\":[]}],\"properties\":{\"inference.time\":\"12\",\"nluPlatformLanguage\":\"en\",\"nluPlatformVersion\":\"3.1.2-HYB\"}}}"
+	*    						},
+	*							{
+	*    							"service": "searchQueryGeneration",
+	*     							"serviceOutput": "",
+	*      							"serviceOutputScore": "",
+	*      							"serviceOutputDetails": "[{\"query\":\"incorrect salary\",\"score\":\"0.83\"},{\"query\":\"salary amount\",\"score\":\"0.73\"}]"
+	*    						}
+	*  						]
+	*					}
+	*				]
+	*			}
+	*
+	* @returns : JSON object that contains field name-value pairs to update the prediction table - sys_cs_auto_resolution_prediction 
+	*            the name in the result should be the same as the field name in the table
+	*			
+	*       eg: { 
+	*             status: this.SUCCESS,  
+	*			  message: ''
+	*             result: [  // the block that contains name-value pairs
+	*                         {
+	*                              predicted_language : 'en', // optional. If omitted, the value from the payload will be used
+	*                              predicted_search_query: 'incorrect salary' , // optional.  If omitted, the search terms that exceed the threshold will be used.
+	*                              predicted_criticality: this.CRITICALITY_NON_CRITICAL, this.CRITICALITY_CRITICAL or  this.CRITICALITY_INCONCLUSIVE
+	*                         }
+	*                     ]  
+	*           }
+	*/
+    process: function(logger, parameterBag) {
+		
+		logger.info("Starting the post-processing extension: {0}", this.type);
+		
+		var response = {status:this.STATUS_SUCCESS, message:'', result: []};
+		
+		//the payload is guaranteed to exist.
+		var payload = parameterBag.language_x_result;
+		
+		var status = payload.status;
+		response.message = status.message;
+		
+		if (status.code != 200) {
+			// if the code != 200, there was an error and let's abort the process
+			response.status = this.STATUS_ERROR;
+			
+			logger.warn("Aborting the post-processing extension:{0}. status-code:{1}, status-message:{2}, payload:{3}", 
+						this.type, status.code, status.message, JSON.stringify(payload));
+			return response;
+		}
+		
+		if (payload.result.length == 0) {
+			response.status = this.STATUS_ERROR;
+			logger.warn("Aborting the post-processing extension:{0}. reason: no result found. status-code:{1}, status-message:{2}, payload:{3}", 
+						this.type, status.code, status.message, JSON.stringify(payload));
+			return response;
+		}
+		
+		var obj = {};
+		
+		// Note that currently, Auto-Resolution supports only one result, but may be extended in the future.
+		var elements = payload.result[0].output;
+		
+		for (var i=0; i<elements.length; i++) {
+		
+			var output = elements[i];
+		
+			switch(output.service) {
+					
+				case global.AutoResolutionConstants.LANGUAGE_DETECTION_SERVICE_NAME:
+					obj.predicted_language = this.getDetectedLanguage(output.serviceOutput , logger);
+					break;
+					
+				case global.AutoResolutionConstants.CRITICALITY_PREDICTION_SERVICE_NAME:
+					obj.predicted_criticality = this.getCriticality(output.serviceOutput , logger);
+					break;
+					
+				case global.AutoResolutionConstants.SEARCH_QUERY_GENERATION_SERVICE_NAME:
+					obj.predicted_search_query = this.getSearchQueries(output.serviceOutputDetails , logger);
+					break;
+			}
+		}
+		
+		// add this object into the array.
+		response.result.push(obj);
+		
+		logger.info("The execution of post-processing extension:{0} is completed", this.type);
+		return response;
+	},
+	
+	/**
+	* Returns the normalized criticality
+	* @return criticality {String}
+	*/
+	getCriticality:function(output, logger) {
+		
+		var val = output.toLowerCase();
+		var rtnVal = this.CRITICALITY_INCONCLUSIVE; // default is inconclusive.
+		
+		if (gs.nil(val))  // if empty string, treat it as inconclusive
+			rtnVal = this.CRITICALITY_INCONCLUSIVE; 
+		else if (val.indexOf("_noncritical") != -1) // noncritical suffix
+			rtnVal = this.CRITICALITY_NON_CRITICAL;
+		else if (val.indexOf("_critical") != -1) // critical suffix
+			rtnVal = this.CRITICALITY_CRITICAL;
+		else if (val.indexOf("noncritical") != -1)
+			rtnVal = this.CRITICALITY_NON_CRITICAL;
+		else if (val.indexOf("critical") != -1)
+			rtnVal = this.CRITICALITY_CRITICAL;
+		else if (val.indexOf("inconclusive") != -1)
+			rtnVal = this.CRITICALITY_INCONCLUSIVE;
+		
+		// if not exist, return the critical
+		logger.info('The post-processing extension: {0} - retuning {1} for the predicted criticality', this.type, rtnVal);
+		
+		return rtnVal;
+	},
+	
+	getSearchQueries:function(details, logger) {
+		return ''; // add a particular logic if needed. If an empty string is returned, the search terms that exceed the threshold will be used.  
+	},
+	
+	getDetectedLanguage:function(output, logger) {
+		return ''; // add a particular logic if needed. If an empty string is returned, the found value in the payload will be used.
+	},
+	
+	type: 'DefaultAutoResolutionPostProcessingExtPoint'
+};

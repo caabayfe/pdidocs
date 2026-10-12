@@ -1,0 +1,89 @@
+- document: sys_hub_action_type_definition
+  document_key: da1fe1845b210300514d484c11f91a2d
+  order: '0'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2017-09-26 23:57:35
+  sys_id: 5f0039845b210300514d484c11f91abf
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2017-09-26 23:57:35
+  value: '0'
+  variable: 9b0039845b210300514d484c11f91aa7
+- document: sys_hub_step_instance
+  document_key: 870039845b210300514d484c11f91a7e
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2017-09-26 23:57:35
+  sys_id: 9b0039845b210300514d484c11f91aa2
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2017-09-26 23:57:35
+  value: |-
+    (function execute(inputs, outputs) {
+      var reval       = new sn_bm_client.RecommendationEvaluator();
+      var count       = Number(inputs.count);
+      var threshold   = Number(inputs.threshold);
+      var score       = 1.0;
+      var scaleFactor = sn_bm_common.CommonConstants.RECO_SCALE_FACTOR;
+      var condition   = (gs.nil(inputs.gr.query_conditions + '')) ? '' : inputs.gr.query_conditions + '';
+
+      if (gs.nil(inputs.gr)) {
+        outputs.result = false;
+        outputs.score = score;
+        return;
+      }
+
+      if ((inputs.gr.type + '') == 'indicator_value')
+        count = reval.getIndicatorValue(inputs.gr.indicator + '', inputs.activityGR.date + '');
+
+      else if ((inputs.gr.type + '') == 'usage')
+        count = reval.getTableCount(inputs.gr.table + '', condition);
+
+      /* Evaluation result: true/false */
+      if ((inputs.direction + '') == 'min')
+        outputs.result = (count < threshold);
+      else if ((inputs.direction + '') == 'max')
+        outputs.result = (count > threshold);
+      else if ((inputs.direction + '') == 'equal')
+        outputs.result = (count == threshold);
+
+      /* Evaluation score: scaled distance from threshold */
+      var score = (threshold <= 0) ? 1.0 : scaleFactor * Math.abs(count - threshold) / threshold;
+      score = Math.min(scaleFactor, score);
+      score = (outputs.result) ? score : 0;
+
+      var pluginId = inputs.gr.plugin_id.id + '';
+      if (!gs.nil(pluginId)) {
+        var pluginEval = new GlidePluginManager().isActive(pluginId) === false;
+        outputs.result = pluginEval || outputs.result;
+        score          = (pluginEval) ? scaleFactor : score;
+      }
+      var scriptResult = new GlideScopedEvaluator().evaluateScript(inputs.gr, 'script');
+      if (!gs.nil(scriptResult) &&  inputs.gr.advanced + '' == 'true') {
+        outputs.result = outputs.result || scriptResult.evaluation;
+        scriptResult.score = Math.min(scaleFactor, scriptResult.score);
+        score = gs.nil(scriptResult.score) ? score : (score + scriptResult.score) / 2.0;
+      }
+
+      outputs.score = (score === Infinity || isNaN(score) || score === 0) ? 1.0 : score;
+      outputs.score = (outputs.result) ? outputs.score : 0;
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: da1fe1845b210300514d484c11f91a2d
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2017-09-26 23:57:35
+  sys_id: 9b0039845b210300514d484c11f91abf
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2017-09-26 23:57:35
+  value: ''
+  variable: df0039845b210300514d484c11f91aab

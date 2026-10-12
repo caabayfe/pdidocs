@@ -1,0 +1,1 @@
+new UACountEvaluatorScript().execute(current);

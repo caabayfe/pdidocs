@@ -1,0 +1,33 @@
+<div id="vcab_bootstrap_override">
+    <div ng-if="formModel.cab.tab.order.length > 0" ng-init="execItemScripts()"></div>
+    <uib-tabset ng-if="formModel.cab" class="cab_custom_form_tabs" role="tablist">
+        <uib-tab ng-repeat="sectionTabId in formModel.cab.tab.order"
+                 heading="{{::formModel.cab.tab.defn[sectionTabId].label}}"
+                 index="{{::sectionTabId}}" cab_change_tab_key="{{::tabLabel}}"
+                 select="formModel.cab.tab.onSelect(sectionTabId)"
+                 active="formModel.cab.tab._selTab[sectionTabId]"
+                 role="tab"
+                 ng-attr-id="{{::sectionTabId + '-tab'}}"
+                 ng-attr-tabindex="{{formModel.cab.tab.selected(sectionTabId) ? 0 : -1}}"
+                 ng-attr-aria-controls="{{::sectionTabId + '-panel'}}"
+                 ng-keydown="formModel.cab.tab.onKeydown($event, sectionTabId)">
+            <div ng-attr-id="{{::sectionTabId + '-panel'}}"
+                 ng-attr-aria-labelledby="{{::sectionTabId + '-tab'}}"
+                 ng-attr-aria-hidden="{{!formModel.cab.tab.selected(sectionTabId)}}"
+                 role="tabpanel" tabindex="0">
+                <div class="row" ng-include src="'cab_form_section_template.xml'"
+                     ng-repeat="section in formModel.cab.tab.defn[sectionTabId].sections"
+                     ng-hide="!section.visible"
+                     ng-show="section.visible"></div>
+            </div>
+        </uib-tab>
+    </uib-tabset>
+    <div ng-if="formModel.cab.tab.order.length === 0" ng-hide="!section.visible" ng-show="section.visible" ng-repeat="section in formModel._sections">
+        <div class="row" ng-include src="'cab_form_section_template.xml'"></div>
+    </div>
+    <div ng-if="!formModel.cab">
+        <sp-variable-layout ng-attr-id="{{::formModel.table}}.do"></sp-variable-layout>
+        <div ng-init="execItemScripts()">
+        </div>
+    </div>
+</div>

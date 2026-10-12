@@ -1,0 +1,129 @@
+<div ng-if="::!data.isValid && !data.emptyStateTemplate" class="panel panel-default">
+  <div class="panel-body wrapper-lg text-center">
+    <span ng-if="!data.tableUnsupported">${Record not found}</span>
+    <span ng-if="data.tableUnsupported">${Form view not supported for requested table}</span>
+  </div>
+</div>
+
+<div ng-if="!data.isValid && data.emptyStateTemplate" class="panel-shift">
+  <div class="empty-state-wrapper panel panel-default" ng-include="data.emptyStateTemplate"></div>
+</div>
+
+<div ng-if="data.isValid" class="panel-shift">
+  <div class="" ng-if="!data.f._view.length && data.hideRelatedLists && data.emptyStateTemplate">
+    <div class="empty-state-wrapper panel panel-default" ng-include="data.emptyStateTemplate"></div>
+  </div>
+
+  <div class="" ng-if="!data.f._view.length && data.hideRelatedLists && !data.emptyStateTemplate">
+    <div class="panel panel-default">
+      <div class="panel-heading"><span class="panel-title">{{data.f.title}}</span> <span ng-if="::options.showFormView == 'true' && data.f.view != ''">[{{data.f.view_title}} view]</span></div>
+      <div class="panel-body wrapper-lg text-center">
+        ${No elements to display}
+      </div>
+    </div>
+  </div>
+
+  <!-- readOnly due to scope -->
+  <div ng-if="isPageReady && data.f.outOfScope" class="read-only-message">
+    <div class="alert alert-info sp-cross-scope" role="alert">
+      <p>${This record is in the <strong>{{data.f.recordScopeLabel}}</strong> application, but <strong>{{data.f.currentScopeLabel}}</strong> is the current application.}</p>
+    </div>
+  </div>
+  <div ng-show="isPageReady" class="panel panel-default" ng-if="data.f._view.length || !data.hideRelatedLists" >
+    <div class="panel-heading" ng-if="data.f.title.length" sp-context-menu="getUIActionContextMenu(event)">
+      	<span class="dropdown m-r-xs" ng-if="(data.isAdmin || getUIActions('context').length > 0) && options.omitHeaderOptions != 'true'">
+            <button aria-label="${{{data.f.label}} Form menu}" title="${{{data.f.label}} Form menu}" class="btn btn-form-menu dropdown-toggle glyphicon glyphicon-menu-hamburger" style="line-height: 1.4em" id="adminMenu" data-toggle="dropdown" data-placement="bottom" aria-haspopup="true" aria-expanded="false" autofocus="true"></button>
+            <ul class="dropdown-menu" aria-labelledby="adminMenu">
+              <li ng-if="::data.isAdmin"><a ng-href="/{{data.f.table}}.do?sys_id={{data.f.sys_id}}&sysparm_view={{data.f.view}}" target="_blank" tabindex="-1">${Open in platform}</a></li>
+              <li ng-if="::data.isAdmin" class="dropdown-header" tabindex="-1">${Configure}</li>
+              <li ng-if="::data.isAdmin"><a href="/slushbucket.do?sysparm_referring_url={{adminMenu.encodedPageUrl}}&sysparm_list={{data.f._sections[0].id}}&sysparm_form=section&sysparm_view={{data.f.view}}" target="_blank" tabindex="-1">${Form Layout}</a></li>
+              <li ng-if="::data.isAdmin"><a href="/slushbucket.do?sysparm_referring_url={{adminMenu.encodedPageUrl}}&sysparm_list={{data.f.table}}&sysparm_form=related_list&sysparm_view={{data.f.view}}" target="_blank" tabindex="-1">${Related Lists}</a></li>
+              <li ng-if="::data.isAdmin"><a href="?id=lf&table=sys_ui_policy&filter=table%3D{{data.f.table}}%5EORtableIN{{data.tableHierarchy}}%5Eactive%3Dtrue%5Eui_type%3D1%5EORui_type%3D10" ng-click="openRelatedList($event, {id:'lf', table: 'sys_ui_policy', filter: 'table%3D{{data.f.table}}%5EORtableIN{{data.f.table}},sys_metadata%5Eactive%3Dtrue%5Eui_type%3D1%5EORui_type%3D10'})" tabindex="-1">${UI Policies} <span class="badge pull-right" ng-if="f.policy.length">{{f.policy.length}}</span></a></li>
+              <li ng-if="::data.isAdmin"><a href="?id=lf&table=sys_script_client&filter=table%3D{{data.f.table}}%5EORtableIN{{data.tableHierarchy}}%5Eactive%3Dtrue%5Eui_type%3D1%5EORui_type%3D10" ng-click="openRelatedList($event, {id: 'lf', table: 'sys_script_client', filter: 'table%3D{{data.f.table}}%5EORtableIN{{data.f.table}},sys_metadata%5Eactive%3Dtrue%5Eui_type%3D1%5EORui_type%3D10'})" tabindex="-1">${Client Scripts} <span class="badge pull-right" ng-if="adminMenu.getClientScriptCount()">{{adminMenu.getClientScriptCount()}}</span></a></li>
+              <li ng-if="getUIActions('context').length > 0 &&  data.isAdmin" role="separator" class="divider"></li>
+              <li ng-repeat="action in getUIActions('context')"><a href="" ng-click="triggerUIAction(action)" tabindex="-1" role="button" >{{action.name}}</a></li>
+              <li ng-if="::data.isAdmin || getUIActions('context').length > 0" role="separator" class="divider"></li>
+              <li><a target="_new" href="/{{data.f.table}}.do?PDF&sys_id={{data.sys_id}}&sysparm_view={{data.f.view}}" tabindex="-1">${Export to PDF}</a></li>
+              <li><a target="_new" href="/{{data.f.table}}.do?PDF&landscape=true&sys_id={{data.sys_id}}&sysparm_view={{data.f.view}}" tabindex="-1">${Export to PDF (landscape)}</a></li>
+            </ul>
+        </span>
+
+      	<!-- optional "Open in platform" link when omitHeaderOptions is true -->
+      	<span class="dropdown m-r-xs" ng-if="::data.isAdmin && options.omitHeaderOptions == 'true' && options.ensurePlatformLink == 'true'">
+            <button aria-label="${{{data.f.label}} Form menu}" title="${{{data.f.label}} Form menu}" class="btn btn-form-menu dropdown-toggle glyphicon glyphicon-menu-hamburger" style="line-height: 1.4em" id="platformLink" data-toggle="dropdown" data-placement="botton" aria-haspopup="true" aria-expanded="false"></button>
+            <ul class="dropdown-menu" aria-labelledby="platformLink">
+              <li><a ng-href="/{{data.f.table}}.do?sys_id={{data.f.sys_id}}&sysparm_view={{data.f.view}}" target="_blank" tabindex="-1">${Open in platform}</a></li>
+            </ul>
+        </span>
+
+      <span class="panel-title" role="heading" aria-level="{{embeddedInModal ? '1' : '2'}}">{{data.f.title}}</span> <span ng-if="::options.showFormView == 'true' && data.f.view != ''">[{{data.f.view_title}} view]</span>
+      <div ng-if="::attachmentHandler && data.canAttach" title="{{::data.addAttachmentMsg}}" class="pull-right attachment-button">
+      	<sp-attachment-button modal="true" supported-extensions="{{::data.supportedAttachmentExtensions}}"></sp-attachment-button>
+      </div>
+      <div ng-if="embeddedInModal && data.showCloseButtonInModal">
+      	<i class="fa fa-close text-base sp-form-modal-close-button" ng-click="cancel()" role="button" aria-label="{{data.closeWindowMsg}}" tabindex="0" data-original-title="{{data.closeWindowMsg}}" data-toggle="tooltip" data-placement="bottom"></i>
+      </div>
+    </div>
+    <div class="panel-body">
+      <!-- performance debug -->
+      <div ng-if="data.show_sql">
+        <div class="comment">
+          <span ng-if="data.f._perf.sql_count">${SQL Statements {{data.f._perf.sql_count}}}, </span>
+          <span>${Time {{data.f._perf.time}}}</span>
+        </div>
+        <div ng-repeat="s in data.f._perf.sql" class="{{s.type}}">
+          {{s.statement}}
+        </div>
+      </div>
+      <!-- attachments -->
+      <sp-attachment-manager table="::data.table" sys-id="data.f._attachmentGUID" omit-edit="::!data.canAttach"></sp-attachment-manager>
+      <!-- asterisk info text -->
+      <div ng-if="hasMandatoryFields()" class="asterisk-div">
+           <span class="fa fa-asterisk asterisk mandatory" title="${asterisk}"></span> ${Indicates required}
+      </div>
+      <!-- form -->
+      <form id="widget-form">
+        <div>
+          <sp-model form_model="data.f" mandatory="mandatory" embedded_in_modal="embeddedInModal"></sp-model>
+        </div>
+      </form>
+      <!-- UI Action Links -->
+      <div ng-if="getUIActions('link').length > 0">
+        <label class="h4" role="heading" aria-level="{{embeddedInModal ? '2' : '3'}}" style="margin: 0;">${Related Links}</label>
+          <nav aria-label="${Related Links}">
+            <div ng-repeat="action in getUIActions('link')">
+              <a href ng-click="triggerUIAction(action)" gsft_id="{{::action.sys_id}}">{{::action.name}}</a>
+            </div>
+          </nav>
+      </div>
+      <!-- related lists -->
+      <div ng-if="!data.hideRelatedLists">
+        <label class="h4" role="heading" aria-level="{{embeddedInModal ? '2' : '3'}}" style="margin: 0">${Related Lists}</label>
+        <div style="margin-bottom: 7px; padding-bottom: 7px; border-bottom: 1px solid #f5f5f5;">
+          <nav aria-label="${Related Lists}">
+            <span ng-repeat="rl in data.f._related_lists" ng-if="rl.visible">
+              <a ng-if="rl.type != 'REL'" ng-href="?id=lf&table={{::rl.table}}&filter={{rl.field}}%3D{{data.f.sys_id}}{{rl.filter ? (rl.filter.charAt(0) !== '^' ? '^' + rl.filter : rl.filter) : ''}}&view={{data.f.view}}" ng-click="openRelatedList($event, {id: 'lf', table: '{{::rl.table}}', filter: '{{rl.field}}%3D{{data.f.sys_id}}'})">{{rl.plural}}
+                <span class="label label-as-badge label-primary" ng-if="rl.count">{{::rl.count}}</span>
+              </a>
+              <a ng-if="::rl.type == 'REL'" href="?id=lf&table={{::rl.table}}&relationship_id={{rl.relationship_id}}&apply_to={{rl.apply_to}}&apply_to_sys_id={{rl.apply_to_sys_id}}&view={{::data.f.view}}" ng-click="openRelatedList($event, {id: 'lf', table: '{{::rl.table}}', apply_to: '{{rl.apply_to}}', apply_to_sys_id: '{{rl.apply_to_sys_id}}', relationship_id: '{{rl.relationship_id}}'})">{{rl.label}}
+                <span class="label label-as-badge label-primary" ng-if="rl.count">{{rl.count}}</span>
+              </a>
+              <span ng-if="!$last" class="related-lists-vertical-bar" aria-hidden="true"> | </span>
+            </span>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-footer">
+      <button ng-click="triggerUIAction(action)" ng-disabled="submitting" ng-repeat="action in getUIActions('button') | filter: hideDuplicateSaveAction" class="btn action-btn" ng-class="::getButtonClass(action)" gsft_id="{{::action.sys_id}}">{{action.name}}</button>
+      <span>{{status}}</span>
+      <button ng-if="getPrimaryAction()" type="submit" ng-click="delayTriggerUIAction(getPrimaryAction())" ng-disabled="submitting" class="btn btn-primary action-btn pull-right" gsft_id="{{::getPrimaryAction().sys_id ? getPrimaryAction().sys_id : ''}}">${Save} <span ng-if="saveButtonSuffix">({{saveButtonSuffix}})</span></button>
+      <div style="clear: both;"></div>
+      <div ng-if="mandatory.length" class="alert alert-info" style="margin-top: .5em" aria-live="polite" aria-atomic="true">
+        <span ng-if="mandatory.length > 0">${Required information} </span>
+        <span ng-repeat="f in mandatory" class="label sc-field-error-label" ng-bind="f.label"></span>
+      </div>
+    </div>
+  </div>
+</div>

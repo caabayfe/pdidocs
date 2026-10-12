@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_cc_group_field" object="true" jelly="true">
+		var field = {};
+        field = jelly.jvar_cc_radio_field;
+        field;
+	</g:evaluate>
+	<g:evaluate var="jvar_cc_groups" object="true" jelly="true">
+		var grouped_field = jelly.jvar_cc_group_field;
+		var groups = grouped_field.groups;
+		groups;
+	</g:evaluate>
+	<g:evaluate var="jvar_cc_group_names" object="true" jelly="true">
+		var groups = jelly.jvar_cc_groups;
+		var names =[];
+		
+		for (var i=0; i != groups.length; i++) {
+			names.push(groups[i].name);								
+		}
+		names = new JSON().encode(names);
+		names;
+	</g:evaluate>
+	<div id="${jvar_cc_group_field.name}" role="radiogroup"  aria-label="${jvar_cc_group_field.label}" aria-labelledby="${jvar_cc_group_field.label}">
+		<br/>
+		<j:forEach var="jvar_cc_group" items="${jvar_cc_groups}">
+			<span class="input-group-radio">
+				<g:evaluate var="jvar_show_group" jelly="true">
+					var script = "showRadioGroup('"+ jelly.jvar_cc_group.name +"', '" + jelly.jvar_cc_group_names +"');";
+					script;
+				</g:evaluate>
+				<j:choose>
+					<j:when test="${jvar_cc_group.default_group}">
+						<input id="${jvar_cc_group.name}" class="radio" type="radio" name="${jvar_cc_group_field.name}" checked="checked" aria-label="${jvar_cc_group.label}" aria-labelledby="${jvar_cc_group.label}" onchange="${jvar_show_group}" onfocus="${jvar_show_group}"/>
+					</j:when>
+					<j:otherwise>
+						<input id="${jvar_cc_group.name}" class="radio" type="radio" name="${jvar_cc_group_field.name}" aria-label="${jvar_cc_group.label}" aria-labelledby="${jvar_cc_group.label}" onchange="${jvar_show_group}" onfocus="${jvar_show_group}"/>
+					</j:otherwise>
+				</j:choose>
+				<label for="${jvar_cc_group.name}" class="radio-label">
+					<g:evaluate var="jvar_radio_message" object="true" jelly="true">
+						var message = jelly.jvar_cc_group.label;
+						message = gs.getMessage(message);
+						message;
+					</g:evaluate>
+					<span>${jvar_radio_message}</span>
+				</label>
+			</span>
+		</j:forEach>
+	</div>
+		<br/><br/>
+		<g:evaluate var="jvar_radio_fields_id" jelly="true">
+			var suffix = "-fields";
+			var radioFieldsId = jelly.jvar_cc_group_field.name + suffix;
+			radioFieldsId;
+		</g:evaluate>
+		<div id="${jvar_radio_fields_id}" >
+			<j:forEach var="jvar_cc_group" items="${jvar_cc_groups}">
+				<g:evaluate var="jvar_default_style" jelly="true">
+					var style = "display:none";
+					if (jelly.jvar_cc_group.default_group){
+						style="display:block";
+					}
+					style;
+				</g:evaluate>
+				<div id="${jvar_cc_group.name}-fields" style="${jvar_default_style}"> 
+					<j:forEach var="jvar_group_field" items="${jvar_cc_group.fields}">
+						<g:evaluate var="jvar_group_cc_field" object="true" jelly="true"> 
+							var field = jelly.jvar_group_field;
+							field;
+						</g:evaluate>
+						<g:macro_invoke macro="cc_field" cc_field='${jvar_group_cc_field}' cc_prefix="${jvar_cc_group.name}"/>
+					</j:forEach>
+				</div>	
+			</j:forEach>
+		</div>
+	<script>
+		
+		function showRadioGroup(groupId, groupsJson) {
+		
+			var groups = JSON.parse(groupsJson);
+			groups.forEach(function(otherGroupId) {
+				showOrHide(groupId, otherGroupId);
+			});
+		}
+		
+		function showOrHide(currentGroupId, groupId) {
+			var group = gel(groupId + "-fields");
+			
+			if (currentGroupId == groupId) {
+				group.style.display = "block";
+			} else {
+				group.style.display = "none";
+			}
+		}
+	
+	</script>
+</j:jelly>

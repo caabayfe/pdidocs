@@ -1,0 +1,1 @@
+new AssessmentUtils().updateTriggerConditionBR(current);

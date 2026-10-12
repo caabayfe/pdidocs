@@ -1,0 +1,192 @@
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '4'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-04-03 17:59:43
+  sys_id: 26ee1d160f2c7300c760001ea8767ea5
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-04-03 17:59:43
+  value: '0'
+  variable: 92ee1d160f2c7300c760001ea8767e94
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '10'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-11-17 08:00:07
+  sys_id: 3d524a7a53b330106bdaddeeff7b12f2
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-11-17 08:00:07
+  value: '0'
+  variable: 25524a7a53b330106bdaddeeff7b12e9
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '7'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-10-23 10:43:20
+  sys_id: 61c5996bc7200010d1f04b47ba97631b
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-10-23 10:43:20
+  value: '0'
+  variable: 19c5996bc7200010d1f04b47ba976312
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '9'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-11-17 08:00:07
+  sys_id: 75524a7a53b330106bdaddeeff7b12f2
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-11-17 08:00:07
+  value: '0'
+  variable: e9524a7a53b330106bdaddeeff7b12e2
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-04-04 11:28:12
+  sys_id: 8dee81620fe03300c760001ea8767e03
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-04-04 11:28:12
+  value: ''
+  variable: 41ee41620fe03300c760001ea8767ef4
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '5'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-04-03 17:59:43
+  sys_id: aeee1d160f2c7300c760001ea8767ea4
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-04-03 17:59:43
+  value: ''
+  variable: 2aee1d160f2c7300c760001ea8767e98
+- document: sys_hub_step_instance
+  document_key: 4aee1d160f2c7300c760001ea8767e4f
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-04-03 17:59:42
+  sys_id: d2ee1d160f2c7300c760001ea8767e7c
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-04-03 17:59:42
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 4aee1d160f2c7300c760001ea8767e4f
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-04-03 17:59:42
+  sys_id: daee1d160f2c7300c760001ea8767e7c
+  sys_mod_count: '26'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-03-22 17:25:29
+  value: |-
+    (function execute(inputs, outputs) {
+        if (!isValidRequest()) {
+            setOutputToError();
+            return;
+        }
+        var REQUEST_STATUS = {
+                INPROGRESS: 0,
+                VERIFIED: 2
+            },
+            REQUEST_ACTION_TYPE = {
+                RESET_PASSWORD: 1,
+                UNLOCK_ACCOUNT: 2,
+                RESET_UNLOCK_ACCOUNT: 3,
+                CHANGE_PASSWORD: 4
+            };
+
+        var request = inputs.requestRecord;
+        outputs.status = "Success";
+        outputs.is_flow = request.process.cred_store.type.use_flow;
+        outputs.req_status = request.status;
+        outputs.is_password_empty = (inputs.password + "") ? false : true;
+        outputs.send_expiration_reminder = request.process.send_expiration_reminder;
+        var isGetUserLockStateSubflow = inputs.action == '4';
+
+        var processGr = new GlideRecord("pwd_process");
+        processGr.get(request.process.sys_id);
+
+        var userGr = new GlideRecord("sys_user");
+        userGr.get(request.user.sys_id);
+
+        outputs.process = processGr;
+        outputs.user = userGr;
+
+        var resetRequestActionType = request.action_type,
+            resetRequestStatus = request.status,
+            subflow = '';
+
+        if (resetRequestActionType == REQUEST_ACTION_TYPE.UNLOCK_ACCOUNT) {
+            outputs.action_type = 'Unlock Account';
+            subflow = request.process.cred_store.type.unlock_user_flow; //Unlock Account
+        } else if (resetRequestActionType == REQUEST_ACTION_TYPE.CHANGE_PASSWORD) {
+            outputs.action_type = 'Change Password';
+            subflow = request.process.cred_store.type.pwd_change_flow; //Change Password
+        } else {
+            outputs.action_type = (resetRequestActionType == REQUEST_ACTION_TYPE.RESET_PASSWORD) ? 'Reset Password' : 'Reset and Unlock Account';
+            if (isGetUserLockStateSubflow) {
+                subflow = request.process.cred_store.type.get_lock_state_flow; // Get lock state
+            } else {
+                subflow = request.process.cred_store.type.passd_reset_flow; //Reset Password.
+            }
+        }
+        outputs.subflow = subflow.sys_scope.scope.toString() + "." + subflow.internal_name.toString();
+
+        function isValidRequest() {
+            return inputs.requestRecord != null && typeof(inputs.requestRecord) === 'object' && inputs.requestRecord.getTableName() == 'pwd_reset_request';
+        }
+
+        function setOutputToError() {
+            outputs.status = "Error";
+            outputs.error_message = gs.getMessage("Invalid Request Record");
+        }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-04-03 17:59:43
+  sys_id: e6ee1d160f2c7300c760001ea8767ea5
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-04-03 17:59:43
+  value: ''
+  variable: 9aee1d160f2c7300c760001ea8767e80
+- document: sys_hub_action_type_definition
+  document_key: 832691120f2c7300c760001ea8767e4b
+  order: '8'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-11-17 08:00:07
+  sys_id: fd524a7a53b330106bdaddeeff7b12f2
+  sys_mod_count: '7'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-03-22 17:25:29
+  value: '{"complexObjectSchema":{"FlowDesigner:FDa9524a7afab330107c22e3ab8b7bd3cc":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDa9524a7afab330107c22e3ab8b7bd3cc.$type_facets":{"SimpleMapFacet":"{\"sourceId\":\"\",\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"db00fafa-3fe7-4489-bed2-a714954825b9\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDa9524a7afab330107c22e3ab8b7bd3cc\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"sourceUiUniqueId\":\"\",\"sourceType\":\"\",\"hint\":\"\",\"uiType\":\"object\",\"order\":\"8\",\"max_length\":\"65000\"}"}},"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"serializationFormat":"JSON","version":"1.0"}'
+  variable: 61524a7a53b330106bdaddeeff7b12de

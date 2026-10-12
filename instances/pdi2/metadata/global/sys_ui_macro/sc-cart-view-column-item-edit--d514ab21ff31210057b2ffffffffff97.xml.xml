@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+    <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <div class="sc_cv_edit_items_buttons">
+		<script>
+			var itemDelUrl = null;
+			if (typeof showDeleteConfirmDialog == "undefined")
+				function showDeleteConfirmDialog(url) {
+					itemDelUrl = url;
+	        			var dialogClass = window.GlideModal ? GlideModal : GlideDialogWindow;
+	        			var dialog = new dialogClass('glide_confirm_standard');
+	        			dialog.setTitle(new GwtMessage().getMessage('Confirmation'));
+	        			dialog.setPreference('warning', true);
+					dialog.setPreference('focusTrap', true);
+					dialog.setPreference('title', new GwtMessage().getMessage("delete_item"));
+					dialog.setPreference('onPromptComplete', deleteItem);
+        				dialog.render();
+				}
+
+			if (typeof deleteItem == "undefined")
+				function deleteItem() {
+					document.location.href = itemDelUrl + "$[AMP]url=" + encodeURIComponent(document.location.href);
+				}
+		</script>
+        <j:if test="${jvar_sc_delete_item_button == 'true'}">
+            <g:evaluate var="jvar_cart_remove_url" jelly="true">
+                var jvar_cart_remove_url = GlideappCatalogURLGenerator.getCartRemoveURL(jelly.sysparm_catalog, jelly.sysparm_catalog_view, jelly.jvar_cart_item.getGr().getUniqueValue(), gs.getSessionToken());
+                if (!JSUtil.nil(jelly.sysparm_cart_name))
+					jvar_cart_remove_url += '$[AMP]sysparm_cart_name=' + jelly.sysparm_cart_name;
+                jvar_cart_remove_url;
+            </g:evaluate>
+            <g:evaluate jelly="true" expression="var sc_delete_item_label=gs.getMessage(jelly.jvar_sc_delete_item_label);" />
+			<g:evaluate jelly="true">
+				var item_title = '';
+				if (!JSUtil.nil(jelly.jvar_cat_item))
+					item_title = jelly.jvar_cat_item + '';
+				item_title;
+				var item_id = jelly.jvar_cart_item.getID();
+			</g:evaluate>
+
+			<g:sc_button id="sc_cv_edit_items_delete_button_${item_id}"
+            			img=""
+            			noTranslate="true"
+            			classes="request_catalog_button"
+            			onclick="showDeleteConfirmDialog('${jvar_cart_remove_url}'); return false;"
+            			label="${sc_delete_item_label}"
+            			title="${sc_delete_item_label} ${item_title}"
+            			isDanger="true"/>
+        </j:if>
+        <j:if test="${jvar_sc_edit_item_button == 'true'}">
+            <g:evaluate var="jvar_edit_cart_action" jelly="true">
+                var params = {"sysparm_parent_sys_id":jelly.RP.getParameterValue("sysparm_parent_sys_id"), "sysparm_parent_table":jelly.RP.getParameterValue("sysparm_parent_table"), "sysparm_view":jelly.RP.getParameterValue("sysparm_view")};
+                var jvar_edit_cart_url = GlideappCatalogURLGenerator.getFullItemEditURLWithParams(jelly.jvar_cat_item.getID(), jelly.sysparm_catalog, jelly.sysparm_catalog_view, jelly.jvar_cart_item.getGr().getUniqueValue(), jelly.sysparm_view, jelly.sysparm_processing_hint, jelly.sysparm_cart_name, params);
+                var jvar_edit_cart_action = "location.assign('" + jvar_edit_cart_url + "'); return false;";
+                jvar_edit_cart_action;
+            </g:evaluate>
+            <g:evaluate jelly="true" expression="var sc_edit_item_label=gs.getMessage(jelly.jvar_sc_edit_item_label);" />
+            <g:sc_button id="sc_cv_edit_items_edit_button_${item_id}"
+            			img=""
+            			noTranslate="true"
+            			classes="request_catalog_button"
+            			onclick="${jvar_edit_cart_action}"
+            			label="${sc_edit_item_label}"
+            			title="${sc_edit_item_label} ${item_title}"/>
+        </j:if>
+    </div>	
+</j:jelly>

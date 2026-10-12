@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <script type="text/javascript">
+        
+        // When the page gets loaded, call the questions_and_answers_on_load method for on-load event.
+        addAfterPageLoadedEvent (
+            function() { 
+                questions_and_answers_on_load('${jvar_form_id}');
+            },
+			'${jvar_form_id}'
+        );
+        
+        // When the page gets loaded, register the event hanlder for on-submit event for the form.
+        addSubmitEvent (
+            function() { 
+                return questions_and_answers_on_submit('${jvar_form_id}');
+            },
+			'${jvar_form_id}'
+        );
+
+        /**
+        * Returns all available questions from the db. 
+        */
+        function getAllQuestions_${jvar_verification_id}(){
+    
+            var arr = [];
+            <j:forEach begin="0" end="${jvar_questions.size()-1}" indexVar="questionIndex" >
+                arr.push("${jvar_questions.get(questionIndex)}");
+            </j:forEach>
+            return arr;
+        }
+		
+		<g:evaluate var="jvar_stored_answer_size" jelly="true">
+			var size = 0;
+			if (jelly.jvar_stored_answer_ids != undefined) {
+				size = jelly.jvar_stored_answer_ids.size();
+			}
+			size;
+		</g:evaluate>
+		
+        /**
+        * Traverse all the stored questions and returns the array of the questions. 
+        */
+        function getAllStoredQuestions_${jvar_verification_id}(){
+            var arr = [];
+            <j:forEach begin="0" end="${jvar_stored_answer_size - 1}" indexVar="questionIndex" >
+                <j:set var="jvar_id" value="${jvar_stored_answer_ids.get(questionIndex)}" />
+                    <g:evaluate var="jvar_question" jelly="true" >
+                        jelly.jvar_mgr.getStoredQuestionByAnswerId(jelly.jvar_id);
+                    </g:evaluate>
+                arr.push("${jvar_question}");
+            </j:forEach>
+            return arr;
+        }
+        /**
+        * Traverse all the stored questions and returns the array of the questions. 
+        */
+        function getAllStoredAnswers_${jvar_verification_id}(){
+            var arr = [];
+            <j:forEach begin="0" end="${jvar_stored_answer_size - 1}" indexVar="questionIndex" >
+                <j:set var="jvar_id" value="${jvar_stored_answer_ids.get(questionIndex)}" />
+                    <g:evaluate var="jvar_answer" jelly="true" >
+                        jelly.jvar_mgr.getStoredAnswerById(jelly.jvar_id);
+                    </g:evaluate>
+                arr.push("${jvar_answer}");
+            </j:forEach>
+            return arr;
+        }
+        /**
+        * Traverse all the stored questions and returns the array of the questions. 
+        */
+        function getAllStoredAnswerSysIds_${jvar_verification_id}(){
+            var arr = [];
+            <j:forEach begin="0" end="${jvar_stored_answer_size - 1}" indexVar="questionIndex" >
+                <j:set var="jvar_id" value="${jvar_stored_answer_ids.get(questionIndex)}" />
+                arr.push("${jvar_id}");
+            </j:forEach>
+            return arr;
+        }
+    </script>
+</j:jelly>

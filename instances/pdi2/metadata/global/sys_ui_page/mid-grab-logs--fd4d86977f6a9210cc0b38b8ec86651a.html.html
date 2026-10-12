@@ -1,0 +1,254 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide">
+
+    <head>
+        <title>${gs.getMessage("MID Server Troubleshooting")}</title>
+        <style>
+            #loader {
+                display: none;
+                text-align: center;
+                margin-top: 30px;
+            }
+
+            #grabLoader {
+                display: none;
+                text-align: center;
+            }
+
+            #logFilesResult div {
+                list-style-type: none;
+            }
+
+            .record-picker {
+                width: 50%;
+            }
+
+            .button-row {
+                display: flex;
+                gap: 10px;
+                margin-top: 10px;
+            }
+
+            #grabLogsButton,
+            #unselectAllButton {
+                display: none;
+            }
+
+            .button-row button:disabled {
+                cursor: not-allowed;
+            }
+
+            .searchBar {
+                margin-bottom: 7px;
+                margin-top: 2px;
+                width: 70%;
+                display: none;
+                border: 1.5px solid;
+                border-radius: 5px;
+                padding: 6px;
+            }
+
+            #filesList {
+                display: none;
+            }
+
+            .pagination {
+                display: none;
+                justify-content: center;
+                margin-top: 10px;
+            }
+
+            .pagination button {
+                margin: 0 5px;
+                padding: 5px 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                background-color: #f9f9f9;
+                cursor: pointer;
+            }
+
+            .pagination button:disabled {
+                background-color: #ccc;
+                cursor: not-allowed;
+            }
+
+            #pageInfo {
+                text-align: center;
+                margin-top: 5px;
+            }
+
+            .log-files-section1 {
+                width: 65%;
+                float: left;
+                padding: 0 15px;
+            }
+
+            .log-files-section2 {
+                width: 35%;
+                float: left;
+                padding: 0 15px;
+            }
+
+            .results-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .results-table th,
+            .results-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+
+            .results-table th {
+                background-color: #f2f2f2;
+            }
+
+            .selected-files-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .file-pill {
+                background-color: #4F52BD;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 15px;
+                display: inline-block;
+                font-size: 12px;
+            }
+
+            .remove-icon {
+                margin-left: 10px;
+                cursor: pointer;
+                font-weight: bold;
+                color: white;
+            }
+
+            .no-files-pill {
+                color: #6c757d;
+                padding: 5px 10px;
+                border-radius: 15px;
+                display: inline-block;
+            }
+
+            select {
+                border-radius: 5px;
+                margin-top: 5px;
+                padding: 1px;
+                margin-left: 2px;
+                border: 1px solid #ccc;
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-default navbar-static-top" style="margin-bottom: 15px;" role="navigation">
+            <div class="container-fluid pull-left">
+                <div class="navbar-header">
+                    <h1 class="navbar-title">${gs.getMessage("MID Server Troubleshooting")}</h1>
+                </div>
+            </div>
+        </nav>
+        <div class="container-fluid">
+            <h2>${gs.getMessage("MID Server Grab Logs")}</h2>
+            <p>${gs.getMessage("Use this tool to list and select log files from a specified MID Server.")}</p>
+            <div class="record-picker">
+                <label for="mid_server_picker">${gs.getMessage("MID Server")}</label>
+                <g:ui_reference id="mid_server_picker" name="mid_server_picker" table="ecc_agent" query="status=Up^validated=true" value="$[midSysId]" displayValue="$[midName]" onchange="listLogFiles()" />
+            </div>
+            <div style="display: none;" id="selectedFilesContainer">
+                <h5>${gs.getMessage("Selected Files")}</h5>
+                <div id="selectedFilesList" class="selected-files-list">
+                    <span class="no-files-pill">${gs.getMessage("No files selected")}</span>
+                </div>
+            </div>
+            <div class="button-row">
+                <button id="grabLogsButton" onclick="grabLogs()" class="btn btn-primary" title="Grab Selected Logs" disabled="disabled">${gs.getMessage("Grab Selected Logs")}</button>
+                <button id="unselectAllButton" onclick="unselectAll()" class="btn btn-primary" title="" disabled="disabled">${gs.getMessage("Unselect All")}</button>
+            </div>
+            <div id="loader">
+                <span class="icon icon-loading"></span>
+                <p>${gs.getMessage("Retrieving list of files...")}</p>
+            </div>
+            <h3 style="display:none;" id="midfilesTitle">${gs.getMessage("List of available files on MID")}</h3>
+            <div class="row">
+                <div id="logFilesSection1" class="col-md-6 log-files-section1" style="margin-top: 0px;">
+                    <h4 id="logFilesTitle1" style="display: none;">${gs.getMessage("Log Files")}</h4>
+                    <div style="display: none;" id="filters1">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="searchBar">${gs.getMessage("Search")}</label>
+                                <input type="text" class="searchBar" id="searchBar1" onkeyup="filterFiles(1)" placeholder="${gs.getMessage('Search for log files...')}"></input>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="startDate">${gs.getMessage("Start Date")}</label>
+                                <g:ui_date_time value="" name="startDate" onchange="filterFiles(1)" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="endDate">${gs.getMessage("End Date")}</label>
+                                <g:ui_date_time value="" name="endDate" onchange="filterFiles(1)" />
+                            </div>
+                        </div>
+                    </div>
+                    <div id="logFilesResult1"></div>
+                    <div style="display: none;" id="pageSelect1">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="itemsPerPage">${gs.getMessage("Files per page")}</label>
+                                <select id="itemsPerPage1" onchange="updateItemsPerPage(1)">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pageInfo1" style="text-align: center; margin-top: 5px;"></div>
+                    <div id="paginationControls1" class="pagination">
+                        <button id="prevPage1" onclick="prevPage(1)" disabled="disabled">Previous</button>
+                        <button id="nextPage1" onclick="nextPage(1)" disabled="disabled">Next</button>
+                    </div>
+                </div>
+                <div id="logFilesSection2" class="col-md-6 log-files-section2" style="margin-top: 2px;">
+                    <h4 id="logFilesTitle2" style="display: none; margin-bottom:29px;">${gs.getMessage("Other Files")}</h4>
+                    <input type="text" class="searchBar" id="searchBar2" onkeyup="filterFiles(2)" placeholder="${gs.getMessage('Search for other files...')}" style="display: none;"></input>
+                    <div id="logFilesResult2"></div>
+                    <div style="display: none;" id="pageSelect2">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="itemsPerPage">${gs.getMessage("Files per page")}</label>
+                                <select id="itemsPerPage2" onchange="updateItemsPerPage(2)">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pageInfo2" style="text-align: center; margin-top: 5px;"></div>
+                    <div id="paginationControls2" class="pagination">
+                        <button id="prevPage2" onclick="prevPage(2)" disabled="disabled">Previous</button>
+                        <button id="nextPage2" onclick="nextPage(2)" disabled="disabled">Next</button>
+                    </div>
+                </div>
+            </div>
+            <div class="button-row">
+                <button id="listLogFilesButton" onclick="listLogFiles()" class="btn btn-default" disabled="disabled">${gs.getMessage("List Log Files")}</button>
+                <button id="grabMidSettings" onclick="grabMidSettings()" class="btn btn-default" disabled="disabled">Grab MID Settings</button>
+                <button id="grabMidServerThreadDump" onclick="grabMidThreadDump()" class="btn btn-default" disabled="disabled">Grab MID Thread Dump</button>
+            </div>
+            <div id="grabLoader">
+                <span class="icon icon-loading"></span>
+                <p>${gs.getMessage("Grabbing Logs...")}</p>
+            </div>
+            <hr class="rounded">
+            </hr>
+            <h3 style="display:none; margin-bottom: 15px;" id="instancefilesTitle">${gs.getMessage("List of available files on the Instance")}</h3>
+            <div id="filesList">
+                <iframe src="agent_file_list.do" style="min-height:600px;width:100%;" scrolling="no" frameborder="0"></iframe>
+            </div>
+        </div>
+    </body>
+</j:jelly>

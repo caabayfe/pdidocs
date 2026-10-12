@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_template"
+   expression="RP.getWindowProperties().get('template')" jelly="true"/>
+	<g2:evaluate var="jvar_defaults" jelly="true"> 
+		defaults = '';
+	    var cols = new Array();
+		cols = jelly.jvar_template.replace(/\^EQ$/, "").split('^');
+		for (var i = 0; i ${AMP}lt; cols.length; i++) {
+			var td = GlideTableDescriptor.get('kb_knowledge');
+			var ed = td.getElementDescriptor(cols[i].split('=')[0]);
+			if(!ed) continue;
+			var name = ed.getLabel();
+			var value = cols[i].split('=')[1];
+			var tableName = ed.getReference();
+			if(ed.getInternalType() == "glide_list" || ed.getInternalType() == "reference"){
+				var gr = new GlideRecord(tableName);
+				gr.addQuery('sys_id','IN',value);
+				var displayValue='';
+				gr.query();
+				while(gr.next()){
+					displayValue += ((displayValue == '') ? '' : ', ') + gr.getDisplayValue();
+				}
+				value = displayValue ? displayValue : value ;
+			}
+		defaults += ((defaults == '') ? '&lt;br&gt;&lt;br&gt;' : '&lt;br&gt;') + '&lt;b&gt;'+name + '&lt;/b&gt;' + ' : ' + value;
+	    }
+		defaults = gs.getMessage("Do you want to populate fields with the default values for the selected knowledge base as follows? {0}",defaults);
+		defaults; 
+	</g2:evaluate>
+	<p id="kb_apply_default_preview"></p> 
+	<div style="float: right;">
+	<g:dialog_buttons_ok_cancel ok_id="ok_button" cancel_type="button" />
+	</div>
+	<script>
+		 var html = "$[jvar_defaults]";
+		 if(html){
+			var messagebox =document.getElementById("kb_apply_default_preview");
+			messagebox.innerHTML = html
+		 }
+	</script>
+</j:jelly>

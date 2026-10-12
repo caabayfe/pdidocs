@@ -1,0 +1,31 @@
+/**
+* @param {params} params
+* @param {api} params.api
+* @param {any} params.event
+* @param {any} params.imports
+* @param {ApiHelpers} params.helpers
+*/
+function handler({api, event, helpers, imports}) {
+    let query = JSON.parse(JSON.stringify(api.state.query));
+    let newSource = event.payload.value; 
+    const duplicate = query.query_json.discovery_sources.find(item => item === newSource);
+    if(!duplicate) {
+        query.query_json.discovery_sources.push(newSource);
+        api.setState('query', query);
+        api.setState('selectedGapBaseSource', "x" + newSource);
+        api.setState('isDirty', true);
+        api.emit('CHECK_FORM_STATUS');
+    } else {
+        api.emit('NOW_UXF_PAGE#ADD_NOTIFICATIONS', {
+            items: [
+                {
+                    id: 'alert1',
+                    status: 'critical',
+                    icon: 'info-circle-outline',
+                    content: 'This Discovery Source has alreay been added',
+                    action: { type: 'dismiss' }
+                }
+            ]
+        }); 
+    }
+}

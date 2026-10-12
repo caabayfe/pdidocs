@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:include_script src="table_columns.jsx" defer="true"/>
+<g:include_script src="gwt_tree2.jsx" defer="true"/>
+<g:include_script src="classes/ScriptTableTree.jsx" defer="true"/>
+<g:include_script src="classes/ScriptTableNode.jsx" defer="true"/>
+<g:include_script src="classes/FieldTreeNode.jsx" defer="true"/>
+<g:include_script src="classes/TableColumnNode.jsx" defer="true"/>
+<g:include_script src="classes/TableIndexNode.jsx" defer="true"/>
+
+<div id="index_creater" style="margin-top: 6px; display: none;">
+		<hr/>
+
+		<input type="hidden" name="sys_action" value="create_index"/>
+
+		<div class="text_caption" style="padding-bottom: 2px;"><label for="sysparm_index_table">${gs.getMessage('Index creator')}</label>
+		</div>
+		<div>
+			${gs.getMessage('available_fields_for_index')}
+		</div>
+		<table class="widelist">
+			<tr>
+				<td colspan="10" valign="top">
+					<table cellSpacing="1" cellPadding="1" border="0">
+						<TR>
+			                  	<TD>$[SP]</TD>
+			            </TR>
+						<TR>
+			                  	<TD>$[SP]</TD>
+			            </TR>
+						<tr>						
+							<td class="bodyBold" align="middle" colSpan="3">${gs.getMessage('Table name')}
+							</td>
+							<td class="bodyBold" align="left" colSpan="9">
+								<input type="text" name="sysparm_index_table" id="sysparm_index_table"
+								       value=""/>
+							</td>
+						</tr>
+						<j:if test="${gs.getProperty('glide.ui.index_method.enabled') == 'true'}">
+							<tr>
+								<td class="bodyBold" align="middle" colSpan="3">${gs.getMessage('Access Method')}
+								</td>
+								<td class="bodyBold" align="left" colSpan="9">
+									<select id="sysparm_access_method" name="sysparm_access_method" onChange="onChange()">
+										<g2:access_method_options />
+									</select>
+								</td>
+							</tr>
+						</j:if>
+						<script>
+						function onChange() {
+							var visibility = 'visible';
+							var accessMethod = gel('sysparm_access_method').value;
+							if (accessMethod === 'columnstore')
+								visibility = 'hidden';
+								
+							var box = gel('sysparm_unique_index_SKIP');
+							box.style.visibility = visibility;
+
+							var label = gel('sysparm_unique_index_label');
+							label.style.visibility = visibility;
+						}
+						</script>
+						<tr>
+							<td class="bodyBold" align="middle"  colSpan="2"><label
+									for="sysparm_unique_index_SKIP" id="sysparm_unique_index_label">${gs.getMessage('Unique Index')}</label>
+							</td>
+							<td class="bodyBold" align="left"  colSpan="10">
+								<input type="checkbox" value="on" name="sysparm_unique_index_SKIP"
+								       id="sysparm_unique_index_SKIP"/>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<input type="hidden" name="sysparm_fields" id="sysparm_fields" value=""/>
+							</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="padding-top: 20px;">
+								<button type="submit" onclick="indexConfirm('$[JS:sysparm_table_name]');" name="create"
+								        style="margin-top: 3px;">${gs.getMessage('Create Index')}
+								</button>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td colspan="2" valign="top">
+					<TABLE cellSpacing="1" cellPadding="1" border="0">
+						<TR>
+							<TD class="bodyBold" vAlign="bottom" align="middle"><label for="columns_0">${gs.getMessage('Available')}</label>
+							</TD>
+							<TD width="3" rowSpan="2"></TD>
+							<TD></TD>
+							<TD width="3" rowSpan="2"></TD>
+							<TD class="bodyBold" vAlign="bottom" align="middle"><label for="columns_1">${gs.getMessage('Selected')}</label>
+							</TD>
+							<TD width="3" rowSpan="2"></TD>
+							<TD></TD>
+							<TD width="3" rowSpan="2"></TD>
+						</TR>
+						<TR>
+							<TD vAlign="top" align="middle">
+								<!-- left selection -->
+								<SELECT id="columns_0" style="WIDTH: 200px" multiple="yes" size="5"
+								        name="select_0"
+								        ondblclick="moveOption(document.getElementById('columns_0'),document.getElementById('columns_1'),'--None--', [], '--None--');"> </SELECT>
+							</TD>
+							<TD class="bodySmall" vAlign="center" align="middle">
+								<!-- add / remove buttons -->
+								<TABLE cellSpacing="0" cellPadding="0" border="0">
+									<TR>
+										<TD align="middle">
+											<A onclick="moveOption(document.getElementById('columns_0'),document.getElementById('columns_1'),'--None--', [], '--None--');">
+												<IMG height="23" alt="${gs.getMessage('uppercase_add')}"
+												     src="images/arrow_rt.gifx?v=2" width="23" border="0"/>
+											</A>
+										</TD>
+									</TR>
+									<TR>
+										<TD>
+									<TR>
+										<TD align="middle">
+											<A onclick="moveOption(document.getElementById('columns_1'),document.getElementById('columns_0'),'--None--', ['home'], '--None--');">
+												<IMG height="23" alt="${gs.getMessage('Remove')}"
+												     src="images/arrow_lt.gifx?v=2" width="23" border="0"/>
+											</A>
+										</TD>
+									</TR>
+									</TD>
+									</TR>
+								</TABLE>
+							</TD>
+							<!-- right selection -->
+							<TD vAlign="top" align="middle">
+								<SELECT id="columns_1" style="WIDTH: 200px"
+								        onChange="buildSelectList();"
+								        multiple="yes" size="5" name="select_1"
+								        ondblclick="moveOption(document.getElementById('columns_1'),document.getElementById('columns_0'),'--None--', [], '--None--');"></SELECT>
+							</TD>
+							<!-- up / down buttons -->
+							<TD class="bodySmall" vAlign="center" align="middle">
+								<TABLE cellSpacing="0" cellPadding="0" border="0">
+									<TR>
+										<TD class="bodySmall" vAlign="bottom" align="middle">
+											${gs.getMessage('Up')}
+										</TD>
+									</TR>
+									<TR>
+										<TD align="middle">
+											<A onclick="moveUp(document.getElementById('columns_1'));"
+											   ondblclick="javascript:moveUp(document.getElementById('columns_1'));">
+												<IMG height="23" alt="${gs.getMessage('Up')}"
+												     src="images/arrow_up.gifx?v=2" width="23" border="0"/>
+											</A>
+										</TD>
+									</TR>
+									<TR>
+										<TD></TD>
+									</TR>
+									<TR>
+										<TD align="middle">
+											<A onclick="moveDown(document.getElementById('columns_1'));"
+											   ondblclick="javascript:moveDown(document.getElementById('columns_1'));">
+												<IMG height="23" alt="${gs.getMessage('Down')}"
+												     src="images/arrow_dwn.gifx?v=2" width="23" border="0"/>
+											</A>
+										</TD>
+									</TR>
+									<TR>
+										<TD class="bodySmall" vAlign="top" align="middle">
+											${gs.getMessage('Down')}
+										</TD>
+									</TR>
+								</TABLE>
+							</TD>
+						</TR>
+					</TABLE>
+				</td>
+			</tr>
+		</table>
+	</div>
+</j:jelly>

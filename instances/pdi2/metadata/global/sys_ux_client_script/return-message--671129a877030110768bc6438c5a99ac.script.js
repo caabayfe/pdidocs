@@ -1,0 +1,17 @@
+/**
+* @param {params} params
+* @param {api} params.api
+* @param {any} params.event
+* @param {any} params.imports
+* @param {ApiHelpers} params.helpers
+*/
+function handler({api, event, helpers, imports}) {
+    helpers.translate("Your form could not be submitted at this time, please return to your conversation.")
+    .then((translatedText) => {
+      api.setState('failure', translatedText);
+    });
+    helpers.translate("Your request is submitted successfully, please return to your conversation.")
+    .then((translatedText) => {
+      api.setState('success', translatedText);
+    });
+}

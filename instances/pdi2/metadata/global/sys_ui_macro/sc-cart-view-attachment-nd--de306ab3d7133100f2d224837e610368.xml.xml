@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:if test="${jvar_cart.isEmpty() != 'true'}">
+        <j:if test="${jvar_sc_special_instructions == 'true' || jvar_sc_attachment == 'true'}">
+	        <j2:set var="jvar_ref_cart_id" value="${jvar_cart.getCartID()}" />
+	        <j:if test="${RP.isPopup()}">
+				<g:requires inline="true" name="scripts/elements/textarea_sizer.js" />
+				<g:requires inline="true" name="scripts/elements/textarea_autosizer.js" />
+			</j:if>
+			<j:if test="${!RP.isPopup()}">
+				<g:requires position="last" inline="true" name="scripts/elements/textarea_sizer.js" />
+				<g:requires position="last" inline="true" name="scripts/elements/textarea_autosizer.js" />
+			</j:if>
+	    	<div class="sc_attachments_container">
+	            <table class="sc_attachments" cellspacing="0" cellpadding="3">
+	                <tr class="header">
+	                    <td>
+	                        <j:if test="${jvar_sc_special_instructions == 'true'}">
+	                        <label for="special_instructions">${gs.getMessage('Special instructions')}</label>
+	                        </j:if>
+	                    </td>         
+	                    <td align="right">
+	                        <j:if test="${jvar_sc_attachment == 'true'}">
+	                        ${gs.getMessage('Add attachment...')}
+	                        <button id="sc_attachment_button" title="${gs.getMessage('Attachments')}" class="icon-paperclip sc_paperclip btn-icon sc_header_back_button btn cat-btn btn-default" onclick="saveCartAttachment('$[jvar_ref_cart_id]');" type="button" href="#" ></button>
+	                        </j:if>
+	                    </td> 
+	                </tr>
+	                <j:if test="${jvar_sc_attachment == 'true'}">
+	                <tr>
+	                    <td colspan="2" class="sc_attachments_cell">
+	                        <g2:evaluate var="sc_cart" object="true" jelly="true">
+	                            var sc_cart = {};
+	                            sc_cart.sys_id = jelly.jvar_ref_cart_id];
+	                            sc_cart;
+	                        </g2:evaluate>
+	                        <j:set var="ref" value="sc_cart" />
+	                        <g:inline template="attachment_list.xml" />
+	                    </td>
+	                </tr>
+	                </j:if>
+	                <j:if test="${jvar_sc_special_instructions == 'true'}">
+	                <tr>
+	                    <td colspan="2" style="padding-bottom: 0px;">
+	                        <textarea id="special_instructions" class="form-control" style="width: 100%" rows="6" name="special_instructions" wrap="soft" onChange="catSpecialInstructions('${jvar_cart.getID()}', 'special_instructions');">
+	                            ${jvar_cart.getSpecialInstructions()}
+	                        </textarea>
+	                    </td>
+	                </tr>
+	                <tr><td></td></tr>
+	                </j:if>
+	            </table>
+            </div>
+        </j:if>
+    </j:if>
+</j:jelly>

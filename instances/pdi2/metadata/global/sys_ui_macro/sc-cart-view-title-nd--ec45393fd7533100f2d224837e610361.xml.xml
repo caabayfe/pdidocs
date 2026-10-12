@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${!sysparm_restyle}">
+		<style>
+			.sc_header .btn:last-child {
+				margin-left: 10px;
+			}
+			
+			.sc_header .btn {
+				margin-right: 15px;
+			}
+		</style>
+	</j:if>
+    <g:evaluate jelly="true">
+        var continueShoppingAction = GlideappCatalogURLGenerator.getContinueShoppingAction(jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+        var restartGuideUrl = GlideappCatalogURLGenerator.getRestartGuideURL(jelly.sysparm_catalog, jelly.sysparm_catalog_view, gs.getSessionToken());
+        var describeNeedsButtonOnClickAction = "location.assign('" + restartGuideUrl + "'); return false;";
+        var showChooseOptionsButton = jelly.jvar_sc_choose_options_button;
+        if (jelly.sysparm_guide != 'true')
+            showChooseOptionsButton = 'false';
+        var sc_title = gs.getMessage(jelly.jvar_title);
+    </g:evaluate>
+    <j:set var="jvar_checkout" value="checkout" />
+    <j:if test="${jvar_two_step == true}">
+        <j:set var="jvar_checkout" value="checkouttwo" />
+    </j:if>
+    
+    <input type="HIDDEN" name="sysparm_view" value="${sysparm_view}" />
+    <input type="HIDDEN" name="sysparm_action" value="${jvar_checkout}" />
+    <input type="HIDDEN" name="sysparm_catalog" value="$[sysparm_catalog]" />
+    <input type="HIDDEN" name="sysparm_catalog_view" value="${jvar_user_context.get('sysparm_catalog_view')}" />
+    <input type="HIDDEN" name="sysparm_cart_name" value="$[sysparm_cart_name]" />
+    <input type="HIDDEN" name="sys_action" />
+    <input type="HIDDEN" name="sysparm_processing_hint" value="$[sysparm_processing_hint]" />   
+    <div role="navigation">
+        <table class="wide" cellspacing="0" cellpadding="0" width="100%" role="presentation">
+            <tr class="header sc_header">
+                <td style="white-space: nowrap; border-collapse: separate;">
+                    <g:inline template="sc_header_back_button.xml" />
+                </td>
+                <td style="width: 100%; height: 40px; padding-right: 5px;">
+    	        <div class="caption sc_caption sc_caption_margin">
+                        ${sc_title}
+                    </div>
+                </td>
+                <td style="white-space: nowrap; padding-right: 5px; border-collapse: separate;">
+                    <j:if test="${jvar_sc_continue_shopping_button == 'true'}">
+                        <g:sc_button img="" classes="request_catalog_button header_button" id="header_button_continue_shopping_in_header" onclick="${continueShoppingAction}" label="${jvar_sc_continue_shopping_label}" title="${jvar_sc_continue_shopping_label}"/>
+                    </j:if>
+                    <j:if test="${showChooseOptionsButton == 'true'}">
+                        <g:sc_button img="" classes="request_catalog_button header_button" id="header_button_describe_needs_in_header" onclick="${describeNeedsButtonOnClickAction}" label="${jvar_sc_choose_options_label}" title="${jvar_sc_choose_options_label}" isPrimary="true"/>
+                    </j:if>
+                    <j:if test="${jvar_sc_checkout_button == 'true' and jvar_cart.isEmpty() != 'true'}">
+                        <g:sc_button img="" classes="request_catalog_button header_button" id="header_button_checkout_in_header" onclick="checkout(this, forms['sc_cart.do']);" label="${jvar_sc_checkout_label}" title="${jvar_sc_checkout_label}" isPrimary="true"/>
+                    </j:if>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="sc_container">
+        <j:if test="${sysparm_guide == 'true'}">	
+            <g:sc_banner />
+        </j:if>
+    </div>
+    <br />
+</j:jelly>

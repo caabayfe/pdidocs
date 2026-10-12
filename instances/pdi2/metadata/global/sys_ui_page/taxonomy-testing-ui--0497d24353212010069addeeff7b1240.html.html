@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_hasAccess" object="true">
+		var impersonateUtil = new GlideImpersonate();
+		var isImpersonating = impersonateUtil.isImpersonating();
+		var hasAccess = false;
+		if (isImpersonating) {
+			var impersonatingUserId = gs.getImpersonatingUserName();
+			var impersonatingUser = gs.getUser().getUserByID(impersonatingUserId);
+			hasAccess = impersonatingUser.hasRole("admin");
+		} else
+			hasAccess = gs.hasRole("admin");
+		hasAccess;
+	</g:evaluate>
+	<j:if test="${!jvar_hasAccess}">
+		${gs.getMessage("Taxonomy Testing UI is only accessible by admin user")}
+	</j:if>
+	<j:if test="${jvar_hasAccess}">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"></link>
+	<style>
+		body {
+			font-size: 12px;
+		}
+
+		h1 {
+			font-size: 22px;
+		}
+
+		h2 {
+			font-size: 20px;
+		}
+
+		h3 {
+			font-size: 16px;
+		}
+	</style>
+	<div class="w3-container" ng-app="testingUI" ng-controller="testingUICtrl">
+		<h1 class="w3-center">Taxonomy Testing UI</h1>
+		<div class="w3-row">
+			<div class="w3-third">
+				<label>API : </label>
+				<select class="w3-select w3-border" ng-model="selectedApi" ng-options="a for a in apiList" ng-change="resetUI()"></select>
+				<div class="w3-panel" ng-if="selectedApi == 'Taxonomy'">
+					<h2>Taxonomy</h2>
+					<label>Taxonomy Id:</label>
+					<input class="w3-input w3-border" ng-model="inputObject.taxonomyId"></input>
+					{{taxonomyId}}
+				</div>
+				<div class="w3-panel" ng-if="selectedApi == 'Topic'">
+					<h2>Topic</h2>
+					<label>Topic Id:</label>
+					<input class="w3-input w3-border" ng-model="inputObject.topicId"></input>
+					{{topicId}}
+				</div>
+			</div>
+			<div class="w3-twothird">
+				<!-- Taxonomy -->
+				<div class="w3-panel" ng-if="selectedApi == 'Taxonomy'">
+						<table class="w3-table-all w3-small" >
+						<tr>
+							<th>API</th>
+							<th>Params</th>
+							<th>Call</th>
+						</tr>
+						<tr ng-repeat="ta in taxonomyApis">
+							<td>{{ta.name}}</td>
+							<td><input size="50" ng-model="ta.params"></input></td>
+							<td><button ng-click="callFuncByName(ta.func, ta.params)">Call</button></td>
+						</tr>
+					</table>
+				</div>
+				<!-- Topic -->
+				<div class="w3-panel" ng-if="selectedApi == 'Topic'">
+				<table class="w3-table-all w3-small" >
+						<tr>
+							<th>API</th>
+							<th>Params</th>
+							<th>Call</th>
+						</tr>
+						<tr ng-repeat="to in topicApis">
+							<td>{{to.name}}</td>
+							<td><input size="50" ng-model="to.params"></input></td>
+							<td><button ng-click="callFuncByName(to.func, to.params)">Call</button></td>
+						</tr>
+					</table>
+				</div>
+				<div class="w3-panel">
+					<h2>Errors</h2><hr/>
+					<div id="errors"></div>
+					<h2>Response</h2><hr/>
+					<div id="response">
+						<pre ng-if="outputObject.isStringResponse == true" ng-bind="outputObject.stringResponse"></pre>
+						<div ng-if="outputObject.hasNoResponse == true" style="color:red">No output</div>
+						<div id="topicResponse" ng-if="outputObject.isTopicResponse == true">
+							<h2>Topics</h2>
+							<h3 ng-if="outputObject.topics.length == 0">No Topics</h3>
+							<div ng-repeat="item in outputObject.topics" class="w3-card" style="padding: 10px; margin: 5px;">
+								<p>sys_id: {{item.sys_id}}</p>
+								<p>name: {{item.name}}</p>
+								<p>description: {{item.description}}</p>
+								<p>parent_topic: {{item.parent_topic}}</p>
+								<p>taxonomy: {{item.taxonomy}}</p>
+								<p>Icon: <img style="height: 25px; width: 25px" ng-src="{{item.icon}}" alt="icon"></img></p>
+								<p>Banner Image: <img style="height: 100px;" ng-src="{{item.bannerImage}}" alt="picture"></img> </p>
+							</div>
+						</div>
+						<div ng-if="outputObject.isContentResponse == true" id="contentResponse">
+							<h2>Content</h2>
+							<h3 ng-if="outputObject.contentItems.length == 0">No Content</h3>
+							<ol>
+								<div ng-repeat="item in outputObject.contentItems" class="w3-card" style="padding: 10px; margin: 5px;">
+									<p>Title: {{item.title}}</p>
+									<p>sysId: {{item.sys_id}}</p>
+									<p>Table: {{item.content_table}}</p>
+									<p>Content: {{item.content}}</p>
+									<p>Topic: {{item.topic}}</p>
+									<p>Popularity: {{item.popularity}}</p>
+									<p>Order: {{item.order}}</p>
+									<p>Alphabetical order: {{item.alphabetical_order}}</p>
+									<p>Content Type: {{item.content_type}}</p>
+								</div>
+							</ol>
+							<a ng-if="outputObject.contentItems.length > 0" href="javascript:void(0);" ng-click="getContent()">Show more</a>
+						</div>
+						<div ng-if="outputObject.isFeaturedContentResponse == true" id="featuredContentResponse">
+							<h2>Featured Content</h2>
+							<h3 ng-if="outputObject.featuredContentItems.length == 0">No Featured Content</h3>
+							<ol>
+								<div ng-repeat="item in outputObject.featuredContentItems" class="w3-card" style="padding: 10px; margin: 5px;">
+									<p>Title: {{item.title}}</p>
+									<p>sysId: {{item.sys_id}}</p>
+									<p>Table: {{item.content_table}}</p>
+									<p>Content: {{item.content}}</p>
+									<p>Topic: {{item.topic}}</p>
+									<p>Popularity: {{item.popularity}}</p>
+								</div>
+							</ol>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	</j:if>
+</j:jelly>

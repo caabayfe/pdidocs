@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:ui_form>
+	<g:evaluate>
+		var currentTable = RP.getWindowProperties().get('current_table') || '';
+		var readableTable = GlideTableDescriptor.get(currentTable).getLabel();
+
+		var sysIdList = RP.getWindowProperties().get('sys_id_list') || '';
+		var numSel = (sysIdList.split(',')).length;
+
+		var currentQuery = RP.getWindowProperties().get('current_query') || '';
+		var decodedQuery = GlideElementConditions.getReadableQuery(currentTable, currentQuery);
+		var queryLength = decodedQuery.length;
+		if ( queryLength > 250 )
+			decodedQuery = decodedQuery.substring(0,250) + "...";
+	</g:evaluate>
+
+	<input type="hidden" name="current_table" value="$[currentTable]" />
+	<input type="hidden" name="sys_id_list" value="$[sysIdList]" />
+	<input type="hidden" name="current_query" value="$[currentQuery]" />
+
+	<style type="text/css">
+		#add_metadata_link_dialog_container input {
+			width: 375px;
+		}
+		#info_message {
+			margin-left:10px;
+			color:#667;
+		 }
+	</style>
+
+	<div id="add_metadata_link_dialog_container">
+		  <span class="row">${gs.getMessage('Please indicate how these records should be loaded during installation')}</span>
+      <!-- span class="label_description" title="" mandatory="true" oclass="">$[SP]</span -->
+      <div class="form-group row">
+         <label for="current_app" class="control-label col-sm-3">${gs.getMessage('Add to application')}:</label>
+         <span class="col-sm-9 form-field">
+             <input id="current_app" name="current_app" value="$[gs.getCurrentApplicationName()]" class="form-control" type="text" disabled="disabled" />
+         </span>
+      </div>
+
+      <div class="form-group row">
+         <label for="current_table" class="control-label col-sm-3">${gs.getMessage('From table')}:</label>
+         <span class="col-sm-9 form-field">
+             <input id="current_table" name="current_table" value="$[readableTable]" class="form-control" type="text" disabled="disabled" />
+         </span>
+      </div>
+
+			<j2:if test="$[currentQuery != '']">
+        <div class="form-group row">
+           <label for="current_query" class="control-label col-sm-3">${gs.getMessage('With query')}:</label>
+           <span class="col-sm-9 form-field">
+              <p>$[decodedQuery]</p>
+           </span>
+        </div>
+			</j2:if>
+
+      <j2:if test="$[sysIdList != '']">
+
+      <div class="form-group row">
+         <label for="number_of_records" class="control-label col-sm-3">${gs.getMessage('Number of Selected Records')}:</label>
+         <span class="col-sm-9 form-field">
+             <input id="number_of_records" name="number_of_records" value="$[numSel]" class="form-control" type="text" disabled="disabled" />
+         </span>
+      </div>
+
+			</j2:if>
+
+			<div>
+				<td id="label.add_metadata_link.load_when"
+					title="Choose how these records will be loaded: 'New Install and Upgrades' - loaded on first install and every time the plugin is upgraded; 'New Install' - loaded only once on first install; 'New Install with Demo Data' - loaded only once and only if user specifies 'load demo data' *Field is used only for custom apps"
+					data-type="label" choice="0" nowrap="true" class="label label_spacing" type="field_name">
+					<label for="label.add_metadata_link.load_when" class="url" dir="ltr">
+						<span id="status.add_metadata_link.load_when" class="label_description" title="" aria-label="" mandatory="false">*</span>
+						<a target="help" href="http://docs.servicenow.com/?context=CSHelp:creating_an_application">
+							${gs.getMessage(' Load When:')}
+							<img width="16" height="12" src="images/help_label.gifx"/>
+						</a>
+					</label>
+				</td>
+				<select id="dir_choicelist" class="form-control select2" name="dir_choicelist">
+					<option value="update">${gs.getMessage(' New Install and Upgrades')}</option>
+					<option value="unload">${gs.getMessage(' New Install')}</option>
+					<option value="unload.demo">${gs.getMessage(' New Install with Demo Data')}</option>
+				</select>
+			</div>
+
+			<div class="row">
+				<div id="dialog_buttons" name="buttons" nowrap="true" style="clear:both; margin-top: 10px; vertical-align:bottom;" colspan="2">
+					<div align="right">
+						<g:dialog_buttons_ok_cancel ok="return true"/>
+					</div>
+				</div>
+			</div>
+	</div>
+</g:ui_form>
+
+</j:jelly>

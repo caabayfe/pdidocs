@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.top_margin {
+			margin-top: 20px;
+			margin-left:20px;
+		}
+	</style>
+	<g2:evaluate jelly="true" >
+	    var fieldList = [];
+		var	errorMsg = "";
+		try{
+			var entityId = jelly.sysparm_entityId; 
+			if(!entityId){
+			  throw gs.getMessage("Missing required parameters");
+			}
+
+			var grEntity = new GlideRecord("promin_project_entity");
+			if(!grEntity.get(entityId) || !grEntity.canRead()) {
+				throw gs.getMessage("Invalid table config");
+			}
+			var table = grEntity.getValue("table");
+			if (!GlideSecurityManager.get().hasRightsTo("record/" + table + "/read", null)) {
+				throw gs.getMessage("Missing access to the table");
+			 }
+			var tableUtils= new TableUtils(table)
+			var tablesHierarchyList = tableUtils.getTables();
+			var tablesCommaList= tablesHierarchyList.get(0);
+			for(i=1;i &lt; tablesHierarchyList.size();i++){
+                tablesCommaList= tablesCommaList= tablesCommaList+","+tablesHierarchyList.get(i);
+            }
+			var gr =new GlideRecord("sys_dictionary");
+			gr.addQuery("name","IN",tablesCommaList)
+			gr.addQuery("internal_type","IN","choice,string,boolean,integer,reference,workflow,glide_date_time,journal_input");
+            gr.orderBy("column_label");
+			gr.query();
+				
+			while(gr.next()){
+				var element= gr.getValue("element");
+				var colLabel=gr.getValue("column_label")
+				fieldList.push({  "element":element,"colLabel": colLabel});
+			}
+				
+		}catch(error){
+			gs.error("Error in UI page (po_select_compound_activity_field_value) "+ error);
+			errorMsg = "Error - " + error;
+		}
+	</g2:evaluate>
+	<j2:if test="$[errorMsg != '']">
+		<h4 class="text-danger">$[errorMsg]</h4>
+	</j2:if>
+	<j2:if test="$[errorMsg == '']">
+		<div class="row">
+			<div class="col-md-7">
+				<select id="compoundSelectList" name="compoundSelectList" class="form-control col-md-6" multiple="true">
+				       <j2:forEach items="$[fieldList]" var="jvar_choice">
+						<option value="$[jvar_choice.element]">$[jvar_choice.colLabel]</option>
+						</j2:forEach>
+				</select>
+			</div>
+		</div>
+		<div class="pull-right top_margin">
+			<g:dialog_buttons_ok_cancel ok="return updateCompoundFieldValue()"  ok_type="button" cancel_type="button"/>
+		</div>
+
+	</j2:if>
+
+
+
+</j:jelly>

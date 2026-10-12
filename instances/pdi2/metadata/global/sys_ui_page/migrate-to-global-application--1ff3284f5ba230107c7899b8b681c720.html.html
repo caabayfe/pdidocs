@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j2:if test="$[gs.hasRole('admin')]">
+		<g2:evaluate jelly="true">
+			var sysTableName = jelly.sysparm_table_name;
+			var selectedRecordsCount;
+			if (sysTableName == 'sys_update_set') {
+				var selectedUpdateSets = jelly.sysparm_update_sets;
+				var selectedUpdateSetsArray = selectedUpdateSets.split(',');
+				var globalUpdateSetsArray = [];
+				var updateSetGR = new GlideRecord('sys_update_set');
+				var i = 0;
+				while (updateSetGR.get(selectedUpdateSetsArray[i])) {
+					if (updateSetGR.getValue('application') == 'global')
+						globalUpdateSetsArray.push(selectedUpdateSetsArray[i]);
+					i++;
+				}
+				selectedRecordsCount = globalUpdateSetsArray.length;
+			}
+
+			if (sysTableName == 'sys_update_xml') {
+				var selectedUpdates = jelly.sysparm_updates;
+				var selectedUpdatesArray = selectedUpdates.split(',');
+				var globalUpdatesArray = [];
+				var updateXMLGR = new GlideRecord('sys_update_xml');
+				var i = 0;
+				while (updateXMLGR.get(selectedUpdatesArray[i])) {
+					var appId = updateXMLGR.getValue('application');
+					if (appId == 'global')
+						globalUpdatesArray.push(selectedUpdatesArray[i]);
+					else {
+						var sysAppGR = new GlideRecord('sys_app');
+						sysAppGR.get(appId);
+						if (sysAppGR.getValue('scope') == 'global')
+							globalUpdatesArray.push(selectedUpdatesArray[i]);
+					}
+					i++;
+				}
+				selectedRecordsCount = globalUpdatesArray.length;
+
+			}
+		</g2:evaluate>
+	<div id="migrate_code_dialog_container">
+		<j2:if test="$[sysparm_table_name == 'sys_update_set']">
+			<div style="white-space: normal; padding: 8px;" class="outputmsg outputmsg_warning notification notification-warning">
+				<span class="notification-icon icon-alert"></span>
+				<span class="outputmsg_text"> $[gs.getMessage('migrate_global_update_set_info')]$[SP]<a class="linked" target="_blank" href="/api/now/v1/context_doc_url/help-add-files-to-global-app">$[gs.getMessage('migrate_global_more_info')]</a></span>
+			</div>
+		</j2:if>
+		<j2:if test="$[sysparm_table_name == 'sys_update_xml']">
+			<div style="white-space: normal; padding: 8px;" class="outputmsg outputmsg_warning notification notification-warning">
+				<span class="notification-icon icon-alert"></span>
+				<j2:if test="$[gs.getProperty('glide.source_control.customize_files_in_other_global_apps', false) == 'true']">
+					<span class="outputmsg_text"> $[gs.getMessage('migrate_global_sys_update_info_true_property')]$[SP]<a class="linked" target="_blank" href="/api/now/v1/context_doc_url/help-migrate-from-customers">$[gs.getMessage('migrate_global_more_info')]</a></span>
+				</j2:if>
+				<j2:if test="$[gs.getProperty('glide.source_control.customize_files_in_other_global_apps', false) == 'false']">
+					<span class="outputmsg_text"> $[gs.getMessage('migrate_global_sys_update_info_false_property')]$[SP]<a class="linked" target="_blank" href="/api/now/v1/context_doc_url/help-migrate-from-customers">$[gs.getMessage('migrate_global_more_info')]</a></span>
+				</j2:if>
+			</div>
+		</j2:if>
+		<j2:if test="$[sysparm_table_name == 'sys_update_set']">
+			<div style="white-space: normal; padding: 4px;">
+				$[gs.getMessage('migrate_global_update_set_add_new_or_existing', '' + globalUpdateSetsArray.length)]
+			</div>
+		</j2:if>
+		<j2:if test="$[sysparm_table_name == 'sys_update_xml']">
+			<div style="white-space: normal; padding: 4px;">
+				$[gs.getMessage('migrate_global_sys_update_add_new_or_existing', '' + globalUpdatesArray.length)]
+			</div>
+		</j2:if>
+				<span class="input-group-radio">
+					<input type="radio" name="radioName" id="radio-new-app" value="appName" onclick="showNewAppInputBox()" checked="true" class="radio">
+						<label for="radio-new-app" class="radio-label">${gs.getMessage('migrate_global_new_radio_button')}</label>
+					</input>
+				</span>
+				<span class="input-group-radio">
+					<input type="radio" name="radioName" id="radio-existing-app" value="appName" onclick="showExistingAppInputBox()" class="radio">
+						<label for="radio-existing-app" class="radio-label">${gs.getMessage('migrate_global_existing_radio_button')}</label>
+					</input>
+				</span>
+		<div id="newApp" style="display:block; padding-top:10px;">
+			<table border="0" class="wide">
+				<tr>
+					<td class="label_spacing" nowrap="true" style="padding-left:4px;">
+						$[gs.getMessage('migrate_global_enter_new_input')]
+					</td>
+					<td valign="top" width="100%" style="padding-left:6px;">
+						<input type="text" id="target_app_name" name="target_app_name" class="form-control"></input>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id="existingApp" style="display:none; padding-top:10px;">
+			<table border="0" class="wide">
+				<tr>
+					<td class="label_spacing" nowrap="true" style="padding-left:4px;">
+						$[gs.getMessage('migrate_global_select_existing_input')]
+					</td>
+					<td valign="top" width="100%" style="padding-left:6px;" >
+						<g2:ui_reference id="app_picker"
+										 name="app_picker"
+										 table="sys_app"
+										 columns="name"
+										 columns_search="false"
+										 order_by="name"
+										 show_popup="false"
+										 query="scope=global"
+										 onchange="updateButton()"
+										 />
+					</td>
+				</tr>
+			</table>
+		</div>
+		<footer class="modal-footer" style="margin-top: 6px;">
+			<button id="cancel_button" class="btn btn-default" style="margin-right: 3px;" onclick="onCancel()">
+				${gs.getMessage('migrate_global_cancel_button')}
+			</button>
+			<button id="ok_button" class="btn btn-primary" style="margin-left: 3px;" disabled="true" onclick="onMigrate()">
+				${gs.getMessage('migrate_global_migrate_button')}
+			</button>
+		</footer>
+	</div>
+</j2:if>
+</j:jelly>

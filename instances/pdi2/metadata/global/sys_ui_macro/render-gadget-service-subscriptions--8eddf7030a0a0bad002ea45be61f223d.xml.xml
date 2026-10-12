@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate> 
+    var subs = new ServiceSubscriptionUtils().getMySubscriptions();
+    service = new GlideRecord("service_offering");
+    service.addQuery("sys_id", "IN", subs);
+    service.orderBy("name");
+    service.query();
+  </g:evaluate>
+  
+  <j:if test="${service.getRowCount() == 0}">
+    <div style="text-align:center">${gs.getMessage("No subscribed services")}</div>
+  </j:if>
+  
+  <j:if test="${service.getRowCount() > 0}">
+    <div align="center">
+      <table>
+        <tr>
+          <j:if test="${GlideTableDescriptor.get('service_availability').canRead()}">
+            <j:set var="jvar_availability_check_display" value="${gs.getPreference('subscription.availability.display', '')}"/>
+            <td style="padding-right:24px;" title="${gs.getMessage('Toggle commitment availability')}">
+              <table>
+                <tr>
+                  <td>
+                    <table cellpadding="0" cellspacing="0" style="border:1px solid black">
+                      <tr>
+                        <td id="availability_check" gsft_checked="true" onclick="toggleAvailability(this)"
+                            style="width:12px;height:12px;background-color:darkgray;background-image:url(images/checked12.png)">
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td>${gs.getMessage("Commitments")}</td>
+                </tr>
+              </table>
+            </td>
+          </j:if>
+          <j:set var="jvar_available_check_display" value="${gs.getPreference('subscription.available.display', '')}"/>
+          <j:set var="jvar_unavailable_check_display" value="${gs.getPreference('subscription.unavailable.display', '')}"/>
+          <j:set var="jvar_degraded_check_display" value="${gs.getPreference('subscription.degraded.display', '')}"/>
+          <j:set var="jvar_planned_check_display" value="${gs.getPreference('subscription.planned.display', '')}"/>
+          <td>${gs.getMessage("Current status")}:</td>
+          <td id="available" style="padding-right:2px;display:none;" title="${gs.getMessage('Toggle available services')}">
+            <table>
+              <tr>
+                <td>
+                  <table cellpadding="0" cellspacing="0" style="border:1px solid black">
+                    <tr>
+                      <td id="available_check" gsft_checked="true" onclick="toggleSet(this, 'available')"
+                          style="width:12px;height:12px;background-color:lightgreen;background-image:url(images/checked12.png)">
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td>${gs.getMessage("Available")}</td>
+              </tr>
+            </table>
+          </td>
+          <td id="planned" style="padding-right:2px;display:none;" title="${gs.getMessage('Toggle planned outage services')}">
+            <table>
+              <tr>
+                <td>
+                  <table cellpadding="0" cellspacing="0" style="border:1px solid black">
+                    <tr>
+                      <td id="planned_check" gsft_checked="true" onclick="toggleSet(this, 'planned')"
+                          style="width:12px;height:12px;background-color:#cc9944;background-image:url(images/checked12.png)">
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td>${gs.getMessage("Planned Outage")}</td>
+              </tr>
+            </table>
+          </td>
+          <td id="degraded" style="padding-right:2px;display:none;" title="${gs.getMessage('Toggle degraded services')}">
+            <table>
+              <tr>
+                <td>
+                  <table cellpadding="0" cellspacing="0" style="border:1px solid black">
+                    <tr>
+                      <td id="degraded_check" gsft_checked="true" onclick="toggleSet(this, 'degraded')"
+                          style="width:12px;height:12px;background-color:#ffff99;background-image:url(images/checked12.png)">
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td>${gs.getMessage("Degraded")}</td>
+              </tr>
+            </table>
+          </td>
+          <td id="unavailable" style="padding-right:2px;display:none;" title="${gs.getMessage('Toggle unavailable services')}">
+            <table>
+              <tr>
+                <td>
+                  <table cellpadding="0" cellspacing="0" style="border:1px solid black">
+                    <tr>
+                      <td id="unavailable_check" gsft_checked="true" onclick="toggleSet(this, 'unavailable')"
+                          style="width:12px;height:12px;background-color:tomato;background-image:url(images/checked12.png)">
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td>${gs.getMessage("Unavailable")}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </j:if>
+  
+  <j:while test="${service.next()}">
+    <div class="sub_avail_card" style="display:none;background-color:#F6F6F6;float:left;width:23em;border:1px solid #BBBBBB;margin:4px;position:relative;">
+      <div style="font-weight:bold;text-align:center;padding:4px;background-color:#EEEEEE"> ${HTML:service.name}
+        <j:if test="${service.canWrite()}">
+          <span class="pointerhand" style="position:absolute;right:8px;"
+                title="${gs.getMessage('Edit')} ${gs.getMessage('this Service Offering')}"
+                onclick="document.location='service_offering.do?sys_id=${service.sys_id}$[AMP]sysparm_view=service_portfolio'">
+            <img src="images/editor_view_small.gif" alt="${gs.getMessage('Edit')} ${gs.getMessage('this Service Offering')}"/>
+          </span>
+        </j:if>
+        <j:if test="${!service.canWrite()}">
+          <g:evaluate var="jvar_cat_entry">
+            var answer = "";
+            if (!service.parent.nil()) {
+              var cat = new GlideRecord("sc_cat_item_service");
+              cat.addQuery("cmdb_ci_service", service.parent);
+              cat.query();
+              while (cat.next() ${AND} answer == "") {
+                if (GlideappCatalogItem.get(cat.sys_id).canView())
+                  answer = cat.sys_id;
+              }
+            }
+            answer;
+          </g:evaluate>
+          <j:if test="${jvar_cat_entry != ''}">
+            <span class="pointerhand" style="position:absolute;right:8px;" 
+                  title="${gs.getMessage('View')} ${gs.getMessage('this Service Offering')}"
+                  onclick="document.location='com.glideapp.servicecatalog_cat_item_view.do?sysparm_id=${jvar_cat_entry}'">
+              <img src="images/search_glass.gif" alt="${gs.getMessage('View')} ${gs.getMessage('this Service Offering')}"/>
+            </span>
+          </j:if>
+        </j:if> </div>
+      <div>
+        <g:inline template="render_gadget_service_availability.xml"/>
+      </div>
+    </div>
+  </j:while>
+  
+<script>
+  alreadyChangedWidth = "false";
+  addLoadEvent(showAvailability);
+  addLoadEvent(showTypes);
+  addLoadEvent(resizeAvailability);
+
+  function showAvailability() {
+    if ("${jvar_availability_check_display}" == "none") {
+      toggleCheck(gel("availability_check"));
+      var avail = $(document.body).select(".avail_report");
+      for (var i = 0; i != avail.length; i++)
+        avail[i].style.display = "none";
+    }
+  }
+
+  function showType(t, display) {
+    var set = $(document.body).select("." + t);
+    if (set.length > 0) {
+      if (display == "none")
+        toggleCheck(gel(t + "_check"));
+      else {
+        for (var i = 0; set.length > i; i++)
+          set[i].parentNode.parentNode.style.display = "";
+      }
+      gel(t).style.display = "";
+    }
+  }
+
+  function showTypes() {
+    showType("degraded", "${jvar_degraded_check_display}");
+    showType("available", "${jvar_available_check_display}");
+    showType("unavailable", "${jvar_unavailable_check_display}");
+    showType("planned", "${jvar_planned_check_display}");
+  }
+
+  function toggleCheck(e) {
+    if (e.getAttribute("gsft_checked") == "true") {
+       e.setAttribute("gsft_checked", "false");
+       e.style.backgroundImage = "";
+       e.setAttribute("gsft_bgcolor", e.style.backgroundColor);
+       e.style.backgroundColor = "";
+    } else {
+       e.setAttribute("gsft_checked", "true");
+       e.style.backgroundImage = 'url("images/checked12.png")';
+       e.style.backgroundColor = e.getAttribute("gsft_bgcolor");
+    }
+  }
+
+  function toggleSet(e, type) {
+    toggleCheck(e);
+    var set = $(document.body).select("." + type);
+    for (var i = 0; i != set.length; i++) {
+      var node = set[i];
+      node = node.parentNode.parentNode;
+      if (e.getAttribute("gsft_checked") == "true") {
+        node.style.display = "";
+        deletePreference("subscription." + type + ".display");
+      } else {
+        node.style.display = "none";
+        setPreference("subscription." + type + ".display", "none");
+      }
+    }
+    resizeAvailability();
+  }
+
+  function toggleAvailability(e) {
+    toggleCheck(e);
+    var avail = $(document.body).select(".avail_report");
+    for (var i = 0; i != avail.length; i++) {
+      if (e.getAttribute("gsft_checked") == "false") {
+        avail[i].style.display = "none";
+        setPreference("subscription.availability.display", "none");
+      } else {
+        avail[i].style.display = "";
+        deletePreference("subscription.availability.display");
+      }
+    }
+    resizeAvailability();
+  }
+
+  function resizeAvailability() {
+    var el = $(document.body).select(".sub_avail_card");
+    if (alreadyChangedWidth == "false") { // only need to set widths once
+      var w = 0;
+      for (var i = 0; i != el.length; i++) {
+        var curwItem = el[i].getElementsByTagName("table")[0]
+        if (!curwItem)
+          continue;
+
+        var curw = curwItem.offsetWidth; // check width of table since only IE sets div width to match
+        if (curw > w)
+          w = curw;
+      }
+      if (w > 0) {
+        w += 2;
+        for (var i = 0; i != el.length; i++)
+          el[i].style.width = w;
+        alreadyChangedWidth = "true";
+      }
+    }
+
+    var h = 0;
+    for (var i = 0; i != el.length; i++) {
+      el[i].style.height = "";
+      if (el[i].offsetHeight > h)
+        h = el[i].offsetHeight;
+    }
+    if (!isMSIE) // only IE gets this "right", Firefox and Chrome are 2px extra
+      h = Math.max(0, h - 2);
+
+    for (var i = 0; i != el.length; i++)
+      el[i].style.height = h + 'px';
+  }
+</script>
+</j:jelly>

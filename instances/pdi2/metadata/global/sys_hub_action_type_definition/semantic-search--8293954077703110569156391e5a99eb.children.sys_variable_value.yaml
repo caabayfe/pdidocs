@@ -1,0 +1,98 @@
+- document: sys_hub_action_type_definition
+  document_key: 8293954077703110569156391e5a99eb
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-08-16 21:19:10
+  sys_id: 41f5194477703110569156391e5a9929
+  sys_mod_count: '3'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-05-21 02:10:44
+  value: '{"version":"1.0","complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"794bc342-9c9d-444b-a3f2-dd4b6a5a0173\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"serializationFormat":"JSON"}'
+  variable: 74f5194477703110569156391e5a990f
+- document: sys_hub_action_type_definition
+  document_key: 8293954077703110569156391e5a99eb
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-08-16 21:19:10
+  sys_id: 49f5194477703110569156391e5a9928
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-08-16 21:19:10
+  value: '0'
+  variable: b8f5194477703110569156391e5a9920
+- document: sys_hub_step_instance
+  document_key: c646dd4477703110569156391e5a99da
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-08-16 21:20:36
+  sys_id: 8e46dd4477703110569156391e5a99e5
+  sys_mod_count: '19'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-05-21 02:10:43
+  value: |-
+    (function execute(inputs, outputs) {
+
+      var context = JSON.parse(inputs.logging_context);
+      var actionStartTime = new GlideDateTime().getNumericValue() - parseInt(inputs.start_time);
+      VAAISearchHelper.getLogger(context).debug('Semantic Search FDIH action started: {0}ms', actionStartTime);
+      
+      try {
+        var api = new AISearchRetrieveSearchResultsWrapper();
+        var additionalContext = inputs.sysid_filter ? JSON.stringify(
+                               {"additional_filters":[{"filter_name":"sys_id","filter_ids":inputs.sysid_filter.split(',')}]}) 
+                               : "";
+        var searchResult = api.retrieveSemanticSearchResults(inputs.search_term, inputs.context_profile_id, inputs.search_context_id,
+                                                    inputs.logging_context, inputs.locale, additionalContext);
+
+        outputs.search_results = JSON.parse(searchResult);
+      } catch (ex) {
+    	  VAAISearchHelper.getLogger(context).error("Error retrieving search results: {0}", ex.toString());
+        var defaultResponse = "{\n" +
+          "  \"result\": [\n" +
+          "    {\n" +
+          "      \"executionResult\": {\n" +
+          "          \"searchMetadata\": {\n" +
+    	    "              \"searchResultMetadata\": {\n" +
+    	    "                  \"searchTerm\": \"" + inputs.search_term + "\"\n" +
+    	    "              }\n" +
+    	    "          },\n" +
+          "          \"searchResultsTemplates\": {\n" +
+          "              \"items\": [\n" +
+          "              ]\n" +
+          "          },\n" +
+          "          \"geniusResultsTemplates\": {\n" +
+          "              \"items\": [\n" +
+          "              ]\n" +
+          "           }\n" +
+          "      },\n" +
+          "      \"errors\": [],\n" +
+          "      \"status\": 204\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}";
+        outputs.search_results = JSON.parse(defaultResponse);  
+      }
+      
+      outputs.end_time = new GlideDateTime().getNumericValue().toString();
+      
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: c646dd4477703110569156391e5a99da
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-08-16 21:20:36
+  sys_id: ca46dd4477703110569156391e5a99e5
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-08-16 21:20:36
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4

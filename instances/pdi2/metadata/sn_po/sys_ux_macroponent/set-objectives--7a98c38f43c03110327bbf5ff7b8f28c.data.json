@@ -1,0 +1,2927 @@
+[
+    {
+        "definition": {
+            "id": "0b84084c536910105a20ddeeff7b124b",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "setSidebarRatioPreference",
+        "elementLabel": "Set sidebar ratio preference",
+        "eventMappings": [],
+        "inputValues": {
+            "name": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "value": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "83114bc453231010c495ddeeff7b12d9",
+            "type": "COMPOSITE"
+        },
+        "dependencies": {},
+        "elementId": "getSidebarRatioPreference",
+        "elementLabel": "Get sidebar ratio preference",
+        "eventMappings": [],
+        "inputValues": {
+            "includeRoles": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "preferences": {
+                "binding": {
+                    "address": [
+                        "sidebarRatioPreference"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "f3cf459043983110327bbf5ff7b8f20d",
+            "type": "REST"
+        },
+        "dependencies": {},
+        "elementId": "getTableDetails",
+        "elementLabel": "GetTableDetails",
+        "eventMappings": [
+            {
+                "eventMappingId": "clkftkgggpaacckadddhhfjjbzaaathhi",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "9f6c451043983110327bbf5ff7b8f224"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clkftkgggpaacckbdddhhfuzyfaaygcc",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "tableQuery": {
+                "binding": {
+                    "address": [
+                        "sourceTypeName"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "tablename": {
+                "binding": {
+                    "address": [
+                        "tableNameFetchInput"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "timestamp": {
+                "binding": {
+                    "address": [
+                        "timestamp"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "beda4252770300108d070d74c810618f",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "create_record_1",
+        "elementLabel": "Create Promin Project Record",
+        "eventMappings": [
+            {
+                "eventMappingId": "clkhvhdojaabbftddbhhneekfatece",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "container": {
+                                    "propName": {
+                                        "type": "JSON_LITERAL",
+                                        "value": "projectId"
+                                    },
+                                    "value": {
+                                        "binding": {
+                                            "address": [
+                                                "data",
+                                                "output",
+                                                "data",
+                                                "GlideRecord_Mutation",
+                                                "insert_promin_project",
+                                                "sys_id",
+                                                "value"
+                                            ]
+                                        },
+                                        "type": "EVENT_PAYLOAD_BINDING"
+                                    }
+                                },
+                                "type": "MAP_CONTAINER"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "clkibuwjpaaeeeelddbhhnwmddzeeebby",
+                        "type": "EVENT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "clientTransformScript": "javascript(/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    const projectId = event.payload.data.output.data.GlideRecord_Mutation.insert_promin_project.sys_id.value;\n    let templateFields;\n    const { touchPoints } = api.state;\n    const touchPointsResponse = {};\n    let touchPointsQuery='';\n    if(touchPoints.enabledForProjects) {\n        touchPointsResponse.fields = touchPoints.fields.join(',');\n        touchPointsResponse.users = touchPoints.users.join(',');\n        touchPointsResponse.timeRange = touchPoints.timeRange;\n        touchPointsQuery = `^touch_point_fields=${touchPointsResponse.fields}^enable_touch_point=${touchPoints.enabledForProjects}^touch_point_excluded_users=${touchPointsResponse.users}^touch_point_time_range=${touchPointsResponse.timeRange}`;\n    }\n    const sourceLabel = api.state.selectedSourceLabel.split('(')[0].trim();\n    if (api.state.sourceType == 'TABLE') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}${touchPointsQuery}`;\n    } else if (api.state.sourceType == 'EXTERNAL_DATA') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^external_dataset=${api.state.selectedDataSourceID}${touchPointsQuery}`;\n    } else if (api.state.sourceType == 'REPORT_SOURCE') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^report_source=${api.state.selectedDataSourceID}`;\n    } else if (api.state.sourceType == 'ARCHIVED_DATA') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^report_source=${api.state.selectedDataSourceID}${touchPointsQuery}`;\n    } else if (api.state.sourceType == 'AGENTIC_AI_DATA') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^report_source=${api.state.selectedDataSourceID}`;\n    }\n    return {\n        table: \"promin_project_entity\",\n        templateFields: templateFields,\n        useSetDisplayValue: null\n    };\n})",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": {
+                            "dataBrokerId": "beda4252770300108d070d74c810618f",
+                            "operationName": "EXECUTE",
+                            "parentResourceId": "create_entity_record",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    const projectId = event.payload.data.output.data.GlideRecord_Mutation.insert_promin_project.sys_id.value;\n    let templateFields;\n    const { touchPoints } = api.state;\n    const touchPointsResponse = {};\n    let touchPointsQuery='';\n    if(touchPoints.enabledForProjects) {\n        touchPointsResponse.fields = touchPoints.fields.join(',');\n        touchPointsResponse.users = touchPoints.users.join(',');\n        touchPointsResponse.timeRange = touchPoints.timeRange;\n        touchPointsQuery = `^touch_point_fields=${touchPointsResponse.fields}^enable_touch_point=${touchPoints.enabledForProjects}^touch_point_excluded_users=${touchPointsResponse.users}^touch_point_time_range=${touchPointsResponse.timeRange}`;\n    }\n    const sourceLabel = api.state.selectedSourceLabel.split('(')[0].trim();\n    if (api.state.sourceType == 'TABLE') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}${touchPointsQuery}`;\n    } else if (api.state.sourceType == 'EXTERNAL_DATA') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^external_dataset=${api.state.selectedDataSourceID}${touchPointsQuery}`;\n    } else if (api.state.sourceType == 'REPORT_SOURCE') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^report_source=${api.state.selectedDataSourceID}`;\n    } else if (api.state.sourceType == 'ARCHIVED_DATA') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^report_source=${api.state.selectedDataSourceID}${touchPointsQuery}`;\n    } else if (api.state.sourceType == 'AGENTIC_AI_DATA') {\n        templateFields = `name=${sourceLabel}^table=${api.state.selectedSourceValue}^project=${projectId}^source_type=${api.state.sourceType}^report_source=${api.state.selectedDataSourceID}`;\n    }\n    return {\n        table: \"promin_project_entity\",\n        templateFields: templateFields,\n        useSetDisplayValue: null\n    };\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            }
+                        },
+                        "targetId": "clkilcccgzaajjaaddddbhhnaaogbnvnk",
+                        "type": "DATABROKER_OP"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clkjpeeqffiiaabbbeedddhhfyxgglelggl",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "items": [
+                                        {
+                                            "action": {
+                                                "type": "dismiss"
+                                            },
+                                            "content": "translate(Create project operation failed)",
+                                            "icon": "info-circle-outline",
+                                            "id": "alert1",
+                                            "status": "high"
+                                        }
+                                    ]
+                                }
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "clkjpeeqffiiaabbbffdddhhfuddcctlhhoi",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project"
+            },
+            "templateFields": {
+                "transform": {
+                    "operands": {
+                        "container": [
+                            {
+                                "type": "JSON_LITERAL",
+                                "value": "status="
+                            },
+                            {
+                                "binding": {
+                                    "address": [
+                                        "projectStatus"
+                                    ]
+                                },
+                                "type": "STATE_BINDING"
+                            },
+                            {
+                                "type": "JSON_LITERAL",
+                                "value": "^goal="
+                            },
+                            {
+                                "binding": {
+                                    "address": [
+                                        "selectedGoal"
+                                    ]
+                                },
+                                "type": "STATE_BINDING"
+                            },
+                            {
+                                "type": "JSON_LITERAL",
+                                "value": "^name="
+                            },
+                            {
+                                "binding": {
+                                    "address": [
+                                        "projectName"
+                                    ]
+                                },
+                                "type": "STATE_BINDING"
+                            },
+                            {
+                                "type": "JSON_LITERAL",
+                                "value": "^short_description="
+                            },
+                            {
+                                "binding": {
+                                    "address": [
+                                        "projectDescription"
+                                    ]
+                                },
+                                "type": "STATE_BINDING"
+                            }
+                        ],
+                        "type": "LIST_CONTAINER"
+                    },
+                    "operator": "CONCAT"
+                },
+                "type": "CLIENT_TRANSFORM"
+            },
+            "useSetDisplayValue": {
+                "type": "JSON_LITERAL",
+                "value": false
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "beda4252770300108d070d74c810618f",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "create_entity_record",
+        "elementLabel": "Create Promin Entity Record",
+        "eventMappings": [
+            {
+                "eventMappingId": "clkilhhnwggaajjbbddddbhhnddccoyiiece",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "cbdbaf8fffa82210dbdeffffffffff7a"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "ghBiyPzGBkTijjfwCniuKEkHs",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "clientTransformScript": "",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "container": {
+                                    "items": {
+                                        "container": [
+                                            {
+                                                "container": {
+                                                    "action": {
+                                                        "container": {
+                                                            "type": {
+                                                                "type": "JSON_LITERAL",
+                                                                "value": "dismiss"
+                                                            }
+                                                        },
+                                                        "type": "MAP_CONTAINER"
+                                                    },
+                                                    "content": {
+                                                        "type": "TRANSLATION_LITERAL",
+                                                        "value": {
+                                                            "code": null,
+                                                            "comment": "",
+                                                            "message": "Project created successfully"
+                                                        }
+                                                    },
+                                                    "icon": {
+                                                        "type": "JSON_LITERAL",
+                                                        "value": "info-circle-outline"
+                                                    },
+                                                    "id": {
+                                                        "type": "JSON_LITERAL",
+                                                        "value": "Success"
+                                                    },
+                                                    "status": {
+                                                        "type": "JSON_LITERAL",
+                                                        "value": "positive"
+                                                    }
+                                                },
+                                                "type": "MAP_CONTAINER"
+                                            }
+                                        ],
+                                        "type": "LIST_CONTAINER"
+                                    }
+                                },
+                                "type": "MAP_CONTAINER"
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "vHzmUvggggBECjeeddDIEUWOJddTaaI",
+                        "type": "EVENT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clkjprzieeaabbpkdddhhfhsqjjzggog",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "items": [
+                                        {
+                                            "action": {
+                                                "type": "dismiss"
+                                            },
+                                            "content": "translate(Create project operation failed)",
+                                            "icon": "info-circle-outline",
+                                            "id": "alert2",
+                                            "status": "high"
+                                        }
+                                    ]
+                                }
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "clkjprzieeaabbpldddhhfddgbahteek",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "templateFields": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "useSetDisplayValue": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "bundleLinks": [
+            {
+                "bundleInstanceId": "record_list_1",
+                "elementType": "controller"
+            }
+        ],
+        "definition": {
+            "id": "5865e308432021105571609dc7b8f23b",
+            "type": "CONTROLLER"
+        },
+        "dependencies": {},
+        "elementId": "list_controller",
+        "elementLabel": "List Controller",
+        "eventMappings": [
+            {
+                "eventMappingId": "clkqojjbtgaaccggqddbhhnffccaohhlhdd",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_now_list_common.LIST_CTRL#DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_now_list_common.LIST_CTRL#DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "8cc1583e43983110327bbf5ff7b8f22d"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clkqojjbtgaaccggrddbhhnyknggquus",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "columnFilteringPopoverDisplay": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "columnLimit": {
+                "type": "JSON_LITERAL",
+                "value": 0
+            },
+            "columns": {
+                "type": "JSON_LITERAL",
+                "value": "number,name,short_description,status,par_dashboard_id,sys_created_by"
+            },
+            "enableCardClickOpen": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "enableOnlySingleSelection": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "filter": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "fixedFilter": {
+                "type": "JSON_LITERAL",
+                "value": "is_template=true^ORcontent_pack=true"
+            },
+            "listId": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "listMenuConfigurationId": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "parentRecordSysId": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "parentTable": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "relatedListName": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "rowLimit": {
+                "type": "JSON_LITERAL",
+                "value": 5
+            },
+            "showListOpenedByLinkSection": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project"
+            },
+            "transformScriptSysId": {
+                "type": "JSON_LITERAL"
+            },
+            "view": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            }
+        },
+        "preset": null,
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "2921c42143543110327bbf5ff7b8f280",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "create_project_from_template_1",
+        "elementLabel": "Create project from template",
+        "eventMappings": [
+            {
+                "eventMappingId": "clklbbxohhhaabbvpdddhhfoehklffqjj",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "32f3c4e543543110327bbf5ff7b8f22e"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clklbbxohhiaabbvqdddhhfepoggdqct",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clklbbzhrpaabbwbbdddhhfcbbiiseeead",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "32f3c4e543543110327bbf5ff7b8f22e"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clklbbzhrpaabbwccdddhhfomtcqron",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clklgguiffuaabbogdddhhfcdffgmiipf",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "a97582ac43943110327bbf5ff7b8f233"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clklgguiffuaabbohdddhhfhehddnsffgg",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "items": [
+                                        {
+                                            "action": {
+                                                "type": "dismiss"
+                                            },
+                                            "content": "Project created successfully",
+                                            "icon": "info-circle-outline",
+                                            "id": "Success",
+                                            "status": "positive"
+                                        }
+                                    ]
+                                }
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "cllmhhbbgeyaaccxdddbhhncctfopwjjy",
+                        "type": "EVENT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clklbklfbbaaccdxdddhhfiapbbmggcv",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf_page.NOW_UXF_PAGE#ADD_NOTIFICATIONS",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {
+                                    "items": [
+                                        {
+                                            "action": {
+                                                "type": "dismiss"
+                                            },
+                                            "content": "Create project operation failed",
+                                            "icon": "info-circle-outline",
+                                            "id": "alert2",
+                                            "status": "high"
+                                        }
+                                    ]
+                                }
+                            },
+                            "sysId": "49fe7d575f983bb3f8eea3fa8d40694c"
+                        },
+                        "operation": null,
+                        "targetId": "clklbklfccaaccdydddhhfddiiwjfeehhv",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "description": {
+                "binding": {
+                    "address": [
+                        "projectDescription"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "goal": {
+                "binding": {
+                    "address": [
+                        "selectedGoal"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "name": {
+                "binding": {
+                    "address": [
+                        "projectName"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "template": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "b997a84053021010cbc2ddeeff7b1228",
+            "type": "COMPOSITE"
+        },
+        "dependencies": {},
+        "elementId": "look_up_records_1",
+        "elementLabel": "Look Up filtered list Records",
+        "eventMappings": [
+            {
+                "eventMappingId": "clklfddwzraabbaffdddhhfchhhhfeenoa",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "32f3c4e543543110327bbf5ff7b8f22e"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clklfddwzraabbaggdddhhfluugseiir",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "encodedQuery": {
+                "binding": {
+                    "address": [
+                        "listFilterQuery"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "limit": {
+                "type": "JSON_LITERAL",
+                "value": "1000"
+            },
+            "offset": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "orderBy": {
+                "type": "JSON_LITERAL"
+            },
+            "queryCategory": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": "project"
+            },
+            "sortType": {
+                "type": "JSON_LITERAL",
+                "value": "asc"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project_entity"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "52b6ca2743e83110327bbf5ff7b8f29b",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "get_project_details",
+        "elementLabel": "Get project details",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllciicjjjqaabbebddbhhoffddndeethhjj",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "5c76822743e83110327bbf5ff7b8f2b8"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllciicjjjqaabbecddbhhoalaaiijjddggo",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "projectId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "6ce7684843303110327bbf5ff7b8f293",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "get_project_details_1",
+        "elementLabel": "Get project details 1",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllebbfeeovaabbbpdddhhfoleujjari",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "c5d7a44843303110327bbf5ff7b8f2aa"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllebbfeeovaabbbqdddhhfalhhzbbeaah",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "2661343243863110d56abf5ff7b8f2c4"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clohhffxkgguaaiiwiiddbhhqulymmggrcc",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n* @param {params} params\n* @param {api} params.api\n* @param {any} params.event\n*/\nfunction evaluateEvent({api, event}) {\n\treturn {\n\t\tpropName: 'isLoading',\n\t\tvalue: false\n\t};\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "clsvmdcndaacciibddbhhntjjiijoumo",
+                        "type": "EVENT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clsvmdsjlaacciisddbhhnhheelyvujx",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n* @param {params} params\n* @param {api} params.api\n* @param {any} params.event\n*/\nfunction evaluateEvent({api, event}) {\n\treturn {\n\t\tpropName: 'isLoading',\n\t\tvalue: false\n\t};\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "clsvmdsjlaacciitddbhhndqfzxuqk",
+                        "type": "EVENT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "projectId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "fc87db3c432031103c0273aa86b8f24b",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "get_choice_status",
+        "elementLabel": "Get choice status",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllfhhbbxccxaabbdrddbhhoeylgaadsii",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d88fa85c43303110327bbf5ff7b8f2e8"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllfhhbbxccxaabbdsddbhhoykqwggkdda",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "column": {
+                "type": "JSON_LITERAL",
+                "value": "status"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "fc87db3c432031103c0273aa86b8f24b",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "get_choice_sourceType",
+        "elementLabel": "Get choice sourceType",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllfiiffjjgeeaacciitddbhhoccxcggojnaa",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d88fa85c43303110327bbf5ff7b8f2e8"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllfiiffjjgffaacciiuddbhhokyddgghhjee",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "column": {
+                "type": "JSON_LITERAL",
+                "value": "source_type"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project_entity"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "f3cf459043983110327bbf5ff7b8f20d",
+            "type": "REST"
+        },
+        "dependencies": {},
+        "elementId": "check_external_data_enabled",
+        "elementLabel": "check External data enabled",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllgjjcggjjaacckoddbhhneeaaffbegb",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d3772ce843703110327bbf5ff7b8f262"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllgjjjwdjaaccymddbhhncwpednaadd",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clljrenzbaaddvdddbhhndtgccbbreecc",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d3772ce843703110327bbf5ff7b8f262"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clljreytkaaddvnddbhhnyeetybkiiee",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "tablename": {
+                "type": "JSON_LITERAL",
+                "value": "sn_po_extdata_dataset"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "9b4b978353211010cbc2ddeeff7b1245",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "edit_promin_project",
+        "elementLabel": "Edit promin project",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllmiibbxhjaaddczddbhhnkajjkaavdda",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "a97582ac43943110327bbf5ff7b8f233"
+                        },
+                        "conditional": {
+                            "operation": {
+                                "left": {
+                                    "binding": {
+                                        "address": [
+                                            "resetPrimaryEntity"
+                                        ]
+                                    },
+                                    "type": "STATE_BINDING"
+                                },
+                                "operator": "EQUAL",
+                                "right": {
+                                    "type": "JSON_LITERAL",
+                                    "value": false
+                                }
+                            },
+                            "type": "BINARY"
+                        },
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllmiibbxhjaadddaaddbhhntxjjdibbn",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": {
+                            "operation": {
+                                "left": {
+                                    "binding": {
+                                        "address": [
+                                            "resetPrimaryEntity"
+                                        ]
+                                    },
+                                    "type": "STATE_BINDING"
+                                },
+                                "operator": "EQUAL",
+                                "right": {
+                                    "type": "JSON_LITERAL",
+                                    "value": true
+                                }
+                            },
+                            "type": "BINARY"
+                        },
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": {
+                            "dataBrokerId": "7efd262e434131103c0273aa86b8f299",
+                            "operationName": "EXECUTE",
+                            "parentResourceId": "create_primary_entity",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n* @param {params} params\n* @param {api} params.api\n* @param {any} params.event\n*/\nfunction evaluateEvent({api, event}) {\n\tconst sourceLabel = api.state.selectedSourceLabel.split('(')[0].trim();\n\treturn {\n\t\tentityPayload: JSON.stringify({\n\t\t\tproject: api.context.props.projectId,\n\t\t\ttable: api.state.selectedSourceValue,\n\t\t\tname: sourceLabel,\n\t\t\tsource_type: api.state.projectDetails.sourceType,\n\t\t}),\n\t};\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            }
+                        },
+                        "targetId": "clutmzyldaaccffaddbhhosgfmthbf",
+                        "type": "DATABROKER_OP"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "recordId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "templateFields": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "useSetDisplayValue": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "54e9c8d25310101024e5ddeeff7b12db",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "get_system_properties",
+        "elementLabel": "get system properties",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllpbbuutffaaggpiddbhhnniibydjbcc",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "545cb3d243303110327bbf5ff7b8f297"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllpbbuutffaaggpjddbhhnkfftddheezk",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "recordId": {
+                "type": "JSON_LITERAL",
+                "value": "80057df8a3d0311011ecb18c26fcdab7"
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": "value"
+            },
+            "returnTableMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "sys_properties"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "b997a84053021010cbc2ddeeff7b1228",
+            "type": "COMPOSITE"
+        },
+        "dependencies": {},
+        "elementId": "look_up_template_record",
+        "elementLabel": "Look Up template record",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllqerawccaabbxbddbhhnffccoqeddddr",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "6f9789f643b03110327bbf5ff7b8f22d"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllqerawccaabbxcddbhhnjjbffevfml",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "encodedQuery": {
+                "binding": {
+                    "address": [
+                        "templateQuery"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "limit": {
+                "type": "JSON_LITERAL",
+                "value": "1000"
+            },
+            "offset": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "orderBy": {
+                "type": "JSON_LITERAL"
+            },
+            "queryCategory": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": "table"
+            },
+            "sortType": {
+                "type": "JSON_LITERAL",
+                "value": "asc"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project_entity"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "9664d48053461010cbc2ddeeff7b128e",
+            "type": "COMPOSITE"
+        },
+        "dependencies": {},
+        "elementId": "look_up_promin_project",
+        "elementLabel": "Look Up Promin Project",
+        "eventMappings": [
+            {
+                "eventMappingId": "clmiwmsokaaddywddbhhqinjjwzvqk",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "ebe7bb41431131103c0273aa86b8f28e"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmiwmsokaaddyxddbhhqqxdqhxgp",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": {
+                            "operation": {
+                                "left": {
+                                    "binding": {
+                                        "address": [
+                                            "look_up_promin_project",
+                                            "result",
+                                            "dirty",
+                                            "value"
+                                        ]
+                                    },
+                                    "type": "DATA_OUTPUT_BINDING"
+                                },
+                                "operator": "EQUAL",
+                                "right": {
+                                    "type": "JSON_LITERAL",
+                                    "value": true
+                                }
+                            },
+                            "type": "BINARY"
+                        },
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": {
+                            "dataBrokerId": "c870999b434131103c0273aa86b8f229",
+                            "operationName": "REFRESH",
+                            "parentResourceId": "get_project_dirty_message",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            }
+                        },
+                        "targetId": "clpgglhhzcjjaacciiiddbhhqtdccznaiiw",
+                        "type": "DATABROKER_OP"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "recordId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": "is_template,template_type,auto_retire,is_le_progress,dirty,restricted"
+            },
+            "returnTableMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "fc87db3c432031103c0273aa86b8f24b",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "get_template_types",
+        "elementLabel": "Get template types",
+        "eventMappings": [
+            {
+                "eventMappingId": "clmisjjaqggaabbjrddbhhqccqccrhhqtg",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "7f8ddbcd435131103c0273aa86b8f2b8"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmisjjaqhhaabbjsddbhhqcxnzphhffq",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "column": {
+                "type": "JSON_LITERAL",
+                "value": "template_type"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "54d6a3c9439131103c0273aa86b8f2ab",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "validate_entity_template",
+        "elementLabel": "Validate entity template",
+        "eventMappings": [
+            {
+                "eventMappingId": "clmitszffzaaeerccddbhhrlwvniitggp",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "f5a3e3c5439131103c0273aa86b8f2de"
+                        },
+                        "conditional": {
+                            "operation": {
+                                "left": {
+                                    "binding": {
+                                        "address": [
+                                            "data",
+                                            "output",
+                                            "data",
+                                            "snPo",
+                                            "GlidePromin",
+                                            "prominValidateEntityTemplate",
+                                            "success"
+                                        ]
+                                    },
+                                    "type": "EVENT_PAYLOAD_BINDING"
+                                },
+                                "operator": "EQUAL",
+                                "right": {
+                                    "type": "JSON_LITERAL",
+                                    "value": true
+                                }
+                            },
+                            "type": "BINARY"
+                        },
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmitszffzaaeerddddbhhrftjjjiipxx",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "39a3e3c5439131103c0273aa86b8f2de"
+                        },
+                        "conditional": {
+                            "operation": {
+                                "left": {
+                                    "binding": {
+                                        "address": [
+                                            "data",
+                                            "output",
+                                            "data",
+                                            "snPo",
+                                            "GlidePromin",
+                                            "prominValidateEntityTemplate",
+                                            "success"
+                                        ]
+                                    },
+                                    "type": "EVENT_PAYLOAD_BINDING"
+                                },
+                                "operator": "EQUAL",
+                                "right": {
+                                    "type": "JSON_LITERAL",
+                                    "value": false
+                                }
+                            },
+                            "type": "BINARY"
+                        },
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmittxanaaeercddbhhrrpmchbbwaa",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clmituiieevaaeerlddbhhrssddwzryr",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "39a3e3c5439131103c0273aa86b8f2de"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmituiieevaaeermddbhhrfddccmnbhr",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "entityPayload": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "templateType": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "c870999b434131103c0273aa86b8f229",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "get_project_dirty_message",
+        "elementLabel": "Get project dirty message 1",
+        "eventMappings": [
+            {
+                "eventMappingId": "clmxhjjuepaabbjjpddbhhrrpszddjjbh",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "ef47771c43213110d56abf5ff7b8f2b5"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmxhjjuepaabbjjqddbhhrvaxvldcff",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "currentTableDisplayName": {
+                "type": "JSON_LITERAL",
+                "value": "promin_project"
+            },
+            "projectId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "3816ea3843693110d56abf5ff7b8f23b",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "is_shared_project",
+        "elementLabel": "is shared project",
+        "eventMappings": [
+            {
+                "eventMappingId": "clmzoffaabuaabbefddbhhqzoaauwojjh",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "8dd41cc143a13110d56abf5ff7b8f2f4"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmzoffaabuaabbegddbhhqrtzaamprj",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clmzoffffzhhaabbepddbhhqsaaivcdjy",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "8dd41cc143a13110d56abf5ff7b8f2f4"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clmzoffffzhhaabbeqddbhhqxnmsdvddv",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clnyidjjgvaabbllddbhhqddffehhyhhuu",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "8dd41cc143a13110d56abf5ff7b8f2f4"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clnyidjjgvaabblmddbhhqaffjjbbgpil",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "projectId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "54d6a3c9439131103c0273aa86b8f2ab",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "validate_entity_template_update",
+        "elementLabel": "Validate entity template update",
+        "eventMappings": [
+            {
+                "eventMappingId": "clnjjzazbaaaaddiiggddbiiaawffmuxbbas",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "39a3e3c5439131103c0273aa86b8f2de"
+                        },
+                        "conditional": {
+                            "operation": {
+                                "left": {
+                                    "binding": {
+                                        "address": [
+                                            "data",
+                                            "output",
+                                            "data",
+                                            "snPo",
+                                            "GlidePromin",
+                                            "prominValidateEntityTemplate",
+                                            "success"
+                                        ]
+                                    },
+                                    "type": "EVENT_PAYLOAD_BINDING"
+                                },
+                                "operator": "EQUAL",
+                                "right": {
+                                    "type": "JSON_LITERAL",
+                                    "value": false
+                                }
+                            },
+                            "type": "BINARY"
+                        },
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clnjjzazbaaaaddiihhddbiiaaubbfgpwlx",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "825bd99f436131103c0273aa86b8f2d6"
+                        },
+                        "conditional": {
+                            "operation": {
+                                "left": {
+                                    "binding": {
+                                        "address": [
+                                            "data",
+                                            "output",
+                                            "data",
+                                            "snPo",
+                                            "GlidePromin",
+                                            "prominValidateEntityTemplate",
+                                            "success"
+                                        ]
+                                    },
+                                    "type": "EVENT_PAYLOAD_BINDING"
+                                },
+                                "operator": "EQUAL",
+                                "right": {
+                                    "type": "JSON_LITERAL",
+                                    "value": true
+                                }
+                            },
+                            "type": "BINARY"
+                        },
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clnjjzbeiijaaddiiqddbiiaaleeoauzeegg",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "clnjjzbhhquaaddiigddbiiaaiuffzeeaoa",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "39a3e3c5439131103c0273aa86b8f2de"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clnjjzbhhquaaddiihddbiiaawtliixiijjp",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "entityPayload": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "templateType": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "40da0c2e53613010e7cdddeeff7b12e3",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "fetch_available_versions",
+        "elementLabel": "Fetch available versions 1",
+        "eventMappings": [
+            {
+                "eventMappingId": "clohhffxzdgaaiiwtddbhhqkuhujjugb",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "2661343243863110d56abf5ff7b8f2c4"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clohhffxzdhaaiiwuddbhhqnnuyggmlq",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "projectId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "36efd2c343827110d56abf5ff7b8f232",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "is_scope_analysis_stage_enabled",
+        "elementLabel": "Is Scope Analysis Stage Enabled",
+        "eventMappings": [
+            {
+                "eventMappingId": "cloiiobeeesaaggptddbhhqfymbbycccii",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "2661343243863110d56abf5ff7b8f2c4"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cloiiobeeesaaggpuddbhhqmtjjffjbbzee",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "projectId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "7efd262e434131103c0273aa86b8f299",
+            "type": "GRAPHQL"
+        },
+        "dependencies": {},
+        "elementId": "create_primary_entity",
+        "elementLabel": "Create primary entity",
+        "eventMappings": [
+            {
+                "eventMappingId": "clutnggmhvaacciicddbhholhhffffnuccdd",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "a97582ac43943110327bbf5ff7b8f233"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clutnggmhwaacciidddbhhozqydjxrn",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "entityPayload": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "b997a84053021010cbc2ddeeff7b1228",
+            "type": "COMPOSITE"
+        },
+        "elementId": "get_dashboard_data",
+        "elementLabel": "get KPI dashboard data",
+        "eventMappings": [
+            {
+                "eventMappingId": "clwzzdoggaaahhlcddbiiccsheebbddysj",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "9f6c451043983110327bbf5ff7b8f224"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clwzzdoggaaahhldddbiiccdkngghhddjjh",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "encodedQuery": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "limit": {
+                "type": "JSON_LITERAL",
+                "value": "1000"
+            },
+            "offset": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "orderBy": {
+                "type": "JSON_LITERAL"
+            },
+            "queryCategory": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL"
+            },
+            "sortType": {
+                "type": "JSON_LITERAL",
+                "value": "asc"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "par_dashboard"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "78a69e4f432202101bfe73aa86b8f29d",
+            "type": "GRAPHQL"
+        },
+        "elementId": "is_primary_entity_valid",
+        "elementLabel": "Is primary entity valid",
+        "eventMappings": [
+            {
+                "eventMappingId": "clxeeahaccbbaabbwtddbiiaaffkadneekg",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "4b98de03436202101bfe73aa86b8f2c0"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clxeeahaccbbaabbwuddbiiaaddaatevbblj",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "tableName": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "a917d2ed43c302101bfe73aa86b8f2e0",
+            "type": "GRAPHQL"
+        },
+        "elementId": "get_table_list",
+        "elementLabel": "Get table list",
+        "eventMappings": [
+            {
+                "eventMappingId": "clxxbnjjniaabbxoddbiiddaaivpmhhom",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "b424d9f143503110327bbf5ff7b8f25b"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clxxbnjjniaabbxpddbiiddcwhhgeenldd",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "searchTerm": {
+                "binding": {
+                    "address": [
+                        "sourceSearchTerm"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "sourceType": {
+                "binding": {
+                    "address": [
+                        "sourceType"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "44d74954430312101bfe73aa86b8f210",
+            "type": "GRAPHQL"
+        },
+        "elementId": "get_project_info",
+        "elementLabel": "Get project info",
+        "eventMappings": [
+            {
+                "eventMappingId": "AbbuddweehhJiDUbeehhjjhQNEhheccjBBeehh",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "29184114430312101bfe73aa86b8f26e"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cPlaavcRBaaIVjjmcHRxgPiiTddh",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "projectId": {
+                "binding": {
+                    "address": [
+                        "projectId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "bb13548243581210a829bf5ff7b8f2f2",
+            "type": "GRAPHQL"
+        },
+        "elementId": "get_process_configuration",
+        "elementLabel": "Get process configuration",
+        "eventMappings": [
+            {
+                "eventMappingId": "WazXngChCaasljjwsLHaaoqbhhfS",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "bae2b85f7f2312107a98cb28bc8665c7"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "JkrbeeddviiWCUeehhwjjhIMqccRswbbbj",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "d0b2cb5fff242210dbdeffffffffff9b",
+            "type": "GRAPHQL"
+        },
+        "elementId": "create_multiple_promin_activities",
+        "elementLabel": "Create multiple promin activities",
+        "eventMappings": [
+            {
+                "eventMappingId": "WHZhtveehhkDkTjjjjffUMtddekeeddAccF",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "6dc9fe9fffe02210dbdeffffffffff0c"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "HezAggPaeeBEccQeeddPULXjjeehhLggFIeedd",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "EaUccnvmrDEFFjjhYHcciYddhhbbgeehh",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "6dc9fe9fffe02210dbdeffffffffff0c"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "tcclNffFqDEJrjjSAFDeZCNvhhr",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "activityPayload": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "c8d8a41d431131103c0273aa86b8f2c7",
+            "type": "GRAPHQL"
+        },
+        "elementId": "get_promin_user_info",
+        "elementLabel": "Get promin user info",
+        "eventMappings": [
+            {
+                "eventMappingId": "DDwZbbeehhaiAaazsjjheeAljVWUiizB",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d4fc13e8ff78f210dbdeffffffffff32"
+                        },
+                        "clientTransformScript": "",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "eehhwTuGfHbAkWwjjccYGFpuqHbNL",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {},
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "6852f3e753e010105a20ddeeff7b129f",
+            "type": "TRANSFORM"
+        },
+        "elementId": "get_ai_agent_plugin_status",
+        "elementLabel": "Get AI Agent Plugin Status",
+        "eventMappings": [
+            {
+                "eventMappingId": "pPnkEvYzBUTKjjiigCqKeehhiimyPcc",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d52e85ffff653210dbdeffffffffff2e"
+                        },
+                        "clientTransformScript": "",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "ffDpcawBBCEVQjjvEBIDhhuqlgE",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "ujWAuvOhhCkFIeeddHEIccVTVbeehhIQ",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d52e85ffff653210dbdeffffffffff2e"
+                        },
+                        "clientTransformScript": "",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "OeeddjeeddpvPmBkHdjjYQMuiiiPHeeddrhh",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "pluginId": {
+                "type": "JSON_LITERAL",
+                "value": "sn_aia"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "037cf624ffe032107a98ffffffffff09",
+            "type": "GRAPHQL"
+        },
+        "elementId": "create_new_playbook_project",
+        "elementLabel": "Create playbook project",
+        "eventMappings": [
+            {
+                "eventMappingId": "OeehhhAeehhgghhDkkAeeddMQOrTTeeeWsii",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "5059217cff6432107a98ffffffffff43"
+                        },
+                        "clientTransformScript": "",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "ViiPaNPXvBaaabbeeddOUFxltZsKny",
+                        "type": "CLIENT_SCRIPT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "a97582ac43943110327bbf5ff7b8f233"
+                        },
+                        "clientTransformScript": "",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "aaEvPafMTCkoojjTAKsZffffKZSU",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            },
+            {
+                "eventMappingId": "eehhYaasvPZDaahBjjxoORggzReeaaggb",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_OP_FAILED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_OP_FAILED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "5059217cff6432107a98ffffffffff43"
+                        },
+                        "clientTransformScript": "",
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "oFeeddViPuaaBUncjjoYOtRcffyffXeehh",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "autoRetire": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "description": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "filterCondition": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "playbookId": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "projectName": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "restricted": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "snapshotId": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    }
+]

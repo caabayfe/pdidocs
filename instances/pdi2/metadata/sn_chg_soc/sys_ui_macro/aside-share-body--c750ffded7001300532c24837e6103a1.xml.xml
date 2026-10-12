@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<div trap-tab-focus="" id="shareOptionsSideContent" ng-init="shareCtrl.getPermissions()" class="sidebar-panel soc-sharing-add-content-main sn-soc-sharing-option-side-content" aria-label="{{::shareCtrl.messages['Share']}}" tabindex="-1" role="complementary">
+	<div class="sn-aside-header">
+		<button ng-show="shareCtrl.view.views.inviteUsers || shareCtrl.view.views.profile"
+			class="sn-aside-btn icon-chevron-left btn btn-icon"
+			aria-label="{{::shareCtrl.messages['Back to sharing panel permissions list view']}}"
+			ng-click="shareCtrl.goBack()"/>
+		<span id="asideAriaTitle" ng-if="shareCtrl.view.views.listPermissions" role="heading" aria-label="{{::shareCtrl.messages['Share']}}">{{::shareCtrl.messages['Share']}}</span>
+		<span id="asideAriaTitle" ng-if="shareCtrl.view.views.inviteUsers" role="heading" aria-label="{{::shareCtrl.messages['Invite']}}">{{::shareCtrl.messages['Invite']}}</span>
+		<span id="asideAriaTitle" ng-if="shareCtrl.view.views.profile" role="heading" aria-label="{{::shareCtrl.messages['Profile']}}">{{::shareCtrl.messages['Profile']}}</span>
+		<div focus-here="" class="sn-aside-btn icon-cross" ng-click="shareCtrl.closeView()" aria-label="{{::shareCtrl.messages['Close panel']}}" />
+	</div>
+	<div class="sn-aside-body">
+		<div class="soc-share-container" ng-cloak="true" ng-if="shareCtrl.view.views.listPermissions">
+			<div class="soc-expand-panel dashboard-permissions-view-container" ng-if="shareCtrl.view.listPermissionsTabs">
+				<!-- Invitation button -->
+				<div class="soc-add-access-button-container">
+					<div class="sn-widget sn-widget-button sn-widget-button_row">
+						<span class="sn-widget-list-content">
+							<div class="btn btn-default icon" role="button" tabindex="0" ng-click="shareCtrl.showSharingView('inviteUsers')">
+								<span class="icon-add-circle-empty" />
+								<span>
+									{{::shareCtrl.messages['Add groups, users and roles']}}
+								</span>
+							</div>
+						</span>
+					</div>
+				</div>
+				<!-- Permissions Tabs -->
+				<div role="tablist" class="soc-sharing-nav-buttons">
+					<button title="{{::shareCtrl.messages['All']}}" ng-click="shareCtrl.view.selectedTab='all'" aria-label="{{::shareCtrl.messages['All']}}" aria-selected="{{shareCtrl.view.selectedTab === 'all' }}" role="tab" class="btn btn-icon side-bar-btn all" ng-class="{'state-active' : shareCtrl.view.selectedTab === 'all'}" data-panel="allPermissionsList">
+						{{::shareCtrl.messages['All']}}
+					</button>
+					<button title="{{::shareCtrl.messages['Groups']}}" ng-click="shareCtrl.view.selectedTab='groups'" aria-label="{{::shareCtrl.messages['Groups']}}" aria-selected="{{shareCtrl.view.selectedTab === 'groups' }}" role="tab" class="btn btn-icon side-bar-btn groups" ng-class="{'state-active' : shareCtrl.view.selectedTab === 'groups'}" data-panel="groupsPermissionsList">
+						{{::shareCtrl.messages['Groups']}}
+					</button>
+					<button title="{{::shareCtrl.messages['Users']}}" ng-click="shareCtrl.view.selectedTab='users'" aria-label="{{::shareCtrl.messages['Users']}}" aria-selected="{{shareCtrl.view.selectedTab === 'users' }}" role="tab" class="btn btn-icon side-bar-btn users" ng-class="{'state-active' : shareCtrl.view.selectedTab === 'users'}" data-panel="usersPermissionsList">
+						{{::shareCtrl.messages['Users']}}
+					</button>
+					<button title="{{::shareCtrl.messages['Roles']}}" ng-click="shareCtrl.view.selectedTab='roles'" aria-label="{{::shareCtrl.messages['Roles']}}" aria-selected="{{shareCtrl.view.selectedTab === 'roles' }}" role="tab" class="btn btn-icon side-bar-btn roles" ng-class="{'state-active' : shareCtrl.view.selectedTab === 'roles'}" data-panel="rolesPermissionsList">
+						{{::shareCtrl.messages['Roles']}}
+					</button>
+				</div>
+				<!-- Permissions lists content -->
+				<div class="soc-sharing-side-content-list">
+					<div id="allPermissionsList" class="state-default" ng-class="{'active' : shareCtrl.view.selectedTab === 'all'}">
+						<div ng-if="shareCtrl.permissions.all.length" class="sn-widget">
+							<ul role="list" class="sn-widget-list sn-widget-list_v2">
+								<li class="soc-permission-profile-container" ng-click="shareCtrl.showProfileView(identityDetails, $event)"
+									ng-repeat="(identity, identityDetails) in shareCtrl.permissions.all track by identityDetails.sys_id"
+									role="listitem" tabindex="0">
+									<div class="sn-widget-list-bg sn-widget-list-bg_disable">
+										<div class="soc-permission-profile sn-widget-list-wrapper">
+											<span aria-hidden="true" class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_padding">
+												<sn-avatar ng-if="identityDetails.avatar" primary="identityDetails"/>
+												<div ng-if="!identityDetails.avatar" class="sn-avatar-container">
+													<div class="avatar bottom">
+														<div class="sub-avatar soc-sharing-no-avatar">
+															{{identityDetails.initials}}
+														</div>
+													</div>
+												</div>
+											</span>
+											<div id="{{identityDetails.sys_id + '-All-Permissions'}}" class="sn-soc-profile-details">
+												<span class="sn-soc-profile-detail sn-soc-profile-name soc-truncate" uib-tooltip="{{::identityDetails.name}}" show-tooltip-on-text-overflow="" tooltip-class="soc-truncate-tooltip" tooltip-placement="auto" tooltip-enable="false" tooltip-append-to-body="true">{{::identityDetails.name}}</span>
+												<span class="sn-soc-profile-detail sn-soc-profile-email" ng-if="identityDetails.email">{{::identityDetails.email}}</span>
+											</div>
+											<div class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_actions">
+												<button data-toggle="tooltip"
+													class="btn btn-icon icon-delete sn-widget-list-action sn-tooltip-basic"
+												 	name="removePermissionButton"
+													ng-click="shareCtrl.removePermission(identityDetails, $event)"
+													data-original-title="{{::shareCtrl.messages['Remove']}}"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['Remove {0}'], identityDetails.name)}}"
+													data-container="body"/>
+												<button class="btn btn-icon icon-chevron-right sn-widget-list-action"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['View {0} profile'], identityDetails.name)}}"/>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						<div ng-show="!shareCtrl.permissions.all || shareCtrl.permissions.all.length === 0" class="soc-sharing-no-data">
+							<span>{{::shareCtrl.messages["This change schedule hasn't been shared with anyone"]}}</span>
+						</div>
+					</div>
+					<div id="groupsPermissionsList" class="state-default" ng-class="{'active' : shareCtrl.view.selectedTab === 'groups'}">
+						<div ng-if="shareCtrl.permissions.groups" class="sn-widget">
+							<ul role="list" class="sn-widget-list sn-widget-list_v2">
+								<li role="listitem" ng-click="shareCtrl.showProfileView(groupDetails, $event)" tabindex="0" ng-repeat="(groupId, groupDetails) in shareCtrl.permissions.groups">
+									<div class="sn-widget-list-bg sn-widget-list-bg_disable">
+										<div class="sn-widget-list-wrapper">
+											<span aria-hidden="true" class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_padding">
+												<div class="sn-avatar-container">
+													<div class="avatar bottom">
+														<div class="sub-avatar soc-sharing-no-avatar">
+															{{groupDetails.initials}}
+														</div>
+													</div>
+												</div>
+											</span>
+											<span id="{{groupDetails.sys_id + '-Groups-Permissions'}}" class="sn-widget-list-content">
+												<div class="sn-widget-list-title">{{groupDetails.name}}</div>
+											</span>
+											<div class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_actions">
+												<button data-toggle="tooltip"
+													class="btn btn-icon icon-delete sn-widget-list-action sn-tooltip-basic"
+													name="removePermissionButton"
+													ng-click="shareCtrl.removePermission(groupDetails, $event)"
+													data-original-title="{{::shareCtrl.messages['Remove']}}"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['Remove {0}'], groupDetails.name)}}"
+													data-container="body"/>
+												<button class="btn btn-icon icon-chevron-right sn-widget-list-action"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['View {0} profile'], groupDetails.name)}}"/>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						<div ng-if="!shareCtrl.permissions.groups || shareCtrl.permissions.groups.length === 0" class="soc-sharing-no-data">
+							{{::shareCtrl.messages["This change schedule hasn't been shared with any groups"]}}
+						</div>
+					</div>
+					<div id="usersPermissionsList" class="state-default" ng-class="{'active' : shareCtrl.view.selectedTab === 'users'}">
+						<div ng-if="shareCtrl.permissions.users" class="sn-widget">
+							<ul role="list" class="sn-widget-list sn-widget-list_v2">
+								<li role="listitem"
+									ng-click="shareCtrl.showProfileView(userDetails, $event)"
+									tabindex="0"
+									ng-repeat="(userId, userDetails) in shareCtrl.permissions.users track by userDetails.sys_id">
+									<div class="sn-widget-list-bg sn-widget-list-bg_disable">
+										<div class="sn-widget-list-wrapper">
+											<div aria-hidden="true" ng-if="!userDetails.avatar" class="sn-avatar-container sn-widget-list-content_padding">
+												<div class="avatar bottom">
+													<div class="sub-avatar soc-sharing-no-avatar">{{userDetails.initials}}</div>
+												</div>
+											</div>
+											<span aria-hidden="true" ng-if="userDetails.avatar"
+												class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_padding">
+												<sn-avatar primary="userDetails" />
+											</span>
+											<span id="{{userDetails.sys_id + '-Users-Permissions'}}" class="sn-widget-list-content">
+												<div class="sn-widget-list-title">{{userDetails.name}}</div>
+											</span>
+											<div class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_actions">
+												<button data-toggle="tooltip"
+													class="btn btn-icon icon-delete sn-widget-list-action sn-tooltip-basic"
+													name="removePermissionButton"
+													ng-click="shareCtrl.removePermission(userDetails,$event)"
+													data-original-title="{{::shareCtrl.messages['Remove']}}"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['Remove {0}'], userDetails.name)}}"
+													data-container="body"/>
+												<button class="btn btn-icon icon-chevron-right sn-widget-list-action"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['View {0} profile'], userDetails.name)}}"/>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						<div ng-if="!shareCtrl.permissions.users || shareCtrl.permissions.users.length === 0" class="soc-sharing-no-data">
+							{{::shareCtrl.messages["This change schedule hasn't been shared with any users"]}}
+						</div>
+					</div>
+					<div id="rolesPermissionsList" class="state-default" ng-class="{'active' : shareCtrl.view.selectedTab === 'roles'}">
+						<div ng-if="shareCtrl.permissions.roles.length" class="sn-widget">
+							<ul role="list" class="sn-widget-list sn-widget-list_v2">
+								<li role="listitem" tabindex="0" ng-click="shareCtrl.showProfileView(roleDetails, $event)" ng-repeat="(roleId, roleDetails) in shareCtrl.permissions.roles">
+									<div class="sn-widget-list-bg sn-widget-list-bg_disable">
+										<div class="sn-widget-list-wrapper">
+											<span aria-hidden="true" class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_padding">
+												<div class="sn-avatar-container">
+													<div class="avatar bottom">
+														<div class="sub-avatar soc-sharing-no-avatar">
+															{{roleDetails.initials}}
+														</div>
+													</div>
+												</div>
+											</span>
+											<span id="{{roleDetails.sys_id + '-Roles-Permissions'}}" class="sn-widget-list-content">
+												<div class="sn-widget-list-title">{{roleDetails.name}}</div>
+											</span>
+											<div class="sn-widget-list-content sn-widget-list-content_static sn-widget-list-content_actions">
+												<button data-toggle="tooltip"
+													class="btn btn-icon icon-delete sn-widget-list-action sn-tooltip-basic"
+													name="removePermissionButton"
+													ng-click="shareCtrl.removePermission(roleDetails, $event)"
+													data-original-title="{{::shareCtrl.messages['Remove']}}"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['Remove {0}'], roleDetails.name)}}"
+													data-container="body"/>
+												<button class="btn btn-icon icon-chevron-right sn-widget-list-action"
+													aria-label="{{shareCtrl.i18n.format(shareCtrl.messages['View {0} profile'], roleDetails.name)}}"/>
+											</div>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						<div ng-if="!shareCtrl.permissions.roles || shareCtrl.permissions.roles.length === 0" class="soc-sharing-no-data">
+							{{::shareCtrl.messages["This change schedule hasn't been shared with any roles"]}}
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Shared with everyone message -->
+			<div class="soc-expand-panel" ng-if="!shareCtrl.view.listPermissionsTabs">
+				<div class="soc-sharing-no-data">
+					{{::shareCtrl.messages['Shared with everyone']}}
+				</div>
+			</div>
+			<!-- Share with Checkbox -->
+			<div class="soc-fixed-panel">
+				<div class="soc-sharing-everyone form-group" >
+					<span class="input-group-checkbox">
+						<input ng-model="shareCtrl.permissions.everyone" class="checkbox" id="share-everyone-check" name="share-everyone-check" type="checkbox" ng-disabled="shareCtrl.view.checkboxDisabled" />
+						<label aria-label="{{::shareCtrl.messages['Share with everyone']}}" class="checkbox-label" for="share-everyone-check">
+							{{::shareCtrl.messages['Share with everyone']}}
+						</label>
+					</span>
+				</div>
+			</div>
+		</div>
+		<!--Invite users groups roles view. -->
+		<div ng-if="shareCtrl.view.views.inviteUsers" class="soc-share-container invite-users-view">
+			<div class="soc-expand-panel invite-users-input-cntnr">
+				<!-- Search for users groups roles. -->
+				<sn-create-new-invite pendingRecipients="shareCtrl.invitation.recipients"/>
+				<div class="sn-soc-suggestions" ng-if="shareCtrl.suggestions.query">
+					<ul role="list">
+						<li id="suggestion-{{::identityDetails.sys_id}}" class="sn-soc-suggestion" role="listitem" tabindex="0" ng-repeat="(identity, identityDetails) in shareCtrl.suggestions.current track by identityDetails.sys_id" ng-click="selectMember(identityDetails)" ng-keyup="keyUp($event, $index, identityDetails, shareCtrl.suggestions.current)">
+							<div class="sn-soc-profile">
+								<div class="sn-soc-profile-avatar">
+									<sn-avatar ng-if="identityDetails.avatar" primary="identityDetails"/>
+									<div ng-if="!identityDetails.avatar" class="sn-avatar-container">
+										<div class="avatar bottom">
+											<div class="sub-avatar soc-sharing-no-avatar">
+												{{::identityDetails.initials}}
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="sn-soc-profile-details">
+									<span class="sn-soc-profile-detail sn-soc-profile-name soc-truncate" uib-tooltip="{{::identityDetails.name}}" show-tooltip-on-text-overflow="" tooltip-class="soc-truncate-tooltip" tooltip-placement="auto" tooltip-enable="false" tooltip-append-to-body="true">{{::identityDetails.name}}</span>
+									<span class="sn-soc-profile-detail sn-soc-profile-email" ng-if="identityDetails.email">{{::identityDetails.email}}</span>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
+				<div class="email-container" ng-if="!shareCtrl.suggestions.query">
+					<div class="email-invitation form-group" >
+						<span class="input-group-checkbox">
+							<input ng-model="shareCtrl.invitation.sendEmail" class="checkbox" id="email-invitation-check" name="email-invitation-check" type="checkbox" />
+							<label aria-label="{{::shareCtrl.messages['Send an e-mail invitation']}}" class="checkbox-label" for="email-invitation-check">
+								{{::shareCtrl.messages['Send an e-mail invitation']}}
+							</label>
+						</span>
+					</div>
+					<div class="invite-message-container">
+						<div class="invite-message-header" ng-show="shareCtrl.invitation.sendEmail">
+							<span class="sn-aside-group-title"> {{::shareCtrl.messages['MESSAGE']}} </span>
+						</div>
+						<!-- Editable div instead of textarea allow for natural growth of the box as text is entered. -->
+						<div ng-show="shareCtrl.invitation.sendEmail" class="invite-message default-focus-outline" contenteditable="true" contenteditable-escape-html="true" ng-model="shareCtrl.invitation.inviteMessage"/>
+					</div>
+				</div>
+			</div>
+			<!-- Add invitation information view. Allow to enter sharing information.-->
+			<div class="soc-fixed-panel">
+				<div class="soc-sharing-invitation-info-item">
+					<button title="{{::shareCtrl.messages['Cancel']}}" type="button" class="btn btn-default" ng-click="shareCtrl.goBack();">
+						{{::shareCtrl.messages['Cancel']}}
+					</button>
+					<button title="{{::shareCtrl.messages['Share']}}" ng-disabled="shareCtrl.invitation.recipients.length === 0" type="button" class="btn btn-primary" ng-click="shareCtrl.invite();">
+						{{::shareCtrl.messages['Share']}}
+					</button>
+				</div>
+			</div>
+		</div>
+		<!-- User Info panel -->
+		<div ng-if="shareCtrl.view.views.profile">
+			<div class="sn-widget sn-widget-profile">
+				<div aria-hidden="true" class="sn-widget-profile-avatar">
+					<div class="avatar-large no-click avatar-container sn-canvas-avatar-large"
+						 ng-if="!shareCtrl.view.selectedProfile.avatar">
+						<div class="avatar soloAvatar bottom">
+							<div class="sub-avatar sn-avatar-light-background">
+								<div ng-bind="shareCtrl.view.selectedProfile.initials" class="sn-canvas-avatar-initials"/>
+							</div>
+						</div>
+					</div>
+					<sn-avatar class="avatar-large no-click avatar-container sn-canvas-avatar-large" ng-if="shareCtrl.view.selectedProfile.avatar" primary="shareCtrl.view.selectedProfile" show-presence="true"/>
+				</div>
+				<div class="soc-widget-profile" tabindex="0">
+					<span class="sn-widget-profile-name soc-truncate" uib-tooltip="{{shareCtrl.view.selectedProfile.name}}" show-tooltip-on-text-overflow="" tooltip-class="soc-truncate-tooltip" tooltip-placement="auto" tooltip-enable="false" tooltip-append-to-body="true">{{shareCtrl.view.selectedProfile.name}}</span>
+					<div class="sn-widget-profile-type">{{shareCtrl.view.selectedProfile.typeLabel}}</div>
+				</div>
+			</div>
+			<div class="soc-fixed-panel">
+				<div class="sn-aside-group-title">
+					<span>{{::shareCtrl.messages['Access']}}</span>
+				</div>
+				<div class="sn-canvas-user-info-action-section" >
+					<button type="button" class="btn btn-default sn-canvas-user-info-remove-button" ng-click="shareCtrl.removePermission(shareCtrl.view.selectedProfile, $event)" title="{{::shareCtrl.messages['Remove access']}}" ng-if="shareCtrl.view.showRemoveButton">
+						{{::shareCtrl.messages['Remove access']}}
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

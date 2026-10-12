@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:inline template="oauth_banner.xml" />
+	<style type="text/css">
+		.alignleft {
+			float: left;
+		}
+		.alignright {
+			float: right;
+		}
+		#page_timing_div {
+			display: none !important;
+		}
+	</style>
+	<g2:evaluate var="jvar_instance_name" jelly="true">
+		var instance_name = gs.getProperty('instance_name');
+		var is_plugin_installed = GlidePluginManager.isActive('com.snc.customurl');
+		if (gs.getProperty('glide.customurl.enabled') === 'true' &amp;&amp; is_plugin_installed) {
+			var name = SNC.InstanceURLUtil.getHostFromRequestURL();
+			if(name &amp;&amp; GlideStringUtil.notNil(name))
+				instance_name = name;
+		}
+		instance_name;
+    </g2:evaluate>
+	<g2:evaluate var="jvar_data_model" object="true" jelly="true">
+	    var dataModel = SNC.OAuthEntityBuilder.getEntityInfo(jelly.sysparm_oauthapp_id);
+		var itr = dataModel.keySet().iterator();
+		while(itr.hasNext()) {
+			var name = itr.next();
+			if (name == 'scopes_json')
+				continue;
+
+			var htmlEscaped = GlideStringUtil.escapeHTML(dataModel.get(name));
+			dataModel.put(name, htmlEscaped);
+		}
+
+		var scopes = [];
+		try {
+			scopes = JSON.parse(dataModel.get('scopes_json') || '[]');
+			for (var i = 0; i != scopes.length; i++) {
+				var scope = scopes[i];
+				if (scope.name) {
+					scope.name = GlideStringUtil.escapeHTML(scope.name);
+				}
+				if (scope.description) {
+					scope.description = GlideStringUtil.escapeHTML(scope.description);
+				}
+			}
+		} catch (e) {
+			gs.error('Error decoding scopes JSON: ' + e.message);
+		}
+		dataModel.put('scopes', scopes);
+
+		dataModel.put('msg_allow',gs.getMessage('By clicking Allow, you allow {0} to connect to your ServiceNow account on instance {1} and allow it to interact with records as you.', [dataModel.get("name"), jelly.jvar_instance_name]) );
+		dataModel.put('msg_deny', gs.getMessage('You have denied {0} to access to your ServiceNow account on instance {1}',[dataModel.get("name"), jelly.jvar_instance_name]) );
+		dataModel;
+	</g2:evaluate>
+    <g2:evaluate var="jvar_valid_request"  jelly="true">
+		jvar_valid_request = GlideStringUtil.notNil(jelly.jvar_data_model.get('name'));
+	    jvar_valid_request;
+    </g2:evaluate>
+
+    <j2:set var="jvar_sysparm_state" value="${RP.getParameterValue('sysparm_state')}" />
+
+    <j2:if test="$[jvar_valid_request == false]" >
+		${gs.getMessage('Bad request.')}
+    </j2:if>
+    <j2:if test="$[jvar_valid_request == true]" >
+		<form action="oauth_auth.do" method="POST" id="oauth_authorizeform">
+			<div id="divImage" style="align:center;width:100%;padding-right:15%;padding-left:15%;padding-top:1%;padding-bottom:1%">
+				<img src="$[jvar_data_model.get('logo_url')]" alt="app logo" height="40%" width="40%" style="display:block;margin: 0 auto;max-height:100px;"/>
+			</div>
+			<j2:if test="$[jvar_sysparm_state != 'denied']" >
+			<div id="divDescr" style="font-family:verdana;font-size:20px;padding-right:15%;padding-left:15%;padding-top:4%;padding-bottom:4%">
+				<b>$[jvar_data_model.get("name")]</b>$[SP]${gs.getMessage('would like to connect to your ServiceNow account on instance')}$[SP]$[jvar_instance_name].
+			</div>
+			</j2:if>
+			<div id="divInstr" style="width:100%;font-family:verdana;font-size:10px;padding-right:15%;padding-left:15%;padding-top:3%;padding-bottom:2%">
+				<j2:if test="$[jvar_sysparm_state != 'denied']" >
+					$[jvar_data_model.get('msg_allow')]
+				</j2:if>
+				<j2:if test="$[jvar_sysparm_state == 'denied']" >
+					$[jvar_data_model.get('msg_deny')]
+				</j2:if>
+				<br/>
+                   ${gs.getMessage('You can change this and other')}$[SP]<a href="/nav_to.do?uri=oauth_credential_list.do?sysparm_query=type=access_token^user=javascript:gs.user_id()^peer.type=client" target="_blank">${gs.getMessage('account permissions')}</a>$[SP]${gs.getMessage('at any time')}.
+			</div>
+			<j2:if test="$[jvar_data_model.get('scopes').length != 0]">
+				<div id="permissionsList" style="font-family:verdana;font-size:10px;padding-right:15%;padding-left:15%;padding-top:0%;padding-bottom:1%">
+					${gs.getMessage('The following permissions will be granted:')}
+				</div>
+				<div id="scopesTable" style="font-family:verdana;font-size:10px;padding-right:15%;padding-left:15%;padding-top:0%;padding-bottom:0%;max-height:300px;overflow-y:auto;overflow-x:hidden;">
+					<table class="table table-striped table-bordered">
+						<thead>
+							<tr>
+								<th>${gs.getMessage('Name')}</th>
+								<th>${gs.getMessage('Description')}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<j2:forEach items="$[jvar_data_model.get('scopes')]" var="jvar_scope">
+								<tr>
+									<td>$[jvar_scope.name]</td>
+									<td>$[jvar_scope.description]</td>
+								</tr>
+							</j2:forEach>
+						</tbody>
+					</table>
+				</div>
+			</j2:if>
+			<div id="divFooter" style="float:right;width:100%;padding-right:15%;padding-left:15%;padding-bottom:4%;padding-top:3%">
+				<footer class="modal-footer">
+					<j2:if test="$[jvar_sysparm_state != 'denied']" >
+						<button class="btn btn-default" name="oauth_auth_check_action" value="deny">${gs.getMessage('Deny')}</button>$[SP]
+						<button class="btn btn-primary" name="oauth_auth_check_action" value="authorize">${gs.getMessage('Allow')}</button>
+					</j2:if>
+					<j2:if test="$[jvar_sysparm_state == 'denied']" >
+						<button class="btn btn-primary" name="oauth_auth_check_action" value="close" onclick="closeSelf(); return false;" id="id_oauth_close">${gs.getMessage('Close')}</button>
+					</j2:if>
+				</footer>
+			</div>
+		</form>
+   </j2:if>
+</j:jelly>

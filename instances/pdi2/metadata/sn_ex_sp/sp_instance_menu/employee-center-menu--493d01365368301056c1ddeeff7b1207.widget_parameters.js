@@ -1,0 +1,35 @@
+{
+	"enable_cart":{
+		"displayValue":"false",
+		"value":false
+	},
+	"auto_update_cart":{
+		"displayValue":"true",
+		"value":true
+	},
+	"exclude_search_on_homepage":{
+		"displayValue":"true",
+		"value":true
+	},
+	"enable_wishlist":{
+		"displayValue":"false",
+		"value":false
+	},
+	"enable_requests":{
+		"displayValue":"true",
+		"value":true
+	},
+	"enable_tasks":{
+		"displayValue":"true",
+		"value":true
+	},
+    "enable_assets":{
+        "displayValue":"false",
+        "value":false
+  	},
+    "enable_more_items":{
+      	"displayValue":"true",
+      	"value":true,
+        "sysId":"01ef85b65368301056c1ddeeff7b12ce"
+    }
+}

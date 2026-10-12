@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate jelly="true" var="jvar_attachmentUrl">
+			var attachmenturl = "";
+			var attachmentGr = new GlideRecord("sys_attachment");
+			attachmentGr.addQuery("file_name", "logo");
+			attachmentGr.addQuery("table_sys_id", jelly.sysparm_sys_id);
+			attachmentGr.query();
+			if(attachmentGr.next())
+				attachmenturl = attachmentGr.getValue("sys_id")+".iix";
+		   attachmenturl;
+	</g2:evaluate>
+	<g2:evaluate jelly="true">
+			var storeAppGr = new GlideRecord("sys_store_app");
+			storeAppGr.get(jelly.sysparm_sys_id);
+			storeAppGr;
+	</g2:evaluate>
+	<g2:evaluate jelly="true" var="jvar_customizationVersion">
+		var customizationVersion = "";
+		var repoConfigGr = new GlideRecord("sys_repo_config");
+		repoConfigGr.addQuery("sys_app", jelly.sysparm_sys_id);
+		repoConfigGr.query();
+		if (!repoConfigGr.next()) {
+			var appCustomizationGR = new GlideRecord("sys_app_customization");
+		    appCustomizationGR.addQuery("vendor_app", jelly.sysparm_sys_id);
+		    appCustomizationGR.query();
+		    if (appCustomizationGR.next())
+		        if (appCustomizationGR.getValue("version") != "none")
+			        customizationVersion = appCustomizationGR.getValue("version");
+		}
+
+		customizationVersion;
+	</g2:evaluate>
+	<j2:if test="$[jvar_attachmentUrl != '']">
+		<div class="row">
+			<div class="col-md-1 padding-lr-5">
+				<img src='$[jvar_attachmentUrl]'
+					alt="${gs.getMessage('Application')} {{app.name}}  ${gs.getMessage('logo')}"
+					class="logo-div padding-5" />
+			</div>
+			<div class=" col-md-11 padding-r-0">
+				<h5 class="header-font">${sysparm_app_name}</h5>
+				<p>${sysparm_app_description}</p>
+			</div>
+		</div>
+	</j2:if>
+	<j2:if test="$[jvar_attachmentUrl == '']">
+		<div class="row">
+			<div class=" col-md-12 padding-r-0">
+				<h5 class="header-font">${sysparm_app_name}</h5>
+				<p>${sysparm_app_description}</p>
+			</div>
+		</div>
+	</j2:if>
+	<input type="hidden" id="app_sys_id" name="app_sys_id" value="$[storeAppGr.sys_id.toString()]" />
+	<input type="hidden" id="contains_plugins" name="contains_plugins" value="$[storeAppGr.contains_plugins.toString()]" />
+	<input type="hidden" id="version" name="version" value="$[storeAppGr.version.toString()]" />
+	<input type="hidden" id="customization_version" name="customization_version" value="$[jvar_customizationVersion]" />
+	<input type="hidden" id="app_name" name="app_name" value="$[storeAppGr.name.toString()]" />
+	<input type="hidden" id="app_scope" name="app_scope" value="$[storeAppGr.scope.toString()]" />
+	<j2:if test="$[storeAppGr.demo_data.toString() != 'no_demo_data']">
+		<div class="row">
+			<div class=" col-md-12 padding-r-0 mt-10">
+				<div class="input-group-checkbox">
+					<input type="checkbox" class="checkbox" tabindex="0" id="load_demo"
+						name="load_demo" role="checkbox" aria-checked="false"/>
+					<label for="load_demo" id="label_load_demo" class="checkbox-label font-size-12"
+						dir="ltr">
+						${gs.getMessage('Load demo data')}
+					</label>
+				</div>
+			</div>
+		</div>
+	</j2:if>
+
+		<div class="row">
+			<div class="col-md-12">
+				<h5 class="header-font">${gs.getMessage("Are you sure you want to repair this application")}?
+				</h5>
+			</div>
+		</div>
+		<div class="row mt-10">
+			<div class="col-md-12 text-right">
+				<button class="btn btn-default" onClick="onCancel()">${gs.getMessage('Cancel')}
+				</button>
+				<button class="btn btn-primary ml-5" onClick="onRepair()">${gs.getMessage('Repair')}</button>
+			</div>
+		</div>
+</j:jelly>

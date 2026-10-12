@@ -1,0 +1,104 @@
+<div ng-if="!(options.showAll && options.showAll != 'false' && data.instances.length && data.totalRecords == data.maxRecords && data.totalRecords != 0)">
+	<div class="panel panel-{{::options.color}} b">
+		<div class="panel-heading">
+			<h2 class="panel-title"><fa ng-if="::options.glyph.length" name="{{::options.glyph}}" class="m-r-sm"></fa>{{::data.widgetTitle}}</h2>
+		</div>
+			<div class="list-group" ng-if="data.instances.length && data.totalRecords > 0">
+				<div class="list-group-item" ng-repeat="instance in data.instances track by $index">
+					<div>
+						<a href="?id=take_survey&instance_id={{::instance.sys_id}}" title = "Take {{::instance.evaluation_method_display}}">
+                          <span  class = "survey-icon icon-article-document"
+                                  ng-if="(instance.evaluation_method == 'assessment' || instance.evaluation_method == 'attestation_v2' || instance.evaluation_method == 'risk_assessment')"></span>
+                            <span ng-if="(instance.evaluation_method == 'survey' || instance.evaluation_method == 'quiz')" class="survey-icon icon-form"></span>
+                          <span class="instance-display-text" data-toggle="tooltip" data-container="body" title="{{::instance.display}}">{{::instance.display}}</span>
+                      </a>
+					</div>
+					<div>
+						<small ng-if="instance.trigger_id">
+							<a style="color:inherit;text-decoration:underline" href="?id=ticket&table={{::instance.trigger_table}}&sys_id={{::instance.trigger_id}}">{{::instance.trigger_display}}</a>
+							<span> • </span>
+						</small>
+						<small>
+							<span aria-hidden="true" class="ng-binding">{{::instance.due_display}}</span>
+							<span class="sr-only">{{instance.due_display_message}}</span>
+						</small>
+					</div>
+
+				</div>
+			</div>
+			<div ng-if="data.totalRecords ==0" class="panel-body ng-scope">
+				${No assessments or surveys for you at the moment}
+			</div>
+			<div class="panel-footer" ng-if="data.totalRecords > data.maxRecords">
+				<h4 class="panel-title row">
+					<div class="col-xs-6">
+						<span>{{::data.recordsShownMsg}}</span>
+					</div>
+					<div class="col-xs-6 text-right">
+						<a href="?id=my_surveys&title={{::data.encodedWidgetTitle}}">${View all}</a>
+					</div>
+			 	</h4>
+			</div>
+	</div>
+</div>
+
+<div ng-if="options.showAll && options.showAll != 'false' && data.instances.length && data.totalRecords == data.maxRecords && data.totalRecords != 0">
+  <div class = "survey-panel-spacer"/>
+  <h2>{{::data.widgetTitle}}</h2>
+  <div class="row">
+    <div class="col-sm-6 col-md-4 wrapper-xs" ng-repeat="instance in data.instances track by $index">
+      <div class="panel panel-default wrapper-sm">
+
+        <div class="row">
+          <div class="col-xs-12 survey-title" style="height:34px;padding-top:4px;">
+            <a href="?id=take_survey&instance_id={{::instance.sys_id}}" class="text-overflow-ellipsis block tool-tip-title" data-toggle="tooltip" data-container="body" title="{{::instance.display}}" data-placement="top">
+                          <span  class = "survey-icon icon-article-document"
+                                  ng-if="(instance.evaluation_method == 'assessment' || instance.evaluation_method == 'attestation_v2' || instance.evaluation_method == 'risk_assessment')"></span>
+                            <span ng-if="(instance.evaluation_method == 'survey' || instance.evaluation_method == 'quiz')" class="survey-icon icon-form"></span>
+                          <span class="instance-display-text">{{::instance.display}}</span>
+          </a>    
+          </div>
+          <div class="col-xs-12 text-overflow-ellipsis tool-tip-title" ng-if="instance.trigger_description" style="height:34px;" data-toggle="tooltip" data-container="body" title="{{::instance.trigger_description}}" data-placement="top">
+            {{::instance.trigger_description}}
+          </div>
+          <div class="col-xs-12 text-overflow-ellipsis tool-tip-title" ng-if="!instance.trigger_description" style="height:34px;" data-toggle="tooltip" data-container="body" title="{{::instance.description}}" data-placement="top">
+            {{::instance.description}}
+          </div>
+        </div>
+
+        <div class="card-bottom" style="font-size:12px;">
+
+          <div class="row">
+            <div class="col-xs-8 container-height">
+							<span ng-if="instance.can_retake">${Completed. Do you want to retake?}</span>
+            </div>
+            <div class="col-xs-4 text-right container-height">
+              <a  ng-if="instance.trigger_table_display" href="?id=ticket&table={{::instance.trigger_table}}&sys_id={{::instance.trigger_id}}" class="col-xs-12.5 text-overflow-ellipsis" data-toggle="tooltip" data-container="body" title="{{::instance.trigger_display}}" data-placement="top">
+               {{::instance.trigger_display}}
+              </a>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xs-8">
+              <div class="progress-bar" ng-if="instance.portal_progress > '0'">
+                <div class="progress-bar-inner" ng-style="{width: instance.portal_progress + '%'}"></div>
+              </div>
+            </div>
+            <div class="col-xs-4 text-right">
+              <div class="due-date">
+			   <span aria-hidden="true" class="ng-binding">{{::instance.due_display}}</span>
+			   <span class="sr-only">{{instance.due_display_message}}</span>
+              </div>
+            </div>
+            <div class="col-xs-12 container-height">
+            	<span ng-if="instance.portal_progress > '0'">{{instance.progress_text}}</span>
+            </div>
+          </div>
+
+        </div> <!-- end div.card-bottom -->
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,108 @@
+<div ng-if="!data.is_logged_in" class="sp-login-widget" ng-class="::(c.options.use_advanced == 'true' ? 'advanced' : '')">
+  <form ng-if="!c.externalLoginMode" class="form-signin" ng-submit="c.login(c.username, c.password)" method="post">
+		<div ng-class="::{'panel panel-default': c.options.show_panel}">
+			<div ng-if="::c.options.show_panel" class="panel-heading padder-v">	      
+				<h3 class="panel-title">${Login}</h3>
+			</div>
+			<div ng-class="::{'panel-body': c.options.show_panel}">
+				<div ng-if="(!c.data.portal_authentication_mode || (c.data.portal_authentication_mode && c.data.use_local_login))" class="list-group list-group-sm">
+					<div class="list-group-item">
+            <label for="username" class="label-advanced">{{::data.usernameMsg}}</label>
+            <input id="username" name="username" autocapitalize="off" ng-keypress="c.message = ''" ng-click="c.message = ''" class="form-control input-advanced input-group-advanced" type="text" autofocus="true" ng-model="c.username" autocomplete="off"/>
+					</div>
+					<div class="list-group-item">
+            <label for="password" class="label-advanced">{{::data.passwordMsg}}</label>
+                <p id="btnDescription" class="sr-only" aria-live="polite">"${Password hidden}</p>
+            <div class="input-group password-group input-group-advanced">
+					<input id="password" name="password" ng-keypress="c.message = ''" ng-click="c.message = ''" class="form-control input-advanced" type="password" ng-model="c.password" autocomplete="off"/>
+					<span class="input-advanced" >
+              				<button
+						id="mask_icon"
+						type="button"
+						class="btn btn-default icon-preview input-group-append mask_btn sn-tooltip-basic"
+						ng-Click="c.renderMaskIcon()"
+						aria-label="${Show Password}"
+						data-toggle="tooltip"
+						data-container="body"
+						data-original-title="${Show password}"></button>
+    				</span>
+    			</div>
+					</div>
+				</div>
+
+				<div ng-if="c.message" class="alert alert-danger login-alert" role="alert">{{c.message}}</div>
+				<div ng-if="c.success" class="alert alert-success login-alert" role="alert">{{c.success}}</div>
+
+				<div ng-if="::!c.data.forgetMe" class="checkbox">
+           <label ng-if="(!c.data.portal_authentication_mode || (c.data.portal_authentication_mode && c.data.use_local_login))">
+            <input name="c.remember_me" ng-model="c.remember_me" checked="checked" id="remember_me" type="checkbox" class="checkbox" value="true"/> ${Remember me}
+					</label>
+				</div>
+        <!--STRY50033370: Forgot Password link in the login widget-->
+        <div ng-if="(!c.data.portal_authentication_mode || (c.data.portal_authentication_mode && c.data.use_local_login))" class="forgot-pwd-div m-b">
+          <div class="row">
+            <div ng-if="::(c.data.forgotPwdLinkProp == 'true')" class="forgot-text" ng-class="::(c.options.use_advanced == 'true' ? 'col-xs-8' : 'col-xs-12')">
+              <a class="forgot-pwd-link" ng-href="{{::c.data.pswdResetUrl}}">${Forgot Password ?}</a>
+            </div>
+            <div ng-class="::(c.options.use_advanced == 'true' && c.data.forgotPwdLinkProp =='true' ? 'col-xs-4' : 'col-xs-12')">
+              <button name="login" type="submit" class="btn btn-lg btn-primary btn-block login-button-old">
+                ${Login}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="row set-login-type-link m-t" ng-if="::data.multisso_enabled">
+          <div class="col-xs-12 text-center">
+            <a href="javascript:void(0)"
+               ng-click="c.setExternalLogin(true)">${Use external login}</a>
+          </div>
+        </div>
+        <div ng-class="col-xs-12" ng-if="data.cert_based_auth || data.isShowLoginWithIdps">
+              </div>
+        <div ng-class="col-xs-12" ng-if="::c.data.cert_based_auth" class="loginWithBtn">
+           <button name="login" type="button" class="cert btn btn-lg btn-default" ng-click="c.login(null, null, true)"><img alt="" ng-src="certLoginLogo.svg"/>${Login with PIV/CAC card}</button>
+        </div>
+        <div ng-repeat="a in ::c.data.ssoRecords">
+           <div ng-class="col-xs-12" class="loginWithBtn">                 
+              <a name="login" class="idp btn btn-lg btn-default" href="javascript:void(0)" ng-click="c.oidcLogin(a.sysId)">
+              <img ng-if="::a.isLogoUrlValid" alt="" ng-src="{{::a.logoUrl}}"/>${Log in with} {{::a.name}}
+              </a>
+           </div>
+        </div>
+			</div>
+		</div>
+	</form>
+	<form ng-if="c.externalLoginMode" class="form-signin" ng-submit="c.externalLogin()" method="post">
+		<div ng-class="::{'panel panel-default': c.options.show_panel}">
+			<div ng-if="::c.options.show_panel" class="panel-heading">
+				<h3 class="panel-title">${External Login}</h3>
+			</div>
+
+			<div ng-class="::{'panel-body': c.options.show_panel}">
+				<div class="list-group list-group-sm">
+					<div class="list-group-item">
+            <label for="username" class="label-advanced">{{::data.ssoSelectorFieldLabel}}</label>
+            <input id="username" name="username" ng-click="message = ''" class="form-control input-advanced" type="text" autofocus="true" ng-model="c.username"/>
+					</div>
+				</div>
+
+        <div class="submit-btn row">
+          <div class="col-xs-12">
+            <button name="login" type="submit" class="btn btn-lg btn-primary btn-block">
+              ${Submit}
+            </button>
+          </div>
+        </div>
+        <div class="set-login-type-link row m-t">
+          <div class="col-xs-12 text-center">
+            <a href="javascript:void(0)"
+               ng-click="c.setExternalLogin(false)">${Use internal login}</a>    
+          </div>
+        </div>
+      </div>
+		</div>
+	</form>
+  <div class="sp-self-registration forgot-pwd-link" ng-if="::c.data.self_registration_record_producer">${Don't have an account?}
+    <a ng-href="/{{::c.data.url_suffix}}?id=sn_user_registration&sys_id={{::c.data.self_registration_record_producer}}">{{::c.data.self_registration_label}}</a>
+  </div>
+</div>

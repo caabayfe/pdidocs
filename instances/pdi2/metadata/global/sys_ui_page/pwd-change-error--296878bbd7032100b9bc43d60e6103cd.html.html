@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="sysparm_request_id">gs.getSession().getProperty('sysparm_request_id');</g:evaluate>
+  
+<!-- ACTUAL PAGE STARTS HERE -->
+
+<g:if_polaris>
+	<g:then>
+		<g:inline template="polarisberg_output.xml"/>
+	</g:then>
+	<g:else>
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true"/>
+	</g:else>
+</g:if_polaris>
+<g:macro_invoke macro="$pwd_reset_stylesheet"/>
+<g:requires name="scripts/lib/jquery_includes.js" includes="true"/>
+
+<center role="alert">
+  <div class="pwd-notification-box" style="text-align:center">
+    <i class="icon-error pwd-icon pwd-icon-error"/>
+    <h1 class="pwd-title">${gs.getMessage("Change Password Error")}</h1>
+    <g:set_if var="jvar_error_exp" test="${empty(sysparm_error)}" true="${gs.getSession().getProperty('sysparm_error')}" false=""/>
+    <g:set_if var="jvar_error" test="${empty(sysparm_error)}" true="${gs.getSession().getProperty('sysparm_error')}" false="${sysparm_error}"/>
+
+    <j:if test="${empty(jvar_error)}">
+      <h2 class="pwd-subtitle">${gs.getMessage('{0}, contact service desk for assistance.', 'General error');}</h2>
+    </j:if>
+
+    <g:evaluate var="jvar_request_id">
+       var requestId = gs.getSession().getProperty('sysparm_request_id');
+       requestId;
+    </g:evaluate>
+
+    <j:if test="${!empty(jvar_error)}">
+      <j:choose>
+        <j:when test="${jvar_error == 'TIMEOUT'}">
+          <h2 class="pwd-subtitle">${gs.getMessage('{0}, contact service desk for assistance.', 'Change password timed out');}</h2>
+        </j:when>
+
+        <j:when test="${jvar_error == 'block'}">
+          <h2 class="pwd-subtitle"></h2>
+          <div class="pwd-content">
+            <b>${gs.getMessage('We are unable to change your password at this time due to one of the following reasons:')}</b><br/>
+            <i class="icon-circle-solid"></i>${gs.getMessage('You have exceeded the limit on change password attempts.')}<br/>
+            <i class="icon-circle-solid"></i>${gs.getMessage('You have recently changed your password successfully.')}<br/>
+            <br/>
+            ${gs.getMessage('Try again later, or for immediate assistance, call the service desk.')}
+          </div>
+        </j:when>
+
+        <j:when test="${jvar_error == 'incorrect old password'}">
+          <h2 class="pwd-subtitle">${gs.getMessage('The specified old password is not correct. Try again.')}</h2>
+        </j:when>
+		  
+		<j:when test="${jvar_error == 'pwd history check failed'}">
+			<g:evaluate var="jvar_pwd_history_limit_msg" jelly="true">
+				var msg = gs.getMessage('You used that password recently. Choose a different password');
+				msg;
+			</g:evaluate>
+			
+          <h2 class="pwd-subtitle">${HTML:jvar_pwd_history_limit_msg}</h2>
+        </j:when>
+
+        <j:when test="${jvar_error == 'non fatal failure'}">
+          <div class="pwd-content">
+            <b>${gs.getMessage('We are unable to change your password at this time due to one of the following reasons:')}</b><br/>
+            <i class="icon-circle-solid"></i>${gs.getMessage('The password does not meet the password policy requirements. Check the minimum password length, password complexity and password history requirements.')}<br/>
+            <br/>
+            ${gs.getMessage('Try again later, or for immediate assistance, call the service desk.')}
+          </div>
+        </j:when>
+
+        <j:when test="${jvar_error == 'no_process'}">
+          <h2 class="pwd-subtitle">${gs.getMessage('{0}, contact service desk for assistance.', 'Change password is not configured in your environment')}</h2>
+        </j:when>
+
+        <j:when test="${jvar_error == 'process_does_not_exist'}">
+          <h2 class="pwd-subtitle">${gs.getMessage('{0}, contact service desk for assistance.', 'This page does not exist')}</h2>
+        </j:when>
+
+        <j:when test="${jvar_error == 'process_not_active'}">
+          <h2 class="pwd-subtitle">${gs.getMessage('{0}, contact service desk for assistance.', 'The process is not active')}</h2>
+        </j:when>
+
+        <j:otherwise>
+          <h2 class="pwd-subtitle">${jvar_error}</h2>
+        </j:otherwise>
+      </j:choose>
+    </j:if>
+
+    <div class="pwd-additional-info">
+      <g:evaluate var="jvar_request_number" jelly="true">
+        var ret = "";
+        var gr = new GlideRecord("pwd_reset_request");
+        if (gr.get(jelly.jvar_request_id)) {
+          ret = gr.number;
+        }
+        ret;
+      </g:evaluate>
+
+      <j:if test="${!empty(jvar_request_number)}">
+        ${gs.getMessage("Reset request number")}<span class="pwd-request-reference">${jvar_request_number}</span><br/>
+      </j:if>
+
+      <g:evaluate var="jvar_display_add_on" jelly="true">
+        var processId = new SNC.PwdTrackingManager().getProcessIdByRequestId(jelly.jvar_request_id);
+        var ret="";
+        var gr=new GlideRecord("pwd_process");
+        if (gr.get(processId)) {
+          ret=gr.getDisplayValue("user_experience_failure");
+        }
+        ret;
+      </g:evaluate>
+
+      <j:if test="${!empty(jvar_display_add_on)}">
+        <g:macro_invoke macro="${jvar_display_add_on}" />
+      </j:if>
+    </div>
+
+  </div>
+</center>
+
+
+</j:jelly>

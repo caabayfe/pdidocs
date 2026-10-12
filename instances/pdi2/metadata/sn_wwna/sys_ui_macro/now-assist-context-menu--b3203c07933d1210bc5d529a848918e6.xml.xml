@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j:jelly xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null" trim="true">
+
+    <g2:evaluate var="jvar_nacm_table_level_config" jelly="true" object="true">
+        var nacm_config = new sn_wwna.WWNAUtils().fetchNACMSkillConfiguration(sn_wwna.WWNAConstants.WWNA_COMMON_ACTIONS_CAPABILITY_ID, jelly.jvar_table, jelly.jvar_form_sys_id);
+        JSON.stringify(nacm_config || {});
+    </g2:evaluate>
+
+    <g2:evaluate var="jvar_nacm_columns_map" jelly="true" object="true">
+        var result = {};
+        var configObject = "$[jvar_nacm_table_level_config]";
+        configObject = JSON.parse(configObject);
+        if(configObject.active &amp;&amp; configObject.in_product_active &amp;&amp; configObject.is_wwna_active
+        &amp;&amp; configObject.isInProductRolesSatisfied &amp;&amp; configObject.formfieldsMapper &amp;&amp; configObject.formfieldsMapper[jelly.jvar_table])
+        	result = (configObject.formfieldsMapper[jelly.jvar_table] || {});
+
+
+        result;
+    </g2:evaluate>
+
+    <script id="sn_wwna_ui_asset_script" type="module" defer="true" src="/uxasset/externals/static/@devsnc/sn-wwna/index.jsdbx?sysparm_use_cache_buster=true$[AMP]uxpcb=$[UxFrameworkScriptables.getFlushTimestamp()]" />
+    <style>
+        :root {
+            --classicformonlydonotuse--rem-multipy: 1.6;
+        }
+    </style>
+
+    <script>
+        try {
+            var nacmConfig = JSON.parse('$[JS:jvar_nacm_table_level_config]');
+            var _wtableName = '$[JS:jvar_table]';
+            if(nacmConfig $[AMP]$[AMP] nacmConfig.active $[AMP]$[AMP] nacmConfig.in_product_active $[AMP]$[AMP] nacmConfig.is_wwna_active $[AMP]$[AMP] nacmConfig.isInProductRolesSatisfied $[AMP]$[AMP] nacmConfig.formfieldsMapper $[AMP]$[AMP] nacmConfig.formfieldsMapper[_wtableName]) {
+                NOW.tableLevelNacmConfig = nacmConfig;
+            }
+        } catch (e) {
+            console.log("Error in WWNA NACM config: ", e);
+        }
+    </script>
+
+    <g2:inline template="sn-wwna-static-bundle-asset.xml" />
+</j:jelly>

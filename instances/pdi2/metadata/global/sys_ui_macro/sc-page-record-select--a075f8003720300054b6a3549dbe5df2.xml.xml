@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div data-sn-macro-sys-id="${jvar_macro_sys_id}">
+	<j:if test="$[GlideI18NStyle.getDirection() == 'rtl']">
+		<style>
+			select#perrows {
+				margin-left: 25px;
+			}
+		</style>
+	</j:if>
+	<j:if test="${sysparm_nav_count == '' || sysparm_nav_count == null}">
+		<j:set var="sysparm_nav_count" value="${gs.getUser().getPreference('rowcount')}"/>
+	</j:if>
+	<j:if test="${sysparm_nav_count == '' || sysparm_nav_count == null}">
+		<j:set var="sysparm_nav_count" value="20" />
+	</j:if>
+	<j:if test="${sysparm_nav_count != gs.getUser().getPreference('rowcount')}">
+		<g:evaluate jelly="true">
+			gs.getUser().setPreference("rowcount", jelly.sysparm_nav_count);
+		</g:evaluate>
+	</j:if>
+
+	<j:set var="sysparm_nav_count" value="${gs.getUser().getPreference('rowcount')}"/>
+	<label for="perrows" style="display:none">Rows per Page</label>
+	<script>
+		function getNavCountURL(value) {
+			var url = '${jvar_change_count_url}';
+			url += value;
+			if ('${sysparm_cartless}' == 'true')
+				url += "${AMP}sysparm_cartless=true";
+			return url;
+		}
+	</script>	
+	<select class="listbar_select form-control" name='perrows' onchange="document.location.href=getNavCountURL(this.value)" id='perrows' aria-label="${gs.getMessage('Rows per Page')}" title="${gs.getMessage('Rows per Page')}">
+		<g:tokenize var="jvar_c_list" delim=",">
+			${gs.getProperty('glide.ui.per_page', '10,20,50,100')}
+		</g:tokenize>
+		<j:set var="jvar_foundCount" value="false" />
+		<j:set var="jvar_per_page" value="${gs.getMessage('per page')}" />
+		<j:forEach var="jvar_citem" items="${jvar_c_list}">
+			<j:if test="${sysparm_nav_count != jvar_citem}">
+				<option value="${jvar_citem}"> ${jvar_citem} ${jvar_per_page}</option>
+			</j:if>
+			<j:if test="${sysparm_nav_count == jvar_citem}">
+				<option selected="true" value="${jvar_citem}"> ${jvar_citem} ${jvar_per_page}</option>
+				<j:set var="jvar_foundCount" value="true" />
+			</j:if>
+		</j:forEach>
+		<j:if test="${jvar_foundCount == false}">
+			<option selected="true" value="${sysparm_nav_count}"> ${sysparm_nav_count} </option>
+		</j:if>
+	</select>
+	</div>
+</j:jelly>

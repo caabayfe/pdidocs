@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g2:evaluate>
+      var g_xmlDoc = null;
+      var g_url = "";
+
+      var g_baseRecord = new GlideRecordSecure('sys_cluster_state');
+      if (g_baseRecord.get('$[sys_id]')) {
+          g_xmlDoc = new XMLDocument(g_baseRecord.node_stats.stats + '');
+          g_http_url = 'http://' + g_xmlDoc.getNodeText('//servlet.hostname') + ':' + g_xmlDoc.getNodeText('//servlet.port');
+
+          var ngr = new GlideRecordSecure('sys_trigger');
+          ngr.addQuery('system_id', g_baseRecord.system_id);
+          ngr.query();
+
+          g_jobs_assigned = ngr.getRowCount();
+      }
+  </g2:evaluate>
+  <tr><td>
+    <table cellpadding="2" cellspacing="2" border="0" style="margin: 8px;">
+      <tr><td colspan="2"><b>Additional details</b></td></tr>
+      <tr><td class="label label_spacing">Servlet started:</td><td>$[g_xmlDoc.getNodeText('//servlet.started')]</td></tr>
+      <tr><td class="label label_spacing">Servlet URL:</td><td><a href='$[g_http_url]' class='web' target='_new'>$[g_http_url]</a></td></tr>
+      <tr><td class="label label_spacing">Assigned version:</td><td>$[g_xmlDoc.getNodeText('//instance_assigned_version')]</td></tr>
+      <j2:if test="$[g_jobs_assigned >= 1]">
+          <g2:evaluate>
+              g_trigger_url = "sys_trigger_list.do?sysparm_query=system_id=" + g_baseRecord.system_id;
+          </g2:evaluate>
+
+          <tr><td class="label label_spacing">Jobs assigned:</td><td><a href='$[g_trigger_url]' class='web'>$[g_jobs_assigned]</a></td></tr>
+      </j2:if>
+      <j2:if test="$[!g_jobs_assigned >= 1]">
+          <tr><td class="label label_spacing">Jobs assigned:</td><td>None</td></tr>
+      </j2:if>
+
+    </table>
+  </td></tr>
+</j:jelly>

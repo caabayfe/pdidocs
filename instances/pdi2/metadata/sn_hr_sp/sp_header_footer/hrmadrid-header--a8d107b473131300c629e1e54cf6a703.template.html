@@ -1,0 +1,93 @@
+<div>
+  <!-- To-dos, Cases popup for mobile view -->
+  <div ng-if="data.isMobile" class="popup-edit popover bottom" id="popup_todos_mobile">
+    <sp-widget widget="::data.todoCaseList"></sp-widget>
+  </div>
+  <div ng-if="data.isMobile" class="popup-edit popover bottom" id="popup_cases_mobile">
+    <sp-widget widget="::data.caseList"></sp-widget>
+  </div>
+  <!-- Nav bar menu items starts-->
+  <nav class="navbar-inverse" ng-class="::{'navbar':!isViewNative, 'is-native': isViewNative}" role="navigation">
+    <div ng-show="::!isViewNative" class="navbar-header">
+      <a class="navbar-brand" ng-if="::!portal.logo" href="?id={{::portal.homepage_dv}}"><span>{{::portal.title}}</span></a>
+      <a class="navbar-brand navbar-brand-logo" ng-if="::portal.logo" href="?id={{::portal.homepage_dv}}">
+        <img ng-src="{{::portal.logo}}" alt="{{::portal.title}}"/>
+      </a>
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#sp-nav-bar">
+        <span ng-show="data.todoCount > 0" class="label label-as-badge label-primary navbar-collapse-label">{{data.todoCount}}</span>
+        <span class="sr-only">${Toggle navigation}</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+   <div class="navbar-header typeahead-search">
+      <sp-widget widget="data.typeahead"></sp-widget>
+   </div>
+    <div sp-navbar-toggle="" class="collapse navbar-collapse navbar-right" id="sp-nav-bar">
+      <!-- Include The Menu -->
+      <ul ng-if="::user.logged_in" class="nav navbar-nav">
+        <!-- Fix to show loading indicator at first place in the menu bar-->
+        <li>
+          <a>
+            <div class="header-loader" ng-show="loadingIndicator" id="hr_loading_indicator">
+              <div class="hidden-xs sp-loading-indicator la-sm">
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+          </a>
+        </li>
+        <!--  To-Dos  -->
+        <li ng-if="data.isHrCoreActive">
+          <a href="javascript:void(0)" data-toggle="{{popupType}}" id="todos_popup" data-target="{{todosPopupId}}" aria-label="${To-dos}">
+            <span ng-bind-html="'${To-dos}'" aria-hidden="true"></span>
+            <span ng-show="data.todoCount > 0" class="label label-as-badge label-primary">{{data.todoCount}}</span>
+          </a>
+          <div ng-if="!data.isMobile" class="dropdown-menu case-menu" >
+            <sp-widget widget="::data.todoCaseList"></sp-widget>
+          </div>
+        </li>
+        <!--  Cases  -->
+        <li ng-if="data.isHrCoreActive">
+          <a href="javascript:void(0)" data-toggle="{{popupType}}" id="cases_popup" data-target="{{casesPopupId}}" aria-label="${Cases}">
+            <span ng-bind-html="'${Cases}'" aria-hidden="true"></span>
+          </a>
+          <div ng-if="!data.isMobile" class="dropdown-menu case-menu" >
+            <sp-widget widget="::data.caseList"></sp-widget>
+          </div>
+        </li>
+      </ul>
+      <sp-widget widget="data.menu"></sp-widget>
+      <ul ng-if="::(!user.logged_in && page.id != portal.login_page_dv && !data.hasLogin)" class="nav navbar-nav">
+        <li><a href ng-click="openLogin()">${Login}</a>
+        </li>
+      </ul>
+      <ul ng-if="::user.logged_in" class="nav navbar-nav">
+        <!-- chat, avatar, and logout -->
+        <li ng-if="data.chatSupportEnabled == true && data.isHrCoreActive"><a target="chat" href="/$chat_support.do?queueID=fde232209f22120047a2d126c42e70ab"><i alt="${Chat with HR}" class="fa fa-comments-o"></i> ${Chat with HR}</a>
+        </li>
+        <li ng-if="data.isHrCoreActive">
+          <a href="mailto:{{data.email}}"><i alt="${Email HR}" class="fa fa-envelope-o"></i> ${Email HR}</a>
+        </li>
+        <li class="dropdown hidden-xs">
+          <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">
+            <span class="navbar-avatar"><sn-avatar class="avatar-small-medium" show-presence="false" primary="user.sys_id" /></span>
+            <span class="visible-lg-inline" aria-hidden="true">{{user.name}}</span>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="{{data.link}}">${Profile}</a>
+            </li>
+            <li><a href="{{::portal.logoutUrl}}">${Logout}</a>
+            </li>
+          </ul>
+        </li>
+        <li class="visible-xs-block"><a href="{{data.link}}"><span class="navbar-avatar"><sn-avatar class="avatar-small-medium" show-presence="false" primary="user.sys_id" /></span><span aria-hidden="true">{{user.name}}</span></a>
+        </li>
+        <li class="visible-xs-block"><a href="{{::portal.logoutUrl}}">${Logout}</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</div>

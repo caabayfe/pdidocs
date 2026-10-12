@@ -1,0 +1,520 @@
+_meta:
+  hash: 2d8b4787fd27e98896b6fe83dbcc2ac8de45c5d8273ad4656867cd619858f37a
+  hash_version: 1
+  scope: sn_oe_sfs
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2022-04-05 10:02:33
+  sys_domain: global
+  sys_id: 1a531eeb53a20110d3d5ddeeff7b1282
+  sys_mod_count: '1'
+  sys_package: 53b1b0e79761011018b2fa98c253afcc
+  sys_scope: 53b1b0e79761011018b2fa98c253afcc
+  sys_update_name: sys_cb_design_topic_1a531eeb53a20110d3d5ddeeff7b1282
+  sys_updated_by: admin
+  sys_updated_on: 2022-04-05 10:03:04
+compiled_topic: 5e531eeb53a20110d3d5ddeeff7b127d
+design_definition: '{"type":"FlowTopic","type":"FlowTopic","triggers":[{"type":"Trigger","name":"9cde5b7f4ea84704840b82e22097e6f1","triggerType":"request","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"id":"9cde5b7f4ea84704840b82e22097e6f1"}],"goals":[{"name":"primary","trigger_id":"9cde5b7f4ea84704840b82e22097e6f1","nodes":[{"type":"StartGoal","type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"0fb3b6ff9e344abe92e34537af851c2f","name":"Start"},{"type":"TerminateGoal","type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"3bbf2e8af7a94cea8af9fe2ee06aa232","name":"End"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var addMessage = function(val){\n        if(message) {\n            return message + ''<br/>'' + val;\n        }\n        return val;\n    }\n    var getGlideRecord = function(tableName){\n        return new GlideRecord(tableName);\n    }\n    var getInteraction = function(interactionNumber){\n        var gr = getGlideRecord(''interaction'');\n        gr.addQuery(''number'', interactionNumber);\n        gr.query();\n        return gr;\n    }\n    var getWorkItemFromInteraction = function(interactionSysId){\n        var gr = getGlideRecord(''awa_work_item'');\n        gr.addQuery(''document_id'', interactionSysId);\n        gr.query();\n        return gr;\n    }\n    var VIRTUAL_AGENT_SYS_ID = ''2e94fca9c3123010d81b6e221f40dd08'';\n    var MSG_WORK_ITEM_GENERATED = ''{0} work item generated. '';\n    var MSG_INTERACTION_TO_VIRTUAL_AGENT = ''The interaction is assigned to Virtual Agent. '';\n    var MSG_WORK_ITEM_NOT_GENERATED = ''Work item is not created. '';\n    var MSG_CHECK_FOR_BUSINESS_RULES = ''Check for Business rules on awa_work_item table or time out configuration based on the reason for canceling the work items. '';\n    var MSG_NO_QUEUE_EXIST = ''No queue exist for Interaction with type: {0}. '';\n    var MSG_INTERCTION_NOT_FOUND = ''Interaction not found with number {0}. '';\n    var MSG_AGENT_AVAILABLE = ''Right now Agents are available for Service Channel: {0}'';\n    var MSG_NO_AGENT_AVAILABLE = ''Right now no Agent available for Service Channel: {0}. '';\n    var MSG_NO_AGENT_AVAILABLE_WITH_SKILLS = ''Right now no Agent available for Service Channel: {0} with required skills. '';\n    var MSG_AGENT_AVAILABLE_WITH_SKILLS = ''Right now Agents are available for Service Channel: {0} with required skills. '';\n    var MSG_WORK_ITEM_STATUS = ''Associated work item is in {0} state'';\n    var MSG_WORK_ITEM_STATUS_CANCELLED = ''Associated work item is in cancelled state with reason {0}'';\n    var MSG_AVAILABLE_QUEUES = ''Below queues are available. Please validate the schedule and utilization conditions: '';\n    var message = '''';\n    var interactionGr = getInteraction(vaInputs.interaction_number);\n    if (interactionGr.next()) {\n       var interactionType = interactionGr.type;\n       if (interactionGr.getValue(''assigned_to'') == VIRTUAL_AGENT_SYS_ID) {\n            message = addMessage(gs.getMessage(MSG_INTERACTION_TO_VIRTUAL_AGENT));\n            vaVars.output_message = message;\n            return;\n       }\n       var workItemGr = getWorkItemFromInteraction(interactionGr.getUniqueValue());\n       var count = workItemGr.getRowCount();\n       if (count > 1) {\n           message = addMessage(gs.getMessage(MSG_WORK_ITEM_GENERATED, count));\n           message = addMessage(gs.getMessage(MSG_CHECK_FOR_BUSINESS_RULES));\n       } else if (count == 0) {\n            message = addMessage(gs.getMessage(MSG_WORK_ITEM_NOT_GENERATED));\n            var queueGr = new GlideRecord(''awa_queue'');\n            queueGr.addEncodedQuery(''active=true^service_channel.workitem_table=interaction^service_channel.type=''+interactionType);\n            queueGr.orderBy(''order'');\n            queueGr.query();\n            if (queueGr.getRowCount() == 0){\n              message = addMessage(gs.getMessage(MSG_NO_QUEUE_EXIST, interactionType));\n              vaVars.output_message = message;\n              return;\n            } \n            message = addMessage(gs.getMessage(MSG_AVAILABLE_QUEUES));\n            while (queueGr.next()) {\n                var url = vaVars.base_url+''awa_queue.do?sys_id=''+queueGr.getUniqueValue();\n                message = addMessage(''<a href='' + url + ''>''+queueGr.getValue(''name'')+''</a>'');\n            }  \n       } else if (count == 1) {\n           if (workItemGr.next()) {\n               var state = workItemGr.getValue(''state'');\n               if (state == ''cancelled'') {\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS_CANCELLED , workItemGr.getValue(''cancelled_reason'')));\n               } else{\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS , workItemGr.getValue(''state'')));\n               }\n               var queue = workItemGr.getValue(''queue'');\n               var queueGr = new GlideRecord(''awa_queue'');\n               queueGr.get(queue);\n               var serviceChannel = queueGr.getValue(''service_channel'');\n               var serviceChannelGr = new GlideRecord(''awa_service_channel'');\n               serviceChannelGr.get(serviceChannel);\n               var defaultCapacity = serviceChannelGr.getValue(''default_capacity'');\n               var channelCapacityGr = new GlideRecord(''awa_agent_presence_capacity'');\n               channelCapacityGr.addQuery(''channel'', serviceChannel);\n               channelCapacityGr.addEncodedQuery(''aca_presence_state.available_to_receive_work_items=true'');\n               channelCapacityGr.addQuery(''ac_workload'', ''<'', defaultCapacity);\n               channelCapacityGr.query();\n               if (channelCapacityGr.getRowCount() == 0){\n                   message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE , serviceChannelGr.getValue(''name'')));\n                   vaVars.output_message = message;\n                   return;\n               }\n               var skillEnabled = gs.getProperty(''glide.awa.skill_level.evaluate'');\n               if (skillEnabled && skillEnabled == ''true'') {\n                   var skills = [];\n                   var skillGr = new GlideRecord(''interaction_m2m_skill'');\n                   skillGr.addQuery(''interaction'', interactionGr.getUniqueValue());\n                   skillGr.query();\n                   while (skillGr.next()) {\n                       skills.push(skillGr.getUniqueValue());\n                   }\n                   skills.sort(function(a, b) {\n                       return a.localeCompare(b);\n                   });\n                   while (channelCapacityGr.next()){\n                       channelCapacityGr.getValue(''ap_agent'');\n                       var userSkillGr = new GlideRecord(''sys_user_has_skill'');\n                       userSkillGr.addQuery(''user'', channelCapacityGr.getValue(''ap_agent''));\n                       userSkillGr.addQuery(''skill'', ''IN'', skills.toString().replaceAll(''['').replaceAll('']''));\n                       userSkillGr.query();\n                       if (userSkillGr.getRowCount() != skills.length) {\n                           continue;\n                       }\n                       var userSkills = [];\n                       while (userSkillGr.next()) {\n                           userSkills.push(userSkillGr.getValue(''skill''));\n                       }\n                       userSkills.sort(function(a, b) {\n                           return a.localeCompare(b);\n                       });\n                       if (userSkills.toString() == skills.toString()) {\n                            message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE_WITH_SKILLS, serviceChannelGr.getValue(''name'')));\n                            vaVars.output_message = message;\n                            return;\n                       }\n                   }\n                   message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE_WITH_SKILLS , serviceChannelGr.getValue(''name'')));\n               } else {\n                   message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE , serviceChannelGr.getValue(''name'')));\n               } \n           }\n       }\n    } else {\n        message = addMessage(gs.getMessage(MSG_INTERCTION_NOT_FOUND,vaInputs.interaction_number));\n    }\n    vaVars.output_message = message;\n})()\n","id":"cc62e227f6dd4804aeaf3dbe74f259f4","name":"evaluate","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"InputPrompt","type":"InputPrompt","variable_id":"24b0a84f106b4ef39c7a258d0fabdfd0","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Please enter Interaction Number\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"975a0f59aa104801b0f3928fbad8ae54","name":"Interaction Number","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"formatType":"Text","validationScript":""},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"string","value":"{{vaVars.output_message}}"}],"id":"ca63c928a8864ffc8ff6704efbbc2517","name":"output","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Exit","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"re_enter="},"id":"f8e1ab71366e4c6fb60ca93927ed5140","name":"Exit"},{"type":"Branch","type":"Branch","label":"Recheck selected","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"re_enter=true"},"id":"40797b1bd5974dd388a2c06a0a251feb","name":"Recheck selected"}],"id":"7b1fe139422244f1976ecfde3ad428fc","goal_id":"primary"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"89c2e55d5d7f48e6be61c8c22476e8f3","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Do you want to try for another Interaction/Task?\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"983ea6a2e3cb41d887dcdf851b07b6b7","name":"Re Enter","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"ChoiceInputPrompt","type":"ChoiceInputPrompt","expression_mode":"simple","metadataScript":"","cardName":"","cardFields":[],"id":"20314099e0cd4038ad3ea5e5893412c9","name":"interaction_or_others","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"variable_id":"796042ea9f874bff91d09bfb3dfc6787","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Please select the Task Type\", vaContext.getRequesterLang())"},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Interaction","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"interaction_or_others=interaction"},"id":"5f0cf5ca00104d04affe6fe7115d7c95","name":"Interaction"},{"type":"Branch","type":"Branch","label":"Others","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"interaction_or_others=other"},"id":"499e2886670c4c7995ffda68a4e68401","name":"Others"}],"id":"0c393dd87f174c9382edd8526082f120","goal_id":"primary"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"08ddf034e4aa4933a74f0aed62bc66c2","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Please enter Task number\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"95d09506a92548158c1605814043dcd8","name":"Task Number","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"formatType":"Text","validationScript":""},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var addMessage = function(val) {\n        if (message) {\n            return message + ''<br/>'' + val;\n        }\n        return val;\n    }\n    var getGlideRecord = function(tableName) {\n        return new GlideRecord(tableName);\n    }\n    var getDocument = function(number, documentTable) {\n        var gr = getGlideRecord(documentTable);\n        gr.addQuery(''number'', number);\n        gr.query();\n        return gr;\n    }\n    var getWorkItem = function(sysId) {\n        var gr = getGlideRecord(''awa_work_item'');\n        gr.addQuery(''document_id'', sysId);\n        gr.query();\n        return gr;\n    }\n    var getDocumentTable = function() {\n        var id = vaInputs.task_number.toString();\n        if (id.startsWith(''INC'')) {\n            return ''incident'';\n        } else if (id.startsWith(''PRB'')) {\n            return ''problem'';\n        } else {\n            return null;\n        }\n    }\n    var MSG_WORK_ITEM_GENERATED = ''{0} work item generated. '';\n    var MSG_WORK_ITEM_NOT_GENERATED = ''Work item is not created. '';\n    var MSG_CHECK_FOR_BUSINESS_RULES = ''Check for Business rules on awa_work_item table or time out configuration based on the reason for canceling the work items. '';\n    var MSG_NO_QUEUE_EXIST = ''No queue exist for Document with number: {0}. '';\n    var MSG_DOCUMENT_NOT_FOUND = ''Document not found with number {0}. '';\n    var MSG_AGENT_AVAILABLE = ''Right now Agents are available for Service Channel: {0}'';\n    var MSG_NO_AGENT_AVAILABLE = ''Right now no Agent available for Service Channel: {0}. '';\n    var MSG_NO_AGENT_AVAILABLE_WITH_SKILLS = ''Right now no Agent available for Service Channel: {0} with required skills. '';\n    var MSG_AGENT_AVAILABLE_WITH_SKILLS = ''Right now Agents are available for Service Channel: {0} with required skills. '';\n    var MSG_AVAILABLE_QUEUES = ''Below queues are available. Please validate the schedule and utilization conditions: '';\n    var MSG_WORK_ITEM_STATUS = ''Associated work item is in {0} state'';\n    var MSG_WORK_ITEM_STATUS_CANCELLED = ''Associated work item is in cancelled state with reason {0}'';\n    var message = '''';\n    var documentTable = getDocumentTable(vaInputs.task_number);\n    if (!documentTable) {\n        message = addMessage(gs.getMessage(MSG_DOCUMENT_NOT_FOUND, vaInputs.task_number));\n        vaVars.output_message = message;\n        return;\n    }\n    var documentGr = getDocument(vaInputs.task_number, documentTable);\n    if (documentGr && documentGr.next()) {\n        var workItemGr = getWorkItem(documentGr.getUniqueValue());\n        var count = workItemGr.getRowCount();\n        if (count > 1) {\n            message = addMessage(gs.getMessage(MSG_WORK_ITEM_GENERATED, count));\n            message = addMessage(gs.getMessage(MSG_CHECK_FOR_BUSINESS_RULES));\n        } else if (count == 0) {\n            message = addMessage(gs.getMessage(MSG_WORK_ITEM_NOT_GENERATED));\n            var queueGr = new GlideRecord(''awa_queue'');\n            queueGr.addEncodedQuery(''active=true^service_channel.workitem_table='' + documentTable);\n            queueGr.orderBy(''order'');\n            queueGr.query();\n            if (queueGr.getRowCount() == 0) {\n                message = addMessage(gs.getMessage(MSG_NO_QUEUE_EXIST, vaInputs.task_number));\n                vaVars.output_message = message;\n                return;\n            }\n            message = addMessage(gs.getMessage(MSG_AVAILABLE_QUEUES));\n            while (queueGr.next()) {\n                var url = vaVars.base_url + ''awa_queue.do?sys_id='' + queueGr.getUniqueValue();\n                message = addMessage(''<a href='' + url + ''>'' + queueGr.getValue(''name'') + ''</a>'');\n            }\n        } else if (count == 1) {\n            if (workItemGr.next()) {\n                var state = workItemGr.getValue(''state'');\n                if (state === ''cancelled'') {\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS_CANCELLED, workItemGr.getValue(''cancelled_reason'')));\n                } else {\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS, workItemGr.getValue(''state'')));\n                }\n                var queue = workItemGr.getValue(''queue'');\n                var queueGr = new GlideRecord(''awa_queue'');\n                queueGr.get(queue);\n                var serviceChannel = queueGr.getValue(''service_channel'');\n                var serviceChannelGr = new GlideRecord(''awa_service_channel'');\n                serviceChannelGr.get(serviceChannel);\n                var defaultCapacity = serviceChannelGr.getValue(''default_capacity'');\n                var channelCapacityGr = new GlideRecord(''awa_agent_presence_capacity'');\n                channelCapacityGr.addQuery(''channel'', serviceChannel);\n                channelCapacityGr.addEncodedQuery(''aca_presence_state.available_to_receive_work_items=true'');\n                channelCapacityGr.addQuery(''ac_workload'', ''<'', defaultCapacity);\n                channelCapacityGr.query();\n                if (channelCapacityGr.getRowCount() == 0) {\n                    message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE, serviceChannelGr.getValue(''name'')));\n                    vaVars.output_message = message;\n                    return;\n                }\n                var skillEnabled = gs.getProperty(''glide.awa.skill_level.evaluate'');\n                if (skillEnabled && skillEnabled == ''true'') {\n                    var skills = [];\n                    var skillGr = new GlideRecord(''task_m2m_skill'');\n                    skillGr.addQuery(''task'', documentGr.getUniqueValue());\n                    skillGr.query();\n                    while (skillGr.next()) {\n                        skills.push(skillGr.getUniqueValue());\n                    }\n                    skills.sort(function(a, b) {\n                        return a.localeCompare(b);\n                    });\n                    while (channelCapacityGr.next()) {\n                        channelCapacityGr.getValue(''ap_agent'');\n                        var userSkillGr = new GlideRecord(''sys_user_has_skill'');\n                        userSkillGr.addQuery(''user'', channelCapacityGr.getValue(''ap_agent''));\n                        userSkillGr.addQuery(''skill'', ''IN'', skills.toString().replaceAll(''['').replaceAll('']''));\n                        userSkillGr.query();\n                        if (userSkillGr.getRowCount() != skills.length) {\n                            continue;\n                        }\n                        var userSkills = [];\n                        while (userSkillGr.next()) {\n                            userSkills.push(userSkillGr.getValue(''skill''));\n                        }\n                        userSkills.sort(function(a, b) {\n                            return a.localeCompare(b);\n                        });\n                        if (userSkills.toString() == skills.toString()) {\n                            message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE_WITH_SKILLS, serviceChannelGr.getValue(''name'')));\n                            vaVars.output_message = message;\n                            return;\n                        }\n                    }\n                    message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE_WITH_SKILLS, serviceChannelGr.getValue(''name'')));\n                } else {\n                    message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE, serviceChannelGr.getValue(''name'')));\n                }\n            }\n        }\n    } else {\n        message = addMessage(gs.getMessage(MSG_DOCUMENT_NOT_FOUND, vaInputs.task_number));\n    }\n    vaVars.output_message = message;\n})()","id":"a3d5c445ab094cdcb32250ad964620ac","name":"evaluate","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}}],"edges":[{"type":"Edge","source_node_id":"7b1fe139422244f1976ecfde3ad428fc","target_node_id":"3bbf2e8af7a94cea8af9fe2ee06aa232","branch_id":"f8e1ab71366e4c6fb60ca93927ed5140","id":"6efe10730c25433e99c9d15e6444c562","name":"f8e1ab71366e4c6fb60ca93927ed5140"},{"type":"Edge","source_node_id":"cc62e227f6dd4804aeaf3dbe74f259f4","target_node_id":"ca63c928a8864ffc8ff6704efbbc2517","id":"420ce22b44f741ee8f14e704cd22be0b"},{"type":"Edge","source_node_id":"975a0f59aa104801b0f3928fbad8ae54","target_node_id":"cc62e227f6dd4804aeaf3dbe74f259f4","id":"47e7cde6f1284af1a357eb00c61ada1d"},{"type":"Edge","source_node_id":"ca63c928a8864ffc8ff6704efbbc2517","target_node_id":"983ea6a2e3cb41d887dcdf851b07b6b7","id":"cc7181616fb947bba13be1c1dfc00440"},{"type":"Edge","source_node_id":"983ea6a2e3cb41d887dcdf851b07b6b7","target_node_id":"7b1fe139422244f1976ecfde3ad428fc","id":"33774829ee5e43bab4f69a5197c8c95b"},{"type":"Edge","source_node_id":"7b1fe139422244f1976ecfde3ad428fc","target_node_id":"20314099e0cd4038ad3ea5e5893412c9","branch_id":"40797b1bd5974dd388a2c06a0a251feb","id":"373ae80c013a4f63a34f77ac5e4e7a81","name":"40797b1bd5974dd388a2c06a0a251feb"},{"type":"Edge","source_node_id":"0fb3b6ff9e344abe92e34537af851c2f","target_node_id":"20314099e0cd4038ad3ea5e5893412c9","id":"ab9e0250a6b049388f0aa014af17a889"},{"type":"Edge","source_node_id":"20314099e0cd4038ad3ea5e5893412c9","target_node_id":"0c393dd87f174c9382edd8526082f120","id":"6284114b641342bb82f04ddc93e4c2b7"},{"type":"Edge","source_node_id":"0c393dd87f174c9382edd8526082f120","target_node_id":"975a0f59aa104801b0f3928fbad8ae54","branch_id":"5f0cf5ca00104d04affe6fe7115d7c95","id":"a2102245221942f4859d129905becd17","name":"5f0cf5ca00104d04affe6fe7115d7c95"},{"type":"Edge","source_node_id":"0c393dd87f174c9382edd8526082f120","target_node_id":"95d09506a92548158c1605814043dcd8","branch_id":"499e2886670c4c7995ffda68a4e68401","id":"67996bcd9c3743399bf64286382e715e","name":"499e2886670c4c7995ffda68a4e68401"},{"type":"Edge","source_node_id":"95d09506a92548158c1605814043dcd8","target_node_id":"a3d5c445ab094cdcb32250ad964620ac","id":"d1eefc7283014f4aba30e75276c5b763"},{"type":"Edge","source_node_id":"a3d5c445ab094cdcb32250ad964620ac","target_node_id":"ca63c928a8864ffc8ff6704efbbc2517","id":"45ce1b15358746fca7530ffc949de2d0"}],"id":"primary"}],"script_variables":[{"type":"VariableDto","type":"String","name":"message","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"ccbee794cdfa4992a8b5709e7b1f4c6b","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"base_url","value":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    /* return ''a default value''; */\n    return gs.getProperty(''glide.servlet.uri'');\n})()\n"},"list":false,"id":"628fe06951224890b2bf47ea5db1859a","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"output_message","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"c5f6d7cb493b482b957b2d5a51413ac9","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","type":"Reference","table":"sys_user","id":"40537b0ea4cd45d99c173ffdccc4e18f","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"interaction_number","list":false,"id":"24b0a84f106b4ef39c7a258d0fabdfd0","formatType":"Text","validationScript":"","secure":false,"sensitive":false},{"type":"True/False","type":"True/False","id":"89c2e55d5d7f48e6be61c8c22476e8f3","name":"re_enter","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Choice","type":"Choice","choices":[{"name":"Interaction","element":"interaction"},{"name":"Other Task","element":"other"}],"id":"796042ea9f874bff91d09bfb3dfc6787","name":"interaction_or_others","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"task_number","list":false,"id":"08ddf034e4aa4933a74f0aed62bc66c2","formatType":"Text","validationScript":"","secure":false,"sensitive":false}],"applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    /* Return true or false to indicate if the topic or topic node can run\n       and be discoverable (or not). Using the format vaContext.liveagent_[var_name] For example:\n\n       var applicability = vaContext.liveagent_portal == ''csm'' ? true : false;\n       return applicability;\n    */\n    return false;\n})()\n"},"roles":[],"scope":"global","domain":"global","topic_type":"STANDARD","channels":[],"id":"f9b216ab53a20110d3d5ddeeff7b12e9","name":"No Agent Available","key_phrases":["No Agent Available"],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"library":false,"readOnly":false,"nluMapping":"[]"}'
+design_topic_id: f9b216ab53a20110d3d5ddeeff7b12e9
+graph: |-
+  {
+    "graph_api_version": "1.0.40",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "0fb3b6ff9e344abe92e34537af851c2f": {
+            "id": "0fb3b6ff9e344abe92e34537af851c2f",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "3bbf2e8af7a94cea8af9fe2ee06aa232": {
+            "id": "3bbf2e8af7a94cea8af9fe2ee06aa232",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "cc62e227f6dd4804aeaf3dbe74f259f4": {
+            "id": "cc62e227f6dd4804aeaf3dbe74f259f4",
+            "name": "evaluate",
+            "script": "(function execute() {\n    var addMessage = function(val){\n        if(message) {\n            return message + '<br/>' + val;\n        }\n        return val;\n    }\n    var getGlideRecord = function(tableName){\n        return new GlideRecord(tableName);\n    }\n    var getInteraction = function(interactionNumber){\n        var gr = getGlideRecord('interaction');\n        gr.addQuery('number', interactionNumber);\n        gr.query();\n        return gr;\n    }\n    var getWorkItemFromInteraction = function(interactionSysId){\n        var gr = getGlideRecord('awa_work_item');\n        gr.addQuery('document_id', interactionSysId);\n        gr.query();\n        return gr;\n    }\n    var VIRTUAL_AGENT_SYS_ID = '2e94fca9c3123010d81b6e221f40dd08';\n    var MSG_WORK_ITEM_GENERATED = '{0} work item generated. ';\n    var MSG_INTERACTION_TO_VIRTUAL_AGENT = 'The interaction is assigned to Virtual Agent. ';\n    var MSG_WORK_ITEM_NOT_GENERATED = 'Work item is not created. ';\n    var MSG_CHECK_FOR_BUSINESS_RULES = 'Check for Business rules on awa_work_item table or time out configuration based on the reason for canceling the work items. ';\n    var MSG_NO_QUEUE_EXIST = 'No queue exist for Interaction with type: {0}. ';\n    var MSG_INTERCTION_NOT_FOUND = 'Interaction not found with number {0}. ';\n    var MSG_AGENT_AVAILABLE = 'Right now Agents are available for Service Channel: {0}';\n    var MSG_NO_AGENT_AVAILABLE = 'Right now no Agent available for Service Channel: {0}. ';\n    var MSG_NO_AGENT_AVAILABLE_WITH_SKILLS = 'Right now no Agent available for Service Channel: {0} with required skills. ';\n    var MSG_AGENT_AVAILABLE_WITH_SKILLS = 'Right now Agents are available for Service Channel: {0} with required skills. ';\n    var MSG_WORK_ITEM_STATUS = 'Associated work item is in {0} state';\n    var MSG_WORK_ITEM_STATUS_CANCELLED = 'Associated work item is in cancelled state with reason {0}';\n    var MSG_AVAILABLE_QUEUES = 'Below queues are available. Please validate the schedule and utilization conditions: ';\n    var message = '';\n    var interactionGr = getInteraction(vaInputs.interaction_number);\n    if (interactionGr.next()) {\n       var interactionType = interactionGr.type;\n       if (interactionGr.getValue('assigned_to') == VIRTUAL_AGENT_SYS_ID) {\n            message = addMessage(gs.getMessage(MSG_INTERACTION_TO_VIRTUAL_AGENT));\n            vaVars.output_message = message;\n            return;\n       }\n       var workItemGr = getWorkItemFromInteraction(interactionGr.getUniqueValue());\n       var count = workItemGr.getRowCount();\n       if (count > 1) {\n           message = addMessage(gs.getMessage(MSG_WORK_ITEM_GENERATED, count));\n           message = addMessage(gs.getMessage(MSG_CHECK_FOR_BUSINESS_RULES));\n       } else if (count == 0) {\n            message = addMessage(gs.getMessage(MSG_WORK_ITEM_NOT_GENERATED));\n            var queueGr = new GlideRecord('awa_queue');\n            queueGr.addEncodedQuery('active=true^service_channel.workitem_table=interaction^service_channel.type='+interactionType);\n            queueGr.orderBy('order');\n            queueGr.query();\n            if (queueGr.getRowCount() == 0){\n              message = addMessage(gs.getMessage(MSG_NO_QUEUE_EXIST, interactionType));\n              vaVars.output_message = message;\n              return;\n            } \n            message = addMessage(gs.getMessage(MSG_AVAILABLE_QUEUES));\n            while (queueGr.next()) {\n                var url = vaVars.base_url+'awa_queue.do?sys_id='+queueGr.getUniqueValue();\n                message = addMessage('<a href=' + url + '>'+queueGr.getValue('name')+'</a>');\n            }  \n       } else if (count == 1) {\n           if (workItemGr.next()) {\n               var state = workItemGr.getValue('state');\n               if (state == 'cancelled') {\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS_CANCELLED , workItemGr.getValue('cancelled_reason')));\n               } else{\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS , workItemGr.getValue('state')));\n               }\n               var queue = workItemGr.getValue('queue');\n               var queueGr = new GlideRecord('awa_queue');\n               queueGr.get(queue);\n               var serviceChannel = queueGr.getValue('service_channel');\n               var serviceChannelGr = new GlideRecord('awa_service_channel');\n               serviceChannelGr.get(serviceChannel);\n               var defaultCapacity = serviceChannelGr.getValue('default_capacity');\n               var channelCapacityGr = new GlideRecord('awa_agent_presence_capacity');\n               channelCapacityGr.addQuery('channel', serviceChannel);\n               channelCapacityGr.addEncodedQuery('aca_presence_state.available_to_receive_work_items=true');\n               channelCapacityGr.addQuery('ac_workload', '<', defaultCapacity);\n               channelCapacityGr.query();\n               if (channelCapacityGr.getRowCount() == 0){\n                   message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE , serviceChannelGr.getValue('name')));\n                   vaVars.output_message = message;\n                   return;\n               }\n               var skillEnabled = gs.getProperty('glide.awa.skill_level.evaluate');\n               if (skillEnabled && skillEnabled == 'true') {\n                   var skills = [];\n                   var skillGr = new GlideRecord('interaction_m2m_skill');\n                   skillGr.addQuery('interaction', interactionGr.getUniqueValue());\n                   skillGr.query();\n                   while (skillGr.next()) {\n                       skills.push(skillGr.getUniqueValue());\n                   }\n                   skills.sort(function(a, b) {\n                       return a.localeCompare(b);\n                   });\n                   while (channelCapacityGr.next()){\n                       channelCapacityGr.getValue('ap_agent');\n                       var userSkillGr = new GlideRecord('sys_user_has_skill');\n                       userSkillGr.addQuery('user', channelCapacityGr.getValue('ap_agent'));\n                       userSkillGr.addQuery('skill', 'IN', skills.toString().replaceAll('[').replaceAll(']'));\n                       userSkillGr.query();\n                       if (userSkillGr.getRowCount() != skills.length) {\n                           continue;\n                       }\n                       var userSkills = [];\n                       while (userSkillGr.next()) {\n                           userSkills.push(userSkillGr.getValue('skill'));\n                       }\n                       userSkills.sort(function(a, b) {\n                           return a.localeCompare(b);\n                       });\n                       if (userSkills.toString() == skills.toString()) {\n                            message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE_WITH_SKILLS, serviceChannelGr.getValue('name')));\n                            vaVars.output_message = message;\n                            return;\n                       }\n                   }\n                   message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE_WITH_SKILLS , serviceChannelGr.getValue('name')));\n               } else {\n                   message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE , serviceChannelGr.getValue('name')));\n               } \n           }\n       }\n    } else {\n        message = addMessage(gs.getMessage(MSG_INTERCTION_NOT_FOUND,vaInputs.interaction_number));\n    }\n    vaVars.output_message = message;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "975a0f59aa104801b0f3928fbad8ae54": {
+            "id": "975a0f59aa104801b0f3928fbad8ae54",
+            "stepType": "Prompt",
+            "name": "Interaction Number",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Please enter Interaction Number"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "24b0a84f106b4ef39c7a258d0fabdfd0",
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            }
+          },
+          "ca63c928a8864ffc8ff6704efbbc2517": {
+            "id": "ca63c928a8864ffc8ff6704efbbc2517",
+            "stepType": "TextOutput",
+            "name": "output",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.output_message}}",
+                          "displayValue": "Script Variables➛output_message"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "7b1fe139422244f1976ecfde3ad428fc": {
+            "id": "7b1fe139422244f1976ecfde3ad428fc",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "983ea6a2e3cb41d887dcdf851b07b6b7": {
+            "id": "983ea6a2e3cb41d887dcdf851b07b6b7",
+            "stepType": "Prompt",
+            "name": "Re Enter",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Do you want to try for another Interaction/Task?"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "89c2e55d5d7f48e6be61c8c22476e8f3"
+          },
+          "20314099e0cd4038ad3ea5e5893412c9": {
+            "stepType": "ChoicePrompt",
+            "name": "interaction_or_others",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Please select the Task Type"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "796042ea9f874bff91d09bfb3dfc6787",
+            "id": "20314099e0cd4038ad3ea5e5893412c9",
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false
+          },
+          "0c393dd87f174c9382edd8526082f120": {
+            "id": "0c393dd87f174c9382edd8526082f120",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "95d09506a92548158c1605814043dcd8": {
+            "id": "95d09506a92548158c1605814043dcd8",
+            "stepType": "Prompt",
+            "name": "Task Number",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Please enter Task number"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "08ddf034e4aa4933a74f0aed62bc66c2",
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            }
+          },
+          "a3d5c445ab094cdcb32250ad964620ac": {
+            "id": "a3d5c445ab094cdcb32250ad964620ac",
+            "name": "evaluate",
+            "script": "(function execute() {\n    var addMessage = function(val) {\n        if (message) {\n            return message + '<br/>' + val;\n        }\n        return val;\n    }\n    var getGlideRecord = function(tableName) {\n        return new GlideRecord(tableName);\n    }\n    var getDocument = function(number, documentTable) {\n        var gr = getGlideRecord(documentTable);\n        gr.addQuery('number', number);\n        gr.query();\n        return gr;\n    }\n    var getWorkItem = function(sysId) {\n        var gr = getGlideRecord('awa_work_item');\n        gr.addQuery('document_id', sysId);\n        gr.query();\n        return gr;\n    }\n    var getDocumentTable = function() {\n        var id = vaInputs.task_number.toString();\n        if (id.startsWith('INC')) {\n            return 'incident';\n        } else if (id.startsWith('PRB')) {\n            return 'problem';\n        } else {\n            return null;\n        }\n    }\n    var MSG_WORK_ITEM_GENERATED = '{0} work item generated. ';\n    var MSG_WORK_ITEM_NOT_GENERATED = 'Work item is not created. ';\n    var MSG_CHECK_FOR_BUSINESS_RULES = 'Check for Business rules on awa_work_item table or time out configuration based on the reason for canceling the work items. ';\n    var MSG_NO_QUEUE_EXIST = 'No queue exist for Document with number: {0}. ';\n    var MSG_DOCUMENT_NOT_FOUND = 'Document not found with number {0}. ';\n    var MSG_AGENT_AVAILABLE = 'Right now Agents are available for Service Channel: {0}';\n    var MSG_NO_AGENT_AVAILABLE = 'Right now no Agent available for Service Channel: {0}. ';\n    var MSG_NO_AGENT_AVAILABLE_WITH_SKILLS = 'Right now no Agent available for Service Channel: {0} with required skills. ';\n    var MSG_AGENT_AVAILABLE_WITH_SKILLS = 'Right now Agents are available for Service Channel: {0} with required skills. ';\n    var MSG_AVAILABLE_QUEUES = 'Below queues are available. Please validate the schedule and utilization conditions: ';\n    var MSG_WORK_ITEM_STATUS = 'Associated work item is in {0} state';\n    var MSG_WORK_ITEM_STATUS_CANCELLED = 'Associated work item is in cancelled state with reason {0}';\n    var message = '';\n    var documentTable = getDocumentTable(vaInputs.task_number);\n    if (!documentTable) {\n        message = addMessage(gs.getMessage(MSG_DOCUMENT_NOT_FOUND, vaInputs.task_number));\n        vaVars.output_message = message;\n        return;\n    }\n    var documentGr = getDocument(vaInputs.task_number, documentTable);\n    if (documentGr && documentGr.next()) {\n        var workItemGr = getWorkItem(documentGr.getUniqueValue());\n        var count = workItemGr.getRowCount();\n        if (count > 1) {\n            message = addMessage(gs.getMessage(MSG_WORK_ITEM_GENERATED, count));\n            message = addMessage(gs.getMessage(MSG_CHECK_FOR_BUSINESS_RULES));\n        } else if (count == 0) {\n            message = addMessage(gs.getMessage(MSG_WORK_ITEM_NOT_GENERATED));\n            var queueGr = new GlideRecord('awa_queue');\n            queueGr.addEncodedQuery('active=true^service_channel.workitem_table=' + documentTable);\n            queueGr.orderBy('order');\n            queueGr.query();\n            if (queueGr.getRowCount() == 0) {\n                message = addMessage(gs.getMessage(MSG_NO_QUEUE_EXIST, vaInputs.task_number));\n                vaVars.output_message = message;\n                return;\n            }\n            message = addMessage(gs.getMessage(MSG_AVAILABLE_QUEUES));\n            while (queueGr.next()) {\n                var url = vaVars.base_url + 'awa_queue.do?sys_id=' + queueGr.getUniqueValue();\n                message = addMessage('<a href=' + url + '>' + queueGr.getValue('name') + '</a>');\n            }\n        } else if (count == 1) {\n            if (workItemGr.next()) {\n                var state = workItemGr.getValue('state');\n                if (state === 'cancelled') {\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS_CANCELLED, workItemGr.getValue('cancelled_reason')));\n                } else {\n                    message = addMessage(gs.getMessage(MSG_WORK_ITEM_STATUS, workItemGr.getValue('state')));\n                }\n                var queue = workItemGr.getValue('queue');\n                var queueGr = new GlideRecord('awa_queue');\n                queueGr.get(queue);\n                var serviceChannel = queueGr.getValue('service_channel');\n                var serviceChannelGr = new GlideRecord('awa_service_channel');\n                serviceChannelGr.get(serviceChannel);\n                var defaultCapacity = serviceChannelGr.getValue('default_capacity');\n                var channelCapacityGr = new GlideRecord('awa_agent_presence_capacity');\n                channelCapacityGr.addQuery('channel', serviceChannel);\n                channelCapacityGr.addEncodedQuery('aca_presence_state.available_to_receive_work_items=true');\n                channelCapacityGr.addQuery('ac_workload', '<', defaultCapacity);\n                channelCapacityGr.query();\n                if (channelCapacityGr.getRowCount() == 0) {\n                    message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE, serviceChannelGr.getValue('name')));\n                    vaVars.output_message = message;\n                    return;\n                }\n                var skillEnabled = gs.getProperty('glide.awa.skill_level.evaluate');\n                if (skillEnabled && skillEnabled == 'true') {\n                    var skills = [];\n                    var skillGr = new GlideRecord('task_m2m_skill');\n                    skillGr.addQuery('task', documentGr.getUniqueValue());\n                    skillGr.query();\n                    while (skillGr.next()) {\n                        skills.push(skillGr.getUniqueValue());\n                    }\n                    skills.sort(function(a, b) {\n                        return a.localeCompare(b);\n                    });\n                    while (channelCapacityGr.next()) {\n                        channelCapacityGr.getValue('ap_agent');\n                        var userSkillGr = new GlideRecord('sys_user_has_skill');\n                        userSkillGr.addQuery('user', channelCapacityGr.getValue('ap_agent'));\n                        userSkillGr.addQuery('skill', 'IN', skills.toString().replaceAll('[').replaceAll(']'));\n                        userSkillGr.query();\n                        if (userSkillGr.getRowCount() != skills.length) {\n                            continue;\n                        }\n                        var userSkills = [];\n                        while (userSkillGr.next()) {\n                            userSkills.push(userSkillGr.getValue('skill'));\n                        }\n                        userSkills.sort(function(a, b) {\n                            return a.localeCompare(b);\n                        });\n                        if (userSkills.toString() == skills.toString()) {\n                            message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE_WITH_SKILLS, serviceChannelGr.getValue('name')));\n                            vaVars.output_message = message;\n                            return;\n                        }\n                    }\n                    message = addMessage(gs.getMessage(MSG_NO_AGENT_AVAILABLE_WITH_SKILLS, serviceChannelGr.getValue('name')));\n                } else {\n                    message = addMessage(gs.getMessage(MSG_AGENT_AVAILABLE, serviceChannelGr.getValue('name')));\n                }\n            }\n        }\n    } else {\n        message = addMessage(gs.getMessage(MSG_DOCUMENT_NOT_FOUND, vaInputs.task_number));\n    }\n    vaVars.output_message = message;\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "6efe10730c25433e99c9d15e6444c562",
+            "edgeType": "Branch",
+            "source": "7b1fe139422244f1976ecfde3ad428fc",
+            "target": "3bbf2e8af7a94cea8af9fe2ee06aa232",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.re_enter=",
+              "mode": "query"
+            },
+            "label": "Exit"
+          },
+          {
+            "id": "420ce22b44f741ee8f14e704cd22be0b",
+            "edgeType": "Edge",
+            "source": "cc62e227f6dd4804aeaf3dbe74f259f4",
+            "target": "ca63c928a8864ffc8ff6704efbbc2517",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "47e7cde6f1284af1a357eb00c61ada1d",
+            "edgeType": "Edge",
+            "source": "975a0f59aa104801b0f3928fbad8ae54",
+            "target": "cc62e227f6dd4804aeaf3dbe74f259f4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "cc7181616fb947bba13be1c1dfc00440",
+            "edgeType": "Edge",
+            "source": "ca63c928a8864ffc8ff6704efbbc2517",
+            "target": "983ea6a2e3cb41d887dcdf851b07b6b7",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "33774829ee5e43bab4f69a5197c8c95b",
+            "edgeType": "Edge",
+            "source": "983ea6a2e3cb41d887dcdf851b07b6b7",
+            "target": "7b1fe139422244f1976ecfde3ad428fc",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "373ae80c013a4f63a34f77ac5e4e7a81",
+            "edgeType": "Branch",
+            "source": "7b1fe139422244f1976ecfde3ad428fc",
+            "target": "20314099e0cd4038ad3ea5e5893412c9",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.re_enter=true",
+              "mode": "query"
+            },
+            "label": "Recheck selected"
+          },
+          {
+            "id": "ab9e0250a6b049388f0aa014af17a889",
+            "edgeType": "Edge",
+            "source": "0fb3b6ff9e344abe92e34537af851c2f",
+            "target": "20314099e0cd4038ad3ea5e5893412c9",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6284114b641342bb82f04ddc93e4c2b7",
+            "edgeType": "Edge",
+            "source": "20314099e0cd4038ad3ea5e5893412c9",
+            "target": "0c393dd87f174c9382edd8526082f120",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a2102245221942f4859d129905becd17",
+            "edgeType": "Branch",
+            "source": "0c393dd87f174c9382edd8526082f120",
+            "target": "975a0f59aa104801b0f3928fbad8ae54",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.interaction_or_others=interaction",
+              "mode": "query"
+            },
+            "label": "Interaction"
+          },
+          {
+            "id": "67996bcd9c3743399bf64286382e715e",
+            "edgeType": "Branch",
+            "source": "0c393dd87f174c9382edd8526082f120",
+            "target": "95d09506a92548158c1605814043dcd8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.interaction_or_others=other",
+              "mode": "query"
+            },
+            "label": "Others"
+          },
+          {
+            "id": "d1eefc7283014f4aba30e75276c5b763",
+            "edgeType": "Edge",
+            "source": "95d09506a92548158c1605814043dcd8",
+            "target": "a3d5c445ab094cdcb32250ad964620ac",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "45ce1b15358746fca7530ffc949de2d0",
+            "edgeType": "Edge",
+            "source": "a3d5c445ab094cdcb32250ad964620ac",
+            "target": "ca63c928a8864ffc8ff6704efbbc2517",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "40537b0ea4cd45d99c173ffdccc4e18f": {
+        "category": "vaInputs",
+        "id": "40537b0ea4cd45d99c173ffdccc4e18f",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "24b0a84f106b4ef39c7a258d0fabdfd0": {
+        "id": "24b0a84f106b4ef39c7a258d0fabdfd0",
+        "name": "interaction_number",
+        "label": "Interaction Number",
+        "varType": "string",
+        "secure": false,
+        "category": "vaInputs",
+        "encryptionHashFunction": "SHA-256",
+        "encryptionSalt": {
+          "value": "MTYyOTgwNjA0MTM5NiBWQSBEZXNpZ25lciBpcyBhd2Vzb21l",
+          "mode": "simple"
+        }
+      },
+      "ccbee794cdfa4992a8b5709e7b1f4c6b": {
+        "id": "ccbee794cdfa4992a8b5709e7b1f4c6b",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "message",
+        "label": "message",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "89c2e55d5d7f48e6be61c8c22476e8f3": {
+        "id": "89c2e55d5d7f48e6be61c8c22476e8f3",
+        "name": "re_enter",
+        "label": "Re Enter",
+        "varType": "boolean",
+        "secure": false,
+        "category": "vaInputs"
+      },
+      "628fe06951224890b2bf47ea5db1859a": {
+        "id": "628fe06951224890b2bf47ea5db1859a",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    /* return 'a default value'; */\n    return gs.getProperty('glide.servlet.uri');\n})()\n"
+        },
+        "name": "base_url",
+        "label": "base_url",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "796042ea9f874bff91d09bfb3dfc6787": {
+        "id": "796042ea9f874bff91d09bfb3dfc6787",
+        "name": "interaction_or_others",
+        "label": "Interaction_or_others",
+        "varType": "choice",
+        "choices": [
+          {
+            "label": "Interaction",
+            "value": "interaction"
+          },
+          {
+            "label": "Other Task",
+            "value": "other",
+            "checked": true
+          }
+        ],
+        "category": "vaInputs"
+      },
+      "08ddf034e4aa4933a74f0aed62bc66c2": {
+        "id": "08ddf034e4aa4933a74f0aed62bc66c2",
+        "name": "task_number",
+        "label": "Task Number",
+        "varType": "string",
+        "secure": false,
+        "category": "vaInputs",
+        "encryptionHashFunction": "SHA-256",
+        "encryptionSalt": {
+          "value": "MTYzMDk5MDQxNzYyNiBWQSBEZXNpZ25lciBpcyBhd2Vzb21l",
+          "mode": "simple"
+        }
+      },
+      "c5f6d7cb493b482b957b2d5a51413ac9": {
+        "id": "c5f6d7cb493b482b957b2d5a51413ac9",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "output_message",
+        "label": "output_message",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+name: No Agent Available
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

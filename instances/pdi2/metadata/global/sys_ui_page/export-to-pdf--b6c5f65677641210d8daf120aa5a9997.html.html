@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <style>
+        #pdf-orientation {
+            width: 238px;
+        }
+
+        .footer-buttons {
+            display: flex;
+            justify-content: end;
+            padding: 40px 0 0 0;
+        }
+    </style>
+    <g2:evaluate jelly="true">
+        var hasPermissions = false;
+        var tableName = jelly.sysparm_table_name;
+        var sysId = jelly.sysparm_sys_id;
+        var record = new GlideRecordSecure(tableName);
+        if (sysId) {
+            // Fetch the record
+            if (record.get(sysId)) {
+                // Now check if the user can read this specific record
+                if (record.canRead()) {
+                    hasPermissions = true;
+                }
+            }
+        }
+        else {
+            if (jelly.sysparm_isList) hasPermissions = true;
+        }
+        hasPermissions;
+    </g2:evaluate>
+    <j2:if test="$[hasPermissions]">
+        <div class="export-pdf-form">
+			<input id="query_param" value="$[HTML:sysparm_query]" hidden="true" />
+            <div class="pdf-orientation-block form-group ">
+                <label class="control-label" for="pdf-orientation">
+                    <span class="label-text">${gs.getMessage('Orientation')}</span>
+                </label>
+
+                <select class="form-control" id="pdf-orientation" onchange="onOrientationChange(this)">
+                    <option value="portrait">${gs.getMessage('Portrait')}</option>
+                    <option value="landscape">${gs.getMessage('Landscape')}</option>
+                    <j:if test="${sysparm_isList}">
+                        <option value="detailed_portrait">${gs.getMessage('Detailed Portrait')}</option>
+                        <option value="detailed_landscape">${gs.getMessage('Detailed Landscape')}</option>
+                    </j:if>
+                </select>
+            </div>
+            <j:if test="${gs.getProperty('com.snc.pdf.generation.accessibility')}">
+                <span class="input-group-checkbox" style="padding-top: 12px;">
+                    <input id="pdf-accessibility" name="pdf-accessibility-checkbox" type="checkbox" class="checkbox ng-valid" aria-invalid="false" onclick="onAccessibilityChange(this)" />
+                    <label for="pdf-accessibility" class="checkbox-label">${gs.getMessage('Accessible PDF')}</label>
+                </span>
+            </j:if>
+
+            <div class="footer-buttons">
+                <g:dialog_buttons_ok_cancel cancel_text="${gs.getMessage('Cancel')}" ok_text="${gs.getMessage('Export')}" ok_type="button" ok="onClickOk('$[JS:sysparm_table_name]', '$[JS:sysparm_sys_id]', '$[JS:sysparm_view]', '$[JS:sysparm_domain]', '$[JS:sysparm_isList]', '$[JS:sysparm_rows]', '$[JS:sysparm_locale_txt_match]')" />
+            </div>
+            <div id="tab-helper" tabindex="0"></div>
+        </div>
+    </j2:if>
+
+    <j2:if test="$[!hasPermissions]">
+        <p>${gs.getMessage("Security constraints are restricting the page")}</p>
+    </j2:if>
+</j:jelly>

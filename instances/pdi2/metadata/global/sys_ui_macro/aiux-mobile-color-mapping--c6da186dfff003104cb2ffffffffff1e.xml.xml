@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+    <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+      <g2:evaluate var="jvar_theme_url" expression="sn_aiux.Experience.isKarunaServiceAvailable() ? '/aiux/api/mobile/theme-defaults' : sn_aiux.Experience.getOffGlideAIXPath() + '/mobile-theme-defaults'" />
+      <tr><td colspan="2">
+        <div id="aix_theme_css_vars" style="margin:8px;padding:12px;background:#f9f9f9;border:1px solid #e0e0e0;border-radius:4px;max-height:500px;overflow-y:auto;">
+          <h4 style="margin:0 0 12px;font-size:14px;color:#333;">${gs.getMessage('Mobile Color Variable Defaults')}</h4>
+          <p id="aix_css_vars_loading" style="color:#999;font-style:italic;">${gs.getMessage('Loading...')}</p>
+        </div>
+        <script>
+          (function() {
+            var LT = String.fromCharCode(60);
+            var GT = String.fromCharCode(62);
+            function tag(t) { return LT + t + GT; }
+            function ctag(t) { return LT + '/' + t + GT; }
+            function escapeHtml(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s)); return d.innerHTML; }
+
+            var container = document.getElementById('aix_theme_css_vars');
+            var loadingEl = document.getElementById('aix_css_vars_loading');
+            var url = '$[jvar_theme_url]';
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.onreadystatechange = function() {
+              if (xhr.readyState !== 4) return;
+              if (loadingEl) loadingEl.remove();
+
+              if (xhr.status !== 200) {
+                container.innerHTML += "${JS:gs.getMessage('Unable to load mobile color defaults. Please ensure the sncapps service is running.')}";
+                return;
+              }
+
+              try {
+                var data = JSON.parse(xhr.responseText);
+                var vars = data.result || data;
+                var keys = Object.keys(vars);
+                var html = '';
+                var i;
+
+                if (keys.length === 0) {
+                  html = "${JS:gs.getMessage('No default mappings found.')}";
+                } else {
+                  html += tag('table cellpadding="4" cellspacing="0" border="0" style="width:100%;font-size:12px;font-family:monospace;"');
+                  html += tag('tr style="border-bottom:2px solid #ddd;"');
+                  html += tag('th style="padding:6px 8px;text-align:left;color:#555;font-size:11px;text-transform:uppercase;"');
+                  html += "${JS:gs.getMessage('Variable')}";
+                  html += ctag('th');
+                  html += tag('th style="padding:6px 8px;text-align:left;color:#555;font-size:11px;text-transform:uppercase;"');
+                  html += "${JS:gs.getMessage('Token Reference')}";
+                  html += ctag('th');
+                  html += ctag('tr');
+                  for (i = 0; i !== keys.length; i++) {
+                    html += tag('tr style="border-bottom:1px solid #f0f0f0;"');
+                    html += tag('td style="padding:3px 8px;color:#0066cc;white-space:nowrap;width:40%;"');
+                    html += escapeHtml(keys[i]);
+                    html += ctag('td');
+                    html += tag('td style="padding:3px 8px;color:#333;"');
+                    html += escapeHtml(vars[keys[i]]);
+                    html += ctag('td');
+                    html += ctag('tr');
+                  }
+                  html += ctag('table');
+                }
+
+                container.innerHTML += html;
+              } catch (e) {
+                container.innerHTML += "${JS:gs.getMessage('Failed to parse mobile color defaults. Please check the sncapps service to fetch the color defaults.')}";
+              }
+            };
+            xhr.send();
+          })();
+        </script>
+      </td></tr>
+    </j:jelly>

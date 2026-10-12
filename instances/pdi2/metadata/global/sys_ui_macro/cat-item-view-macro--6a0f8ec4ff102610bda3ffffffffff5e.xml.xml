@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/js_includes_catalog.js" includes="true" />
+    <g:evaluate var="jvar_theme">
+        var theme = gs.getPreference('glide.css.theme.ui16');
+        if (null == theme){
+        var company = gs.getUser().getCompanyRecord();
+        if (null != company)
+        theme = company.getValue("theme");
+        }
+        theme;
+    </g:evaluate>
+    <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <g:inline template="sc_sanitize.xml" />
+    <g:inline template="sc_request_parent_message.xml" />
+    <g:inline template="glide_weba_header.xml" />
+    <!-- check authorization -->
+    <g2:evaluate var="jvar_cat_item_authorized" jelly="true">
+        var answer = true;
+        var item = GlideappCatalogItem.get(jelly.sysparm_id);
+        if (item == null || !item.canViewInDomain())
+        answer = false;
+        else {
+        var preview = jelly.sysparm_preview;
+        if (preview $[AMP]$[AMP] gs.hasRole('catalog_admin'))
+        answer = true;
+        else {
+        if (!gs.nil(jelly.sysparm_cart_edit)) {
+        var cartItem = new GlideRecord('sc_cart_item');
+        cartItem.get(jelly.sysparm_cart_edit);
+        answer = cartItem.canRead() $[AMP]$[AMP] cartItem.cat_item == jelly.sysparm_id $[AMP]$[AMP] item.canView();
+        }
+        else
+        answer = gs.hasRole('catalog_admin') || item.canView();
+        }
+        }
+        answer;
+    </g2:evaluate>
+    <j2:if test="$[!sysparm_catalog || sysparm_catalog == '' || sysparm_catalog == null]">
+        <g2:evaluate var="sysparm_catalog" jelly="true">
+            var item = GlideappCatalogItem.get(jelly.sysparm_id);
+            var cat = item.getFirstAccessibleCategoryForSearch();
+            var sysparm_catalog = GlideappCategory.get(cat).getCatalog();
+            sysparm_catalog;
+        </g2:evaluate>
+    </j2:if>
+    <div id="page_title" data-form-title="$[HTML:item.getName()]" style="display:none" />
+    <j2:if test="$[jvar_cat_item_authorized]">
+        <div id="cat_item_view" class="" sn-atf-blacklist="IS_SERVICE_CATALOG">
+            <input type="hidden" id="log_variable_actions" name="log_variable_actions" value="${gs.getProperty('glide.sc.log.variable_actions')}" />
+            <g:catalog_item />
+
+            <j:if test="${new GlideappScriptHelper().isUI16Enabled()}">
+                <script>
+                    catalogHistory.setHistory('$[HTML,JS:sc_cat_item.name.getDisplayValue()]', catalogHistory.getPageUrl());
+                </script>
+            </j:if>
+        </div>
+    </j2:if>
+    <j2:if test="$[!jvar_cat_item_authorized]">
+        <div class="notification notification-error">${gs.getMessage('You are either not authorized or the cart item is invalid')}</div>
+    </j2:if>
+    <g:inline template="catalog_web_analytics.xml" />
+</j:jelly>

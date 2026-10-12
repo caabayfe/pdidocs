@@ -1,0 +1,695 @@
+_meta:
+  hash: a3b1ca7c27d74570ffc72796e077d8187ef82cf88097af27bce7815788fe890d
+  hash_version: 1
+  scope: sn_uibtk_site_map
+  sys_class_name: sys_cb_topic
+  sys_created_by: admin
+  sys_created_on: 2025-05-07 18:39:12
+  sys_domain: global
+  sys_id: 94fac93aff11221018c8ffffffffff2f
+  sys_mod_count: '23'
+  sys_package: e66ddf5fbdfe27b1ff649fc8eafdcb62
+  sys_scope: e66ddf5fbdfe27b1ff649fc8eafdcb62
+  sys_update_name: sys_cb_topic_94fac93aff11221018c8ffffffffff2f
+  sys_updated_by: admin
+  sys_updated_on: 2025-05-12 20:19:07
+applicability: ''
+applicability_mode: query
+autopilot_topic: 'false'
+category: ''
+channels: ''
+connect_queue: ''
+context_profiles: ''
+description: Presents a greeting to the user at the beginning of a conversation. The purpose of this conversation is to provide accurate answers to user requests related to UI Builder features from ServiceNow documentation.
+dialog_acts_enabled: 'false'
+expose_on_palette: 'false'
+flexible_conversation_switching: 'false'
+foundational: 'false'
+graph: |-
+  {
+    "graph_api_version": "1.0.78",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "e77b00b951ef4216959059968f7b3425": {
+            "id": "e77b00b951ef4216959059968f7b3425",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "cd234628c4e440bfac97574f09b4654f": {
+            "id": "cd234628c4e440bfac97574f09b4654f",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "I understand that you want to end this conversation. Thank you and have a great day!"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            }
+          },
+          "5f057dccd44642fbbb338c4d525dec45": {
+            "id": "5f057dccd44642fbbb338c4d525dec45",
+            "name": "Set agent context",
+            "script": "(function execute() {\n    // Setup to match Now Assist - Greeting topic\n    vaVars.global_agentContext = JSON.stringify({\n        \"conversationId\": vaSystem.getConversationId()\n    });\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "2833dbe2331a446682680bf38cafd23e": {
+            "id": "2833dbe2331a446682680bf38cafd23e",
+            "stepType": "ScriptOutput",
+            "name": "Send Greeting Message",
+            "output_type": "single_part",
+            "script": "(function execute() {\n  // Taken from Now Assist - Greeting topic\n  var aisHelper = new sn_nowassist_va.NowAssistAISearchHelper();\n  var logger = aisHelper.getLogger(aisHelper.getLoggerContext(vaSystem));\n  vaVars.isNASS = vaSystem.isNASSConversation();\n  var greeting = new sn_cs.SinglePartOutMsg();\n  var userName = \"\";\n  try {\n    if (gs.isLoggedIn()) {\n      userName = vaInputs.user.first_name.getDisplayValue()\n        ? vaInputs.user.first_name.getDisplayValue()\n        : gs.getUser().getFirstName();\n    }\n  } catch (error) {\n    logger.error(\n      \"[NowAssistGreetingHelper] Error trying to derive name of user for conversation: {conversation}\"\n    );\n  }\n\n  var configuredGreeting =\n    global.NowAssistGreetingHelper.constructGreetingMessage({\n      userName: userName,\n      requesterLang: vaContext.getRequesterLang(),\n      greetingMessage: vaSystem.getContextProfileMessage(\"greeting\"),\n      greetingGuestMessage: vaSystem.getContextProfileMessage(\"greeting_guest\"),\n      channel: getCurrentChannel(),\n    });\n  if (configuredGreeting.type === \"html\") {\n    greeting.setHtmlPart(configuredGreeting.message);\n  } else if (configuredGreeting.type === \"json\") {\n    greeting.setAnimationPayloadPart(configuredGreeting.message);\n  } else {\n    greeting.setTextPart(configuredGreeting.message);\n  }\n  return greeting;\n})();\n\nfunction getCurrentChannel() {\n  var channel = vaContext.deviceType;\n  if (channel == \"mweb\") {\n    // Sends either self_service or chat_client. Need this to differentiate b/w web client experiences\n    return vaContext.experience;\n  }\n  return channel;\n}\n",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "b3885fb25d7b4e778aa135cf03731160": {
+            "id": "b3885fb25d7b4e778aa135cf03731160",
+            "stepType": "ReusableTopic",
+            "name": "User Request",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "useTemplateTopic": true,
+            "reusableTopicChoice": "",
+            "reusableTopicId": "",
+            "inputs": {
+              "aisresponse": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.aisresponse}}",
+                          "displayValue": "Input Variables➛AISResponse"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              }
+            },
+            "outputs": [
+              {
+                "id": "0108bb39d03b4c46a3288611a1e671e7",
+                "value": "user_request",
+                "mapping": "user_request"
+              }
+            ],
+            "variableIds": [
+              "0108bb39d03b4c46a3288611a1e671e7"
+            ],
+            "dynamicTopicBlockName": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "UI Builder Now Assist Question"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "inputDynamicModal": {
+              "inputDefinitions": [
+                {
+                  "type": "String",
+                  "value": "",
+                  "id": "454709c7512a457bb9ba877dacae8a81",
+                  "name": "aisresponse"
+                }
+              ]
+            },
+            "outputDynamicModal": {
+              "outputDefinitions": [
+                "user_request"
+              ]
+            }
+          },
+          "eafe5ab5d8964e599e262cc151e0616d": {
+            "id": "eafe5ab5d8964e599e262cc151e0616d",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "417ff1955da34779922014da942c6bb7": {
+            "id": "417ff1955da34779922014da942c6bb7",
+            "stepType": "TextOutput",
+            "name": "Enter Something",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "If you need help, try asking a question."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "ce41123eb7f44e97a3698bd06bf1d965"
+              }
+            ],
+            "isCollapsible": true,
+            "requestFeedback": true,
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "fb35fc82292c4bb1b21032c78a4f082d": {
+            "id": "fb35fc82292c4bb1b21032c78a4f082d",
+            "name": "Call Get Help Skill",
+            "invocationType": "action",
+            "stepType": "FlowAction",
+            "actionSpoke": "191d42f7c35c165034e25773e4013197",
+            "actionSpokeAction": "a1b82a94773912100a9e34357a5a991a",
+            "actionWaitType": "sync",
+            "actionRunAs": "session_user",
+            "permissionsNote": "By default, the Action executes based on the permissions of the user who initiated the conversation. For elevated privileges, you can set to System User.",
+            "actionSecureField": false,
+            "actionSelectSecureField": "",
+            "actionPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionConfirmPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionNonSecureChannelMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionInputs": {
+              "input-query": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.user_request}}",
+                          "displayValue": "Input Variables➛User_request"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string"
+              },
+              "input-page": {
+                "value": "(function execute() {\n    var url = vaVars.global_context_url;\n    if (!url.endsWith(\"/\")) {\n       url += \"/\";\n    }\n    var isClassicPage = url.contains(\".do\");\n    if (isClassicPage) {\n        return url.slice(0, url.indexOf(\".do\"));\n    }\n    var route = vaVars.global_context_route;\n    var searchStr = \"/\" + route + \"/\";\n    var index = url.indexOf(searchStr); \n    if (index !== -1) {\n        return url.slice(0, index + searchStr.length);\n    }\n    return ''; \n})()",
+                "mode": "script"
+              },
+              "input-conversationid": {
+                "value": "(function execute() {\n    return vaSystem.getConversationId();\n})()",
+                "mode": "script"
+              }
+            },
+            "actionOutputs": {
+              "output-aisresponse": [
+                {
+                  "id": "d6658773f68148cd972e6bf217d8fdc7",
+                  "mapping": "AISResponse",
+                  "disabled": false,
+                  "type": "string",
+                  "value": "AISResponse",
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": "",
+                  "variable": "AISResponse",
+                  "variableName": "aisresponse"
+                }
+              ],
+              "output-__action_status__": [
+                {
+                  "id": "54a9c3b346a04a8bbe3685b2b4456ac0",
+                  "mapping": "Action Status",
+                  "disabled": false,
+                  "type": "object",
+                  "value": "Action Status",
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": "",
+                  "variable": "Action Status",
+                  "variableName": "action_status"
+                }
+              ],
+              "output-__dont_treat_as_error__": [
+                {
+                  "id": "5e21f6d17a374662b6421296777b84b1",
+                  "mapping": "Don't Treat as Error",
+                  "disabled": false,
+                  "type": "boolean",
+                  "value": "Don't Treat as Error",
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": "",
+                  "variable": "Don't Treat As Error",
+                  "variableName": "don_t_treat_as_error"
+                }
+              ]
+            },
+            "actionDefinition": {
+              "id": "a1b82a94773912100a9e34357a5a991a",
+              "latest_snapshot_id": "a1b82a94773912100a9e34357a5a991a",
+              "parent_id": "ae972290773912100a9e34357a5a9973",
+              "type": "action",
+              "name": "callgethelpapi",
+              "label": "callGetHelpAPI",
+              "scope_id": "191d42f7c35c165034e25773e4013197",
+              "description": "This action calls the REST API to fetch answers for a given query.",
+              "category": "",
+              "parameters_have_loaded": true,
+              "input_parameters": [
+                {
+                  "supported_input_modes": [
+                    "script",
+                    "data_pill",
+                    "data_entry"
+                  ],
+                  "name": "query",
+                  "label": "query",
+                  "type": "string",
+                  "order": 1,
+                  "required": true,
+                  "value": [],
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": ""
+                },
+                {
+                  "supported_input_modes": [
+                    "script",
+                    "data_pill",
+                    "data_entry"
+                  ],
+                  "name": "page",
+                  "label": "page",
+                  "type": "string",
+                  "order": 2,
+                  "required": true,
+                  "value": [],
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": ""
+                },
+                {
+                  "supported_input_modes": [
+                    "script",
+                    "data_pill",
+                    "data_entry"
+                  ],
+                  "name": "conversationid",
+                  "label": "conversationId",
+                  "type": "string",
+                  "order": 3,
+                  "required": false,
+                  "value": [],
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": ""
+                }
+              ],
+              "output_parameters": [
+                {
+                  "name": "aisresponse",
+                  "label": "AISResponse",
+                  "type": "string",
+                  "order": 1,
+                  "required": true,
+                  "value": [],
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": ""
+                },
+                {
+                  "name": "__action_status__",
+                  "label": "Action Status",
+                  "type": "object",
+                  "order": 2,
+                  "required": false,
+                  "value": [],
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": ""
+                },
+                {
+                  "name": "__dont_treat_as_error__",
+                  "label": "Don't Treat as Error",
+                  "type": "boolean",
+                  "order": 3,
+                  "required": false,
+                  "value": [],
+                  "description": "",
+                  "is_list_data_entry": false,
+                  "dependent_on_field": ""
+                }
+              ]
+            },
+            "subflowSecureField": false,
+            "subflowSelectSecureField": "",
+            "subflowPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "subflowConfirmPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "subflowNonSecureChannelMessage": {
+              "mode": "simple",
+              "value": "This action is not supported on this channel."
+            },
+            "variableIds": [
+              "d6658773f68148cd972e6bf217d8fdc7",
+              "54a9c3b346a04a8bbe3685b2b4456ac0",
+              "5e21f6d17a374662b6421296777b84b1"
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "bcb2bfc2ac90405c9d01ecd31ee91585": {
+            "id": "bcb2bfc2ac90405c9d01ecd31ee91585",
+            "stepType": "TextOutput",
+            "name": "Display Response",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.aisresponse}}",
+                          "displayValue": "Input Variables➛AISResponse"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "a7e08c04c726462bbdc67a80dc782df2"
+              }
+            ],
+            "isCollapsible": true,
+            "requestFeedback": true,
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "a2a06f4ecdec42679373aab0cac30fa0": {
+            "id": "a2a06f4ecdec42679373aab0cac30fa0",
+            "stepType": "Decision",
+            "name": "Decision"
+          }
+        },
+        "edges": [
+          {
+            "id": "1fbcc7a30d4a4b9f9854a7ebc2f8b8e9",
+            "edgeType": "Edge",
+            "source": "2833dbe2331a446682680bf38cafd23e",
+            "target": "b3885fb25d7b4e778aa135cf03731160",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b0e23003cc83494e8e9048d0429d92d2",
+            "edgeType": "Branch",
+            "source": "eafe5ab5d8964e599e262cc151e0616d",
+            "target": "417ff1955da34779922014da942c6bb7",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.user_requestISEMPTY",
+              "mode": "query"
+            },
+            "label": "No Request"
+          },
+          {
+            "id": "95411d92541c4ca9a8382db24e9dfea8",
+            "edgeType": "Edge",
+            "source": "e77b00b951ef4216959059968f7b3425",
+            "target": "5f057dccd44642fbbb338c4d525dec45",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9fb8695d2452474fbbc3ce2e406df74d",
+            "edgeType": "Edge",
+            "source": "5f057dccd44642fbbb338c4d525dec45",
+            "target": "2833dbe2331a446682680bf38cafd23e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0186f79fdba54945a33be1a36321844a",
+            "edgeType": "Edge",
+            "source": "b3885fb25d7b4e778aa135cf03731160",
+            "target": "eafe5ab5d8964e599e262cc151e0616d",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "8e43290e2c78451ba21fae09c979ae48",
+            "edgeType": "Edge",
+            "source": "417ff1955da34779922014da942c6bb7",
+            "target": "b3885fb25d7b4e778aa135cf03731160",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a61197795d8c46deae743c430a3eaafe",
+            "edgeType": "Branch",
+            "source": "eafe5ab5d8964e599e262cc151e0616d",
+            "target": "fb35fc82292c4bb1b21032c78a4f082d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.user_requestISNOTEMPTY",
+              "mode": "query"
+            },
+            "label": "Has Request"
+          },
+          {
+            "id": "e3e4c34a594949e28f297a03261b119d",
+            "edgeType": "Edge",
+            "source": "fb35fc82292c4bb1b21032c78a4f082d",
+            "target": "bcb2bfc2ac90405c9d01ecd31ee91585",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "7e629c79cba943c4a4ab02a78509e6dd",
+            "edgeType": "Edge",
+            "source": "bcb2bfc2ac90405c9d01ecd31ee91585",
+            "target": "a2a06f4ecdec42679373aab0cac30fa0",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6c9de3997169441495fd1dfcc8bcf79a",
+            "edgeType": "Branch",
+            "source": "a2a06f4ecdec42679373aab0cac30fa0",
+            "target": "cd234628c4e440bfac97574f09b4654f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    // Continue asking for help and never exit conversation\n    return false;\n})()\n"
+            },
+            "label": "Never"
+          },
+          {
+            "id": "0199c059ee424ce9b4e309eac4d42e87",
+            "edgeType": "Branch",
+            "source": "a2a06f4ecdec42679373aab0cac30fa0",
+            "target": "b3885fb25d7b4e778aa135cf03731160",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    // Continue asking for help and never exit conversation\n    return true;\n})()\n"
+            },
+            "label": "Always"
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "b19fd1f1eb8a411b960596d659b05f97": {
+        "id": "b19fd1f1eb8a411b960596d659b05f97",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "greeting_message",
+        "label": "greeting_message",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "d6658773f68148cd972e6bf217d8fdc7": {
+        "id": "d6658773f68148cd972e6bf217d8fdc7",
+        "name": "aisresponse",
+        "label": "AISResponse",
+        "defaultValue": "AISResponse",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "description": "",
+        "is_list_data_entry": false,
+        "dependent_on_field": "",
+        "nodeId": "fb35fc82292c4bb1b21032c78a4f082d",
+        "isHidden": false
+      },
+      "54a9c3b346a04a8bbe3685b2b4456ac0": {
+        "id": "54a9c3b346a04a8bbe3685b2b4456ac0",
+        "name": "action_status",
+        "label": "Action Status",
+        "defaultValue": "Action Status",
+        "varType": "object",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "description": "",
+        "is_list_data_entry": false,
+        "dependent_on_field": "",
+        "nodeId": "fb35fc82292c4bb1b21032c78a4f082d",
+        "isHidden": false
+      },
+      "5e21f6d17a374662b6421296777b84b1": {
+        "id": "5e21f6d17a374662b6421296777b84b1",
+        "name": "don_t_treat_as_error",
+        "label": "Don't Treat As Error",
+        "defaultValue": "Don't Treat as Error",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "description": "",
+        "is_list_data_entry": false,
+        "dependent_on_field": "",
+        "nodeId": "fb35fc82292c4bb1b21032c78a4f082d",
+        "isHidden": false
+      },
+      "0108bb39d03b4c46a3288611a1e671e7": {
+        "id": "0108bb39d03b4c46a3288611a1e671e7",
+        "name": "user_request",
+        "label": "User_request",
+        "defaultValue": "user_request",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "nodeId": "b3885fb25d7b4e778aa135cf03731160",
+        "isHidden": false
+      }
+    }
+  }
+key_phrases: ''
+library: 'false'
+live_agent: 'false'
+model_type: llm
+modify_confirmation_enabled: 'false'
+name: UI Builder Now Assist Greeting
+nlu_intent: ''
+nlu_intent_label: ''
+nlu_model: ''
+nlu_model_label: ''
+nlu_provider: ''
+palette_label: ''
+roles: ''
+root_topic_id: ''
+secure_custom_input_control: 'false'
+source_topic_id: ''
+sys_name: UI Builder Now Assist Greeting
+sys_policy: ''
+title: UI Builder Now Assist Greeting
+triggerable_by_notification: 'false'
+type: SETUP_TOPIC

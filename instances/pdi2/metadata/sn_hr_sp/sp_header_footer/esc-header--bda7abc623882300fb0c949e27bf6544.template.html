@@ -1,0 +1,110 @@
+<!-- Nav bar menu items starts-->
+<nav class="navbar-inverse" aria-label="Primary" role="navigation">
+
+  <!-- Piece above searchbar -->
+
+  <div class="clearfix">
+    <div class="navbar-header nav-container">
+
+      <!-- Logo -->
+      <a class="navbar-brand" ng-if="::!portal.logo" href="?id={{::portal.homepage_dv}}" aria-label="{{::portal.title}}"><span>{{::portal.title}}</span></a>
+      <a class="navbar-brand navbar-brand-logo" ng-if="::portal.logo" href="?id={{::portal.homepage_dv}}" aria-label="{{::portal.title}}${ - Home Page}" data-toggle="tooltip" data-placement="bottom" data-title="{{::portal.title}}${ - Home}">
+        <img ng-src="{{::portal.logo}}" alt="{{::portal.title}}${ - Home}"/>
+      </a>
+
+      <!-- Toggle Button -->
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse" ng-class="(expanded) ? 'in' : 'collapsed'" ng-click="expanded = !expanded" aria-expanded="{{expanded ? true: false}}" ng-style="{'background-color' : (expanded) ? '#333' : 'transparent'}" aria-label="{{expanded ? '${Hide menu primary navigation}' : '${Show menu primary navigation}'}}" data-toggle="tooltip" data-placement="auto bottom" data-original-title="{{expanded ? '${Hide Menu}' : '${Show Menu}'}}">
+        <span ng-show="(data.todoCount + data.requestCount + cartItemCount) > 0" class="label label-as-badge label-primary navbar-collapse-label">{{data.todoCount + data.requestCount + cartItemCount}}</span>
+        <span class="sr-only">${Toggle navigation}</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+
+      <!-- Search Bar Desktop -->
+      <div class="header-search navbar-header col-sm-3" ng-if="showSearchBar">
+        <sp-widget widget="data.typeahead"></sp-widget>
+      </div>
+
+      <!-- Header Navbar -->
+      <div class="navbar-collapse upper-collapse navbar-right collapse collapsed" ng-class="(expanded) ? 'in' : 'collapsed'" aria-expanded="false">
+        <div class="height-adjust">
+          <ul class="nav navbar-nav" role="menubar" aria-orientation="horizontal">
+            <li class="hidden-xs" ng-show="loadingIndicator">  
+              <a> 
+                <div class="header-loader" id="hr_loading_indicator"> 
+                  <div class="hidden-xs sp-loading-indicator la-sm"> 
+                    <div></div> 
+                    <div></div> 
+                    <div></div> 
+                  </div> 
+                </div> 
+              </a> 
+            </li> 
+            <li class="visible-xs-block m-t-sm m-b-sm">
+              <a href="{{data.link}}" ng-class="getClass(data.link)" aria-label="{{user.name}} ${profile}" role="menuitem">
+                <span class="navbar-avatar"><sn-avatar class="avatar-small-medium" show-presence="false" primary="user.sys_id" /></span>
+                <span class="visible-xs-inline">{{user.name}}</span>
+              </a>
+            </li>        
+            <li class="hidden-xs header-menu-item" role="presentation" ng-if="data.showTodos">
+              <a href="?id=hrm_todos_page" ng-class="getClass('?id=hrm_todos_page')" id="todos_link"  aria-label="${To-dos}, {{c.todoCountTranslation}}" role="menuitem">
+                <span ng-bind-html="'${To-dos}'"></span>
+                <span ng-show="data.todoCount" class="label label-as-badge label-primary">{{data.todoCount}}</span>
+              </a>
+            </li>
+            <li class="hidden-xs header-menu-item" role="presentation" ng-if="data.showRequests">
+              <a href="?id=my_requests" id="cases_popup" aria-label="${Requests}" role="menuitem"> <!-- TODO: Link for requests -->
+                <span ng-bind-html="'${Requests}'" aria-hidden="true"></span>
+                <span ng-show="data.requestCount" class="label label-as-badge label-primary">{{data.requestCount}}</span>
+              </a>
+            </li>
+            <li>
+            	<sp-widget widget="data.top.menu" id="menu_item"></sp-widget>
+            </li>
+            
+            <li class="visible-xs" ng-if="data.isHrCoreActive" ng-if="data.showTodos">
+              <a href="?id=hrm_todos_page" id="todos_mobile" aria-label="${To-dos}, {{data.todoCountTranslation}}" role="menuitem">
+                <span ng-bind-html="'${To-dos}'" aria-hidden="true"></span>
+                <span ng-show="data.todoCount" class="label label-as-badge label-primary">{{data.todoCount}}</span>
+              </a>
+            </li>
+            <li class="visible-xs" ng-if="data.showRequests">
+              <a href="?id=my_requests" id="requests_mobile" aria-label="${Requests}" role="menuitem">
+                <span ng-bind-html="'${Requests}'" aria-hidden="true"></span>
+                <span ng-show="data.requestCount" class="label label-as-badge label-primary">{{data.requestCount}}</span>
+              </a>
+            </li>
+          </ul>
+          <!-- Avatar and its drop down -->
+          <div class="avatar-drop-down header-menu-item">
+            <sp-widget widget="data.avatarDropDown" id="avatar_drop_down" ></sp-widget>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Sub Navbar -->
+
+  <div class="navbar-collapse sub-navbar clearfix collapse collapsed" ng-class="(expanded) ? 'in' : 'collapsed'" aria-expanded="false">
+    <div class="height-adjust">
+      <sp-widget widget="data.sub.menu"></sp-widget>
+      <ul ng-if="::(!user.logged_in && page.id != portal.login_page_dv && !data.hasLogin)" class="nav navbar-nav">
+        <li><a href ng-click="openLogin()">${Login}</a>
+        </li>
+      </ul>
+      <div class="hidden-xs" ng-if="data.chatSupportEnabled == true || isVAActive">
+          <button class="btn chat-btn" ng-click="toggleChat()" id="va_chat" aria-label="{{showChat ? '${Hide Chat Window}' : '${Show Chat Window}'}}" aria-pressed="{{showChat ? true : false}}" ng-class="mobileDevice?'active-chat':'inactive-chat'">
+            <span ng-bind-html="'${Chat}'" aria-hidden="true"></span>
+            <span ng-if="mobileDevice && showChat" class="chat-active" ng-bind-html="'${Active}'" aria-hidden="true"></span>
+          </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics -->
+  <div ng-if="data.analyticsSupportEnabled">
+    <widget id="cda-site-analytics" options="{'enable_logging': false}"></widget>
+  </div>
+</nav>

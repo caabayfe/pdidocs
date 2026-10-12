@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.top_margin {
+			margin-top: 20px;
+			margin-left:20px;
+		}
+	</style>
+	<g2:evaluate jelly="true">
+		var	errorMsg = "";
+		try{
+			var fieldLabel = "Users";
+			var defaultValue = jelly.sysparm_defaultValue;
+			var defaultDisplayValue = jelly.sysparm_defaultDisplayValue;
+			var isMultiSelect = (jelly.sysparm_predicate == "IN");
+			var disableLookup = (jelly.sysparm_disable_lookup == "true");
+			var displayFieldName = jelly.sysparm_displayFieldName; // to set this field with display field values
+			var fieldName = jelly.sysparm_fieldName; // to set this field with ids of field values
+
+
+			var fieldDetails = {};
+			fieldDetails.internalType = "reference";
+			fieldDetails.referenceTable = "sys_user";
+			if(defaultValue.length &lt; 32){
+					defaultValue = "";
+					defaultDisplayValue = "";
+			}
+		}catch(e) {
+			gs.error("Error in UI page (po_select_user_value) "+ e);
+			errorMsg = "Error - " + e;
+		}
+
+	</g2:evaluate>
+	<j2:if test="$[errorMsg != '']">
+		<h4 class="text-danger">$[errorMsg]</h4>
+	</j2:if>
+	<j2:if test="$[errorMsg == '']">
+		<input type="hidden" value="$[defaultValue]" name="defaultValue" id="defaultValue"/>
+		<input type="hidden" value="$[fieldDetails.internalType]" name="fieldType" id="fieldType"/>
+		<input type="hidden" value="$[isMultiSelect]" name="isMultiSelect" id="isMultiSelect"/>
+		<input type="hidden" value="$[disableLookup]" name="disableLookup" id="disableLookup"/>
+		<input type="hidden" value="$[displayFieldName]" name="displayFieldName" id="displayFieldName"/>
+		<input type="hidden" value="$[fieldName]" name="fieldName" id="fieldName"/>
+		
+		<div class="row">
+			<div class="form-group top_margin">
+				<div class="col-md-5">
+					<span class="required-marker" style="float:left;"></span>
+					<label for="$[fieldLabel]">$[fieldLabel]</label>
+				</div>
+				<div class="col-md-7">
+					<j2:choose>
+						<j2:when test="$[fieldDetails.internalType == 'reference']">
+							<j2:if test="$[isMultiSelect]">
+								<g2:macro_invoke macro="lightweight_glide_list2"
+												 name="fieldValue" id="fieldValue" control_name="fieldListControl"
+												 label="List"
+												 reference="$[fieldDetails.referenceTable]" list_data="$[defaultValue]" can_write="true"
+												 input_class_name="form-control input-group" input_button_name="input-group-btn"/>
+							</j2:if>
+							<j2:if test="$[!isMultiSelect]">
+								<g:ui_reference name="fieldValue" id="fieldValue" table="$[fieldDetails.referenceTable]" value="$[defaultValue]" displayvalue="$[defaultDisplayValue]" />
+							</j2:if>
+						</j2:when>
+
+						<j2:otherwise></j2:otherwise>
+					</j2:choose>
+				</div>
+			</div>
+		</div>
+	
+		<div class="pull-right top_margin">
+			<g:dialog_buttons_ok_cancel ok="return updateFieldValue()" ok_type="button" cancel_type="button"/>
+		</div>
+	</j2:if>
+	<style>
+		td.featureListRoleGroup, tr.featureListRoleGroup {
+			display: flex;
+			align-items: center;
+		}
+		
+		.featureListRoleOpenList {
+			width: 10%;
+		}
+	</style>
+</j:jelly>

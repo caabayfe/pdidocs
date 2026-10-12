@@ -1,0 +1,181 @@
+<g:ui_form>
+    <j:set var="jvar_title" value="${gs.getMessage('Specify Import set and Transform map')}" />
+    <g:inline template="page_header.xml" />
+
+    <g2:evaluate var="jvar_iset_max" jelly="true" expression="$[gs.getProperty('glide.import_set.run_import.max_iset','30')]" />
+    <g:inline template="run_import_messages.xml"/>
+    <g:inline template="run_import.xml"/>
+    <script>
+    addLoadEvent(function() {
+        setInfoMessage();
+        loadImportSets();
+
+        if ('$[JS:sysparm_map]' != '') {
+            setImportSetOptions('$[JS:sysparm_map]');
+        } else if ('$[JS:sysparm_set]' != '') {
+            setImportSet('$[JS:sysparm_set]');
+        } else {
+            // set at the first one
+            document.forms[0].import_set.selectedIndex = 0; // select the first one
+            setImportSet(document.forms[0].import_set.options[document.forms[0].import_set.selectedIndex].value)
+        }
+    });
+
+    function map_select_sb_populate() {} // do nothing, called by ui_dnd_sluchbucket
+
+    function setWarningMessage(m) {
+        setMessage('warning_message', m);
+    }
+
+    function setInfoMessage(m) {
+        setMessage('info_message', m);
+    }
+
+    function setMessage(type, m) {
+        gel(type + "_text").innerHTML = m;
+
+        if (m)
+            gel(type).style.display = '';
+        else
+            gel(type).style.display = 'none';
+    }
+
+    function afterSBMove() {
+        if (map_select_sb_rightzone.getLength() == 0) {
+            toggleButton(false);
+        } else {
+            toggleButton(true);
+        }
+    }
+
+    function setImportSet(chosen) {
+        // select the chosen one
+        for (var i = 0; i != document.forms[0].import_set.length; i++) {
+            if (chosen == document.forms[0].import_set.options[i].value)
+                document.forms[0].import_set.selectedIndex = i;
+        }
+
+        var gr = new GlideRecord('sys_import_set');
+        gr.addQuery('sys_id', chosen);
+        gr.query();
+        if (gr.next()) {
+            loadMaps(gr.table_name);
+        }
+    }
+
+    function setImportSetOptions(chosen) {
+        var mgr = new GlideRecord('sys_transform_map');
+        if (chosen)
+            mgr.addQuery('sys_id', chosen);
+
+        mgr.addQuery("active", "true");
+        mgr.query();
+        if (mgr.next()) {
+            var source_table = mgr.source_table;
+            loadImportSets(source_table);
+        }
+    }
+
+    function loadMaps(source_table) {
+        if (!source_table) {
+            return;
+        }
+
+        var mgr = new GlideRecord('sys_transform_map');
+        mgr.addQuery('active', 'true');
+        if (source_table)
+            mgr.addQuery('source_table', source_table);
+
+        mgr.query();
+        var k = 0;
+        map_select_sb_leftzone.clear();
+        map_select_sb_rightzone.clear();
+        while (mgr.next()) {
+            map_select_sb_leftzone.add(mgr.name + ' - ' + mgr.target_table, mgr.sys_id);
+            k++;
+        }
+
+        if (k == 0) {
+            var anchorTag = '<a href="sys_transform_map.do?sys_id=-1$[AMP]sysparm_query=source_table='+source_table+'">'
+            setWarningMessage(new GwtMessage().getMessage('There are {0}no transform maps{1} for the selected import set. {2}Create one{3}','<b>','</b>',anchorTag,'</a>'));
+            gel("map_select").style.display = 'none';
+            toggleButton(false);
+        } else {
+            map_select_sb_leftzone.setSelected(0, true);
+            map_select_sb_selectTable.copyOrMoveSelectedItems(map_select_sb_leftzone, map_select_sb_rightzone, 0);
+            setWarningMessage();
+            gel("map_select").style.display = '';
+            toggleButton(true);
+        }
+    }
+
+    function loadImportSets(source_table) {
+        var maxIset = $[jvar_iset_max]; // starts at 0
+
+        var selbox = document.forms[0].import_set;
+        selbox.options.length = 0;
+
+        var sgr = new GlideRecord('sys_import_set');
+        if (source_table)
+            sgr.addQuery('table_name', source_table);
+
+        sgr.addQuery('state', 'loaded');
+        sgr.addQuery('', 'ORDERBYDESC', 'number');
+        sgr.query();
+        var ikount = 0;
+        while (sgr.next()) {
+            selbox.options[selbox.options.length] = new Option(sgr.number + ' - ' + sgr.table_name + ' (' + sgr.sys_created_on + ')', sgr.sys_id);
+            if (sgr.sys_id.toString() == '$[JS:sysparm_import_set]') {
+                selbox.selectedIndex = selbox.options.length - 1;
+            }
+
+            ikount++;
+            if (ikount > (maxIset - 1)) {
+                setInfoMessage(new GwtMessage().getMessage('There were more than {0} import sets available, only the most recent {1} are displayed',maxIset,maxIset));
+                loadMaps(source_table);
+                gel('run_transform_table').style.display = "";
+                return;
+            }
+        }
+
+        // no import sets available
+        if (selbox.options.length == 0) {
+            setWarningMessage(new GwtMessage().getMessage("No import set available. <a href='create_import_set.do'>Create and load an import set first</a>"));
+            toggleButton(false);
+            gel('run_transform_table').style.display = "none";
+        } else {
+            setWarningMessage("");
+            loadMaps(source_table);
+            gel('run_transform_table').style.display = "";
+        }
+    }
+
+    function toggleButton(active) {
+        var cn = 'disabled';
+        var db = true;
+        if (active) {
+            cn = 'web';
+            db = false;
+        }
+
+        var b = gel('import_button');
+        b.disabled = db;
+        b.setAttribute('class', cn);
+        b.setAttribute('className', cn);
+    }
+
+    function failMandatorySelect(fieldName, labelName) {
+        var frm = document.forms[0];
+        if (frm[fieldName].selectedIndex == -1) {
+            failCheck(labelName);
+            return true;
+        }
+
+        return false;
+    }
+
+    function failCheck(labelName) {
+        alert(new GwtMessage().getMessage('The following mandatory field is not filled in {0}',labelName));
+    }
+    </script>
+</g:ui_form>

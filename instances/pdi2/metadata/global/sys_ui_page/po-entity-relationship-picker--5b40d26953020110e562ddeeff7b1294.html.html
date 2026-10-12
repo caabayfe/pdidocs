@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.top_margin {
+			margin-top: 20px;
+		}
+	</style>
+
+	<g2:evaluate jelly="true" object="true" var="jvar_fieldsObj">
+		var jsonObj = {}, tableFields = [], refFieldList = [];
+		jsonObj.errorMsg = "";
+		jsonObj.dialogBoxHeader = "";
+		try {
+			var currentEntityTable = jelly.sysparm_entityTable,
+				referenceEntityTable = jelly.sysparm_referenceEntityTable,
+				relationType = jelly.sysparm_relationType,
+				defaultValue = jelly.sysparm_currentFieldValue,
+				parentEntitySource = jelly.sysparm_parentEntitySource,
+				childEntitySource = jelly.sysparm_childEntitySource,
+				encodedQuery = '',
+				allTables = [],
+				queryTable = '',
+				allQueryTable = [],
+				referenceTable = '',
+				gsm = GlideSecurityManager.get();
+
+			if(gs.nil(currentEntityTable) || gs.nil(referenceEntityTable) || gs.nil(relationType)){
+				throw gs.getMessage("Missing required parameters. Please contact your system administrator");
+			}
+			if(!gsm.hasRightsTo("record/"+ currentEntityTable + "/read", null)) {
+				throw gs.getMessage("Missing required permissions to access current table");
+			}
+			if(!gsm.hasRightsTo("record/"+ referenceEntityTable + "/read", null)) {
+				throw gs.getMessage("Missing required permissions to access reference table");
+			}
+
+			if (relationType == 'CHILD') {
+				queryTable = currentEntityTable;
+				allQueryTable += new TableUtils(queryTable).getTables().toString();
+				allQueryTable = allQueryTable.replace(/[\][]/g, '').replace(/ +?/g, '');
+				
+				referenceTable = referenceEntityTable;
+				allTables += new TableUtils(referenceTable).getTables().toString();
+				allTables = allTables.replace(/[\][]/g, '').replace(/ +?/g, '');
+				encodedQuery = 'nameIN' + allQueryTable;
+				
+				if(parentEntitySource == 'EXTERNAL_DATA'){
+					var fieldQuery = 'elementIN';
+					encodedQuery +=  '^internal_type!=domain_id^internal_type!=domain_path^internal_type!=glide_date_time^internal_type!=GUID^internal_type!=boolean^internal_type!=reference^' + fieldQuery + getIndexColumns(queryTable);
+					
+				} else {
+					encodedQuery += '^internal_type=reference^referenceIN' + allTables.toString();
+				}
+				 
+		} else if (relationType == 'REFERENCE') {
+				queryTable = referenceEntityTable;
+				allQueryTable += new TableUtils(queryTable).getTables().toString();
+				allQueryTable = allQueryTable.replace(/[\][]/g, '').replace(/ +?/g, '');
+
+				referenceTable = currentEntityTable;
+				allTables += new TableUtils(referenceTable).getTables().toString();
+				allTables = allTables.replace(/[\][]/g, '').replace(/ +?/g, '');
+				encodedQuery = 'nameIN' + allQueryTable;
+				
+				if(childEntitySource == 'EXTERNAL_DATA'){
+					var fieldQuery = 'elementIN';
+					encodedQuery += '^internal_type!=domain_id^internal_type!=domain_path^internal_type!=glide_date_time^internal_type!=GUID^internal_type!=boolean^internal_type!=reference^' + fieldQuery + getIndexColumns(queryTable);
+				}
+				else {
+					encodedQuery += '^internal_type=reference^referenceIN' + allTables.toString();
+				}
+			}
+			var grDictionary = new GlideRecord("sys_dictionary");
+			grDictionary.addActiveQuery();
+			grDictionary.addEncodedQuery(encodedQuery);
+			grDictionary.orderBy("column_label");
+			grDictionary.query();
+			while (grDictionary.next()) {
+				var fieldOption = {};
+				fieldOption.label = grDictionary.getDisplayValue("column_label");
+				fieldOption.name = grDictionary.getValue("element");
+				fieldOption.refTable = grDictionary.getValue("reference") || "";
+
+				if(grDictionary.getValue("internal_type") == "reference" &amp;&amp; fieldOption.refTable != "") {
+					fieldOption.label += gs.getMessage("(reference of '{0}' table)", fieldOption.refTable);
+				}
+			
+				tableFields.push(fieldOption);
+			}
+		
+			//sort tableFields array to show direct reference first
+			for(var cnt = 0; cnt ${AMP}lt; tableFields.length; cnt++){
+				if(tableFields[cnt].refTable == referenceTable){
+					refFieldList.push(tableFields[cnt]);
+				}
+			}
+			for(var cnt = 0; cnt ${AMP}lt; tableFields.length; cnt++){
+				if(tableFields[cnt].refTable != referenceTable){
+					refFieldList.push(tableFields[cnt]);
+				}
+			}
+		
+			if(refFieldList.length == 0){
+				throw gs.getMessage("There are no fields present in '{0}' table which has relation with '{1}' table. Please check the configuration or contact your system administrator", [queryTable, referenceTable]);;
+			}
+			jsonObj.queryTable = queryTable;
+			jsonObj.referenceTable = referenceTable;
+			jsonObj.dialogBoxHeader = gs.getMessage("Select field from '{0}' table which has relation with '{1}' table", [jsonObj.queryTable, jsonObj.referenceTable]);
+		}catch(e) {
+			gs.error("Error in UI page (po_select_config_source_field or po_select_config_target_field) "+ e);
+			jsonObj.errorMsg = e;
+		}
+		function getIndexColumns(tableName){
+            var columnList = {};
+			var grTable = new GlideRecord("sys_db_object");
+			grTable.addQuery("name", tableName);
+			grTable.query();
+			if(grTable.next()) {
+				var grIndex = new GlideRecord("v_index_creator");
+				grIndex.addQuery("table", grTable.getUniqueValue());
+				grIndex.query();
+				while(grIndex.next()) {
+					var fields = grIndex.getValue("index_col_name").split(",");
+					fields.forEach(function(field) {
+						columnList[field.trim()] = field.trim();
+					});
+				}
+			}
+			return Object.keys(columnList).toString();
+		}
+		jsonObj.defaultValue = defaultValue;
+		jsonObj.refFieldList = refFieldList;
+		jsonObj;
+	</g2:evaluate>
+	<j2:if test="$[jvar_fieldsObj.errorMsg != '']">
+		<h5 class="text-danger">$[jvar_fieldsObj.errorMsg]</h5>
+	</j2:if>
+	<j2:if test="$[jvar_fieldsObj.errorMsg == '']">
+
+		<input type="hidden" value="$[jvar_fieldsObj.defaultValue]" name="defaultValue" id="defaultValue"/>
+	
+		<div class="row">
+			<div class="col-md-12 text-info" style="margin-bottom:15px">
+				<label for="Field">$[jvar_fieldsObj.dialogBoxHeader]</label>
+			</div>
+			<div class="form-group">
+				<div class="col-md-5">
+					<span class="required-marker" style="float:left;"></span>
+					<label for="Field">${gs.getMessage('Field')}</label>
+				</div>
+				<div class="col-md-7">
+					<select name="refField" id="refField" class="form-control">
+						<j2:forEach items="$[jvar_fieldsObj.refFieldList]" var="jvar_fieldList">	
+							<option value="$[jvar_fieldList.name]">$[jvar_fieldList.label]</option>
+						</j2:forEach>
+					</select>
+				</div>
+			</div>
+		</div>
+	
+		<div class="pull-right top_margin">
+			<g:dialog_buttons_ok_cancel ok="return updateFieldValue()" ok_type="button" cancel_type="button"/>
+		</div>
+	</j2:if>
+</j:jelly>

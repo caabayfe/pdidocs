@@ -1,0 +1,55 @@
+<div style="padding:10px;">
+    <j2:if test="$[gs.hasRole('text_search_admin')]">
+        <div style="margin-left:4px; ">
+            <a class="web" href="ts_group.do?sys_id=$[sysparm_tsg]">$[gs.getMessage('Edit')] "$[sysparm_tsg_name]" $[gs.getMessage('search group')]</a>
+        </div>
+        <hr/>
+    </j2:if>
+    
+    <div style="margin-left:4px; margin-top:8px; margin-bottom:8px;">
+        $[gs.getMessage('Search the following tables in the')] "$[sysparm_tsg_name]" $[gs.getMessage('search group')]:
+    </div>
+    
+    <g2:evaluate>
+      var tstables = new GlideRecordSecure('ts_table');
+      tstables.addQuery('group','$[sysparm_tsg]');
+      tstables.addActiveQuery();
+      tstables.orderBy('order');
+      tstables.query();
+    </g2:evaluate>
+    
+    <table border="0" cellspacing="0" cellpadding="0">
+      <j2:while test="$[tstables.next()]">
+        <j2:set var="jvar_tstable" value="$[tstables.sys_id]"/>
+        <tr><td>
+          <g2:evaluate var="jvar_tstable_checked">
+              var prefname = "ts.table." + "$[jvar_tstable]";
+              gs.getPreference(prefname);
+          </g2:evaluate>
+          <g2:evaluate var="jvar_tstable_label">
+    		if ("$[tstables.label]" != "")
+    		  "$[tstables.label]";
+    		else
+    		  "$[GlideMetaData.getTablePlural(tstables.name)]";
+          </g2:evaluate>
+    
+          <label for="sysparm_tstable_$[jvar_tstable]">
+              <input type="checkbox" checked="true" style="margin-left: 4px;" id="sysparm_tstable_$[jvar_tstable]" 
+    	         name="sysparm_tstable_$[jvar_tstable]" onclick="tsTableCheckbox(this)" />
+     	      <span style="cursor:pointer; margin-left:4px;" >
+                $[jvar_tstable_label]
+              </span>
+          </label>
+        </td></tr>
+      </j2:while>
+      <tr><td><br/>
+          <label for="search_all_tables">
+              <input type="checkbox" checked="true" style="margin-left: 4px;" id="search_all_tables" 
+    	         name="search_all_tables" onclick="checkAll()" />
+    	      <span style="cursor:hand; cursor:pointer; margin-left:4px;">
+                  <em>$[gs.getMessage("Select all")]</em>
+              </span>
+          </label>
+      </td></tr>
+    </table>
+</div>

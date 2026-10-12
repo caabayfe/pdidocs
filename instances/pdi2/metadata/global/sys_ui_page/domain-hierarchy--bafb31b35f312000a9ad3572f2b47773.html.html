@@ -1,0 +1,52 @@
+   <g2:evaluate var="jvar_show_map">
+      var att = '$[sysparm_attributes]'.split(',');
+      var baseid = "";
+      var table = "";
+      for (var i = 0; att.length > i; i++) {
+         var attribute = att[i];
+         if (attribute.startsWith("baseid="))
+            baseid = attribute.substring(attribute.indexOf("=") + 1);
+         if (attribute.startsWith("record="))
+            table = attribute.substring(attribute.indexOf("=") + 1);
+      }
+      if (baseid == "" || table == "")
+         "false";
+      else {
+         var domain = new GlideRecord(table);
+         if (domain.get(baseid))
+            "true";
+         else
+            "false";
+      }   
+   </g2:evaluate>
+   
+   <j2:if test="$[!jvar_show_map]">
+       ${gs.getMessage("Cannot display domain map")}
+   </j2:if>
+
+   <j2:if test="$[jvar_show_map]">
+       <g:requires name="styles/diagrammer.css" />
+       <g:requires name="scripts/GwtGraphicsIncludes.js" includes="true" />
+       <g:requires name="scripts/GwtDiagramIncludes.js" includes="true" />
+   
+       <g:include_script src="classes/GwtDiagramLayout.jsx"/>
+       <g:include_script src="classes/GwtSugiyamaLayout.jsx"/>
+       <g:include_script src="classes/GenericHierarchy.jsx"/>
+       <table border="0" cellspacing="0" cellpadding="2" class="toolbar">
+           <tr>
+               <td nowrap="true">
+                  <g:diagram_scale diagram="g_hierarchy" />
+               </td>
+               <td width="100%"></td>
+           </tr>
+           <tr>
+               <td style="height: 100%; width: 100%;" colspan="3">
+                   <div id="diagram_area" style="height: 100%; width: 100%; background: white; overflow:auto; position: relative"/>
+               </td>
+           </tr>
+       </table>
+       <script>
+          var generic_hierarchy_attributes = '$[sysparm_attributes]';
+          var showit = true;
+       </script>
+   </j2:if>

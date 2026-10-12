@@ -1,0 +1,84 @@
+<g2:evaluate var="jvar_guid" expression="gs.generateGUID(this);" />
+<g2:evaluate>
+   var members = new GlideRecord('jrobin_graph_set_member');
+   members.addQuery('set','${RP.getWindowProperties().get('graph_set')}' );
+   members.orderBy('order');
+   members.orderBy('name');
+   members.query();
+</g2:evaluate>
+<g2:evaluate>
+  var cmdb_ci_id = validateID();
+  if (cmdb_ci_id) {
+    graph_div = '';
+    no_graph_div = 'display:none';
+  } else {
+    graph_div = 'display:none';
+    no_graph_div = '';
+  }
+
+  function validateID() {
+    gs.print('RP = ' + RP);
+    var answer = "${RP.getWindowProperties().get('cmdb_ci')}"; 
+    if (!answer) // empty ci is fine
+      return answer;
+
+    var gr = new GlideRecord('snc_monitorable_item');
+    gr.addQuery('sys_id', answer);
+    gr.query();
+    if (gr.next()) // found it we're fine
+       return answer;
+    
+    // first chance at redemption
+    gr = new GlideRecord('snc_monitorable_item');
+    gr.addQuery('name', GlideServlet.getSystemID());
+    gr.query();
+    if (gr.next()) {
+      var actual = gr.sys_id + '';
+      return actual;
+    }
+
+    return '';
+  }
+  
+</g2:evaluate>
+
+<span id='$[jvar_guid]'>
+   <table class="wide form-inline">
+      <tr>
+         <td nowrap="true" align="center">
+	    <label for="$[jvar_guid].graph_set">${gs.getMessage('Set')}: </label>
+	    <select name="graph_set" id="$[jvar_guid].graph_set" onchange="g_set_$[jvar_guid].onSetChange()" class="form-control">
+	       <option>${gs.getMessage('Loading...')}</option>
+	    </select>
+	    <label style="margin-left: 10px;" for="$[jvar_guid].cmdb_ci">${gs.getMessage('CI')}: </label>
+	    <select name="cmdb_ci" id="$[jvar_guid].cmdb_ci" onchange="g_set_$[jvar_guid].onCIChange();" class="form-control">
+	       <option>${gs.getMessage('Loading...')}</option>
+	    </select>
+	    <div id="$[jvar_guid].graph_div" style="$[graph_div]">
+               <j2:while test="$[members.next()]">
+                  <g2:jrobin_graph_controls />
+                  <g2:evaluate>
+                     var image_source = 'jrobin_render_graph.do?sysparm_sys_id=' + members.graph;
+                     image_source += '$[AMP]sysparm_ci=$[cmdb_ci_id]';
+                     image_source += '$[AMP]sysparm_unique=$[jvar_guid]';
+                     image_source += '$[AMP]sysparm_show_legend=false';
+                  </g2:evaluate>
+                  <img src="$[image_source]" id="graph_$[jvar_guid]_$[members.graph]" gsft_base_src="$[image_source]$[AMP]" alt=""/>
+               </j2:while>
+	    </div>
+            <div id="$[jvar_guid].no_graph_div" style="$[no_graph_div]">
+               ${gs.getMessage('Metrics not available')}
+            </div>
+	  </td>
+       </tr>
+   </table>
+</span>
+
+<script src="scripts/JRobinGraphSet.jsx?v=${gs.getProperty('glide.builddate')}" />
+
+<script type="text/javascript">
+  var g_set_$[jvar_guid] = new JRobinGraphSet("$[jvar_guid]", "${RP.getWindowID()}");
+  var t = g_set_$[jvar_guid];
+  t.loadSets();
+  t.setGraphSet( "${RP.getWindowProperties().get('graph_set')}", "$[cmdb_ci_id]" );
+</script>

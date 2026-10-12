@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true" object="true" var="jvar_inputs">
+		var gr = new GlideRecordSecure("sys_ui_interaction");
+		gr.get(jelly.sysparm_interaction);
+		try {
+			JSON.parse(gr.getValue("inputs") || "[]");
+		} catch (e) {
+			[];
+		}
+	</g:evaluate>
+	<g:evaluate jelly="true" object="true" var="jvar_scope">
+		var gr = new GlideRecordSecure("sys_ui_interaction");
+		gr.get(jelly.sysparm_interaction);
+		try {
+			gr.sys_scope.scope;
+		} catch (e) {
+			"";
+		}
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_has_inputs">
+		!!jelly.jvar_inputs.length;
+	</g:evaluate>
+	<j:if test="${jvar_has_inputs}">
+		<g:evaluate jelly="true" object="true" var="jvar_input_map">
+			try {
+				JSON.parse(jelly.sysparm_interaction_input_map || "{}");
+			} catch (e) {
+				{};
+			}
+		</g:evaluate>
+		<form id="input_map_form" class="form-horizontal">
+			<div class="row">
+				<div class="col-xs-12">
+					<j:forEach items="${jvar_inputs}" var="jvar_input_def">
+						<g:evaluate jelly="true" var="jvar_translated_label" expression="(new global.InteractionTranslationUtils).getMessage(jelly.jvar_scope, jelly.jvar_input_def.label);" />
+						<g:evaluate jelly="true" var="jvar_translated_description" expression="(new global.InteractionTranslationUtils).getMessage(jelly.jvar_scope, jelly.jvar_input_def.description);" />
+						<g:evaluate jelly="true" object="true" var="jvar_input">
+							({
+								name: jelly.jvar_input_def.name,
+								label: jelly.jvar_translated_label,
+								description: jelly.jvar_translated_description,
+								required: jelly.jvar_input_def.required,
+								typeMetadata: jelly.jvar_input_def.typeMetadata
+							});
+						</g:evaluate>
+						<g:evaluate jelly="true" object="true" var="jvar_input_value">
+							var value = jelly.jvar_input_map["${jvar_input_def.name}"];
+
+							if (typeof value == "undefined") {
+								value = null;
+							}
+
+							value;
+						</g:evaluate>
+						<g:evaluate jelly="true" object="true" var="jvar_is_binding">
+							typeof jelly.jvar_input_value == 'string'
+								${AND} jelly.jvar_input_value.startsWith('\u007B\u007B')
+								${AND} jelly.jvar_input_value.endsWith('\u007D\u007D');
+						</g:evaluate>
+						<g:evaluate jelly="true" object="true" var="jvar_static_value">
+							var value = "";
+
+							if (!jelly.jvar_is_binding ${AND} typeof jelly.jvar_input_value != 'undefined') {
+								value = jelly.jvar_input_value;
+							} else if (typeof jelly.jvar_input_def.defaultValue != 'undefined'
+								${AND} jelly.jvar_input_def.defaultValue != null) {
+								value = jelly.jvar_input_def.defaultValue;
+							}
+
+							value;
+						</g:evaluate>
+						<g:evaluate jelly="true" object="true" var="jvar_binding_value">
+							var value = "";
+
+							if (jelly.jvar_is_binding ${AND} typeof jelly.jvar_input_value != 'undefined') {
+								value = jelly.jvar_input_value;
+							}
+
+							value;
+						</g:evaluate>
+						<g:evaluate jelly="true" var="jvar_existing_type">
+							var value = "string";
+
+							if (["boolean", "choice", "json", "reference"].includes(jelly.jvar_input_def.type)) {
+								value = jelly.jvar_input_def.type;
+							}
+
+							value;
+						</g:evaluate>
+						<g:call
+							function="ui_interaction_${jvar_existing_type}_input.xml"
+							input="${jvar_input}"
+							value="${jvar_static_value}"
+							shown="${!jvar_is_binding}"
+							scope="${jvar_scope}"
+						/>
+						<g:call
+							function="ui_interaction_binding_input.xml"
+							input="${jvar_input}"
+							value="${jvar_binding_value}"
+							shown="${jvar_is_binding}"
+						/>
+					</j:forEach>
+				</div>
+			</div>
+			<div class="form_action_button_container" style="margin-top: 8px; display: flex; justify-content: flex-end; gap: 4px;">
+				<button class="form_action_button  action_context btn btn-default" style="white-space: nowrap" type="button" onclick="handleInputMapCancel();" id="cancel_button">${gs.getMessage('Cancel')}</button>
+				<button class="form_action_button  action_context btn btn-primary" style="white-space: nowrap" type="button" onclick="handleInputMapSave();" id="save_button">${gs.getMessage('Save')}</button>
+			</div>
+		</form>
+	</j:if>
+	<j:if test="${!jvar_has_inputs}">
+		<p style="text-align: center; margin: 16px;">${gs.getMessage('This UI interaction has no inputs to configure.')}</p>
+		<div class="form_action_button_container" style="margin-top: 8px; display: flex; justify-content: flex-end; gap: 4px;">
+			<button class="form_action_button  action_context btn btn-primary" style="white-space: nowrap" type="button" onclick="handleInputMapClose();" id="close_button">${gs.getMessage('Close')}</button>
+		</div>
+	</j:if>
+</j:jelly>

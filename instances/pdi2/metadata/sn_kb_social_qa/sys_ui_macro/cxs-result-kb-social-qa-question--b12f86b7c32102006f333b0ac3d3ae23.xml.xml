@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:requires name="styles/search_service_results.css" includes="true" params="c=$[gs.getCssCacheVersionString()]" />
+<g:evaluate jelly="true">
+	var is_doctype = jelly.jvar_cxs_doctype;
+	var index = jelly.jvar_cxs_index;
+	var docIdArray = jelly.jvar_cxs_result.id.split(":");
+	var recordId = docIdArray[1];
+	var title = jelly.jvar_cxs_result.title;
+    title = GlideStringUtil.escapeHTML(title);
+	var snippet = jelly.jvar_cxs_result.snippet;
+	var itemLink = jelly.jvar_cxs_result.link + "${AMP}sysparm_stack=no${AMP}sysparm_context=popup${AMP}sysparm_no_create=true${AMP}sysparm_no_update=true${AMP}sysparm_no_info=true${AMP}sysparm_no_history=true${AMP}sysparm_no_suggest=true${AMP}sysparm_no_create_incident=true${AMP}sysparm_no_rating=true";
+	var author = jelly.jvar_cxs_result.meta.author;
+	
+	var articleViews = jelly.jvar_cxs_result.meta.viewCount;
+	var answerCount = jelly.jvar_cxs_result.meta.answerCount;
+	var voteCount = jelly.jvar_cxs_result.meta.votes;
+	
+	var articleCreatedDate = '';
+	var questionGr = new GlideRecord('kb_social_qa_question');
+	questionGr.addActiveQuery();
+	if(questionGr.get(recordId))
+		articleCreatedDate = questionGr.getValue('sys_created_on');
+
+	var gdt = new GlideDateTime();
+	if(articleCreatedDate) {
+		gdt.setDisplayValue(articleCreatedDate);
+		articleCreatedDate = gdt.getDate().getDisplayValue();
+	}
+		
+	
+	var result_action_label = jelly.jvar_cxs_action_label;
+	var result_action_value = jelly.jvar_cxs_action_value;
+	
+	var catArray = jelly.jvar_cxs_result.meta.parentCategories.reverse();
+	var categoryBreadCrumb = "";
+	if(new global.GlobalKnowledgeUtil().getDirection() == "ltr")
+		categoryBreadCrumb = catArray.join(" / ");
+	else
+		categoryBreadCrumb = catArray.join(" \ ");
+	
+	categoryBreadCrumb = GlideStringUtil.escapeHTML(categoryBreadCrumb);
+	
+	var show = {
+		"author": (gs.getProperty("glide.knowman.search.show_author", "true") == "true" ? true : false),
+		"category" : (gs.getProperty("glide.knowman.search.show_category", "true") == "true" ? true: false),
+		"views": (gs.getProperty('glide.knowman.search.show_view_count', "true") == "true" ? true: false),
+		"lastModified": (gs.getProperty("glide.knowman.search.show_last_modified", "true") == "true" ? true : false)
+	}
+	var ariaGridCell = "gridcell";
+	var ariaGroup = 'group';
+	var ariaPresentation = "presentation";
+</g:evaluate>
+<g:evaluate var="jvar_helped" jelly="true">
+	var feedbackClass = "cxs_hide_pill";
+	if (jelly.jvar_cxs_result.meta.relevance ${AMP}${AMP} jelly.jvar_cxs_result.meta.relevance[jelly.jvar_cxs_action_value])
+		feedbackClass = "cxs_show_pill";
+	feedbackClass;
+</g:evaluate>
+
+<div class="${recordId} cxs_sc_rp">
+	<div class="main-content">
+		<h4 class="cxs_result_title">
+			<a class="cxs_result" data-index="${index}" href="${itemLink}" data-href="${itemLink}">
+				<g:no_escape>${title}</g:no_escape>
+			</a>
+		</h4>
+		<div class="cxs_meta_row">
+			<j:if test="${show.author}">
+				<span class="breadcrumbs">
+					${gs.getMessage("Asked by")}${SP}${author}
+					${AMP}nbsp;${AMP}bull;${AMP}nbsp;
+				</span>
+			</j:if>
+			<j:if test="${articleCreatedDate != ''}">
+				<span class="breadcrumbs">
+					on${SP}${articleCreatedDate}
+				</span>
+			</j:if>
+		</div>
+		<div class="kb details section highlight">
+			<g:no_escape>${snippet}</g:no_escape>
+		</div>
+
+		<div class="cxs_meta_row" style="padding-top: 9px;">
+			<j:if test="${show.category}">
+				<div style="display:inline-block; white-space: no-wrap;" class="breadcrumbs">
+					${categoryBreadCrumb}
+				</div>
+			</j:if>
+			<j:if test="${show.views}">
+				<j:if test="${articleViews !== '0'}">
+					<div style="display:inline-block; white-space: no-wrap;" class="breadcrumbs">
+						${AMP}nbsp;${AMP}bull;${AMP}nbsp;
+						${articleViews}${SP}
+						<j:choose>
+							<j:when test="${articleViews == '1'}">${gs.getMessage('View')}</j:when>
+							<j:otherwise>${gs.getMessage('Views')}</j:otherwise>
+						</j:choose>
+					</div>
+				</j:if>
+			</j:if>
+		</div>
+		<div class="cxs_result_action">
+			<span class="cxs_pill cxs_helped ${jvar_helped}" data-index="${index}" action-value="${result_action_value}">
+				${result_action_label}
+				<button class="cxs_close_button" id="cxs_result_action" data-index="${index}" action-value="${result_action_value}" aria-label = "${result_action_value}">
+					<j:choose>
+						<j:when test="${is_doctype == 'true'}">
+							<div class="cxs_close_icon icon-button icon-cross" aria-hidden = "true"/>
+						</j:when>
+						<j:otherwise>
+							<div class="x_icon_cross" aria-hidden = "true">X</div>
+						</j:otherwise>
+					</j:choose>
+				</button>
+			</span>
+		</div>
+	</div>
+	<div class="question_stats_box">
+		<div class="side-box" role = "${ariaPresentation}">
+			<div class="box" style="width: 47%;" role = "${ariaGroup}">
+				<div class="number-box" role = "${ariaPresentation}">
+					${voteCount}
+				</div>
+				<div class="text-box a11y-text-box" role = "${ariaPresentation}">
+					<j:choose>
+						<j:when test="${voteCount == '1'}">${gs.getMessage('votes')}</j:when>
+						<j:otherwise>${gs.getMessage('vote')}</j:otherwise>
+					</j:choose>
+				</div>
+			</div>
+			<div class="box" style="width: 47%;" role = "${ariaGroup}">
+				<div class="number-box" role = "${ariaPresentation}">
+					${answerCount}
+				</div>
+				<div class="text-box a11y-text-box" role = "${ariaPresentation}">
+					<j:choose>
+						<j:when test="${answerCount == '1'}">${gs.getMessage('answers')}</j:when>
+						<j:otherwise>${gs.getMessage('answer')}</j:otherwise>
+					</j:choose>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</j:jelly>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    
+<!-- ACTUAL PAGE STARTS HERE -->
+<g:if_polaris>
+	<g:then>
+		<g:inline template="polarisberg_output.xml"/>
+	</g:then>
+	<g:else>
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true"/>
+	</g:else>
+</g:if_polaris>
+<g:macro_invoke macro="$pwd_reset_stylesheet"/>
+<g:requires name="scripts/lib/jquery_includes.js" includes="true"/>
+
+<center>
+  <div class="pwd-notification-box">
+	<g:evaluate var="jvar_gr_process" object="true" jelly="true">
+        var requestId = gs.getSession().getProperty('sysparm_request_id');
+        var processId = new SNC.PwdTrackingManager().getProcessIdByRequestId(requestId);
+        var processGr = new GlideRecord("pwd_process");
+        processGr.get(processId);
+		processGr;
+    </g:evaluate>
+	<g:evaluate var="jvar_isAsync" jelly="true">
+		var isAsync = gs.getSession().getProperty('async_pwd_request') == 'true';
+		gs.getSession().clearProperty("async_pwd_request");
+		isAsync;
+    </g:evaluate>
+    <i class="icon-success pwd-icon pwd-icon-success"/>
+	<j:if test="${!jvar_isAsync}">
+		<h1 class="pwd-title">${gs.getMessage("Change Password Success")}</h1>
+	</j:if>
+	<j:if test="${jvar_isAsync}">
+		<h1 class="pwd-title">${gs.getMessage("We have initiated your password change request. You will get a confirmation once the request is completed.")}</h1>
+	</j:if>
+    
+    <g:set_if var="jvar_success" test="${empty(sysparm_success)}" true="${gs.getSession().getProperty('sysparm_success')}" false="${sysparm_success}" />
+	
+    <j:if test="${empty(jvar_success)}">
+		<j:if test="${!jvar_isAsync}">
+			<h2 class="pwd-subtitle">${gs.getMessage('Password was changed successfully.')}</h2>
+		</j:if>
+    </j:if>
+	
+
+	<!-- user_experience_success macro -->
+	<g:evaluate var="jvar_display_add_on">
+		jelly.jvar_gr_process.getDisplayValue("user_experience_success")
+    </g:evaluate>
+
+    <j:if test="${!empty(jvar_display_add_on)}">
+       <g:macro_invoke macro="${jvar_display_add_on}" />
+    </j:if>
+	
+  </div>
+</center> 
+
+</j:jelly>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:if test="${gs.getProperty('glide.auth_factors.softpin.enrollment.enabled', 'false') != 'true'}">
+        <div class="alert alert-warning">
+            ${gs.getMessage('Soft PIN enrollment is not available at this time. Please contact administrator for more details')}
+        </div>
+    </j:if>
+    <j:if test="${gs.getProperty('glide.auth_factors.softpin.enrollment.enabled', 'false') == 'true'}">
+    <g2:evaluate var="jvar_verification_id" object="true" jelly="true">
+        var verificationId = '06a5c9845302011017c3ddeeff7b1229';
+        verificationId;
+    </g2:evaluate>
+	<g2:evaluate var="jvar_verification_name" object="true" jelly="true">
+        var OOB_SOFTPIN_VERIFICATION_SYS_ID = '06a5c9845302011017c3ddeeff7b1229';
+		var verificationName = new SNC.SoftPINEnrollmentManager().getVerificationNameByVerificationId(OOB_SOFTPIN_VERIFICATION_SYS_ID);
+		verificationName;
+    </g2:evaluate>
+    <g2:evaluate var="jvar_form_id" jelly="true">
+		"form_softpin_auth_factor_enroll_ui_"+jelly.jvar_verification_id;
+    </g2:evaluate>
+    <g2:evaluate var="jvar_submit_event_id" jelly="true">
+		"submit_softpin_auth_factor_enroll_ui_"+jelly.jvar_verification_id;
+    </g2:evaluate>
+    <div class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <h5>
+                    <span class="caption">${gs.getMessage('Soft PIN Enrollment')}</span>
+                </h5>
+            </div>
+        </div>
+    </div>
+    <h4>
+        <span style="padding-left:5px" id="soft_pin_enroll"><b>${gs.getMessage('Steps to enroll')}</b></span>
+    </h4>
+    <form id="$[jvar_form_id]" name="$[jvar_form_id]" onsubmit="return false;">
+        <input id="__submit_$[jvar_form_id]" type="submit" style="display:none" />
+        <input type="hidden" name="__submit_event_id" value="$[jvar_submit_event_id]" />
+        <input type="hidden" name="__form_id" value="$[jvar_form_id]" />
+
+        <!-- if form for optional enrollment is not filled, then dont submit it -->
+        <input type="hidden" name="can_submit" value="true" />
+
+        <g2:macro_invoke macro="softpin_auth_factor_enroll_ui" verification_id="$[jvar_verification_id]" verification_name="$[jvar_verification_name]" submit_event_id="$[jvar_submit_event_id]" form_id="$[jvar_form_id]" />
+        <div class="pwd-bottom-btn-bar">
+            <button id="sysverb_softpin_submit" class="btn btn-primary btn-pwd-submit" onclick="onSubmit();" aria-label="${gs.getMessage('Submit')}">${gs.getMessage('Submit')}</button>
+        </div>
+    </form>
+    </j:if>
+</j:jelly>

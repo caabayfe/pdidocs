@@ -1,0 +1,1 @@
+javascript: (function(){ var answer = ''; if(!current.component.nil()) { var gr = new GlideRecord('sys_ux_lib_component'); if (gr.get(current.component)) answer = gr.getValue('tag');} return answer;})();

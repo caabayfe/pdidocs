@@ -1,0 +1,1 @@
+answer=(pageParams.channel=="workplace");

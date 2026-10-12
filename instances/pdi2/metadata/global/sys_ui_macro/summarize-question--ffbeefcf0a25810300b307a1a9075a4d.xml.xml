@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.display-value {
+			white-space: pre-wrap;
+		}
+		td {
+			vertical-align: top;
+		}
+	</style>
+	<tbody data-sn-macro-sys-id="${jvar_macro_sys_id}">
+    <tr>
+		<g:evaluate var="jvar_question_display_value" jelly="true">
+			jelly.jvar_question.getDisplayValue();
+		</g:evaluate>
+		<td>${jvar_question.getLabel()}$[SP]</td>
+		<j:if test="${jvar_question.getType() != 33}">
+			<td class="display-value">${HTML: jvar_question_display_value}</td>
+		</j:if>
+		<j:if test="${jvar_question.getType() == 33}">
+			<g:evaluate var="jvar_question_value" jelly="true">
+				jelly.jvar_question.getValue();
+			</g:evaluate>
+			<g:evaluate var="jvar_question_state" jelly="true">
+				var jvar_question_state = '';
+				if (!GlideStringUtil.nil(jelly.jvar_question_value)) {
+					var sysAttachment = new GlideSysAttachment(jelly.jvar_question_value);
+					jvar_question_state = sysAttachment.exists() ? sysAttachment.getState() : '';
+				}
+				jvar_question_state;
+			</g:evaluate>
+			<td>
+				<j:if test="${jvar_question_value != '' &amp;&amp; jvar_question_state == 'not_available'}">
+					<g:evaluate var="attachment_err_display" jelly="true">
+						var attachment_err_display = gs.getMessage("{0} [unavailable]", jelly.jvar_question_display_value);
+						attachment_err_display;
+					</g:evaluate>
+					<span class="sc-attach-unavailable" tabindex="0">
+						${attachment_err_display}
+					</span>
+				</j:if>
+				<j:if test="${jvar_question_value != '' &amp;&amp; jvar_question_state != 'not_available'}">
+					<a href="sys_attachment.do?sys_id=${jvar_question_value}" style="curser:pointer">${HTML: jvar_question_display_value}</a>
+				</j:if>
+			</td>
+		</j:if>
+	</tr>
+	</tbody>
+</j:jelly>

@@ -1,0 +1,1 @@
+answer = !((current.sys_id == 'f6c83944ff6c5a10ac42fbd38c4fd993' || current.sys_id == '4a520a4cff6c5a10ac42fbd38c4fd997' || current.sys_id == 'e9828690ff38da10ac42fbd38c4fd983' || current.sys_id == 'f6668fdaff34d250ac42fbd38c4fd94a') && !gs.getUser().hasRole('maint'));

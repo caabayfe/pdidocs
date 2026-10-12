@@ -1,0 +1,52 @@
+{
+  "idField": "uuid.indicator",
+  "timeZone": "SESSION",
+  "icon": "analytics-center-outline",
+  "order": 200,
+  "isReadOnly": false,
+  "useSeriesLabels": false,
+  "dataApiEndpoint": "/api/now/par/pardata",
+  "retrieveSourcesOnInit": true,
+  "retrieveSourcesQuery": "query($start: Int, $count: Int, $searchQuery: String, $indicatorClass: String){\n\t\t\tAppPARConfig_Query {\n\t\t\t\tresults: indicators(start: $start, count: $count, nameContains: $searchQuery, indicatorClass: $indicatorClass) {\n\t\t\t\t\tvalues {\n\t\t\t\t\t\tid: sysID\n\t\t\t\t\t\tlabel: name\n\t\t\t\t\t}\n\t\t\t\t\tresult\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+  "groupByOptions": {
+    "fetchAPI": {
+      "query": "GlideRecord_Query {\n\t\t\t\t\t\t\tpa_breakdowns(queryConditions: $queryConditions) {\n\t\t\t\t\t\t\t\tvalues: _results {\n\t\t\t\t\t\t\t\t\t\tdata: _row_data {\n\t\t\t\t\t\t\t\t\t\t\tlabel: displayValue\n\t\t\t\t\t\t\t\t\t\t\tid: uniqueValue\n\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t}",
+      "requestVariables": {
+        "queryConditions": {
+          "graphQLType": "String",
+          "getValue": "({ groupBys }) => {const groupByIds = groupBys.map((groupBy) => groupBy.field);return `sys_idIN${groupByIds.join(',')}`;}"
+        }
+      },
+      "valuesPath": "data.GlideRecord_Query.pa_breakdowns.values",
+      "individualValuePath": "data"
+    },
+    "additionalGroupBy": {
+      "maxSupported": 1
+    }
+  },
+  "sourceDetailsPath": "data.query.indicatorDetails",
+  "retrieveSourcesResultPath": "payload.data.AppPARConfig_Query.results.values",
+  "getRetrieveSourcesSearchArgument": "(searchQuery, dataSources, isEditMode) => {const indicatorClass = dataSources?.[0]?.indicatorClass;return indicatorClass && !(isEditMode && dataSources.length === 1) ?{ searchQuery, indicatorClass } :{ searchQuery };}",
+  "getSourceSelectedPayload": "(id, type) => ({sourceType: type,uuid: {indicator: id,breakdowns: [],},})",
+  "recentSourceMutationName": "recentDynamic",
+  "recentSourceMutationArgument": "id",
+  "configurationComponent": "sn-par-indicator-configuration",
+  "getDefaultConfigurationProps": "({ sourceType, uuid }) => {const hasBreakdown = uuid.breakdowns && uuid.breakdowns.length;return {sourceType,uuid: {...uuid,},previewUuid: {...uuid,},isExpanded: true,isEditMode: !hasBreakdown,};}",
+  "temporaryConfigurationProps": [
+    "previewUuid",
+    "isExpanded",
+    "isEditMode"
+  ],
+  "dataCategories": [
+    "trend",
+    "group",
+    "simple"
+  ],
+  "preferredVisualizations": [
+    "18ac962264404bcc0039359d184b15f3"
+  ],
+  "sourceType": "java",
+  "requestProviderClassName": "com.snc.par.data.service.indicator.providers.IndicatorRequestProvider",
+  "dataProviderClassName": "com.snc.par.data.service.PARDataProvider",
+  "additionalGroupByLabelProviderClassName": "com.snc.par.multivis.service.contextdata.additionalgroupby.IndicatorAdditionalGroupByLabelProvider"
+}

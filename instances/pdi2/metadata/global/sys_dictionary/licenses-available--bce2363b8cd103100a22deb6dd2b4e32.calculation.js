@@ -1,0 +1,1 @@
+current.license_count-current.install_count

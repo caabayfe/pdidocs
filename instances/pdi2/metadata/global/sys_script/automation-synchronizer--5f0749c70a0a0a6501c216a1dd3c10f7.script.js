@@ -1,0 +1,1 @@
+SncTriggerSynchronizer.synchronize(current);

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<input type="hidden" name="authenticated" id="authenticated" />
+<input type="hidden" name="_canSubmit" id="_canSubmit" />
+<input type="hidden" name="minScheduled" id="minScheduled" />
+<input type="hidden" name="minimumCloneStartTime" id="minimumCloneStartTime"/>	
+<input type="hidden" name="cloneRecordSysId" id="cloneRecordSysId" />	
+
+<script>
+
+
+var _authenticateCallback = null; // caller shows confirmation dialog before submission
+var _isCloneEstimationMessagePopulated = false;
+
+addLoadEvent(function() {
+  // min scheduled date gets the default advanced notice
+  $("minScheduled").value = g_form.getValue("scheduled");
+});
+
+function isTargetAuthenticated() {
+  return $('authenticated').value == '1';
+}
+
+function invalidateTarget() {
+  $('authenticated').value = ''; 
+}
+
+function setSubmit() {
+	$('_canSubmit').value = 'true';
+}
+
+function canSubmit(){
+	return $('_canSubmit').value == 'true';
+}
+
+function onTargetChanged() {
+  invalidateTarget();
+  var targetSysId = g_form.getValue("target_instance");
+  var profile = g_form.getValue("profile");
+  if (targetSysId == null || targetSysId.length == 0)
+    return;
+
+  var schedule_date = g_form.getValue("scheduled");
+  
+   var o = new GlideDialogWindow('clone_wait');
+   o.setTitle(getMessage("Processing.."));
+   o.setPreference('sysparm_info', getMessage("Please wait while we get the start time for your clone"));
+   o.render();
+  
+  var ga = new GlideAjax('InstanceCloneManagerAjax');
+  ga.addParam('sysparm_name', 'getMinDate');
+  ga.addParam('sysparm_instance_id', targetSysId);
+  ga.addParam('sysparm_schedule_date', schedule_date);
+  ga.addParam('sysparm_profile', profile);
+  ga.getXML(onTargetChangedResponse);
+
+  window.setTimeout(function(){
+	o.destroy();
+	},3000);
+  
+}
+
+function onTargetChangedResponse(response) {
+    if (response != null)
+	 _setProposedCloneParams(response);
+}
+
+function authenticateTarget(callback) {
+  _authenticateCallback = callback;
+
+  var targetSysId = g_form.getValue("target_instance");
+  if (targetSysId == null || targetSysId.length == 0)
+    return;
+
+  var instance = g_form.getReference("target_instance", _authenticateTargetResponse);
+}
+
+function _authenticateTargetResponse(instance) {
+   if (!instance || instance == null)
+     return;
+
+   var sysId = gel('sys_uniqueValue').value;
+   var schedule_date = g_form.getValue("scheduled");   
+	
+   // bring up the auth dialog which does the connectivity tests
+   var o = new GlideDialogWindow('clone_target_authenticate');   
+   o.setTitle('Authenticate Target - ' + instance.instance_name);
+   o.setPreference('instance_sysid', instance.sys_id);
+   o.setPreference('schedule_date', schedule_date);	
+   o.setPreference('instance_id', instance.instance_id);
+   o.setPreference('instance_url', instance.instance_url);
+   o.setPreference('clone_id', sysId);
+   o.setPreference('admin_user', g_user.userName);
+   o.setPreference('onLoginSuccess', _authenticateSuccess);
+   o.render();
+}
+
+function _authenticateSuccess(scheduled, clusterNode, securityToken) {
+  $("authenticated").value = "1";
+  _setAdvanceNotice(scheduled);
+
+  if (clusterNode)
+    g_form.setValue("cluster_node", clusterNode);
+
+  if (securityToken)
+    g_form.setValue("security_token", securityToken);
+
+  if (_authenticateCallback != null)
+    _authenticateCallback();
+}
+
+function getAdvanceNoticeDate() {
+  return $("minimumCloneStartTime").value;	
+}
+
+function isAdvanceNotice() {
+  var userDate = g_form.getValue("scheduled");
+  var minDate = getAdvanceNoticeDate();
+  if (userDate == "" || minDate == "")
+    return true;
+	
+
+  if (userDate == minDate)
+    return true;
+  
+  // get user's date time display format
+  var format = g_user_date_time_format;
+
+  // 1 (true) if minDate is greater than userDate
+  // 0 if userDate is greater than minDate of if they are the same
+  // -1 if either of the dates is in an invalid format 
+
+  // so advance notice is OK if minDate is not greater than userDate
+  var answer = compareDates(minDate, format, userDate, format);
+  return answer != 1;
+}
+
+function _setAdvanceNotice(minDate) {
+  if (minDate == null || minDate.length == 0)
+    return;
+
+  $("minScheduled").value = minDate;
+  // only change the user-defined schedule date if it is BEFORE min allowed server date
+  if (isAdvanceNotice()) {
+	 return;
+	}
+
+  g_form.setValue("scheduled", minDate);  
+}
+
+function _setProposedCloneParams(response) {
+	var answer = response.responseXML.documentElement.getAttribute("answer")||'';
+	// answer is the DOM element to parse always for Glide Ajax call
+	answer = answer.evalJSON();//Decode Response as JSON Object
+	if(answer.maxRecurringCloneDuration != '') 
+		g_scratchpad.maxCloneDuration = answer.maxRecurringCloneDuration;
+
+	var proposedCloneStartTime = answer.scheduledStartTime ||'';
+	if (proposedCloneStartTime == null || proposedCloneStartTime.length == 0) 
+		return;
+
+	var cloneEstimationMessage = getMessage(answer.cloneEstimationMessage || '');
+	_isCloneEstimationMessagePopulated = true; 
+	g_form.setValue("scheduled", proposedCloneStartTime);
+	_isCloneEstimationMessagePopulated = false;
+	$("minScheduled").value = proposedCloneStartTime;
+	$("cloneRecordSysId").value = answer.cloneRecordSysId || '';
+	g_form.showFieldMsg('scheduled',cloneEstimationMessage ,'info');
+	$("minimumCloneStartTime").value = answer.minimumCloneStartTime;
+}
+
+function showErrorDialog(error) { 
+	var o = new GlideOverlay({
+		title: "ERROR"
+	});
+
+	o.setPreference('sysparm_error', error);
+	o.setBodyFromForm('clone_error');
+	o.render();
+}
+
+function onScheduleChange(newCloneStartDate) {
+	invalidateTarget();
+	var targetSysId = g_form.getValue("target_instance");
+	if (targetSysId == null || targetSysId.length == 0)
+	return;
+
+	var minScheduleDate = $("minScheduled").value;
+	// Make sure we don't call this for the first time
+	if (minScheduleDate.length == 0 || minScheduleDate == null || _isCloneEstimationMessagePopulated) {
+	return;
+	}
+	//Show a progress message
+	g_form.showFieldMsg('scheduled',getMessage('Checking availability for the new start time ...') ,'info');
+	var clone_record_sys_id = $("cloneRecordSysId").value;
+	var ga = new GlideAjax('InstanceCloneManagerAjax');
+	ga.addParam('sysparm_name', 'isReservationAvailable');
+	ga.addParam('sysparam_clone_record_sys_id', clone_record_sys_id);
+	ga.addParam('sysparm_clone_start_date', newCloneStartDate);
+	ga.getXML(processOnScheduleDate);
+	}
+
+	function processOnScheduleDate(response){
+	// Hide the Progress message
+	g_form.hideFieldMsg('scheduled');
+	var answer = response.responseXML.documentElement.getAttribute("answer")||'';
+	answer = answer.evalJSON();//Decode Response as JSON Object
+	var is_reservation_available = answer.isReservationAvailable || '';
+	var clone_estimation_msg = getMessage(answer.cloneEstimationMessage || '');
+	if (is_reservation_available == "1") {
+		var proposedCloneStartTime = answer.scheduledStartTime ||'';
+		$("minScheduled").value = proposedCloneStartTime;
+		g_form.showFieldMsg('scheduled',clone_estimation_msg ,'info');
+	}  else {
+		g_form.showFieldMsg('scheduled',clone_estimation_msg ,'error');
+	}
+}
+
+function showLargePreserverWarning(largePreserverOptions,cloneSysID){
+	var options = {};
+	var _dialog = new GlideDialogWindow('clone_large_preserver_warning_popup');
+	_dialog.setTitle('');
+	_dialog.setPreference('options',largePreserverOptions);
+	_dialog.setPreference('sys_id',cloneSysID);
+	_dialog.render();
+}
+
+</script>
+</j:jelly>

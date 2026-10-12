@@ -1,0 +1,96 @@
+- document: sys_hub_step_instance
+  document_key: 8d86eca6ff72101088e94ee9453bf100
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-08-25 21:30:32
+  sys_id: 1ff9606aff72101088e94ee9453bf1e0
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-08-25 21:30:32
+  value: ''
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 8d86eca6ff72101088e94ee9453bf100
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-08-25 21:15:22
+  sys_id: 8586eca6ff72101088e94ee9453bf10a
+  sys_mod_count: '19'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-11-25 00:16:46
+  value: |-
+    ( function execute(inputs, outputs) {
+    // ... code ...
+      function formatWeekly(strInput) {
+      	if (strInput.length === 0) 
+          return "00";
+        else if (strInput.length === 1) 
+          return "0" + strInput;
+        else
+          return strInput;
+      };
+      
+      var inputScope = inputs.flow_scope_sys_id;
+      var newFlow = inputs.new_flow_sys_id;
+      var slackChannel = inputs.slack_channel;
+      var slackMessage = inputs.slack_message;
+      var weeklyDay = inputs.weekly_day;
+      var weeklyHour = inputs.weekly_hour;
+      var weeklySecond = inputs.weekly_second;
+      var weeklyMinute = inputs.weekly_minute;
+      var slackConnection = inputs.slack_connection;
+
+      var weeklyDayValue = -1;
+      // 1 = Monday, 2 = Tuesday, 7 = Sunday
+      if (weeklyDay.toUpperCase() === "MONDAY") {
+        weeklyDayValue = 1;
+      } else if (weeklyDay.toUpperCase() === "TUESDAY") {
+        weeklyDayValue = 2;
+      } else if (weeklyDay.toUpperCase() === "WEDNESDAY") {
+        weeklyDayValue = 3;
+      } else if (weeklyDay.toUpperCase() === "THURSDAY") {
+        weeklyDayValue = 4;
+      } else if (weeklyDay.toUpperCase() === "FRIDAY") {
+        weeklyDayValue = 5;
+      } else if (weeklyDay.toUpperCase() === "SATURDAY") {
+        weeklyDayValue = 6;
+      } else if (weeklyDay.toUpperCase() === "SUNDAY") {
+        weeklyDayValue = 7;
+      }
+      
+      if (weeklyDayValue !== -1) {
+        sn_flow.FlowTemplates.updateFlowTrigger(newFlow, 'day_of_week', weeklyDayValue);  
+      }
+
+      var value = "1970-01-01 " + formatWeekly(weeklyHour) + ":" + formatWeekly(weeklyMinute) + ":" + formatWeekly(weeklySecond);
+      sn_flow.FlowTemplates.updateFlowTrigger(newFlow, 'time', value);
+      
+      
+      // update slack channel
+      sn_flow.FlowTemplates.updateFlowActions(newFlow, '1', 'ah_channel', slackChannel);
+
+      //update slack message
+      sn_flow.FlowTemplates.updateFlowActions(newFlow, '1', 'ah_message', slackMessage);
+      
+
+      //update active gmail connection
+      new global.FlowTemplatesHelper().activateConnection(slackConnection);
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 8d86eca6ff72101088e94ee9453bf100
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-08-25 21:30:32
+  sys_id: d3f9606aff72101088e94ee9453bf1e1
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-08-25 21:30:32
+  value: ''
+  variable: 2c226939b3101300176b051a16a8dc83

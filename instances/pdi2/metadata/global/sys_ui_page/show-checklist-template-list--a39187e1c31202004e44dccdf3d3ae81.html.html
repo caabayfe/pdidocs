@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_templates">
+		var templateList = [];
+		var temp = new GlideRecordSecure("checklist_template");
+		temp.orderBy("name");
+		temp.query();
+		while(temp.next()) {
+			templateList.push({
+				"name" : GlideStringUtil.escapeHTML(temp.getValue("name")),
+				"sysID" : temp.getValue("sys_id")
+			});
+		}
+		var str = JSON.stringify(templateList);
+		str;
+	</g:evaluate>
+	
+	<g:evaluate var="jvar_record" expression="RP.getWindowProperties().get('record')"></g:evaluate>
+	<g:evaluate var="jvar_table" expression="RP.getWindowProperties().get('tablename')"></g:evaluate>
+	<style>
+		.checklist_template_list {
+			margin-top: 5px;
+			padding:10px 15px 0px 25px;  
+			border-top: 1px solid #e5e5e5; 
+			max-height:200px;
+			height:auto !important;
+			height:200px;
+			overflow: auto;
+		}
+		#template_buttons {
+			float: right;
+			padding: 10px;
+		}
+		.checklist_template_list .input-group-radio {
+			height: 7mm;
+		}
+	</style>
+	<body>
+		<input type="hidden" id="template_list" name="template_list" value="${jvar_templates}"/>
+		<input type="hidden" id="record" name="record" value="${jvar_record}"/>
+		<input type="hidden" id="table" name="table" value="${jvar_table}"/>
+		
+		<div class="checklist_template_list" id="templateList"/>
+		<div id="template_buttons">
+			<button class="btn-default btn" style="margin-right:5px" onclick="cancelTemplateDialog();" name="tmpCancel" id="tmpCancel">${gs.getMessage('Cancel')}</button>
+			<button class="btn-primary btn" onclick="return createChecklistFromTemplate();" name="tmpOK" id="tmpOK">${gs.getMessage('OK')}</button>
+		</div>
+	</body>
+</j:jelly>

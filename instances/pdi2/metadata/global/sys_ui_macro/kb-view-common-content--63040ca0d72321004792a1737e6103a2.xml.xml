@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g2:evaluate>
+        var contentClass = 'snc-article-content-text ';
+        var isMarkdown = false;
+        if(knowledgeRecord.article_type == 'wiki') {
+        contentClass += 'knowledge-wiki-text';
+        }
+        else if(knowledgeRecord.article_type == 'markdown') {
+        contentClass += 'knowledge-markdown-text';
+        isMarkdown = true;
+        }
+        else
+        contentClass += 'row';
+
+        var articleContent = kbViewModel.getArticleViewData();
+        var internalAssets = kbViewModel.getInternalAttachments();
+        var hasAssets = false;
+        if (internalAssets) {
+        hasAssets = true;
+        }
+    </g2:evaluate>
+
+    <j2:if test="$[isMarkdown]">
+        <g2:requires name="scripts/sn-markdown-editor/markdown-editor-bundle.min.js" params="sysparm_substitute=false" />
+        <g2:requires position="last" inline="true" name="scripts/MarkdownEditorElement.js" />
+         <script>
+            addLoadEvent(function() {
+                var m = window.GlideMarkdownEditor;
+                if (!m || !m.renderMarkdown) {
+                    console.error('sn-markdown-editor: global bundle not loaded');
+                    return;
+                }
+                var rawMarkdown = "$[NS:articleContent.data]";
+                var articleEl = document.getElementById('article');
+                if (articleEl) {
+                    articleEl.innerHTML = m.renderMarkdown(rawMarkdown);
+                }
+            });
+        </script>
+    </j2:if>
+    <j2:if test="$[hasAssets]">
+        <script>
+            window._ECE_ASSET_CONTEXT = document;
+            addLoadEvent(function() {
+                var jsElm = window.document.createElement('script');
+                jsElm.src = '/sys_attachment.do?sys_id=$[NS:internalAssets.js]';
+                window.document.body.append(jsElm);
+            });
+        </script>
+    </j2:if>
+
+    <j2:if test="$[!articleContent.isTemplate]">
+        <article id="article" class="$[contentClass]">
+            <j2:if test="$[!isMarkdown]">
+            <g2:no_escape>$[NS:articleContent.data]</g2:no_escape>
+            </j2:if>
+        </article>
+    </j2:if>
+	
+    <j2:if test="$[articleContent.isTemplate]">
+        <article id="article" class="$[contentClass]">
+            <j2:forEach items="$[articleContent.data]" var="jvar_field">
+                <section style="$[jvar_field.field_style]" class="prevent-wrap">
+                    <j2:if test="$[jvar_field.collapsible]">
+                        <header class="collapsible-title" tabindex="0" onclick="toggleSection('$[jvar_field.column]')">
+                            <h3 style="$[jvar_field.heading_style]" tabindex="-1">$[jvar_field.label]</h3>
+                            <j2:if test="$[jvar_field.collapsed]">
+                                <i class="icon-chevron-up rotate down" tabindex="-1" />
+                            </j2:if>
+                            <j2:if test="$[!jvar_field.collapsed]">
+                                <i class="icon-chevron-up rotate" tabindex="-1" />
+                            </j2:if>
+                        </header>
+                    </j2:if>
+                    <j2:if test="$[!jvar_field.collapsible]">
+                        <h3 style="$[jvar_field.heading_style]">$[jvar_field.label]</h3>
+                    </j2:if>
+                    <j2:if test="$[jvar_field.type == 'html']">
+                        <j2:if test="$[jvar_field.collapsed]">
+                            <section id="$[jvar_field.column]" style="display:none;">
+                                <g2:no_escape>$[NS:jvar_field.content]</g2:no_escape>
+                            </section>
+                        </j2:if>
+                        <j2:if test="$[!jvar_field.collapsed]">
+                            <section id="$[jvar_field.column]">
+                                <g2:no_escape>$[NS:jvar_field.content]</g2:no_escape>
+                            </section>
+                        </j2:if>
+                    </j2:if>
+                    <j2:if test="$[jvar_field.type != 'html']">
+                        <j2:if test="$[jvar_field.collapsed]">
+                            <p id="$[jvar_field.column]" style="display:none;">
+                                <span>$[NS:jvar_field.content]</span>
+                            </p>
+                        </j2:if>
+                        <j2:if test="$[!jvar_field.collapsed]">
+                            <p id="$[jvar_field.column]">
+                                <span>$[NS:jvar_field.content]</span>
+                            </p>
+                        </j2:if>
+                    </j2:if>
+                </section>
+            </j2:forEach>
+        </article>
+    </j2:if>
+
+    <j2:if test="$[readOnlyPage]">
+        <script>
+            $j(".snc-article-content-text").find("a").attr("target", "_blank");
+        </script>
+    </j2:if>
+</j:jelly>

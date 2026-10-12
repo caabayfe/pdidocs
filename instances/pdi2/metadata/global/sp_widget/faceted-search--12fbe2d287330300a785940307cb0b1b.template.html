@@ -1,0 +1,181 @@
+<div>
+   <div ng-if="!c.data.aisEnabled" ng-class="{'hidden-xs': showFilterMenu}">
+      <div class="row header">
+         <div class="col-md-8">
+            <sp-widget widget="data.breadcrumbsWidget"></sp-widget>
+         </div>
+         <div class="col-md-4" ng-if="data.showTypeaheadSearch">
+            <sp-widget widget="data.typeaheadSearchWidget"></sp-widget>
+         </div>
+      </div>
+      <div class="row">
+         <div class="col-sm-3 hidden-xs">
+            <a id="sp-page-content-focus-target" class="skip-link sr-only" ng-click="skipToSearchResults()" href="javascript:void(0)">${Skip to search results}</a>
+            <sp-search-nav search-sources="data.searchSources" q="data.q" t="data.t"></sp-search-nav>
+            <section ng-show="hasFacet" aria-label="${Search results filters}">
+                <sp-facet-lists collapsed="collpaseFacets" list-title="c.data.facetTitle" search-sources="data.searchSources" t="data.t"></sp-facet-lists>
+            </section>
+         </div>
+         <div class="col-sm-9">
+            <div class="panel panel-default" role="region" aria-label="{{::data.SEARCH_RESULTS}}">
+               <div ng-if="isLoading || results.length>0" class="panel-heading flex">
+                  <h2 class="h4 panel-title results-heading" tabindex="-1">${{{t_label}} results for "{{data.q}}"}</h2>
+                  <button id="filter_icon" class="btn btn-link hidden visible-xs pull-right" data-toggle="tooltip" data-original-title="{{isFilterApplied ? '${Change Filters}' : '${Apply Filters}'}}" ng-attr-aria-label="{{isFilterApplied ? '${Change Filters}' : '${Apply Filters}'}}" ng-class="{'filter-icon': !isFilterApplied}" ng-click="openFilterMenu()">
+                     <fa name="filter"></fa>
+                  </button>
+               </div>
+               <div ng-if="data.pills && data.pills.length>0" class="panel-heading flex break-word hidden-xs facet-pill-container">
+                  <div class="h4 panel-title pills">
+                     <span class="pills-label">${Filtering by}</span>
+                     <div>
+                        <sp-facet-pill facet="pill" ng-repeat="pill in data.pills"></sp-facet-pill>
+                     </div>
+                  </div>
+                  <div>
+                     <button class="btn btn-link clear-all" ng-click="clearAll()" aria-label="${Clear all active filters}">${Clear All}</button>
+                  </div>
+               </div>
+               <div ng-show="isLoading" class="loading-icon">
+                  <i class="fa fa-spinner fa-spin fa-3x fa-fw" style="font-size:24px"></i>
+                  <div class="">${Hold on, your results are loading}...</div>
+               </div>
+               <div ng-show="!isLoading" class="panel-default">
+                  <div ng-if="results.length==0" class="panel-default">
+                     <div class="panel-heading">
+                        <h2 class="h4 panel-title results-heading" tabindex="-1">${No results}</h2>
+                        <button id="filter_icon" ng-if="showFilterIcon" class="btn btn-link hidden visible-xs pull-right" data-toggle="tooltip" data-original-title="{{isFilterApplied ? '${Change Filters}' : '${Apply Filters}'}}" ng-attr-aria-label="{{isFilterApplied ? '${Change Filters}' : '${Apply Filters}'}}" ng-class="{'filter-icon': !isFilterApplied}" ng-click="openFilterMenu()">
+                           <fa name="filter"></fa>
+                        </button>
+                     </div>
+                     <div class="panel-body wrapper break-word">
+                        <p>${Your search - <b>{{data.q}}</b> - did not match any documents}</p>
+                        <div ng-if="options.show_did_you_mean && data.suggestions.length > 0">
+                           ${Did you mean}:
+                           <ul>
+                              <li ng-repeat="term in data.suggestions track by $index">
+                                 <a href="javascript:void(0)" ng-click="search(term)">{{term}}</a>
+                              </li>
+                           </ul>
+                        </div>
+                        <p ng-if="options.show_did_you_mean && data.suggestions.length > 0">${Other suggestions}:</p>
+                        <p ng-if="!options.show_did_you_mean || data.suggestions.length == 0">${Suggestions}:</p>
+                        <ul>
+                           <li>${Make sure all words are spelled correctly}</li>
+                           <li>${Try different, more general, or fewer keywords}</li>
+                        </ul>
+                     </div>
+                  </div>
+                  <div ng-if="results.length>0" ng-class="{'search-result-xs': smallScreenSize}">
+                     <div role="list">
+                        <div role="listitem" ng-repeat="item in results" class="panel-body b-b result-item" ng-click="sendAnalytics(item, $index)">
+                           <div ng-include="item.templateID" data-index="{{$index}}"></div>
+                        </div>
+                     </div>
+                     <div role="region" aria-label="${pagination}" class="panel-body b-b">
+                        <div class="pagination-section">
+                           <span ng-if="showPagination && showLoadMore"><button type="button" class="btn btn-link" aria-label="${Load more results}" ng-click="fetchMoreResults(query_start_location)">${Load more results}</button></span>
+                           <span ng-if="showPagination && !showLoadMore" aria-label="${End of results}">${End of results}</span>
+                           <span ng-if="!showPagination" aria-label="{{endPagination}}">{{endPagination}}</span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+   <div class="hidden search-overlay panel panel-default list-view" ng-class="{'visible-xs': showFilterMenu}">
+      <div class="panel-heading header">
+         <span>
+         <button id="cancel" class="btn btn-link clear pull-left" ng-click="cancel()" aria-label="${Cancel}">${Cancel}</button>
+         </span>
+         <span style="visibility: hidden;">
+         ${results}
+         </span>
+         <span>
+         <button class="btn btn-link pull-right"  ng-class="{'disabled': !showApply}" aria-disabled="{{!showApply}}" ng-click="apply()" aria-label="${Done}" ng-disabled="!showApply">${Done}</button>
+         </span>
+      </div>
+      <sp-search-nav show-toggle="true" list-view="true" search-sources="data.searchSources" q="data.q" t="data.t"></sp-search-nav>
+      <section ng-show="hasFacet" aria-label="${Search results filters}">
+          <sp-facet-lists collapsed="true" collapsed-searchsource="collpaseFacets" toggle-searchsource="true" list-title="options.facet_list_title" search-sources="data.searchSources" t="data.t"></sp-facet-lists>
+      </section>
+   </div>
+   <div class="hidden search-overlay search-filter-menu" ng-class="{'visible-xs': showFilterMenu && isFilterMenuLoading}">
+      <div class="loading-icon">
+         <i class="fa fa-spinner fa-spin fa-3x fa-fw" style="font-size:24px"></i>
+         <div class="">${Hold on, your filters are loading}...</div>
+      </div>
+   </div>
+   <div ng-if="c.data.aisEnabled" class="ai-search">
+      <div class="row header" ng-class="{'hidden': isMobileFacets && screenSize == 'sm'}">
+         <div class="col-sm-8 ais-breadCrumbs">
+            <sp-widget ng-if=!c.data.isSearchFromChat widget="data.breadcrumbsWidget"></sp-widget>
+         </div>
+         <div class="col-sm-4 ais-typeAhead" ng-if="data.showTypeaheadSearch">
+            <sp-widget widget="data.typeaheadSearchWidget"></sp-widget>
+         </div>
+      </div>
+      <div class="container">
+        <div class="ais-top-results" ng-if="!c.hideGeniusResults">
+          <sn-search-top-results
+                 search-context-config-id={{data.searchContextConfigId}}
+                 sync-genius-results-loading={{c.isGeniusResultLoading}}
+                 carousel-data={{c.geniusResultsTemplates}}
+                 search-result-metadata={{c.geniusResultMetadata}}
+                 delegate-actions={{false}}
+                 class="triggerActions"
+                 can-ask-follow-up={{data.canAskFollowUp}}
+                 async-genius-results-max-wait-time={{data.searchMetadata.searchResultMetadata.asyncGeniusResultsMaxWaitTime}}
+                 sensitivity-filter-matched={{c.sensitivityFilter}}
+                 disable-href={{data.disableGeniusHref}}
+                 show-genius-results={{data.showGeniusResults}}></sn-search-top-results>
+         </div>
+        <button class="visible-xs ais-mobile-facets" ng-click="c.toggleFilter(false)" ng-if="data.showFacets && !isMobileFacets && screenSize == 'sm'" aria-controls="mobile-facets">
+         	<i class="fa fa-filter"> </i>
+         	<span>${Filter}</span>
+        </button>
+        <div class="ais-show-filter-facet"ng-if="hideFacetPanel">
+         <now-button-bare variant="secondary" size="md" label="${Show filters}" ng-click="c.toggleFacetPanel(false)"></now-button-bare>
+        </div>
+         <div class="ais-results-container">
+           <div class="ais-facets" ng-class="{'col-sm-3': data.searchMetadata.filters || data.showFacets,'hidden': !isMobileFacets && screenSize == 'sm'}" ng-attr-id="{{screenSize == 'sm' ? 'mobile-facets': ''}}">
+                  <div ng-if="!hideFacetPanel">
+                     <sn-search-facets
+                       search-sources={{data.searchMetadata.filters}}
+                       selected-search-sources={{data.searchMetadata.selectedFilterIds}}
+                       size={{screenSize}}
+                       class="triggerActions"
+                       facets={{data.facetsData}}
+                       label={{data.facetTitle}}
+                       selected-options={{data.searchMetadata.appliedFacetFilters}}
+                       search-context-config-id={{data.searchContextConfigId}}
+                       search-term={{data.searchTerm}}
+                       sort-filters={{data.searchMetadata.sortOptions}}
+                       selected-sort-filters={{data.searchMetadata.selectedSortOptionIds}}
+                       search-from-chat={{false}}
+                       facet-panel-is-hidden={{hideFacetPanel}}
+                       is-loading={{c.isLoading}}></sn-search-facets>
+                  </div>
+               </div>
+           <div class="ais-results" ng-class="{'col-sm-12':hideFacetPanel,'col-sm-9': data.searchMetadata.filters || data.showFacets, 'hidden': isMobileFacets && screenSize == 'sm'}">
+                  <sn-search-results-container
+                     is-loading={{c.isLoading}}
+                     search-context-config-id={{data.searchContextConfigId}}
+                     class="triggerActions"
+                     search-result-metadata={{data.searchMetadata.searchResultMetadata}}
+                     genius-results={{c.results.geniusResultsTemplates}}
+                     search-results={{c.results.searchResultsTemplates}}
+                     result-count-font-size={{data.resultCountFontSize}}
+                     spell-check-font-size={{data.spellCheckFontSize}}
+                     search-from-chat={{false}}
+                     sort-filters={{data.searchMetadata.sortOptions}}
+                     selected-sort-filters={{data.searchMetadata.selectedSortOptionIds}}
+                     show-card-border={{false}}
+                     disable-href={{data.disableHref}}
+                     integrated-chat-enabled={{data.isAINativeChatEnabled}}></sn-search-results-container>
+               </div>
+            </div>
+         </div>
+      </div>
+</div>

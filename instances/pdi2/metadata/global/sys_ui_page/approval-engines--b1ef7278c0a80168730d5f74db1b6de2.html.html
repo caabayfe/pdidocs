@@ -1,0 +1,103 @@
+<g:ui_form>
+   <g:evaluate var="jvar_engines">
+      function getWorkflowManagedTables() {
+          // sys_ids of the approval activities (wf_activity_definition)
+          var approvalActivities = getApprovalActivityDefinitionIds();
+          var arrayUtil = new ArrayUtil();
+          var workflowTables = [];
+          var grV = new GlideRecord('wf_workflow_version');
+          grV.addQuery('published', true);
+          grV.query();
+          while (grV.next()) {
+              if (arrayUtil.contains(workflowTables, grV.table + ''))
+                  continue;
+              grA = new GlideRecord('wf_activity');
+              grA.addQuery('workflow_version', grV.getUniqueValue());
+              grA.addQuery('activity_definition', 'IN', approvalActivities);
+              grA.query();
+              if (grA.next())
+                  workflowTables.push(grV.table + '');
+          }
+          return workflowTables;
+          
+          function getApprovalActivityDefinitionIds() {
+              var approvalActivityIds = '';
+              var gr = new GlideRecord('wf_activity_definition');
+              gr.addQuery('attributes', 'CONTAINS', 'approval');
+              gr.query();
+              while (gr.next()) {
+                  var att = GlideStringUtil.decodeAttributes(gr.attributes + '');
+                  if (att.get('approval') + '' == 'true') {
+                      if (approvalActivityIds.length > 0)
+                          approvalActivityIds += ',';
+                      approvalActivityIds += gr.sys_id + '';
+                  }
+              }
+              return approvalActivityIds;
+          }
+      }
+      var workflowTables = getWorkflowManagedTables();
+      var tables = new GlideDBObjectManager.get().getAllExtensions('task');
+      var tableList = [];
+      for (var i = 0; i != tables.size(); i++) {
+         tableList.push(tables.get(i) + '');
+      }
+      tableList.sort();
+      var engines = [];
+      for (var i = 0; i != tableList.length; i++) {
+         var engine = {};
+         engine.table = tableList[i];
+         var td = new GlideTableDescriptor.get(engine.table);
+         engine.label = td.getLabel() + '';
+         engine.approval = new ApprovalEngineUtils().getEngineForTable(engine.table);
+         var notesKey = "approval_engine.notes." + engine.table;
+         var notes = gs.getMessage(notesKey) + '';
+         if (notes == notesKey)
+            notes = '';
+            
+         engine.notes = notes;
+
+         if (new ArrayUtil().contains(workflowTables, engine.table)) {
+            var additionalNotes = gs.getMessage('Workflows are managing approvals on this table.') ;
+            if (engine.approval == 'off')
+               engine.disable = true;
+            else
+               additionalNotes += ' ' + gs.getMessage('This should be set to "Turn Engines Off".');
+               
+            if (engine.notes == '')
+                engine.notes = additionalNotes;
+         }
+
+         engines.push(engine);
+      }
+      var json = new JSON();
+      json.encode(engines);
+   </g:evaluate>
+   
+   <table border="0" cellspacing="0" cellpadding="0">
+   		<tr><td colspan="5">${ALLOW_JELLY:gs.getMessage("approval_engine.description.intro")}</td></tr>
+		<tr><td colspan="5">${ALLOW_JELLY:gs.getMessage("approval_engine.description.approval_rules")}</td></tr>
+		<tr><td colspan="5">${ALLOW_JELLY:gs.getMessage("approval_engine.description.process_guides")}</td></tr>
+		<tr><td colspan="5">${ALLOW_JELLY:gs.getMessage("approval_engine.description.turn_engines_off")}</td></tr>
+   </table>
+
+   <table border="0" cellspacing="2" cellpadding="0" id="engines">
+      <tr class="header">
+         <td nowrap="true" class="column_head" align="center">${gs.getMessage("Table")}</td>
+         <td nowrap="true" class="column_head" align="center">${gs.getMessage("Name")}</td>
+         <td nowrap="true" class="column_head" align="center">${gs.getMessage("Approval Engine")}</td>
+         <td class="column_head" align="center">
+            ${gs.getMessage("Notes")}
+	    <input id="make_spacing_ok" style="visibility:hidden;width:0px;" title=""/>
+         </td>
+      </tr>
+   </table>
+   <input type="hidden" id="tables" name="tables" />
+   <g:no_escape>
+		<script>
+		  var g_engines = ${jvar_engines};
+	    </script>
+	</g:no_escape>
+   
+   <g:dialog_button onclick="save()" style="" id="engine_save" type="submit">${gs.getMessage("Save")}</g:dialog_button>
+</g:ui_form>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="jelly:core" xmlns:g2="glide">
+  <g:requires name="scripts/lib/jquery_includes.js" includes="true"/>
+  <g:requires name="scripts/classes/WorkflowTabs.js" includes="true" />
+  <g:requires name="styles/WorkflowTabs.css" />
+  <g:requires name="styles/ActivityRelatedInfo.css" />
+
+  <g:ui_form>
+    <!-- Get the values from dialog preferences -->
+    <g:evaluate var="jvar_activeTab" expression="RP.getWindowProperties().get('activeTab')" />
+    <g:evaluate var="jvar_sysId" expression="RP.getWindowProperties().get('sysId')" />
+    <g:evaluate var="jvar_user" expression="gs.getUserID()" />
+    <g:evaluate var="jvar_versions" jelly="true">
+      var gr = new GlideRecord('wf_element_definition');
+      gr.get((jelly.jvar_sysId || '') + '');
+      gr.version_container_id;
+    </g:evaluate>
+
+    <div id="VersionList">
+      <g:list_default table="wf_versionable" view="wf_version_modal" />
+      <g:evaluate jelly="true">
+        ListProperties.setHasTopNav(true);
+        ListProperties.setHasTitle(true);
+        ListProperties.setHasTitleContextMenu(false);
+        ListProperties.setHasListMechanic(false);
+        ListProperties.setHasTopVCR(true);
+        ListProperties.setHasHeader(true);
+        ListProperties.setHasHeaderContextMenu(false);
+        ListProperties.setShowLinks(true);
+        ListProperties.setHasFilter(true);
+        ListProperties.setHasBreadcrumbs(true);
+        ListProperties.setHasPopup(false);
+        ListProperties.setShowEmpty(true);
+        ListProperties.setHasBottomNav(false);
+        ListProperties.setHasBottomVCR(true);
+        ListProperties.setHasActions(false);
+        ListProperties.setCssName("embedded");
+        ListProperties.setHasRowContextMenu(false);
+        ListProperties.setOrderColumn("version");
+        ListProperties.setView("wf_version_modal");
+        ListProperties.setHiddenQuery("version_container_id=" + (jelly.jvar_versions || ''));
+      </g:evaluate>
+      <g:inline template="list2_default.xml" />
+    </div>
+
+    <div id="HistoryList">
+      <g:list_default table="wf_activity_context"/>
+      <g:evaluate jelly="true">
+        ListProperties.setHasTopNav(true);
+        ListProperties.setHasTitle(true);
+        ListProperties.setHasTitleContextMenu(false);
+        ListProperties.setHasListMechanic(false);
+        ListProperties.setHasTopVCR(true);
+        ListProperties.setHasHeader(true);
+        ListProperties.setHasHeaderContextMenu(false);
+        ListProperties.setShowLinks(true);
+        ListProperties.setHasFilter(true);
+        ListProperties.setHasBreadcrumbs(true);
+        ListProperties.setHasPopup(false);
+        ListProperties.setShowEmpty(true);
+        ListProperties.setHasBottomNav(false);
+        ListProperties.setHasBottomVCR(true);
+        ListProperties.setHasActions(false);
+        ListProperties.setCssName("embedded");
+        ListProperties.setHasRowContextMenu(false);
+        ListProperties.setOrderColumn("wc_started");
+        ListProperties.setHiddenQuery("wa_activity_definition=" + (jelly.jvar_sysId || ''));
+      </g:evaluate>
+      <g:inline template="list2_default.xml" />
+    </div>
+
+    <div id="UsedInList">
+      <g:list_default table="wf_activity" view="wf_version_modal" />
+      <g:evaluate jelly="true">
+        ListProperties.setHasTopNav(true);
+        ListProperties.setHasTitle(true);
+        ListProperties.setHasTitleContextMenu(false);
+        ListProperties.setHasListMechanic(false);
+        ListProperties.setHasTopVCR(true);
+        ListProperties.setHasHeader(true);
+        ListProperties.setHasHeaderContextMenu(false);
+        ListProperties.setShowLinks(true);
+        ListProperties.setHasFilter(true);
+        ListProperties.setHasBreadcrumbs(true);
+        ListProperties.setHasPopup(false);
+        ListProperties.setShowEmpty(true);
+        ListProperties.setHasBottomNav(false);
+        ListProperties.setHasBottomVCR(true);
+        ListProperties.setHasActions(false);
+        ListProperties.setCssName("embedded");
+        ListProperties.setHasRowContextMenu(false);
+        ListProperties.setOrderColumn("version");
+        ListProperties.setView("wf_version_modal");
+        ListProperties.setHiddenQuery("activity_definition=" + (jelly.jvar_sysId || '') + "^workflow_version.published=true^ORworkflow_version.checked_out_by=" + (jelly.jvar_user || ''));
+      </g:evaluate>
+      <g:inline template="list2_default.xml" />
+    </div>
+
+    <div id="relatedTabs"/>
+    <div align="right">
+      <!-- Add OK button. Clicking OK calls the done script -->
+      <g:dialog_button_ok ok="return ari_dialog_done()" ok_type="button" />
+    </div>
+    <script type="javascript">
+      var activeTab='${jvar_activeTab}';
+    </script>
+  </g:ui_form>
+</j:jelly>

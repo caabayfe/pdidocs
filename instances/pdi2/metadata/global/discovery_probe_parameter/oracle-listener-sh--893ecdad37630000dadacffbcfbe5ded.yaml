@@ -1,0 +1,60 @@
+_meta:
+  hash: 28aa7d4a624a4143ce7361dc7f3d79c2adac932a25dc9024bba4701aa00cf6e1
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: ben.yukich
+  sys_created_on: 2011-06-28 21:16:10
+  sys_id: 893ecdad37630000dadacffbcfbe5ded
+  sys_mod_count: '7'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_893ecdad37630000dadacffbcfbe5ded
+  sys_updated_by: tim.broberg
+  sys_updated_on: 2013-05-22 23:03:33
+active: 'true'
+name: oracle_listener.sh
+probe: 00555f3237130000dadacffbcfbe5d25
+sys_name: oracle_listener.sh
+sys_policy: ''
+value: |-
+  ORA_HOME=$1
+  LISTENER=$2
+  FAILED=0
+  ERR=""
+
+  get_config() {
+      CONFIG_PATH="${ORA_HOME}/network/admin/listener.ora"
+      FAILED=`cat $CONFIG_PATH 1> /dev/null 2>&1; echo $?`
+      [ "$FAILED" != 0 ] && ERR="Could not read listener.ora: $CONFIG_PATH. $ERR" && return
+      echo "snc_listener.ora_contents="
+      cat $CONFIG_PATH
+  }
+
+  get_instances() {
+      ORACLE_HOME=$ORA_HOME
+      export ORACLE_HOME
+      TNS_ADMIN=${ORA_HOME}/network/admin
+      export TNS_ADMIN
+      INSTANCES=`${ORA_HOME}/bin/lsnrctl status $LISTENER 2>&1 | sed -ne 's/Instance "\(.*\)", status READY.*/\1/p' | tr -d ' ' | uniq | tr '\n' ' '`
+      [ "$INSTANCES" != "" ] && echo "snc_ora_instances=$INSTANCES" && return
+      FAILED=1
+      ERR="Unable to accurately determine listener<->instance relationships. $ERR"
+  }
+
+  get_version() {
+      VERSION=`${ORA_HOME}/bin/lsnrctl status 2>&1 | grep Version | sed -ne 's/.*: Version \([0-9.]*\) .*/\1/p'`
+      [ "$VERSION" != "" ] && echo "snc_ora_version=$VERSION" && return
+      VERSION=`echo $ORA_HOME | sed -ne 's/.*\/\([0-9.]*\)\/.*/\1/p'`
+      [ "$VERSION" != "" ] && echo "snc_ora_version=$VERSION" && return
+      FAILED=1
+      ERR="Could not determine Oracle listener version. $ERR"
+  }
+
+  get_version
+  get_instances
+  get_config
+  [ "$FAILED" != 0 ] && echo "snc_error=$ERR"
+  echo "listener_name=$LISTENER"
+  exit 0
+value_script: ''

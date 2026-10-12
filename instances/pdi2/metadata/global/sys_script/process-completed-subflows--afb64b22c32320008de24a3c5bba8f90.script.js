@@ -1,0 +1,1 @@
+(new Workflow()).handleSubflowComplete(current);

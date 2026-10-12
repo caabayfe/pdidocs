@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<!-- pre script -->
+<g2:evaluate>
+	// setup the notifications in variable 'n'
+	var n = new GlideRecord("sysevent_email_action");
+	n.addQuery("active", true);
+	// n.addQuery("collection", "incident");
+	n.orderBy("name");
+	n.query(); 
+</g2:evaluate>	
+	
+<g:ui_form>
+<g:ui_table>
+	<g:ui_header>Generally do This!</g:ui_header>
+	<!-- get language, time zone from the current user record -->
+	<tr>
+		<td class="label" nowrap="true">Language:</td>
+		<td nowrap="true" width="100%">
+			Language:
+			<input id="make_spacing_ok" title=""
+				style="visibility:hidden;width:0px:" />
+		</td>		
+	</tr>	
+	<tr>
+		<td class="label" nowrap="true">Time zone:</td>
+		<td nowrap="true">
+			tz select
+			<input id="make_spacing_ok" title=""
+				style="visibility:hidden;width:0px:" />
+		</td>		
+	</tr>		
+</g:ui_table>
+<g:ui_table>
+	<g:ui_header>Notifications</g:ui_header>
+        <table>
+	<j2:while test="$[n.next()]">
+	<tr>
+		<td>
+			<j2:set var="jvar_v" value="false"/>
+			<g2:evaluate var="jvar_name" expression="'notification_disable_' + n.sys_id"/>
+			<g2:evaluate var="jvar_x" expression="gs.getPreference('notification_disable_' + n.sys_id)"/>
+			<j2:if test="$[jvar_x == 'true']">
+				<j2:set var="jvar_v" value="true"/>
+			</j2:if>
+			<g2:ui_checkbox name="$[jvar_name]" value="$[jvar_v]" title="$[n.name]" />
+		</td>
+		<td>$[n.name]</td>
+	</tr>
+	</j2:while>
+        </table>
+	<tr>
+		<td colspan="2">
+			<g:ui_button action="save">Save</g:ui_button>
+		</td>
+	</tr>		
+</g:ui_table>
+</g:ui_form>
+</j:jelly>

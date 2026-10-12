@@ -1,0 +1,49 @@
+- document: sys_atf_step
+  document_key: 7da9b23c73403300623db63854f6a732
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:14:18
+  sys_id: 14c9b23c73403300623db63854f6a73a
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-03-05 12:15:03
+  value: |-
+    //Getting all the used active solution
+    (function(outputs, steps, stepResult, assertEqual) {
+    	// If no output received from earlier step then exit
+    	if(steps("7199b23c73403300623db63854f6a775").record_id == ""){
+    		stepResult.setOutputMessage("No active classification solutions with old predictions found.");
+    		return true;
+    	}
+    	var actvSolId = steps("7199b23c73403300623db63854f6a775").record_id.split(",");
+    	var actvSolWithPred = "";
+    	var count = 0;
+    	for(var i = 0; i < actvSolId.length; i++){
+    		var oldPred = GlideRecord("ml_predictor_results");
+    		oldPred.addQuery("solution",actvSolId[i]);
+    		oldPred.query();
+    		if(oldPred.next()){
+    			count++;
+    			actvSolWithPred += actvSolId[i] + ",";
+    			gs.info(oldPred.solution.solution_name);
+    		}
+    	}
+    	stepResult.setOutputMessage(count + " active classification solutions with old predictions found.");
+    	outputs.record_id = actvSolWithPred.slice(0,-1);
+    })(outputs, steps, stepResult, assertEqual);
+  variable: 989d9e235324220002c6435723dc3484
+- document: sys_atf_step
+  document_key: 7da9b23c73403300623db63854f6a732
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:14:18
+  sys_id: 50c9b23c73403300623db63854f6a73a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-03-05 12:14:18
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777

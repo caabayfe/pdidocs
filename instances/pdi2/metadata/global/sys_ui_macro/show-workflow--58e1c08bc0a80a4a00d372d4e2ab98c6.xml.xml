@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide"
+	xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_is_running_tablet">
+		var isRunningTablet = GlideMobileExtensions.runningTablet();
+		isRunningTablet;
+	</g:evaluate>
+	<j:if test="${!jvar_is_running_tablet}">
+		<g:reference_decoration id="show_workflow.${ref}" field="${ref}"
+			onclick="showWorkflow('${ref}');" title="${gs.getMessage('Show Workflow')}"
+			image="images/workflow/wkfl_definition.gifx" />
+	</j:if>
+
+	<script>
+		function showWorkflow(reference) {
+			var s = reference.split('.');
+			var referenceField = s[1];
+			var workflowId = g_form.getValue(referenceField);
+	
+			var url = new GlideURL('workflow_ide.do');
+			url.addParam('sysparm_wf_id', workflowId);
+			var w = getHighestParentWith("popupOpenFocus");
+			w.popupOpenFocus(url.getURL(), 'show_workflow_version', 950, 700, '', false, false);
+
+			function getHighestParentWith(prop) {
+				var topWin = window.self;
+				try {
+					while (topWin !== window $[AND] topWin.parent[prop]) {
+						topWin = topWin.parent;
+					}
+				} catch(e) {}
+
+				return topWin;
+			}
+		}
+	</script>
+</j:jelly> 

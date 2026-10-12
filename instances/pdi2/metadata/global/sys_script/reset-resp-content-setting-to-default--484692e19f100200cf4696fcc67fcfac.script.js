@@ -1,0 +1,3 @@
+function onBefore(current, previous) {
+
+}

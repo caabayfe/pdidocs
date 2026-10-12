@@ -1,0 +1,1 @@
+current.initialized = false;

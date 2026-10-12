@@ -1,0 +1,1 @@
+answer = gs.getCurrentApplicationId() == "global";

@@ -1,0 +1,2 @@
+
+     /** * @param {params} params * @param {api} params.api * @param {TransformApiHelpers} params.helpers */ function evaluateProperty({api, helpers}) { const data = api.data.related_lists_gql.output?.data?.GlideLayout_Query?.formLayout?.relatedLists || []; if(api.state.fetchRelatedListsStatus === 'PENDING' || api.state.fetchRelatedListsStatus === 'FAILED' || data.length){ return true; } return false; }

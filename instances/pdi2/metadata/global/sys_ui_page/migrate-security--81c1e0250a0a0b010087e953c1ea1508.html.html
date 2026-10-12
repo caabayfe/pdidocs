@@ -1,0 +1,40 @@
+<g:evaluate>
+  var count = new GlideAggregate('sys_security_acl');
+  count.addAggregate('COUNT');
+  count.query();
+  var current_rule_count = 0;
+  if (count.next()) 
+     current_rule_count = count.getAggregate('COUNT');
+</g:evaluate>
+
+<g:ui_form>
+<g:ui_table>
+  <g:ui_header>Security Migration Utility</g:ui_header>
+  <tr>
+    <td>
+        This utility will migrate your security defintitions into contextual security rules in order to use the new security manager. Usual run time is in the one to two minute range although some degree of variance is to be expected. <br/>
+      <b>Please be aware of the following</b>
+       <ol>
+        <li>Running the migration utility more than once will create duplicate rules in your ACL base. If want to "start over", you'll want to run the ACL reset utility prior to running this utility a second time.</li>
+        <li>If you are running multiple instances with a promotion chain e.g. dev -> test -> prod, we recommend only running this utility on your dev environment and then migrating any rules generated there up to the next step in the chain.</li>
+       </ol>
+       <b>Your current rule count:$[SP]${current_rule_count}</b>
+    </td>
+  </tr>
+  <j:if test="${typeof(sys_output) != 'undefined'}">
+  <tr>
+    <td>
+      <g:yellow_annotation>
+        ${sys_output}
+      </g:yellow_annotation>
+    </td>
+  </tr>
+  </j:if>
+  <tr>
+   <td>
+     <g:ui_button action="migrate">Migrate</g:ui_button>      <g:ui_button action="cancel">Cancel</g:ui_button>
+   </td>
+  </tr>
+  
+</g:ui_table>
+</g:ui_form>

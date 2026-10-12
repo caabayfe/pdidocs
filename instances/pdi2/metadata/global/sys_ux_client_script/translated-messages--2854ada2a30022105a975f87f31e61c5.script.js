@@ -1,0 +1,23 @@
+/**
+* @param {params} params
+* @param {api} params.api
+* @param {any} params.event
+* @param {any} params.imports
+* @param {ApiHelpers} params.helpers
+*/
+function handler({api, event, helpers, imports}) {
+    helpers.translate("Record updated successfully.").then(label => api.state.translatedMessages.successfulUpdateMessage = label);
+    helpers.translate("Invalid URL, please enter a valid URL.").then(label => api.state.translatedMessages.invalidJWKSURL = label);
+    helpers.translate("Failed to delete JWT verifier map.").then(label => api.state.translatedMessages.jwtVerifierDeleteFail = label);
+    helpers.translate("Successfully deleted JWT verifier map.").then(label => api.state.translatedMessages.jwtVerifierDeleteSuccess = label);
+    helpers.translate("Successfully created JWT verifier map.").then(label => api.state.translatedMessages.jwtVerifierCreateSuccess = label);
+    helpers.translate("Failed to create JWT verifier map.").then(label => api.state.translatedMessages.jwtVerifierCreateFail = label);
+    helpers.translate("Enter a service provider to continue with integration.").then(label => api.state.translatedMessages.providerRequired = label);
+
+    api.state.translatedMessages.scopeRestriction = {};
+    helpers.translate("Broadly scoped").then(label => api.state.translatedMessages.scopeRestriction["broadlyScopedLabel"] = label);
+    helpers.translate("Useraccount scoped").then(label => api.state.translatedMessages.scopeRestriction["useraccountScopedLabel"] = label);
+    helpers.translate("Securely scoped").then(label => api.state.translatedMessages.scopeRestriction["securelyScopedLabel"] = label);
+    helpers.translate("Restrict this client's access exclusively to APIs within the designated scopes by enabling the 'Allow access only to APIs in selected scope' option. This client has access to APIs which are not associated to any scope.").then(label => api.state.translatedMessages.scopeRestriction["broadlyScopedWarning"] = label);
+    helpers.translate("Assign only non-sensitive API scopes to reduce security risks. This integration currently has access to the useraccount scope.").then(label => api.state.translatedMessages.scopeRestriction["useraccountScopedWarning"] = label);
+}

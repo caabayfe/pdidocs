@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/angular_includes_supported.jsx" inline="false" />
+	<g:inline template="set_theme_vars.xml" />
+	<g:requires name="styles/css_includes_doctype_polaris.css" includes="true" params="$[jvar_css_cache_key]" />
+	<g:inline template="polarisberg_output.xml"/>
+	<j:set var="__ref__" value="sys_ui_page" />
+	<g2:evaluate jelly="true">
+		var table = jelly.sysparm_table === undefined ? '' : jelly.sysparm_table + '';
+		var label = '';
+		var viewName = '';
+		var firstRecordSysId = '';
+		var firstRecordDisplayValue = '';
+		var isRelationship = false;
+		if (typeof jelly.sysparm_relationship_id !== 'undefined')
+			isRelationship = true;
+
+		var relationshipId;
+
+		if (isRelationship) {
+			relationshipId = jelly.sysparm_relationship_id;
+			const relationshipGr = new GlideRecord('sys_relationship');
+			if (relationshipGr.get(relationshipId))
+				table = relationshipGr.getValue('basic_apply_to');
+		} else if (table) {
+			const viewManager = new GlideScriptViewManager('');
+			viewManager.setTable(table);
+			viewManager.setTarget('related_list');
+			const viewChoiceList = viewManager.getList(RP);
+
+			const viewNameParam = jelly.sysparm_view_name || '';
+			const choice = viewChoiceList.getChoice(viewNameParam);
+			viewName = (choice) ? viewNameParam : '';
+		}
+
+		if (table) {
+			const td = GlideTableDescriptor.get(table);
+			if (td.isValid()) {
+				label = td.getLabel();
+
+				const sysIdParam = jelly.sysparm_sys_id;
+				const firstTargetRecordGr = new GlideRecordSecure(table);
+				firstTargetRecordGr.setLimit(1);
+
+				if (sysIdParam)
+					firstTargetRecordGr.addQuery('sys_id', sysIdParam);
+
+				firstTargetRecordGr.query();
+				if (firstTargetRecordGr.next()) {
+					firstRecordSysId = firstTargetRecordGr.getUniqueValue();
+					firstRecordDisplayValue = firstTargetRecordGr.getDisplayValue();
+				}
+			} else {
+				table = '';
+			}
+		}
+
+		var showView = !isRelationship $[AMP]$[AMP] GlideStringUtil.notNil(table);
+	</g2:evaluate>
+	<g2:evaluate>
+		var dbi = GlideDBConfiguration.getDBI('sys_dictionary');
+		if (GlideStringUtil.notNil(table) $[AMP]$[AMP] !dbi.isMySQL())
+			gs.addInfoMessage(gs.getMessage('Rows Queried, Index Used and Fields in Index are only supported for MySQL databases.'));
+	</g2:evaluate>
+	<g2:breakpoint />
+	<head>
+		<style>
+			.rl-summary-table { border-collapse: collapse; border: 1px solid RGB(var(--now-form-field--border-color)); margin: auto; }
+			.rl-summary-table th { background-color: RGB(var(--now-color_background--primary)); border: 1px solid RGB(var(--now-form-field--border-color))}
+			.totals-row { border-top: 1px solid RGB(var(--now-form-field--border-color)); font-weight: bold }
+			.rl-summary-table .table-divider { border-right: 1px solid RGB(var(--now-form-field--border-color)); }
+
+			.rl-summary-table th, .rl-summary-table td { padding: 5px 4px; text-align: left; font-size: 13px; }
+			.rl-diag-page { margin: 15px 30px; }
+			.rl-summary-table .truncate { max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+			.spaced-divider { margin-top: 8px;margin-bottom: 8px; }
+			.link-separator { margin-right: 5px; }
+
+			.rl-summary-table .numeric {text-align: right}
+			.rl-diag-header, .invalid-query, .rl-summary-table th[colspan] { text-align: center }
+
+			.missing-index { color: RGB(var(--now-color_alert--critical-2)) }
+			#is_loading { text-align: center; margin-top: 100px }
+			.rl-summary-table a { color: RGB(var(--now-text-link--primary--color)); white-space: nowrap;}
+			.rl-summary-table tr:nth-child(odd) { background-color: RGB(var(--now-color_background--secondary))}
+			.rl-summary-table tr:nth-child(even) { background-color: RGB(var(--now-color_background--primary)); }
+		</style>
+		<script>
+			window.g_ck = '$[gs.getSessionToken()]';
+		</script>
+	</head>
+	<body class="section_header_body_no_scroll        chrome        -polaris " style="padding:0px" ng-app="relatedListDiagnostics" ng-controller="rl_diagnostics_controller" ng-init="requestDiagnostics()">
+		<div class='rl-diag-page'>
+			<div class="rl-diag-header">
+				<h4>${gs.getMessage('Related List Performance Diagnostics')}</h4>
+				<hr class="spaced-divider" />
+			</div>
+			<g:inline template="output_messages2.xml" />
+			<div>
+				<div class="form_body form-horizontal">
+					<span class="tabs2_section">
+						<span class="section">
+							<div class="section-content with-overflow">
+								<div class="row">
+									<j2:if test="$[GlideStringUtil.notNil(table)]">
+										<div class="vsplit col-sm-6">
+											<div class="form-group">
+												<div nowrap="true">
+													<label class=" col-xs-12 col-md-3 col-lg-4 control-label">$[label]</label>
+												</div>
+												<div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+													<g:ui_reference name="target_record" id="target_record" table="$[table]" field="target_record"
+																show_popup="false" value="$[firstRecordSysId]" displayValue="$[firstRecordDisplayValue]"
+																onchange="angular.element(document.querySelector('#target_record')).scope().requestDiagnostics();"/>
+												</div>
+											</div>
+										</div>
+									</j2:if>
+									<j2:if test="$[!GlideStringUtil.notNil(table)]">
+										<div class="vsplit col-sm-6">
+											<div class="form-group">
+												<div nowrap="true">
+													<label class=" col-xs-12 col-md-3 col-lg-4 control-label">${gs.getMessage('Table')}</label>
+												</div>
+												<div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+													<select id="target_table" onchange="angular.element(document.querySelector('#target_table')).scope().reloadWithTable();">
+														<g2:table_options none="true" all="false"  selectedOnly="" selectedField="" noViews="true"
+															includeDefault="false" shortList="true"
+															noSystemTables="false" currentTableName="" fieldName=""/>
+													</select>
+												</div>
+											</div>
+										</div>
+									</j2:if>
+									<j2:if test="$[showView]">
+										<div class="vsplit col-sm-6">
+											<div class="form-group">
+												<div nowrap="true">
+													<label class=" col-xs-12 col-md-3 col-lg-4 control-label">${gs.getMessage('View name')}</label>
+												</div>
+												<div class="col-xs-10 col-sm-9 col-md-6 col-lg-5 form-field input_controls">
+													<select id="view_choice_list" name="view_choice_list" class="form-control"
+															onchange="angular.element(document.querySelector('#view_choice_list')).scope().requestDiagnostics();">
+														<g2:options choiceList="$[viewChoiceList]" choiceValue="$[viewName]"/>
+													</select>
+												</div>
+											</div>
+										</div>
+									</j2:if>
+									<j2:if test="$[isRelationship]">
+										<input type="hidden" id="relationship_id" value="$[relationshipId]" />
+									</j2:if>
+								</div>
+							</div>
+						</span>
+					</span>
+				</div>
+				<div id='is_loading' ng-show="isLoading" >
+					<i class="icon-loading"></i>
+				</div>
+				<div ng-show="showResults()">
+					<table class='rl-summary-table'>
+						<thead>
+							<tr>
+								<th colspan="7">${gs.getMessage('Query Summary')}</th>
+								<th colspan="4">${gs.getMessage('Relationship Summary')}</th>
+							</tr>
+							<tr>
+								<th>${gs.getMessage('Table')}</th>
+								<th>${gs.getMessage('Query Time')}</th>
+								<th>${gs.getMessage('Result Count')}</th>
+								<th>${gs.getMessage('Rows Queried')}
+									$[AMP]nbsp;
+									<span class="icon-info inco" aria-hidden="true" style="margin: 0px; font-size: 12px;"
+									title="${gs.getMessage('Indicates the number of rows MySQL believes it must examine to execute the query. It may not always be exact.')}"></span>
+								</th>
+								<th>${gs.getMessage('Index Used')}</th>
+								<th>${gs.getMessage('Fields in Index')}</th>
+								<th>${gs.getMessage('Encoded Query')}</th>
+								<th>${gs.getMessage('Evaluation Time')}
+									$[AMP]nbsp;
+									<span class="icon-info inco" aria-hidden="true" style="margin: 0px; font-size: 12px;"
+									title="${gs.getMessage('Total evaluation time for the sys_relationship \'Query with\' script.')}" />
+								</th>
+								<th>${gs.getMessage('SQL Time')}
+									$[AMP]nbsp;
+									<span class="icon-info inco" aria-hidden="true" style="margin: 0px; font-size: 12px;"
+									title="${gs.getMessage('Total time spent executing SQL queries while evaluating the sys_relationship \'Query with\' script.')}"
+									 />
+								</th>
+								<th>${gs.getMessage('SQL Count')}
+									$[AMP]nbsp;
+									<span class="icon-info inco" aria-hidden="true" style="margin: 0px; font-size: 12px;"
+									title="${gs.getMessage('Total number of SQL queries executed while evaluating the sys_relationship \'Query with\' script.')}" />
+								</th>
+								<th>${gs.getMessage('Actions')}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="rl in relatedLists">
+								<span ng-if="rl.relatedListMetrics">
+									<td>{{rl.targetTable}}</td>
+									<td class='numeric'>{{rl.relatedListMetrics.queryTime}}</td>
+									<td class='numeric'>{{rl.count}}</td>
+									<td class='numeric'>{{rl.relatedListExplain.rows}}</td>
+									<td ng-class="{'missing-index': rl.relatedListExplain.indexUsed == 'none'}">{{getIndexUsed(rl)}}</td>
+									<td>{{getFieldsInIndex(rl)}}</td>
+									<td class="truncate table-divider" title="{{rl.filter}}">{{rl.filter}}</td>
+									<td class='numeric'>{{getRelationshipEvalTime(rl)}}</td>
+									<td class='numeric'>{{getRelationshipSqlTime(rl)}}</td>
+									<td class='numeric table-divider'>{{getRelationshipEvalQueryCount(rl)}}</td>
+									<td>
+										<j2:if test="$[gs.hasRole('maint')]">
+											<a title="{{getSqlStatement(rl)}}" ng-click="copySqlStatement($event);">${gs.getMessage('Copy SQL')}</a>
+											<span class='link-separator'>,</span>
+										</j2:if>
+										<a href="{{getListHref(rl)}}" target="_blank">${gs.getMessage('Open as List')}</a>
+										<div style="margin-top: 2px;">
+											<a ng-if="isRelationship(rl)" href="{{getRelationshipUrl(rl)}}" target="_blank">${gs.getMessage('Open Relationship')}</a>
+										</div>
+									</td>
+								</span>
+							</tr>
+							<tr ng-repeat="rl in invalidRelatedLists">
+								<td>{{rl.targetTable}}</td>
+								<td colspan="5" class="invalid-query" style="text-align: center;">-- ${gs.getMessage('Invalid query')} --</td>
+								<td class="truncate table-divider" title="{{rl.filter}}">{{rl.filter}}</td>
+								<td colspan="3" class="table-divider"> </td>
+								<td>
+									<a ng-if="isRelationship(rl)" href="{{getRelationshipUrl(rl)}}" target="_blank">${gs.getMessage('Open Relationship')}</a>
+								</td>
+							</tr>
+							<tr class="totals-row">
+								<td>${gs.getMessage('Totals (ms)')}</td>
+								<td class='numeric'>{{totalQueryTime}}</td>
+								<td colspan="5" class="table-divider"></td>
+								<td class='numeric'>{{totalRelationshipEvalTime}}</td>
+								<td class='numeric'>{{totalRelationshipSqlTime}}</td>
+								<td class="table-divider"></td>
+								<td></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</body>
+</j:jelly>

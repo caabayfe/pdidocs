@@ -1,0 +1,196 @@
+<div id="{{data.sysId}}_task_lineitem"  class="task-content">
+  <div class="panel">
+    <!-- Heading panel should not appear after clicking on 'Acknowledge' button in mobile view -->
+    <div class="panel-heading fixed-panel"  role="presentation"  ng-class="{'mobile-panel': mobileDevice}" ng-show="(!isSignPadVisible && mobileDevice) || !mobileDevice">
+      <div ng-if="data.aiSummaryWidget">
+        <sp-widget widget="data.aiSummaryWidget"></sp-widget>
+      </div>
+      <div class="row">
+        <div class="col-sm-7"
+             ng-class="{'col-sm-12': (!data.isGranularDelegationActive || !data.active_duty_available || data.currentDelegates.noTableEntry || (data.currentDelegates.delegate && data.currentDelegates.delegate.name))}">         
+          <h3 id="{{data.sysId}}_todo_title" role="heading" aria-level="3" class="task-title" ng-bind-html="::data.displayValueList[0]"></h3>
+          <div class="case-title m-t-sm" ng-if="!data.onTicketPage">
+            <a ng-if="data.displayValueList[1]" id="{{data.sysId}}_todo_link" ng-href="{{data.url}}" aria-label="Parent task, {{::data.displayValueList[1]}}" ng-bind-html="::data.displayValueList[1]"></a>
+          </div>
+          <div class="status">
+            <span ng-show="data.todoNumber" ng-if="!data.future" class="todo-label">{{::data.todoNumber}}</span> 
+            <span class="text-muted todo-label-due-date" ng-bind="!data.isCompleted ? data.dueDateDisplayValue : data.stateLabel"></span>
+            <span ng-if="!data.isCompleted && data.optionalLabel">{{::data.optionalLabel}}</span>
+          </div> 
+        </div>
+        <div class="col-sm-5" ng-if="c.canDelegate()">
+          <!-- if NO delegate is assigned -->
+          <button class="m-t-xl btn-link delegate-task-link"
+             ng-class="{'pull-right': !mobileDevice, 'pull-left': mobileDevice}"
+             ng-if="data.currentDelegates.searchResCount === 0 &&
+                    data.canDelegateRecord"
+             ng-click="c.singleTaskPageModal($event)">
+            <i class="fa fa-lg fa-user-plus"></i> {{ ::data.CONST.i18n.DELEGATE_SINGLE_TASK }}
+          </button>
+          <!-- if SINGLE delegate is assigned -->
+          <div class="row selected-delegate" 
+               ng-if="data.currentDelegates.searchResCount === 1">
+            <div class="col-xs-8">
+              <div class="avatar-small-medium avatar-container m-r-sm" style="margin-top: 6px; float: left;">
+                <div class="avatar soloAvatar bottom" 
+                     context-menu="contextOptions">
+                  <a href="?id=hri_user_profile&sys_id={{ data.currentDelegates.searchRes[0].id }}" 
+                     target="_blank" 
+                     aria-label="{{ c.getViewProfileText(data.currentDelegates.searchRes[0].name) }}"
+                     class="sub-avatar" 
+                     ng-class="{'no-photo':!data.currentDelegates.searchRes[0].avatar}"
+                     ng-style="c.getAvatar(data.currentDelegates.searchRes[0].avatar)">
+                    <sn-presence user="data.currentDelegates.searchRes[0].id" 
+                                 class="presence presence-online"></sn-presence>
+                    <span class="delegate-initials"
+                          ng-if="!data.currentDelegates.searchRes[0].avatar" 
+                          ng-bind="data.currentDelegates.searchRes[0].initial"></span>
+                  </a>
+                </div>
+              </div>
+              <div class="i-b w60">
+                <span class="block" ng-bind="::data.CONST.i18n.DELEGATE"></span>
+                <div class="ellipsis"
+                     ng-class="{'push-down': !data.currentDelegates.searchRes[0].title}"
+                     data-toggle="tooltip"
+                     ng-mouseover="c.showTooltip($event)"
+                     ng-bind="data.currentDelegates.searchRes[0].name"></div>
+              </div>
+            </div>
+            <div class="col-xs-4">
+              <div style="margin-top: 9px; text-align: right;">
+                <button class="xs-m-r-lg btn-link"                                                
+                        ng-click="c.singleTaskPageModal($event, data.currentDelegates.searchRes[0])">
+                  <i class="fa fa-lg fa-pencil"
+                     data-toggle="tooltip"
+                     title="{{ ::data.CONST.i18n.BUTTON_TITLE.EDIT }}"></i>
+                </button>
+                <button class="btn-link m-l-xs"                        
+                        ng-if="data.canDelegateRecord"
+                        ng-click="c.singleTaskPageModal($event)">
+                  <i class="fa fa-lg fa-plus-circle"
+                     title="{{ ::data.CONST.i18n.BUTTON_TITLE.ADD }}"
+                     data-toggle="tooltip"                        
+                     data-placement="bottom"></i>
+                </button>
+              </div>              
+            </div>
+          </div>
+         
+          
+          <!-- if MULTIPLE delegate is assigned -->
+          <div class="row selected-delegate" 
+               ng-if="data.currentDelegates.searchResCount > 1">
+            <div class="col-xs-9">
+              <div class="avatar-small-medium avatar-container m-r-sm" style="margin-top: 6px; float: left;">
+                <div class="avatar soloAvatar bottom">
+                  <div class="sub-avatar no-cursor" 
+                       ng-bind="data.currentDelegates.searchResCount"></div>
+                </div>
+              </div>
+              
+              <div class="delegate-detail-container" style="float: left;">
+                <span class="block" ng-bind="::data.CONST.i18n.DELEGATE"></span>
+                <span class="text-xs">
+                  <button class="btn-link show-delegate-popover" 
+                          title="{{ ::data.CONST.i18n.BUTTON_TITLE.VIEW_ALL }}" 
+                          ng-click="c.triggerDelegatePopover($event)" 
+                          ng-bind="::data.CONST.i18n.VIEW_ALL"></button>
+                </span>
+              </div>
+            </div>
+                        
+            <div class="delegate-popover fade bottom in" 
+                 aria-role="group"
+                 aria-labelledby="#popoverTitle"
+                 ng-class="{'popover': (c.showAllDelegatePopover &amp;&amp data.currentDelegates.searchResCount > 1)}"
+                 ng-if="c.showAllDelegatePopover || data.currentDelegates.searchResCount === 1" 
+                 style="display: block;">
+              <h3 id="popoverTitle"
+                  class="popover-title"
+                  ng-if="(c.showAllDelegatePopover &amp;&amp data.currentDelegates.searchResCount > 1)"
+                  ng-bind="c.showDelegateCount(data.currentDelegates.searchResCount)"></h3>
+              <div ng-class="{'popover-content': c.showAllDelegatePopover}">              
+                <div class="row multiple-delegates"
+                     ng-class="{'as-popover': c.showAllDelegatePopover}"
+                     ng-repeat="delegate in data.currentDelegates.searchRes track by $index"> 
+                  <div class="col-xs-9">
+                    <div class="avatar-small-medium avatar-container i-b m-r-sm">
+                      <div class="avatar soloAvatar bottom" 
+                           context-menu="contextOptions">
+                        <a class="sub-avatar" 
+                           href="?id=hri_user_profile&sys_id={{ delegate.id }}"
+                           target="_blank"
+                           aria-label="{{ c.getViewProfileText(delegate.name) }}"
+                           ng-class="{'no-photo':!delegate.avatar}" 
+                           ng-style="c.getAvatar(delegate.avatar)">
+                          <sn-presence user="delegate.id" 
+                                       class="presence presence-online"></sn-presence>
+                          <span class="delegate-initials"
+                                ng-if="!delegate.avatar" 
+                                ng-bind="delegate.initial"></span>
+                        </a>
+                      </div>
+                    </div>
+                    <div class="i-b w60">
+                      <div class="ellipsis"
+                           ng-class="{'push-down': !delegate.title}"
+                           data-toggle="tooltip"
+                           ng-mouseover="c.showTooltip($event)"
+                           ng-bind="delegate.name"></div>
+                    </div>
+                  </div>
+                  <div class="col-xs-3">
+                    <div class="tooltip-btn-container">
+                      <button class="btn-link" 
+                              ng-click="c.singleTaskPageModal($event, delegate)">
+                        <i class="fa fa-lg fa-pencil"
+                           data-toggle="tooltip"
+                           data-placement="left"
+                           title="{{ ::data.CONST.i18n.BUTTON_TITLE.EDIT }}" ></i>
+                      </button>
+                    </div>              
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-xs-3">
+              <div style="margin-top: 9px; text-align: right;">
+                <button class="btn-link"
+                        title="{{ ::data.CONST.i18n.BUTTON_TITLE.ADD }}"
+                        data-toggle="tooltip"
+                        data-placement="bottom"
+                        ng-if="data.canDelegateRecord"
+                        ng-click="c.singleTaskPageModal($event)">
+                  <i class="fa fa-lg fa-plus-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="attachments-gallery" class="-p-top-bottom" ng-class="{'hr-task-attachment-gallery': data.showAttachmentsHR}">
+        <sp-widget widget="data.ticketAttachmentGalleryWidget"></sp-widget>
+      </div>
+      <div ng-if="!data.isHRCase && !data.future" class="ahc-widget m-t" ng-class="{'ahc-visible': data.ahcWidget? false: true}">
+        <sp-lazy-widget ng-if="data.ahcWidget.lazy" name="data.ahcWidget.lazy.name" options="data.ahcWidget.lazy.options"></sp-lazy-widget>
+      </div>
+    </div>
+    <div ng-show="data.widgetToRender && selectedTab == 'details'" class="panel-body">
+        <div ng-if="c.isPortalInMessagingAppContext() && data.redirectionNeeded" class="todo-line-item-wrap padder">
+            <div ng-bind-html="c.displayMessage" class="todo-line-item-teams-link"></div>
+      	</div>
+      <div class="todo-line-item-wrap padder" ng-if="!(c.isPortalInMessagingAppContext() && data.redirectionNeeded)">
+        <sp-widget widget="data.widgetToRender"></sp-widget>
+      </div>
+    </div>
+    <div ng-if="visited.activity" ng-show="data.historyWidget && selectedTab == 'activity'" class="panel-body">
+      <div class="todo-line-item-wrap padder">
+        <sp-lazy-widget ng-if="data.historyWidget.lazy" name="data.historyWidget.lazy.name" options="data.historyWidget.lazy.options"></sp-lazy-widget>
+      </div>
+    </div>
+  </div> 
+</div>
+
+<now-message key='A task with document type is not supported within {0}. Please {1}"{2}" {3}click here{4} to view the task.' value='${Task with document type is not supported}'/>

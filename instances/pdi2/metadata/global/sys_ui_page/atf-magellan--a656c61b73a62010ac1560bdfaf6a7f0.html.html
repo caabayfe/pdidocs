@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<!-- this includes js_includes_magellan.js and its dependencies -->
+	<g2:requires name="styles/sn/concourse/css_includes_concourse.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+	<g2:requires name="scripts/sn/concourse/js_includes_concourse.js" includes="true"/>
+	<g2:requires name="scripts/concourse/delayedAngularBootstrapper.js" inline="true" />
+	<g:inline template="html_page_script_globals.xml" />
+
+	<g:inline template="magellan_navigator.xml" />
+
+	<script>
+		// prevent framebusting from concourse_framebuster.js
+		window.name = 'sn_frame';
+
+		// bootstrap the ng.common and Magellan angular modules
+		jQuery(document).ready(function() {
+			window.NOW = window.NOW || {};
+			window.NOW.ngLoadModules = window.NOW.ngLoadModules || [];
+			NOW.ngLoadModules.push('ng.common', 'Magellan');
+		});
+
+		// shim in a dummy SingletonKeyboardRegistry. The magellan controller injects it as a module even though it doesn't use it
+		if (!window.top.SingletonKeyboardRegistry) {
+			window.top.SingletonKeyboardRegistry = (function() {
+				return {
+					getInstance: function() {
+						return {};
+					}
+				}
+			})();
+		}
+	</script>
+
+	<style>
+		.magellan_navigator {
+			width: 100% !important;
+		}
+
+		.navigator-filter-form {
+			margin-bottom: 0px !important;
+		}
+	</style>
+
+</j:jelly>

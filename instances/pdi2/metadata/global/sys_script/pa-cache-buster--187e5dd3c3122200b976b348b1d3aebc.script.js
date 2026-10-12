@@ -1,0 +1,1 @@
+SNC.PAScore.updateIndicatorScoreModifiedAtOn2ndLevelTable(current.ref_id);

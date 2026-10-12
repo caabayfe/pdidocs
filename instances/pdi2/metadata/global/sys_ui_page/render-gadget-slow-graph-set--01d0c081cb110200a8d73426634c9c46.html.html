@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g2:evaluate var="jvar_user_trend">
+        var currentUser = gs.getUser();
+        var userTrend = currentUser.getPreference('slow_perf_trend');
+        if (!userTrend) {
+            0;
+        } else {
+            parseInt(userTrend, 10);
+        }
+    </g2:evaluate>
+    <g2:evaluate var="jvar_user_duration">
+        var currentUser = gs.getUser();
+        var userDuration = currentUser.getPreference('slow_perf_duration');
+        if (!userDuration) {
+            0;
+        } else {
+            parseInt(userDuration, 10);
+        }
+    </g2:evaluate>
+    <style>
+        .form-inline {
+            text-align: center;
+        }
+
+        .form-inline label {
+            margin-right: 5px;
+        }
+
+        #slowPerfTrend {
+            margin-right: 10px;
+        }
+
+        .slowGraph .report_content {
+            margin: 0 auto;
+        }
+    </style>
+    <g:inline template="ie_checker.xml" />
+    <j2:if test="$[jvar_isMSIE8 || jvar_isMSIE7]">
+        <style>
+            .slowGraph {
+                text-align: center;
+            }
+        </style>
+    </j2:if>
+    <div class="container">
+        <form class="form-inline">
+            <div class="form-group">
+                <label for="slowPerfTrend">Trend</label>
+                <select id="slowPerfTrend" class="form-control" data-selected="$[jvar_user_trend]">
+                    <option value="0">Count</option>
+                    <option value="1">Time</option>
+                </select>
+                <label for="slowPerfDuration">Duration</label>
+                <select id="slowPerfDuration" class="form-control" data-selected="$[jvar_user_duration]">
+                    <option value="0">2 Hours</option>
+                    <option value="1">1 Day</option>
+                    <option value="2">1 Month</option>
+                </select>
+            </div>
+        </form>
+        <div class="slowGraph" id="slowScriptGraph"/>
+        <div class="slowGraph" id="slowTransactionGraph"/>
+        <div class="slowGraph" id="slowQueryGraph"/>
+		<div class="slowGraph" id="slowMutexGraph"/>
+    </div>
+</j:jelly>

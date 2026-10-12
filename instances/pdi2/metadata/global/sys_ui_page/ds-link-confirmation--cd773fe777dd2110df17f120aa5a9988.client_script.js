@@ -1,0 +1,4 @@
+                                                   
+function onClickDelete() {
+	proceedWithDeleteLink();
+}

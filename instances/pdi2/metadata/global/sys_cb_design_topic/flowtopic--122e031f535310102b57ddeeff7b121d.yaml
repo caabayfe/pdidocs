@@ -1,0 +1,1412 @@
+_meta:
+  hash: 0ef1b0e7d02adfa773a0acd97e25d6ea07c77ce32850f7580e13b7126af6d1fd
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2020-09-22 13:54:39
+  sys_domain: global
+  sys_id: 122e031f535310102b57ddeeff7b121d
+  sys_mod_count: '212'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_122e031f535310102b57ddeeff7b121d
+  sys_updated_by: admin
+  sys_updated_on: 2024-01-31 22:56:09
+compiled_topic: bb9714a9530210106e61ddeeff7b1201
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"7b74a5b285bc418bb81e85f8f71a9012","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"7b74a5b285bc418bb81e85f8f71a9012"}],"goals":[{"name":"primary","trigger_id":"7b74a5b285bc418bb81e85f8f71a9012","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"ebb3b128dfc048b5a2e8e4c4158a912b","name":"Start"},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"c218875d4daf43b0bf12a1fc0daf0e78","name":"End"},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Adapters","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if (!vaSystem.isAMBClient(vaContext.deviceType))\n    return true;\n})()\n"},"id":"1f769f6ff62a4d9c918fb86e7398c7a8","name":"Adapters"},{"type":"Branch","label":"Web Client","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if (vaSystem.isAMBClient(vaContext.deviceType))\n        return true;\n})()\n"},"id":"48d0dde65cad4ad7a4bcf73f5827422f","name":"Web Client"}],"id":"45557b00255846e3b6f8493d0f4402c4","goal_id":"primary"},{"type":"ScriptOutputPrompt","output_type":"single_part","id":"903e435446d14a10a15097a363abcfd5","name":"Notification - Web Client","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"value":{"type":"String","mode":"string","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n\n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n    \n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n\n    var cardFields = [];\n    Object.keys(fields).forEach(function(a){\n        cardFields.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    });\n\n    var cardData = {\n        title: !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        subtitle: !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        fields: cardFields,\n    };\n        \n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    }\n    \n    if (gs.nil(tableLabel))\n        return;\n\n    return vaSystem.renderCard(showRecordLink ? \"Record Card\" : \"Record Card Without Link\", JSON.stringify(cardData));\n})()"},"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n    var greetingTopic = vaVars.global_notification_welcome_topic;\n    if ( greetingTopic != \"\" && greetingTopic != undefined ) {\n        vaVars.global_notification_welcome_topic = \"\";\n        vaSystem.switchTopic(greetingTopic);\n    }\n})()\n","id":"7813ee856773498699ae6e4176cfa892","name":"Switch Welcome","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptOutputPrompt","output_type":"single_part","id":"9b22ab1b3dc34594bc3b0f83962b98f8","name":"Notification - Adapters","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"value":{"type":"String","mode":"string","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n    \n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n\n    // Message header variables\n    var message = gs.getMessageLang(notification_content.message, conversationLang);\n    var messageHeading = gs.getMessageLang(notification_content.messageHeading, conversationLang);\n\n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n    var imageUrl = notification_content.imageUrl;\n    var imageAlt = notification_content.imageAlt;\n      \n    var questionAnswerPairs = [];\n    Object.keys(fields).forEach(function(a){\n        questionAnswerPairs.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    }) \n      \n    var cardData = {\n        \"message\": message,\n        \"messageHeading\": messageHeading,\n        \"fields\": questionAnswerPairs,\n        \"tableLabel\": !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        \"recordDisplayValue\": !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        \"table_name\": tableName,\n        \"sys_id\": sysId,\n        \"enableLink\": showRecordLink,\n        \"imageUrl\": imageUrl,\n        \"imageAlt\": imageAlt,\n    };\n\n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    }\n    \n    return vaSystem.renderCard(\"Notification\", JSON.stringify(cardData));\n})()"},"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"string","value":"gs.getMessageLang(\"va:topic:ec769c61530210106e61ddeeff7b12b9:node:d67bffa670d8400abf5cc123e3510b38:field:0\", vaContext.getRequesterLang())"}],"request_feedback":true,"id":"d67bffa670d8400abf5cc123e3510b38","name":"Skip Text","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function execute() {\n   if(!vaVars.actionId || vaVars.actionId == \"\") {\n       return true;\n   }\n   return false;\n})()\n"},"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n     var actionId = vaVars.actionId;\n    if (actionId && actionId != '''') {\n        var notification_content = JSON.parse(vaInputs.notification_content);\n        var gr = new GlideRecord(''sys_cs_notification'');\n        gr.get(notification_content.vaNotificationId);\n        gr.setValue(''state'', ''completed'');\n        gr.setValue(''conversation'', vaSystem.getConversationId());\n        gr.update();\n        var actions = notification_content.actions;\n        var selectedActionTopic = '''';\n        var selectedAcknowledgementMessage = '''';\n        for (var i = 0; i < actions.length; i++) {\n            if(actionId === actions[i].actionId) {\n                selectedActionTopic = actions[i].topicId ? actions[i].topicId: '''';\n                selectedAcknowledgementMessage = actions[i].acknowledgementMessage;\n                break;\n            }\n        }\n        //if va action then switch topic.\n        if(selectedActionTopic != '''') {\n            var table_name = notification_content.tableName;\n            var sys_id = notification_content.recordSysId;\n            if (notification_content.recordAccessible && (table_name == null || sys_id == null)) {\n                var notificationGr = new GlideRecord(''sys_cs_notification'');\n                notificationGr.get(notification_content.vaNotificationId);\n                table_name = notificationGr.notification_execution.target_table.getValue();\n                sys_id = notificationGr.notification_execution.instance.getValue();\n            }\n            var eventParm1 = notification_content.eventParm1;\n            var eventParm2 = notification_content.eventParm2;\n            var actionContext = {''tableName'': table_name, \n                                 ''tableSysId'': sys_id, \n                                 ''actionId'': actionId, \n                                 ''eventParm1'': eventParm1, \n                                 ''eventParm2'': eventParm2};\n            vaVars.global_notification_context = JSON.stringify(actionContext);\n            vaSystem.switchTopicById(selectedActionTopic);\n        } else {\n            vaVars.actionAcknowledgement = selectedAcknowledgementMessage;\n            var providerId = '''';\n            if (vaSystem.isAMBClient(vaContext.deviceType)) {\n                providerId = ''3918bf49533100102f40ddeeff7b122e'';\n            } else {\n                var providerApp = JSON.parse(sn_cs.VASystemObject.getProviderAppById(vaContext.providerAppId));\n                var mapping = new GlideRecord(''sys_cs_notification_channel_configuration'');\n                mapping.get(''provider'', providerApp.providerId);\n\n                var channel = new GlideRecord(''sys_notification_channel'');\n                channel.get(''sys_id'', mapping.getValue(''notification_channel''));\n                providerId = channel.getValue(''provider'');\n            }\n            \n            var act = new sn_notification.NotificationActionService(providerId, notification_content.executionId);\n            act.runById(actionId, true);\n        }\n    }\n})()","id":"53762fdbc42c4ec0aad09c16760a87cf","name":"Switch to Action Topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Image","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageUrl != null;\n})()"},"id":"846362c3159846b2a48e74bb3fa67a83","name":"Image"},{"type":"Branch","label":"No Image","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageUrl == null;\n})()"},"id":"c57f7c265c1a40f882de1183a8bddad3","name":"No Image"}],"id":"33293d8f63ce42a0a1fe4194488aca47","goal_id":"primary"},{"type":"CardOutputPrompt","templateName":"Large image with text","fields":[{"name":"title","value":{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n"},"required":true},{"name":"description","value":{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()\n"},"required":false},{"name":"image","value":{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageUrl;\n})()\n"},"required":true},{"name":"imageAlt","value":{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageAlt;\n})()\n"},"required":false}],"id":"9d2dd7810e3546199aa1366d301f2383","name":"Image Card","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"request_feedback":true},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Non Actionable","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return !notification_content.actionable;\n})()\n"},"id":"fefec9b81f2f4bf385428243fe390329","name":"Non Actionable"},{"type":"Branch","label":"Actionable","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.actionable;\n})()\n"},"id":"475a6d5175fb4bfe93eaf5215b1fa54e","name":"Actionable"}],"id":"1c612561fe5b46b1ad5b6a3b78665b1f","goal_id":"primary"},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"4208523587a744cfbed53025a44b7693","name":"Actionable Card","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return true;\n})()\n"},"variable_id":"36b083d30a7d4e6d8bda0612997f80d6","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"What would you like to do?\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return gs.nil(notification_content.allowSkipping) || notification_content.allowSkipping == true;\n})()\n"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessageLang(actions[i].label, vaContext.getRequesterLang()), ''render_style'': ''button'' });\n    }\n    return options;\n})()","metadataScript":"function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n\n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n\n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n\n    var cardFields = [];\n    Object.keys(fields).forEach(function(a){\n        cardFields.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    });\n\n    var cardData = {\n        title: !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        subtitle: !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        fields: cardFields,\n    }\n\n    var cardName = \"Record Card Without Link\";\n    \n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardName = \"Record Card\";\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    };\n    \n    var data = JSON.stringify(cardData);\n    var template = \"\";\n    var iosTemplate;\n    var androidTemplate;\n    var templateAndSmartLinkMetadataMap;\n    var smartLinkMetadata;\n\n    if (vaSystem.isAMBClient(vaContext.deviceType)) {\n        var conversationId = vaSystem.getConversationId();\n        templateAndSmartLinkMetadataMap = sn_cs.VASystemObject.fillTemplateFromDataDeviceTypeAndConvoId(cardName, data, ''mweb'', false, conversationId);\n        template = templateAndSmartLinkMetadataMap.templateKey;\n        smartLinkMetadata = templateAndSmartLinkMetadataMap.smartLinksMetadataKey;\n        iosTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, ''ios'', true);\n        androidTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, ''android'', true);\n    }\n    \n    return {\n       cardTemplate: template,\n       iosTemplate: iosTemplate,\n       androidTemplate: androidTemplate,\n       cardName: cardName,\n       cardData: data,\n       renderStyle: ''card'',\n       suppressPrompt: true,\n       smartLinksMetadataKey: smartLinkMetadata,\n    };\n}","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No Record Found\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"glide_scripted_query","value":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessageLang(actions[i].label, vaContext.getRequesterLang()), ''render_style'': ''button'' });\n    }\n    return options;\n})()"},"description":""},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Simple Card","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n     var notification_content = JSON.parse(vaInputs.notification_content);\n    var table_name = notification_content.tableName;\n    var imageUrl = notification_content.imageUrl;\n\n    if (imageUrl == null && table_name == null){\n        return true;\n    }\n})()\n"},"id":"361ae948aab8496ea0d27f43f72638e4","name":"Simple Card"},{"type":"Branch","label":"Image  Card","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var table_name = notification_content.tableName;\n    var imageUrl = notification_content.imageUrl;\n    if (imageUrl != null && table_name == null)\n        return true;\n})()\n"},"id":"1183df9e0c8d454ea7f0cc84dc96b25c","name":"Image  Card"},{"type":"Branch","label":"Record Card","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var table_name = notification_content.tableName;\n    var imageUrl = notification_content.imageUrl;\n    if (imageUrl == null && table_name != null)\n        return true;\n})()\n"},"id":"3af2632cd322403b8ba2429f2d03f7cc","name":"Record Card"}],"id":"450216088a7a4860a15fc2531025c721","goal_id":"primary"},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"5784e985b55044b8a26d6793cdb20d7a","name":"Actionable Image Card","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"variable_id":"61813b06bd17480fb41a0f6ed6aa7f05","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"What would you like to do?\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    \n    return notification_content.allowSkipping == true;\n})()\n"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessage(actions[i].label), ''render_style'': ''button'' });\n    }\n    return options;\n})()","metadataScript":"function() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    var messageHeading = notification_content.messageHeading;\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var table_name = notification_content.tableName;\n    var sys_id = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n    var imageUrl = notification_content.imageUrl;\n    var imageAlt = notification_content.imageAlt;\n\n    var url;\n    if(showRecordLink)\n        url = gs.getProperty(''glide.servlet.uri'')+table_name+\".do?sys_id=\"+sys_id;\n\n    var cardName = \"Large image with text\";\n    var cardData = {\n        title: messageHeading,\n        description: message,\n        image: imageUrl,\n        imageAlt: imageAlt\n    };\n    var data = JSON.stringify(cardData);\n    \n    var template = \"\";\n    var iosTemplate;\n    var androidTemplate;\n    if (vaSystem.isAMBClient(vaContext.deviceType)) {\n       template = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, ''mweb'', false);\n       iosTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, ''ios'', true);\n       androidTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, ''android'', true);\n    }\n\n    return {\n      cardTemplate: template,\n      iosTemplate: iosTemplate,\n      androidTemplate: androidTemplate,\n      cardName: cardName,\n      cardData: data,\n      renderStyle: ''card'',\n      suppressPrompt: true\n    };\n}","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No record found\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"glide_scripted_query","value":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessage(actions[i].label), ''render_style'': ''button'' });\n    }\n    return options;\n})()"},"description":""},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.actionId = vaInputs.actionable_card;\n})()\n","id":"2fc5fba7d13742acbfb03cfb9620b446","name":"Set Action Topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n   vaVars.actionId = vaInputs.actionable_image_card;\n})()\n","id":"504cb201c44742e28d820c87eb66af5a","name":"Set Action Topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Web Client","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if (vaSystem.isAMBClient(vaContext.deviceType))\n    return true;\n})()\n"},"id":"3cf40735caea4478bbbd1ac610bb05f5","name":"Web Client"},{"type":"Branch","label":"Adapters","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if (!vaSystem.isAMBClient(vaContext.deviceType))\n    return true;\n})()\n"},"id":"15c6434798fd41e9b1bf386d3e96d811","name":"Adapters"}],"id":"93dbbd9dc02644e7af13206d79673d8b","goal_id":"primary"},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"c206678ff17c4cbf9c6b7cf9a18e329e","name":"Actionable Adapters Card","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"variable_id":"90e9b0065e14430a908ef8253b870fce","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"What would you like to do?\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    \n    return notification_content.allowSkipping == true;\n})()\n"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessageLang(actions[i].label, vaContext.getRequesterLang()), ''render_style'': ''button'' });\n    }\n    return options;\n})()","metadataScript":"function() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n\n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n    \n    // Message header variables\n    var message = gs.getMessageLang(notification_content.message, conversationLang);\n    var messageHeading = gs.getMessageLang(notification_content.messageHeading, conversationLang);\n\n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n    var imageUrl = notification_content.imageUrl;\n    var imageAlt = notification_content.imageAlt;\n      \n    var questionAnswerPairs = [];\n    Object.keys(fields).forEach(function(a){\n        questionAnswerPairs.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    });\n      \n    var cardData = {\n        \"message\": message,\n        \"messageHeading\": messageHeading,\n        \"fields\": questionAnswerPairs,\n        \"tableLabel\": !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        \"recordDisplayValue\": !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        \"table_name\": tableName,\n        \"sys_id\": sysId,\n        \"enableLink\": showRecordLink,\n        \"imageUrl\": imageUrl,\n        \"imageAlt\": imageAlt,\n    };\n\n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    }\n\n    var conversationId = vaSystem.getConversationId();\n    templateAndSmartLinkMetadataMap = sn_cs.VASystemObject.fillTemplateFromDataDeviceTypeAndConvoId(\"Record Card\", JSON.stringify(cardData), ''mweb'', false, conversationId);\n    template = templateAndSmartLinkMetadataMap.templateKey;\n    smartLinkMetadata = templateAndSmartLinkMetadataMap.smartLinksMetadataKey;\n\n\n    return {\n\t    cardTemplate: \"\",\n\t    cardName: \"Notification\",\n\t    cardData: JSON.stringify(cardData),\n\t    smartLinksMetadataKey: smartLinkMetadata\n    };\n}\n","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No record Found\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"glide_scripted_query","value":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessageLang(actions[i].label, vaContext.getRequesterLang()), ''render_style'': ''button'' });\n    }\n    return options;\n})()"},"description":""},{"type":"ScriptedAction","script":"(function execute() {\n    if (vaInputs.actionable_adapters_card != \"skip\")\n       vaVars.actionId = vaInputs.actionable_adapters_card;\n})()\n","id":"5be262e9d9a54475993d8b7af0d2cf70","name":"Set Action Topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n"}],"request_feedback":true,"id":"9488ce2b8d294c729aaa14062f24f308","name":"Message Heading","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function execute() {\n     var notification_content = JSON.parse(vaInputs.notification_content);\n     var messageHeading = notification_content.messageHeading;\n     if(messageHeading.length != 0)\n        return true;\n})()\n"},"secure":false},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"bc9f058c59804198b489373be213a021","name":"Select Action","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"variable_id":"f2f5bb10a9344650b55f55c3ef8fcd07","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"What would you like to do?\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return gs.nil(notification_content.allowSkipping) || notification_content.allowSkipping == true;\n})()\n"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessage(actions[i].label) });\n    }\n    return options;\n})()","metadataScript":"","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No actions\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"glide_scripted_query","value":"(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ ''value'': actions[i].actionId, ''label'': gs.getMessage(actions[i].label) });\n    }\n    return options;\n})()"},"description":""},{"type":"ScriptedAction","script":"(function execute() {\n   vaVars.actionId = vaInputs.select_action;\n})()\n","id":"919f477fa7fa4efc880d71d8ebff2d39","name":"Set Action Topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n"}],"request_feedback":true,"id":"47445fddc8524b0e9d2049b0ae2d16be","name":"Message Heading","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()\n"}],"request_feedback":true,"id":"84969fbcbec24819af1a72509ecaf123","name":"Message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n"}],"request_feedback":true,"id":"2017f8c12cc747f695b66754b0614674","name":"Message Heading","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()\n"}],"request_feedback":true,"id":"4ca67c8fb7d541f99c239d38f9f01b44","name":"Message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()"}],"request_feedback":true,"id":"11c3a91e85f040b0a799e05aeee09e17","name":"Message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    return gs.getMessage(vaVars.actionAcknowledgement);\n})()\n"}],"request_feedback":true,"id":"4c72771dd4f049ac92ee4c12275baea6","name":"Action Acknowledgement","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function execute() {\n    if(!vaVars.actionAcknowledgement || vaVars.actionAcknowledgement == \"\") {\n       return false;\n    }\n    return true;\n})()\n"},"secure":false},{"type":"Decision","name":"Is SMS Device","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaContext.deviceType != ''SMS'';\n})()\n"},"id":"c016c77b30b940b88a78802e9fc7c82e","name":"No"},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaContext.deviceType == ''SMS'';\n})()\n"},"id":"55fca90657354e938a4b1b895ace0f55","name":"Yes"}],"id":"6c36f5855cfd4a97b0fed7e7abc4ef62","goal_id":"primary"},{"type":"Decision","name":"Link Status","branches":[{"type":"Branch","label":"Success","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.linkstatus == ''success'';\n})()\n"},"id":"e79aa9df865d488698d54c20256f383f","name":"Success"},{"type":"Branch","label":"Abort","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.linkstatus == ''aborted'';\n})()\n"},"id":"51431fcc367041ef809b780030962bef","name":"Abort"},{"type":"Branch","label":"Failure","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.linkstatus == ''failure'';\n})()\n"},"id":"44c606d4da6240808448648ae323f04a","name":"Failure"}],"id":"f4e161939e7942cea8ceca75de1c937b","goal_id":"primary"},{"type":"Decision","name":"Is SMS Device","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaContext.deviceType != ''SMS'';\n})()\n"},"id":"d858ec51e4e74cec8cfb9bbd2040423e","name":"No"},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaContext.deviceType == ''SMS'';\n})()\n"},"id":"0e2a3baf8844403aae1f68f80cf959c4","name":"Yes"}],"id":"e1ec7031fbc8403da336bc081de1a14f","goal_id":"primary"},{"type":"Decision","name":"User Locked Out","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.userLockedOut;\n})()\n"},"id":"a58049e798114d51b44f312d5e0917be","name":"Yes"},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.userLockedOut;\n})()\n"},"id":"036f438b66d74ff8a5342ff53cc57bcc","name":"No"}],"id":"21a1b9e2e68b4e088c99a501cb978c7e","goal_id":"primary"},{"type":"ScriptedAction","script":"(function execute() {\n    var providerAppId = vaContext.providerAppId;\n    var retryInterval = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(''softpin_max_invalid_attempts_interval_hrs'', providerAppId);\n    var maxRetries = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy(''softpin_max_retry_attempts'', providerAppId);\n    vaVars.userLockedOut = CustomAdapterSoftPinHelper.isUserLockedOutOnMaxAttempts(providerAppId, vaContext.providerUserId,\n                                maxRetries, retryInterval, vaInputs.userId);\n})()\n","id":"f42cdd7ef6ae472288657a2f6c01d471","name":"Get User Lockout Status","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"LibraryCall","library_topic_name":"_link_account_adapter_","library_topic_id":"0902a7d2530333006e61ddeeff7b1250","library_topic_is_template":false,"parameter-mappings":[],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"connecttola","main_topic_mapped_variable_name":"connecttola"},{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"linkstatus","main_topic_mapped_variable_name":"linkstatus"}],"id":"6acd1abd0093465d9869e525f5af42e9","name":"_link_account_adapter_","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","script":"(function execute() {\n    vaSystem.switchTopic(vaVars._topic_live_agent_topic);\n})()\n","id":"383868b0d87e49c9b0e336ca1cfdf896","name":"Connect to Live Agent","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"Is Linking Enabled","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.accountLinkingEnabled == true;\n})()\n"},"id":"3f0c1f8aff2648c786b567af6f97cf14","name":"Yes"},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.accountLinkingEnabled == false;\n})()\n"},"id":"6c8ce9b568954b5fbddb55b40c86ebb8","name":"No"}],"id":"447fa9876a0343829ee6c07d30ca49c0","goal_id":"primary"},{"type":"ScriptedAction","script":"(function execute() {\n    var provider = JSON.parse(sn_cs.VASystemObject.getProviderByProviderAppId(vaContext.providerAppId));\n    \n    vaVars.accountLinkingEnabled = provider.linkAccountEnabled;\n})()\n","id":"593dde48f1f8453caca844294ddb256b","name":"Initialize SMS Related Variables","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"Is Linking Enabled","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.accountLinkingEnabled == true;\n})()\n"},"id":"4f7700a665704c5e996b1f42c0e3a651","name":"Yes"},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.accountLinkingEnabled == false;\n})()\n"},"id":"5c8064b73fc9494495a52452bd4af81b","name":"No"}],"id":"35d1ec1370b94b30a7cca8c34417861e","goal_id":"primary"}],"edges":[{"type":"Edge","source_node_id":"6acd1abd0093465d9869e525f5af42e9","target_node_id":"f4e161939e7942cea8ceca75de1c937b","id":"ee058cc5cd7c4f1f9ef9293b05660f4f"},{"type":"Edge","source_node_id":"21a1b9e2e68b4e088c99a501cb978c7e","target_node_id":"7813ee856773498699ae6e4176cfa892","branch_id":"a58049e798114d51b44f312d5e0917be","id":"a4db40dff6704a758ad794f6933093e0","name":"a58049e798114d51b44f312d5e0917be"},{"type":"Edge","source_node_id":"2017f8c12cc747f695b66754b0614674","target_node_id":"4ca67c8fb7d541f99c239d38f9f01b44","id":"4dadc9c86d544981a7c97a4431432761"},{"type":"Edge","source_node_id":"84969fbcbec24819af1a72509ecaf123","target_node_id":"903e435446d14a10a15097a363abcfd5","id":"3e8d10f192ff4085a9fc425103054651"},{"type":"Edge","source_node_id":"450216088a7a4860a15fc2531025c721","target_node_id":"9488ce2b8d294c729aaa14062f24f308","branch_id":"361ae948aab8496ea0d27f43f72638e4","id":"381cf492acf7401fbb98b175dc86ec4e","name":"361ae948aab8496ea0d27f43f72638e4"},{"type":"Edge","source_node_id":"9b22ab1b3dc34594bc3b0f83962b98f8","target_node_id":"7813ee856773498699ae6e4176cfa892","id":"38782fdbd2cf488887908c2070cbd32a"},{"type":"Edge","source_node_id":"d67bffa670d8400abf5cc123e3510b38","target_node_id":"53762fdbc42c4ec0aad09c16760a87cf","id":"91e6068513ad48328d2ab7411a4cb16f"},{"type":"Edge","source_node_id":"7813ee856773498699ae6e4176cfa892","target_node_id":"c218875d4daf43b0bf12a1fc0daf0e78","id":"5abb366f428a4e4382487482e1509c34"},{"type":"Edge","source_node_id":"903e435446d14a10a15097a363abcfd5","target_node_id":"7813ee856773498699ae6e4176cfa892","id":"bbfa0bfb28d74743b9e049fa302b36a9"},{"type":"Edge","source_node_id":"45557b00255846e3b6f8493d0f4402c4","target_node_id":"9b22ab1b3dc34594bc3b0f83962b98f8","branch_id":"1f769f6ff62a4d9c918fb86e7398c7a8","id":"49d37f0b26b844dda95cd2875a1b3c40","name":"1f769f6ff62a4d9c918fb86e7398c7a8"},{"type":"Edge","source_node_id":"45557b00255846e3b6f8493d0f4402c4","target_node_id":"33293d8f63ce42a0a1fe4194488aca47","branch_id":"48d0dde65cad4ad7a4bcf73f5827422f","id":"13e8ce9d43c3405da495f096c1fe7548","name":"48d0dde65cad4ad7a4bcf73f5827422f"},{"type":"Edge","source_node_id":"33293d8f63ce42a0a1fe4194488aca47","target_node_id":"9d2dd7810e3546199aa1366d301f2383","branch_id":"846362c3159846b2a48e74bb3fa67a83","id":"3b9fd859a2604ac28c15897a08ed8570","name":"846362c3159846b2a48e74bb3fa67a83"},{"type":"Edge","source_node_id":"9d2dd7810e3546199aa1366d301f2383","target_node_id":"7813ee856773498699ae6e4176cfa892","id":"96bb135628c24f27acc8764f943ac008"},{"type":"Edge","source_node_id":"ebb3b128dfc048b5a2e8e4c4158a912b","target_node_id":"1c612561fe5b46b1ad5b6a3b78665b1f","id":"1d236671fbae4306a05a1d0dd55545f2"},{"type":"Edge","source_node_id":"1c612561fe5b46b1ad5b6a3b78665b1f","target_node_id":"45557b00255846e3b6f8493d0f4402c4","branch_id":"fefec9b81f2f4bf385428243fe390329","id":"60b23e0435dd45f38b99bcc79fbe0d07","name":"fefec9b81f2f4bf385428243fe390329"},{"type":"Edge","source_node_id":"450216088a7a4860a15fc2531025c721","target_node_id":"5784e985b55044b8a26d6793cdb20d7a","branch_id":"1183df9e0c8d454ea7f0cc84dc96b25c","id":"f6b7614830344ad3912056b372452c10","name":"1183df9e0c8d454ea7f0cc84dc96b25c"},{"type":"Edge","source_node_id":"4208523587a744cfbed53025a44b7693","target_node_id":"2fc5fba7d13742acbfb03cfb9620b446","id":"3cf1bc297a284e3c99ee5c6985df92c9"},{"type":"Edge","source_node_id":"2fc5fba7d13742acbfb03cfb9620b446","target_node_id":"d67bffa670d8400abf5cc123e3510b38","id":"68269de241324dab8ef4fc40febb588d"},{"type":"Edge","source_node_id":"5784e985b55044b8a26d6793cdb20d7a","target_node_id":"504cb201c44742e28d820c87eb66af5a","id":"211e3bea51044eca83fdeaeed3534621"},{"type":"Edge","source_node_id":"504cb201c44742e28d820c87eb66af5a","target_node_id":"d67bffa670d8400abf5cc123e3510b38","id":"8e9f3e4df9314cb78687247517278346"},{"type":"Edge","source_node_id":"1c612561fe5b46b1ad5b6a3b78665b1f","target_node_id":"93dbbd9dc02644e7af13206d79673d8b","branch_id":"475a6d5175fb4bfe93eaf5215b1fa54e","id":"17a02b212d454bba841654c75d000f6f","name":"475a6d5175fb4bfe93eaf5215b1fa54e"},{"type":"Edge","source_node_id":"93dbbd9dc02644e7af13206d79673d8b","target_node_id":"450216088a7a4860a15fc2531025c721","branch_id":"3cf40735caea4478bbbd1ac610bb05f5","id":"2f17803c72d54fc8818d3d7ce64f8231","name":"3cf40735caea4478bbbd1ac610bb05f5"},{"type":"Edge","source_node_id":"5be262e9d9a54475993d8b7af0d2cf70","target_node_id":"d67bffa670d8400abf5cc123e3510b38","id":"afceb27bdc314bd1a011d6ba9e2f7da2"},{"type":"Edge","source_node_id":"bc9f058c59804198b489373be213a021","target_node_id":"919f477fa7fa4efc880d71d8ebff2d39","id":"c73e3b514f55435e876ea72b7578467e"},{"type":"Edge","source_node_id":"919f477fa7fa4efc880d71d8ebff2d39","target_node_id":"d67bffa670d8400abf5cc123e3510b38","id":"54c059c67bd74aa6a7bf705154a99233"},{"type":"Edge","source_node_id":"33293d8f63ce42a0a1fe4194488aca47","target_node_id":"47445fddc8524b0e9d2049b0ae2d16be","branch_id":"c57f7c265c1a40f882de1183a8bddad3","id":"11619493ba004f0cbf65dda4dd42113c","name":"c57f7c265c1a40f882de1183a8bddad3"},{"type":"Edge","source_node_id":"47445fddc8524b0e9d2049b0ae2d16be","target_node_id":"84969fbcbec24819af1a72509ecaf123","id":"85e3c0738ee146e09689be1efc2bca62"},{"type":"Edge","source_node_id":"450216088a7a4860a15fc2531025c721","target_node_id":"2017f8c12cc747f695b66754b0614674","branch_id":"3af2632cd322403b8ba2429f2d03f7cc","id":"153547eb66f24683afe983f8486e497b","name":"3af2632cd322403b8ba2429f2d03f7cc"},{"type":"Edge","source_node_id":"4ca67c8fb7d541f99c239d38f9f01b44","target_node_id":"4208523587a744cfbed53025a44b7693","id":"39065e4fe7f4498c8c5d1bf887913adb"},{"type":"Edge","source_node_id":"9488ce2b8d294c729aaa14062f24f308","target_node_id":"11c3a91e85f040b0a799e05aeee09e17","id":"b8e5fe25d0c2489aaf442939b5291ff0"},{"type":"Edge","source_node_id":"11c3a91e85f040b0a799e05aeee09e17","target_node_id":"bc9f058c59804198b489373be213a021","id":"ee9f2ff058bf431e8eaad47cac45ed5d"},{"type":"Edge","source_node_id":"53762fdbc42c4ec0aad09c16760a87cf","target_node_id":"4c72771dd4f049ac92ee4c12275baea6","id":"e4d39a6b260845899fce9a8480da9212"},{"type":"Edge","source_node_id":"4c72771dd4f049ac92ee4c12275baea6","target_node_id":"7813ee856773498699ae6e4176cfa892","id":"0e2909742e124779bc35197b9181a860"},{"type":"Edge","source_node_id":"c206678ff17c4cbf9c6b7cf9a18e329e","target_node_id":"6c36f5855cfd4a97b0fed7e7abc4ef62","id":"ebb793aa1bde4e7fa8d8587727753b6c"},{"type":"Edge","source_node_id":"6c36f5855cfd4a97b0fed7e7abc4ef62","target_node_id":"5be262e9d9a54475993d8b7af0d2cf70","branch_id":"c016c77b30b940b88a78802e9fc7c82e","id":"e993d26f62bc42f582e5f233b373c274","name":"c016c77b30b940b88a78802e9fc7c82e"},{"type":"Edge","source_node_id":"f4e161939e7942cea8ceca75de1c937b","target_node_id":"5be262e9d9a54475993d8b7af0d2cf70","branch_id":"e79aa9df865d488698d54c20256f383f","id":"0f38bd47e6ac44b589b4927c8b5fa520","name":"e79aa9df865d488698d54c20256f383f"},{"type":"Edge","source_node_id":"93dbbd9dc02644e7af13206d79673d8b","target_node_id":"e1ec7031fbc8403da336bc081de1a14f","branch_id":"15c6434798fd41e9b1bf386d3e96d811","id":"a3ac9266bb2643a295978250b8275946","name":"15c6434798fd41e9b1bf386d3e96d811"},{"type":"Edge","source_node_id":"e1ec7031fbc8403da336bc081de1a14f","target_node_id":"c206678ff17c4cbf9c6b7cf9a18e329e","branch_id":"d858ec51e4e74cec8cfb9bbd2040423e","id":"633318a370384f6aacc97da6747cc54a","name":"d858ec51e4e74cec8cfb9bbd2040423e"},{"type":"Edge","source_node_id":"21a1b9e2e68b4e088c99a501cb978c7e","target_node_id":"c206678ff17c4cbf9c6b7cf9a18e329e","branch_id":"036f438b66d74ff8a5342ff53cc57bcc","id":"721e85a10c6044509d2a65a36b099e4e","name":"036f438b66d74ff8a5342ff53cc57bcc"},{"type":"Edge","source_node_id":"f42cdd7ef6ae472288657a2f6c01d471","target_node_id":"21a1b9e2e68b4e088c99a501cb978c7e","id":"d006e7c540464d7c9a80e1d0d9dbea9b"},{"type":"Edge","source_node_id":"f4e161939e7942cea8ceca75de1c937b","target_node_id":"7813ee856773498699ae6e4176cfa892","branch_id":"51431fcc367041ef809b780030962bef","id":"02b9d1fc14be49aabaf4747898598308","name":"51431fcc367041ef809b780030962bef"},{"type":"Edge","source_node_id":"f4e161939e7942cea8ceca75de1c937b","target_node_id":"383868b0d87e49c9b0e336ca1cfdf896","branch_id":"44c606d4da6240808448648ae323f04a","id":"f89e494ca74e4168b0cda7ba2ed68837","name":"44c606d4da6240808448648ae323f04a"},{"type":"Edge","source_node_id":"383868b0d87e49c9b0e336ca1cfdf896","target_node_id":"c218875d4daf43b0bf12a1fc0daf0e78","id":"45333aa87b214b57ab78ec79c08d1d0d"},{"type":"Edge","source_node_id":"447fa9876a0343829ee6c07d30ca49c0","target_node_id":"f42cdd7ef6ae472288657a2f6c01d471","branch_id":"3f0c1f8aff2648c786b567af6f97cf14","id":"5193b2224ff64626b44541ae4166ef5b","name":"3f0c1f8aff2648c786b567af6f97cf14"},{"type":"Edge","source_node_id":"447fa9876a0343829ee6c07d30ca49c0","target_node_id":"c206678ff17c4cbf9c6b7cf9a18e329e","branch_id":"6c8ce9b568954b5fbddb55b40c86ebb8","id":"9f20679e68594ee58cb24a82f297ea0b","name":"6c8ce9b568954b5fbddb55b40c86ebb8"},{"type":"Edge","source_node_id":"e1ec7031fbc8403da336bc081de1a14f","target_node_id":"593dde48f1f8453caca844294ddb256b","branch_id":"0e2a3baf8844403aae1f68f80cf959c4","id":"8d3e84a974ff4ca9bb204459528a6e36","name":"0e2a3baf8844403aae1f68f80cf959c4"},{"type":"Edge","source_node_id":"593dde48f1f8453caca844294ddb256b","target_node_id":"447fa9876a0343829ee6c07d30ca49c0","id":"163779959c844ccbaae61e6644b56b3a"},{"type":"Edge","source_node_id":"6c36f5855cfd4a97b0fed7e7abc4ef62","target_node_id":"35d1ec1370b94b30a7cca8c34417861e","branch_id":"55fca90657354e938a4b1b895ace0f55","id":"181a4dcfecf64f72930c7307eb91c98a","name":"55fca90657354e938a4b1b895ace0f55"},{"type":"Edge","source_node_id":"35d1ec1370b94b30a7cca8c34417861e","target_node_id":"6acd1abd0093465d9869e525f5af42e9","branch_id":"4f7700a665704c5e996b1f42c0e3a651","id":"c4c193d58c3d4c03a747682ee349a068","name":"4f7700a665704c5e996b1f42c0e3a651"},{"type":"Edge","source_node_id":"35d1ec1370b94b30a7cca8c34417861e","target_node_id":"5be262e9d9a54475993d8b7af0d2cf70","branch_id":"5c8064b73fc9494495a52452bd4af81b","id":"1a1440aa13994ec880008d1d7c50ad8e","name":"5c8064b73fc9494495a52452bd4af81b"}],"id":"primary"}],"script_variables":[{"type":"String","name":"actionId","value":{"type":"String","mode":"string"},"list":false,"id":"d9320f28f82945ca8c79c9bb9ea7d88b","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"accountLinkingEnabled","value":{"type":"String","mode":"script","value":"(function execute() {\n    return false;\n})()\n"},"list":false,"id":"12a1b9eb4b974dbbbeecb017dd593eaa","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"String","name":"notification_content","list":false,"id":"995e361142024ec4b56345b8eb2acfca","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"Reference","table":"incident","id":"36b083d30a7d4e6d8bda0612997f80d6","name":"actionable_card","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Reference","table":"incident","id":"61813b06bd17480fb41a0f6ed6aa7f05","name":"actionable_image_card","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Reference","table":"incident","id":"90e9b0065e14430a908ef8253b870fce","name":"actionable_adapters_card","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Reference","table":"incident","id":"f2f5bb10a9344650b55f55c3ef8fcd07","name":"select_action","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"String","name":"connecttola","list":false,"id":"3a3bc4547a824d70ad0964bde4964278","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false},{"type":"String","name":"linkstatus","list":false,"id":"942d9cc7e40947b8bde1ad253bd79cb1","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"notification_content","label":"notification_content","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"995e361142024ec4b56345b8eb2acfca","type":"String","hint":""}],"return-values-mapping":[]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"ec769c61530210106e61ddeeff7b12b9","name":"_notification_controller_topic_block_","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"model_type":"nlu_keyword","modify_confirmation_enabled":false,"library":true,"csTopicId":"bb9714a9530210106e61ddeeff7b1201","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: ec769c61530210106e61ddeeff7b12b9
+graph: |-
+  {
+    "graph_api_version": "1.0.55",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "ebb3b128dfc048b5a2e8e4c4158a912b": {
+            "id": "ebb3b128dfc048b5a2e8e4c4158a912b",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "name": "notification_content",
+                "value": "",
+                "checked": true,
+                "id": "995e361142024ec4b56345b8eb2acfca",
+                "disabled": true,
+                "referenced": true,
+                "type": "String",
+                "hint": ""
+              }
+            ],
+            "variableIds": [
+              "995e361142024ec4b56345b8eb2acfca"
+            ]
+          },
+          "c218875d4daf43b0bf12a1fc0daf0e78": {
+            "id": "c218875d4daf43b0bf12a1fc0daf0e78",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "45557b00255846e3b6f8493d0f4402c4": {
+            "id": "45557b00255846e3b6f8493d0f4402c4",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "903e435446d14a10a15097a363abcfd5": {
+            "id": "903e435446d14a10a15097a363abcfd5",
+            "stepType": "ScriptOutput",
+            "name": "Notification - Web Client",
+            "output_type": "single_part",
+            "script": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n\n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n    \n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n\n    var cardFields = [];\n    Object.keys(fields).forEach(function(a){\n        cardFields.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    });\n\n    var cardData = {\n        title: !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        subtitle: !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        fields: cardFields,\n    };\n        \n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    }\n    \n    if (gs.nil(tableLabel))\n        return;\n\n    return vaSystem.renderCard(showRecordLink ? \"Record Card\" : \"Record Card Without Link\", JSON.stringify(cardData));\n})()",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "7813ee856773498699ae6e4176cfa892": {
+            "id": "7813ee856773498699ae6e4176cfa892",
+            "name": "Switch Welcome",
+            "script": "(function execute() {\n    var greetingTopic = vaVars.global_notification_welcome_topic;\n    if ( greetingTopic != \"\" && greetingTopic != undefined ) {\n        vaVars.global_notification_welcome_topic = \"\";\n        vaSystem.switchTopic(greetingTopic);\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "9b22ab1b3dc34594bc3b0f83962b98f8": {
+            "id": "9b22ab1b3dc34594bc3b0f83962b98f8",
+            "stepType": "ScriptOutput",
+            "name": "Notification - Adapters",
+            "output_type": "single_part",
+            "script": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n    \n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n\n    // Message header variables\n    var message = gs.getMessageLang(notification_content.message, conversationLang);\n    var messageHeading = gs.getMessageLang(notification_content.messageHeading, conversationLang);\n\n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n    var imageUrl = notification_content.imageUrl;\n    var imageAlt = notification_content.imageAlt;\n      \n    var questionAnswerPairs = [];\n    Object.keys(fields).forEach(function(a){\n        questionAnswerPairs.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    }) \n      \n    var cardData = {\n        \"message\": message,\n        \"messageHeading\": messageHeading,\n        \"fields\": questionAnswerPairs,\n        \"tableLabel\": !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        \"recordDisplayValue\": !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        \"table_name\": tableName,\n        \"sys_id\": sysId,\n        \"enableLink\": showRecordLink,\n        \"imageUrl\": imageUrl,\n        \"imageAlt\": imageAlt,\n    };\n\n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    }\n    \n    return vaSystem.renderCard(\"Notification\", JSON.stringify(cardData));\n})()",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "d67bffa670d8400abf5cc123e3510b38": {
+            "id": "d67bffa670d8400abf5cc123e3510b38",
+            "stepType": "TextOutput",
+            "name": "Skip Text",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "OK, to see them at any time, type 'show notification'."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n   if(!vaVars.actionId || vaVars.actionId == \"\") {\n       return true;\n   }\n   return false;\n})()\n"
+            },
+            "requestFeedback": true
+          },
+          "53762fdbc42c4ec0aad09c16760a87cf": {
+            "id": "53762fdbc42c4ec0aad09c16760a87cf",
+            "name": "Switch to Action Topic",
+            "script": "(function execute() {\n     var actionId = vaVars.actionId;\n    if (actionId && actionId != '') {\n        var notification_content = JSON.parse(vaInputs.notification_content);\n        var gr = new GlideRecord('sys_cs_notification');\n        gr.get(notification_content.vaNotificationId);\n        gr.setValue('state', 'completed');\n        gr.setValue('conversation', vaSystem.getConversationId());\n        gr.update();\n        var actions = notification_content.actions;\n        var selectedActionTopic = '';\n        var selectedAcknowledgementMessage = '';\n        for (var i = 0; i < actions.length; i++) {\n            if(actionId === actions[i].actionId) {\n                selectedActionTopic = actions[i].topicId ? actions[i].topicId: '';\n                selectedAcknowledgementMessage = actions[i].acknowledgementMessage;\n                break;\n            }\n        }\n        //if va action then switch topic.\n        if(selectedActionTopic != '') {\n            var table_name = notification_content.tableName;\n            var sys_id = notification_content.recordSysId;\n            if (notification_content.recordAccessible && (table_name == null || sys_id == null)) {\n                var notificationGr = new GlideRecord('sys_cs_notification');\n                notificationGr.get(notification_content.vaNotificationId);\n                table_name = notificationGr.notification_execution.target_table.getValue();\n                sys_id = notificationGr.notification_execution.instance.getValue();\n            }\n            var eventParm1 = notification_content.eventParm1;\n            var eventParm2 = notification_content.eventParm2;\n            var actionContext = {'tableName': table_name, \n                                 'tableSysId': sys_id, \n                                 'actionId': actionId, \n                                 'eventParm1': eventParm1, \n                                 'eventParm2': eventParm2};\n            vaVars.global_notification_context = JSON.stringify(actionContext);\n            vaSystem.switchTopicById(selectedActionTopic);\n        } else {\n            vaVars.actionAcknowledgement = selectedAcknowledgementMessage;\n            var providerId = '';\n            if (vaSystem.isAMBClient(vaContext.deviceType)) {\n                providerId = '3918bf49533100102f40ddeeff7b122e';\n            } else {\n                var providerApp = JSON.parse(sn_cs.VASystemObject.getProviderAppById(vaContext.providerAppId));\n                var mapping = new GlideRecord('sys_cs_notification_channel_configuration');\n                mapping.get('provider', providerApp.providerId);\n\n                var channel = new GlideRecord('sys_notification_channel');\n                channel.get('sys_id', mapping.getValue('notification_channel'));\n                providerId = channel.getValue('provider');\n            }\n            \n            var act = new sn_notification.NotificationActionService(providerId, notification_content.executionId);\n            act.runById(actionId, true);\n        }\n    }\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "mode": "query",
+              "value": ""
+            }
+          },
+          "33293d8f63ce42a0a1fe4194488aca47": {
+            "id": "33293d8f63ce42a0a1fe4194488aca47",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "9d2dd7810e3546199aa1366d301f2383": {
+            "id": "9d2dd7810e3546199aa1366d301f2383",
+            "stepType": "RecordOutput",
+            "name": "Image Card",
+            "variableId": "",
+            "cardTemplate": "Large image with text",
+            "cardFields": {
+              "1c617fa17313101081e06502edf6a780_title": {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n",
+                "mode": "script"
+              },
+              "1c617fa17313101081e06502edf6a780_description": {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()\n",
+                "mode": "script"
+              },
+              "1c617fa17313101081e06502edf6a780_image": {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageUrl;\n})()\n",
+                "mode": "script"
+              },
+              "1c617fa17313101081e06502edf6a780_imageAlt": {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageAlt;\n})()\n",
+                "mode": "script"
+              }
+            },
+            "mode": "variable",
+            "tableName": "",
+            "fields": [],
+            "cardDefinition": {
+              "sys_id": "1c617fa17313101081e06502edf6a780",
+              "name": "Large image with text",
+              "sys_name": "Large image with text",
+              "thumbnail.name": "Large image with text.svg",
+              "fields": [
+                {
+                  "label": "Title",
+                  "position": "1",
+                  "mandatory": true,
+                  "name": "title",
+                  "id": "1c617fa17313101081e06502edf6a780_title"
+                },
+                {
+                  "label": "Description",
+                  "position": "2",
+                  "mandatory": false,
+                  "name": "description",
+                  "id": "1c617fa17313101081e06502edf6a780_description"
+                },
+                {
+                  "label": "Image URL link",
+                  "position": "3",
+                  "mandatory": true,
+                  "type": "image",
+                  "name": "image",
+                  "id": "1c617fa17313101081e06502edf6a780_image"
+                },
+                {
+                  "label": "Image alt text",
+                  "position": "4",
+                  "mandatory": false,
+                  "name": "imageAlt",
+                  "id": "1c617fa17313101081e06502edf6a780_imageAlt"
+                }
+              ],
+              "value": "Large image with text",
+              "hasTemplateError": false
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "condition": {
+              "mode": "glide_query",
+              "value": ""
+            },
+            "requestFeedback": true
+          },
+          "1c612561fe5b46b1ad5b6a3b78665b1f": {
+            "id": "1c612561fe5b46b1ad5b6a3b78665b1f",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "4208523587a744cfbed53025a44b7693": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Actionable Card",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "What would you like to do?"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    return true;\n})()\n"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return gs.nil(notification_content.allowSkipping) || notification_content.allowSkipping == true;\n})()\n"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "36b083d30a7d4e6d8bda0612997f80d6",
+            "id": "4208523587a744cfbed53025a44b7693",
+            "mode": "glide_record",
+            "script": "",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "No Record Found"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "mode": "glide_scripted_query",
+              "value": "(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ 'value': actions[i].actionId, 'label': gs.getMessageLang(actions[i].label, vaContext.getRequesterLang()), 'render_style': 'button' });\n    }\n    return options;\n})()"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "script",
+              "metadataScript": "function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n\n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n\n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n\n    var cardFields = [];\n    Object.keys(fields).forEach(function(a){\n        cardFields.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    });\n\n    var cardData = {\n        title: !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        subtitle: !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        fields: cardFields,\n    }\n\n    var cardName = \"Record Card Without Link\";\n    \n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardName = \"Record Card\";\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    };\n    \n    var data = JSON.stringify(cardData);\n    var template = \"\";\n    var iosTemplate;\n    var androidTemplate;\n    var templateAndSmartLinkMetadataMap;\n    var smartLinkMetadata;\n\n    if (vaSystem.isAMBClient(vaContext.deviceType)) {\n        var conversationId = vaSystem.getConversationId();\n        templateAndSmartLinkMetadataMap = sn_cs.VASystemObject.fillTemplateFromDataDeviceTypeAndConvoId(cardName, data, 'mweb', false, conversationId);\n        template = templateAndSmartLinkMetadataMap.templateKey;\n        smartLinkMetadata = templateAndSmartLinkMetadataMap.smartLinksMetadataKey;\n        iosTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, 'ios', true);\n        androidTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, 'android', true);\n    }\n    \n    return {\n       cardTemplate: template,\n       iosTemplate: iosTemplate,\n       androidTemplate: androidTemplate,\n       cardName: cardName,\n       cardData: data,\n       renderStyle: 'card',\n       suppressPrompt: true,\n       smartLinksMetadataKey: smartLinkMetadata,\n    };\n}"
+            },
+            "hasCardHeader": true,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "450216088a7a4860a15fc2531025c721": {
+            "id": "450216088a7a4860a15fc2531025c721",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "5784e985b55044b8a26d6793cdb20d7a": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Actionable Image Card",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "What would you like to do?"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    \n    return notification_content.allowSkipping == true;\n})()\n"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "61813b06bd17480fb41a0f6ed6aa7f05",
+            "id": "5784e985b55044b8a26d6793cdb20d7a",
+            "mode": "glide_record",
+            "script": "",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "No record found"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "mode": "glide_scripted_query",
+              "value": "(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ 'value': actions[i].actionId, 'label': gs.getMessage(actions[i].label), 'render_style': 'button' });\n    }\n    return options;\n})()"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "script",
+              "metadataScript": "function() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    var messageHeading = notification_content.messageHeading;\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var table_name = notification_content.tableName;\n    var sys_id = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n    var imageUrl = notification_content.imageUrl;\n    var imageAlt = notification_content.imageAlt;\n\n    var url;\n    if(showRecordLink)\n        url = gs.getProperty('glide.servlet.uri')+table_name+\".do?sys_id=\"+sys_id;\n\n    var cardName = \"Large image with text\";\n    var cardData = {\n        title: messageHeading,\n        description: message,\n        image: imageUrl,\n        imageAlt: imageAlt\n    };\n    var data = JSON.stringify(cardData);\n    \n    var template = \"\";\n    var iosTemplate;\n    var androidTemplate;\n    if (vaSystem.isAMBClient(vaContext.deviceType)) {\n       template = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, 'mweb', false);\n       iosTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, 'ios', true);\n       androidTemplate = sn_cs.VASystemObject.fillTemplateFromDataAndDeviceType(cardName, data, 'android', true);\n    }\n\n    return {\n      cardTemplate: template,\n      iosTemplate: iosTemplate,\n      androidTemplate: androidTemplate,\n      cardName: cardName,\n      cardData: data,\n      renderStyle: 'card',\n      suppressPrompt: true\n    };\n}"
+            },
+            "hasCardHeader": true,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "2fc5fba7d13742acbfb03cfb9620b446": {
+            "id": "2fc5fba7d13742acbfb03cfb9620b446",
+            "name": "Set Action Topic",
+            "script": "(function execute() {\n    vaVars.actionId = vaInputs.actionable_card;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "504cb201c44742e28d820c87eb66af5a": {
+            "id": "504cb201c44742e28d820c87eb66af5a",
+            "name": "Set Action Topic",
+            "script": "(function execute() {\n   vaVars.actionId = vaInputs.actionable_image_card;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "93dbbd9dc02644e7af13206d79673d8b": {
+            "id": "93dbbd9dc02644e7af13206d79673d8b",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "c206678ff17c4cbf9c6b7cf9a18e329e": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Actionable Adapters Card",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "What would you like to do?"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    \n    return notification_content.allowSkipping == true;\n})()\n"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "90e9b0065e14430a908ef8253b870fce",
+            "id": "c206678ff17c4cbf9c6b7cf9a18e329e",
+            "mode": "glide_record",
+            "script": "",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "No record Found"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "mode": "glide_scripted_query",
+              "value": "(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ 'value': actions[i].actionId, 'label': gs.getMessageLang(actions[i].label, vaContext.getRequesterLang()), 'render_style': 'button' });\n    }\n    return options;\n})()"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "script",
+              "metadataScript": "function() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var conversationLang = vaContext.getRequesterLang();\n\n    // Card header variables\n    var cardHeading = !gs.nil(notification_content.cardHeading) ? gs.getMessageLang(notification_content.cardHeading, conversationLang) : null;\n    var cardLinkText = !gs.nil(notification_content.cardLinkText) ? gs.getMessageLang(notification_content.cardLinkText, conversationLang) : null;\n    var cardLinkUrl = !gs.nil(notification_content.cardLinkUrl) ? notification_content.cardLinkUrl : null;\n    \n    // Message header variables\n    var message = gs.getMessageLang(notification_content.message, conversationLang);\n    var messageHeading = gs.getMessageLang(notification_content.messageHeading, conversationLang);\n\n    // Card body variables\n    var fields = notification_content.fields;\n    var tableLabel = notification_content.tableLabel;\n    var recordDisplayValue = notification_content.recordDisplayValue;\n    var tableName = notification_content.tableName;\n    var sysId = notification_content.recordSysId;\n    var showRecordLink = notification_content.showRecordLink;\n    var imageUrl = notification_content.imageUrl;\n    var imageAlt = notification_content.imageAlt;\n      \n    var questionAnswerPairs = [];\n    Object.keys(fields).forEach(function(a){\n        questionAnswerPairs.push({\"fieldLabel\": a, \"fieldValue\": fields[a]});\n    });\n      \n    var cardData = {\n        \"message\": message,\n        \"messageHeading\": messageHeading,\n        \"fields\": questionAnswerPairs,\n        \"tableLabel\": !gs.nil(cardHeading) && cardHeading !== \"null\" ? cardHeading : tableLabel,\n        \"recordDisplayValue\": !gs.nil(cardLinkText) && cardLinkText !== \"null\" ? cardLinkText : recordDisplayValue,\n        \"table_name\": tableName,\n        \"sys_id\": sysId,\n        \"enableLink\": showRecordLink,\n        \"imageUrl\": imageUrl,\n        \"imageAlt\": imageAlt,\n    };\n\n    if (showRecordLink) {\n        var templatedUrl = vaSystem.applyLinkTemplate(sysId, tableName);\n        cardData.url = !gs.nil(cardLinkUrl) && cardLinkUrl !== \"null\" ? cardLinkUrl : templatedUrl;\n    }\n\n    var conversationId = vaSystem.getConversationId();\n    templateAndSmartLinkMetadataMap = sn_cs.VASystemObject.fillTemplateFromDataDeviceTypeAndConvoId(\"Record Card\", JSON.stringify(cardData), 'mweb', false, conversationId);\n    template = templateAndSmartLinkMetadataMap.templateKey;\n    smartLinkMetadata = templateAndSmartLinkMetadataMap.smartLinksMetadataKey;\n\n\n    return {\n\t    cardTemplate: \"\",\n\t    cardName: \"Notification\",\n\t    cardData: JSON.stringify(cardData),\n\t    smartLinksMetadataKey: smartLinkMetadata\n    };\n}\n"
+            },
+            "hasCardHeader": true,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "5be262e9d9a54475993d8b7af0d2cf70": {
+            "id": "5be262e9d9a54475993d8b7af0d2cf70",
+            "name": "Set Action Topic",
+            "script": "(function execute() {\n    if (vaInputs.actionable_adapters_card != \"skip\")\n       vaVars.actionId = vaInputs.actionable_adapters_card;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "9488ce2b8d294c729aaa14062f24f308": {
+            "id": "9488ce2b8d294c729aaa14062f24f308",
+            "stepType": "TextOutput",
+            "name": "Message Heading",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n     var notification_content = JSON.parse(vaInputs.notification_content);\n     var messageHeading = notification_content.messageHeading;\n     if(messageHeading.length != 0)\n        return true;\n})()\n"
+            },
+            "requestFeedback": true
+          },
+          "bc9f058c59804198b489373be213a021": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Select Action",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "What would you like to do?"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return gs.nil(notification_content.allowSkipping) || notification_content.allowSkipping == true;\n})()\n"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "f2f5bb10a9344650b55f55c3ef8fcd07",
+            "id": "bc9f058c59804198b489373be213a021",
+            "mode": "glide_record",
+            "script": "",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "No actions"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "mode": "glide_scripted_query",
+              "value": "(function execute() {\n    var options = [];\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var actions = notification_content.actions;\n    for (var i = 0; i < actions.length; i++) {\n        options.push({ 'value': actions[i].actionId, 'label': gs.getMessage(actions[i].label) });\n    }\n    return options;\n})()"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "919f477fa7fa4efc880d71d8ebff2d39": {
+            "id": "919f477fa7fa4efc880d71d8ebff2d39",
+            "name": "Set Action Topic",
+            "script": "(function execute() {\n   vaVars.actionId = vaInputs.select_action;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "47445fddc8524b0e9d2049b0ae2d16be": {
+            "id": "47445fddc8524b0e9d2049b0ae2d16be",
+            "stepType": "TextOutput",
+            "name": "Message Heading",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "84969fbcbec24819af1a72509ecaf123": {
+            "id": "84969fbcbec24819af1a72509ecaf123",
+            "stepType": "TextOutput",
+            "name": "Message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "2017f8c12cc747f695b66754b0614674": {
+            "id": "2017f8c12cc747f695b66754b0614674",
+            "stepType": "TextOutput",
+            "name": "Message Heading",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var messageHeading = notification_content.messageHeading;\n    return messageHeading;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "4ca67c8fb7d541f99c239d38f9f01b44": {
+            "id": "4ca67c8fb7d541f99c239d38f9f01b44",
+            "stepType": "TextOutput",
+            "name": "Message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "11c3a91e85f040b0a799e05aeee09e17": {
+            "id": "11c3a91e85f040b0a799e05aeee09e17",
+            "stepType": "TextOutput",
+            "name": "Message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var message = notification_content.message;\n    return message;\n})()",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "4c72771dd4f049ac92ee4c12275baea6": {
+            "id": "4c72771dd4f049ac92ee4c12275baea6",
+            "stepType": "TextOutput",
+            "name": "Action Acknowledgement",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    return gs.getMessage(vaVars.actionAcknowledgement);\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if(!vaVars.actionAcknowledgement || vaVars.actionAcknowledgement == \"\") {\n       return false;\n    }\n    return true;\n})()\n"
+            },
+            "requestFeedback": true
+          },
+          "6c36f5855cfd4a97b0fed7e7abc4ef62": {
+            "id": "6c36f5855cfd4a97b0fed7e7abc4ef62",
+            "stepType": "Decision",
+            "name": "Is SMS Device"
+          },
+          "f4e161939e7942cea8ceca75de1c937b": {
+            "id": "f4e161939e7942cea8ceca75de1c937b",
+            "stepType": "Decision",
+            "name": "Link Status"
+          },
+          "e1ec7031fbc8403da336bc081de1a14f": {
+            "id": "e1ec7031fbc8403da336bc081de1a14f",
+            "stepType": "Decision",
+            "name": "Is SMS Device"
+          },
+          "21a1b9e2e68b4e088c99a501cb978c7e": {
+            "id": "21a1b9e2e68b4e088c99a501cb978c7e",
+            "stepType": "Decision",
+            "name": "User Locked Out"
+          },
+          "f42cdd7ef6ae472288657a2f6c01d471": {
+            "id": "f42cdd7ef6ae472288657a2f6c01d471",
+            "name": "Get User Lockout Status",
+            "script": "(function execute() {\n    var providerAppId = vaContext.providerAppId;\n    var retryInterval = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy('softpin_max_invalid_attempts_interval_hrs', providerAppId);\n    var maxRetries = sn_cs.VASystemObject.getCustomAdapterPropertyWithHierarchy('softpin_max_retry_attempts', providerAppId);\n    vaVars.userLockedOut = CustomAdapterSoftPinHelper.isUserLockedOutOnMaxAttempts(providerAppId, vaContext.providerUserId,\n                                maxRetries, retryInterval, vaInputs.userId);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "6acd1abd0093465d9869e525f5af42e9": {
+            "id": "6acd1abd0093465d9869e525f5af42e9",
+            "stepType": "ReusableTopic",
+            "name": "_link_account_adapter_",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "_link_account_adapter_",
+            "reusableTopicId": "0902a7d2530333006e61ddeeff7b1250",
+            "inputs": {},
+            "outputs": [
+              {
+                "id": "3a3bc4547a824d70ad0964bde4964278",
+                "value": "connecttola",
+                "mapping": "connecttola",
+                "preventDisable": false
+              },
+              {
+                "id": "942d9cc7e40947b8bde1ad253bd79cb1",
+                "value": "linkstatus",
+                "mapping": "linkstatus",
+                "preventDisable": true
+              }
+            ],
+            "variableIds": [
+              "3a3bc4547a824d70ad0964bde4964278",
+              "942d9cc7e40947b8bde1ad253bd79cb1"
+            ],
+            "outdatedNote": false,
+            "loading": false,
+            "useTemplateTopic": false
+          },
+          "383868b0d87e49c9b0e336ca1cfdf896": {
+            "id": "383868b0d87e49c9b0e336ca1cfdf896",
+            "name": "Connect to Live Agent",
+            "script": "(function execute() {\n    vaSystem.switchTopic(vaVars._topic_live_agent_topic);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "447fa9876a0343829ee6c07d30ca49c0": {
+            "id": "447fa9876a0343829ee6c07d30ca49c0",
+            "stepType": "Decision",
+            "name": "Is Linking Enabled"
+          },
+          "593dde48f1f8453caca844294ddb256b": {
+            "id": "593dde48f1f8453caca844294ddb256b",
+            "name": "Initialize SMS Related Variables",
+            "script": "(function execute() {\n    var provider = JSON.parse(sn_cs.VASystemObject.getProviderByProviderAppId(vaContext.providerAppId));\n    \n    vaVars.accountLinkingEnabled = provider.linkAccountEnabled;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "35d1ec1370b94b30a7cca8c34417861e": {
+            "id": "35d1ec1370b94b30a7cca8c34417861e",
+            "stepType": "Decision",
+            "name": "Is Linking Enabled"
+          }
+        },
+        "edges": [
+          {
+            "id": "ee058cc5cd7c4f1f9ef9293b05660f4f",
+            "edgeType": "Edge",
+            "source": "6acd1abd0093465d9869e525f5af42e9",
+            "target": "f4e161939e7942cea8ceca75de1c937b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a4db40dff6704a758ad794f6933093e0",
+            "edgeType": "Branch",
+            "source": "21a1b9e2e68b4e088c99a501cb978c7e",
+            "target": "7813ee856773498699ae6e4176cfa892",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.userLockedOut;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "4dadc9c86d544981a7c97a4431432761",
+            "edgeType": "Edge",
+            "source": "2017f8c12cc747f695b66754b0614674",
+            "target": "4ca67c8fb7d541f99c239d38f9f01b44",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3e8d10f192ff4085a9fc425103054651",
+            "edgeType": "Edge",
+            "source": "84969fbcbec24819af1a72509ecaf123",
+            "target": "903e435446d14a10a15097a363abcfd5",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "381cf492acf7401fbb98b175dc86ec4e",
+            "edgeType": "Branch",
+            "source": "450216088a7a4860a15fc2531025c721",
+            "target": "9488ce2b8d294c729aaa14062f24f308",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n     var notification_content = JSON.parse(vaInputs.notification_content);\n    var table_name = notification_content.tableName;\n    var imageUrl = notification_content.imageUrl;\n\n    if (imageUrl == null && table_name == null){\n        return true;\n    }\n})()\n"
+            },
+            "label": "Simple Card"
+          },
+          {
+            "id": "38782fdbd2cf488887908c2070cbd32a",
+            "edgeType": "Edge",
+            "source": "9b22ab1b3dc34594bc3b0f83962b98f8",
+            "target": "7813ee856773498699ae6e4176cfa892",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "91e6068513ad48328d2ab7411a4cb16f",
+            "edgeType": "Edge",
+            "source": "d67bffa670d8400abf5cc123e3510b38",
+            "target": "53762fdbc42c4ec0aad09c16760a87cf",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "5abb366f428a4e4382487482e1509c34",
+            "edgeType": "Edge",
+            "source": "7813ee856773498699ae6e4176cfa892",
+            "target": "c218875d4daf43b0bf12a1fc0daf0e78",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "bbfa0bfb28d74743b9e049fa302b36a9",
+            "edgeType": "Edge",
+            "source": "903e435446d14a10a15097a363abcfd5",
+            "target": "7813ee856773498699ae6e4176cfa892",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "49d37f0b26b844dda95cd2875a1b3c40",
+            "edgeType": "Branch",
+            "source": "45557b00255846e3b6f8493d0f4402c4",
+            "target": "9b22ab1b3dc34594bc3b0f83962b98f8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (!vaSystem.isAMBClient(vaContext.deviceType))\n    return true;\n})()\n"
+            },
+            "label": "Adapters"
+          },
+          {
+            "id": "13e8ce9d43c3405da495f096c1fe7548",
+            "edgeType": "Branch",
+            "source": "45557b00255846e3b6f8493d0f4402c4",
+            "target": "33293d8f63ce42a0a1fe4194488aca47",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaSystem.isAMBClient(vaContext.deviceType))\n        return true;\n})()\n"
+            },
+            "label": "Web Client"
+          },
+          {
+            "id": "3b9fd859a2604ac28c15897a08ed8570",
+            "edgeType": "Branch",
+            "source": "33293d8f63ce42a0a1fe4194488aca47",
+            "target": "9d2dd7810e3546199aa1366d301f2383",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageUrl != null;\n})()"
+            },
+            "label": "Image"
+          },
+          {
+            "id": "96bb135628c24f27acc8764f943ac008",
+            "edgeType": "Edge",
+            "source": "9d2dd7810e3546199aa1366d301f2383",
+            "target": "7813ee856773498699ae6e4176cfa892",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "1d236671fbae4306a05a1d0dd55545f2",
+            "edgeType": "Edge",
+            "source": "ebb3b128dfc048b5a2e8e4c4158a912b",
+            "target": "1c612561fe5b46b1ad5b6a3b78665b1f",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "60b23e0435dd45f38b99bcc79fbe0d07",
+            "edgeType": "Branch",
+            "source": "1c612561fe5b46b1ad5b6a3b78665b1f",
+            "target": "45557b00255846e3b6f8493d0f4402c4",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return !notification_content.actionable;\n})()\n"
+            },
+            "label": "Non Actionable"
+          },
+          {
+            "id": "f6b7614830344ad3912056b372452c10",
+            "edgeType": "Branch",
+            "source": "450216088a7a4860a15fc2531025c721",
+            "target": "5784e985b55044b8a26d6793cdb20d7a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var table_name = notification_content.tableName;\n    var imageUrl = notification_content.imageUrl;\n    if (imageUrl != null && table_name == null)\n        return true;\n})()\n"
+            },
+            "label": "Image  Card"
+          },
+          {
+            "id": "3cf1bc297a284e3c99ee5c6985df92c9",
+            "edgeType": "Edge",
+            "source": "4208523587a744cfbed53025a44b7693",
+            "target": "2fc5fba7d13742acbfb03cfb9620b446",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "68269de241324dab8ef4fc40febb588d",
+            "edgeType": "Edge",
+            "source": "2fc5fba7d13742acbfb03cfb9620b446",
+            "target": "d67bffa670d8400abf5cc123e3510b38",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "211e3bea51044eca83fdeaeed3534621",
+            "edgeType": "Edge",
+            "source": "5784e985b55044b8a26d6793cdb20d7a",
+            "target": "504cb201c44742e28d820c87eb66af5a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "8e9f3e4df9314cb78687247517278346",
+            "edgeType": "Edge",
+            "source": "504cb201c44742e28d820c87eb66af5a",
+            "target": "d67bffa670d8400abf5cc123e3510b38",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "17a02b212d454bba841654c75d000f6f",
+            "edgeType": "Branch",
+            "source": "1c612561fe5b46b1ad5b6a3b78665b1f",
+            "target": "93dbbd9dc02644e7af13206d79673d8b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.actionable;\n})()\n"
+            },
+            "label": "Actionable"
+          },
+          {
+            "id": "2f17803c72d54fc8818d3d7ce64f8231",
+            "edgeType": "Branch",
+            "source": "93dbbd9dc02644e7af13206d79673d8b",
+            "target": "450216088a7a4860a15fc2531025c721",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaSystem.isAMBClient(vaContext.deviceType))\n    return true;\n})()\n"
+            },
+            "label": "Web Client"
+          },
+          {
+            "id": "afceb27bdc314bd1a011d6ba9e2f7da2",
+            "edgeType": "Edge",
+            "source": "5be262e9d9a54475993d8b7af0d2cf70",
+            "target": "d67bffa670d8400abf5cc123e3510b38",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "c73e3b514f55435e876ea72b7578467e",
+            "edgeType": "Edge",
+            "source": "bc9f058c59804198b489373be213a021",
+            "target": "919f477fa7fa4efc880d71d8ebff2d39",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "54c059c67bd74aa6a7bf705154a99233",
+            "edgeType": "Edge",
+            "source": "919f477fa7fa4efc880d71d8ebff2d39",
+            "target": "d67bffa670d8400abf5cc123e3510b38",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "11619493ba004f0cbf65dda4dd42113c",
+            "edgeType": "Branch",
+            "source": "33293d8f63ce42a0a1fe4194488aca47",
+            "target": "47445fddc8524b0e9d2049b0ae2d16be",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    return notification_content.imageUrl == null;\n})()"
+            },
+            "label": "No Image"
+          },
+          {
+            "id": "85e3c0738ee146e09689be1efc2bca62",
+            "edgeType": "Edge",
+            "source": "47445fddc8524b0e9d2049b0ae2d16be",
+            "target": "84969fbcbec24819af1a72509ecaf123",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "153547eb66f24683afe983f8486e497b",
+            "edgeType": "Branch",
+            "source": "450216088a7a4860a15fc2531025c721",
+            "target": "2017f8c12cc747f695b66754b0614674",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var notification_content = JSON.parse(vaInputs.notification_content);\n    var table_name = notification_content.tableName;\n    var imageUrl = notification_content.imageUrl;\n    if (imageUrl == null && table_name != null)\n        return true;\n})()\n"
+            },
+            "label": "Record Card"
+          },
+          {
+            "id": "39065e4fe7f4498c8c5d1bf887913adb",
+            "edgeType": "Edge",
+            "source": "4ca67c8fb7d541f99c239d38f9f01b44",
+            "target": "4208523587a744cfbed53025a44b7693",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b8e5fe25d0c2489aaf442939b5291ff0",
+            "edgeType": "Edge",
+            "source": "9488ce2b8d294c729aaa14062f24f308",
+            "target": "11c3a91e85f040b0a799e05aeee09e17",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ee9f2ff058bf431e8eaad47cac45ed5d",
+            "edgeType": "Edge",
+            "source": "11c3a91e85f040b0a799e05aeee09e17",
+            "target": "bc9f058c59804198b489373be213a021",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e4d39a6b260845899fce9a8480da9212",
+            "edgeType": "Edge",
+            "source": "53762fdbc42c4ec0aad09c16760a87cf",
+            "target": "4c72771dd4f049ac92ee4c12275baea6",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0e2909742e124779bc35197b9181a860",
+            "edgeType": "Edge",
+            "source": "4c72771dd4f049ac92ee4c12275baea6",
+            "target": "7813ee856773498699ae6e4176cfa892",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ebb793aa1bde4e7fa8d8587727753b6c",
+            "edgeType": "Edge",
+            "source": "c206678ff17c4cbf9c6b7cf9a18e329e",
+            "target": "6c36f5855cfd4a97b0fed7e7abc4ef62",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e993d26f62bc42f582e5f233b373c274",
+            "edgeType": "Branch",
+            "source": "6c36f5855cfd4a97b0fed7e7abc4ef62",
+            "target": "5be262e9d9a54475993d8b7af0d2cf70",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaContext.deviceType != 'SMS';\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "0f38bd47e6ac44b589b4927c8b5fa520",
+            "edgeType": "Branch",
+            "source": "f4e161939e7942cea8ceca75de1c937b",
+            "target": "5be262e9d9a54475993d8b7af0d2cf70",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.linkstatus == 'success';\n})()\n"
+            },
+            "label": "Success"
+          },
+          {
+            "id": "a3ac9266bb2643a295978250b8275946",
+            "edgeType": "Branch",
+            "source": "93dbbd9dc02644e7af13206d79673d8b",
+            "target": "e1ec7031fbc8403da336bc081de1a14f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (!vaSystem.isAMBClient(vaContext.deviceType))\n    return true;\n})()\n"
+            },
+            "label": "Adapters"
+          },
+          {
+            "id": "633318a370384f6aacc97da6747cc54a",
+            "edgeType": "Branch",
+            "source": "e1ec7031fbc8403da336bc081de1a14f",
+            "target": "c206678ff17c4cbf9c6b7cf9a18e329e",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaContext.deviceType != 'SMS';\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "721e85a10c6044509d2a65a36b099e4e",
+            "edgeType": "Branch",
+            "source": "21a1b9e2e68b4e088c99a501cb978c7e",
+            "target": "c206678ff17c4cbf9c6b7cf9a18e329e",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.userLockedOut;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "d006e7c540464d7c9a80e1d0d9dbea9b",
+            "edgeType": "Edge",
+            "source": "f42cdd7ef6ae472288657a2f6c01d471",
+            "target": "21a1b9e2e68b4e088c99a501cb978c7e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "02b9d1fc14be49aabaf4747898598308",
+            "edgeType": "Branch",
+            "source": "f4e161939e7942cea8ceca75de1c937b",
+            "target": "7813ee856773498699ae6e4176cfa892",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.linkstatus == 'aborted';\n})()\n"
+            },
+            "label": "Abort"
+          },
+          {
+            "id": "f89e494ca74e4168b0cda7ba2ed68837",
+            "edgeType": "Branch",
+            "source": "f4e161939e7942cea8ceca75de1c937b",
+            "target": "383868b0d87e49c9b0e336ca1cfdf896",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.linkstatus == 'failure';\n})()\n"
+            },
+            "label": "Failure"
+          },
+          {
+            "id": "45333aa87b214b57ab78ec79c08d1d0d",
+            "edgeType": "Edge",
+            "source": "383868b0d87e49c9b0e336ca1cfdf896",
+            "target": "c218875d4daf43b0bf12a1fc0daf0e78",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "5193b2224ff64626b44541ae4166ef5b",
+            "edgeType": "Branch",
+            "source": "447fa9876a0343829ee6c07d30ca49c0",
+            "target": "f42cdd7ef6ae472288657a2f6c01d471",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.accountLinkingEnabled == true;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "9f20679e68594ee58cb24a82f297ea0b",
+            "edgeType": "Branch",
+            "source": "447fa9876a0343829ee6c07d30ca49c0",
+            "target": "c206678ff17c4cbf9c6b7cf9a18e329e",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.accountLinkingEnabled == false;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "8d3e84a974ff4ca9bb204459528a6e36",
+            "edgeType": "Branch",
+            "source": "e1ec7031fbc8403da336bc081de1a14f",
+            "target": "593dde48f1f8453caca844294ddb256b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaContext.deviceType == 'SMS';\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "163779959c844ccbaae61e6644b56b3a",
+            "edgeType": "Edge",
+            "source": "593dde48f1f8453caca844294ddb256b",
+            "target": "447fa9876a0343829ee6c07d30ca49c0",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "181a4dcfecf64f72930c7307eb91c98a",
+            "edgeType": "Branch",
+            "source": "6c36f5855cfd4a97b0fed7e7abc4ef62",
+            "target": "35d1ec1370b94b30a7cca8c34417861e",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaContext.deviceType == 'SMS';\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "c4c193d58c3d4c03a747682ee349a068",
+            "edgeType": "Branch",
+            "source": "35d1ec1370b94b30a7cca8c34417861e",
+            "target": "6acd1abd0093465d9869e525f5af42e9",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.accountLinkingEnabled == true;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "1a1440aa13994ec880008d1d7c50ad8e",
+            "edgeType": "Branch",
+            "source": "35d1ec1370b94b30a7cca8c34417861e",
+            "target": "5be262e9d9a54475993d8b7af0d2cf70",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.accountLinkingEnabled == false;\n})()\n"
+            },
+            "label": "No"
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "995e361142024ec4b56345b8eb2acfca": {
+        "id": "995e361142024ec4b56345b8eb2acfca",
+        "name": "notification_content",
+        "label": "Notification_content",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "ebb3b128dfc048b5a2e8e4c4158a912b",
+        "isHidden": false
+      },
+      "36b083d30a7d4e6d8bda0612997f80d6": {
+        "id": "36b083d30a7d4e6d8bda0612997f80d6",
+        "name": "actionable_card",
+        "label": "Actionable Card",
+        "varType": "reference",
+        "table": "incident",
+        "category": "vaInputs",
+        "nodeId": "4208523587a744cfbed53025a44b7693",
+        "isHidden": false
+      },
+      "61813b06bd17480fb41a0f6ed6aa7f05": {
+        "id": "61813b06bd17480fb41a0f6ed6aa7f05",
+        "name": "actionable_image_card",
+        "label": "Actionable Image Card",
+        "varType": "reference",
+        "table": "incident",
+        "category": "vaInputs",
+        "nodeId": "5784e985b55044b8a26d6793cdb20d7a",
+        "isHidden": false
+      },
+      "d9320f28f82945ca8c79c9bb9ea7d88b": {
+        "id": "d9320f28f82945ca8c79c9bb9ea7d88b",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "actionId",
+        "label": "actionId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "90e9b0065e14430a908ef8253b870fce": {
+        "id": "90e9b0065e14430a908ef8253b870fce",
+        "name": "actionable_adapters_card",
+        "label": "Actionable Adapters Card",
+        "varType": "reference",
+        "table": "incident",
+        "category": "vaInputs",
+        "nodeId": "c206678ff17c4cbf9c6b7cf9a18e329e",
+        "isHidden": false
+      },
+      "f2f5bb10a9344650b55f55c3ef8fcd07": {
+        "id": "f2f5bb10a9344650b55f55c3ef8fcd07",
+        "name": "select_action",
+        "label": "Select Action",
+        "varType": "reference",
+        "table": "incident",
+        "category": "vaInputs",
+        "nodeId": "bc9f058c59804198b489373be213a021",
+        "isHidden": false
+      },
+      "3a3bc4547a824d70ad0964bde4964278": {
+        "id": "3a3bc4547a824d70ad0964bde4964278",
+        "name": "connecttola",
+        "label": "Connecttola",
+        "defaultValue": "connecttola",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": false,
+        "nodeId": "6acd1abd0093465d9869e525f5af42e9",
+        "isHidden": false
+      },
+      "942d9cc7e40947b8bde1ad253bd79cb1": {
+        "id": "942d9cc7e40947b8bde1ad253bd79cb1",
+        "name": "linkstatus",
+        "label": "Linkstatus",
+        "defaultValue": "linkstatus",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "6acd1abd0093465d9869e525f5af42e9",
+        "isHidden": false
+      },
+      "12a1b9eb4b974dbbbeecb017dd593eaa": {
+        "id": "12a1b9eb4b974dbbbeecb017dd593eaa",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return false;\n})()\n"
+        },
+        "name": "accountLinkingEnabled",
+        "label": "accountLinkingEnabled",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+name: _notification_controller_topic_block_
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

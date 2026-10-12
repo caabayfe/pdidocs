@@ -1,0 +1,2 @@
+sn_applyonce.ApplyOnce.allowOneMoreUpdate("nlq_semantic_shortcut_174c6c0d732333006c629bcefaf6a741.xml");
+sn_applyonce.ApplyOnce.allowOneMoreUpdate("nlq_synonym_ebe091cc732333006c629bcefaf6a743.xml");

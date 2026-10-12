@@ -1,0 +1,148 @@
+- document: sys_atf_step
+  document_key: 70b83ef873403300623db63854f6a7a3
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:09:50
+  sys_id: 36b83ef873403300623db63854f6a7dc
+  sys_mod_count: '9'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-08-10 05:19:35
+  value: |-
+    // Validating existing valid solutions upon instance upgrade
+    (function(outputs, steps, stepResult, assertEqual) {
+    	// Exit test if no predictions with active solutions found
+    	if(steps("7168baf873403300623db63854f6a767").record_id == ""){
+    		stepResult.setOutputMessage("No active similarity solutions with old predictions found.");
+    		return true;
+    	}
+    	//Make an api call for each active solution
+    	var username = "";
+    	var password = "";
+    	var pass = true;
+    	var validSols = steps("7168baf873403300623db63854f6a767").record_id.split(",");
+    	var failedPred = "";
+    	//Get username and password from basic auth table
+    	var authProfile = new GlideRecord("sys_auth_profile_basic");
+    	authProfile.addQuery("name","ml_atf");
+    	authProfile.query();
+    	if (authProfile.next()) {
+    		username = authProfile.username;
+    		password = authProfile.password.getDecryptedValue();
+    	}
+    	else {
+    		stepResult.setOutputMessage("Create a basic auth profile in Basic Auth Configurations (sys_auth_profile_basic) table with name as \"ml_atf\" to proceed with the test");
+    		return false;
+    	}
+    	for(var i = 0; i < validSols.length; i++){
+    		var Solutions = new GlideRecord("ml_solution");
+    		Solutions.get(validSols[i]);
+    		
+    		var oldPred = GlideRecord("ml_similarity_example");
+    		oldPred.addQuery("solution",Solutions.getUniqueValue());
+    		oldPred.query();
+    		var count = 0;
+    		//Asserting on outcome status
+    		while(oldPred.next() && count < 5){
+    		count++;
+    		if(!oldPred.getValue('test_record_input')){
+    			gs.info("Skipping test because the input field is empty");
+    			continue;
+    		}
+    		// I/p O/p key values of previous prediction
+    		var pred_input_vlue_name = Solutions.getValue('prediction_input_fields').split(',');
+    		var pred_input_vlue = oldPred.getValue('test_record_input').split('||');
+    		if(pred_input_vlue_name.length != pred_input_vlue.length){
+    			pred_input_vlue = oldPred.getValue('test_record_input').split('|');
+    			if(pred_input_vlue_name.length != pred_input_vlue.length){
+    				gs.info("Skipping test because the input field parameters are not matching with trained parameters");
+    				continue;
+    			}
+    		}
+    		var solName = Solutions.getValue('solution_name') + '    v' + Solutions.getValue('version') ;
+    		var totaldash = 110 - solName.length;
+    		gs.info("");
+    		gs.info("- ".repeat(totaldash/2) + solName + "- ".repeat(totaldash/2));
+    		gs.info("");
+    		//Getting table name on which prediction was made
+    		var table = GlideRecord("sys_db_object");
+    		table.addQuery("name",oldPred.getValue('solution_table'));
+    		table.query();
+    		var tableName = oldPred.getValue('solution_table');
+    		if(table.next())
+    			tableName = table.getValue("label");
+    		
+    		gs.info("Starting Upgrade Test");
+    		gs.info("Model trained on - " + Solutions.getValue('prediction_input_fields') + " of " + tableName + " table");
+    		gs.info("");
+    		gs.info("Previous prediction");
+    		gs.info("Given input -> ");
+    		
+    		var inp_str = '?';
+    		for(var j = 0; j < pred_input_vlue_name.length; j++){
+    			var tmp = concatInp(pred_input_vlue_name[j],pred_input_vlue[j]);
+    			gs.info(tmp);
+    			inp_str += tmp + '&';
+    		}
+    		//Constructing REST API
+    		gs.info("Making Rest API call using same input");
+    		inp_str = inp_str.slice(0,-1);
+    		//Read from "glide.servlet.uri" property
+    		var url = gs.getProperty("glide.servlet.uri") + "api/now/agent_intelligence/solution/" + Solutions.getValue('solution_name') + "/prediction" + inp_str;
+    		var uri = encodeURI(url);
+    		gs.info(uri);
+    		r = new sn_ws.RESTMessageV2();
+    		r.setHttpMethod('get');
+    		r.setEndpoint(uri);
+    		r.setRequestHeader("Authorization","BASIC " + GlideStringUtil.base64Encode(username+":"+password));
+    		r.setRequestHeader('Accept','application/json');
+    		r.setRequestHeader("Content-Type", "application/json");
+    		var response = null;
+    		try {
+    			response = r.executeAsync();	
+    			response.waitForResponse(300);
+    }
+    		catch(err) {
+    			gs.info("Error caused while excecuting request");
+    		}
+    		status = response.getStatusCode();
+    		//Asserting
+    		if(status != 200){
+    			pass = false;
+    			gs.info("Response_Status REST: " +status);
+    			failedPred += "Prediction failed for \"" + Solutions.getValue('solution_name') + "\"  ->  Output Status : Unable to process the request \"" + '\"\n';
+    			continue;
+    		}
+    		responseBody = response.getBody();
+    		gs.info("Response_Body REST: " +responseBody);
+    		//Parsing response output
+    		var mydata = new JSON().decode(responseBody);
+    		var outcomeStatus = mydata.result.output[0].outcomeArr[0].output;
+    		var outcome = mydata.result.output[0].outcomeArr[0].ClassName;
+    		if (outcomeStatus === "failure")
+    			outcome = mydata.result.output[0].outcomeArr[0].output_msg;
+    		gs.info("Outcome : " + outcome);
+    	
+    	}
+    	}
+    	stepResult.setOutputMessage("Making Api calls for previously used active solutions.\n" + failedPred);
+    	return pass;
+    	function concatInp(key,value){
+    		return key + '=' + value;
+    	}
+    })(outputs, steps, stepResult, assertEqual);
+  variable: 989d9e235324220002c6435723dc3484
+- document: sys_atf_step
+  document_key: 70b83ef873403300623db63854f6a7a3
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:09:50
+  sys_id: 72b83ef873403300623db63854f6a7dc
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-03-05 12:09:50
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777

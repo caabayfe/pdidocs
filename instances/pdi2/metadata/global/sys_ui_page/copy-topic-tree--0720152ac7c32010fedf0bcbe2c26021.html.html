@@ -1,0 +1,45 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate>
+		var currentParentTopic = RP.getWindowProperties().get('currentParentTopic');
+		var currentTaxonomy = RP.getWindowProperties().get('currentTaxonomy');
+	</g:evaluate>
+	<g:evaluate>
+		var taxonomyGr = new GlideRecord('taxonomy');
+		taxonomyGr.query();
+	</g:evaluate>	
+	
+	
+	<p id="taxonomy_err_message" class="notification notification-error" style="display:none">${gs.getMessage('No taxonomies found')}</p>
+	<div id="copy_topic_tree" style="display:block; padding: 5px 10px">
+		
+		<div id="taxonomy_selector" style="padding-bottom:25px">
+			<div>
+				<label for="taxonomy" class="control-label">${gs.getMessage('Taxonomy')}</label>
+			</div>
+			<div class="col-lg-3 col-md-5 col-sm-6 col-xs-7 input-group">
+				<select id="taxonomyField" class="form-group no-bottom-margin select2" style="width:360px" onChange="updateTopicField()" aria-label="${gs.getMessage('Select taxonomy')}">
+					<j:while test="${taxonomyGr.next()}">
+						<j:if test = "${taxonomyGr.canRead()}">
+							<option value="${taxonomyGr.sys_id}">${taxonomyGr.name}</option>
+						</j:if>						
+					</j:while> 					
+				</select>
+			</div>
+		</div>
+
+		<div id="topic_selector" style="padding-bottom:25px">
+			<div >
+				<label for="topic" class="control-label">${gs.getMessage('Parent Topic')}</label>
+			</div>
+			<div class="col-lg-3 col-md-5 col-sm-6 col-xs-7 input-group">
+				<select id="topicField" class="form-group no-bottom-margin" style="width:360px" aria-label="${gs.getMessage('Select parent topic')}">
+				</select>
+			</div>
+		</div>
+		<div class="modal-footer flex" >
+			<g:dialog_buttons_ok_cancel ok="return invokePromptCallBack('ok')" ok_style_class="btn btn-primary category-ok-btn" ok_type="button" cancel="return invokePromptCallBack('cancel')" cancel_type="button"/>
+		</div>
+	</div>	
+
+</j:jelly>

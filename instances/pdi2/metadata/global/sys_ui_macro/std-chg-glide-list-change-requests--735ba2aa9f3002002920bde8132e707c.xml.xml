@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_html_identifier" value="std_change_proposal.change_requests"/>
+	<j:set var="jvar_tab_name" value="change_request"/>
+	<j:set var="jvar_list_title" value='${gs.getMessage("Change Requests")}'/>
+	<j:set var="jvar_isDoctype" value="$[GlideMobileExtensions.getDeviceType()]" />
+	<j:if test="$[jvar_isDoctype != 'doctype']">
+		<g:macro_invoke macro="std_chg_glide_list_handler_non_doc"/>
+	</j:if>
+	<j:if test="$[jvar_isDoctype == 'doctype']">
+		<g:macro_invoke macro="std_chg_glide_list_handler"/>
+	</j:if>
+	<script>
+		//This will be used to get the final value in the submit event handling
+		var sncSampleChangesPlaceHolder = '${jvar_html_identifier}';
+
+
+		addRenderEvent(function() {
+			g_form.setDisplay('variables.change_requests',false);
+			//Coming from Change Request > Propose a Standard Change.
+			var chgReqId = getParmVal('sysparm_chgReqId');
+			if(chgReqId){
+				setListAndShortDesc(chgReqId);
+			}
+		});
+
+		function setListAndShortDesc(chgReqId) {
+			var chgGR = new GlideRecord('change_request');
+			chgGR.get(chgReqId);
+			var displayVal=chgGR.getValue('number');
+			var shortDesc=chgGR.getValue('short_description');
+			g_form.setValue('variables.short_description',shortDesc);
+			addChoiceExternal('${jvar_html_identifier}',chgReqId,displayVal);
+		}
+
+		function getParmVal(name){
+			var url = document.URL.parseQuery();
+			if(url[name]){
+				return decodeURI(url[name]);
+			}
+			else{
+				return;
+			}
+		}
+	</script>
+</j:jelly>

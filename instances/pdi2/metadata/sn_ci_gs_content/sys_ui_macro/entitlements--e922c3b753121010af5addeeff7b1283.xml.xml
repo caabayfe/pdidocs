@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<style>
+		.entitlement_group {
+			display: flex;
+			clear: both;
+			text-align: center
+		}
+		.hideBlock {
+			visibility: hidden;
+		}
+		
+		.select-card {
+			padding: 20px;
+			width: 150px;
+			height: 50px;
+			border: 1px solid lightgrey;
+			margin-top: 5px;
+			margin-bottom: 5px;
+		}
+		.active-card {
+			background-color: lightblue;
+		}
+		
+		.entitlement_group .select-card {
+			margin-right: 100px;
+		}
+		
+		.agentsupport_group .agentsupport_subgroup {
+			margin-right: 100px;
+		}
+		
+		.agentsupport_group {
+			display: flex;
+			text-align: center
+		}
+				
+		.active-card {
+			background-color: lightblue;
+		}
+		
+		.section_header {		
+
+			font-family: Source Sans Pro;
+			font-style: normal;
+			font-weight: normal;
+			font-size: 12px;
+			line-height: 15px;			
+			margin-top: 20px;
+			color: #81878E;
+		}
+		
+	</style>
+	<div class="entitlement_group">
+		<div id="entitlement_itsm_pro" name="entitlement_itsm_pro" class="select-card">ITSM Pro</div>
+		<div id="entitlement_csm_pro" name="entitlement_csm_pro" class="select-card">CSM Pro</div>
+		<div id="entitlement_hr_pro" name="entitlement_hr_pro" class="select-card">HR Pro</div>
+	</div>
+	<div class="entitlement_group">
+		<div id="entitlement_itsm" name="entitlement_itsm" class="select-card">ITSM</div>
+		<div id="entitlement_csm" name="entitlement_csm" class="select-card">CSM</div>
+		<div id="entitlement_hr" name="entitlement_hr" class="select-card">HR</div>
+	</div>	
+	<div class="section_header">Select Agents</div>
+	<div class="agentsupport_group">		
+		<div class="agentgroup_itsm agentsupport_subgroup">
+			<div id="agentsupport_itsm_la" name="agentsupport_itsm_la" class="select-card">ITSM-LA</div>
+			<div id="agentsupport_itsm_va" name="agentsupport_itsm_va" class="select-card">ITSM-VA</div>
+		</div>
+		<div class="agentgroup_csm agentsupport_subgroup">
+			<div id="agentsupport_csm_la" name="agentsupport_csm_la" class="select-card">CSM-LA </div>
+			<div id="agentsupport_csm_va" name="agentsupport_csm_va" class="select-card">CSM-VA </div>
+		</div>
+		<div class="agentgroup_hr agentsupport_subgroup">
+			<div id="agentsupport_hr_la" name="agentsupport_hr_la" class="select-card">HR-LA</div>
+			<div id="agentsupport_hr_va" name="agentsupport_hr_va" class="select-card">HR-VA</div>
+		</div>
+	</div>	
+	
+	<script>
+		jQuery(".agentgroup_itsm").addClass("hideBlock")
+		jQuery(".agentgroup_csm").addClass("hideBlock")
+		jQuery(".agentgroup_hr").addClass("hideBlock")
+		jQuery("#entitlement_itsm_pro").on("click", function(e) {
+			let isAlreadySelected = jQuery("#entitlement_itsm_pro").hasClass("active-card");
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='entitlement_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+
+			if(isAlreadySelected) {
+				if(jQuery("#entitlement_itsm").hasClass("active-card")) {
+					jQuery(".agentgroup_itsm").removeClass("hideBlock");
+				}else {
+					if(!jQuery(".agentgroup_itsm").hasClass("hideBlock")) {
+						jQuery(".agentgroup_itsm").addClass("hideBlock");
+					}
+				}
+			}else{
+				if(jQuery("#entitlement_itsm").hasClass("active-card")) {
+					jQuery("#entitlement_itsm").removeClass("active-card");
+					value["ITSM"] = false;
+				}
+				jQuery(".agentgroup_itsm").removeClass("hideBlock");
+			}
+		
+			isAlreadySelected?jQuery("#entitlement_itsm_pro").removeClass("active-card"): jQuery("#entitlement_itsm_pro").addClass("active-card")					
+			value["ITSM_PRO"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#entitlement_csm_pro").on("click", function(e) {			
+			let isAlreadySelected = jQuery("#entitlement_csm_pro").hasClass("active-card");
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='entitlement_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+			if(isAlreadySelected) {
+				if(jQuery("#entitlement_csm").hasClass("active-card")) {
+					jQuery(".agentgroup_csm").removeClass("hideBlock");
+				}else {
+					if(!jQuery(".agentgroup_csm").hasClass("hideBlock")) {
+						jQuery(".agentgroup_csm").addClass("hideBlock");
+					}
+				}
+			}else{
+				if(jQuery("#entitlement_csm").hasClass("active-card")) {
+					jQuery("#entitlement_csm").removeClass("active-card")
+					value["CSM"] = false;
+				}
+				jQuery(".agentgroup_csm").removeClass("hideBlock");
+				jQuery("#agentsupport_csm_va").removeClass("hideBlock");
+			}
+			isAlreadySelected?jQuery("#entitlement_csm_pro").removeClass("active-card"): jQuery("#entitlement_csm_pro").addClass("active-card")
+			
+			value["CSM_PRO"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#entitlement_hr_pro").on("click", function(e) {
+			let isAlreadySelected = jQuery("#entitlement_hr_pro").hasClass("active-card");
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='entitlement_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+		
+			if(isAlreadySelected) {
+				if(jQuery("#entitlement_hr").hasClass("active-card")) {
+					jQuery(".agentgroup_hr").removeClass("hideBlock");
+				}else {
+					if(!jQuery(".agentgroup_hr").hasClass("hideBlock")) {
+						jQuery(".agentgroup_hr").addClass("hideBlock");
+					}
+				}
+			}else{
+				if(jQuery("#entitlement_hr").hasClass("active-card")) {
+					jQuery("#entitlement_hr").removeClass("active-card");
+					value["HR"] = false;
+				}
+				jQuery(".agentgroup_hr").removeClass("hideBlock");		
+				jQuery("#agentsupport_hr_va").removeClass("hideBlock");
+			}
+			isAlreadySelected?jQuery("#entitlement_hr_pro").removeClass("active-card"): jQuery("#entitlement_hr_pro").addClass("active-card")			
+			value["HR_PRO"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#entitlement_itsm").on("click", function(e) {
+			let isAlreadySelected = jQuery("#entitlement_itsm").hasClass("active-card");
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='entitlement_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+		
+			if(isAlreadySelected) {
+				if(jQuery("#entitlement_itsm_pro").hasClass("active-card")) {
+					jQuery(".agentgroup_itsm").removeClass("hideBlock");
+				}else {
+					if(!jQuery(".agentgroup_itsm").hasClass("hideBlock")) {
+						jQuery(".agentgroup_itsm").addClass("hideBlock");
+					}
+				}
+			}else{
+				if(jQuery("#entitlement_itsm_pro").hasClass("active-card")) {
+					jQuery("#entitlement_itsm_pro").removeClass("active-card")
+					value["ITSM_PRO"] = false;
+				}
+				jQuery(".agentgroup_itsm").removeClass("hideBlock");
+			}
+			isAlreadySelected?jQuery("#entitlement_itsm").removeClass("active-card"): jQuery("#entitlement_itsm").addClass("active-card")
+			
+			value["ITSM"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#entitlement_csm").on("click", function(e) {			
+			let isAlreadySelected = jQuery("#entitlement_csm").hasClass("active-card");
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='entitlement_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+		
+			if(isAlreadySelected) {
+				if(jQuery("#entitlement_csm_pro").hasClass("active-card")) {
+					jQuery(".agentgroup_csm").removeClass("hideBlock");					
+				}else {
+					if(!jQuery(".agentgroup_csm").hasClass("hideBlock")) {
+						jQuery(".agentgroup_csm").addClass("hideBlock");
+					}
+				}
+			}else{
+				if(jQuery("#entitlement_csm_pro").hasClass("active-card")) {
+					jQuery("#entitlement_csm_pro").removeClass("active-card");
+					value["CSM_PRO"] = false;
+				}
+				jQuery(".agentgroup_csm").removeClass("hideBlock");
+				if(!jQuery("#agentsupport_csm_va").hasClass("hideBlock")) {		
+					jQuery("#agentsupport_csm_va").addClass("hideBlock");
+					jQuery("#agentsupport_hr_va").removeClass("active-card");
+					let agentVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+					let agentVarEl = gel("IO:" + agentVarId);
+					let agentValue = agentVarEl $[AMP]$[AMP] agentVarEl.value?JSON.parse(agentVarEl.value): {};
+					agentValue["CSM_VA"] = false;
+					agentVarEl.value = JSON.stringify(agentValue);
+				}
+			}
+			isAlreadySelected?jQuery("#entitlement_csm").removeClass("active-card"): jQuery("#entitlement_csm").addClass("active-card")
+			
+			value["CSM"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#entitlement_hr").on("click", function(e) {
+			let isAlreadySelected = jQuery("#entitlement_hr").hasClass("active-card");
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='entitlement_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+		
+			if(isAlreadySelected) {
+				if(jQuery("#entitlement_hr_pro").hasClass("active-card")) {
+					jQuery(".agentgroup_hr").removeClass("hideBlock");
+				}else {
+					if(!jQuery(".agentgroup_hr").hasClass("hideBlock")) {
+						jQuery(".agentgroup_hr").addClass("hideBlock");
+					}
+				}
+			}else{
+				if(jQuery("#entitlement_hr_pro").hasClass("active-card")) {
+					jQuery("#entitlement_hr_pro").removeClass("active-card")
+					value["HR_PRO"] = false;
+				}
+				jQuery(".agentgroup_hr").removeClass("hideBlock");
+				if(!jQuery("#agentsupport_hr_va").hasClass("hideBlock")) {		
+					jQuery("#agentsupport_hr_va").addClass("hideBlock");	
+					jQuery("#agentsupport_hr_va").removeClass("active-card");
+					let agentVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+					let agentVarEl = gel("IO:" + agentVarId);
+					let agentValue = agentVarEl $[AMP]$[AMP] agentVarEl.value?JSON.parse(agentVarEl.value): {};
+					agentValue["HR_VA"] = false;
+					agentVarEl.value = JSON.stringify(agentValue);
+				}
+			}
+			isAlreadySelected?jQuery("#entitlement_hr").removeClass("active-card"): jQuery("#entitlement_hr").addClass("active-card")
+
+			value["HR"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});	
+		
+		jQuery("#agentsupport_csm_la").on("click", function(e) {
+			let isAlreadySelected = jQuery("#agentsupport_csm_la").hasClass("active-card");			
+			isAlreadySelected?jQuery("#agentsupport_csm_la").removeClass("active-card"): jQuery("#agentsupport_csm_la").addClass("active-card")
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+			value["CSM_LA"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#agentsupport_csm_va").on("click", function(e) {
+			let isAlreadySelected = jQuery("#agentsupport_csm_va").hasClass("active-card");
+			isAlreadySelected?jQuery("#agentsupport_csm_va").removeClass("active-card"): jQuery("#agentsupport_csm_va").addClass("active-card")
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+			value["CSM_VA"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});			
+		jQuery("#agentsupport_itsm_la").on("click", function(e) {
+			let isAlreadySelected = jQuery("#agentsupport_itsm_la").hasClass("active-card");
+			isAlreadySelected?jQuery("#agentsupport_itsm_la").removeClass("active-card"): jQuery("#agentsupport_itsm_la").addClass("active-card")
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+			value["ITSM_LA"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#agentsupport_itsm_va").on("click", function(e) {
+			let isAlreadySelected = jQuery("#agentsupport_itsm_va").hasClass("active-card");
+			isAlreadySelected?jQuery("#agentsupport_itsm_va").removeClass("active-card"): jQuery("#agentsupport_itsm_va").addClass("active-card")
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+			value["ITSM_VA"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		
+		jQuery("#agentsupport_hr_la").on("click", function(e) {
+			let isAlreadySelected = jQuery("#agentsupport_hr_la").hasClass("active-card");
+			isAlreadySelected?jQuery("#agentsupport_hr_la").removeClass("active-card"): jQuery("#agentsupport_hr_la").addClass("active-card")
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+			value["HR_LA"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		jQuery("#agentsupport_hr_va").on("click", function(e) {
+			let isAlreadySelected = jQuery("#agentsupport_hr_va").hasClass("active-card");
+			isAlreadySelected?jQuery("#agentsupport_hr_va").removeClass("active-card"): jQuery("#agentsupport_hr_va").addClass("active-card")
+			let actualVarId = jQuery(gel("variable_map")).find("item[qname='agentsupport_value']").attr("id");
+			let actualVarEl = gel("IO:" + actualVarId);
+			let value = actualVarEl $[AMP]$[AMP] actualVarEl.value?JSON.parse(actualVarEl.value): {};
+			value["HR_VA"] = isAlreadySelected?false: true;
+			actualVarEl.value = JSON.stringify(value);
+		});
+		
+	</script>
+</j:jelly>

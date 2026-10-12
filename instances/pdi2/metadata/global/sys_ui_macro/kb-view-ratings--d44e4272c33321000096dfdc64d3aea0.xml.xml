@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g2:evaluate var="jvar_not_important" expression="
+		var show_kb_menu = gs.getProperty('glide.knowman.show_kb_menu', 'true');
+		var roles = gs.getProperty('glide.knowman.show_kb_menu.roles');
+		if (roles == null || roles == '')
+			;
+		else {
+			var hasRole = gs.hasRole(roles);
+			if (hasRole == false)
+				show_kb_menu = false;
+		}
+	"/>
+
+	<j2:if test="$[show_kb_menu]">
+		<j2:if test="$[sysparm_media != 'print']">
+
+			<g2:evaluate var="jvar_not_important" expression="
+				var show_kb_rating_options = gs.getProperty('glide.knowman.show_rating_options','true');
+				var roles = gs.getProperty('glide.knowman.show_rating_options.roles');
+				if (roles == null || roles == '')
+				  ;
+				else {
+					var hasRole = gs.hasRole(roles);
+					if (hasRole == false)
+						show_kb_rating_options = false;
+				}
+			"/>
+
+			<g2:evaluate var="jvar_not_important" expression="
+				var show_kb_yn_rating = gs.getProperty('glide.knowman.show_yn_rating','true');
+				if(knowledgeRecord.kb_knowledge_base.disable_mark_as_helpful)
+					show_kb_yn_rating = false;	
+				var roles = gs.getProperty('glide.knowman.show_yn_rating.roles');
+				if (roles == null || roles == '')
+					;
+				else {
+					var hasRole = gs.hasRole(roles);
+					if (hasRole == false)
+						show_kb_yn_rating = false;
+				}
+			"/>
+
+			<g2:evaluate var="jvar_not_important" expression="
+				var show_user_feedback = kbViewInfo.hideFeedbackOptions ? false : gs.getProperty('glide.knowman.show_user_feedback') == 'onclick';
+				var roles = gs.getProperty('glide.knowman.show_user_feedback.roles');
+				if (roles == null || roles == '')
+					;
+				else {
+					var hasRole = gs.hasRole(roles);
+					if (hasRole == false)
+						show_user_feedback = false;
+				}
+			" />
+            <g:evaluate var="jvar_failure_message" expression="gs.getMessage('Useful rating not submitted')" />
+            <j2:if test="$[show_kb_rating_options]">
+                <script>
+                    function KbArticleRatingClass() {
+                        var currentId = '$[JS:knowledgeRecord.sys_id]';
+                        var feedbackRequestState = null;
+                        var helpfulYesCount = parseInt("${kbViewInfo.helpfulYesCount || 0}");
+                        var helpfulTotalCount = parseInt("${kbViewInfo.helpfulTotalCount || 0}");
+                        var isSubmitting = false;
+
+                        function ajaxPost(value) {
+                            if (isSubmitting) {
+                                return;
+                            }
+                            isSubmitting = true;
+                            if (currentId) {
+                                var ajax = new GlideAjax('KBAjax');
+                                ajax.addParam('sysparm_type', 'saveUseful');
+                                ajax.addParam('sysparm_useful', value);
+                                ajax.addParam("sysparm_article_id", currentId);
+                                var query = $j('#sysparm_search');
+                                ajax.addParam('sysparm_search', (query.length) ? escape(query.val()) : '');
+                                ajax.addParam("ts_queryId", "${tsQueryId}");
+                                ajax.getXMLAnswer(function(answer) {
+                                    postUsefulCallback(answer);
+                                    isSubmitting = false;
+                                });
+                            } else {
+                                isSubmitting = false;
+                            }
+                        }
+
+                        function postUsefulCallback(answer) {
+                            var data = answer.evalJSON(true);
+                            if (!data) {
+                                return kbViewArticle.showErrorMessage('${jvar_failure_message}');
+                            }
+                            if (!data.success) {
+                                return kbViewArticle.showErrorMessage(data.message);
+                            }
+                            helpfulTotalCount += 1;
+                            if (feedbackRequestState === 'yes') {
+                                helpfulYesCount += 1;
+                            }
+                            var newPercent = (helpfulTotalCount > 0) ? Math.round(helpfulYesCount / helpfulTotalCount * 100) : 0;
+                            var messageTemplate = "${gs.getMessage('{0}% found this useful')}";
+                            var notification = $j('#kb_feedback_notification');
+                            if (notification.length > 0) {
+                                notification.css({
+                                    'position': 'fixed',
+                                    'top': '10px',
+                                    'left': '10px',
+                                    'right': '10px',
+                                    'z-index': '9999',
+                                    'width': 'calc(100% - 20px)',
+                                    'max-width': 'none',
+                                    'margin': '0 auto',
+                                    'box-shadow': '0 2px 8px rgba(0,0,0,0.15)'
+                                }).fadeIn(300, function() {
+                                    setTimeout(function() {
+                                        notification.find('.icon-cross.close').focus();
+                                    }, 100);
+                                });
+                            }
+                            var percentageElement = $j('.kb-article-yn-percentage');
+                            if (percentageElement.length > 0) {
+                                if (newPercent > 0) {
+                                    messageTemplate = messageTemplate.replace("{0}", newPercent);
+                                    percentageElement.html(
+                                        '<span class="thankyou-text">' + "${gs.getMessage('Thank you for your feedback!')}" + '</span> ' +
+                                        '<span class="thankyou-percent" style="padding-left: 20px;">' + messageTemplate + '</span>'
+                                    ).css({
+                                        'display': 'block',
+                                        'opacity': 0
+                                    }).animate({
+                                        opacity: 1
+                                    }, 300);
+                                } else {
+                                    percentageElement.html(
+                                        '<span class="thankyou-text">' + "${gs.getMessage('Thank you for your feedback!')}" + '</span>'
+                                    ).css({
+                                        'display': 'block',
+                                        'opacity': 0
+                                    }).animate({
+                                        opacity: 1
+                                    }, 300);
+                                }
+                            }
+                        }
+
+                        function feedback(value) {
+                            if (feedbackRequestState === value) {
+                                return;
+                            }
+                            if (isSubmitting) {
+                                return;
+                            }
+                            feedbackRequestState = value;
+                            var box = $j('.kb_box_centered');
+                            box.find('.kb-article-yn-label, .kb-article-yes-btn, .kb-article-no-btn, .kb-article-yn-percentage').fadeOut(200, function() {
+                                ajaxPost(value);
+                            });
+                        }
+
+                        function close() {
+                            var notification = $j('#kb_feedback_notification');
+                            notification.fadeOut(300, function() {
+                                notification.css('display', 'none');
+                            });
+                        }
+
+                        return {
+                            feedback: feedback,
+                            close: close
+                        };
+                    }
+
+                    // Create instance
+                    if (typeof kbArticleRating === 'undefined') {
+                        var kbArticleRating = new KbArticleRatingClass();
+                    }
+                </script>
+
+				<j2:if test="$[show_kb_yn_rating]">
+					<j2:if test="$[sysparm_no_rating != true]">
+						<div class="kb_box_centered">
+							<span class="sr-only">${gs.getMessage('Was this article helpful?') + ' ' + kbViewInfo.helpfulText}</span>
+							<span class="kb-article-yn-label" >
+								<span id="kb_helpful_yn_label" aria-hidden="true">${gs.getMessage('Helpful?')}</span>
+							</span>
+							<span role="group" aria-label="${gs.getMessage('Was this article helpful?')}" class="kb-article-yn-box">
+								<button class="btn btn-success-subdued kb-article-yes-btn"
+										onclick="kbArticleRating.feedback('yes')" aria-label="${gs.getMessage('Yes,this article was helpful')}">${gs.getMessage('Yes')}</button>
+								<button class="btn btn-destructive-subdued kb-article-no-btn"
+										onclick="kbArticleRating.feedback('no')" aria-label="${gs.getMessage('No,this article was not helpful')}">${gs.getMessage('No')}</button>
+								<span class="kb-article-yn-percentage" aria-hidden="true">${kbViewInfo.helpfulText}</span>
+							</span>
+						</div>
+						<div id="kb_feedback_notification" class="notification notification-closable notification-info notification_message_sticky" style="display:none">
+							<span class="icon-cross close" tabindex="0" role="button" aria-label="${gs.getMessage('Close Notification')}" onclick="kbArticleRating.close()"></span>
+							<span role="alert">${gs.getMessage('Feedback submitted.')}</span>
+                        </div>
+					</j2:if>
+				</j2:if>
+
+			</j2:if>
+		</j2:if>
+	</j2:if>
+</j:jelly>

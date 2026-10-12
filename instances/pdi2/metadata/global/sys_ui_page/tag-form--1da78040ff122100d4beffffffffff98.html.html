@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+   <g2:requires name="scripts/heisenberg/custom/tabs.js"/>
+   <g2:requires name="styles/tag_form.css" includes="true"/>
+   <g2:requires name="scripts/select2_doctype/select2.js"/>
+   <g2:requires name="scripts/tag_form_select2.js"/>
+   <g2:requires name="scripts/functions_onchange.js"/>
+
+   <g:evaluate var="jvar_sys_ids" expression="RP.getWindowProperties().get('sys_ids')"/>
+   <g:evaluate var="jvar_table_name" expression="RP.getWindowProperties().get('table_name')"/>
+   <g:evaluate var="jvar_label_id" expression="RP.getWindowProperties().get('label_id')"/>
+
+   <g:ui_form>
+      <input id="sys_ids" value="${jvar_sys_ids}" type="hidden"/>
+      <input id="table_name" value="${jvar_table_name}" type="hidden"/>
+      <input id="label_id" value ="${jvar_label_id}" type="hidden"/>
+    
+      <hr class="header-divider"/>
+
+      <div class="form-body" data-scroll="false">
+      <div class="form-section">
+         <div class="form-group">
+			 <label id="name_label" for="name_input" class="control-label"><span class="required-marker"></span> ${gs.getMessage("Name")}</label> <br/>
+            <input id="name_input" aria-describedby="name_message_text" aria-required="true" class="form-control" type="text"/>
+         </div>
+         <div>
+	         <div id="name_message" class="outputmsg outputmsg_error hide">
+	            <div id="name_message_text" class="outputmsg_text"/>
+	         </div>
+	     </div>
+      </div>
+
+      <div class="form-section">
+         <label id="viewable_by_label" class="control-label">${gs.getMessage("Viewable by")}</label> <br/>
+         <ul aria-labelledby="viewable_by_label" role="radiogroup" class="nav nav-segmented sn-tabs-basic">
+            <li role="presentation" class="active" data-value="me">
+               <a id="me_button"
+                  tabindex="0" 
+                  role="radio"
+                  data-toggle="segmented" 
+                  href="#me_everyone" 
+				  aria-checked="true">
+                 ${gs.getMessage("Me")}
+               </a>
+            </li>
+            <li role="presentation" data-value="groups and users">
+               <a id="groups_users_button"
+                  aria-controls="groups_users"
+                  tabindex="-1"
+                  role="radio"
+                  data-toggle="segmented" 
+                  href="#groups_users">
+                  ${gs.getMessage("Groups and Users")}
+               </a>
+            </li>
+            <li role="presentation" data-value="everyone">
+               <a id="everyone_button"
+                  tabindex="-1"
+                  role="radio"
+                  data-toggle="segmented" 
+                  href="#me_everyone">
+               ${gs.getMessage("Everyone")}
+               </a>
+            </li>
+          </ul>
+          <div id="viewable_by_message" class="outputmsg outputmsg_error hide">
+            <div class="outputmsg_text" >
+               ${gs.getMessage('Add at least 1 group or user')}
+            </div>
+          </div>
+       </div>
+
+       <div class="tab-content">
+    
+          <div id="groups_users" aria-expanded="false" aria-hidden="true" role="region" class="segmented-pane borderless" aria-labelledby="groups_users_button">
+             <div class="form-section sharing-section">
+                <div>
+                   <label id="label_groups"
+                      for="add_group_button">
+                      ${gs.getMessage('Groups')} 
+                      <span id="group_number"> $[SP](0) </span>
+                   </label>
+                </div>
+                <div>
+                   <button id="add_group_button"
+                      role="button"
+                      aria-label="Add Group"
+                      aria-expanded="false"
+                      type="button"
+                      class="btn btn-default max-width">
+                      ${gs.getMessage('Add Group')}
+                   </button>
+                   <input id="group_input"
+						  tabindex="-1"
+                      type="hidden"
+                      class="form-control hidden-select2"/>
+                </div>
+                <div id="groups" class="selection">
+                   <table id="selected_groups" class="max-width" role="grid" aria-hidden="true"> 
+					   <thead>
+						   <tr>
+							   <th aria-label="${gs.getMessage('Remove Group')}"></th>
+							   <th aria-label="${gs.getMessage('Group Name')}"></th>
+							   <th aria-label="${gs.getMessage('Preview Group')}"></th>
+						   </tr>
+					   </thead>
+					   <tbody>
+					   </tbody>
+					</table>
+                </div>
+                <div align="right">
+                   <a href="javascript:void(0)" id="group_show" class="show-more">
+                      ${gs.getMessage("Show {0} more", 0)}
+                   </a> 
+                </div>
+             </div>
+
+             <div class="form-section sharing-section">
+                <div>
+                   <label id="label_users"
+                      for="add_user_button">
+                      ${gs.getMessage('Users')}
+                      <span id="user_number"> $[SP](0) </span>
+                   </label>
+                </div>
+                <div>
+                   <button id="add_user_button"
+                      role="button"
+                      aria-label="Add User"
+                      aria-expanded="false"
+                      type="button"
+                      class="btn btn-default max-width">
+                      ${gs.getMessage('Add User')}
+                   </button>
+                   <input id="user_input"
+						  tabindex="-1"
+                      type="hidden"
+                      class="form-control hidden-select2"/>
+                </div>
+               <div id="users" class="selection">
+                   <table id="selected_users" class="max-width" role="grid" aria-hidden="true">
+				  		<thead>
+						   <tr>
+							   <th aria-label="${gs.getMessage('Remove Used')}"></th>
+							   <th aria-label="${gs.getMessage('User Name')}"></th>
+							   <th aria-label="${gs.getMessage('Preview User')}"></th>
+						   </tr>
+					   </thead>
+					   <tbody>
+					   </tbody>
+				   </table>
+                </div>
+                <div align="right">
+                   <a id="user_show" class="show-more">
+                      ${gs.getMessage("Show {0} more", 0)}
+                   </a> 
+                </div>
+             </div>
+          </div>
+      </div>
+		  <div class="text-right">
+			  <button
+						 id="close_button"
+						 type="button"
+						 class="btn btn-default"
+						 onclick="GlideDialogWindow.prototype.locate(this).destroy(); return false"
+						 style="min-width:5em;"
+					  >
+					 ${gs.getMessage('Cancel')}
+				 </button>
+				$[SP]
+				 <button
+						 id="save_button"
+						 type="button"
+						 class="btn btn-primary"
+						 style="min-width:5em;"
+						 
+						 >
+					 ${gs.getMessage('Save')}
+			 </button>
+		  </div>
+      </div>
+   </g:ui_form>
+</j:jelly>

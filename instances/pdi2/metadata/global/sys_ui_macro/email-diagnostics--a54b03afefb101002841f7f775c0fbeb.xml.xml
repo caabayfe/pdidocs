@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate>
+    var diag = new EmailDiagnostics();
+    diag.getDiagnostics();
+  </g:evaluate>
+<script>
+$('referer').value = document.location;
+
+function showPropertyContext(event, id) {
+     var mcm = new GwtContextMenu('context_menu_property_' +id);
+     mcm.clear();
+     mcm.addURL("${gs.getMessage('Edit Property')}", "sys_properties.do?sysparm_query=name=" + id, "gsft_main");
+     mcm.addHref("Copy Name To Clipboard", "copyToClipboard('" + id + "')");
+     return contextShow(event, mcm.getID(), 500, 0, 0);
+}
+
+document.observe("dom:loaded", function() {
+ 	// initially hide all containers for tab content  
+ 	var smtpTest = createStatusElement().update('${JS:gs.getMessage("Testing Connection...")}');
+ 	var pop3Test = createStatusElement().update('${JS:gs.getMessage("Testing Connection...")}');
+ 	var outboundHeader = $$("#smtpSettings p.header")[0];
+ 	var inboundHeader = $$("#pop3Settings p.header")[0];
+
+	outboundHeader.insert(smtpTest);
+	inboundHeader.insert(pop3Test);
+	$("ni.glide.email.smtp.active").observe('change', function() {
+		if (this.checked &amp;amp;&amp;amp; "${diag.sendReadyCount  &gt; 100}" == "true")
+			alert("Enabling email will cause ${diag.sendReadyCount} emails to be sent" );
+	});
+    $$("#smtpSettings input").each(function (el) {
+       if ( el.id != "ni.glide.email.smtp.active")
+	    return $(el).observe('change', function() {
+		    if (outboundHeader.select(".validator").length &gt; 0) outboundHeader.select(".validator")[0].update('${JS:gs.getMessage("Click \"Save\" to test Connection")}');})});
+	$$("#pop3Settings input").each(function (el) {
+	    if (el.id != "ni.glide.email.read.active")
+	    return $(el).observe('change', function() {
+		    if (inboundHeader.select(".validator").length &gt; 0) inboundHeader.select(".validator")[0].update('${JS:gs.getMessage("Click \"Save\" to test Connection")}');})});
+	checkSMTP();
+ 	checkPOP3();
+});
+
+function checkPOP3(event) {
+	$$("#pop3Settings p.header .validator")[0].update('${JS:gs.getMessage("Testing Connection...")}');
+	var ga = new GlideAjax('EmailDiagnostics');
+	ga.addParam("sysparm_name","checkPOP3");
+	ga.getXMLAnswer(function(answer) {
+		updatePOP3ConnectionDoctor(answer);
+	});
+}
+
+function checkSMTP(event) {
+	$$("#smtpSettings p.header .validator")[0].update('${JS:gs.getMessage("Testing Connection...")}');
+	var ga = new GlideAjax('EmailDiagnostics');
+	ga.addParam("sysparm_name","checkSMTP");
+	ga.getXMLAnswer(function(answer) {
+		updateSMTPConnectionDoctor(answer);
+	});
+}
+
+function updateSMTPConnectionDoctor(answer, timeout) {
+	timeout = maxTimeout(timeout);
+	var ids = answer.split(",");
+	var worker_id = ids[0];
+    var progressWorker = getProgressWorker(worker_id);	
+    outboundHeaderValidator = $$("#smtpSettings p.header .validator")[0];
+	if (progressWorker.state == "running" || progressWorker.state == "starting") {
+		outboundHeaderValidator.update("${gs.getMessage('" + progressWorker.message + "')}...");
+		setTimeout(function() { updateSMTPConnectionDoctor(answer, timeout * 1.5); },timeout);
+	} else writeCompletion(outboundHeaderValidator, progressWorker);
+		
+}
+
+function updatePOP3ConnectionDoctor(answer, timeout) {
+    timeout = maxTimeout(timeout);
+    var ids = answer.split(",");
+	var worker_id = ids[0]
+    var progressWorker = getProgressWorker(worker_id);	
+    inboundHeaderValidator = $$("#pop3Settings p.header .validator")[0];
+	if (progressWorker.state == "running" || progressWorker.state == "starting") {
+		inboundHeaderValidator.update("${gs.getMessage('" + progressWorker.message + "')}...");
+		setTimeout(function() { updatePOP3ConnectionDoctor(answer, timeout * 1.5); },timeout);
+	} else writeCompletion(inboundHeaderValidator,progressWorker);
+}
+
+function writeCompletion(statusElement, progressWorker) {
+	statusElement.writeAttribute("title",progressWorker.message);
+		if (progressWorker.state_code == "success") {
+			statusElement.update("${gs.getMessage('Connection Successful')}");
+			statusElement.addClassName("valid");
+        } else {
+			statusElement.update("${gs.getMessage('Connection Invalid')}");
+			statusElement.addClassName("invalid");
+		}
+}
+
+function maxTimeout(timeout) {
+	if (!timeout)
+		return 1000;
+
+	if (timeout &gt; 60000)
+		return  60000;
+
+	return timeout;
+}
+
+function getProgressWorker(id) {
+	var gr = new GlideRecord("sys_progress_worker");
+	gr.addQuery("sys_id", id);
+	gr.query();
+	gr.next();
+	return gr;
+}			
+			  
+function createStatusElement() {
+	return new Element("span", {'class':'validator'});
+}
+</script>
+  <div id="diagnostics_container">
+  <h4 id="diagnostics">Mail Diagnostics</h4>
+  <div class="diag_hr" />
+  <table class="diagnostics wide"> 
+    <th class="diagnostics">${gs.getMessage("Sending")} </th>
+    <th class="diagnostics">${gs.getMessage("Receiving")} </th>
+    <tr class="diagnostics">
+      <td class="diagnostics">
+        <table class="wide">
+          <tr><td class="align_right">${gs.getMessage("Mail Sending")}:$[SP] </td>
+            <j:if test="${diag.sendingEnabled}"><td class="good icon-check-circle">${gs.getMessage("Enabled")}</td> </j:if> 
+            <j:if test="${!diag.sendingEnabled}"><td class="bad icon-cross-circle" title="${gs.getMessage('Click for more information')}"><a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0521768" >${gs.getMessage("Disabled")}</a></td> </j:if>
+          </tr>
+          <tr><td class="align_right">${gs.getMessage("Mail in Queue")}:$[SP] </td>
+            <j:if test="${diag.sendReadyCount &lt; GlideProperties.get('glide.email_diag.threshold.send_ready', 200)}"> <td class="good">${diag.sendReadyCount + ""}</td> </j:if>
+            <j:if test="${diag.sendReadyCount &gt;= GlideProperties.get('glide.email_diag.threshold.send_ready', 200)}"> <td class="maybe">${diag.sendReadyCount + ""}</td> </j:if>
+          </tr>
+          <tr><td class="align_right">${gs.getMessage("Last Sent Mail")}:$[SP] </td>
+            <j:choose>
+               <j:when test="${diag.lastSent == null}">
+                  <td class='good icon-check-circle' title="${gs.getMessage('No emails sent in last 24 hours')}"> ${gs.getMessage("None Sent")} </td>
+               </j:when> 
+               <j:otherwise> 
+                  <td class='good'> ${diag.lastSent} </td>
+               </j:otherwise>
+            </j:choose>
+          </tr>
+          <tr><td class="align_right"><a class="diagnostics" href="/sys_trigger_list.do?sysparm_query=job_id.name%3DSMTP%20Sender">${gs.getMessage("SMTP Sender")}</a> ${gs.getMessage("state")}:$[SP] </td>
+            <j:if test="${diag.smtpSenderState == 'Ready'}"><td class="good icon-check-circle">  ${diag.smtpSenderState} </td></j:if>  
+            <j:if test="${diag.smtpSenderState == 'Running'}"><td class="maybe">  ${diag.smtpSenderState} </td></j:if>
+            <j:if test="${diag.smtpSenderState == 'Queued'}"><td class="maybe" title="${gs.getMessage('Click for more information')}">  <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0523599">${diag.smtpSenderState}</a> </td></j:if>
+            <j:if test="${diag.smtpSenderState == 'Error'}"><td class="bad icon-cross-circle" title="${gs.getMessage('Click for more information')}">  <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0523599">${diag.smtpSenderState}</a> </td></j:if>
+          </tr>
+          <tr> <td class="align_right">${gs.getMessage("SMTP Sender processing time")}:$[SP]$[SP]$[SP] </td>
+            <j:if test="${diag.smtpSenderDuration &lt; GlideProperties.get('glide.email_diag.threshold.smtp_sender.runtime', 10000)}"> <td class="good icon-check-circle" > ${diag.smtpSenderDuration}ms </td></j:if>
+            <j:if test="${diag.smtpSenderDuration &gt;= GlideProperties.get('glide.email_diag.threshold.smtp_sender.runtime', 10000)}"> 
+            <td class="bad icon-cross-circle" title="${gs.getMessage('Click for more information')}"> <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0521382" >${diag.smtpSenderDuration}ms </a></td></j:if>
+          </tr>
+          <tr> <td class="align_right">${gs.getMessage("SMTP Sender last run")}:$[SP] </td>
+            <j:if test="${gs.dateDiff( gs.minutesAgo(GlideProperties.get('glide.email_diag.threshold.smtp_sender.last_run', 10)),diag.smtpSenderLastRun,true) &lt; 0}"> <td class='bad icon-cross-circle' title="${gs.getMessage('Click for more information')}"><a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0523580">${diag.smtpSenderLastRun}</a>  </td> </j:if>
+            <j:if test="${gs.dateDiff( gs.minutesAgo(GlideProperties.get('glide.email_diag.threshold.smtp_sender.last_run', 10)),diag.smtpSenderLastRun,true) &gt;= 0}"> <td class='good icon-check-circle'>${diag.smtpSenderLastRun} </td></j:if>
+          </tr> 
+<tr>
+                 <td class="align_right"><a class="jobLink" href="/sys_trigger_list.do?sysparm_query=job_id.name%3DSMS%20Sender">${gs.getMessage("SMS Sender")}</a> ${gs.getMessage("state")}:$[SP] </td>
+             <j:set var="jvar_first_item" value="true" />
+             <j:set var="jvar_diag_index" value="0" />
+              <td>
+             <j:forEach items="${diag.smsJobs}" var="jvar_sms_job">
+              <j:if test="${jvar_diag_index != 0}"><span>,$[SP]</span></j:if>
+              <g:evaluate jelly="true">
+                var sms_job =  diag.smsJobs[jelly.jvar_diag_index];
+              </g:evaluate>
+
+              <j:if test="${sms_job.state == 'Ready'}"><span class="good icon-check-circle"> ${sms_job.state}</span></j:if>  
+              <j:if test="${sms_job.state == 'Running'}"><span class="maybe"> ${sms_job.state}</span></j:if>
+              <j:if test="${sms_job.state == 'Queued'}"><span class="maybe" title="${gs.getMessage('Click for more information')}">  <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0541878">${sms_job.state}</a></span></j:if>
+              <j:if test="${sms_job.state == 'Error'}"><span class="bad icon-cross-circle" title="${gs.getMessage('Click for more information')}">  <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0541878">${sms_job.state}</a></span></j:if>
+
+              
+              <j:set var="jvar_diag_index" value="${jvar_diag_index + 1}" />
+            </j:forEach>
+</td>
+                 </tr> 
+  <tr>
+                   <td class="align_right">${gs.getMessage("SMS Sender processing time")}:$[SP]</td>
+            <j:set var="jvar_first_item" value="true" />
+            <j:set var="jvar_diag_index" value="0" />
+            <td>
+            <j:forEach items="${diag.smsJobs}" var="sms_job">
+              <j:if test="${jvar_diag_index != 0}"><span>,$[SP]</span></j:if>
+              <g:evaluate jelly="true">
+                var sms_job =  diag.smsJobs[jelly.jvar_diag_index];
+              </g:evaluate>
+              <j:if test="${sms_job.duration &lt; GlideProperties.getInt('glide.email_diag.threshold.sms_sender.runtime', 10000)}"> <span class="good icon-check-circle" > ${sms_job.duration}ms </span></j:if>
+              <j:if test="${sms_job.duration &gt;= GlideProperties.getInt('glide.email_diag.threshold.sms_sender.runtime', 10000)}"> 
+                <span class="bad icon-cross-circle" title="${gs.getMessage('Click for more information')}"> <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0521382" >${sms_job.duration}ms</a></span></j:if>
+               <j:set var="jvar_diag_index" value="${jvar_diag_index + 1}" />
+            </j:forEach>
+
+                 </td> 
+                 </tr>
+ <tr>
+                  <td class="align_right">${gs.getMessage("SMS Sender last run")}:$[SP]  </td>
+                        <j:set var="jvar_first_item" value="true" />
+                        <j:set var="jvar_diag_index" value="0" /> 
+                        <td>
+                        <j:forEach items="${diag.smsJobs}" var="jvar_sms_last_run">
+                        <g:evaluate var="jvar_test" jelly="true" expression="jelly.jvar_sms_last_run" />
+                        <j:if test="${jvar_diag_index != 0}"><span>,$[SP]</span></j:if>
+                        <g:evaluate jelly="true">
+                            var sms_job =  diag.smsJobs[jelly.jvar_diag_index];
+                        </g:evaluate>
+                        <j:if test="${gs.dateDiff( gs.minutesAgo(GlideProperties.get('glide.email_diag.threshold.sms_sender.last_run', 10)), sms_job.lastRun,true) &lt; 0}"> <span class='bad icon-cross-circle' title="${gs.getMessage('Click for more information')}"><a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0523580">${sms_job.lastRun}</a>  </span> </j:if>
+                        <j:if test="${gs.dateDiff( gs.minutesAgo(GlideProperties.get('glide.email_diag.threshold.sms_sender.lastRun', 10)),sms_job.lastRun,true) &gt;= 0}"> <span class='good icon-check-circle'>${sms_job.lastRun} </span></j:if>
+                        <j:set var="jvar_diag_index" value="${jvar_diag_index + 1}" />
+            </j:forEach>
+
+                 </td>
+                 </tr>   
+          <g:evaluate>
+            var emailTestUser = gs.getProperty('glide.email.test.user', '');
+          </g:evaluate> 
+
+           <j:if test="${emailTestUser != ''}">
+            <tr>
+              <td>${gs.getMessage("Mail Test Address:")} $[SP]</td>
+              <td class="maybe" title="${gs.getMessage('All emails redirected to')} ${emailTestUser}"> ${emailTestUser}</td>
+            </tr>
+           </j:if>
+
+           <g:evaluate>
+            var outboundAccounts = new GlideRecord("sys_email_account");
+            if (outboundAccounts.isValid()) {
+              outboundAccounts.addQuery("active",true);
+              outboundAccounts.addQuery("type","=", "SMTP");
+              outboundAccounts.query();
+            }
+          </g:evaluate>
+  
+         <j:while test="${outboundAccounts.next()}">
+           <tr class="outbound_email_accounts" id="${outboundAccounts.sys_id}" >
+              <td><a class="Web" href="/sys_email_account.do?sys_id=${outboundAccounts.sys_id}">${outboundAccounts.name}</a> Status: $[SP]</td>
+              <td class="account_state"></td>
+           </tr>
+         </j:while>
+       </table>
+      <div> </div>
+        
+      </td>
+      <td class="diagnostics">
+         <table class="wide">
+         <tr><td class="align_right">${gs.getMessage("Mail Receiving")}: $[SP] </td>
+           <j:if test="${diag.receivingEnabled}"><td class="good icon-check-circle">${gs.getMessage("Enabled")}</td> </j:if> 
+           <j:if test="${!diag.receivingEnabled}"><td class="bad icon-cross-circle" title="${gs.getMessage('Click for more information')}"><a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0521775"> ${gs.getMessage("Disabled")}</a></td> </j:if>
+         </tr>
+         <tr class="align_right"><td class="align_right">${gs.getMessage("Last Received Mail")}:$[SP] </td>
+            <j:choose>
+               <j:when test="${diag.lastReceived == null}">
+                  <td class='good icon-check-circle' title="${gs.getMessage('No emails received in last 24 hours')}"> ${gs.getMessage("None Received")} </td>
+               </j:when> 
+               <j:otherwise> 
+                  <td class='good'> ${diag.lastReceived} </td>
+               </j:otherwise>
+            </j:choose>
+          </tr>
+         <tr> 
+            <td class="align_right"><a class="Web" href="/sys_trigger.do?sysparm_query=GOTOjob_id.name%3D${jvar_inbound_reader}">${jvar_inbound_reader}</a> ${gs.getMessage("state")}:$[SP]</td>
+            <j:if test="${diag.pop3ReaderState == 'Ready'}"><td class="good icon-check-circle">  ${diag.pop3ReaderState} </td></j:if>  
+            <j:if test="${diag.pop3ReaderState == 'Running'}"><td class="maybe">  ${diag.pop3ReaderState} </td></j:if>
+            <j:if test="${diag.pop3ReaderState == 'Queued'}"><td class="maybe">  <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0523573#POPrunning">${diag.pop3ReaderState}</a> </td></j:if>
+            <j:if test="${diag.pop3ReaderState == 'Error'}"><td class="bad icon-cross-circle" >  <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0523573#POPerror">${diag.pop3ReaderState}</a> </td></j:if>
+         </tr>
+         <tr> 
+            <td class="align_right">${jvar_inbound_reader} ${gs.getMessage("processing time")}:$[SP]$[SP]$[SP] </td> 
+            <j:if test="${diag.pop3ReaderDuration &lt; GlideProperties.get('glide.email_diag.threshold.email_reader.runtime', 10000)}"> <td class="good icon-check-circle">  ${diag.pop3ReaderDuration}ms </td></j:if>
+            <j:if test="${diag.pop3ReaderDuration &gt;= GlideProperties.get('glide.email_diag.threshold.email_reader.runtime', 10000)}"> <td class="bad icon-cross-circle" title="${gs.getMessage('Click for more information')}"> <a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0520595" > ${diag.pop3ReaderDuration}ms </a> </td></j:if>
+         </tr>
+         <tr>
+            <td class="align_right">${jvar_inbound_reader} ${gs.getMessage("last run")}:$[SP] </td>
+            <j:if test="${gs.dateDiff( gs.minutesAgo(GlideProperties.get('glide.email_diag.threshold.email_reader.last_run', 10)),diag.pop3ReaderLastRun,true) &lt; 0}"> <td class='bad icon-cross-circle' title="${gs.getMessage('Click for more information')}"><a target="_blank" href="https://hi.service-now.com/kb_view.do?sysparm_article=KB0523580" >${diag.pop3ReaderLastRun}</a></td> </j:if>
+            <j:if test="${gs.dateDiff( gs.minutesAgo(GlideProperties.get('glide.email_diag.threshold.email_reader.last_run', 10)),diag.pop3ReaderLastRun,true) &gt;= 0}"> <td class='good icon-check-circle'>${diag.pop3ReaderLastRun} </td> </j:if>  
+         </tr>
+         <g:evaluate>
+            var inboundAccounts = new GlideRecord("sys_email_account");
+            if (inboundAccounts.isValid()) {
+              inboundAccounts.addQuery("active","true");
+              inboundAccounts.addQuery("type","!=", "SMTP");
+              inboundAccounts.query();
+            }
+         </g:evaluate>
+         <j:while test="${inboundAccounts.next()}">
+           <tr class="inbound_email_accounts" id="${inboundAccounts.sys_id}" >
+              <td><a class="Web" href="/sys_email_account.do?sys_id=${inboundAccounts.sys_id}">${inboundAccounts.name}</a> Status: $[SP]</td>
+              <td class="account_state"></td>
+           </tr>
+         </j:while>
+       </table> 
+      </td>
+    </tr>
+  </table>
+</div>
+<br></br>
+</j:jelly>

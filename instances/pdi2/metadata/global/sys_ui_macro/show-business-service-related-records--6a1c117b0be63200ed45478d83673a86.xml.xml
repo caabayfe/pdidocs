@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${gs.hasRole('itil') || gs.hasRole('sn_incident_read') || gs.hasRole('sn_problem_read') || gs.hasRole('sn_change_read')}">
+		<j:set var="jvar_n" value="show_business_service_related_records_${ref}"/>
+		<g2:evaluate var="jvar_show_business_service_related_record_display" jelly="true">
+			var id = __ref__.getSysIdValue();
+			var recordSysId = jelly.sys_id;
+			if (id === null || id === '' || recordSysId === null || recordSysId === '')
+				"hidden";
+			else {
+				var taskGr = new GlideRecordSecure('task');
+				taskGr.addQuery('business_service', id);
+				taskGr.addQuery('sys_id', '!=', recordSysId);
+				taskGr.addQuery('active', true);
+				taskGr.setLimit(1);
+				taskGr.query();
+				if (taskGr.hasNext())
+					"visible";
+				else
+					"hidden";
+			}
+		</g2:evaluate>
+		<g2:set_if var="jvar_show_tasks_position" test="$[jvar_show_business_service_related_record_display == 'visible']" true="" false="absolute" />
+		<g2:set_if var="jvar_show_tasks_left" test="$[jvar_show_business_service_related_record_display == 'visible']" true="" false="-1000px" />
+
+		<button id="${jvar_n}"
+				type="button"
+				tabindex="$[jvar_ua_optional_tabindex]"
+				aria-haspopup="true"
+				onclick="showBusinessServiceTasksDialog('${ref}')"
+				name="${jvar_n}"
+				title="${gs.getMessage('Show other active tasks')}"
+				class="btn btn-ref btn-default icon-warning-circle"
+				style="visibility:$[jvar_show_business_service_related_record_display];position:$[jvar_show_tasks_position];left:$[jvar_show_tasks_left];">
+			<span class="sr-only">
+				${gs.getMessage('Show other active tasks affecting this Business Service')}
+			</span>
+		</button>
+
+		<script>
+			function onChangeBusinessServiceShowRelated(element, original, changed, loading) {
+				if (loading) {
+					return;
+				}
+				if (changed.length == 0) {
+					hideBusinessServiceRelatedRecord();
+					return;
+				}
+				var ga = new GlideAjax('ShowRelatedTasksForBusinessService');
+				ga.addParam('sysparm_name', 'hasRelatedTaskCount');
+				ga.addParam('sysparm_business_service', g_form.getValue('${ref}'));
+				ga.addParam('sysparm_sys_id', g_form.getUniqueValue());
+				ga.getXML(showRelatedTaskCallback);
+			}
+
+			function showRelatedTaskCallback(response) {
+				var answer = response.responseXML.documentElement.getAttribute("answer");
+				if (answer === 'true')
+					showBusinessServiceRelatedRecord();
+				else
+					hideBusinessServiceRelatedRecord();
+			}
+			function hideBusinessServiceRelatedRecord(){
+				var e = $('${jvar_n}');
+				e.style.visibility = 'hidden';
+				e.style.position = 'absolute';
+				e.style.left = '-1000px';
+			}
+			function showBusinessServiceRelatedRecord(){
+				var e = $('${jvar_n}');
+				e.style.visibility = 'visible';
+				e.style.position = '';
+				e.style.left = '';
+			}
+
+			var h = new GlideEventHandler('onChange_incident_business_service_show_related', onChangeBusinessServiceShowRelated, '${ref}');
+			g_event_handlers.push(h);
+
+			function showBusinessServiceTasksDialog(reference){
+				var v = g_form.getValue(reference);
+				var w = new GlideModal('show_list');
+				w.setTitle(getMessage('Other active tasks affecting this Business Service'));
+				w.setPreference('table', 'task_list');
+				w.setPreference('sysparm_view', 'default');
+				w.setPreference('sysparm_query', "active=true^sys_id!=" + g_form.getUniqueValue() + "^business_service=" + v + "^GROUPBYsys_class_name");
+				w.setPreference('focusTrap', true);
+				w.render();
+			}
+		</script>
+	</j:if>
+</j:jelly>

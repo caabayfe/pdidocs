@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/js_includes_catalog.js" includes="true"/>
+	<g:evaluate var="jvar_theme">
+		var theme = gs.getPreference('glide.css.theme.ui16');
+		if (null == theme){
+			var company = gs.getUser().getCompanyRecord();
+			if (null != company)
+				theme = company.getValue("theme");
+		}
+		theme;
+	</g:evaluate>
+	<g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true" params="theme=${jvar_theme}"/>
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true" params="theme=${jvar_theme}"/>
+        </g:then>
+    </g:if_polaris>
+    <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}"/>
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="false" params="theme=${jvar_theme}"/>
+        </g:then>
+    </g:if_polaris>
+	<g:inline template="sc_sanitize_dialog.xml"/>
+	<style>
+		.dialog-buttons {
+		  margin-top:15px;
+		}
+
+		#footer_content .btn + .btn {
+			margin-left : 5px;
+			margin-bottom: 0px;
+		}
+	</style>
+	<g:evaluate var="primary_button_label" jelly="true">
+		var primary_button_label = "";
+		if (jelly.sysparm_action == "create")
+			primary_button_label = gs.getMessage("Add");
+		else
+			primary_button_label = gs.getMessage("Save");
+		primary_button_label;
+	</g:evaluate>
+	<input id="sysparm_id" type="HIDDEN" value="${sysparm_table_variable_id}"/>
+	<input id="sysparm_table_variable_catitem_id" type="HIDDEN" value="${sysparm_catalog_item_id}" />
+
+	<div id="variable_content">
+			<table cellSpacing="0" cellPadding="0" border="0" width="100%" role="presentation">
+				<g2:com.glideapp.servicecatalog.table_variable_dialog tableVariableId="${sysparm_table_variable_id}"  dialogAction="${sysparm_action}" nodeId="${sysparm_active_node_id}" nodeData="${sysparm_active_node_data}" sourceTable="${sysparm_source_table}" sourceId="${sysparm_source_id}" catalogItemId="${sysparm_catalog_item_id}"/>
+			</table>
+	</div>
+	<g2:com.glideapp.servicecatalog_table_script_emitter tableVariableId="$[sysparm_table_variable_id]" sourceTable="$[sysparm_source_table]" sourceId="$[sysparm_source_id]" />
+	<g:inline template="table_ui_policy" />
+	<div id="footer_content" class="" style="text-align: right;">
+        <button type="button" class="btn btn-default dialog-buttons" data-dismiss="GlideModal" onclick="closeDialog()"> ${gs.getMessage('Cancel')}</button>
+		<button type="button" class="btn btn-primary dialog-buttons" onClick="saveDialog('${JS,HTML:sysparm_table_variable_id}', '${JS,HTML:sysparm_active_node_id}', '${JS,HTML:sysparm_action}', '${JS,HTML:sysparm_source_id}')">${primary_button_label}</button>
+	</div>
+</j:jelly>

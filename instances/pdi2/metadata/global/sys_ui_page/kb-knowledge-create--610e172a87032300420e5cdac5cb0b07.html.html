@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/angular_1.5.11/angular.min.js" position="last"/>
+	<g:if_polaris>
+		<g:then>
+			<link href="35c2f95b04b01d10f87741889ffd9eb5.cssdbx?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet"/>
+		</g:then>
+		<g:else>
+			<link href="a137308287622300420e5cdac5cb0b6c.cssdbx?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet"/>
+		</g:else>
+	</g:if_polaris>
+	<main>
+		<div class="main-content" ng-app="createKnowledge" ng-controller="kb_knowledge_create">
+			<nav class="navbar navbar-default">
+				<div class="navbar-header">
+					<h1 class="caption">
+						<span>${gs.getMessage('Create new article')}</span>
+					</h1>
+				</div>
+				<div class="navbar-buttons">
+					<button class="btn btn-primary next-btn" ng-disabled="!selectedKB || !selectedTemplate || templatesLoading || previewLoading" ng-click="createArticle()">
+						${gs.getMessage('Next')}
+					</button>
+				</div>
+			</nav>
+			<div class="content-sections">
+				<div id="knowledge_bases" class="column kb-main col-lg-3 col-md-4 col-sm-6 col-xs-12" ng-cloak="">
+					<g2:evaluate>
+						var kbs = new ArticleTemplateUtil().getCanContributeKBForTemplate('kb_knowledge');
+						var kblist = Object.keys(kbs).map(function(kbId){
+							return {
+								name: kbs[kbId],
+								value: kbId
+							};
+						});
+					</g2:evaluate>
+					<g2:evaluate>
+						var kbObj = {};
+						kbObj.list = 'kblist';
+						kbObj.placeholder = gs.getMessage('Filter knowledge bases');
+						kbObj.link_text = gs.getMessage('Add Knowledge base');
+						kbObj.selectedElement = 'selectedKB';
+						kbObj.click = 'selectKB';
+						kbObj.table = 'kb_knowledge_base';
+						kbObj.filter = 'filter:{name:kb_knowledge_base}';
+						kbObj.isLoading = 'templatesLoading';
+					</g2:evaluate>
+					<div class="nav nav-segmented">
+						<h2>${gs.getMessage('Select knowledge base')}</h2>
+					</div>
+					<g2:kb_knowledge_create_list_search data="$[JSON.stringify(kbObj)]"/>
+				</div>
+				<div id="article_templates" class="column kb-main col-lg-3 col-md-4 col-sm-6 col-xs-12" ng-cloak="" ng-show="templatesListPresent &amp;&amp; !templatesEmpty">
+					<g2:evaluate>
+						var tempObj = {};
+						tempObj.list = 'templatesList';
+						tempObj.link_text = gs.getMessage('Add article template');
+						tempObj.placeholder = gs.getMessage('Filter article templates');
+						tempObj.selectedElement = 'selectedTemplate';
+						tempObj.click = 'selectTemplate';
+						tempObj.table = 'kb_article_template';
+						tempObj.filter = 'filter:{name:kb_article_template}';
+						tempObj.isLoading = 'previewLoading';
+					</g2:evaluate>
+					<div class="nav nav-segmented">
+					        <h2>${gs.getMessage('Select article template')}</h2>
+					</div>
+					<g2:kb_knowledge_create_list_search data="$[JSON.stringify(tempObj)]"/>
+				</div>
+				<!-- Show empty state message when templates list is empty (no filter shown) -->
+				<div id="empty_templates_message" class="column kb-main col-lg-3 col-md-4 col-sm-6 col-xs-12" ng-cloak="" ng-show="templatesListPresent &amp;&amp; templatesEmpty">
+				    <div class="nav nav-segmented">
+				        <h2>${gs.getMessage('Select article template')}</h2>
+				    </div>
+				    <div class="kb-preview-message" ng-if="templatesEmpty">
+				        <p class="message-bold">
+				            <strong>${gs.getMessage('No article template is active.')}</strong>
+				        </p>
+				        <p class="message-light">
+				            ${gs.getMessage('Activate an article template to create an article.')}
+				        </p>
+				    </div>
+				</div>
+				<div id="kb_preview" class="kb-preview column" ng-class="templatesListPresent? 'col-lg-6 col-md-4 col-xs-12': 'col-lg-9 col-md-8 col-sm-6 col-xs-12'" ng-cloak="">
+					<div class="nav nav-segmented">
+					    <h2 ng-if="!(!selectedKB || !selectedTemplate || templatesLoading || previewLoading)">${gs.getMessage('Article template preview (Sample text)')}</h2>
+                        <h2 ng-if="!selectedKB || !selectedTemplate || templatesLoading || previewLoading">${gs.getMessage('Article template preview')} </h2>
+                    </div>
+                    <g2:kb_knowledge_create_template_preview/>
+                </div>
+            </div>
+        </div>
+        <g2:evaluate>
+			var collection = RP.getParameterValue('sysparm_collection');
+			var knowledgeBaseName = RP.getParameterValue('kb_knowledge_base');
+			var kbId = '';	
+			if(collection == 'kb_knowledge_base')
+				kbId = RP.getParameterValue('sysparm_collectionID');
+			else if(knowledgeBaseName!=null){
+				kbId = knowledgeBaseName;
+			}	
+			else {
+				var sys_query = RP.getParameterValue('sysparm_query');
+				if(sys_query.indexOf('kb_knowledge_base=') != -1){
+					var kbquery = sys_query.split('kb_knowledge_base=')[1];
+					kbId = kbquery.indexOf('^')==-1 ? kbquery  : kbquery.substring(0, kbquery.indexOf('^'));
+				}
+				else
+					kbId = '';
+			}
+			var templateId = '';
+			var templateName = RP.getParameterValue('kb_template');
+			if(templateName!=null) {
+				templateId = templateName;
+			}
+			var sourceTable = RP.getParameterValue('source') || '';
+			var sourceId = RP.getParameterValue('source_id') || '';
+		</g2:evaluate>
+      </main>
+      <g:requires output="true"/>
+</j:jelly>

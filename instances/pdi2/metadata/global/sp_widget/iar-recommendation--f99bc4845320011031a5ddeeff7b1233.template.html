@@ -1,0 +1,53 @@
+<div ng-if="c.data.recommendations.length == 0" class="row wrapper">
+    <p class="padder text-md mar-bot-5">${No recommendations found}</p>
+</div>
+<div ng-if="c.data.recommendations.length > 0" class="row wrapper">
+  <p class="padder text-md mar-bot-5" ng-class="{'no-horizontal-padding': c.data.isMobile}">${Here are a few recommendations <highlight>that</highlight> may lead to a faster resolution of your request:}</p>
+  <div class="padder list-group mar-bot-0 mar-top-15" ng-class="{'col-md-9': showFeedback, 'no-horizontal-padding': c.data.isMobile}">
+       <div class="table mar-bot-0" aria-label="{{data.messages.title}}">
+          <ul class="item-list-style-type-none item-card-row mar-bot-minus-15" role="list">
+            <li class="item-card-column b mar-bot-15" ng-class="{'mobile-item-card-column': c.data.isMobile}" ng-repeat="item in c.data.recommendations" role="listitem" >
+              <div class="panel-default item-card mar-bot-0">
+                <a href="{{item.url}}" class="block height-100" aria-labelledby="recommended_item_title_{{item.id}}" aria-describedby="recommended_item_desc_{{item.id}}">
+                  <div>
+                    <div class="icon padder-l-none padder-r-none pull-right">
+                      <div ng-if="item.resultStatus == c.data.resultStatus.VIEWED" class="state pull-right padder-xs viewed-background text-black">
+                        <i class="fa fa-eye pad-right" aria-hidden="true"></i>${Viewed}
+                      </div>
+                      <div ng-if="item.resultStatus == c.data.resultStatus.SUBMITTED" class="state pull-right padder-xs submitted-background text-black">${Submitted}
+                      </div>
+                    </div>
+                    <div class="data pull-left" id="recommended_item_header_{{item.id}}">
+                      <span class="vertical-align-middle" ng-class="{'m-l-xs': c.data.isMobile}">{{data.categoryLabel[item.className]}}  </span> <span class="vertical-align-middle" ng-if="item.category && !c.data.isMobile"> | {{item.category}}</span>
+                      <div class="icon" ng-class="{'no-horizontal-padding': c.data.isMobile}" data-name="chart-do"><i ng-class="{'fa fa-2x fa-file-text-o': item.className == c.data.resultType.KNOWLEDGE_ARTICLE,'fa fa-2x fa-edit': item.className == c.data.resultType.CATALOG_ITEM}"></i></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class= "pull-left data recommendation-item-content" ng-class="{'no-horizontal-padding': c.data.isMobile}">
+                      <div class="recommendation-item-image">
+                        <img ng-src="{{item.image}}?t=small" alt="{{c.isNative ? data.categoryLabel[item.className] : ''}}" role="{{c.isNative ? 'img' : 'presentation'}}" />
+                      </div>
+                      <div class="right-content">
+                        <div title="{{item.name}}" id="recommended_item_title_{{item.id}}" class="padder-v-xs no-horizontal-padding padder-t-none text-md recommendation-item-title" aria-label="{{item.title}}, ${Recommendation}">{{item.title}}</div> 
+                        <div class="text recommendation-item-text" id="recommended_item_desc_{{item.id}}">{{item.description}}</div>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            </li>
+          </ul>
+       </div>
+    </div>
+  <div class="padder list-group col-md-3" ng-class="{'no-horizontal-padding feedback-widget-left-padder': c.data.isMobile}" ng-if="showFeedback">
+      <div class="panel mar-top-15 mar-bot-5">
+        <sp-widget widget="c.data.feedbackwidget"></sp-widget>
+      </div>
+      <p ng-if="data.isCatalogSubmitted && data.slaTimeLeft" class="text-muted mar-top-15 mar-bot-5">
+       ${Note:} <span>${If you don't do anything, we'll automatically close this request for you in} {{data.slaTimeLeft}}</span> 
+      </p>
+    <div ng-if="showOptOut">
+      <sp-widget widget="c.data.optOutWidget" class="text-muted mar-top-15 mar-bot-5"></sp-widget>
+    </div>
+    </div>
+</div>

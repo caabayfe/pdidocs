@@ -1,0 +1,1 @@
+if (current.estimated_probe_count != 0 && current.state != 'Canceled') { var progress = (current.completed / current.estimated_probe_count) * 100; if (progress >= 100) current.progress = current.state != 'Completed' ? 99 : 100; else current.progress = progress; }

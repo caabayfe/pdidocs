@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/js_includes_listv2.js" includes="true" />
+    <g:requires name="scripts/js_includes_catalog.js" includes="true" />
+    <g:evaluate var="jvar_theme">
+        var theme = gs.getPreference('glide.css.theme.ui16');
+        if (null == theme){
+        var company = gs.getUser().getCompanyRecord();
+        if (null != company)
+        theme = company.getValue("theme");
+        }
+        theme;
+    </g:evaluate>
+    <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <g:inline template="sc_sanitize.xml" />
+    <g:inline template="glide_weba_header.xml" />
+    <g2:evaluate expression="SNC.CatalogURLGenerator.clearBrowsingContextCategoryID()" />
+    <g:evaluate jelly="true">
+        var catalog = jelly.sysparm_catalog + "";
+        var catalog_view = jelly.sysparm_catalog_view + "";
+        var view = jelly.sysparm_view + "";
+        var re = /^[0-9A-Fa-f]{32}$/g;
+        if (JSUtil.nil(catalog.match(re)))
+        catalog = "";
+        var rev = /^[0-9A-Za-z_]+$/g;
+        if (JSUtil.nil(view.match(rev)))
+        view = "";
+        if (JSUtil.nil(catalog_view.match(rev)))
+        catalog_view = "";
+        var temp_catalog_view = GlideappCatalogURLGenerator.getCatalogViewForHome(catalog, catalog_view, view);
+        var temp_catalog = GlideappCatalogURLGenerator.getCatalogForHome(catalog, catalog_view, view);
+        catalog_view = temp_catalog_view;
+        catalog = temp_catalog;
+        view = catalog_view;
+
+        var layout = "022ac9000a0a0b120041878ff6ceb99b";
+        var layoutName = "layout_3_across_catalog";
+        var gr = new GlideRecord('sys_portal_page');
+        gr.addQuery('view', view);
+        gr.query();
+        if (gr.next()) {
+        layout = gr.layout.sys_id + "";
+        layoutName = gr.layout.name + "";
+        }
+    </g:evaluate>
+    <g:inline template="sc_request_parent_message.xml" />
+    <input type="HIDDEN" id="sysparm_catalog" value="${catalog}" />
+    <input type="HIDDEN" id="sysparm_catalog_view" value="${catalog_view}" />
+    <j:set var="sysparm_catalog" value="${catalog}" />
+    <j:set var="sysparm_catalog_view" value="${catalog_view}" />
+    <j:set var="sysparm_view" value="${catalog_view}" />
+    <j:set var="sysparm_parent" value="" />
+    <j2:set var="sysparm_catalog" value="${catalog}" />
+    <j2:set var="sysparm_catalog_view" value="${catalog_view}" />
+    <j2:set var="sysparm_view" value="${view}" />
+    <j2:set var="sysparm_parent" value="" />
+    <j:set var="jvar_is_catalog" value="${true}" />
+    <j2:set var="jvar_gridName" value="homepage_grid" />
+    <g2:evaluate jelly="true">
+        var hu = new GlideappHome(jelly);
+        var current_page = hu.getCurrentPage();
+    </g2:evaluate>
+    <style>
+        TABLE {
+            white-space: normal;
+        }
+    </style>
+    <g:messages>
+        Close
+        Edit
+        Collapse
+        Shopping Cart
+        Empty
+        Edit Cart
+        Continue Shopping
+        Proceed to Checkout
+        Save and Checkout
+    </g:messages>
+    <g:inline template="grid_header.xml" />
+    <g2:evaluate var="jvar_editable_grid" jelly="true">
+        var edit_access = gs.hasRole('catalog_admin');
+        if(!edit_access $[AMP]$[AMP] gs.hasRole('catalog_manager')){
+        var gr = new GlideRecord('sc_catalog');
+        gr.get(catalog);
+        var manager = gr.getValue("manager");
+        if (manager==gs.getUserID())
+        edit_access = true;
+        }
+        if(!edit_access $[AMP]$[AMP] gs.hasRole('catalog_editor')){
+        var gr = new GlideRecord('sc_catalog');
+        gr.get(catalog);
+        var editors = gr.getValue("editors");
+        if (editors $[AMP]$[AMP] editors.indexOf(gs.getUserID()) != -1)
+        edit_access = true;
+        }
+        jelly.jvar_editable_grid $[AMP]$[AMP] edit_access $[AMP]$[AMP] !GlideMobileExtensions.runningTablet();
+    </g2:evaluate>
+    <g2:evaluate var="jvar_editable_content">
+        edit_access $[AMP]$[AMP] !GlideMobileExtensions.runningTablet();
+    </g2:evaluate>
+    <g:inline template="catalog_title_editor.xml" />
+
+    <j:if test="${new GlideappScriptHelper().isUI16Enabled()}">
+        <script>
+            catalogHistory.setHistory('$[HTML,JS:jvar_catalog_title]', catalogHistory.getPageUrl());
+        </script>
+    </j:if>
+
+    <!-- layout -->
+    <g2:call function="${layoutName}.xml" name="$[jvar_gridName]" />
+
+    <!-- pre-rendered content -->
+    <j2:if test="$[JSUtil.notNil(current_page.getID())]">
+        <g2:generate_grid id="$[current_page.getID()]" editable="$[jvar_editable_content]" />
+    </j2:if>
+
+    <g:inline template="grid_script.xml" />
+    <g2:call function="grid_footer.xml" editable="$[jvar_editable_grid]" name="$[jvar_gridName]" view="$[sysparm_view]" />
+
+    <script>
+        addLateLoadEvent(function() {
+            focusOnSearch();
+            var base = previewLayoutID;
+            previewLayoutID = function(id, mode) {
+                id = "${layout}";
+                base(id, mode);
+            }
+        });
+
+        function addHomeContent() {
+            var page_id = glideGrid.getProperty('sys_id');
+            var name = "${layout}";
+            var title = "${gs.getMessage('Sections')}";
+            var filter = "$[gs.getProperty('glide.sc.home.filter')]";
+            var catalog_id = '$[catalog]';
+            var catalog_view = '$[catalog_view]';
+            sectionDialog({
+                name: name,
+                renderer: SECTIONS,
+                title: title,
+                filter: filter,
+                page_id: page_id,
+                pinned: true,
+                catalog_id: catalog_id,
+                catalog_view: catalog_view,
+                focusTrap: true
+            });
+        }
+
+        function focusOnSearch() {
+            var elemSearchInput = document.getElementsByClassName("scSearchInput");
+            if (elemSearchInput $[AMP]$[AMP] elemSearchInput.length > 0)
+                elemSearchInput[0].focus();
+
+        }
+    </script>
+    <g:inline template="catalog_web_analytics.xml" />
+</j:jelly>

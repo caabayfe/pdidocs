@@ -1,0 +1,10 @@
+current.kill_job = true;
+current.update();
+var grs = new GlideRecordSecure("syslog_pa_dm");
+grs.process = "HISTORICAL_MINING";
+grs.sub_process = "LOAD_HISTORICAL_DATA";
+grs.level = "Warning";
+grs.message = "The historical mining job is suspended";
+grs.source="HistoricalMiningTask";
+grs.insert();
+action.setRedirectURL(current);

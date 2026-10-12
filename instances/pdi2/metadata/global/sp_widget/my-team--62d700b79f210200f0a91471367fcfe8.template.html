@@ -1,0 +1,109 @@
+<sp-panel rect="rect" widget-title="'${Team}'" ng-if="showTeamWidget()">
+
+	<div id="manager" ng-if="myManager && myManager.sys_id">
+		<h3 ng-if="myManager.name && !showMyProfile" class="team_header m-t-none">${My Manager}</h3>
+		<h3 ng-if="myManager.name && showMyProfile" class="team_header m-t-none">${Manager}</h3>
+
+		<div class="row info-row">
+			<div tabindex="0" class="col-sm-9 container" ng-click="openProfile(myManager)" aria-label="Open Profile: {{myManager.name}}">
+			  <div class="row">
+			   <div class="col-xs-3" aria-hidden="true">
+			      <span class="navbar-avatar">
+			         <sn-avatar class="avatar-small-medium" primary="myManager.sys_id" show-presence="false"></sn-avatar>
+			      </span>
+			   </div>
+			   <div class="col-xs-9" aria-hidden="true">{{myManager.name}}</div>
+			  </div>
+			</div>
+			<div class="col-xs-1" ng-class="{'hide-element': !myManager.phone}">
+				<a class="contact" href="tel:{{myManager.phone}}" aria-label="${Call {{myManager.phone}}}" title="${Call {{myManager.phone}}}" data-toggle="tooltip">
+                  <fa name="phone" size="2"></fa>
+				</a>
+			</div>
+			<div class="col-xs-1 text-right" ng-class="{'hide-element': !myManager.email}">
+				<a class="contact" href="mailto:{{myManager.email}}" aria-label="${Send an email to {{myManager.email}}}" title="${Send an email to {{myManager.email}}}" data-toggle="tooltip">
+					<fa name="envelope" size="2"></fa>
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<div id="colleagues" ng-if="teamMembers && teamMembers.length > 0">
+		<h3 ng-if="!showMyProfile" class="team_header">${My Coworkers}</h3>
+		<h3 ng-if="showMyProfile" class="team_header">${Coworkers}</h3>
+
+		<div class="row info-row" ng-repeat="member in teamMembers | limitTo: showFullInfoCollegues ? teamMembers.length : data.limitTo">
+			<div tabindex="0" class="col-sm-9 container" ng-click="openProfile(member)" aria-label="Open Profile: {{member['name']}}">
+			  <div class="row">
+			   <div class="col-xs-3" aria-hidden="true">
+			      <span class="navbar-avatar">
+			         <sn-avatar class="avatar-small-medium" primary="member.sys_id" show-presence="false"></sn-avatar>
+			      </span>
+			   </div>
+			   <div class="col-xs-9" ng-click="openProfile(member)" aria-hidden="true">{{member['name']}}</div>
+			  </div>
+			</div>
+			<div class="col-xs-1" ng-class="{'hide-element': !member.phone}">
+				<a class="contact" href="tel:{{member.phone}}" aria-label="${Call {{member.phone}}}" title="${Call {{member.phone}}}" data-toggle="tooltip">
+					<fa name="phone" size="2"></fa>
+				</a>
+			</div>
+			<div class="col-xs-1 text-right" ng-class="{'hide-element': !member.email}">
+				<a class="contact" href="mailto:{{member.email}}" aria-label="${Send an email to {{member.email}}}" title="${Send an email to {{member.email}}}" data-toggle="tooltip">
+					<fa name="envelope" size="2"></fa>
+				</a>
+			</div>
+		</div>
+
+		<div ng-if="teamMembers.length > data.limitTo" class="pull-right">
+			<a href="javascript:void(0)" class="more_link" ng-if="!showFullInfoCollegues" ng-click="updateList('showFullInfoCollegues',true)">${Show all ({{teamMembers.length}})}
+			</a>
+			<a href="javascript:void(0)" class="more_link" ng-if="showFullInfoCollegues" ng-click="updateList('showFullInfoCollegues',false)">${Show less}</a>
+		</div>
+
+	</div>
+
+	<div id="direct_reports" ng-if="directReports && directReports.length > 0">
+		<h3 ng-if="directReports.length > 0 && !showMyProfile" class="team_header">${My Direct Reports}</h3>
+		<h3 ng-if="directReports.length > 0 && showMyProfile" class="team_header">${Direct Reports}</h3>
+
+		<div class="row info-row" ng-repeat="direct_report in directReports | limitTo: showFullInfoReports ? directReports.length : data.limitTo">
+			<div tabindex="0" class="col-sm-9 container" ng-click="openProfile(direct_report)" aria-label="Open Profile: {{direct_report['name']}}">
+			  <div class="row">
+			   <div class="col-xs-3" aria-hidden="true">
+			      <span class="navbar-avatar">
+			         <sn-avatar class="avatar-small-medium" primary="direct_report.sys_id" show-presence="false"></sn-avatar>
+			      </span>
+			   </div>
+			   <div class="col-xs-9" ng-click="openProfile(direct_report)" aria-hidden="true">{{direct_report['name']}}</div>
+			  </div>
+			</div>
+			<div class="col-xs-1" ng-class="{'hide-element': !direct_report.phone}">
+				<a class="contact" href="tel:{{direct_report.phone}}" aria-label="${Call {{direct_report.phone}}}" title="${Call {{direct_report.phone}}}" data-toggle="tooltip">
+					<fa name="phone" size="2"></fa>
+				</a>
+			</div>
+			<div class="col-xs-1 text-right" ng-class="{'hide-element': !direct_report.email}">
+				<a class="contact" href="mailto:{{direct_report.email}}" aria-label="${Send an email to {{direct_report.email}}}" title="${Send an email to {{direct_report.email}}}" data-toggle="tooltip">
+					<fa name="envelope" size="2"></fa>
+				</a>
+			</div>
+		</div>
+
+		<div ng-if="directReports.length > data.limitTo" class="pull-right">
+			<a href="javascript:void(0)" class="more_link" ng-if="!showFullInfoReports" ng-click="updateList('showFullInfoReports',true)">${Show all ({{directReports.length}})}</a>
+			<a href="javascript:void(0)" class="more_link" ng-if="showFullInfoReports" ng-click="updateList('showFullInfoReports',false)">${Show less}</a>
+		</div>
+
+	</div>
+
+	<a id="my_org_chart" class="widget-button btn btn-primary" ng-if="!showMyProfile" href="?id=my_org_chart">
+		<i class="fa fa-sitemap"></i>
+		${my org chart}
+	</a>
+	<a id="my_org_chart" class="widget-button btn btn-primary" ng-if="showMyProfile" ng-href="?id=my_org_chart&p={{userID}}">
+		<i class="fa fa-sitemap"></i>
+		${org chart}
+	</a>
+
+</sp-panel>

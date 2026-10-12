@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <g:evaluate>
+        var profileIds = RP.getWindowProperties().get('profileIds') +'';
+        var profileNumbers = RP.getWindowProperties().get('profileNumbers') +'';
+        var fromUIAction = RP.getWindowProperties().get('fromUIAction') + '';
+        var profileName = RP.getWindowProperties().get('profileName') + '';
+    </g:evaluate>
+
+
+    <input type="hidden" id="profileIds" value="${profileIds}" />
+
+    <table width="100%">
+        <tr>
+            <td align="left" valign="middle" class="container-td">
+                <div id="form" class="container-fluid form-horizontal">
+                    <j:choose>
+                        <j:when test="${fromUIAction == 'true'}">
+                            <div class="row">
+                                <g> ${ALLOW_JELLY:gs.getMessage('Attempting to sync the following profile(s)') } </g>
+                                <textarea class="form-control" style="overflow: hidden; word-wrap: break-word; resize: none; margin-top: 10px;">
+							${profileNumbers}
+							</textarea>
+                                <br />
+                            </div>
+                        </j:when>
+                        <j:otherwise>
+                            <div class="row">
+                                <div class="alert alert-warning" style="margin-bottom: 10px;">
+                                    ${ALLOW_JELLY:gs.getMessage('Warning: The behavior of the MID Server will change after sync. If you desire to sync later, you can do so on the MID Profile form.')}
+                                </div>
+                                <g> ${ALLOW_JELLY:gs.getMessage('Attempting to sync the following profile:') } </g>
+                                <div style="margin-left: 10px; margin-top: 10px;">
+                                    <a href="mid_server_profile.do?sys_id=${profileIds}" target="_blank">${profileName}</a>
+                                </div>
+                                <br />
+                            </div>
+                        </j:otherwise>
+                    </j:choose>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="row form-group">
+                    <div align="left">
+                        <g:ui_choice_input_field name="sync_strategy" label="${gs.getMessage('Select a sync strategy')}">
+                            <option value="override_ifexists">${gs.getMessage("Apply all profile settings, leave other mid specific settings alone")}</option>
+                            <option value="replace_all">${gs.getMessage("Apply all profile settings, remove other mid specific settings")}</option>
+                        </g:ui_choice_input_field>
+                    </div>
+                </div>
+                <div class="row form-group" style="padding-left: 10px; margin-top: 10px;">
+                  <div align="left">
+                      <input type="checkbox" id="sync_wrapper_override" name="sync_wrapper_override" onclick="toggleRestartCheckbox()"></input>
+                      <label for="sync_wrapper_override" style="margin-left: 5px;">${gs.getMessage('Sync wrapper-override settings to MID Server (Restart is needed to apply changes)')}</label>
+                  </div>
+                </div>
+                <div class="row form-group" id="restart_checkbox_container" style="display:none;padding-left: 10px;">
+                  <div align="left">
+                      <input type="checkbox" id="restart_mid_server" name="restart_mid_server"></input>
+                      <label for="restart_mid_server" style="margin-left: 5px;">${gs.getMessage('Do you want to Auto restart MID Server after sync?')}</label>
+                  </div>
+                </div>
+                <div align="center">
+                    <div id="ok-cancel-btns" class="pull-right">
+                        <g:dialog_button class="form-control" onClick="return actionCancel()">${gs.getMessage("Cancel")}</g:dialog_button>
+                        <g:dialog_button class="form-control" style="margin-left: 10px;" style_class="btn btn-primary" onClick="return actionOK()">${gs.getMessage("Sync Profile")}</g:dialog_button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</j:jelly>

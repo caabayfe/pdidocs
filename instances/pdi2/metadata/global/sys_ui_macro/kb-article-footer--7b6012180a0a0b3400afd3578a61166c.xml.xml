@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<!-- outputs an article's footer info: link, viewcount -->
+
+	<j:set var="jvar_kb_showlinks" value="${gs.getProperty('glide.knowman.show_links','true')}" />
+	<j:if test="${jvar_kb_showlinks}">
+		<b><a id="permalink" style="color:#999999;">${gs.getMessage("Permalink")}</a>:</b>$[SP]<span id="permatext"></span>$[SP]$[SP]$[SP]$[SP]
+		<script language="javascript">
+			var urlpath = location.href.substring(0, location.href.indexOf("?")) + "?sysparm_article=$[URL:kb.number]";
+			gel("permalink").href = urlpath;
+			gel("permatext").innerHTML = urlpath;
+		</script>
+        </j:if> 
+	  <j2:if test="$[kb.canWrite()]">
+	    <g2:evaluate jelly="true">
+			new KBViewModel().increaseKBView(kb);
+			var viewCount = 0;
+			var viewCountGR = new GlideRecord('kb_knowledge');
+			if(viewCountGR.get('$[JS:kb.sys_id]'))
+				viewCount = viewCountGR.getValue('sys_view_count');
+			viewCount;
+		</g2:evaluate>
+		<b>${gs.getMessage("Views")}:</b>$[SP]$[viewCount]
+       </j2:if>
+
+</j:jelly>

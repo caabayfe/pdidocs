@@ -1,0 +1,276 @@
+<div>
+   <!-- your widget template -->
+  <link href="84f0346b87120300cfab6dd207cb0b72.cssdbx?" rel="stylesheet" type="text/css"/>
+   <div class="notification notification-success" id="divNotificationMain" style="display:none;">
+      <button data-dismiss="alert" class="btn-icon close icon-cross">
+      <span class="sr-only">${Close}</span>
+      </button>
+   </div>
+   <div id="multi_factor_authenticator_widget" style="padding-left: 1%;">
+      <div>
+         <div>
+            <h1> ${Multi-Factor Authentication} </h1>
+         </div>
+         <hr>
+         <div>
+	            <p>
+                	${multifactor_profile_section_msg}
+              	</p>
+	           <p>
+                	${For more details }
+                	<a href="/api/now/v1/context_doc_url/CSHelp-using-mfa" target="_blank" style="padding-left:3px">${view our documentation.}</a>
+              </p>
+         </div>
+      </div>
+      <div>
+        <h2><b>${Authenticators}</b></h2>
+         <div>
+            <!-- TOTP authenticator	   -->
+            <div class="flex">
+               <div class ="authenticator">
+                  <div role="heading" aria-level="1" id="totpAuthenticatorHeader">
+                        <h3> ${Authenticator app} </h3>
+                          </div>
+                  <div >
+                     <div>
+                        ${Time-Based One-Time Password (TOTP) authenticator app}
+                     </div>
+                     <div id="totpAuthenticator" role="tabpanel" aria-labelledby="totpAuthenticatorHeader">
+                        <div ng-repeat="a in data.totp">
+                           <div class="authenticator_item col-sm-12 col-md-12 col-lg-12">
+                              <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                                 <img
+                                    src="totp.svg" alt="Authenticator app"
+                                    />
+                              </div>
+                              <div class="col-sm-10 col-md-10 col-lg-10">
+                                 <div class="col-sm-4 col-md-4 col-lg-4">
+                                    <p>${Authenticator App}</p>
+                                    <p>${Registration time:} {{::a.sys_updated_on}}</p>
+                                 </div>
+                                 <div class="col-sm-6 col-md-6 col-lg-6">
+                                    <a href="#edit">
+                                       <h4><i class="icon-edit" style="float:right;"  ng-click="openTotpSetupChangeDialog()" tabindex="0" role="button" aria-label="manage" title="${manage authenticator}" data-toggle="tooltip"></i></h4>
+                                    </a>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                    <div ng-if="!data.totp_available">
+                              <a class="navigation_link default-focus-outline" ng-click="openTotpSetupDialog()" tabindex="0" role="button">
+                                 ${Set up authenticator app}
+                              </a>
+                   </div>
+
+                     <div ng-if="data.totp_available" >
+                        <a class="navigation_link default-focus-outline" ng-click="openTotpSetupChangeDialog()" tabindex="0" role="button">
+                           ${Change Authenticator app}
+                        </a>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div ng-if="data.webauthn_enabled && doesClientSupportWebAuthn">
+               <div id="webautnAuthenticators">
+                  <!-- 	Built in authenticator	   -->
+                  <div  id="builtInAuthenticatorDiv" class="flex">
+                     <div class="authenticator">
+                        <div role="heading" aria-level="1" id="builtInAuthenticatorHeader">
+                              <h4>${Biometric Authenticators} ({{::data.platformCred.length}})</h4>
+                        </div>
+                        <div>
+                           <div>
+                              <h5>${Device-based authenticators such as WIndows Hello or Apple Touch ID}</h5>
+                           </div>
+                           <div id="builtInAuthenticator" role="tabpanel" aria-labelledby="builtInAuthenticatorHeader">
+                              <div>
+                                 <div ng-if="!data.platformCred_available">
+                                    <p style="font-size: medium;">${No built-in authenticator added.}</p>
+                                 </div>
+                                 <div ng-repeat="a in data.platformCred">
+                                    <div class="authenticator_item col-sm-12 col-md-12 col-lg-12">
+                                       <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                                          <img
+                                             src="internal_authenticator_activated.svg" alt="Built-in authenticator"
+                                             />
+                                       </div>
+                                       <div class="col-sm-10 col-md-10 col-lg-10">
+                                          <div class="col-sm-4 col-md-4 col-lg-4">
+                                             <p>{{::a.credential_nickname}}</p>
+                                             <p>${Registration time:} {{::a.registration_time}}</p>
+                                          </div>
+                                          <div class="col-sm-6 col-md-6 col-lg-6">
+                                             <a href="#edit">
+                                                <h4><i id="{{::a.sys_id}}" class="icon-edit" style="float:right;" ng-click='openManageAuthenticator(a.sys_id,"platform")' aria-label="manage" tabindex="0" title = "${manage authenticator}" data-toggle="tooltip"></i></h4>
+                                             </a>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                           <div>
+                              <a ng-click="openInternalAuthenticatorSetupDialog()" role="button">
+                                 <h6>${Register biometric authenticator} </h6>
+                              </a>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  <!-- 	Hardware security key	   -->
+                  <div id="roamingAuthenticatorDiv" class="flex">
+                     <div class="authenticator">
+                        <div role="heading" aria-level="1" id="securityKeysHeader">
+                              <h4>${Hardware Security keys or Passkeys} ({{::data.roamingCred.length}})</h4>
+                        </div>
+                        <div>
+                           <div>
+                              <h5>${Hardware security keys such as Yubikey or Passkeys.}</h5>
+                           </div>
+                           <div id="securityKeys" role="tabpanel" aria-labelledby="securityKeysHeader">
+                              <div>
+                                 <div ng-if="!data.grRoamingCred_available">
+                                    <p style="font-size: medium;">${No hardware security key added.}</p>
+                                 </div>
+                                 <div ng-repeat="a in data.roamingCred">
+                                    <div class="authenticator_item col-sm-12 col-md-12 col-lg-12">
+                                       <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                                          <img
+                                             src="security_key_activated.svg" alt="Security key"
+                                             />
+                                       </div>
+                                       <div class="col-sm-10 col-md-10 col-lg-10">
+                                          <div class="col-sm-4 col-md-4 col-lg-4">
+                                             <p>{{::a.credential_nickname}}</p>
+                                             <p> ${Registration time:} {{::a.registration_time}}</p>
+                                          </div>
+                                          <div class="col-sm-6 col-md-6 col-lg-6">
+                                             <a href="#edit">
+                                                <h4><i id="{{::a.sys_id}}" class="icon-edit" style="float:right;" ng-click="openManageAuthenticator(a.sys_id, 'cross-platform')" aria-label="manage"></i></h4>
+                                             </a>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                        <div>
+                           <a ng-click="openAuthenticatorKeySetupDialog()" role="button">
+                              <h6>${Register Hardware security key or passkey}</h6>
+                           </a>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <script type="text/ng-template" id="totpModalTemplate">
+         <div>
+           <div class="modal-header">
+             <h1 class="h4 modal-title" id="totpModal" style="display: inline-block">${Complete the steps below to enable multi-factor authentication}</h1>
+             <i class="fa fa-close pull-right text-base" autofocus="true" tabindex="0" ng-click="dismissMFAConfigurationModal(this.mfaModalInstance)" data-toggle="tooltip" data-original-title="${Close modal}" aria-role="button" aria-label="${Close dialog}"></i>
+           </div>
+           <div class="modal-body">
+           	<iframe id="mfa-config-window" src="/google_auth_setup_dialog" width="100%" height="500px" frameBorder="0"></iframe>
+           	<button class="sr-only"></button>
+           </div>
+         </div>
+      </script>
+     <script type="text/ng-template" id="totpSetupChangeModalTemplate">
+         <div>
+           <div class="modal-header">
+             <h1 class="h4 modal-title" id="totpModal" style="display: inline-block">${Manage authenticator app}</h1>
+             <i class="fa fa-close pull-right text-base" autofocus="true" tabindex="0" ng-click="dismissMFAConfigurationModal(this.mfaModalInstance)" data-toggle="tooltip" data-original-title="${Close modal}" aria-role="button" aria-label="${Close dialog}"></i>
+           </div>
+           <div class="modal-body">
+           	<iframe id="mfa-config-window" src="/google_auth_setup_dialog" width="100%" height="500px" frameBorder="0"></iframe>
+           	<button class="sr-only"></button>
+           </div>
+         </div>
+      </script>
+      <script type="text/ng-template" id="hardwareModalTemplate">
+         <div>
+           <div class="modal-header">
+             <h1 class="h4 modal-title" style="display: inline-block">${Register Security Key}</h1>
+             <i class="fa fa-close pull-right text-base" autofocus="true" tabindex="0" ng-click="dismissMFAConfigurationModal(this.authenticatorKeyModalInstance)" data-toggle="tooltip" data-original-title="${Close modal}" aria-role="button" aria-label="${Close dialog}"></i>
+           </div>
+           <div class="modal-body">
+           	<iframe id="hardware-config-window" src="/webauthn_roaming_authenticator_registration" width="100%" height="300px" frameBorder="0"></iframe>
+           </div>
+         </div>
+      </script>
+      <script type="text/ng-template" id="internalAuthenticatorModalTemplate">
+         <div>
+           <div class="modal-header">
+             <h1 class="h4 modal-title" style="display: inline-block">${Register Biometric authenticator}</h1>
+             <i class="fa fa-close pull-right text-base" autofocus="true" tabindex="0" ng-click="dismissMFAConfigurationModal(this.internalAuthenticatorModalInstance)" data-toggle="tooltip" data-original-title="${Close modal}" aria-role="button" aria-label="${Close dialog}"></i>
+           </div>
+           <div class="modal-body">
+           	<iframe id="internalAuthenticator-config-window" src="/webauthn_register_internal_authenticator" width="100%" height="300px" frameBorder="0"></iframe>
+           </div>
+         </div>
+      </script>
+      <script type="text/ng-template" id="manageAuthenticatorModalTemplate">
+         <div class="modal-header">
+                <h1 class="h4 modal-title" style="display: inline-block">${Manage Authenticator}</h1>
+                <i class="fa fa-close pull-right text-base" autofocus="true" tabindex="0" ng-click="dismissMFAConfigurationModal(this.manageAuthenticatorModalInstance)" data-toggle="tooltip" data-original-title="${Close modal}" aria-role="button" aria-label="${Close dialog}"></i>
+         </div>
+         <div id="manageAuthentication-config-window" class="container-fluid modal-body">
+             <div  style="font-size: medium; margin-bottom: 3%;">
+                <div class="flex col-sm-12">
+                   <p style="font-size: large;"><b>${You have successfully registered this authenticator.}</b></p>
+                </div>
+             </div>
+                   
+                         <div ng-if="webAuthType ==  'cross-platform'"class="col-sm-2 col-md-2 col-lg-2 img square">
+                            <img src="security_key_activated.svg"/>
+                         </div>
+                         <div ng-if="webAuthType ==  'platform'"class="col-sm-2 col-md-2 col-lg-2 img square">
+                            <img src="internal_authenticator_activated.svg"/>
+                         </div>
+                      <div class="col-sm-10 col-md-10 col-lg-10">
+                         <p>{{nickName}}</p>
+                         <p>${Registration time:} {{registrationTime}}</p>
+                         <p>${Last Used:} {{lastUsedTime}}</p>
+                      </div>
+                
+                <div class="modal-footer flex float-right">
+                   <button class="btn btn-secondary"   id="btnClose" style="margin-right:16px;" ng-click="dismissMFAConfigurationModal(this.manageAuthenticatorModalInstance)">${Close}</button>
+                   <button class="btn btn-primary" id="btnRemove" ng-click="removeAuthenticator()">${Remove}</button>
+                </div>
+          </div>
+          
+      </script>
+      <div ng-if= "data.has_remembered_browser || data.can_disable_mfa" role="region" aria-label="Related Links">
+         <h2 class="related_links h4">${Related Links}</h2>
+         <ul class="related_links_container list-unstyled">
+               <li ng-if="data.can_disable_mfa">
+                  <a
+                     class="navigation_link default-focus-outline"
+                     id="disable_multifactor_authentication"
+                     tabindex="0"
+                     ng-click="disableMfa(this)"
+                     role="button"
+                     >
+                  ${Disable multi-factor authentication}
+                  </a>
+               </li>
+               <li ng-if="data.has_remembered_browser">
+                  <a
+                     class="navigation_link default-focus-outline"
+                     id="forget_remembered_browser"
+                     tabindex="0"
+                     ng-click="forgetAllRememberedBrowsers(this)"
+                     role="button"
+                     >
+                  ${Forget all remembered browsers}
+                  </a>
+               </li>
+         </ul>
+      </div>
+   </div>
+</div>

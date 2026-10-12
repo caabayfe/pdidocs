@@ -1,0 +1,134 @@
+_meta:
+  hash: 1bd82dd4736b2dab8ee7c54f0a2494a286db7b5094fd6c0536ff55f8b88e722f
+  hash_version: 1
+  scope: sn_creatorstudio
+  sys_class_name: sys_graphql_schema
+  sys_created_by: admin
+  sys_created_on: 2023-11-21 10:13:25
+  sys_id: 0e9e1ac7776ab11008908835ba5a995f
+  sys_mod_count: '40'
+  sys_package: 81ac5fe1c7442110408bc8d6f2c260d1
+  sys_scope: 81ac5fe1c7442110408bc8d6f2c260d1
+  sys_update_name: sys_graphql_schema_0e9e1ac7776ab11008908835ba5a995f
+  sys_updated_by: admin
+  sys_updated_on: 2025-03-06 21:06:35
+active: 'true'
+application_namespace: snCreatorstudio
+contextual_acl_max_depth: ''
+enforce_acl: c8fe34317777351008908835ba5a99ed
+name: Form Submission Schema
+namespace: formSubmission
+paths: Category:description,Category:filteredLists,Category:id,Category:label,Category:order,Column:id,Column:label,DeletedFilteredList:category,DeletedFilteredList:filteredListID,Error:errorType,Error:message,FilteredList:active,FilteredList:categoryId,FilteredList:columns,FilteredList:condition,FilteredList:defaultColumns,FilteredList:id,FilteredList:label,FilteredList:order,FilteredList:selectedColumns,FilteredList:table,InitialFilteredList:id,InitialFilteredList:label,InitialFilteredList:order,InitialFilteredList:table,List:list,Mutation:createFilteredList,Mutation:deleteFilteredList,Mutation:reorderFilteredList,Mutation:updateFilteredList,Query:getFilteredListByID,Query:getList,ReorderFilteredList:filteredList,ReorderListResponse:category,ReorderListResponse:id,ReorderListResponse:label,ReorderListResponse:order,Table:canRead,Table:id,Table:label
+requires_acl_authorization: 'true'
+requires_authentication: 'true'
+requires_snc_internal_role: 'true'
+schema: |-
+  schema {
+  	query: Query
+  	mutation: Mutation
+  }
+
+  type Mutation {
+  	createFilteredList(appSysID: ID!, payload: CreateFilteredListPayload!) : FilteredListResult
+  	updateFilteredList(sysId: ID!, payload: UpdateFilteredListPayload!) : FilteredListResult
+  	reorderFilteredList(appSysID: ID!, payload: [ReorderFilteredListPayload]!) : ReorderFilteredListResult
+  	deleteFilteredList(appSysID: ID!,sysId:ID!):deletedFilteredListResult
+  }
+
+  union ListResult = List | Error
+  union FilteredListResult = FilteredList | Error
+  union ReorderFilteredListResult = ReorderFilteredList | Error
+  union deletedFilteredListResult = DeletedFilteredList | Error
+
+  input ReorderFilteredListPayload {
+  	category: String
+  	order: String
+  	id: ID!
+  }
+
+  input CreateFilteredListPayload {
+  	title: String!,
+  	table: String!,
+  	category: ID!,
+  	order: String!
+  }
+
+  input UpdateFilteredListPayload {
+  	title: String
+  	active: Boolean
+  	columns: String
+  	condition: String
+  	order: String
+  }
+
+  type Query {
+  	getList(appSysID: ID!): ListResult
+  	getFilteredListByID(filteredListID: ID!): FilteredListResult
+  }
+
+  type ReorderFilteredList {
+  	filteredList: [ReorderListResponse]
+  }
+
+  type ReorderListResponse {
+  	category: String
+  	order: String
+  	id: ID!
+  	label:String
+  }
+
+  type DeletedFilteredList{
+  	filteredListID:String!
+  	category:String!
+  }
+
+  type List {
+  	list: [Category]
+  }
+
+  type Column {
+  	id: String,
+  	label: String
+  }
+
+  type Category {
+  	label: String,
+  	id: ID,
+  	order: Int,
+  	description: String,
+  	filteredLists:[InitialFilteredList]
+  }
+
+  type InitialFilteredList {
+  	label: String,
+  	id: ID,
+  	order: Int,
+  	table: Table
+  }
+
+  type FilteredList {
+  	label: String
+  	id: ID
+  	order: Int
+  	active: Boolean
+  	table: Table
+  	categoryId: String
+  	columns: String
+  	condition: String
+  	selectedColumns: [Column]
+  	defaultColumns: [Column]
+  }
+
+  type Table {
+  	label: String
+  	id: String
+  	canRead: Boolean
+  }
+
+  type Error {
+  	message: String!,
+  	errorType: String!
+  }
+sys_name: Form Submission Schema
+sys_policy: read
+type_names: FilteredListResult,ListResult,ReorderFilteredListResult,deletedFilteredListResult

@@ -1,0 +1,13 @@
+/**
+  * Optional script to set variables or cancel notification
+  * global variables
+  *      current is the current GlideRecord object
+  *      changedFields is an ArrayList of fields changed on submit, use changedFields.contains('fieldname') to check for change
+  *      set answer = false to cancel the notification
+  *      set profileSource to a GlideRecord to define the profile that is posting the message
+  *      set profileID to a live_profile sys_id to define the profile that is posting the message, by default it is the current record. Overrides profileSource if specified.
+  */
+  
+  //cancel if the incident state hasn't changed
+   if (changedFields.contains("incident_state"))
+   answer = false;

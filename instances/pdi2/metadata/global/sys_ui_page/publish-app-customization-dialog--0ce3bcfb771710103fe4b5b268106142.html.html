@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null">
+<!--
+Parameters:
+  From any sys_store_app record:
+  sysparm_sys_id - SysID of the app record
+-->
+<g2:evaluate jelly="true">
+
+var appId = jelly.sysparm_sys_id; //Load the app record to populate some fields.
+var gr = new GlideRecord("sys_store_app");
+gr.get(appId);
+	
+var appName = SNC.GlideHTMLSanitizer.sanitize(gr.getDisplayValue());
+var appDescription = SNC.GlideHTMLSanitizer.sanitize(gr.short_description);
+
+</g2:evaluate>
+
+<g:ui_form>
+	<style type="text/css">
+		#publish_to_update_set_dialog_container input {
+			width: 100%;
+			margin-bottom: 10px;
+		}
+		#publish_to_update_set_dialog_container label {
+			text-align: right;
+		}
+	</style>
+	<div id="publish_to_update_set_dialog_container">
+		<div class="modal-body">
+			${gs.getMessage('Publishing an application lets you transfer it to another ServiceNow instance')}
+		</div>
+
+		<div class="form-group">
+			<label class="control-label col-sm-3" for="app_name">
+				${gs.getMessage('Application name')}</label>
+			<span class="col-sm-9 form-field">
+				<input class="form-control" id="app_name" type="text" value="$[appName]" readonly="readonly"/>
+			</span>
+		</div>
+
+		<div class="form-group">
+			<label class="control-label col-sm-3" for="update_set_description">
+				${gs.getMessage('Description')}</label>
+			<span class="col-sm-9 form-field">
+				<textarea class="form-control" type="text" id="update_set_description" name="update_set_description">
+					$[appDescription]</textarea>
+			</span>
+		</div>
+	</div>
+
+	<footer class="modal-footer">
+		<button id="cancel_button" class="btn btn-default" onclick="onCancel()" type="button">
+			${gs.getMessage('Cancel')}</button>
+		<button id="ok_button" class="btn btn-primary" onclick="onSubmit()" type="button">
+			${gs.getMessage('Publish')}</button>
+	</footer>
+</g:ui_form>
+</j:jelly>

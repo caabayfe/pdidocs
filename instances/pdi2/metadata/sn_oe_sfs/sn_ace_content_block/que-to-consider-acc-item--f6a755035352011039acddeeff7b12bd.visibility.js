@@ -1,0 +1,1 @@
+answer = CIPlugin.Chatbot().isActive();

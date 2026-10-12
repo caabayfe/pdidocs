@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+		var rusSysId = "${RP.getWindowProperties().get('rus_sys_id')}";
+		var inHierarchy = "${RP.getWindowProperties().get('in_hierarchy')}";
+		var appInstalls = sn_update_set.UpdateSetUtil.getAppInstalls(rusSysId, inHierarchy == 'true', false);
+	</g:evaluate>
+
+	<j:if test="${appInstalls.length > 0}">
+		<g:evaluate jelly="true">
+			var appIndex = 0;
+		</g:evaluate>
+		<h5>${gs.getMessage("This update set will attempt to install the following application(s)")}</h5>
+		<ul id="appInstalls">
+			<j:while test="${appIndex != appInstalls.length}">
+				<li id="${appIndex}">${appInstalls[appIndex]}</li>
+				<g:evaluate>appIndex++</g:evaluate>
+			</j:while>
+		</ul>
+		<div class="row" style="padding: 10px 10px 0px 10px">
+			<span class="input-group-checkbox">
+				<input id="cb" class="checkbox" type="checkbox" name="cb"/>
+				<label for="cb" class="checkbox-label">${gs.getMessage("Skip application installs")}</label>
+			</span>
+		</div>
+		<div class="row" style="padding: 10px 0px 0px 10px">
+			<span class="input-group-checkbox">
+				<input id="dont_display_again" class="checkbox" type="checkbox" name="dont_display_again"/>
+				<label for="dont_display_again" class="checkbox-label">${gs.getMessage("Don't display again")}</label>
+			</span>
+		</div>
+	</j:if>
+
+	<footer class="modal-footer">
+    	<button id="cancel_button" onClick="cancel()"
+	  		data-dismiss="modal" class="btn btn-default">${gs.getMessage('Cancel')}</button>
+    	<button id="ok_button" onClick="runCommit()"
+	  		data-dismiss="modal" class="btn btn-primary">${gs.getMessage('Proceed')}</button>
+    </footer>
+</j:jelly>

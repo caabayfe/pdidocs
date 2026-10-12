@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<tbody data-sn-macro-sys-id="${jvar_macro_sys_id}">
+    <tr>
+        <td class="label_left" width="100%">
+            ${gs.getMessage('Summary of Item being approved:')}
+            <g:label_spacing />
+        </td>
+    </tr>
+    <g:evaluate var="jvar_ni" expression="var task = ${ref}.sysapproval;" />
+    <tr>
+        <td width="100%">
+            <table class="table" width="100%">
+                <thead>
+                    <tr>
+                        <th>
+                            $[SP]
+                        </th>
+                        <th>
+                            ${gs.getMessage('Description')}
+                        </th>
+                        <th>
+                            ${gs.getMessage('Price')}
+                        </th>
+                        <th>
+                            ${gs.getMessage('Quantity')}
+                        </th>
+                        <th>
+                            ${gs.getMessage('Total')}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <j:set var="jvar_item_price" value="${task.price * task.quantity}" />
+                    <j:set var="jvar_overall_total" value="${jvar_overall_total + jvar_item_price}" />
+                    <j:set var="jvar_line_color" value="odd" />
+                    <j:set var="jvar_line_num" value="${jvar_line_num + 1}" />
+                    <j:if test="${jvar_line_num % 2 == 0}">
+                        <j:set var="jvar_line_color" value="even" />
+                    </j:if>
+                    <g:evaluate var="ni"
+                        expression="
+                        var smart_description = task.cat_item.short_description.getDisplayValue();
+                        if (smart_description == null || smart_description == '' || smart_description == 'undefined')
+                           smart_description = task.cat_item.name.getDisplayValue();" />
+                    <tr class="${jvar_line_color}">
+                        <td valign="top">
+                            <g2:evaluate var="jvar_pop_target" expression="$[ref].getRecordClassName()" />
+                            <a class="linked" target="gsft_main" href="sc_req_item.do?sys_id=${task.sys_id}"
+                                onmouseover="popListDiv(event, 'sc_req_item', '${task.sys_id}','${JS:sysparm_view}')" onmouseout="lockPopup(event)">
+                                <img src="images/icons/hover_icon.gifx" class="clsshort" alt="${gs.getMessage('uppercase_view')}" />
+                            </a>
+                        </td>
+                        <td valign="top" width="50%">
+                            <g:call function="variable_summary_approval.xml" question_name="${task.sys_id}" question_help_tag="${smart_description}"
+                                sc_req_item="${task.sys_id}" help_class="${jvar_line_color}" />
+                        </td>
+                        <td valign="top">
+                            <g:currency_format value="${task.price.getDisplayValue()}" />
+                        </td>
+                        <td valign="top"> ${task.quantity}</td>
+                        <td valign="top">
+                            <g:currency_format double="${jvar_item_price}" />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+	</tbody>
+</j:jelly>

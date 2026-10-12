@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <div for_cat="${jvar_category.getID()}" style="padding-bottom: 5px; display: flex; align-items: center;" data-sn-macro-sys-id="${jvar_macro_sys_id}">
+        <j:set var="jvar_debug" value="${RP.isInteractive()}" />
+        <j:set var="jvar_target" value="${jvar_item.getTarget()}" />
+        <j:if test="${jvar_target == null}">
+	    <j:set var="jvar_target" value="" />
+        </j:if>
+        <j:if test="${jvar_target.equals('internal')}">
+	    <j:set var="jvar_target" value="" />
+        </j:if>
+        <j:if test="${!RP.isInteractive()}">
+        	<span>
+				<img class="catalog_item_icon" src="${jvar_iconsrc}" alt=""></img>
+			</span>
+            <span> ${jvar_item.getName()}</span>
+        </j:if>
+        <j:if test="${RP.isInteractive()}">
+			<span>
+				<j:if test="${jvar_href.indexOf('sys_attachment') == 0}">
+					<img class="catalog_item_icon" src="images/icons/attachment.gif" alt=""></img>
+				</j:if>
+				<j:if test="${jvar_href.indexOf('sys_attachment') != 0}">
+					<img class="catalog_item_icon" src="${jvar_iconsrc}" alt=""></img>
+				</j:if>
+			</span>
+            <a tabindex="0" href="${jvar_href}" target="${jvar_target}" class="service_catalog">${jvar_item.getName()}</a>
+            <j:if test="${jvar_use_popup_desc}">
+				<g:evaluate var ="jvar_sysparm_parent_sys_id" jelly="true">
+					var jvar_sysparm_parent_id = RP.getParameterValue("sysparm_parent_sys_id");
+					jvar_sysparm_parent_id;
+				</g:evaluate>
+				<g:evaluate var ="jvar_sysparm_parent_table" jelly="true">
+					var jvar_sysparm_parent_table = RP.getParameterValue("sysparm_parent_table");
+				 	jvar_sysparm_parent_table;
+				</g:evaluate>
+				<g:evaluate var ="jvar_sysparm_view" jelly="true">
+					var jvar_sysparm_view= RP.getParameterValue("sysparm_view");
+				 	jvar_sysparm_view;
+				</g:evaluate>
+				<g:evaluate var ="jvar_sysparm_processing_hint" jelly="true">
+					var jvar_sysparm_processing_hint= RP.getParameterValue("sysparm_processing_hint");
+				 	jvar_sysparm_processing_hint;
+				</g:evaluate>
+				<g:evaluate var = "jvar_params">
+					var jvar_params={
+						"sysparm_parent_sys_id": SNC.GlideHTMLSanitizer.sanitize(jvar_sysparm_parent_id),
+						"sysparm_parent_table": SNC.GlideHTMLSanitizer.sanitize(jvar_sysparm_parent_table),
+						"sysparm_view": SNC.GlideHTMLSanitizer.sanitize(jvar_sysparm_view),
+						"sysparm_processing_hint": SNC.GlideHTMLSanitizer.sanitize(jvar_sysparm_processing_hint),
+						"sysparm_sys_id": '${jvar_item.getID()}'
+					}
+					JSON.stringify(jvar_params);
+				</g:evaluate>
+				<span tabindex="0"  class="icon-info" onclick="event.stopPropagation(); popDiv(event, '${jvar_params}')"></span>
+			</j:if>
+        </j:if>
+    </div>
+</j:jelly>

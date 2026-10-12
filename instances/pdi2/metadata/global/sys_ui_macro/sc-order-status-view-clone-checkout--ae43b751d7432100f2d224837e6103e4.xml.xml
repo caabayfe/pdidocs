@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_canClone" jelly="true">
+		var canClone = false;
+		var roles = gs.getProperty('glide.sc.allow.clone.roles');
+		if ((JSUtil.notNil(roles) &amp;&amp; gs.hasRole(roles)) || JSUtil.nil(roles))
+			canClone = true;
+		canClone;
+	</g:evaluate>
+	<j:if test="${jvar_sc_clone_checkout_button == 'true' &amp;&amp; jvar_canClone == 'true'}">
+        <script src="scripts/SimpleProgressRenderer.js"></script>
+        <script src="scripts/catalog_clone_progress.js"></script>
+        <style>
+            HTML[data-doctype=true] div.sc-container-fluid.modal-body {
+                padding: 20px; <!-- override catalog div.sc-container-fluid: padding-right:0 -->
+            }
+        </style>
+        <br />
+        <input id="request_id" type="HIDDEN" value="${jvar_sc_request.getID()}" />
+		<input id="request_number" type="HIDDEN" value="${jvar_sc_request.getRequestNumber()}" />
+		<input id="msg_clone_request" type="HIDDEN" value="${gs.getMessage('Clone Request')}" />
+		<input id="msg_close" type="HIDDEN" value="${gs.getMessage('Close')}" />
+		<input id="msg_view_new_requests" type="HIDDEN" value="${gs.getMessage('View New Requests')}" />
+		<input id="msg_empty_users" type="HIDDEN" value="${gs.getMessage('Please specify at least one user to clone request')}" />
+        <j:set var="jvar_row" value="0" />
+        <j:set var="jvar_max_rows" value="10" />
+        <j:set var="ref" value="sys_user" />
+        <j:set var="jvar_question_reference" value="sys_user" />
+        <g:evaluate var="not_important" expression="var jsrow=0;" />
+        <div class="container sc_requested_for_container">
+            <div class="row col-xs-12 sc_cv_info_row">
+                <h3>${gs.getMessage('catalog_clone')}</h3>
+            </div>
+            <j:while test="${jvar_row &lt; jvar_max_rows}">
+                <j:set var="jvar_row" value="${jvar_row + 1}" />
+                <g:evaluate var="jvar_question_name" expression="jsrow++; 'sys_user:ZZYYXXclone_row'+jsrow;" />
+                <div class="row col-xs-12 sc_cv_info_row">
+                    <div class="col-xs-12 col-md-4">
+                        <g:ui_reference label="${gs.getMessage('catalog_clone')}" table="sys_user" name="${jvar_question_name}" query="active=true"/>
+                    </div>
+                </div>
+            </j:while>
+            <div class="row col-xs-12" style="padding-top: 20px">
+                <div class="col-xs-12 col-md-4">
+                    <g:sc_button img="" classes="request_catalog_button header_button" id="sc_order_now_button" label="${jvar_sc_order_now_label}" title="${jvar_sc_order_now_label}" onclick="return false;"/>
+                </div>
+            </div>
+        </div>
+    </j:if>
+</j:jelly>

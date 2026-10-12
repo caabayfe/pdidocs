@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide">
+<tbody data-sn-macro-sys-id="${jvar_macro_sys_id}">
+  <tr>
+    <td>
+      <div class="sc_category_item" onmouseover="this.className='sc_category_item_hover'" onmouseout="this.className='sc_category_item'">
+        <table style="background-color: transparent; padding:0px 2px; width: 100%;" role="presentation">
+          <tr>
+            <j:set var="jvar_t" value="${jvar_category.getDisplayValue('icon')}" />
+	    <g:evaluate var="jvar_icon" jelly="true" >
+	      var icon = jelly.jvar_t;
+	      if (gs.nil(icon))
+	        icon = "images/service_catalog/productcatalog.gifx";
+	      icon;
+	    </g:evaluate>
+	    <g:evaluate var = "jvar_parent_params" jelly="true" object="true" >
+			var params = {
+				"sysparm_parent_sys_id":jelly.RP.getParameterValue("sysparm_parent_sys_id"),
+				"sysparm_parent_table":jelly.RP.getParameterValue("sysparm_parent_table"),
+				"sysparm_view":jelly.RP.getParameterValue("sysparm_view")
+			};
+			params;
+		</g:evaluate>
+        <g:evaluate var="jvar_subcat_url" jelly="true">
+              var jvar_subcat_url = GlideappCatalogURLGenerator.getCategoryLinkWithParams(jelly.sysparm_catalog, jelly.sysparm_catalog_view,  jelly.sysparm_view, jelly.jvar_category.getValue('sys_id'), jelly.sysparm_no_checkout, jelly.sysparm_processing_hint, jelly.jvar_parent_params);
+              if (jelly.sysparm_cartless == 'true')
+					jvar_subcat_url += '&amp;sysparm_cartless=true';
+				jvar_subcat_url;
+		</g:evaluate>
+            <td valign="top">
+              <img src="${jvar_icon}" alt="${jvar_category.getDisplayValue('title')}"/>
+            </td>
+            <td style="width: 100%;" onclick="document.location.href = '${jvar_subcat_url}';">
+	      <table style="background-color: transparent; width: 100%;" role="presentation">
+	        <tr>
+                  <td style="width: 100%;">
+                    <a style="white-space: normal;" class="linked" href="${jvar_subcat_url}">
+                      <div style="font-size: larger">
+                        <strong>
+                          ${jvar_category.getDisplayValue('title')}
+                        </strong>
+                      </div>
+                    </a>
+                      <div style="text-decoration: none;">
+                        ${jvar_category.getDisplayValue('description')}
+                      </div>
+                      <j:if test="${jvar_children.hasNext()}">
+                        <div class="sub_cat_links">
+                          <table cellpadding="0" cellspacing="0" style="font-size: smaller; background-color: transparent; border-collapse: collapse" role="presentation">
+                            <tr>
+                              <td colspan="2" style="font-size: 60%;">
+                                ${AMP}nbsp;
+                              </td>
+                            </tr>
+                            <j:while test="${jvar_children.next()}">
+
+<g:evaluate var="jvar_can_view_child" jelly="true">
+var jvar_can_view_child = GlideappCategory.get(jelly.jvar_children.sys_id).canView();
+jvar_can_view_child;
+</g:evaluate>
+
+                             <j:if test="${jvar_can_view_child}">
+                             	<g:evaluate var="jvar_child_url" jelly="true">
+                                		var jvar_child_url = GlideappCatalogURLGenerator.getCategoryLinkWithParams(jelly.sysparm_catalog, jelly.sysparm_catalog_view,  jelly.sysparm_view, jelly.jvar_children.sys_id, jelly.sysparm_no_checkout, jelly.sysparm_processing_hint, jelly.jvar_parent_params);
+                                		jvar_child_url;
+                             	</g:evaluate>
+                              <tr>
+                                <td>
+                                  <div style="width: 20px; font-size: 0"></div>
+                                  ${AMP}nbsp;
+                                </td>
+                                <td style="width: 100%; vertical-align: top;">
+                                  <a style="color: #006;" class="linked" href="${jvar_child_url}">
+                                    ${jvar_children.getDisplayValue('title')}
+                                  </a>
+                                  <span style="padding-right: 5px;" />
+                                </td>
+                              </tr>
+                             </j:if>
+                            </j:while>
+                          </table>
+                        </div>
+                      </j:if>
+                  </td>
+                </tr>
+	      </table>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </td>
+  </tr>
+	</tbody>
+</j:jelly>

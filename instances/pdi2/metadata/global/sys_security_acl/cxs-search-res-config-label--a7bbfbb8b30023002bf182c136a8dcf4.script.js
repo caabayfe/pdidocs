@@ -1,0 +1,1 @@
+answer = gs.hasRole('maint') || ((gs.hasRole('admin') || gs.hasRole('sn_cxs_admin'))  && (current.search_resource_id == 'com.snc.contextual_search.search_resource.GlideRecordSearchResource' || current.search_resource_id == 'com.snc.contextual_search.search_resource.ScriptSearchResource'));

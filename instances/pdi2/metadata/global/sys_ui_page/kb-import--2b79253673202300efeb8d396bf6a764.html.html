@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		var ERROR_MESSAGE = gs.getMessage('Error Message');
+		var ACCESS_DENIED = gs.getMessage('Access denied. You need CanContribute access to at least one knowledge base to import articles.');
+		var FIND_KNOWLEDGE = gs.getMessage('Find Knowledge');
+		var NOTIFICATION = gs.getMessage('Notifications');
+		var CHOOSE_FILE = gs.getMessage('Choose File');
+		var KNOWLEDGE_BASE_LIST = gs.getMessage('Knowledge Base list');
+		var CATEGORY_LIST = gs.getMessage('Category list');
+		var IMPORT_FILE = gs.getMessage('Import a Word File');
+		var IMPORT = gs.getMessage('Import');
+		var IMPORT_ARTICLE = gs.getMessage('Import Articles');
+		var KNOWLEDGE_BASE = gs.getMessage('Knowledge Base');
+		var CATEGORY = gs.getMessage('Category');
+		var PUBLISH = gs.getMessage('Publish');
+		var COPY_ATTACHMENTS = gs.getMessage('Copy Attachments');
+		var IMPORT_FILE = gs.getMessage('Import a Word File');
+		var CHOOSE_KNOWLEDGE_BASE = gs.getMessage('Choose a knowledge base to import the documents');
+		var CHOOSE_CATEGORY = gs.getMessage('Choose a category to import the documents');
+		var PUBLISH_IMPORTED_ARTICLES = gs.getMessage('Choose to publish imported articles');
+		var CLOSE_IMPORT_DIALOG = gs.getMessage('Click to close the import dialog');
+		var IMPORT_SELECTED_FILES = gs.getMessage('Click to import selected files');
+		var DRAG_AND_DROP_FILES = gs.getMessage('Drag and drop DOC or DOCX files here');
+		var DRAG_AND_DROP_FILE = gs.getMessage('Drag and drop DOC or DOCX file here');
+		var OR = gs.getMessage('or');
+		var BROWSE_FILES = gs.getMessage('Browse Files');
+		var BROWSE_FILE = gs.getMessage('Browse File');
+		var BROWSE_FILES_ARIA_LABEL = gs.getMessage('Import a word file required Browse Files');
+        	var BROWSE_FILE_ARIA_LABEL = gs.getMessage('Import a word file required Browse File');
+		var IMPORTED_DOCUMENT = gs.getMessage('Imported Document:');
+		var REMOVE_DOCUMENT = gs.getMessage('Remove document');
+		var UPLOADING_KNOWLEDGE_ARTICLES = gs.getMessage('Uploading Knowledge Articles');
+		var UPLOADING_ARTICLES = gs.getMessage('Uploading Articles');
+		var UPLOADING_ARTICLE = gs.getMessage('Uploading Article');
+		var CANCEL = gs.getMessage('Cancel');
+		var ARTICLE = gs.getMessage('Article');
+		var OVERALL_PROGRESS = gs.getMessage('Overall progress');
+		var CANCEL_UPLOAD = gs.getMessage('Cancel Upload');
+		var IMPORT_PROGRESS = gs.getMessage('Import progress');
+		var CONTINUE_TO_VIEW = gs.getMessage('Continue to view imported articles');
+		var CONTINUE = gs.getMessage('Continue');
+		var VIEW_ARTICLE = gs.getMessage('View Article');
+		var CLOSE_IMPORT_SUCCESS_DIALOG = gs.getMessage('Click to close import success dialog');
+		var IMPORT_COMPLETED = gs.getMessage('Import Completed');
+		var CLOSE = gs.getMessage('Close');
+		var HASH = gs.getMessage('#');
+		var RECORD_NUMBER =gs.getMessage('Record Number');
+		var SHORT_DESCRIPTION = gs.getMessage('Short Description');
+		var VIEW_IMPORTED_ARTICLE = gs.getMessage('Click to view imported article');
+		var UPLOADING_SINGLE_ARTICLE = gs.getMessage('Uploading {0} article', '{{model.files.length}}');
+		var UPLOADING_MULTIPLE_ARTICLES = gs.getMessage('Uploading {0} articles', '{{model.files.length}}');
+		var INFO_IMPORT_MESSAGE = gs.getMessage("Import of articles is not available for mobile devices.");
+		var TOGGLE = gs.getMessage("Toggle progress tab");
+		var CLOSE_KNOWLEDGE_ARIA_LABEL = gs.getMessage("Remove Knowledge Base");
+		var CLOSE_CATEGORY_ARIA_LABEL = gs.getMessage("Remove Category");
+	</g:evaluate>
+	<j:choose>
+		<j:when test="${!(new KBKnowledge().canCreate())}">
+			<div class="outputmsg_div">
+				<div id="output_messages" class="outputmsg_container">
+					<h2 class="sr-only">${NOTIFICATION}</h2>
+					<div class="outputmsg_div" aria-live="polite" role="region">
+						<div class="outputmsg outputmsg_error notification notification-danger">
+							<span class="notification-icon icon-cross-circle">
+								<span class="sr-only">${ERROR_MESSAGE}</span>
+							</span>
+							<div class="outputmsg_text">${ACCESS_DENIED}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</j:when>
+		<j:otherwise>
+			<g2:evaluate var="has_attachments" jelly="true">
+				var knowledge_sys_id = RP.getParameterValue('knowledge_sys_id');
+				var article = new GlideRecord("kb_knowledge");
+				article.addQuery("sys_id", knowledge_sys_id);
+				article.query();
+
+				var has_attachments = "false";
+				//if found glide Record
+				if(article.next()) {
+					var objSysAttachment = new GlideSysAttachment();
+					oldAttachments = objSysAttachment.getAttachments(article.sys_class_name, knowledge_sys_id) ;
+					has_attachments = oldAttachments.getRowCount() > 0 ? "true" : "false";
+				}
+				has_attachments;
+			</g2:evaluate>
+			<j:set var="jvar_app" value="sn.knowledge" />
+			<j:set var="jvar_title" value="${gs.getMessage('Import Article')}" />
+			<g:inline template="html_page_import_platform.xml">
+				<div  ng-controller="KnowledgeController" class="container-fluid application" detect-device="detect-device" responsive="responsive" ng-init="platform=true">	
+					<j:if test="${!(new KBKnowledge().canCreate())}">
+						<div ng-if="isImportAllowed()" />
+					</j:if>
+					<div  ng-if="applicationState.isHandHeldDevice()">
+						<div class="outputmsg_div">
+							<div id="output_messages" class="outputmsg_container">
+								<h2 class="sr-only">${NOTIFICATION}</h2>
+								<div class="outputmsg_div" aria-live="polite" role="region">
+									<div class="outputmsg outputmsg_error notification notification-danger">
+										<span class="notification-icon icon-cross-circle">
+											<span class="sr-only">${ERROR_MESSAGE}</span>
+										</span>
+										<div class="outputmsg_text">${INFO_IMPORT_MESSAGE}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div  ng-controller="KnowledgeImportController" class="knowledgeImport"   ng-if="!applicationState.isHandHeldDevice()">				<!--input for invoking upload from normal input type-->
+						<form file-read="fileDropped(file)"  class="fileForm" ng-if="!model.uploadNewVersion">
+							<label class="sr-only" for="fileselect" aria-hidden="true">${CHOOSE_FILE}</label>
+							<input id="fileselect" type="file" aria-label="${CHOOSE_FILE}" class="fileInput" multiple="" accept="application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"/>
+						</form>
+						<form file-read="fileDropped(file)"  class="fileForm" ng-if="model.uploadNewVersion">
+							<label class="sr-only" for="fileselect" aria-hidden="true">${CHOOSE_FILE}</label>
+							<input id="fileselect" type="file" aria-label="${CHOOSE_FILE}" class="fileInput" accept="application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"/>
+						</form>
+						<g:inline template="import.dropTarget.xml"/>
+						<!-- bigImportPaneNew.xml  -->
+						<div  class="bigPane bigImportPane bigImpPane" role="main" ng-keydown="handleEscape($event)"  aria-label="${IMPORT}">
+							<div id="importMainPane" ng-if="(!model.uploadNewVersion) || (model.status!='detailedUploading' ${AMP}${AMP} model.uploadNewVersion)">
+								<nav class="navbar navbar-default section_zero cm-copy-perm-body" ng-if="!model.uploadNewVersion">
+									<div class="container-fluid">
+										<div class="navbar-header navHeader">
+											<h1 class="form_header navbar-title navbar-title-size">
+												<span class="navbar-title-caption cm-copy-perm-hdr-txt navTitle" >${IMPORT_ARTICLE}</span>
+												<div class="btnTopSection">
+													<button class="btn btn-primary btnImport" id="impStartBtn"
+															ng-disabled="(model.unSupportedFiles.length >0 ${AMP}${AMP} model.files.length === 0) || model.files.length === 0 || (!model.selectedKnowledgeBase.value ${AMP}${AMP} model.selectedArticle.length === 0)"
+															ng-keydown="handleImportTabKey($event)"
+															ng-click="beginUpload()"
+															aria-label="${IMPORT}">${IMPORT}
+													</button>
+												</div>
+											</h1>
+										</div>
+									</div>
+								</nav>
+								<span class="sr-only" id="dcdb" aria-hidden="true">${CLOSE_IMPORT_DIALOG}</span>
+								<span class="sr-only" id="dkbl" aria-hidden="true">${CHOOSE_KNOWLEDGE_BASE}</span>
+								<span class="sr-only" id="dcl" aria-hidden="true">${CHOOSE_CATEGORY}</span>
+								<span class="sr-only" id="dpf" aria-hidden="true">${PUBLISH_IMPORTED_ARTICLES}</span>
+								<span class="sr-only" id="dcb" aria-hidden="true">${CLOSE_IMPORT_DIALOG}</span>
+								<span class="sr-only" id="difb" aria-hidden="true">${IMPORT_SELECTED_FILES}</span>
+								<div class="{{model.uploadNewVersion ? 'container-fluid main-container import-popup' : 'container-fluid main-container'}}">
+									<div class="row" ng-if="!model.uploadNewVersion">
+										<div class="col-md-12">
+											<div class="col-md-6 form-group" id="knowledgebasemarker">
+												<div class="col-lg-4 col-md-12 kb-imp-title">
+													<label for="knowledgebase" >
+														<span class="required-marker mkr" id="kbMarker"></span>${KNOWLEDGE_BASE}
+													</label>
+												</div>
+												<div class="col-lg-8 col-md-12 mandatoryError-{{model.error ${AMP}${AMP} !model.selectedKnowledgeBase.value}}">
+													<select id="knowledgebase" sn-select2-reference-picker="" field="model.selectedKnowledgeBase" close-aria-label="${CLOSE_KNOWLEDGE_ARIA_LABEL}" sn-on-change="kbSelected(field)" aria-required="true" aria-label="${KNOWLEDGE_BASE_LIST}" aria-describedby="dkbl" >
+														<option value=""></option>
+														<option ng-repeat="kb in model.meta.kbList | filterCanContributeKBs" ng-if="kb.sys_id" value="{{kb.sys_id}}">{{kb.title}}</option>
+													</select>
+												</div> 
+											</div>
+											<div class="col-md-6 form-group">
+												<div class="col-lg-4 col-md-12  kb-imp-title">
+													<label for="category">${CATEGORY}</label>	
+												</div>
+												<div  class="col-lg-8 col-md-12"> 
+													<div ng-if="!model.selectedKnowledgeBase.value">
+														<input id="category" class="form-control" disabled="true" ng-attr-aria-label="${gs.getMessage('{0} category selected for import', '{{model.selectedCategory}}')}"/>
+													</div>
+													<div ng-if=" !model.refresh ${AMP}${AMP} model.selectedKnowledgeBase.value">
+													<select  id="category" sn-select2-reference-picker=""  ng-disabled="disabled" field="model.selectedCategory" close-aria-label="${CLOSE_CATEGORY_ARIA_LABEL}" aria-label="${CATEGORY_LIST}" aria-describedby="dcl">
+															<option value=""></option>
+															<option ng-repeat="category in model.meta.categoryList" value="{{category.sys_id}}">{{category.label}}</option>
+														</select>	
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row" ng-if="!model.uploadNewVersion">
+										<div class="col-xs-12">
+											<div ng-if="showPublishCheckbox()" class="col-xs-6 form-group">
+												<div class="col-lg-4 col-md-12 col-sm-12 col-x-12 kb-imp-title">
+													<label for="publish_import_documents">
+														${PUBLISH}
+													</label>
+												</div>
+												<div class="col-lg-8 col-md-12 col-sm-12 col-xs-12">
+													<span class="input-group-checkbox input-group-md">
+														<input type="checkbox" id="checkbox-1-publish" name="publish" ng-model="model.publish" class="checkbox wrap-text ng-cloak" aria-label="${PUBLISH}" aria-describedby="dpf"/>
+														<label id="label_publish" for="checkbox-1-publish"
+															   class="checkbox-label label-filters publish-large"></label>
+													</span>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row" ng-if="(model.files.length === 0 ${AMP}${AMP} model.uploadNewVersion) || !model.uploadNewVersion">
+										<div class="col-md-12" ng-if="!model.uploadNewVersion">
+											<div class="col-lg-2 col-md-12 col-sm-12 kb-imp-title drag-drop-title">  
+												<label id="importfile"><span class="required-marker mkr" id="importMarker"></span>${IMPORT_FILE}</label>
+											</div>
+											<div class="col-lg-10 col-md-12 drag-drop-position" >
+												<div id="miniDropTarget" class="drop-new-files dragDrop drag-drop-align drag-drop-lg drag-drop-md col-lg-12 col-md-12 col-sm-12 ng-isolate-scope" kb-drop-target="filesDropped(files)" disable-drop="model.status === 'idle'">
+													<div class="container drag-drop-container">
+														<div class="icon-upload">
+														</div>
+														<p class="msgDrag1">${DRAG_AND_DROP_FILES}</p>
+														<p class="msgDrag2">${OR}
+														</p>
+														<p>
+															<button ng-click="uploadDocument()" aria-label="${BROWSE_FILES_ARIA_LABEL}" class="btn btn-primary" id="uploadButtonOld">${BROWSE_FILES}</button>
+														</p>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="col-md-12 import-popup" ng-if="model.uploadNewVersion">
+											<div class="col-lg-10 col-md-12 import-popup" >
+												<div id="miniDropTarget" class="drop-new-files dragDrop drag-drop-align drag-drop-lg drag-drop-md col-lg-12 col-md-12 col-sm-12 ng-isolate-scope import-drag-drop-popup" kb-drop-target="filesDropped(files)" disable-drop="model.status === 'idle'">
+													<div class="container drag-drop-container">
+														<div class="icon-upload">
+														</div>
+														<p class="msgDrag1">${DRAG_AND_DROP_FILE}</p>
+														<p class="msgDrag2">${OR}
+														</p>
+														<p>
+															<button ng-click="uploadDocument()" aria-label="${BROWSE_FILE_ARIA_LABEL}" class="btn btn-primary" id="uploadButtonNew">${BROWSE_FILE}</button>
+														</p>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="files-section">
+											<div class="{{model.uploadNewVersion ? 'unsupported import-popup' : 'unsupported'}}" ng-if="model.unSupportedFiles.length">
+												<h4 class="headerUnSupported" ng-if="model.unSupportedFiles.length">
+													<div aria-expanded="false" ng-click="toggleUnSupportedFiles()" class="unsupported-files">
+														{{model.unSupportedFiles.length}} {{ getErrorMessage() }}
+														<span class="icon icon-chevron-right unsupported-chevron-right"
+															  ng-class="{'icon-chevron-right':KnowledgeGlobalData.direction ==='ltr','icon-chevron-left':KnowledgeGlobalData.direction ==='rtl'}"
+															  ng-if="!model.isUnSupportedFilesVisible"></span>
+														<span class="icon icon-chevron-down unsupported-chevron-down" ng-if="model.isUnSupportedFilesVisible"></span>
+													</div>
+												</h4>
+												<div ng-if="model.isUnSupportedFilesVisible" class="filesUnSupported">
+													<div class="lineUnSupported" ng-repeat="file in model.unSupportedFiles">
+														<span>{{ file.description }}</span>
+													</div>
+												</div>
+											</div>
+											<div class="files" ng-if="!model.uploadNewVersion">
+												<div class="line row" ng-repeat="file in model.files">
+													<div class="col-md-12 form-group">
+														<div class="col-lg-2 col-md-12 col-sm-12 col-xs-12 kb-imp-title" ng-if="!model.uploadNewVersion">
+															<label for="file_{{$index}}" class="article-label">{{getUIMessage('ARTICLE', [$index+1])}}</label>
+														</div>
+														<div class="col-lg-10 col-md-12 col-md-12 col-xs-12 input-field-align">
+															<div class="col-lg-11 col-md-11 col-sm-11 col-xs-10">
+																<input class="value form-control input-field-size" type="text" ng-model="file.description" id="file_{{$index}}" ng-if="!model.uploadNewVersion"/>
+																<div class="col-xs-12 imp-doc-label">${IMPORTED_DOCUMENT}
+																	<span class="imp-file-ext">{{ file.extname }}</span>
+																</div>
+															</div>
+															<div class="col-lg-1 col-md-1 col-sm-1 col-xs-2">
+																<div class="icon icon-delete iconDel input-field-del-icon" ng-click="removeFileBeforeImport($index,$event,true)" id="file_remove_{{$index}}_old" aria-label="${REMOVE_DOCUMENT}" aria-describedby="desc_{{$index+1}}" title="${REMOVE_DOCUMENT}"/>
+															</div>
+															<span class="sr-only" id="desc_{{$index+1}}">${gs.getMessage('Remove document {0} from import file list', '{{file.description}}')}</span><br/>
+														</div>
+													</div>
+												</div>
+											</div>
+											<div class="files" ng-if="model.uploadNewVersion">
+												<div class="line row" ng-repeat="file in model.files" style="margin-top: 0px!important;">
+													<div class="col-md-12 form-group import-popup">
+														<div class="col-lg-10 col-md-12 col-md-12 col-xs-12 input-field-align import-popup">
+															<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 import-drag-drop-popup">
+																<div class="col-xs-12 imp-doc-label">
+																	${IMPORTED_DOCUMENT}
+																	<span class="imp-file-ext">
+																		{{file.extname | limitTo : 60}}{{file.extname.length > 60 ? '...' : ''}}
+																	</span>
+																	<div class="icon-delete iconDel" style="display:inline-block" ng-click="removeFileBeforeImport($index,$event,false)" id="file_remove_{{$index}}_new" aria-label="${REMOVE_DOCUMENT}" aria-describedby="desc_{{$index+1}}" title="${REMOVE_DOCUMENT}"/>
+																</div>
+															</div>
+															<span class="sr-only" id="desc_{{$index+1}}">${gs.getMessage('Remove document {0} from import file list', '{{file.description}}')}</span><br/>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="row" ng-if="model.uploadNewVersion ${AMP}${AMP} model.files.length > 0 ${AMP}${AMP} model.hasAttachments">
+										<div class="col-xs-12 import-popup">
+											<label>
+												${COPY_ATTACHMENTS}
+											</label>
+											<span class="input-group-checkbox input-group-md imp-file-ext" style="margin-left:20px">
+												<input type="checkbox" id="copyAttachments" ng-model="model.copyAttachments" class="checkbox wrap-text ng-cloak" aria-label="${COPY_ATTACHMENTS}" aria-describedby="${COPY_ATTACHMENTS}"/>
+												<label id="label_publish" for="copyAttachments"
+															   class="checkbox-label label-filters publish-large"></label>
+											</span>	
+										</div>
+									</div>
+									<div class="btnBottom row" style="{{!model.uploadNewVersion ? 'margin-right:45px' : ''}}">
+										<button class="{{model.uploadNewVersion ? 'btn btn-primary imp-btn-bottom import-button-popup' : 'btn btn-primary imp-btn-bottom'}}"  id="impStartBtnBottom"
+												ng-disabled="(model.unSupportedFiles.length >0 ${AMP}${AMP} model.files.length === 0) || model.files.length === 0 || (!model.selectedKnowledgeBase.value ${AMP}${AMP} model.selectedArticle.length === 0)"
+												ng-keydown="handleImportTabKey($event)"
+												ng-click="beginUpload()"
+												aria-label="${IMPORT}">${IMPORT}
+										</button>
+									</div>
+								</div>
+							</div>
+							<!--Progress Pane-->
+							<div id="importProgressPane" ng-if="model.status=='detailedUploading' ${AMP}${AMP} model.uploadNewVersion ${AMP}${AMP} (!model.completed || !model.showSuccessPane)" class="import-popup">
+								<div class="overallprogress import-popup">
+									<h3 class="overall-progress-label">
+										${UPLOADING_ARTICLE}
+										<span class="overall-prg-bar">${gs.getMessage('Uploading is {{progress()}}% complete')}</span>
+									</h3>
+									<div class="progress cprogress">
+										<div id="bigPrgsBar_0" role="progressbar" aria-label="${OVERALL_PROGRESS}" 
+											 aria-valuenow="{{progress()}}" aria-valuetext="${gs.getMessage('{0} percentage', '{{progress()}}')}" aria-valuemin="0" aria-valuemax="100" class="progress-bar" ng-style="{'width': progress() +'%'}"/>
+									</div>
+								</div>
+								<footer class="modal-footer cancel-footer">
+									<button id="ctne" ng-keydown="handleImportDlgCtnFootTabKey($event)" ng-disabled="!model.completed" class="btn btn-primary prg-con-btn import-button-popup" ng-click="showSuccessDialog()" aria-label="${CONTINUE_TO_VIEW}" aria-describedby="${CONTINUE_TO_VIEW}">${CONTINUE}</button>
+								</footer>
+							</div>
+							<!--Success Pane-->
+							<div id="sucessProgressPane" ng-if="model.status=='detailedUploading' ${AMP}${AMP} model.uploadNewVersion ${AMP}${AMP} model.completed ${AMP}${AMP} model.showSuccessPane">
+								<div class="container success-file-container">
+									<div class="row rowheader success-row-header" style="padding-top:0px !important">
+										<div class="col-xs-3 rcd">${ERROR_MESSAGE}</div>
+										<div class="col-xs-9">${SHORT_DESCRIPTION}</div>
+									</div>
+								</div>
+								<div class="container success-file-body">
+									<div  ng-repeat="file in model.canceledFiles" class="row rowheader success-file-row">
+										<div class="reason col-md-3 rcd-row">
+											{{file.failure}}
+										</div>
+										<div class="col-xs-9">
+											{{file.description | limitTo : 40}}{{file.description.length > 40 ? '...' : ''}}
+										</div>			
+									</div>
+									<div ng-repeat="file in model.files"  ng-if="file.failure" class="row rowheader success-file-row">
+										<div class="reason col-xs-3 rcd-row">
+											{{file.failure}}
+										</div>
+										<div class="kbDescription col-xs-9">
+											{{file.description | limitTo : 40}}{{file.description.length > 40 ? '...' : ''}}
+										</div>
+									</div>
+								</div>	
+							</div>
+						</div>
+						<!--progress pane -->
+
+						<div class="bigPane bigProgressPane" ng-if="model.status=='detailedUploading'  ${AMP}${AMP} (!model.completed || !model.showSuccessPane) ${AMP}${AMP} !model.uploadNewVersion" role="dialog" aria-label="${gs.getMessage('Importing {0} files', '{{model.files.length}}')}">
+							<div class="clickCatcher background-style"/>
+							<div class="modal-dialog modal-md" kb-show-modal=""
+								 show="{{model.status=='detailedUploading'  ${AMP}${AMP} !model.completed}}">
+								<div class="modal-content">
+									<header class="modal-header">
+										<h2 class="modal-title">
+											<span  class="progressHeaderTitle progress-title">
+												${UPLOADING_KNOWLEDGE_ARTICLES}
+											</span>
+											<button id="cancelBtn" ng-keydown="handleImportDlgCancelTabKey($event)" class="btn-icon close icon-cross btnClose crossIcon progress-close-button" ng-click="cancelImport()" focus="true" aria-label="${CANCEL}" aria-describedby="dc">
+												<span class="sr-only">${CANCEL}</span>
+											</button>
+										</h2>
+									</header>
+									<div class="modal-body">
+										<div class="overallprogress">
+											<h3 class="overall-progress-label">
+												${UPLOADING_ARTICLES}
+												<span class="overall-prg-bar">${gs.getMessage('Uploading is {{progress()}}% complete')}</span>
+											</h3>
+											<div class="progress cprogress">
+												<div id="bigPrgsBar_0" role="progressbar" aria-label="${OVERALL_PROGRESS}" 
+													 aria-valuenow="{{progress()}}" aria-valuetext="${gs.getMessage('{0} percentage', '{{progress()}}')}" aria-valuemin="0" aria-valuemax="100" class="progress-bar" ng-style="{'width': progress() +'%'}" />
+											</div>
+										</div>
+										<h4 id="progressModalTitle">
+											<span id="pdttl" class="progressHeaderTitle" ng-if = "!model.multipleFiles" >
+												${UPLOADING_SINGLE_ARTICLE}
+											</span>
+											<span tabindex="0" id="pdttl" class="progressHeaderTitle" ng-if= "model.multipleFiles" >
+												${UPLOADING_MULTIPLE_ARTICLES}
+											</span>
+											<span aria-expanded="false" class="collapsible" ng-click="toggleProgressTab()" aria-label="${TOGGLE}">
+												<i class="updown icon-chevron-right"></i>
+											</span>
+										</h4>										
+										<div class="files-section aboveContent">
+											<div class="content files">
+												<!--  imported files list -->
+												<div class="file" ng-repeat="file in model.files">
+													<div class="name cname">${ARTICLE} {{$index+1}}</div>
+													<div class="outerdiv">
+														<div class="innerdiv">
+															<h4 class="desc">{{file.description | limitTo : 26}}{{file.description.length > 27 ? '...' : ''}}
+																<span class="icon icon-delete cicon-delete" ng-click="cancelUpload($index,$event)" id="file_remove_{{$index}}" aria-label="${CANCEL_UPLOAD}" aria-describedby="cdesc_{{$index+1}}" title="${CANCEL_UPLOAD}"/>
+															</h4>
+														</div>
+														<div class="innerdiv">
+															<div class="progress cprogress">
+																<div id="bigPrgsBar_{{$index+1}}" role="progressbar" aria-label="${IMPORT_PROGRESS}" 
+																	 aria-valuenow="{{file.progress}}" aria-valuetext="${gs.getMessage('{0} percentage', '{{progress()}}')}"
+																	 aria-valuemin="0" aria-valuemax="100" class="progress-bar" ng-style="{'width': file.progress +'%'}"
+																	 aria-describedby="pdesc_{{$index+1}}" ng-keydown="handleProgressTabKey($event, $index)"/>
+																<span class="sr-only" id="pdesc_{{$index+1}}">${gs.getMessage('{0} of the import completed for document {1}', ['{{progress()}}', '{{file.description}}'])}</span>
+															</div>
+														</div>
+													</div>
+													<span class="sr-only" id="cdesc_{{$index+1}}">${gs.getMessage('Cancel uploading document {0}', '{{file.description}}')}</span>
+												</div>
+											</div>
+										</div>
+									</div>
+									<hr/>
+									<footer class="modal-footer cancel-footer">
+										<button id="ctne" ng-keydown="handleImportDlgCtnFootTabKey($event)" ng-disabled="!model.completed" class="btn btn-primary prg-con-btn" ng-click="showSuccessDialog()" aria-label="${CONTINUE_TO_VIEW}" aria-describedby="dc">${CONTINUE}
+										</button>
+									</footer>
+								</div>
+							</div>
+						</div>
+
+						<!--  success pane  -->
+
+						<div class="bigPane bigProgressPane" ng-if="model.status=='detailedUploading' ${AMP}${AMP} model.completed ${AMP}${AMP} model.showSuccessPane ${AMP}${AMP} !model.uploadNewVersion" role="dialog" aria-label="${gs.getMessage('Import completed {0}', '{{getUploadErrorMessage()}}')}">
+							<div class="clickCatcher" ng-click="fileDropped(File)" role="presentation"></div>
+							<div class="modal-dialog modal-md" kb-show-modal=""
+								 show="{{model.status=='detailedUploading' ${AMP}${AMP} model.completed}}">
+								<div class="modal-content">
+									<span class="sr-only" id="dc">${CLOSE_IMPORT_SUCCESS_DIALOG}</span>
+									<span class="sr-only" id="dval">${VIEW_IMPORTED_ARTICLE}</span>
+									<header class="modal-header">
+										<h2 class="modal-title">
+											<span  class="progressHeaderTitle success-title">
+												${IMPORT_COMPLETED}
+											</span>
+											<button id="sdcb" ng-keydown="handleSucImportDlgCloseTabKey($event)" class="btn-icon close icon-cross btnClose crossIcon" ng-click="fileDropped(File)" focus="true" aria-label="${CLOSE}" aria-describedby="dc">
+												<span class="sr-only">${CLOSE}</span>
+											</button>
+										</h2>
+									</header>
+									<div class="modal-body files-section content1">
+										<div class="container success-file-container">
+											<div class="row rowheader success-row-header">
+												<div class="col-xs-1">${HASH}</div>
+												<div class="col-xs-3 rcd">${RECORD_NUMBER}</div>
+												<div class="col-xs-8">${SHORT_DESCRIPTION}</div>
+											</div>
+										</div>
+										<div class="container success-file-body">
+											<div  ng-repeat="file in model.canceledFiles" class="row rowheader success-file-row">
+												<div class="col-xs-1"></div>
+												<div class="reason col-md-3 rcd-row">
+													{{file.failure}}
+												</div>
+												<div class="col-xs-8">
+													{{file.description | limitTo : 26}}{{file.description.length > 27 ? '...' : ''}}
+												</div>			
+											</div>
+											<div ng-repeat="file in model.files"  ng-if="file.failure" class="row rowheader success-file-row">
+												<div class="col-xs-1"></div>
+												<div class="reason col-xs-3 rcd-row">
+													{{file.failure}}
+												</div>
+												<div class="kbDescription col-xs-8">
+													{{file.description | limitTo : 26}}{{file.description.length > 27 ? '...' : ''}}
+												</div>
+											</div>
+											<div ng-repeat="file in model.files" ng-if="!file.failure" class="row rowheader success-file-row">
+												<div class="col-xs-1">{{ $index+1 }}</div>
+												<div class="col-xs-3 rcd-row">
+													<a class="kbNumber" id="kbNumLink" ng-href="kb_view.do?sysparm_article={{file.nowMeta.kb_number}}" target="_blank" ng-keydown="handleSucImportDlgkbNumTabKey($event)" aria-label="${VIEW_ARTICLE}" aria-describedby="dval">
+														{{file.nowMeta.kb_number}}
+													</a>
+												</div>
+												<div class="col-xs-8 kbDescription"
+													 ng-href="kb_view.do?sysparm_article={{file.nowMeta.kb_number}}" target="_blank" aria-label="${VIEW_ARTICLE}" aria-describedby="dval">
+													{{file.description | limitTo : 26}}{{file.description.length > 27 ? '...' : ''}}
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<g:if_polaris>
+					<g:then>
+						<link href="56adce7588559110f877eb3affeea3e3.cssdbx" rel="stylesheet" type="text/css"/>
+					</g:then>
+					<g:else>
+						<link href="f9ee869b73202300ec1f8d396bf6a7c8.cssdbx" rel="stylesheet" type="text/css"/>
+					</g:else>
+				</g:if_polaris>
+			</g:inline>
+		</j:otherwise>
+	</j:choose>	
+</j:jelly>

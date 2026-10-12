@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:evaluate var = "jvar_lcReport" object = "true">
+	var lifeCycleReport = new CSDMCMDBUtil().getLifeCycleDiscrepancyReport(false);
+	lifeCycleReport;
+</g:evaluate>
+<g:evaluate var = "jvar_hwReport" object = "true">
+	var hwMappingReport = new CSDMCMDBUtil().getAssetCIHWDiscrepancyReport();
+	hwMappingReport;
+</g:evaluate>
+<g:evaluate var = "jvar_installReport" object = "true">
+	var installMappingReport = new CSDMCMDBUtil().getAssetCIInstallDiscrepancyReport();
+	installMappingReport;
+</g:evaluate>
+<g:evaluate var = "jvar_estimatedMin" object = "true">
+	var estimatedTime = new CSDMCMDBUtil().getEstimatedDataMigrationTime();
+	estimatedTime;
+</g:evaluate>
+
+<div style="margin-bottom:30px;">
+   <div style="padding:$now-global-space--md;">
+      <button style="padding:5px; float:right" onclick="refresh()" class="btn btn-primary">${gs.getMessage("Refresh");}</button>
+   </div>
+   <div>
+   		${gs.getMessage("The results of the discrepency report is detailed below. There are action item(s) listed to rectify the issue(s) identified. Each action item will open a new window to perform the updates needed. Once completed, click on the refresh button to re-evaluate the report.");}
+   </div>
+</div>
+
+<j:if test="${jvar_lcReport.length > 0}">
+<b>${gs.getMessage("The following status field values have no matching life cycle mapping rule or the rule is inactive:");}</b>
+<ul>
+<j:forEach items="${jvar_lcReport}" var="jvar_item">
+<li>${jvar_item[0]}</li>
+</j:forEach>
+</ul>
+<button style="padding:5px;margin-left:20px" onclick="createStubsAndFilter('life_cycle_mapping')" class="btn btn-primary ">${gs.getMessage("Fix on mapping table");}</button>
+<div style="margin-top:30px;"></div>
+</j:if>
+
+
+<j:if test="${jvar_hwReport.length > 0}">
+<b>${gs.getMessage("The following hardware statuses are not present in asset to CI mappings or the mapping is inactive:");}</b>
+<ul>
+<j:forEach items="${jvar_hwReport}" var="jvar_item">
+<li>${jvar_item[0]}</li>
+</j:forEach>
+</ul>
+<button style="padding:5px;margin-left:20px" onclick="createStubsAndFilter('alm_hardware_state_mapping')" class="btn btn-primary">${gs.getMessage("Fix on related mapping table");}</button>
+<div style="margin-top:30px;"></div>
+</j:if>
+
+<j:if test="${jvar_installReport.length > 0}">
+<b>${gs.getMessage("The following install statuses are not present in asset to CI mappings or the mapping is inactive");}</b>
+<ul>
+<j:forEach items="${jvar_installReport}" var="jvar_item">
+<li>${jvar_item[0]}</li>
+</j:forEach>
+</ul>
+<button style="padding:5px;margin-left:20px" onclick="createStubsAndFilter('alm_asset_ci_state_mapping')" class="btn btn-primary">${gs.getMessage("Fix on related mapping table");}</button>
+<div style="margin-top:30px;"></div>
+</j:if>
+
+<j:if test="${jvar_lcReport.length == 0 &amp;&amp; jvar_hwReport.length == 0 &amp;&amp; jvar_installReport.length == 0}">
+<div>${gs.getMessage("No discrepancies found, please proceed with data migration");}</div>
+<div style="margin-bottom:20px;">${gs.getMessage("Estimated time for data migration in minutes:");} ${jvar_estimatedMin}</div>
+<button style="padding:5px;margin-right:10px" onclick="startBulkPopulation()" class="btn btn-primary">${gs.getMessage("Migrate data");}</button>
+</j:if>
+</j:jelly>

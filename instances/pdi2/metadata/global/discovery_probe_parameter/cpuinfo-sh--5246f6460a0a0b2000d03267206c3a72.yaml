@@ -1,0 +1,71 @@
+_meta:
+  hash: 1f9b970429d5a65c7c4394967793c045d29eaa20ea97c3db2d67e31d03a5233a
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2007-08-11 00:16:08
+  sys_id: 5246f6460a0a0b2000d03267206c3a72
+  sys_mod_count: '3'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_5246f6460a0a0b2000d03267206c3a72
+  sys_updated_by: glide.maint
+  sys_updated_on: 2009-11-25 20:06:23
+active: 'false'
+name: cpuinfo.sh
+probe: 5246daf50a0a0b2000741895af5905b5
+sys_name: cpuinfo.sh
+sys_policy: ''
+value: |-
+  #!/sbin/sh
+  OS_REL=`uname -r | sed -e 's/^[AB]\.//' -e 's/\..*//'`
+  cpu_type=paXXXX
+  if [ "$OS_REL" -ge 11 ]; then
+      typeset -i2 bin
+      bin=`getconf CPU_CHIP_TYPE`
+      typeset -i16 hex
+      hex=2#`echo $bin | sed -e 's/2#//' -e 's/.....$//'`
+      model_num=`echo $hex | cut -c4-`
+      case $model_num in
+          b) cpu_type=PA7200   ;;
+          d) cpu_type=PA7100LC ;;
+          e) cpu_type=PA8000   ;;
+          f) cpu_type=PA7300LC ;;
+          10) cpu_type=PA8200   ;;
+          11) cpu_type=PA8500   ;;
+          12) cpu_type=PA8600   ;;
+          13) cpu_type=PA8700   ;;
+          14) cpu_type=PA8800   ;;
+          15) cpu_type=PA8750   ;;
+          *) cpu_type=paXXXX   ;;
+          *) cpu_type=paXXXX   ;;
+      esac
+  else
+      model_num=`model`
+      model_num=`echo $model_num | sed -e 's/^9000\///'`
+      l=`expr length $model_num`
+      if [ $l -gt 5 ]; then
+          model_num=`echo $model_num | sed -e 's/^[78]..\///'`
+      else
+          model_num=`echo $model_num | sed -e 's/\/.*//'`
+      fi
+      if [ $model_num = B1000 -o $model_num = B2000 ]; then
+          cpu_type=PA8500
+      else
+            for sm in /usr/lib/sched.models /usr/sam/lib/mo/sched.models /opt/langtools/lib/sched.models
+             do
+                  if [ -s $sm ]; then
+                      h=`awk '(NF>=3&&$1=="'$model_num'"){print $3;exit}' $sm`
+                      if [ -n "$h" ]; then
+                          cpu_type=$h
+                          break
+                      fi
+                  fi
+             done
+      fi
+  fi
+  echo "cpu:$cpu_type"
+  CPU_COUNT=`ioscan -fnkC processor | grep PROCESSOR | wc -l`
+  echo "count:$CPU_COUNT"
+value_script: ''

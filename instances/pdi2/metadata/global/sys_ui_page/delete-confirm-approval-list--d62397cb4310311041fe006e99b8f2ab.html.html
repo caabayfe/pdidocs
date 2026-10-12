@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:evaluate var="jvar_has_flow" jelly="true" object="true">
+	var approvalSysIds = jelly.sysparm_obj_list;
+	var flowApprovalsUtil = new FlowApprovalsUtil();
+	var answer = flowApprovalsUtil.hasFlowWaitingForApprovals(approvalSysIds);
+	if (!answer)
+		answer = flowApprovalsUtil.hasWorkflowWaitingForApprovals(approvalSysIds);
+	answer;
+</g:evaluate>
+    <div class="delete_confirm_list">
+    <j:set var="jvar_has_cascade_del" value="${sysparm_has_cascade_del}"/>
+    <j:set var="jvar_delObjList" value="${sysparm_del_obj_list}"/>
+    <j:set var="jvar_selObjName" value="${sysparm_sel_obj_name}"/>
+    <j:choose>
+		<j:when test="${jvar_has_cascade_del == 'false'}">
+			<j:choose>
+				<j:when test="${sysparm_is_domain_used == 'true'}">
+					<div class="delete_confirm_list_header">
+						${gs.getMessage('Warning!')}
+					</div>
+				    <div>${gs.getMessage('One or more data/process records fall under this domain. Do you still want to delete?')}</div>
+				</j:when>
+				<j:when test="${jvar_has_flow == 'true'}">
+					<div class="delete_confirm_list_header">
+						${gs.getMessage('Warning!')}
+					</div>
+					<div>${gs.getMessage('This list contains records associated with a Flow or Workflow. Deleting any of these records will prevent the Flow or Workflow from completing. Are you sure you want to delete the selected record(s)?')}</div><br/>
+				</j:when>
+				<j:otherwise>
+					<div>${gs.getMessage('Delete the selected record(s)?')}</div><br/>
+				</j:otherwise>
+			</j:choose>
+		</j:when>
+		<j:otherwise>
+			<j:choose>
+				<j:when test="${sysparm_table_name == 'sys_attachment'}">
+					<div> ${gs.getMessage('Delete the selected record(s)?')} </div> <br/>
+				</j:when>
+				<j:otherwise>
+					<div class="delete_confirm_list_header">
+						${gs.getMessage('Warning!')}
+					</div>
+					<j:choose>
+						<j:when test="${!empty(jvar_selObjName)}">
+							<div>
+								${gs.getMessage('Deleting the selected records will result in the automatic deletion of related records:')}
+							</div>
+							<div class="delete_confirm_list_body">
+							<p>${gs.getMessage('For example, the record')} '<b><i> ${jvar_selObjName} </i></b>' ${gs.getMessage('has the following dependencies:')} </p>
+							<!-- display related objects table -->
+							<g:macro_invoke macro="show_cascade_del_objs_table" obj_list="${jvar_delObjList}" />
+							</div>
+						</j:when>
+						<j:otherwise>
+							<div>
+								${gs.getMessage('Deleting the selected record will result in the automatic deletion of the following related records:')}
+							</div>
+							<!-- display related objects table -->
+							<g:macro_invoke macro="show_cascade_del_objs_table" obj_list="${jvar_delObjList}" />
+						</j:otherwise>
+					</j:choose>
+					<div>
+						${gs.getMessage('Note that the related records may trigger their own cascade deletions.')}<br/>
+						${gs.getMessage('Proceed?')}
+					</div>
+				</j:otherwise>
+			</j:choose>
+	   </j:otherwise>
+    </j:choose>
+    <div align="right" class="modal-footer flex">
+        <g:dialog_buttons_ok_cancel ok="return ok()" cancel="return cancel()" ok_type="button" ok_style_class="btn btn-destructive" ok_text="${gs.getMessage('Delete')}" cancel_type="button"/>
+    </div>
+
+    </div>
+</j:jelly>

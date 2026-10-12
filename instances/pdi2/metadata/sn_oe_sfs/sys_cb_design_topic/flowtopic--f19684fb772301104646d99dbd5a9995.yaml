@@ -1,0 +1,712 @@
+_meta:
+  hash: ae6e7a2ca67392d1bd4f8e784a0249509d03131dc4380e191e1f99325f1557e9
+  hash_version: 1
+  scope: sn_oe_sfs
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2022-05-25 11:28:51
+  sys_domain: global
+  sys_id: f19684fb772301104646d99dbd5a9995
+  sys_mod_count: '10'
+  sys_package: 53b1b0e79761011018b2fa98c253afcc
+  sys_scope: 53b1b0e79761011018b2fa98c253afcc
+  sys_update_name: sys_cb_design_topic_f19684fb772301104646d99dbd5a9995
+  sys_updated_by: admin
+  sys_updated_on: 2022-05-30 15:32:46
+compiled_topic: b596c0fb772301104646d99dbd5a995c
+design_definition: '{"type":"FlowTopic","type":"FlowTopic","triggers":[{"type":"Trigger","name":"85c6a8f927224cf8bb2bd27b318791f2","triggerType":"request","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"id":"85c6a8f927224cf8bb2bd27b318791f2"}],"goals":[{"name":"primary","trigger_id":"85c6a8f927224cf8bb2bd27b318791f2","nodes":[{"type":"StartGoal","type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"6988b72ebb644c26a3575acef20911c3","name":"Start"},{"type":"TerminateGoal","type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"efe7ac16acd74160b057a9e5ceaad576","name":"End"},{"type":"ReferenceChoiceInputPrompt","type":"ReferenceChoiceInputPrompt","mode":"external","id":"7a2f68d59bf04d09854f2167b10c8500","name":"choose document table","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"variable_id":"a63edfe8bebe4cfc8a341613152a6e59","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Choose the document table\", vaContext.getRequesterLang())"},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var gr = new GlideAggregate(''awa_service_channel''); //GlideAggregate query\n    gr.addAggregate(''count'');\n    gr.groupBy(''workitem_table''); //Group aggregate by work_item table field\n    gr.query();\n    //options.push({''value'':''test'',''label'':''test''});\n    while (gr.next()) {\n        //options.push(gr.getValue(''workitem_table''));\n        options.push({ ''value'': gr.getValue(''workitem_table''), ''label'': gr.getValue(''workitem_table'') })\n    }\n    return options;\n})()","metadataScript":"","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"There are no active service channels in your instance.\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var options = [];\n    var gr = new GlideAggregate(''awa_service_channel''); //GlideAggregate query\n    gr.addAggregate(''count'');\n    gr.groupBy(''workitem_table''); //Group aggregate by work_item table field\n    gr.query();\n    //options.push({''value'':''test'',''label'':''test''});\n    while (gr.next()) {\n        //options.push(gr.getValue(''workitem_table''));\n        options.push({ ''value'': gr.getValue(''workitem_table''), ''label'': gr.getValue(''workitem_table'') })\n    }\n    return options;\n})()"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"one service channel","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var tablesString = vaVars.documentTables;\n    var tables = JSON.parse(tablesString);\n    if(tables.length === 1){\n    vaVars.documentTable = tables[0];\n    }\n    return tables.length === 1;\n})()\n"},"id":"abd8e3ddc369401b886c8959db28eea6","name":"one service channel"},{"type":"Branch","type":"Branch","label":"multiple service channels","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var tablesString = vaVars.documentTables;\n    var tables = JSON.parse(tablesString);\n    return tables.length > 1;\n})()\n"},"id":"4c3bf4eade974864961f388326f55022","name":"multiple service channels"},{"type":"Branch","type":"Branch","label":"no service channel","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var tablesString = vaVars.documentTables;\n    var tables = JSON.parse(tablesString);\n    return tables.length == 0;\n})()\n"},"id":"f1365933e02942d0ac8b8e60b6329ea3","name":"no service channel"}],"id":"63559385f0b54b74bc6ed9da9a011597","goal_id":"primary"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\nvar options = [];\nvar gr = new GlideAggregate(''awa_service_channel''); //GlideAggregate query\ngr.addAggregate(''count'');\ngr.addQuery(''active'',true);\ngr.groupBy(''workitem_table''); //Group aggregate by work_item table field\ngr.query();\nwhile(gr.next()){\n   options.push(gr.getValue(''workitem_table''));\n}\nvaVars.documentTables = JSON.stringify(options);\n})()\n","id":"7b7c7694b54d44b3b821b1b8e298e790","name":"Fetch Active Service Channels","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"There are no active service channels available in the instance\", vaContext.getRequesterLang())"}],"id":"932512c14a4b4f069b58622fe218e18a","name":"No Service channel message","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"InputPrompt","type":"InputPrompt","variable_id":"bb6ce3e0102b4eb9ae5a05f615e99e02","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Input document number\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"d3e0680e0190493d9b7975899d9f2444","name":"input document number","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"formatType":"Text","validationScript":""},{"type":"TableOutput","type":"TableOutput","mode":"external","conditionType":"simple","query":"(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var output = util.queryQueueCondition(vaVars.documentTable,vaInputs.input_document_number);\n    var rows = output.validqs;\n    vaVars.validQueues = JSON.stringify(rows);\n    var headers = [''Queues with matching Conditions''];\n    \n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()\n","title":{"type":"String","type":"String","mode":"string","value":""},"columns":[],"showColumnHeaders":true,"noResultsMessage":{"type":"String","type":"String","mode":"string","value":"There are no active matching queues. Please check logs with the message - ''Invalid query detected'' for any queues with invalid conditions."},"id":"78d510f35098476e96a297194902d584","name":"QueryQueueCondition","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    vaVars.documentTable = vaInputs.choose_document_table.getValue();\n})()\n","id":"6b52ac24e3034dc69a2549f82f1aa384","name":"set documentTable","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"invalid document","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var documentSysId = util.getDocumentSysId(vaVars.documentTable, vaInputs.input_document_number);\n    return documentSysId ==='''';\n})()\n"},"id":"0fc4bdc7200b4f388bb84a1cfd4cb314","name":"invalid document"},{"type":"Branch","type":"Branch","label":"valid document","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var documentSysId = util.getDocumentSysId(vaVars.documentTable, vaInputs.input_document_number);\n    vaVars.documentSysId = documentSysId;\n    return documentSysId!='''';\n})()\n"},"id":"581b6f12c47c4dd6b9a70a4842035219","name":"valid document"}],"id":"6631ce18485f4dc18e1ee3f371d58f91","goal_id":"primary"},{"type":"ChoiceInputPrompt","type":"ChoiceInputPrompt","expression_mode":"simple","metadataScript":"","cardName":"","cardFields":[],"id":"16f9f39f5c7d4647bf90d5a8d121d76f","name":"re-enter input","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"variable_id":"734c40b1982e4d2eb52d39c791e1cfa0","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"The document is not a valid document. Do you want to enter a different document number?\", vaContext.getRequesterLang())"},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Re enter document number","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"re_enter_input=yes"},"id":"76ed4332a5234be6828a9662575bddf4","name":"Re enter document number"},{"type":"Branch","type":"Branch","label":"Donot re-enter document number","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"re_enter_input=no"},"id":"d13c4347f72d46ab8a66486803780527","name":"Donot re-enter document number"}],"id":"cd04a55a7f2d4f69990a73d3d68c0564","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    var output = JSON.parse(vaVars.validQueues);\n    var response = '''';\n    if(output.length > 0){\n     //it means there are no matching queues found. So inform admin to check for responders status   \n    response = gs.getMessage(''Check for warning messages on responders from health check report'');\n    }\n    return response;\n})()\n"}],"id":"332c66874021451b8a9ba34dc400d1b5","name":"checkWarningMessageInfo","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"work item does not exist","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var workItemSysId = util.getWorkItemSysId(vaVars.documentTable, vaVars.documentSysId);\n    return workItemSysId ==='''';\n})()\n"},"id":"a0ecca40fe9c4a3f9f741ad6ba16c69b","name":"work item does not exist"},{"type":"Branch","type":"Branch","label":"work item exist","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var workItemSysId = util.getWorkItemSysId(vaVars.documentTable, vaVars.documentSysId);\n    vaVars.workItemSysId = workItemSysId;\n    return workItemSysId !='''';\n})()\n"},"id":"13d66dde8c1040fdaba5c5c698e6f8e1","name":"work item exist"}],"id":"81c8f8b1802e486d9e6a0adeccf76366","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Work Item for the given document number {0} exists. Work Item Sys Id - {1}\", vaContext.getRequesterLang(), [vaInputs.input_document_number,vaVars.workItemSysId])"}],"id":"ec9c52382b814de88624a3546cbfe3ba","name":"Work Item exists message","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false}],"edges":[{"type":"Edge","source_node_id":"d3e0680e0190493d9b7975899d9f2444","target_node_id":"6631ce18485f4dc18e1ee3f371d58f91","id":"4809dd91d699417e93ed76f3fd3d11d6"},{"type":"Edge","source_node_id":"63559385f0b54b74bc6ed9da9a011597","target_node_id":"d3e0680e0190493d9b7975899d9f2444","branch_id":"abd8e3ddc369401b886c8959db28eea6","id":"41823c27800a4c7eab2ae7fe119a9416","name":"abd8e3ddc369401b886c8959db28eea6"},{"type":"Edge","source_node_id":"63559385f0b54b74bc6ed9da9a011597","target_node_id":"7a2f68d59bf04d09854f2167b10c8500","branch_id":"4c3bf4eade974864961f388326f55022","id":"32e6023dbf6f4a0292d4d31a5ea032b0","name":"4c3bf4eade974864961f388326f55022"},{"type":"Edge","source_node_id":"6988b72ebb644c26a3575acef20911c3","target_node_id":"7b7c7694b54d44b3b821b1b8e298e790","id":"dd72357399ca4b10ab726a7ff800247e"},{"type":"Edge","source_node_id":"7b7c7694b54d44b3b821b1b8e298e790","target_node_id":"63559385f0b54b74bc6ed9da9a011597","id":"57430bb313ea48eea9cc028c3fa9036b"},{"type":"Edge","source_node_id":"63559385f0b54b74bc6ed9da9a011597","target_node_id":"932512c14a4b4f069b58622fe218e18a","branch_id":"f1365933e02942d0ac8b8e60b6329ea3","id":"aa7c0f3a4dc54ec8bb4d17e10b8ad997","name":"f1365933e02942d0ac8b8e60b6329ea3"},{"type":"Edge","source_node_id":"932512c14a4b4f069b58622fe218e18a","target_node_id":"efe7ac16acd74160b057a9e5ceaad576","id":"95c7e25c39134ac9be00cab4ea9bd6ff"},{"type":"Edge","source_node_id":"7a2f68d59bf04d09854f2167b10c8500","target_node_id":"6b52ac24e3034dc69a2549f82f1aa384","id":"af9afaade7984d6e96e99fb749087cd4"},{"type":"Edge","source_node_id":"6b52ac24e3034dc69a2549f82f1aa384","target_node_id":"d3e0680e0190493d9b7975899d9f2444","id":"6474f9324bf048938efdf193918f357a"},{"type":"Edge","source_node_id":"6631ce18485f4dc18e1ee3f371d58f91","target_node_id":"16f9f39f5c7d4647bf90d5a8d121d76f","branch_id":"0fc4bdc7200b4f388bb84a1cfd4cb314","id":"3b31670e82de4833b8d2b0ce4659b3bc","name":"0fc4bdc7200b4f388bb84a1cfd4cb314"},{"type":"Edge","source_node_id":"16f9f39f5c7d4647bf90d5a8d121d76f","target_node_id":"cd04a55a7f2d4f69990a73d3d68c0564","id":"5e966a752df84c1a9eaed43d615e021f"},{"type":"Edge","source_node_id":"cd04a55a7f2d4f69990a73d3d68c0564","target_node_id":"d3e0680e0190493d9b7975899d9f2444","branch_id":"76ed4332a5234be6828a9662575bddf4","id":"7749fbfa58604a2c9ddcb0f7a4396fa2","name":"76ed4332a5234be6828a9662575bddf4"},{"type":"Edge","source_node_id":"cd04a55a7f2d4f69990a73d3d68c0564","target_node_id":"efe7ac16acd74160b057a9e5ceaad576","branch_id":"d13c4347f72d46ab8a66486803780527","id":"97fc5550046f4084b088bd5dc2544461","name":"d13c4347f72d46ab8a66486803780527"},{"type":"Edge","source_node_id":"78d510f35098476e96a297194902d584","target_node_id":"332c66874021451b8a9ba34dc400d1b5","id":"46f9c6314fc942e4a6d0ec9e7abe5aaf"},{"type":"Edge","source_node_id":"332c66874021451b8a9ba34dc400d1b5","target_node_id":"efe7ac16acd74160b057a9e5ceaad576","id":"bb2aa4d52e274377bf38c5075d35a45f"},{"type":"Edge","source_node_id":"6631ce18485f4dc18e1ee3f371d58f91","target_node_id":"81c8f8b1802e486d9e6a0adeccf76366","branch_id":"581b6f12c47c4dd6b9a70a4842035219","id":"dc3e5f2a993e497bbddd30d8646b3e78","name":"581b6f12c47c4dd6b9a70a4842035219"},{"type":"Edge","source_node_id":"81c8f8b1802e486d9e6a0adeccf76366","target_node_id":"78d510f35098476e96a297194902d584","branch_id":"a0ecca40fe9c4a3f9f741ad6ba16c69b","id":"d7c2f43316534b6ba38460e8f834de6c","name":"a0ecca40fe9c4a3f9f741ad6ba16c69b"},{"type":"Edge","source_node_id":"81c8f8b1802e486d9e6a0adeccf76366","target_node_id":"ec9c52382b814de88624a3546cbfe3ba","branch_id":"13d66dde8c1040fdaba5c5c698e6f8e1","id":"2f1280163bb5426ea17e21232d23130b","name":"13d66dde8c1040fdaba5c5c698e6f8e1"},{"type":"Edge","source_node_id":"ec9c52382b814de88624a3546cbfe3ba","target_node_id":"efe7ac16acd74160b057a9e5ceaad576","id":"fe6641046e9a4bc0a6b4355f70c5e0f2"}],"id":"primary"}],"script_variables":[{"type":"VariableDto","type":"String","name":"documentTables","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"4d66c08510ad4c4fbe48bc7930161dfe","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"documentTable","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"d0bdc828538f41739e82eb20cf0fe728","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"documentSysId","value":{"type":"String","type":"String","mode":"string","value":"null"},"list":false,"id":"4048f6720c25404fba5a2de4bb5b3a80","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"validQueues","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"de0e64a6fef847f389d343f7fc2e0654","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"workItemSysId","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"dad05703c88344aba620e15bf6e2ee84","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Choice","type":"Choice","choices":[],"id":"a63edfe8bebe4cfc8a341613152a6e59","name":"choose_document_table","formatType":"text","secure":false,"sensitive":false,"list":false,"table":""},{"type":"VariableDto","type":"String","name":"input_document_number","list":false,"id":"bb6ce3e0102b4eb9ae5a05f615e99e02","formatType":"Text","validationScript":"","secure":false,"sensitive":false},{"type":"Choice","type":"Choice","choices":[{"name":"Yes","element":"yes"},{"name":"No","element":"no"}],"id":"734c40b1982e4d2eb52d39c791e1cfa0","name":"re_enter_input","formatType":"text","secure":false,"sensitive":false,"list":false}],"applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    /* Return true or false to indicate if the topic or topic node can run\n       and be discoverable (or not). Using the format vaContext.liveagent_[var_name] For example:\n\n       var applicability = vaContext.liveagent_portal == ''csm'' ? true : false;\n       return applicability;\n    */\n    return false;\n})()\n"},"roles":[],"scope":"434a64fd531db410f738ddeeff7b12c7","domain":"global","topic_type":"STANDARD","channels":[],"id":"d0796d0f77e301104646d99dbd5a994b","name":"WorkItem not created","key_phrases":["workitem not created"],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"library":false,"readOnly":false,"nluMapping":"[]"}'
+design_topic_id: d0796d0f77e301104646d99dbd5a994b
+graph: |-
+  {
+    "graph_api_version": "1.0.41",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "6988b72ebb644c26a3575acef20911c3": {
+            "id": "6988b72ebb644c26a3575acef20911c3",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "efe7ac16acd74160b057a9e5ceaad576": {
+            "id": "efe7ac16acd74160b057a9e5ceaad576",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "7a2f68d59bf04d09854f2167b10c8500": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "choose document table",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Choose the document table"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "a63edfe8bebe4cfc8a341613152a6e59",
+            "id": "7a2f68d59bf04d09854f2167b10c8500",
+            "mode": "external",
+            "script": "(function execute() {\n    var options = [];\n    var gr = new GlideAggregate('awa_service_channel'); //GlideAggregate query\n    gr.addAggregate('count');\n    gr.groupBy('workitem_table'); //Group aggregate by work_item table field\n    gr.query();\n    //options.push({'value':'test','label':'test'});\n    while (gr.next()) {\n        //options.push(gr.getValue('workitem_table'));\n        options.push({ 'value': gr.getValue('workitem_table'), 'label': gr.getValue('workitem_table') })\n    }\n    return options;\n})()",
+            "metadataScript": "",
+            "cardData": {},
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "There are no active service channels in your instance."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var options = [];\n    var gr = new GlideAggregate('awa_service_channel'); //GlideAggregate query\n    gr.addAggregate('count');\n    gr.groupBy('workitem_table'); //Group aggregate by work_item table field\n    gr.query();\n    //options.push({'value':'test','label':'test'});\n    while (gr.next()) {\n        //options.push(gr.getValue('workitem_table'));\n        options.push({ 'value': gr.getValue('workitem_table'), 'label': gr.getValue('workitem_table') })\n    }\n    return options;\n})()",
+              "mode": "external_script"
+            },
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false
+          },
+          "63559385f0b54b74bc6ed9da9a011597": {
+            "id": "63559385f0b54b74bc6ed9da9a011597",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "7b7c7694b54d44b3b821b1b8e298e790": {
+            "id": "7b7c7694b54d44b3b821b1b8e298e790",
+            "name": "Fetch Active Service Channels",
+            "script": "(function execute() {\nvar options = [];\nvar gr = new GlideAggregate('awa_service_channel'); //GlideAggregate query\ngr.addAggregate('count');\ngr.addQuery('active',true);\ngr.groupBy('workitem_table'); //Group aggregate by work_item table field\ngr.query();\nwhile(gr.next()){\n   options.push(gr.getValue('workitem_table'));\n}\nvaVars.documentTables = JSON.stringify(options);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "932512c14a4b4f069b58622fe218e18a": {
+            "id": "932512c14a4b4f069b58622fe218e18a",
+            "stepType": "TextOutput",
+            "name": "No Service channel message",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "There are no active service channels available in the instance"
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "0421b0fd76604d6482af87cdda0e7c5a"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "d3e0680e0190493d9b7975899d9f2444": {
+            "id": "d3e0680e0190493d9b7975899d9f2444",
+            "stepType": "Prompt",
+            "name": "input document number",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Input document number"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "bb6ce3e0102b4eb9ae5a05f615e99e02",
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            }
+          },
+          "78d510f35098476e96a297194902d584": {
+            "id": "78d510f35098476e96a297194902d584",
+            "stepType": "TableOutput",
+            "name": "QueryQueueCondition",
+            "header": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "displayColumnHeaders": true,
+            "dataSourceType": "script",
+            "script": "(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var output = util.queryQueueCondition(vaVars.documentTable,vaInputs.input_document_number);\n    var rows = output.validqs;\n    vaVars.validQueues = JSON.stringify(rows);\n    var headers = ['Queues with matching Conditions'];\n    \n    return {\n        columnHeaders: headers,\n        columnValues: rows\n    };\n})()\n",
+            "tableName": "",
+            "sortByColumns": [],
+            "tableCondition": {
+              "value": "",
+              "mode": "glide_query"
+            },
+            "columns": [
+              {
+                "key": "",
+                "value": "",
+                "label": ""
+              }
+            ],
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "There are no active matching queues. Please check logs with the message - 'Invalid query detected' for any queues with invalid conditions."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "6b52ac24e3034dc69a2549f82f1aa384": {
+            "id": "6b52ac24e3034dc69a2549f82f1aa384",
+            "name": "set documentTable",
+            "script": "(function execute() {\n    vaVars.documentTable = vaInputs.choose_document_table.getValue();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "6631ce18485f4dc18e1ee3f371d58f91": {
+            "id": "6631ce18485f4dc18e1ee3f371d58f91",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "16f9f39f5c7d4647bf90d5a8d121d76f": {
+            "stepType": "ChoicePrompt",
+            "name": "re-enter input",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "The document is not a valid document. Do you want to enter a different document number?"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "734c40b1982e4d2eb52d39c791e1cfa0",
+            "id": "16f9f39f5c7d4647bf90d5a8d121d76f",
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false
+          },
+          "cd04a55a7f2d4f69990a73d3d68c0564": {
+            "id": "cd04a55a7f2d4f69990a73d3d68c0564",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "332c66874021451b8a9ba34dc400d1b5": {
+            "id": "332c66874021451b8a9ba34dc400d1b5",
+            "stepType": "TextOutput",
+            "name": "checkWarningMessageInfo",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var output = JSON.parse(vaVars.validQueues);\n    var response = '';\n    if(output.length > 0){\n     //it means there are no matching queues found. So inform admin to check for responders status   \n    response = gs.getMessage('Check for warning messages on responders from health check report');\n    }\n    return response;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "81c8f8b1802e486d9e6a0adeccf76366": {
+            "id": "81c8f8b1802e486d9e6a0adeccf76366",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "ec9c52382b814de88624a3546cbfe3ba": {
+            "id": "ec9c52382b814de88624a3546cbfe3ba",
+            "stepType": "TextOutput",
+            "name": "Work Item exists message",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "Work Item for the given document number "
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.input_document_number}}",
+                          "displayValue": "Input Variables➛Input Document Number"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": " exists. Work Item Sys Id - "
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.workItemSysId}}",
+                          "displayValue": "Script Variables➛workItemSysId"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "2e15745441224dceadb39a8c5ae59d80"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "4809dd91d699417e93ed76f3fd3d11d6",
+            "edgeType": "Edge",
+            "source": "d3e0680e0190493d9b7975899d9f2444",
+            "target": "6631ce18485f4dc18e1ee3f371d58f91",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "41823c27800a4c7eab2ae7fe119a9416",
+            "edgeType": "Branch",
+            "source": "63559385f0b54b74bc6ed9da9a011597",
+            "target": "d3e0680e0190493d9b7975899d9f2444",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var tablesString = vaVars.documentTables;\n    var tables = JSON.parse(tablesString);\n    if(tables.length === 1){\n    vaVars.documentTable = tables[0];\n    }\n    return tables.length === 1;\n})()\n"
+            },
+            "label": "one service channel"
+          },
+          {
+            "id": "32e6023dbf6f4a0292d4d31a5ea032b0",
+            "edgeType": "Branch",
+            "source": "63559385f0b54b74bc6ed9da9a011597",
+            "target": "7a2f68d59bf04d09854f2167b10c8500",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var tablesString = vaVars.documentTables;\n    var tables = JSON.parse(tablesString);\n    return tables.length > 1;\n})()\n"
+            },
+            "label": "multiple service channels"
+          },
+          {
+            "id": "dd72357399ca4b10ab726a7ff800247e",
+            "edgeType": "Edge",
+            "source": "6988b72ebb644c26a3575acef20911c3",
+            "target": "7b7c7694b54d44b3b821b1b8e298e790",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "57430bb313ea48eea9cc028c3fa9036b",
+            "edgeType": "Edge",
+            "source": "7b7c7694b54d44b3b821b1b8e298e790",
+            "target": "63559385f0b54b74bc6ed9da9a011597",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "aa7c0f3a4dc54ec8bb4d17e10b8ad997",
+            "edgeType": "Branch",
+            "source": "63559385f0b54b74bc6ed9da9a011597",
+            "target": "932512c14a4b4f069b58622fe218e18a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var tablesString = vaVars.documentTables;\n    var tables = JSON.parse(tablesString);\n    return tables.length == 0;\n})()\n"
+            },
+            "label": "no service channel"
+          },
+          {
+            "id": "95c7e25c39134ac9be00cab4ea9bd6ff",
+            "edgeType": "Edge",
+            "source": "932512c14a4b4f069b58622fe218e18a",
+            "target": "efe7ac16acd74160b057a9e5ceaad576",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "af9afaade7984d6e96e99fb749087cd4",
+            "edgeType": "Edge",
+            "source": "7a2f68d59bf04d09854f2167b10c8500",
+            "target": "6b52ac24e3034dc69a2549f82f1aa384",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6474f9324bf048938efdf193918f357a",
+            "edgeType": "Edge",
+            "source": "6b52ac24e3034dc69a2549f82f1aa384",
+            "target": "d3e0680e0190493d9b7975899d9f2444",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3b31670e82de4833b8d2b0ce4659b3bc",
+            "edgeType": "Branch",
+            "source": "6631ce18485f4dc18e1ee3f371d58f91",
+            "target": "16f9f39f5c7d4647bf90d5a8d121d76f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var documentSysId = util.getDocumentSysId(vaVars.documentTable, vaInputs.input_document_number);\n    return documentSysId ==='';\n})()\n"
+            },
+            "label": "invalid document"
+          },
+          {
+            "id": "5e966a752df84c1a9eaed43d615e021f",
+            "edgeType": "Edge",
+            "source": "16f9f39f5c7d4647bf90d5a8d121d76f",
+            "target": "cd04a55a7f2d4f69990a73d3d68c0564",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "7749fbfa58604a2c9ddcb0f7a4396fa2",
+            "edgeType": "Branch",
+            "source": "cd04a55a7f2d4f69990a73d3d68c0564",
+            "target": "d3e0680e0190493d9b7975899d9f2444",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.re_enter_input=yes",
+              "mode": "query"
+            },
+            "label": "Re enter document number"
+          },
+          {
+            "id": "97fc5550046f4084b088bd5dc2544461",
+            "edgeType": "Branch",
+            "source": "cd04a55a7f2d4f69990a73d3d68c0564",
+            "target": "efe7ac16acd74160b057a9e5ceaad576",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.re_enter_input=no",
+              "mode": "query"
+            },
+            "label": "Donot re-enter document number"
+          },
+          {
+            "id": "46f9c6314fc942e4a6d0ec9e7abe5aaf",
+            "edgeType": "Edge",
+            "source": "78d510f35098476e96a297194902d584",
+            "target": "332c66874021451b8a9ba34dc400d1b5",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "bb2aa4d52e274377bf38c5075d35a45f",
+            "edgeType": "Edge",
+            "source": "332c66874021451b8a9ba34dc400d1b5",
+            "target": "efe7ac16acd74160b057a9e5ceaad576",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "dc3e5f2a993e497bbddd30d8646b3e78",
+            "edgeType": "Branch",
+            "source": "6631ce18485f4dc18e1ee3f371d58f91",
+            "target": "81c8f8b1802e486d9e6a0adeccf76366",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var documentSysId = util.getDocumentSysId(vaVars.documentTable, vaInputs.input_document_number);\n    vaVars.documentSysId = documentSysId;\n    return documentSysId!='';\n})()\n"
+            },
+            "label": "valid document"
+          },
+          {
+            "id": "d7c2f43316534b6ba38460e8f834de6c",
+            "edgeType": "Branch",
+            "source": "81c8f8b1802e486d9e6a0adeccf76366",
+            "target": "78d510f35098476e96a297194902d584",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var workItemSysId = util.getWorkItemSysId(vaVars.documentTable, vaVars.documentSysId);\n    return workItemSysId ==='';\n})()\n"
+            },
+            "label": "work item does not exist"
+          },
+          {
+            "id": "2f1280163bb5426ea17e21232d23130b",
+            "edgeType": "Branch",
+            "source": "81c8f8b1802e486d9e6a0adeccf76366",
+            "target": "ec9c52382b814de88624a3546cbfe3ba",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var util = new global.AWADiagnosticUtils();\n    var workItemSysId = util.getWorkItemSysId(vaVars.documentTable, vaVars.documentSysId);\n    vaVars.workItemSysId = workItemSysId;\n    return workItemSysId !='';\n})()\n"
+            },
+            "label": "work item exist"
+          },
+          {
+            "id": "fe6641046e9a4bc0a6b4355f70c5e0f2",
+            "edgeType": "Edge",
+            "source": "ec9c52382b814de88624a3546cbfe3ba",
+            "target": "efe7ac16acd74160b057a9e5ceaad576",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "a63edfe8bebe4cfc8a341613152a6e59": {
+        "id": "a63edfe8bebe4cfc8a341613152a6e59",
+        "name": "choose_document_table",
+        "label": "Choose Document Table",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs"
+      },
+      "4d66c08510ad4c4fbe48bc7930161dfe": {
+        "id": "4d66c08510ad4c4fbe48bc7930161dfe",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "documentTables",
+        "label": "documentTables",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "bb6ce3e0102b4eb9ae5a05f615e99e02": {
+        "id": "bb6ce3e0102b4eb9ae5a05f615e99e02",
+        "name": "input_document_number",
+        "label": "Input Document Number",
+        "varType": "string",
+        "secure": false,
+        "category": "vaInputs",
+        "encryptionHashFunction": "SHA-256",
+        "encryptionSalt": {
+          "value": "MTY1MzM4NjEzMTA1NSBWQSBEZXNpZ25lciBpcyBhd2Vzb21l",
+          "mode": "simple"
+        }
+      },
+      "d0bdc828538f41739e82eb20cf0fe728": {
+        "id": "d0bdc828538f41739e82eb20cf0fe728",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "documentTable",
+        "label": "documentTable",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4048f6720c25404fba5a2de4bb5b3a80": {
+        "id": "4048f6720c25404fba5a2de4bb5b3a80",
+        "value": {
+          "mode": "simple",
+          "value": "null"
+        },
+        "name": "documentSysId",
+        "label": "documentSysId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "734c40b1982e4d2eb52d39c791e1cfa0": {
+        "id": "734c40b1982e4d2eb52d39c791e1cfa0",
+        "name": "re_enter_input",
+        "label": "Re-enter Input",
+        "varType": "choice",
+        "choices": [
+          {
+            "label": "Yes",
+            "value": "yes"
+          },
+          {
+            "label": "No",
+            "value": "no"
+          }
+        ],
+        "category": "vaInputs"
+      },
+      "de0e64a6fef847f389d343f7fc2e0654": {
+        "id": "de0e64a6fef847f389d343f7fc2e0654",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "validQueues",
+        "label": "validQueues",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "dad05703c88344aba620e15bf6e2ee84": {
+        "id": "dad05703c88344aba620e15bf6e2ee84",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "workItemSysId",
+        "label": "workItemSysId",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+name: WorkItem not created
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

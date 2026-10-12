@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/js_includes_catalog.js" includes="true" />
+    <g:evaluate var="jvar_theme">
+        var theme = gs.getPreference('glide.css.theme.ui16');
+        if (null == theme){
+        var company = gs.getUser().getCompanyRecord();
+        if (null != company)
+        theme = company.getValue("theme");
+        }
+        theme;
+    </g:evaluate>
+    <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+    <g:if_polaris>
+        <g:then>
+            <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="false" params="theme=${jvar_theme}" />
+        </g:then>
+    </g:if_polaris>
+    <g:inline template="sc_sanitize.xml" />
+    <g:inline template="sc_request_parent_message.xml" />
+    <g:inline template="glide_weba_header.xml" />
+    <j2:set var="sysparm_guide" value="$[JS:sysparm_guide]" />
+    <g2:evaluate var="jvar_found_guide" jelly="true">
+        var jvar_found_guide = new GlideRecord('sc_cat_item_guide').get(jelly.sysparm_guide);
+        jvar_found_guide;
+    </g2:evaluate>
+    <g2:evaluate var="jvar_cat_item_authorized" jelly="true">
+        var answer = true;
+        var item = GlideappCatalogItem.get(jelly.sysparm_guide);
+        if (!item.canViewInDomain())
+        answer = false;
+        else if (jvar_found_guide $[AMP]$[AMP] !gs.hasRole('catalog_admin'))
+        answer = item.canView();
+
+        answer;
+    </g2:evaluate>
+    <j2:if test="$[jvar_cat_item_authorized]">
+        <div id="cat_item_guide_view" class="" sn-atf-blacklist="IS_SERVICE_CATALOG">
+            <input type="hidden" id="log_variable_actions" name="log_variable_actions" value="${gs.getProperty('glide.sc.log.variable_actions')}" />
+            <j2:if test="$[sysparm_guide == null || sysparm_guide == '' || !jvar_found_guide]">
+                <b>${gs.getMessage("Error:")}</b>
+                $[AMP]nbsp;${gs.getMessage('Order Guide Not Specified')}
+            </j2:if>
+            <j2:if test="$[sysparm_guide != null &amp;&amp; sysparm_guide != '' &amp;&amp; jvar_found_guide]">
+                <input type="HIDDEN" id="sysparm_no_checkout" value="$[sysparm_no_checkout]" />
+                <g2:inline template="output_messages.xml" />
+                <g:evaluate var="jvar_guide_cart" jelly="true" copyToPhase2="true">
+                    var initial = jelly.sysparm_initial;
+                    var cart_name = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_cart_name);
+                    var c = '';
+                    if (cart_name)
+                    c = GlideappCart.getCartForRhino(cart_name);
+                    else
+                    c = GlideappCart.getCartForRhino();
+                    if (c.getGuide() == '' || c.getCrumbs().size() == 0)
+                    initial = 'true';
+                    c;
+                </g:evaluate>
+                <g:set_if var="sysparm_initial" test="${initial == 'true'}" true="true" false="" />
+                <g2:evaluate var="jvar_item" jelly="true">
+                    var guide = '';
+                    var active = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_active);
+                    var show_tabs = true;
+                    var context_table = "sc_cat_item";
+                    var context_id = "";
+                    if (initial == 'true') {
+                    c.newGuide();
+                    guide = jelly.sysparm_guide;
+                    active = guide;
+                    c.setGuide(guide);
+                    c.setGuideActive(active);
+                    c.update();
+                    show_tabs = false;
+                    context_id = guide;
+                    } else {
+                    // UI reflects sc_cart's opinion of the active tab
+                    if (active == '')
+                    active = c.getGuideActive();
+                    else {
+                    // sc_cart's opinion of active tab updated to reflect UI's
+                    c.setGuideActive(active);
+                    c.update();
+                    }
+                    guide = c.getGuide();
+                    var index = c.getCrumbs().indexOf(active);
+                    if (index > -1) {
+                    var history = c.getCrumbHistory().get(parseInt(index));
+                    if (history == 'Z')
+                    history = '';
+                    }
+                    context_table = "sc_cart_item";
+                    context_id = history;
+                    }
+
+                    if (jelly.sysparm_cart_edit == 'guide_serial')
+                    show_tabs = false;
+
+                    var sc_cat_item = new GlideRecord('sc_cat_item');
+                    sc_cat_item.get(active);
+                    var show_cart = !(initial == 'true' || jelly.sysparm_cart_edit == 'guide_serial' || sc_cat_item.sys_class_name == 'sc_cat_item_producer');
+                    active;
+                </g2:evaluate>
+                <j2:set var="sysparm_id" value="$[sc_cat_item.sys_id]" />
+                <j:set var="jvar_is_guide" value="true" />
+                <j2:set var="jvar_is_guide" value="true" />
+                <g:inline template="com.glideapp.servicecatalog_context_menu.xml" />
+                <j2:if test="$[sysparm_cart_edit != 'guide_serial']">
+                    <j2:set var="sysparm_cart_edit" value="$[history]" />
+                </j2:if>
+                <!-- Set this parameters so that it will be available in Masked Variable Context -->
+                <j2:set var="jvar_context_table" value="$[context_table]" />
+                <!-- Set this parameters so, that they will be in available in Table Variable Context -->
+                <j2:set var="jvar_table_context_name" value="$[context_table]" />
+                <j2:set var="jvar_table_context_sysid" value="$[context_id]" />
+                <g2:evaluate jelly="true">
+                    var sysparm_can_create=false;
+                    var item_guid = gs.generateGUID();
+                    if (jelly.sysparm_initial!='true' $[AMP]$[AMP] jelly.sysparm_cart_edit != 'guide_serial'){
+                    var item_guid = jelly.sysparm_cart_edit;
+                    var item_table;
+                    if (!new CatalogItemTypeProcessor().canCreateNormalCartItem(sc_cat_item.sys_class_name)) {
+                    if (sc_cat_item.sys_class_name=='sc_cat_item_producer'||sc_cat_item.sys_class_name=='sc_cat_item_producer_service'){
+                    var sc_cat_item_producer = new GlideRecord('sc_cat_item_producer');
+                    if (sc_cat_item_producer.get(sc_cat_item.sys_id)){
+                    item_table = sc_cat_item_producer.table_name;
+                    sysparm_can_create=true;
+                    }
+                    }
+                    } else {
+                    item_table = "sc_cart_item";
+                    sysparm_can_create=true;
+                    }
+                    }
+                </g2:evaluate>
+                <input type="HIDDEN" id="sysparm_item_guid" value="$[item_guid]" />
+                <input type="HIDDEN" id="ni.attachment_target" value="$[item_table]" />
+                <input type="HIDDEN" id="no_proceed_checkout" value="$[sc_cat_item.no_proceed_checkout]" />
+                <input type="HIDDEN" id="current_item" value="$[sc_cat_item.sys_id]" />
+                <input type="HIDDEN" id="sysparm_crumbs" value="$[sysparm_crumbs]" />
+                <input type="HIDDEN" id="sysparm_crumb_history" value="$[sysparm_crumb_history]" />
+                <input type="HIDDEN" id="sysparm_active" value="$[sysparm_active]" />
+                <input type="HIDDEN" id="sysparm_catalog" value="$[sysparm_catalog]" />
+                <input type="HIDDEN" id="sysparm_catalog_view" value="$[sysparm_catalog_view]" />
+                <input type="HIDDEN" id="sysparm_cart_edit" value="$[sysparm_cart_edit]" />
+                <input type="HIDDEN" id="sysparm_parent_sys_id" value="$[sysparm_parent_sys_id]" />
+                <input type="HIDDEN" id="sysparm_parent_table" value="$[sysparm_parent_table]" />
+                <input type="HIDDEN" id="sysparm_requested_for" value="$[sysparm_requested_for]" />
+                <input type="HIDDEN" id="sysparm_view" value="$[sysparm_view]" />
+                <input type="HIDDEN" id="sysparm_processing_hint" name="sysparm_processing_hint" value="$[sysparm_processing_hint]" />
+                <j2:if test="$[initial!='true']">
+                    <form name="back_form" method="POST" action="service_catalog.do">
+                        <j2:if test="$[show_tabs == true]">
+                            <input type="HIDDEN" name="sysparm_action" value="previous_guide" />
+                        </j2:if>
+                        <j2:if test="$[show_tabs == false]">
+                            <input type="HIDDEN" name="sysparm_action" value="sysverb_back" />
+                        </j2:if>
+                        <input type="HIDDEN" id="sysparm_guide" name="sysparm_guide" value="$[sysparm_guide]" />
+                    </form>
+                </j2:if>
+                <j2:if test="$[initial=='true']">
+                    <input type="HIDDEN" id="sysparm_guide" name="sysparm_guide" value="$[sysparm_guide]" />
+                </j2:if>
+                <div role="navigation">
+                    <table class="wide" cellspacing="0" cellpadding="0" width="100%" role="presentation">
+                        <tr class="header sc_header">
+                            <td style="white-space: nowrap;">
+                                <g2:inline template="sc_header_back_button.xml" />
+                            </td>
+                            <td style="width: 100%; height: 40px; padding-right: 5px;" oncontextmenu="return contextCatalogHeader(event, '$[sysparm_id]');">
+                                <div class="caption sc_caption sc_caption_margin" role="heading" aria-level="1">
+                                    $[gs.getMessage('Order Guide - {0}', sc_cat_item.name.getDisplayValue())]
+                                </div>
+                            </td>
+                            <td style="white-space: nowrap; padding-right: 5px;">
+                                <j2:if test="$[gs.hasRole(gs.getProperty('glide.attachment.role')) &amp;&amp; sysparm_can_create]">
+                                    <g:sc_button img="images/icons/attachment.gifx" classes="icon-paperclip sc_paperclip btn-icon" id="sc_attachment_button" onclick="saveCatAttachment(gel('sysparm_item_guid').value, '$[item_table]')" label="" title="Manage attachments" />
+                                </j2:if>
+                                <g:inline template="com.glideapp.servicecatalog_guide_tabs_controls.xml" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <j2:if test="$[gs.hasRole(gs.getProperty('glide.attachment.role')) &amp;&amp; sysparm_can_create]">
+                    <g:catalog_cart_attachment_list />
+                </j2:if>
+                <g:sc_banner />
+                <j2:if test="$[show_cart == false]">
+                    <script language="javascript">
+                        function calcPrice() {
+                            // this is a noop
+                        }
+                        addLoadEvent(function() {
+                            g_cart = new SCCart()
+                        });
+                    </script>
+                </j2:if>
+                <div class="guide_container">
+                    <j2:if test="$[show_tabs == true]">
+                        <g:inline template="com.glideapp.servicecatalog_guide_tabs.xml" />
+                    </j2:if>
+                    <div class="tab_section sc-tab_section" role="main" aria-label="$[sc_cat_item.name.getDisplayValue()]">
+                        <span>
+                            <table width="100%" style="margin-top: 5px;" role="presentation">
+                                <tr>
+                                    <td style="padding-left: 15px;">
+                                        <table cellspacing="0" cellpadding="0" width="100%" role="presentation" class="catalog_item_details">
+                                            <tr>
+                                                <td>
+                                                    <h3 class="guide_tab_header">$[sc_cat_item.short_description.getDisplayValue()]</h3>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="catalog_description" style="padding: 2px; padding-left: 10px; padding-top: 10px; list-style-position: inside;">
+                                                    <g2:evaluate var="jvar_has_image">
+                                                        var image_src = sc_cat_item.picture.getDisplayValue();
+                                                        var has_image = true;
+                                                        if (image_src == null || image_src == '')
+                                                        has_image = false;
+                                                        else
+                                                        image_src = image_src + '?t=large';
+                                                        has_image;
+                                                    </g2:evaluate>
+                                                    <j2:if test="$[jvar_has_image]">
+                                                        <div class="sc_cat_item_image_block">
+                                                            <img src="$[image_src]" alt="$[NS:sc_cat_item.short_description.getDisplayValue()]"></img>
+                                                        </div>
+                                                    </j2:if>
+                                                    <div class="sc_cat_item_text_block">
+                                                        <g2:no_escape>$[HTMLSAN:sc_cat_item.description.getDisplayValue()]</g2:no_escape>
+                                                    </div>
+
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                    <j2:if test="$[show_cart]">
+                                        <td style="vertical-align: top; padding-left: 5px;">
+                                            <j2:if test="$[!sc_cat_item.custom_cart.nil()]">
+                                                <j2:set var="sysparm_show_cart_guide" value="true" />
+                                                <g2:macro_invoke macro="$[sc_cat_item.custom_cart.name]" />
+                                            </j2:if>
+                                            <j2:if test="$[sc_cat_item.custom_cart.nil()]">
+                                                <g2:inline template="sc_cart_guide.xml" />
+                                            </j2:if>
+                                        </td>
+                                    </j2:if>
+                                </tr>
+                            </table>
+                            <table width="100%" role="form" aria-label="$[sc_cat_item.name.getDisplayValue()]">
+                                <tr>
+                                    <td colspan="2">
+                                        <table cellSpacing="0" cellPadding="0" border="0" class="wide" role="presentation" style="table-layout:fixed">
+                                            <g:inline template="sc_cat_item_options.xml" />
+                                            <j2:if test="$[sc_cat_item.type == 'bundle']">
+                                                <tr>
+                                                    <td>
+                                                        <strong>${gs.getMessage('Also includes')}</strong>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td> $[SP] </td>
+                                                </tr>
+                                                <g2:evaluate var="jvar_item" jelly="true">
+                                                    z = new GlideRecord('sc_cat_item_children');
+                                                    z.addQuery('parent', jelly.sysparm_id);
+                                                    z.orderBy('child.order');
+                                                    z.orderBy('child.name');
+                                                    z.query();
+                                                </g2:evaluate>
+                                                <j2:set var="jvar_start_closed" value="$[sc_cat_item.start_closed]" />
+                                                <j2:while test="$[z.next()]">
+                                                    <g2:evaluate var="jvar_item">
+                                                        sc_cat_item = new GlideRecord('sc_cat_item');
+                                                        sc_cat_item.get(z.child);"
+                                                    </g2:evaluate>
+                                                    <j2:set var="jvar_is_child" value="true" />
+                                                    <g:inline template="sc_cat_item_options.xml" />
+                                                </j2:while>
+                                            </j2:if>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </span>
+                    </div>
+                    <g2:client_script type="catalog_item" catalogItem="$[sysparm_id]" />
+                    <j2:set var="jvar_catalog_item" value="$[sysparm_id]" />
+                    <g:inline template="catalog_ui_policy.xml" />
+                </div>
+                <div class="row" style="margin:0px" role="navigation" aria-label="$[sc_cat_item.name.getDisplayValue()]">
+                    <j2:if test="$[show_tabs == false]">
+                        <div class="sc_guide_footer sc_float_right" style="padding-right: 5px;">
+                            <g2:sc_button id="next_page_footer" classes="request_catalog_button" onclick="guideNext('$[sc_cat_item.sys_id]');" img="" noTranslate="true" label="$[next_message]" title="$[next_message]" isPrimary="$[jvar_is_primary]" />
+                        </div>
+                    </j2:if>
+
+                    <j2:if test="$[show_tabs == true]">
+                        <div class="sc_guide_footer sc_float_right" style="padding-right: 5px">
+                            <j2:if test="$[jvar_link_next != '']">
+                                <j2:if test="$[gs.getProperty('glide.sc.guide.tab.validate','false') == 'true']">
+                                    <g2:sc_button id="next_tab_footer" classes="request_catalog_button" onclick="$[jvar_func_name]('$[jvar_link_next]')" img="" label="Next Tab" title="Next Tab" isPrimary="true" />
+                                </j2:if>
+                                <j2:if test="$[gs.getProperty('glide.sc.guide.tab.validate','false') != 'true']">
+                                    <g2:sc_button id="next_tab_footer" classes="request_catalog_button" onclick="$[jvar_func_name]('$[jvar_link_next]', '$[sysparm_id]')" img="" label="Next Tab" title="Next Tab" isPrimary="true" />
+                                </j2:if>
+                            </j2:if>
+                            <g2:sc_button id="next_page_footer" classes="request_catalog_button" onclick="guideNext('$[sc_cat_item.sys_id]');" img="" noTranslate="true" label="$[next_message]" title="$[next_message]" isPrimary="$[jvar_is_primary]" />
+                        </div>
+
+                        <div class="sc_guide_footer" style="padding-left: 5px">
+                            <j2:if test="$[sysparm_cart_edit != 'guide_serial']">
+                                <j2:if test="$[initial != 'true']">
+                                    <g2:sc_button id="prev_page_footer" classes="request_catalog_button" onclick="guidePrevious('$[sc_cat_item.sys_id]');" img="" noTranslate="true" label="$[previous_message]" title="$[previous_message]" />
+                                </j2:if>
+                            </j2:if>
+                            <j2:if test="$[jvar_link_prev != '']">
+                                <j2:if test="$[gs.getProperty('glide.sc.guide.tab.validate','false') == 'true']">
+                                    <g2:sc_button id="prev_tab_footer" classes="request_catalog_button" onclick="$[jvar_func_name]('$[jvar_link_prev]')" img="" label="Previous Tab" title="Previous Tab" />
+                                </j2:if>
+                                <j2:if test="$[gs.getProperty('glide.sc.guide.tab.validate','false') != 'true']">
+                                    <g2:sc_button id="prev_tab_footer" classes="request_catalog_button" onclick="$[jvar_func_name]('$[jvar_link_prev]', '$[sysparm_id]')" img="" label="Previous Tab" title="Previous Tab" />
+                                </j2:if>
+                            </j2:if>
+                        </div>
+                    </j2:if>
+                </div>
+            </j2:if>
+        </div>
+    </j2:if>
+    <j2:if test="$[!jvar_cat_item_authorized]">
+        Not Authorized
+    </j2:if>
+    <g:inline template="catalog_web_analytics.xml" />
+</j:jelly>

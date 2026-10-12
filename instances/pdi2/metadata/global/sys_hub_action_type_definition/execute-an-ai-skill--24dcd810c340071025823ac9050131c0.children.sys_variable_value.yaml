@@ -1,0 +1,161 @@
+- document: sys_hub_step_instance
+  document_key: d6f86854c3c0071025823ac90501312d
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: akanksha.shukla@snc
+  sys_created_on: 2026-03-31 10:49:47
+  sys_id: 2ef86854c3c0071025823ac905013163
+  sys_mod_count: '66'
+  sys_tags: ''
+  sys_updated_by: akanksha.shukla@snc
+  sys_updated_on: 2026-04-13 16:43:53
+  value: |-
+    (function execute(inputs, outputs) {
+        var cleanInputs = {};
+        var dyn = inputs.skill_inputs;
+
+        // If skill_inputs is a JSON string, parse it first
+        if (typeof dyn === 'string') {
+            try {
+                dyn = JSON.parse(dyn);
+            } catch (e) {
+                dyn = {};
+            }
+        }
+
+        for (var key in dyn) {
+            var val = dyn[key];
+
+            if (val && typeof val === 'object') {
+                if (val.table && val.sys_id) {
+                    // GlideRecord reference field
+                    cleanInputs[key] = {
+                        tableName: val.table,
+                        sysId: val.sys_id.toString(),
+                        queryString: ''
+                    };
+                } else if (val.hasOwnProperty('value') && val.hasOwnProperty('variableName')) {
+                    // Verbose skill input format — extract just the value
+                    cleanInputs[key] = val.value;
+                } else {
+                    cleanInputs[key] = val;
+                }
+            } else {
+                cleanInputs[key] = val;
+            }
+        }
+        var capabilityId = "";
+    	if (global.JSUtil.notNil(inputs.skill_id)) {
+    		var skillConfigGr = new GlideRecord("sn_nowassist_skill_config");
+    		skillConfigGr.addQuery('skill_table', 'sys_one_extend_capability');
+    		skillConfigGr.addQuery('sys_id', inputs.skill_id);
+    		skillConfigGr.query();
+    		var skillId = "";
+    		if (skillConfigGr.next()) {
+    			skillId = skillConfigGr.getValue('skill_id') || "";
+    		}
+    		if (global.JSUtil.notNil(skillId)) {
+    			capabilityId = skillId;
+    		}
+        }
+
+        outputs.payload = {
+            "executionRequests": [
+            {
+                "payload": JSON.stringify(cleanInputs),
+                "meta": {
+                "skillConfigId": inputs.skill_id
+                },
+                "capabilityId": capabilityId
+            }
+            ]
+        }
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 81948fac874803102f3220ac8bbb3543
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: akanksha.shukla@snc
+  sys_created_on: 2026-04-01 16:48:10
+  sys_id: 31948fac874803102f3220ac8bbb35b6
+  sys_mod_count: '14'
+  sys_tags: ''
+  sys_updated_by: akanksha.shukla@snc
+  sys_updated_on: 2026-04-14 08:47:25
+  value: |-
+    (function execute(inputs, outputs) {
+
+        var skillOutput = {};
+
+        for (var key in inputs) {
+            if (!inputs.hasOwnProperty(key)) continue;
+
+            if (key === 'response') {
+                try {
+                    var match = inputs[key].match(/"model_output"\s*:\s*"([\s\S]*)"\s*\}/);
+                    if (match) {
+                        var inner = match[1]
+                            .replace(/\\n/g, '')
+                            .replace(/\\"/g, '"');
+                        var result = JSON.parse(inner);
+
+                        skillOutput[key] = result;
+                        Object.keys(result).forEach(function(resultKey) {
+                            skillOutput[resultKey] = result[resultKey];
+                        });
+                    } else {
+                        skillOutput[key] = inputs[key];
+                    }
+                } catch (e) {
+                    skillOutput[key] = inputs[key];
+                }
+            } else {
+                skillOutput[key] = inputs[key];
+            }
+        }
+
+        outputs.skill_output = skillOutput;
+        
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: a6d5f0a0870447102f3220ac8bbb353f
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: system
+  sys_created_on: 2026-04-01 06:40:49
+  sys_id: 4999bca8870447102f3220ac8bbb35b7
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: tarun.jain@snc
+  sys_updated_on: 2026-04-01 09:15:21
+  value: ''
+  variable: 3c82becaff10221013f0ffffffffff27
+- document: sys_hub_step_instance
+  document_key: 81948fac874803102f3220ac8bbb3543
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: akanksha.shukla@snc
+  sys_created_on: 2026-04-01 16:48:10
+  sys_id: 6d948fac874803102f3220ac8bbb35b4
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: akanksha.shukla@snc
+  sys_updated_on: 2026-04-01 16:48:10
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: d6f86854c3c0071025823ac90501312d
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: akanksha.shukla@snc
+  sys_created_on: 2026-03-31 10:49:47
+  sys_id: e6f86854c3c0071025823ac905013163
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: akanksha.shukla@snc
+  sys_updated_on: 2026-03-31 10:49:47
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4

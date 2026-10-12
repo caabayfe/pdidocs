@@ -1,0 +1,1096 @@
+_meta:
+  hash: 5b4db850b996e4a36e90ad153fdf91d35c62741013771eeb0521f73c9f9ed4b4
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2021-07-12 22:04:36
+  sys_domain: global
+  sys_id: c428f935535130101fdbddeeff7b1200
+  sys_mod_count: '148'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_c428f935535130101fdbddeeff7b1200
+  sys_updated_by: admin
+  sys_updated_on: 2026-04-08 18:42:46
+compiled_topic: ef989365c32013009cbbdccdf3d3ae53
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"97b8b82b0bfb46268d72155556096241","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"97b8b82b0bfb46268d72155556096241"}],"goals":[{"name":"primary","trigger_id":"97b8b82b0bfb46268d72155556096241","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"80a4569188244427b20b2d34b9a647c2","name":"Start","expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"791e9717d6fb4d0eaf6050fd714d76d4","name":"End","expert_mode":false},{"type":"Decision","name":"Live Agent Configured?","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars._liveagent_configured;\n})()\n})()"},"id":"a0b5df491f7346a1b52921c68de32e66","name":"Yes","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return !vaVars._liveagent_configured;\n})()\n})()"},"id":"23088829b4e44ba1a140541268ffc00e","name":"No","expert_mode":false}],"id":"fc306a42377d4f6894218122b96e0921","goal_id":"primary","expert_mode":false},{"type":"Decision","name":"Live Agent Available?","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return !vaVars._liveagent_available;\n})()\n})()"},"id":"a839289ab0634a9aafc45ab312ca6fa2","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return vaVars._liveagent_available;\n})()\n})()"},"id":"655287aafb584397b11aa18a1539ae5b","name":"Yes","expert_mode":false}],"id":"34fc9c495f8d4ab0b74243465d67ee01","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaSystem.connectToAgentUnsafe();\n})()\n","id":"679a8c4a39014c188cfad0733b2c44b5","name":"Transfer To Live Agent","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    // Skip this message if callback topic executed, since this must have already presented.\n    if (vaVars.global_show_no_agent_available_msg)\n        return gs.getMessageLang(vaVars._liveagent_handoff_error_msg, vaContext.getRequesterLang());\n\n})()\n"}],"request_feedback":true,"isCollapsible":true,"id":"9c1e1a29c55446258284465956c3ea99","name":"Live Agent Not Available Message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    return gs.getMessageLang(vaVars._liveagent_disabled_msg, vaContext.getRequesterLang());\n})()\n"}],"request_feedback":true,"isCollapsible":true,"id":"b940710986ce49849bd03f94859c11f0","name":"Live Agent Not Configured Message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaSystem.setQueue();\n})()\n","id":"f481029fd130402ebb2c70b36e79b1ab","name":"Set Connect Support Queue","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_start_chat_contextual_action_no_agents = true;\n    vaSystem.endConversation();\n})()","id":"33587ca71d5343b4bf3b15cf2285f626","name":"End Conversation If Contextual Action","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    // only execute this node if a contextual action starting a chat was attempted.\n    return vaVars.global_start_chat_contextual_action;\n})()\n})()"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_show_no_agent_available_msg = true;\n    var isEnabled = gs.getProperty(''com.glide.cs.callback.enabled'', ''false'');\n    if (isEnabled == ''true'')\n        vaVars._callback_enabled = true;\n    else\n        vaVars._callback_enabled = false;\n})()","id":"e20a0502bfb64a69843de106535f92fd","name":"Callback Configured","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Callback Enabled ?","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars._callback_enabled == false;\n})()})()"},"id":"d4d978cf437c45bfa9017a16ec0e7d63","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars._callback_enabled == true;\n})()})()"},"id":"6d4523a6141543b98b22da78f0be68e6","name":"Yes","expert_mode":false}],"id":"bfc18bafba454763b305e044e434e97d","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var CALLBACK_DECISION_SYS_ID = \"05c6cc55eb9a0110ad88ca5d2352281e\";\n    var callbackTopicId;\n    var deviceType = vaContext.deviceType;\n\n    // Default callback flow is diabled \n    vaVars.global_callback_executed = false;\n\n    // The callback Topic Id is being fetched form Custom Adapter Properties using Decision rules. \n    // The callback_topic_id has to be publish topic id from sys_cs_topic.\n    var inputs = new Object();\n    inputs[\"channel_id\"] = vaSystem.getChannelIdByName(deviceType);\n    inputs[\"portal\"] = vaContext.portal;\n    inputs[\"provider_application_id\"] = vaContext.providerAppId;\n\n    var decisionTable = new sn_dt.DecisionTableAPI();\n    try {\n        var answer = decisionTable.getDecision(CALLBACK_DECISION_SYS_ID, inputs);\n        if (answer)\n            callbackTopicId = answer.getValue(\"value\");\n\n    } catch (e) {\n        gs.error(\"Error while running the decison rules for callback topic, \" + callbackTopicId);\n    }\n    // Switch the custom/default callback topic\n    if (callbackTopicId) {\n        vaSystem.switchTopicById(callbackTopicId);\n    }\n\n    // Expcted output from the callback topic would be vaVars._transfer_to_agent flag.\n})();","id":"1a256cd5a8b34df7b648aa03d060d9a3","name":"Invoke Custom Callback Topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Callback Executed ?","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.global_callback_executed == false;\n})()})()"},"id":"a24b0138abc84db091250759eba63f92","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.global_callback_executed == true;\n})()\n})()"},"id":"654696e21f284a06b2c4eb91bc142f60","name":"Yes","expert_mode":false}],"id":"2d51f4985f53434eab15cf0da4420e84","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaSystem.endConversation();\n})()\n","id":"36c6958adacd4825a81bae9604927498","name":"End Conversation","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars._liveagent_configured = vaSystem.isLiveAgentConfigured();\n})()\n","id":"61c27b1520904ed29f03313094ef2f61","name":"Check Live Agent Configured","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Agent Available","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars._liveagent_available;\n})()\n})()"},"id":"a7dad6828c4141c39cd4eb5b059e2a9f","name":"Yes","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return !vaVars._liveagent_available;\n})()\n})()"},"id":"48bf00e9c6394de29520593c8774014b","name":"No","expert_mode":false}],"id":"fd2da68324e84b6db0b2c9b84504d1b0","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars._external_agent_config = vaSystem.getMatchingLAConfig();\n})()\n","id":"4e80168aab92495a8be016a0d39388fa","name":"Ext agent configuration","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Has valid ext agent config","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (gs.nil(vaVars._external_agent_config))\n        return true;\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return false;\n    return true;\n})()\n})()"},"id":"b3c39dd98d37484694cac30fdc0b2b50","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return true;\n    return false;\n})()\n})()"},"id":"3b175e340d2b431fb430c8869ac8229a","name":"Yes","expert_mode":false}],"id":"ee89ffc5ce2c44fcb4db798c593734fc","goal_id":"primary","expert_mode":false},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"c4522da1fc23449e9d38a637bb4a2468","name":"Ask user for to pick config","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       return true;\n    return false;\n})()\n})()"},"expert_mode":false,"variable_id":"5e8ed811d104475e9ac698ec32e40fea","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"Choose an Agent config\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"metadataScript":"","cardName":"","cardFields":[],"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ ''value'': config[i].sysID, ''label'': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), ''render_style'': ''data'' });\n    }\n     return options;\n})()\n","no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No Agent config\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ ''value'': config[i].sysID, ''label'': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), ''render_style'': ''data'' });\n    }\n     return options;\n})()\n"},"description":""},{"type":"ScriptedAction","script":"(function execute(){\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       vaSystem.connectToExternalAgent(vaInputs.ask_user_for_to_pick_config.getValue());\n    else\n       vaSystem.connectToExternalAgent(config[0].sysID);\n})()\n","id":"90eec3d6fc8641188365ba1e200c5a4e","name":"Call API to connect to agent","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars._external_agent_config = vaSystem.getMatchingLAConfig();\n})()\n","id":"6982005ef8e24e6c8b7863df358aa28e","name":"Ext Agent config","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Valid LA config","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (gs.nil(vaVars._external_agent_config))\n        return true;\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return false;\n    return true;\n})()\n})()"},"id":"ba0f1a1b69c9497692e1f522509fc428","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return true;\n    return false;\n})()\n})()"},"id":"df89cc2e7f0e43dc9fe3b9a8d4719377","name":"Yes","expert_mode":false}],"id":"8a26a53c4cc04930bfa0c6969181f195","goal_id":"primary","expert_mode":false},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"1bce72547d4741a99e1f1d2ad89c3800","name":"Ask user to choose LA","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       return true;\n    return false;\n})()\n})()"},"expert_mode":false,"variable_id":"7709ed43bbbc4b5ca8742cbcba81937f","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"Choose an Agent config\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"metadataScript":"","cardName":"","cardFields":[],"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ ''value'': config[i].sysID, ''label'': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), ''render_style'': ''data'' });\n    }\n     return options;\n})()\n","no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No Agent config\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ ''value'': config[i].sysID, ''label'': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), ''render_style'': ''data'' });\n    }\n     return options;\n})()\n"},"description":""},{"type":"ScriptedAction","script":"(function execute(){\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       vaSystem.connectToExternalAgent(vaInputs.ask_user_to_choose_la.getValue());\n    else\n       vaSystem.connectToExternalAgent(config[0].sysID);\n})()\n","id":"c072a2c94c5647bb8d5c83c96736e769","name":"Connect to ext Agent","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars._liveagent_available = vaSystem.isLiveAgentAvailable();\n})()\n","id":"a681368190c349a4ae6d35271c17af29","name":"Check Live Agent Available","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Not self service or off-glide","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return !vaSystem.isNASSConversation() && vaVars.global_client_mode != \"OFF_GLIDE\";\n})()\n})()"},"id":"9f06306604584c77ac1718b69e5825c8","name":"Not self service or off-glide","expert_mode":false},{"type":"Branch","label":"is self service or off-glide","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return (vaSystem.isNASSConversation() || vaVars.global_client_mode == \"OFF_GLIDE\");\n})()\n})()"},"id":"4587efd55f144b118096ea846bee8752","name":"is self service or off-glide","expert_mode":false}],"id":"80884a989214431993a2681042d5413a","goal_id":"primary","expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"No LA Chat in Progress","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return !vaSystem.hasOtherLiveAgentChatInProgress();\n})()\n})()"},"id":"03aa49a823c84821a9011dfc2a322fbc","name":"No LA Chat in Progress","expert_mode":false},{"type":"Branch","label":"Other LA chat in Progress","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return vaSystem.hasOtherLiveAgentChatInProgress();\n})()\n})()"},"id":"a4f0e710ffad41b08a7afe83c0f25813","name":"Other LA chat in Progress","expert_mode":false}],"id":"117cae83067644d58f9afffcdfd87b86","goal_id":"primary","expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"string","value":"gs.getMessageLang(\"va:topic:301cdb5c3b1323009cbbcea234efc468:node:244bc8e2706a49078aa9e1837600f2b1:field:0\", vaContext.getRequesterLang())"}],"request_feedback":true,"isCollapsible":true,"id":"244bc8e2706a49078aa9e1837600f2b1","name":"Other Live Agent in progress","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false}],"edges":[{"type":"Edge","source_node_id":"679a8c4a39014c188cfad0733b2c44b5","target_node_id":"791e9717d6fb4d0eaf6050fd714d76d4","id":"eac2c24bde174a7191ea4dff6f4db0ae"},{"type":"Edge","source_node_id":"bfc18bafba454763b305e044e434e97d","target_node_id":"34fc9c495f8d4ab0b74243465d67ee01","branch_id":"d4d978cf437c45bfa9017a16ec0e7d63","id":"a306597e467b47819ae2329171e6deea","name":"d4d978cf437c45bfa9017a16ec0e7d63"},{"type":"Edge","source_node_id":"61c27b1520904ed29f03313094ef2f61","target_node_id":"fc306a42377d4f6894218122b96e0921","id":"6ae0d0d65d6848d9a60a12bbd3b245ad"},{"type":"Edge","source_node_id":"9c1e1a29c55446258284465956c3ea99","target_node_id":"33587ca71d5343b4bf3b15cf2285f626","id":"d1e9f62d5c294e118f8016d8c002476f"},{"type":"Edge","source_node_id":"b940710986ce49849bd03f94859c11f0","target_node_id":"791e9717d6fb4d0eaf6050fd714d76d4","id":"09bcb5073ebd4f2381eddeea91f46c59"},{"type":"Edge","source_node_id":"34fc9c495f8d4ab0b74243465d67ee01","target_node_id":"9c1e1a29c55446258284465956c3ea99","branch_id":"a839289ab0634a9aafc45ab312ca6fa2","id":"43df976b334c48f29fbcf229331f709e","name":"a839289ab0634a9aafc45ab312ca6fa2"},{"type":"Edge","source_node_id":"fc306a42377d4f6894218122b96e0921","target_node_id":"f481029fd130402ebb2c70b36e79b1ab","branch_id":"a0b5df491f7346a1b52921c68de32e66","id":"bf1d6f4c7ae84a97bd512a093d21d6d4","name":"a0b5df491f7346a1b52921c68de32e66"},{"type":"Edge","source_node_id":"33587ca71d5343b4bf3b15cf2285f626","target_node_id":"791e9717d6fb4d0eaf6050fd714d76d4","id":"9a3087ebcf3c4e4bbca0f14677e50664"},{"type":"Edge","source_node_id":"e20a0502bfb64a69843de106535f92fd","target_node_id":"bfc18bafba454763b305e044e434e97d","id":"6b5fba34f83b464d9f46e773ec3162d4"},{"type":"Edge","source_node_id":"bfc18bafba454763b305e044e434e97d","target_node_id":"1a256cd5a8b34df7b648aa03d060d9a3","branch_id":"6d4523a6141543b98b22da78f0be68e6","id":"dd0ec2a3c359466c8c6c651c416b1d29","name":"6d4523a6141543b98b22da78f0be68e6"},{"type":"Edge","source_node_id":"1a256cd5a8b34df7b648aa03d060d9a3","target_node_id":"2d51f4985f53434eab15cf0da4420e84","id":"49d3a8606ae042e7869efe6820f19fdb"},{"type":"Edge","source_node_id":"2d51f4985f53434eab15cf0da4420e84","target_node_id":"34fc9c495f8d4ab0b74243465d67ee01","branch_id":"a24b0138abc84db091250759eba63f92","id":"1eeeec92dc014396a8216cda1db9653b","name":"a24b0138abc84db091250759eba63f92"},{"type":"Edge","source_node_id":"2d51f4985f53434eab15cf0da4420e84","target_node_id":"36c6958adacd4825a81bae9604927498","branch_id":"654696e21f284a06b2c4eb91bc142f60","id":"4268392f07274ba9956cc760b237c513","name":"654696e21f284a06b2c4eb91bc142f60"},{"type":"Edge","source_node_id":"36c6958adacd4825a81bae9604927498","target_node_id":"791e9717d6fb4d0eaf6050fd714d76d4","id":"5d377ed7a57f4e1999b8237e4106c1c1"},{"type":"Edge","source_node_id":"80a4569188244427b20b2d34b9a647c2","target_node_id":"61c27b1520904ed29f03313094ef2f61","id":"9da607f1038a47b3a2ee0b2914aec1d1"},{"type":"Edge","source_node_id":"fd2da68324e84b6db0b2c9b84504d1b0","target_node_id":"e20a0502bfb64a69843de106535f92fd","branch_id":"a7dad6828c4141c39cd4eb5b059e2a9f","id":"075586609c474c65bf5fd5163004507d","name":"a7dad6828c4141c39cd4eb5b059e2a9f"},{"type":"Edge","source_node_id":"fd2da68324e84b6db0b2c9b84504d1b0","target_node_id":"4e80168aab92495a8be016a0d39388fa","branch_id":"48bf00e9c6394de29520593c8774014b","id":"916cbe6835ae4f8bbb6f10348b3e089c","name":"48bf00e9c6394de29520593c8774014b"},{"type":"Edge","source_node_id":"4e80168aab92495a8be016a0d39388fa","target_node_id":"ee89ffc5ce2c44fcb4db798c593734fc","id":"c85856bc1b8740d6aa0793f56b0b5e04"},{"type":"Edge","source_node_id":"ee89ffc5ce2c44fcb4db798c593734fc","target_node_id":"e20a0502bfb64a69843de106535f92fd","branch_id":"b3c39dd98d37484694cac30fdc0b2b50","id":"cc05be970e7548c28cd9e695dcbfe366","name":"b3c39dd98d37484694cac30fdc0b2b50"},{"type":"Edge","source_node_id":"ee89ffc5ce2c44fcb4db798c593734fc","target_node_id":"c4522da1fc23449e9d38a637bb4a2468","branch_id":"3b175e340d2b431fb430c8869ac8229a","id":"181253be9ba14855a6c332ec22dbcc4a","name":"3b175e340d2b431fb430c8869ac8229a"},{"type":"Edge","source_node_id":"c4522da1fc23449e9d38a637bb4a2468","target_node_id":"90eec3d6fc8641188365ba1e200c5a4e","id":"0d03bd3fd0144c32bc65e376d92c84ab"},{"type":"Edge","source_node_id":"90eec3d6fc8641188365ba1e200c5a4e","target_node_id":"791e9717d6fb4d0eaf6050fd714d76d4","id":"5ad4e728edc74b3eb39388f7acdb2c67"},{"type":"Edge","source_node_id":"fc306a42377d4f6894218122b96e0921","target_node_id":"6982005ef8e24e6c8b7863df358aa28e","branch_id":"23088829b4e44ba1a140541268ffc00e","id":"f1b1e7cf29ca4ef98e3fc56b296411b9","name":"23088829b4e44ba1a140541268ffc00e"},{"type":"Edge","source_node_id":"6982005ef8e24e6c8b7863df358aa28e","target_node_id":"8a26a53c4cc04930bfa0c6969181f195","id":"b503b4b09d69444cb34a87d3adcb3b1f"},{"type":"Edge","source_node_id":"8a26a53c4cc04930bfa0c6969181f195","target_node_id":"b940710986ce49849bd03f94859c11f0","branch_id":"ba0f1a1b69c9497692e1f522509fc428","id":"e21e34841a4941c8acc1e556f1e88834","name":"ba0f1a1b69c9497692e1f522509fc428"},{"type":"Edge","source_node_id":"8a26a53c4cc04930bfa0c6969181f195","target_node_id":"1bce72547d4741a99e1f1d2ad89c3800","branch_id":"df89cc2e7f0e43dc9fe3b9a8d4719377","id":"adec8e603941489c8bcb59e52b5e3985","name":"df89cc2e7f0e43dc9fe3b9a8d4719377"},{"type":"Edge","source_node_id":"1bce72547d4741a99e1f1d2ad89c3800","target_node_id":"c072a2c94c5647bb8d5c83c96736e769","id":"836fdd392ab4419d8823cc795836192c"},{"type":"Edge","source_node_id":"c072a2c94c5647bb8d5c83c96736e769","target_node_id":"791e9717d6fb4d0eaf6050fd714d76d4","id":"ce3d2993544a44959d760c15bfbed2e1"},{"type":"Edge","source_node_id":"f481029fd130402ebb2c70b36e79b1ab","target_node_id":"a681368190c349a4ae6d35271c17af29","id":"85bd9cef7c2e4a9a9e1bc5402203002c"},{"type":"Edge","source_node_id":"a681368190c349a4ae6d35271c17af29","target_node_id":"fd2da68324e84b6db0b2c9b84504d1b0","id":"f9ff0bd1c554419abab3bcd5f33d729f"},{"type":"Edge","source_node_id":"34fc9c495f8d4ab0b74243465d67ee01","target_node_id":"80884a989214431993a2681042d5413a","branch_id":"655287aafb584397b11aa18a1539ae5b","id":"2fe517c428914f298c225059dfd8ccde","name":"655287aafb584397b11aa18a1539ae5b"},{"type":"Edge","source_node_id":"80884a989214431993a2681042d5413a","target_node_id":"679a8c4a39014c188cfad0733b2c44b5","branch_id":"9f06306604584c77ac1718b69e5825c8","id":"d76f709fa19a4258b1e5e524c0f3a370","name":"9f06306604584c77ac1718b69e5825c8"},{"type":"Edge","source_node_id":"80884a989214431993a2681042d5413a","target_node_id":"117cae83067644d58f9afffcdfd87b86","branch_id":"4587efd55f144b118096ea846bee8752","id":"3aeb7ab5e8ea4734976075bfa14029d5","name":"4587efd55f144b118096ea846bee8752"},{"type":"Edge","source_node_id":"117cae83067644d58f9afffcdfd87b86","target_node_id":"679a8c4a39014c188cfad0733b2c44b5","branch_id":"03aa49a823c84821a9011dfc2a322fbc","id":"f71475577fe34b61b7f48e8c29bd8f67","name":"03aa49a823c84821a9011dfc2a322fbc"},{"type":"Edge","source_node_id":"117cae83067644d58f9afffcdfd87b86","target_node_id":"244bc8e2706a49078aa9e1837600f2b1","branch_id":"a4f0e710ffad41b08a7afe83c0f25813","id":"9b3eef76364b4e62ba0fbdc654385aaf","name":"a4f0e710ffad41b08a7afe83c0f25813"},{"type":"Edge","source_node_id":"244bc8e2706a49078aa9e1837600f2b1","target_node_id":"791e9717d6fb4d0eaf6050fd714d76d4","id":"148335cee81f462188d2851aef8fea7f"}],"id":"primary"}],"script_variables":[{"type":"String","name":"_liveagent_disabled_msg","value":{"type":"String","mode":"string"},"list":false,"id":"51cd14e9647848349000e151b3a23186","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"_liveagent_handoff_error_msg","value":{"type":"String","mode":"string"},"list":false,"id":"cf59f5de11bb42e8898d499cf33c9d62","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"_liveagent_configured","value":{"type":"String","mode":"string"},"list":false,"id":"2644d2dab92b4bd596de666e2aae6626","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"_liveagent_available","value":{"type":"String","mode":"string"},"list":false,"id":"a4ee6f84465f4baf9cc0dfa989a12cf7","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"_liveagent_external","value":{"type":"String","mode":"string","value":"false"},"list":false,"id":"88a0fe2014ba4f1cb4e088b5b1008cf3","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"_external_agent_config","value":{"type":"String","mode":"string"},"list":false,"id":"85e820f7b9204b04b55df33041f02eb1","formatType":"text","secure":false,"sensitive":false,"aiInput":false}],"glide_variables":[{"type":"Reference","table":"sys_user","auto_select":false,"id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"Choice","choices":[],"id":"5e8ed811d104475e9ac698ec32e40fea","name":"ask_user_for_to_pick_config","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false,"auto_select":false,"table":""},{"type":"Choice","choices":[],"id":"7709ed43bbbc4b5ca8742cbcba81937f","name":"ask_user_to_choose_la","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false,"auto_select":false,"table":""}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":["public"],"scope":"global","domain":"global","topic_type":"STANDARD","channels":[],"dialog_acts_enabled":false,"id":"301cdb5c3b1323009cbbcea234efc468","name":"_live_agent_support_","key_phrases":["_live_agent_support_"],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"model_type":"nlu_keyword","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"_live_agent_support_","library":false,"csTopicId":"ef989365c32013009cbbdccdf3d3ae53","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 301cdb5c3b1323009cbbcea234efc468
+graph: |-
+  {
+    "graph_api_version": "1.0.82",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "80a4569188244427b20b2d34b9a647c2": {
+            "id": "80a4569188244427b20b2d34b9a647c2",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "791e9717d6fb4d0eaf6050fd714d76d4": {
+            "id": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "fc306a42377d4f6894218122b96e0921": {
+            "id": "fc306a42377d4f6894218122b96e0921",
+            "stepType": "Decision",
+            "name": "Live Agent Configured?",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "34fc9c495f8d4ab0b74243465d67ee01": {
+            "id": "34fc9c495f8d4ab0b74243465d67ee01",
+            "stepType": "Decision",
+            "name": "Live Agent Available?",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "679a8c4a39014c188cfad0733b2c44b5": {
+            "id": "679a8c4a39014c188cfad0733b2c44b5",
+            "name": "Transfer To Live Agent",
+            "script": "(function execute() {\n    vaSystem.connectToAgentUnsafe();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "9c1e1a29c55446258284465956c3ea99": {
+            "id": "9c1e1a29c55446258284465956c3ea99",
+            "stepType": "TextOutput",
+            "name": "Live Agent Not Available Message",
+            "value": [
+              {
+                "value": "(function execute() {\n    // Skip this message if callback topic executed, since this must have already presented.\n    if (vaVars.global_show_no_agent_available_msg)\n        return gs.getMessageLang(vaVars._liveagent_handoff_error_msg, vaContext.getRequesterLang());\n\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "isCollapsible": true
+          },
+          "b940710986ce49849bd03f94859c11f0": {
+            "id": "b940710986ce49849bd03f94859c11f0",
+            "stepType": "TextOutput",
+            "name": "Live Agent Not Configured Message",
+            "value": [
+              {
+                "value": "(function execute() {\n    return gs.getMessageLang(vaVars._liveagent_disabled_msg, vaContext.getRequesterLang());\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "isCollapsible": true
+          },
+          "f481029fd130402ebb2c70b36e79b1ab": {
+            "id": "f481029fd130402ebb2c70b36e79b1ab",
+            "name": "Set Connect Support Queue",
+            "script": "(function execute() {\n    vaSystem.setQueue();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "33587ca71d5343b4bf3b15cf2285f626": {
+            "id": "33587ca71d5343b4bf3b15cf2285f626",
+            "name": "End Conversation If Contextual Action",
+            "script": "(function execute() {\n    vaVars.global_start_chat_contextual_action_no_agents = true;\n    vaSystem.endConversation();\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    // only execute this node if a contextual action starting a chat was attempted.\n    return vaVars.global_start_chat_contextual_action;\n})()\n"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "e20a0502bfb64a69843de106535f92fd": {
+            "id": "e20a0502bfb64a69843de106535f92fd",
+            "name": "Callback Configured",
+            "script": "(function execute() {\n    vaVars.global_show_no_agent_available_msg = true;\n    var isEnabled = gs.getProperty('com.glide.cs.callback.enabled', 'false');\n    if (isEnabled == 'true')\n        vaVars._callback_enabled = true;\n    else\n        vaVars._callback_enabled = false;\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "bfc18bafba454763b305e044e434e97d": {
+            "id": "bfc18bafba454763b305e044e434e97d",
+            "stepType": "Decision",
+            "name": "Callback Enabled ?",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "1a256cd5a8b34df7b648aa03d060d9a3": {
+            "id": "1a256cd5a8b34df7b648aa03d060d9a3",
+            "name": "Invoke Custom Callback Topic",
+            "script": "(function execute() {\n    var CALLBACK_DECISION_SYS_ID = \"05c6cc55eb9a0110ad88ca5d2352281e\";\n    var callbackTopicId;\n    var deviceType = vaContext.deviceType;\n\n    // Default callback flow is diabled \n    vaVars.global_callback_executed = false;\n\n    // The callback Topic Id is being fetched form Custom Adapter Properties using Decision rules. \n    // The callback_topic_id has to be publish topic id from sys_cs_topic.\n    var inputs = new Object();\n    inputs[\"channel_id\"] = vaSystem.getChannelIdByName(deviceType);\n    inputs[\"portal\"] = vaContext.portal;\n    inputs[\"provider_application_id\"] = vaContext.providerAppId;\n\n    var decisionTable = new sn_dt.DecisionTableAPI();\n    try {\n        var answer = decisionTable.getDecision(CALLBACK_DECISION_SYS_ID, inputs);\n        if (answer)\n            callbackTopicId = answer.getValue(\"value\");\n\n    } catch (e) {\n        gs.error(\"Error while running the decison rules for callback topic, \" + callbackTopicId);\n    }\n    // Switch the custom/default callback topic\n    if (callbackTopicId) {\n        vaSystem.switchTopicById(callbackTopicId);\n    }\n\n    // Expcted output from the callback topic would be vaVars._transfer_to_agent flag.\n})();",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "2d51f4985f53434eab15cf0da4420e84": {
+            "id": "2d51f4985f53434eab15cf0da4420e84",
+            "stepType": "Decision",
+            "name": "Callback Executed ?",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "36c6958adacd4825a81bae9604927498": {
+            "id": "36c6958adacd4825a81bae9604927498",
+            "name": "End Conversation",
+            "script": "(function execute() {\n    vaSystem.endConversation();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "61c27b1520904ed29f03313094ef2f61": {
+            "id": "61c27b1520904ed29f03313094ef2f61",
+            "name": "Check Live Agent Configured",
+            "script": "(function execute() {\n    vaVars._liveagent_configured = vaSystem.isLiveAgentConfigured();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "fd2da68324e84b6db0b2c9b84504d1b0": {
+            "id": "fd2da68324e84b6db0b2c9b84504d1b0",
+            "stepType": "Decision",
+            "name": "Agent Available",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "4e80168aab92495a8be016a0d39388fa": {
+            "id": "4e80168aab92495a8be016a0d39388fa",
+            "name": "Ext agent configuration",
+            "script": "(function execute() {\n    vaVars._external_agent_config = vaSystem.getMatchingLAConfig();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "ee89ffc5ce2c44fcb4db798c593734fc": {
+            "id": "ee89ffc5ce2c44fcb4db798c593734fc",
+            "stepType": "Decision",
+            "name": "Has valid ext agent config",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "c4522da1fc23449e9d38a637bb4a2468": {
+            "name": "Ask user for to pick config",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Choose an Agent config"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       return true;\n    return false;\n})()\n"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "5e8ed811d104475e9ac698ec32e40fea",
+            "id": "c4522da1fc23449e9d38a637bb4a2468",
+            "stepType": "ReferenceChoicePrompt",
+            "mode": "external",
+            "script": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ 'value': config[i].sysID, 'label': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), 'render_style': 'data' });\n    }\n     return options;\n})()\n",
+            "cardData": {},
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "No Agent config"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ 'value': config[i].sysID, 'label': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), 'render_style': 'data' });\n    }\n     return options;\n})()\n",
+              "mode": "external_script"
+            },
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "detailDescription": ""
+          },
+          "90eec3d6fc8641188365ba1e200c5a4e": {
+            "id": "90eec3d6fc8641188365ba1e200c5a4e",
+            "name": "Call API to connect to agent",
+            "script": "(function execute(){\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       vaSystem.connectToExternalAgent(vaInputs.ask_user_for_to_pick_config.getValue());\n    else\n       vaSystem.connectToExternalAgent(config[0].sysID);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "6982005ef8e24e6c8b7863df358aa28e": {
+            "id": "6982005ef8e24e6c8b7863df358aa28e",
+            "name": "Ext Agent config",
+            "script": "(function execute() {\n    vaVars._external_agent_config = vaSystem.getMatchingLAConfig();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "8a26a53c4cc04930bfa0c6969181f195": {
+            "id": "8a26a53c4cc04930bfa0c6969181f195",
+            "stepType": "Decision",
+            "name": "Valid LA config",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "1bce72547d4741a99e1f1d2ad89c3800": {
+            "name": "Ask user to choose LA",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Choose an Agent config"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       return true;\n    return false;\n})()\n"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "7709ed43bbbc4b5ca8742cbcba81937f",
+            "id": "1bce72547d4741a99e1f1d2ad89c3800",
+            "stepType": "ReferenceChoicePrompt",
+            "mode": "external",
+            "script": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ 'value': config[i].sysID, 'label': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), 'render_style': 'data' });\n    }\n     return options;\n})()\n",
+            "cardData": {},
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "No Agent config"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    var options = [];\n    for(var i=0; i<config.length; i++){\n      options.push({ 'value': config[i].sysID, 'label': gs.getMessageLang(config[i].name, vaContext.getRequesterLang()), 'render_style': 'data' });\n    }\n     return options;\n})()\n",
+              "mode": "external_script"
+            },
+            "hasCardHeader": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "detailDescription": ""
+          },
+          "c072a2c94c5647bb8d5c83c96736e769": {
+            "id": "c072a2c94c5647bb8d5c83c96736e769",
+            "name": "Connect to ext Agent",
+            "script": "(function execute(){\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 1)\n       vaSystem.connectToExternalAgent(vaInputs.ask_user_to_choose_la.getValue());\n    else\n       vaSystem.connectToExternalAgent(config[0].sysID);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "a681368190c349a4ae6d35271c17af29": {
+            "id": "a681368190c349a4ae6d35271c17af29",
+            "name": "Check Live Agent Available",
+            "script": "(function execute() {\n    vaVars._liveagent_available = vaSystem.isLiveAgentAvailable();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "80884a989214431993a2681042d5413a": {
+            "id": "80884a989214431993a2681042d5413a",
+            "stepType": "Decision",
+            "name": "Decision",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "117cae83067644d58f9afffcdfd87b86": {
+            "id": "117cae83067644d58f9afffcdfd87b86",
+            "stepType": "Decision",
+            "name": "Decision",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "244bc8e2706a49078aa9e1837600f2b1": {
+            "id": "244bc8e2706a49078aa9e1837600f2b1",
+            "stepType": "TextOutput",
+            "name": "Other Live Agent in progress",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "It looks like you're already talking to live agent in another chat. You'll need to end that chat to start a new one."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "6238025805d8477dbabd1afff5232d24"
+              }
+            ],
+            "requestFeedback": true,
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "isCollapsible": true
+          }
+        },
+        "edges": [
+          {
+            "id": "eac2c24bde174a7191ea4dff6f4db0ae",
+            "edgeType": "Edge",
+            "source": "679a8c4a39014c188cfad0733b2c44b5",
+            "target": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a306597e467b47819ae2329171e6deea",
+            "edgeType": "Branch",
+            "source": "bfc18bafba454763b305e044e434e97d",
+            "target": "34fc9c495f8d4ab0b74243465d67ee01",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars._callback_enabled == false;\n})()"
+            },
+            "label": "No"
+          },
+          {
+            "id": "6ae0d0d65d6848d9a60a12bbd3b245ad",
+            "edgeType": "Edge",
+            "source": "61c27b1520904ed29f03313094ef2f61",
+            "target": "fc306a42377d4f6894218122b96e0921",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "d1e9f62d5c294e118f8016d8c002476f",
+            "edgeType": "Edge",
+            "source": "9c1e1a29c55446258284465956c3ea99",
+            "target": "33587ca71d5343b4bf3b15cf2285f626",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "09bcb5073ebd4f2381eddeea91f46c59",
+            "edgeType": "Edge",
+            "source": "b940710986ce49849bd03f94859c11f0",
+            "target": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "43df976b334c48f29fbcf229331f709e",
+            "edgeType": "Branch",
+            "source": "34fc9c495f8d4ab0b74243465d67ee01",
+            "target": "9c1e1a29c55446258284465956c3ea99",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return !vaVars._liveagent_available;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "bf1d6f4c7ae84a97bd512a093d21d6d4",
+            "edgeType": "Branch",
+            "source": "fc306a42377d4f6894218122b96e0921",
+            "target": "f481029fd130402ebb2c70b36e79b1ab",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars._liveagent_configured;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "9a3087ebcf3c4e4bbca0f14677e50664",
+            "edgeType": "Edge",
+            "source": "33587ca71d5343b4bf3b15cf2285f626",
+            "target": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6b5fba34f83b464d9f46e773ec3162d4",
+            "edgeType": "Edge",
+            "source": "e20a0502bfb64a69843de106535f92fd",
+            "target": "bfc18bafba454763b305e044e434e97d",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "dd0ec2a3c359466c8c6c651c416b1d29",
+            "edgeType": "Branch",
+            "source": "bfc18bafba454763b305e044e434e97d",
+            "target": "1a256cd5a8b34df7b648aa03d060d9a3",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars._callback_enabled == true;\n})()"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "49d3a8606ae042e7869efe6820f19fdb",
+            "edgeType": "Edge",
+            "source": "1a256cd5a8b34df7b648aa03d060d9a3",
+            "target": "2d51f4985f53434eab15cf0da4420e84",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "1eeeec92dc014396a8216cda1db9653b",
+            "edgeType": "Branch",
+            "source": "2d51f4985f53434eab15cf0da4420e84",
+            "target": "34fc9c495f8d4ab0b74243465d67ee01",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.global_callback_executed == false;\n})()"
+            },
+            "label": "No"
+          },
+          {
+            "id": "4268392f07274ba9956cc760b237c513",
+            "edgeType": "Branch",
+            "source": "2d51f4985f53434eab15cf0da4420e84",
+            "target": "36c6958adacd4825a81bae9604927498",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.global_callback_executed == true;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "5d377ed7a57f4e1999b8237e4106c1c1",
+            "edgeType": "Edge",
+            "source": "36c6958adacd4825a81bae9604927498",
+            "target": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9da607f1038a47b3a2ee0b2914aec1d1",
+            "edgeType": "Edge",
+            "source": "80a4569188244427b20b2d34b9a647c2",
+            "target": "61c27b1520904ed29f03313094ef2f61",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "075586609c474c65bf5fd5163004507d",
+            "edgeType": "Branch",
+            "source": "fd2da68324e84b6db0b2c9b84504d1b0",
+            "target": "e20a0502bfb64a69843de106535f92fd",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars._liveagent_available;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "916cbe6835ae4f8bbb6f10348b3e089c",
+            "edgeType": "Branch",
+            "source": "fd2da68324e84b6db0b2c9b84504d1b0",
+            "target": "4e80168aab92495a8be016a0d39388fa",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars._liveagent_available;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "c85856bc1b8740d6aa0793f56b0b5e04",
+            "edgeType": "Edge",
+            "source": "4e80168aab92495a8be016a0d39388fa",
+            "target": "ee89ffc5ce2c44fcb4db798c593734fc",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "cc05be970e7548c28cd9e695dcbfe366",
+            "edgeType": "Branch",
+            "source": "ee89ffc5ce2c44fcb4db798c593734fc",
+            "target": "e20a0502bfb64a69843de106535f92fd",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (gs.nil(vaVars._external_agent_config))\n        return true;\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return false;\n    return true;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "181253be9ba14855a6c332ec22dbcc4a",
+            "edgeType": "Branch",
+            "source": "ee89ffc5ce2c44fcb4db798c593734fc",
+            "target": "c4522da1fc23449e9d38a637bb4a2468",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return true;\n    return false;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "0d03bd3fd0144c32bc65e376d92c84ab",
+            "edgeType": "Edge",
+            "source": "c4522da1fc23449e9d38a637bb4a2468",
+            "target": "90eec3d6fc8641188365ba1e200c5a4e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "5ad4e728edc74b3eb39388f7acdb2c67",
+            "edgeType": "Edge",
+            "source": "90eec3d6fc8641188365ba1e200c5a4e",
+            "target": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f1b1e7cf29ca4ef98e3fc56b296411b9",
+            "edgeType": "Branch",
+            "source": "fc306a42377d4f6894218122b96e0921",
+            "target": "6982005ef8e24e6c8b7863df358aa28e",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars._liveagent_configured;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "b503b4b09d69444cb34a87d3adcb3b1f",
+            "edgeType": "Edge",
+            "source": "6982005ef8e24e6c8b7863df358aa28e",
+            "target": "8a26a53c4cc04930bfa0c6969181f195",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e21e34841a4941c8acc1e556f1e88834",
+            "edgeType": "Branch",
+            "source": "8a26a53c4cc04930bfa0c6969181f195",
+            "target": "b940710986ce49849bd03f94859c11f0",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (gs.nil(vaVars._external_agent_config))\n        return true;\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return false;\n    return true;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "adec8e603941489c8bcb59e52b5e3985",
+            "edgeType": "Branch",
+            "source": "8a26a53c4cc04930bfa0c6969181f195",
+            "target": "1bce72547d4741a99e1f1d2ad89c3800",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var config = JSON.parse(vaVars._external_agent_config);\n    if (config.length > 0)\n       return true;\n    return false;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "836fdd392ab4419d8823cc795836192c",
+            "edgeType": "Edge",
+            "source": "1bce72547d4741a99e1f1d2ad89c3800",
+            "target": "c072a2c94c5647bb8d5c83c96736e769",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ce3d2993544a44959d760c15bfbed2e1",
+            "edgeType": "Edge",
+            "source": "c072a2c94c5647bb8d5c83c96736e769",
+            "target": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "85bd9cef7c2e4a9a9e1bc5402203002c",
+            "edgeType": "Edge",
+            "source": "f481029fd130402ebb2c70b36e79b1ab",
+            "target": "a681368190c349a4ae6d35271c17af29",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f9ff0bd1c554419abab3bcd5f33d729f",
+            "edgeType": "Edge",
+            "source": "a681368190c349a4ae6d35271c17af29",
+            "target": "fd2da68324e84b6db0b2c9b84504d1b0",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "2fe517c428914f298c225059dfd8ccde",
+            "edgeType": "Branch",
+            "source": "34fc9c495f8d4ab0b74243465d67ee01",
+            "target": "80884a989214431993a2681042d5413a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return vaVars._liveagent_available;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "d76f709fa19a4258b1e5e524c0f3a370",
+            "edgeType": "Branch",
+            "source": "80884a989214431993a2681042d5413a",
+            "target": "679a8c4a39014c188cfad0733b2c44b5",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return !vaSystem.isNASSConversation() && vaVars.global_client_mode != \"OFF_GLIDE\";\n})()\n"
+            },
+            "label": "Not self service or off-glide"
+          },
+          {
+            "id": "3aeb7ab5e8ea4734976075bfa14029d5",
+            "edgeType": "Branch",
+            "source": "80884a989214431993a2681042d5413a",
+            "target": "117cae83067644d58f9afffcdfd87b86",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return (vaSystem.isNASSConversation() || vaVars.global_client_mode == \"OFF_GLIDE\");\n})()\n"
+            },
+            "label": "is self service or off-glide"
+          },
+          {
+            "id": "f71475577fe34b61b7f48e8c29bd8f67",
+            "edgeType": "Branch",
+            "source": "117cae83067644d58f9afffcdfd87b86",
+            "target": "679a8c4a39014c188cfad0733b2c44b5",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return !vaSystem.hasOtherLiveAgentChatInProgress();\n})()\n"
+            },
+            "label": "No LA Chat in Progress"
+          },
+          {
+            "id": "9b3eef76364b4e62ba0fbdc654385aaf",
+            "edgeType": "Branch",
+            "source": "117cae83067644d58f9afffcdfd87b86",
+            "target": "244bc8e2706a49078aa9e1837600f2b1",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return vaSystem.hasOtherLiveAgentChatInProgress();\n})()\n"
+            },
+            "label": "Other LA chat in Progress"
+          },
+          {
+            "id": "148335cee81f462188d2851aef8fea7f",
+            "edgeType": "Edge",
+            "source": "244bc8e2706a49078aa9e1837600f2b1",
+            "target": "791e9717d6fb4d0eaf6050fd714d76d4",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "51cd14e9647848349000e151b3a23186": {
+        "id": "51cd14e9647848349000e151b3a23186",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "_liveagent_disabled_msg",
+        "label": "_liveagent_disabled_msg",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "cf59f5de11bb42e8898d499cf33c9d62": {
+        "id": "cf59f5de11bb42e8898d499cf33c9d62",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "_liveagent_handoff_error_msg",
+        "label": "_liveagent_handoff_error_msg",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "2644d2dab92b4bd596de666e2aae6626": {
+        "id": "2644d2dab92b4bd596de666e2aae6626",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "_liveagent_configured",
+        "label": "_liveagent_configured",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "a4ee6f84465f4baf9cc0dfa989a12cf7": {
+        "id": "a4ee6f84465f4baf9cc0dfa989a12cf7",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "_liveagent_available",
+        "label": "_liveagent_available",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "88a0fe2014ba4f1cb4e088b5b1008cf3": {
+        "id": "88a0fe2014ba4f1cb4e088b5b1008cf3",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "_liveagent_external",
+        "label": "_liveagent_external",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "5e8ed811d104475e9ac698ec32e40fea": {
+        "id": "5e8ed811d104475e9ac698ec32e40fea",
+        "name": "ask_user_for_to_pick_config",
+        "label": "Ask User For To Pick Config",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs",
+        "nodeId": "c4522da1fc23449e9d38a637bb4a2468",
+        "isHidden": false,
+        "autoSelect": false,
+        "autoSelectExpression": ""
+      },
+      "85e820f7b9204b04b55df33041f02eb1": {
+        "id": "85e820f7b9204b04b55df33041f02eb1",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "_external_agent_config",
+        "label": "_external_agent_config",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "7709ed43bbbc4b5ca8742cbcba81937f": {
+        "id": "7709ed43bbbc4b5ca8742cbcba81937f",
+        "name": "ask_user_to_choose_la",
+        "label": "Ask User To Choose LA",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs",
+        "nodeId": "1bce72547d4741a99e1f1d2ad89c3800",
+        "isHidden": false,
+        "autoSelect": false,
+        "autoSelectExpression": ""
+      }
+    }
+  }
+name: _live_agent_support_
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

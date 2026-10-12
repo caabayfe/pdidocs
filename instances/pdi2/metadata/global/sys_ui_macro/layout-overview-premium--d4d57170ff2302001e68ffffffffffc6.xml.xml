@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_canvas">
+		var isHomepage = RP.getReferringURL().contains('home.do');
+		var isCanvasActive = gs.getProperty('glide.cms.enable.responsive_grid_layout', 'true') == 'true';
+		var isCanvas = isCanvasActive &amp;&amp; !isHomepage;
+		isCanvas;
+	</g:evaluate>
+	<j:if test="${jvar_canvas}">
+		<!-- The following table isn't actually displayed but only used to
+		convert widget position to Canvas coordinates.
+		The Canvas is a 12 column responsive grid layout.
+		-->
+		<div id="dropzones_container">
+			<div id="content_wrapper">
+				<table id="${jvar_name}" border="0" cellspacing="8" width="100%">
+					<tr>
+						<!-- the following 3 cells will each span 3 Canvas columns -->
+						<td id="dropzone1" dropzone="true" width="24%" colspan="2"/>
+						<td id="dropzone2" dropzone="true" width="30%" colspan="2"/>
+						<td id="dropzone3" dropzone="true" width="24%" colspan="2"/>
+						<!-- the following cell will generate a long vertical list of filter widget 3 Canvas columns wide-->
+						<td id="dropzone6" dropzone="true" width="20%" rowspan="2"/>
+					</tr>
+					<tr>
+						<!-- Since dropzone6 already occupies 3 Canvas columns, we only
+						have 9 columns left: this means one dropzone will get 4 columns 
+						while the other gets 5 columns. The percentages are set to convert to that.
+						-->
+						<td id="dropzone4" dropzone="true" width="40%" colspan="3"/>
+						<td id="dropzone5" dropzone="true" width="40%" colspan="3"/>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</j:if>
+	<j:if test="${!jvar_canvas}">
+		<g:layout_overview_premium_no_canvas />
+	</j:if>
+	<style>
+		#content_wrapper {
+			display: inline-block;
+			width: 79%;
+			overflow-x: auto;
+			overflow-y: hidden;
+		}
+
+		#dropzone6 {
+			display: inline-block;
+			height: 100%;
+			position: absolute;
+			min-width: 19%;
+			border-left: 1px solid lightgrey;
+			padding-left: 10px;
+		}
+
+		#dropzones_container {
+			position: absolute;
+			width: 100%;
+		}
+
+		/**
+		 * Prevent css styles on the rest of the page to size the mutliple select filters on the
+		 * right side as it causes the elements to be too small and adds scrollbars.
+		 */
+		.compact .form-control {
+			height: auto;
+		}
+
+		/**
+		 * Styles for the layout preview
+		 */
+		.layout_edit_preview #dropzones_container {
+			text-align: left;
+			position: static;
+		}
+
+		.layout_edit_preview #dropzone6 {
+			height: 36%;
+			min-width: 17%;
+		}
+
+		.layout_edit_preview #content_wrapper {
+			min-width: initial;
+		}
+
+		/**
+		 * Styles for the layout in the add content dialog from the dashboard / homepage
+		 */
+		#render_layout_preview #dropzones_container {
+			position: static;
+			text-align: left;
+		}
+
+		#render_layout_preview #dropzone6 {
+			height: 11.5%;
+		}
+
+		#render_layout_preview #dropzone6 a.web{
+			line-height: 5;
+			height: 100%;
+		}
+
+		/**
+		 * Styles for the layout in the add content dialog from the report builder
+		 */
+		#body_dialog_add_gauge #dropzone6 {
+			height: 16%;
+		}
+
+		#body_dialog_add_gauge #dropzone6 a.web{
+			line-height: 4.6;
+		}
+
+		#body_dialog_add_gauge #content_wrapper table {
+			background-color: white;
+		}
+	</style>
+</j:jelly>

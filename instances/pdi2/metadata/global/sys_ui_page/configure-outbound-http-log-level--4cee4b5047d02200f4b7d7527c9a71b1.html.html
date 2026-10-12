@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true" var="jvar_log_level">
+		var logLevel = '';
+		var logLevelGr =  new GlideRecord('sys_outbound_http_log_level');
+		logLevelGr.addQuery('outbound_message_type', '${sysparm_outbound_message_type}');
+		logLevelGr.addQuery('outbound_message_function', '${sysparm_outbound_message_fn}');
+		logLevelGr.query();
+		if(logLevelGr.next())
+			logLevel = logLevelGr.getValue('log_level');
+		logLevel;
+	</g:evaluate>
+	<input type="hidden" id="outbound_message_type" name="outbound_message" value="${sysparm_outbound_message_type}" />
+	<input type="hidden" id="outbound_message_fn" name="outbound_message_fn" value="${sysparm_outbound_message_fn}" />
+	<div style="padding:15px;">
+		<select id="log_level" name="log_level" class="form-control" aria-required="true">
+			<j:if test="${jvar_log_level == 'basic'}">
+				<option value="basic" selected="selected">Basic</option> 
+			</j:if>
+			<j:if test="${jvar_log_level != 'basic'}">
+				<option value="basic">Basic</option> 
+			</j:if>
+			<j:if test="${jvar_log_level == 'elevated'}">
+				<option value="elevated" selected="selected">Elevated</option> 
+			</j:if>
+			<j:if test="${jvar_log_level != 'elevated'}">
+				<option value="elevated">Elevated</option> 
+			</j:if>
+			<j:if test="${jvar_log_level == 'all'}">
+				<option value="all" selected="selected">All</option> 
+			</j:if>
+			<j:if test="${jvar_log_level != 'all'}">
+				<option value="all">All</option> 
+			</j:if>
+		</select>
+	</div>
+	<footer class="modal-footer flex">
+		<button data-dismiss="modal" class="btn btn-primary" id="ok_button" onclick="setLogLevel()">OK</button>
+	</footer>
+</j:jelly>

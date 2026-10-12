@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${gs.hasRole('admin')}">
+		<j:if test="${gs.getProperty('glide.ui.app_menu_context', 'true')}">
+			<j:set var="jvar_show_app_context" value="true"/>
+			<script language="javascript">
+				function showModuleContext(event, id) {
+		  			var mcm = new GwtContextMenu('context_menu_module_' +id);
+	 				mcm.clear();
+		  			mcm.addURL("${gs.getMessage('Edit Module')}", "sys_app_module.do?sys_id=" + id, "gsft_main");
+                                        
+                                        // Ensure the top window is correct
+                                        var w = getTopWindow();
+                                        if (w.location.pathname $[AMP]$[AMP] w.location.pathname.match(/\/navpage11.do/)) {
+		  			  mcm.addFunc("${gs.getMessage('Add Bookmark')}", function() {
+                                            // Looks like the only way to get the link is in the DOM. If we can do this on
+                                            // the server then it would be easier.
+                                            var elem = $(id);
+                                            CustomEvent.fireTop('add_bookmark', {
+                                              type: 'module',
+                                              moduleID: id,
+                                              href: elem.readAttribute('href')
+                                            });
+                                          });
+                                        }
+
+					return contextShow(event, mcm.getID(), 500, 0, 0);
+				}
+				function showAppContext(event, id) {
+					var acm = new GwtContextMenu('context_menu_app_' +id);
+					acm.clear();
+					acm.addURL("${gs.getMessage('Edit Application Menu')}", "sys_app_application.do?sys_id=" + id, "gsft_main");
+					return contextShow(event, acm.getID(), 500, 0, 0);
+				}
+			</script>
+		</j:if>
+	</j:if>
+</j:jelly>

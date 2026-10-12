@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:set var="jvar_n" value="show_business_service_related_bsm_map:${ref}"/>
+	<g2:evaluate var="jvar_table_name">
+		var tableName = current.getTableName();
+		tableName;
+	</g2:evaluate>
+	<a>
+		<span
+			id="${jvar_n}"
+			onclick="showBSM('${jvar_n}')"
+			name="${jvar_n}"
+			style="visibility: hidden"
+			aria-label="${gs.getMessage('Open in Dependency Views')}"
+			title="${gs.getMessage('Open in Dependency Views')}"
+			alt="${gs.getMessage('Open in Dependency Views')}"
+			class="icon ref-button icon-tree btn btn-default btn-ref"
+			tabindex="0"
+			role="button"
+		></span>
+	</a>
+	<script>
+		var fieldName;
+		function onChangeBusinessServiceShowBSM(element, original, changed, loading) {
+			var visibility = 'hidden';
+			if (changed.length > 0)
+				visibility = 'visible';
+			var e = gel('${jvar_n}');
+			e.style.visibility = visibility;
+		}
+
+		// Only allow clicking when the reference field contains full, valid data
+		function showBSM(name) {
+			fieldName = name.split(':')[1];
+			var n = gel(fieldName);
+			n = n.value;
+			if (n.length == 0)
+				alert("Populate Business Service first");
+			else
+				buildUrl(n);
+		}
+
+		function buildUrl(sys_id) {
+			var url = '';
+			url += '$ngbsm.do?id=' + sys_id;
+			url += '&amp;amp;';
+			url += 'serviceView=' + '$[jvar_ngbsm_service]';
+			url += '&amp;amp;';
+			url += 'sysparm_nostack=true';
+			url += '&amp;amp;';
+			url += 'fromTask=' + g_form.getUniqueValue();
+			// Open the map in a new window and focus it
+			g_navigation.open(url, 'super_bsm_map');
+		}
+		var table = '$[jvar_table_name]';
+		var event = new GlideEventHandler('onChange_' + table + '_business_service_related_bsm', onChangeBusinessServiceShowBSM, '${ref}');
+		g_event_handlers.push(event);
+	</script>
+</j:jelly>

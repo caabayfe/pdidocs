@@ -1,0 +1,96 @@
+<div class="filter-container">
+  <div class="filter-bar">
+    <div class="filter-group"
+      ng-class="{'mg-bt-sm' : c.filterPills && c.filterPills.length > 0, 'mg-bt-xl' : !c.filterPills || c.filterPills.length == 0}">
+      <p class="filter-label">${Filter by:}</p>
+
+      <div ng-repeat="fc in c.filtersData | limitTo:c.limitFilters"
+        ng-init="($last && c.adjustFilters())">
+        <div class="dropdown" >
+          <button id="filter-{{fc.categoryId}}" 
+                  class="btn btn-link dropdown-toggle filter-group-button" 
+                  aria-haspopup="true"
+                  data-toggle="dropdown" 
+                  data-filter-grp-id="{{fc.categoryId}}"
+                  aria-label="${Filter by:} {{fc.category}}">
+            {{fc.category}}
+            <span ng-show="fc.selectedFilters.length > 0">({{fc.selectedFilters.length}})</span>
+            <span class="caret"></span>
+          </button>
+
+          <div class="dropdown-menu" ng-style="c.getDropdownStyle()">
+            <ul class="list-group filter-container-style">
+              <li ng-repeat="filter in fc.filters"
+                class="list-group-item {{!$last ? 'mg-bt-sm': ''}} {{$last && c.isScrollable ? 'mg-bt-lg': ''}} {{$index > 0 && filter.isGroup && fc.filters[$index-1].isGroup == false ? 'mg-tp-sm': ''}}"
+                ng-if="fc.filterType != 'reference'">
+                <!-- multi select -->
+                <span class="filter-style standalone-filter-style" ng-if="fc.multiSelect">
+                  <input type="checkbox" 
+                    id="{{fc.categoryId + '-' +filter.value}}" 
+                    name="{{filter.filterName}}"
+                    ng-model="filter.selected" 
+                    ng-change="c.onFilterValueChange(fc, filter)" 
+                    aria-label="{{c.getFilterAriaLabel(filter)}}" 
+                    tabindex="-1">
+                  <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{filter.label}}"
+                    for="{{fc.categoryId + '-' +filter.value}}">{{filter.label}}</label>
+                </span>
+
+                <!-- single select -->
+                <span class="filter-style standalone-filter-style" ng-if="!fc.multiSelect">
+                  <input type="radio" 
+                    id="{{fc.categoryId + '-' +filter.value}}" 
+                    name="{{fc.category}}"
+                    value="{{filter.value}}" 
+                    ng-model="fc.selected" 
+                    ng-change="c.onFilterValueChange(fc, filter)"
+                    aria-label="{{c.getFilterAriaLabel(filter)}}" 
+                    tabindex="-1">
+                  <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{filter.label}}"
+                    for="{{fc.categoryId + '-' +filter.value}}">{{filter.label}}</label>
+                </span>
+              </li>
+
+              <!-- reference -->
+              <div ng-if="fc.filterType == 'reference'" class="list-group-item">
+                <div class="typeahead-filter">
+                  <req-dynamic-record-picker id="{{fc.categoryId}}" field="fc.selection" table="fc.referenceTable"
+                    default-query="fc.referenceCondition" display-field="fc.searchField" value-field="'sys_id'"
+                    search-fields="fc.searchField" page-size="10" multiple="true"
+                    on-change="c.onFilterValueChangeReference(fc, filter)" placeholder="${Search}"
+                    multipleValueDelimiter="fc.categoryId" />
+                </div>
+                <ul class="list-group">
+                  <li ng-repeat="filter in fc.filters" ng-show="filter.selected" class="list-group-item">
+                    <div class="filter-style standalone-filter-style">
+                      <input type="checkbox" id="{{fc.categoryId + '-' +filter.value}}" name="{{fc.categoryId}}"
+                        ng-model="filter.selected"
+                        ng-click="c.onFilterValueChangeReference(fc, filter, false, 'remove', $event)">
+                      <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{filter.label}}" for="{{fc.categoryId + '-' +filter.value}}">{{filter.label}}</label> 
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </ul>
+
+            <div class="dropdown-footer">
+              <hr class="action-separator-style" ng-hide="!c.isScrollable" />
+              <!-- Filter Actions -->
+              <div class="filter-actions display-flex space-between mg-tp-lg">
+                <button class="clearBtn btn btn-link btn-sm pd-initial" ng-click="c.clearFilters(fc, $event)"
+                  ng-disabled="!fc.enableClearBtn" aria-label="${Clear filter}">${Clear}</button>
+                <button class="applyBtn btn btn-primary btn-sm" data-filter-grp-apply="filter-desktop-apply"
+                  data-filter-grp-apply-id="{{fc.categoryId}}" ng-click="c.applyFilter(fc)"
+                  ng-disabled="!fc.enableApplyBtn" aria-label="${Apply filter}">${Apply}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button id="all-filters" data-toggle="modal" data-target="#ec-flyout-filter-modal" data-keyboard="false"
+        data-backdrop="static" class="btn btn-link dropdown-toggle all-filters" ng-click="c.toggleFlyout = true"
+        aria-haspopup="true">${All filters}
+      </button>
+    </div>
+  </div>
+</div>

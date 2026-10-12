@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div style="" id="element.${jvar_textarea_id}" class="form-group form-horizontal is-required">
+		<label id="label-${jvar_textarea_id}" for="${jvar_textarea_id}" class="control-label" style="${jvar_label_style}">
+			<span id="status-${jvar_textarea_id}" mandatory="true" class="required-marker"></span>
+			<span data-toggle="tooltip" title="${jvar_textarea_label_title}" class="label-text">${HTML:jvar_textarea_label}</span>
+		</label>
+		<div class="form-field input_controls" style="${jvar_field_style}">
+			<textarea data-toggle="tooltip" title="${jvar_textarea_title}" onkeyup="${jvar_textarea_onkeyup}" onchange="${jvar_textarea_onchange}" spellcheck="true" name="${jvar_textarea_id}" style="${jvar_textarea_style}" id="${jvar_textarea_id}" wrap="soft" class="form-control" />
+			<input name="sys_original.${jvar_textarea_id}" id="sys_original.${jvar_textarea_id}" type="hidden" value="" />
+		</div>
+	</div>
+	<div id="dialog_buttons" style="clear: both; padding-top: 20px;">
+		<g:dialog_buttons_ok_cancel ok="${jvar_ok}" ok_title="${jvar_ok_title}" cancel_title="${jvar_cancel_title}" ok_id="${jvar_ok_id}" ok_type="${jvar_ok_type}" ok_style_class="${jvar_ok_style_class}" cancel="${jvar_cancel}" />
+	</div>
+	<style>
+		.rtl #label-${JS,HTML:jvar_textarea_id} {
+			float: right;
+			text-align: right;
+		}
+		
+		.rtl #status-${JS,HTML:jvar_textarea_id}:before {
+			padding-right: 0px;
+		}
+		
+		.rtl #dialog_buttons {
+			float: left;
+		}
+		
+		.ltr #label-${JS,HTML:jvar_textarea_id} {
+			float: left;
+			text-align: left;
+		}
+		 
+		.ltr #status-${JS,HTML:jvar_textarea_id}:before {
+			padding-left: 0px;
+		}
+		
+		.ltr #dialog_buttons {
+			float: right;
+		}
+	</style>
+	<script>
+		addLoadEvent(
+			function() {
+				if (window['textareaResize'])
+					textareaResize('${JS,HTML:jvar_textarea_id}');
+				if ($j) {
+					var tooltipProperty = {animation: false, container: 'body'};
+					$j('#${JS,HTML:jvar_dialog_id}').find('[title]').tooltip(tooltipProperty).hideFix();
+					$j('#dialog_buttons').find('button').tooltip(tooltipProperty).hideFix();
+				}
+			}
+		);
+		
+		function enableButton() {
+			var notes = "";
+			var textArea = $("${JS,HTML:jvar_textarea_id}");
+			if (textArea)
+				notes = textArea.value.trim();
+				var parentDiv = $("element.${JS,HTML:jvar_textarea_id}");
+			if (notes $[AND] parentDiv) {
+				parentDiv.removeClassName("is-required");
+				parentDiv.addClassName("is-filled");
+			}
+			if (!notes $[AND] parentDiv) {
+				parentDiv.removeClassName("is-prefilled");
+				parentDiv.removeClassName("is-filled");
+				parentDiv.addClassName("is-required");
+			}
+			var button = $("${JS,HTML:jvar_ok_id}");
+			if (notes $[AND] button) {
+				button.removeClassName("disabled");
+				button.onclick = ${JS,HTML:jvar_ok_action};
+			}
+			if (!notes $[AND] button) {
+				button.addClassName("disabled");
+				button.onclick = "";
+			}
+		};
+	</script>
+</j:jelly>

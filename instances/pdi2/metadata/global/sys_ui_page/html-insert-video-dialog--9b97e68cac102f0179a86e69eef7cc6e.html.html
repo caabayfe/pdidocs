@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<!-- set up some values to be referenced by the client script -->
+<g:evaluate var="jvar_video_extensions">
+   // System property has a list of allowed attachment file extensions, so need to remove
+   // disallowed extensions from the list of those that are active in sys_embed_object
+   var allowedExtProperty = gs.getProperty('glide.attachment.extensions', '');	
+   allowedExtPropertyArr = allowedExtProperty.split(',');
+   var allowedExtArr = []
+   var ext;
+   for (var i = 0; allowedExtPropertyArr.length > i; i++) {
+      ext = allowedExtPropertyArr[i].trim().toLowerCase();
+      if (ext)
+         allowedExtArr.push(ext);
+   }
+   var extensionsArray = [];
+   var extensionsLookup = [];
+   var videoExtensions = "";
+   var videoClsids = "";
+   var videoEmbedTypes = "";
+   var videoCodebases = "";
+   var videoPluginsPages = "";
+   var embedGR = new GlideRecord("sys_embed_object");
+   embedGR.addActiveQuery();
+   embedGR.query();
+   var count = 0;
+   var au = new ArrayUtil();
+   while(embedGR.next()) {
+      var extension = embedGR.getValue('extension');
+      if (allowedExtArr.length > 0) {
+         if (!au.contains(allowedExtArr, extension.toLowerCase()))
+            continue;
+      }
+      
+      if (videoExtensions!="") {
+         videoExtensions += ",";
+         videoClsids += "|";
+         videoEmbedTypes += "|";
+         videoCodebases += "|";
+         videoPluginsPages += "|";
+      }
+      videoExtensions += extension;
+      videoClsids += embedGR.clsid;
+      videoEmbedTypes += embedGR.embed_type;
+      videoCodebases += embedGR.codebase;
+      videoPluginsPages += embedGR.pluginspage;
+      extensionsArray[count] = extension;
+      count++;
+      }
+    videoExtensions;
+</g:evaluate>
+<g2:evaluate>
+    var extensionsString = "${jvar_video_extensions}";
+    extensionsArray = extensionsString.split(",");
+</g2:evaluate>
+<g:evaluate var="jvar_video_clsids" expression="videoClsids" />
+<g:evaluate var="jvar_video_embed_types" expression="videoEmbedTypes" />
+<g:evaluate var="jvar_video_codebases" expression="videoCodebases" />
+<g:evaluate var="jvar_video_pluginpages" expression="videoPluginsPages" />
+<input type="hidden" id="ni.file_extensions" name="ni.file_extensions" value="${jvar_video_extensions}"/>
+<input type="hidden" id="ni.clsids" name="ni.clsids" value="${jvar_video_clsids}"/>
+<input type="hidden" id="ni.embedtypes" name="ni.embedtypes" value="${jvar_video_embed_types}"/>
+<input type="hidden" id="ni.codebases" name="ni.codebases" value="${jvar_video_codebases}"/>
+<input type="hidden" id="ni.pluginspages" name="ni.pluginspages" value="${jvar_video_pluginpages}"/>
+<g:evaluate var="jvar_use_dbvideo">
+   var videoGR = new GlideRecord('db_video');
+   videoGR.isValid();
+</g:evaluate>
+<g:evaluate var="jvar_write_dbvideo">
+   videoGR.canWrite();
+</g:evaluate>
+<input type="hidden" id="ni.has_db_video" name="ni.has_db_video" value="${jvar_use_dbvideo}"/>
+<j:set var="jvar_show_link" value="true" />
+<j:if test="${gs.getProperty('glide.ui.disable_attachment_view') == 'true'}">
+   <j:set var="jvar_show_link" value="false" />
+</j:if>
+<j:set var="jvar_show_link" value="true" />
+<j:if test="${gs.getProperty('glide.ui.disable_attachment_view') == 'true'}">
+   <j:set var="jvar_show_link" value="false" />
+</j:if>
+<input type="hidden" id="ni.show_attachment_view" name="ni.show_attachment_view" value="${jvar_show_link}"/>
+<input type="hidden" id="ni.show_attachment_popup" name="ni.show_attachment_popup" value="${jvar_show_link_popup}" />
+<input type="hidden" id="ni.return_clsid" name="ni.return_clsid" value="" />
+<input type="hidden" id="ni.return_embed_type" name="ni.return_embed_type" value="" />
+<input type="hidden" id="ni.return_codebase" name="ni.return_codebase" value="" />
+<input type="hidden" id="ni.return_pluginspage" name="ni.return_pluginspage" value="" />
+
+<table>
+<tbody>
+  <tr>
+    <td style="white-space:nowrap"><label for="link_type">${gs.getMessage('Type')}:</label></td>
+    <td>
+        <select name="link_type" id="link_type" onchange="changedLinkType();">
+            <j:set var="jvar_default_insert_video_type" value="attachment" />
+            <j:if test="${jvar_use_dbvideo}">
+               <j:set var="jvar_default_insert_video_type" value="dbvideo" />
+               <g:ui_select_option text="${gs.getMessage('Video Library')}" value="dbvideo" selected="${jvar_default_insert_video_type}" />
+            </j:if>
+            <g:ui_select_option text="${gs.getMessage('URL')}" value="url" selected="${jvar_default_insert_video_type}" />
+            <g:ui_select_option text="${gs.getMessage('Attachment')}" value="attachment" selected="${jvar_default_insert_video_type}" />
+        </select>
+    </td>
+  </tr>
+  <tr>
+    <td style="white-space:nowrap;vertical-align:top;padding-top:4px;"><label for="dbvideo_list">${gs.getMessage('Video')}:</label></td>
+    <td width="100%">
+
+<!-- DB_VIDEO  -->
+
+      <j:if test="${jvar_use_dbvideo}">
+           <g:evaluate var="jvar_dbvideo_exist">
+              var dbf = new GlideRecord("db_video");
+              dbf.query();
+                     if (dbf.hasNext())
+                 "inline";
+              else
+                 "none";
+           </g:evaluate>
+           <div id="type_dbvideo" style="white-space:nowrap; display:none">
+             <select name="dbvideo_list" id="dbvideo_list" onchange="onPreview()" style="display:${jvar_dbvideo_exist}">$[SP]
+                              <g:evaluate var="jvar_db_video_name_len">
+                                 var videoGR = new GlideRecord("db_video");
+                                 videoGR.initialize();
+                                 videoGR.name.sys_meta.max_length;
+                              </g:evaluate>
+                              <g:evaluate>
+                                 videoGR.addActiveQuery();
+                                 videoGR.orderBy("name");
+                                 videoGR.query();
+                              </g:evaluate>
+                              <j:while test="${videoGR.next()}">
+                                <j:set var="jvar_file_name" value="${videoGR.getValue('name')}"/>
+                                <j:if test="${!empty(jvar_file_name)}">
+                                   <j:set var="jvar_escaped_file_name" value="${HTML:jvar_file_name}"/>
+                                   <g:ui_select_option text="${jvar_escaped_file_name}" value="${jvar_file_name}" />
+                                </j:if>
+                              </j:while>
+                        </select>
+                        <j:if test="${jvar_write_dbvideo}">
+                              <span style="padding-left:4px;"/>
+                              <button type="button" id="new_db_video_button" onclick="showNewDbVideo()" title="${gs.getMessage('Upload a new video file to the database')}">
+                                  ${gs.getMessage('New')}
+                              </button>
+                        </j:if>
+                        <div id="new_dbvideo" style="white-space:nowrap; display:none">
+                           <form id="new_dbvideo_form" action="sys_user_image.do" enctype="multipart/form-data"
+                              method="post" onsubmit="return submitDbVideo()" target="upload_target">
+                              <input type="hidden" name="sysparm_table" value="db_video"/>
+                              <input type="hidden" name="sysparm_fieldname" value="video"/>
+                              <input type="hidden" name="sysparm_sys_id" value="new_db_video"/>
+                              <input type="hidden" name="sysparm_nostack" value="yes"/>
+                              <input type="hidden" name="sysparm_redirect" value="html_insert_image_uploaded.do?sysparm_nostack=yes"/>
+                              <fieldset style="float: left">
+                                 <legend>${gs.getMessage('New Video Library File')}</legend>
+                                 <table><tbody><tr><td> <!-- table keeps Safari from messing up the fieldset -->
+                                    <div style="white-space:nowrap; float: left; padding: 2px 5px;">
+                                        <label for="db_video_name">${gs.getMessage('Filename')}:</label>
+                                    </div>
+                                    <input type="text" name="db_video_name" id="db_video_name" size="50" maxlength="${jvar_db_video_name_len}" onkeypress="checkDbVideoSubmitOK('name')"
+                                           title="${gs.getMessage('Name must have the file extension swf')}"/>
+                                    <p/>
+                                    <input type="file" name="attachFile" id="attachFile" size="41" onchange="checkDbVideoSubmitOK('file')" title="${gs.getMessage('File must be type swf')}"/>
+                                    <p/>
+                                    <button type="submit" id="new_dbvideo_ok" disabled="true" class="disabled">${gs.getMessage('Upload')}</button>
+                                    <button type="button" id="new_dbvideo_cancel"
+                                       onclick="cancelDbVideo()" style="display:none;">${gs.getMessage('Cancel')}</button>
+                                    <img id="dbvideo_please_wait" src="images/please_wait.gifx" style="display: none;" alt="${gs.getMessage('Please Wait')}"/>
+                                 </td></tr></tbody></table>
+                              </fieldset>
+                           </form>
+                        </div>
+           </div>
+                </j:if>
+<!-- SYS_ATTACHMENT -->
+        <div id="type_attachment" style="white-space:nowrap; display:none">
+              <select name="attachment_list" id="attachment_list" onchange="onPreview()" title="${gs.getMessage('Attachments')}">$[SP]
+                 <g2:evaluate jelly="true">
+                    var sa = new GlideSysAttachment();
+                    var attachmentGR = sa.getAttachments((jelly.RP.getWindowProperties().get('target_table') || '') + '',
+                       (jelly.RP.getWindowProperties().get('target_sys_id') || '') + '');
+                 </g2:evaluate>
+                 <j2:while test="$[attachmentGR.next()]">
+                       <g2:evaluate var="jvar_is_video">
+                          var isVideo = false;
+                          var fileName = attachmentGR.getValue("file_name");
+                          if (!gs.nil(fileName)) {
+                             if (fileName.lastIndexOf(".") > 0) {
+                                var lowerFileName = fileName.toLowerCase();
+                                for(var i=extensionsArray.length-1; i>=0; i--) {
+                                   if (lowerFileName.endsWith("." + extensionsArray[i]))
+                                      isVideo = true;
+                                }
+                             }
+                          }
+                          isVideo;
+                       </g2:evaluate>
+                       <j2:if test="$[jvar_is_video]">
+                          <j2:set var="jvar_file_name" value="$[HTML:attachmentGR.getValue('file_name')]"/>
+                          <g2:ui_select_option text="$[jvar_file_name]" value="$[attachmentGR.getValue('sys_id')]" />
+                       </j2:if>
+                 </j2:while>
+              </select>
+              <span style="padding-left:4px;"/>
+              <button type="button" id="new_attachment_video_button" onclick="showNewAttachmentVideo()" title="${gs.getMessage('Upload a new video file as an attachment')}">
+                  ${gs.getMessage('New')}
+              </button>
+              <form id="new_attachmentvideo" action="sys_user_image.do" enctype="multipart/form-data" style="display:none"
+                 method="post" onsubmit="return submitAttachmentVideo()" target="upload_target">
+                 <input type="hidden" name="sysparm_table" value="${RP.getWindowProperties().get('target_table')}"/>
+                 <input type="hidden" name="sysparm_noprefix" value="true"/>
+                 <input type="hidden" name="sysparm_sys_id" value="${RP.getWindowProperties().get('target_sys_id')}"/>
+                 <input type="hidden" name="sysparm_nostack" value="yes"/>
+                 <input type="hidden" name="sysparm_redirect" value="html_insert_image_uploaded.do?sysparm_nostack=yes"/>
+                 <fieldset style="float: left">
+                    <legend>${gs.getMessage('New Video Attachment')}</legend>
+                    <table><tbody><tr><td> <!-- table keeps Safari from messing up the fieldset -->
+                       <input type="file" name="attachmentFile" id="attachmentFile" size="41" onchange="checkAttachmentSubmitOK()" aria-label="${gs.getMessage('Supported extensions')}: ${jvar_video_extensions}"/>
+                       <p/>
+                       <button type="submit" id="new_attachmentvideo_ok" disabled="true" class="disabled">${gs.getMessage('Attach')}</button>
+                       <button type="button" id="new_attachmentvideo_cancel"
+                          onclick="cancelAttachmentVideo()" style="display:none">${gs.getMessage('Cancel')}</button>
+                       <img id="attachment_please_wait" src="images/please_wait.gifx" style="display: none;" alt="${gs.getMessage('Please Wait')}"/>
+                    </td></tr></tbody></table>
+                 </fieldset>
+              </form>
+        </div>
+<!-- URL -->
+        <div id="type_url" style="white-space:nowrap">
+           <input type="text" name="url" id="f_url" size="60" onchange="onPreview()"
+              title="${gs.getMessage('Enter the video URL here')}" />
+        </div>
+<!-- END URL -->
+
+    </td>
+  </tr>
+</tbody>
+</table>
+
+<br clear="all" />
+<g:ui_table>
+ <tr>
+  <td align="center">
+    <div name="ipreview" id="ipreview" style="height:200px;width:450px"></div>
+  </td>
+ </tr>
+</g:ui_table>
+
+<g:evaluate var="jvar_advanced_display">
+  var p = gs.getPreference("image_select.advanced.options");
+  if (p == "true")
+    "block";
+  else
+    "none";
+</g:evaluate>
+
+<div style="padding:4px;"><span title="${gs.getMessage('Expand/collapse additional video options')}" style="cursor:pointer;color:blue;font-size:80%;"
+   onclick="toggleAdvanced()">Advanced options</span></div>
+<div id="advanced_options" style="display:${jvar_advanced_display};">
+<table width="100%"><tbody>
+   <tr>
+      <td valign="top">
+         <fieldset>
+            <legend>${gs.getMessage('Size')}</legend>
+
+            <div style="padding: 2px"></div>
+               <table><tbody>
+                  <tr>
+                     <td style="white-space:nowrap;"><label for="f_width">${gs.getMessage('Width')}:</label></td>
+                     <td>
+                        <input type="text" name="width" id="f_width" size="5"
+                           title="${gs.getMessage('Width')}" />
+                     </td>
+                  </tr>
+                  <tr>
+                     <td style="white-space:nowrap;"><label for="f_height">${gs.getMessage('Height')}:</label></td>
+                     <td>
+                        <input type="text" name="height" id="f_height" size="5"
+                           title="${gs.getMessage('Height')}" />
+                     </td>
+                  </tr>
+               </tbody></table>
+            <div style="padding: 2px"></div>
+
+         </fieldset>
+
+      </td>
+      <td valign="top">
+         <fieldset id="flash_options">
+            <legend>${gs.getMessage('More Options')}</legend>
+            <div style="padding: 2px; float: top"></div>
+               <table><tbody>
+                  <tr>
+                     <td style="white-space:nowrap;"><label for="f_allowfullscreen">${gs.getMessage('Allow full screen')}:</label></td>
+                     <td>
+                        <input type="checkbox" name="allowfullscreen" id="f_allowfullscreen"
+                           title="${gs.getMessage('Allow full screen')}" onChange="adjustFullScreen()" />
+                     </td>
+                  </tr>
+               <tr>
+                     <td style="white-space:nowrap;"><label for="f_allowscriptaccess">${gs.getMessage('Allow script access')}:</label></td>
+                     <td>
+                        <select name="allowscriptaccess" id="f_allowscriptaccess">
+                          <option value="sameDomain">${gs.getMessage('Same domain')}</option>
+                          <option value="always">${gs.getMessage('Always')}</option>
+                        </select>
+                     </td>
+                  </tr>
+               </tbody></table>
+            <div style="padding: 2px"></div>
+         </fieldset>
+      </td>
+   </tr>
+</tbody></table>
+</div>
+
+<div style="border-top: 1px solid #dfdfdf; padding:6px;align:right;">
+   <span style="float:right;padding-bottom:4px;">
+      <g:dialog_button_ok ok="return onOK()" ok_id="ok_button" />
+   </span>
+</div>
+
+<iframe id="upload_target" name="upload_target" src="blank.do" style="width:0;height:0;border:0px solid #fff;" title="">$[SP]</iframe>
+</j:jelly>

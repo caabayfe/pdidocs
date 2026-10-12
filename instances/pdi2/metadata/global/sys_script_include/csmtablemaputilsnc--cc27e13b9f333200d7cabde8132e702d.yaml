@@ -1,0 +1,144 @@
+_meta:
+  hash: 147067b880ec9949fbd48d237d3cc90a09a9404d763e9dcac1340c3b3a7c2d56
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: admin
+  sys_created_on: 2017-07-13 15:09:43
+  sys_id: cc27e13b9f333200d7cabde8132e702d
+  sys_mod_count: '18'
+  sys_package: 01457aff8c5503100a22deb6dd2b4eec
+  sys_scope: global
+  sys_update_name: sys_script_include_cc27e13b9f333200d7cabde8132e702d
+  sys_updated_by: admin
+  sys_updated_on: 2022-05-04 15:45:30
+access: package_private
+active: 'true'
+api_name: global.CSMTableMapUtilSNC
+caller_access: ''
+client_callable: 'false'
+description: |-
+  Customers should not change this class directly
+  This class is never called directly.
+
+
+  API Usage:
+   
+  -  To find if mapping exists. Can be used to show or hide action button.
+   
+  //Initialise the map object with Source gliderecord object.
+  var map = new CSMTableMapUtil (<source gliderecord object>);
+
+  //Find all mappings (use 'limit' to limit the number of return results)
+  //returns boolean
+  if(map.findMap([limit])){
+  // show or hide button
+  }
+   
+  //Find by CSM Table map sys_id
+  //returns boolean
+  if(map.findMapByID(<CSM Table map sys_id>)){
+  // show or hide button
+  }
+
+  //Find by CSM Table map api_name
+  //returns boolean
+  if(map.findMapByName(<CSM Table map api_name>)){
+  // show or hide button
+  }
+   
+  //Find by target table name (In case of multiple maps, highest order is given preference. Also conditions will be evaluated to find the relevant map)
+  //use 'limit' to limit the number of return results
+  //returns boolean
+  if(map.findMapByTarget(<Taget table name>[, limit ])){
+  // show or hide button
+  }
+   
+  -  To retrieve target record URL directly. Can be used in Platform UI Action to redirect to the target form with prefilled values as per mapping.
+   
+  //returns target url array for all matched mappings with  target fieldName and values.
+  var map = new CSMTableMapUtil (<source gliderecord object>);
+  map.findMapByID(<CSM Table map sys_id>); //or map.findMapByTarget(<Taget table name>);
+  var targetURL = map.getTargetURL();
+  if(targetURL)
+  action.setRedirectURL(targetURL[0]);
+   
+   
+  -  To retrieve the mappings as encoded query. Can be used in Service portal widget to initialise the Form widget.
+   
+  //returns encoded query array for all matched mappings with  target fieldName and values.
+  var map = new CSMTableMapUtil (<source gliderecord object>);
+  map.findMapByID(<CSM Table map sys_id>); //or map.findMapByTarget(<Taget table name>);
+  var queryStr = map.getTargetQuery();
+  if(queryStr){
+      data.template = $sp.getWidget('widget-form', { table: 'kb_knowledge', sys_id: '-1', query: queryStr[0]});
+  }
+   
+  -   To retrieve the mappings as JSON object. Can be used in the code to generate custom actions.
+   
+  //returns JSON array for all matched mappings with  target fieldName and values.
+  var map = new CSMTableMapUtil (<source gliderecord object>);
+  map.findMapByID(<CSM Table map sys_id>); //or map.findMapByTarget(<Taget table name>);
+  var obj = map.getTargetJSON();
+  if(obj){
+      var data = {};
+      data = obj;
+      //custom code
+  }
+
+  - To add meta data like mapping name, order,  target table in output JSON use
+  //returns JSON array for all matched mappings with  target fieldName and values.
+  var map = new CSMTableMapUtil (<source gliderecord object>);
+  map.findMapByID(<CSM Table map sys_id>); //or map.findMapByTarget(<Taget table name>);
+  map.addMetaData();
+  var obj = map.getTargetJSON();
+  if(obj){
+      var data = {};
+      data = obj;
+      //custom code
+  }
+   
+  -   To retrieve the mappings as GlideRecord object. Can be used in the code to generate custom actions.
+   
+  //returns single GlideRecord object if there is single mapping, and returns GlideRecord array for multiple mappings with target fieldName and values.
+  var map = new CSMTableMapUtil (<source gliderecord object>);
+  map.findMapByID(<CSM Table map sys_id>); //or map.findMapByTarget(<Taget table name>);
+  var obj = map.getTargetGlideRecord();
+  if(obj){
+      var sys_id = obj.insert();
+      //custom code
+  }
+   
+  Sample Output:
+
+  Without MetaData:
+  - For getTargetQuery
+  ["kb_knowledge_base=85071a1347c12200e0ef563dbb9a71c1^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share.^short_description=Sales",
+  "short_description=Unable%20to%20access%20team%20file%20share^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share."]
+
+  With MetaData:
+  [{"data":"kb_knowledge_base=85071a1347c12200e0ef563dbb9a71c1^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share.^short_description=Sales","meta":{"name":"Incident","order":100,"target":"kb_knowledge"}},{"data":"short_description=Unable%20to%20access%20team%20file%20share^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share.","meta":{"name":"Inc2","order":100,"target":"kb_knowledge"}}] (sys.scripts extended logging)
+
+  - For getTargetURL
+
+  without MetaData:
+  ["/kb_knowledge.do?sys_id=-1&sysparm_query=kb_knowledge_base=85071a1347c12200e0ef563dbb9a71c1^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share.^short_description=Sales",
+  "/kb_knowledge.do?sys_id=-1&sysparm_query=short_description=Unable%20to%20access%20team%20file%20share^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share."] (sys.scripts extended logging)
+
+  With MetaData:
+  [{"data":"/kb_knowledge.do?sys_id=-1&sysparm_query=kb_knowledge_base=85071a1347c12200e0ef563dbb9a71c1^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share.^short_description=Sales","meta":{"name":"Incident","order":100,"target":"kb_knowledge"}},{"data":"/kb_knowledge.do?sys_id=-1&sysparm_query=short_description=Unable%20to%20access%20team%20file%20share^text=I%20can%20access%20my%20personal%20folder%20but%20can't%20access%20my%20team's%20folder%20on%20our%20file%20share.","meta":{"name":"Inc2","order":100,"target":"kb_knowledge"}}]
+
+  - For getTargetJSON
+
+  Without MetaData:
+  [{"kb_knowledge_base":"85071a1347c12200e0ef563dbb9a71c1","short_description":"Sales","text":"I can access my personal folder but can't access my team's folder on our file share."},
+  {"short_description":"Unable to access team file share","text":"I can access my personal folder but can't access my team's folder on our file share."}]
+
+  With MetaData:
+  [{"data":{"kb_knowledge_base":"85071a1347c12200e0ef563dbb9a71c1","short_description":"Sales","text":"I can access my personal folder but can't access my team's folder on our file share."},"meta":{"name":"Incident","order":100,"target":"kb_knowledge"}},
+  {"data":{"short_description":"Unable to access team file share","text":"I can access my personal folder but can't access my team's folder on our file share."},"meta":{"name":"Inc2","order":100,"target":"kb_knowledge"}}]
+mobile_callable: 'false'
+name: CSMTableMapUtilSNC
+sandbox_callable: 'false'
+sys_name: CSMTableMapUtilSNC
+sys_policy: read

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <SCRIPT LANGUAGE="JavaScript" SRC="kb.jsx?v=${gs.getProperty('glide.builddate')}" />
+    <SCRIPT LANGUAGE="JavaScript" SRC="kb_feedback.jsx?v=${gs.getProperty('glide.builddate')}" />
+    <link href="kb_styles.cssx" type="text/css" rel="stylesheet" />
+    <g:include_script src="KnowledgeFunctions.jsdbx"/>
+    <style type="text/css">
+        A {
+            color: blue;
+            text-decoration: underline;
+        }
+        TABLE {
+            white-space: normal;
+        }
+        IMG {
+            visibility: visible;
+            display: inline;
+        }
+        .kb_options {
+            border:1px solid #dddddd;
+            background-color:#f6f6f6;
+        }
+        .kb_options_header {
+            font-weight:bold;
+            color:#666666;
+            padding-left:3px;
+            background-color: #EEEEEE;
+        }
+        .kb_link {
+            padding-left:10px;
+        }
+        .kb_link A {
+            color: blue;
+            text-decoration: none;
+        }
+        .kb_link A:hover {
+            text-decoration: underline;
+        }
+        .kb_link_disable {
+            padding-left:10px;
+        }
+        .kb_link_disable A {
+            color: #666666;
+            text-decoration: none;
+            cursor:default;
+        }
+    </style>
+
+    <g2:evaluate var="jvar_item" object="true" jelly="true">var kb = new KnowledgeHelp().findArticle(); kb;</g2:evaluate>
+    <j2:set var="jvar_valid_article" value="$[new KnowledgeHelp(kb).isValidArticle()]" />
+    <j2:set var="jvar_has_rights" value="$[new KnowledgeHelp().hasRights(kb)]" />
+    <g2:evaluate var="jvar_css_name">new KnowledgeHelp(kb).findDisplayCSS();</g2:evaluate>
+    <link href="styles/$[jvar_css_name]x?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet" />
+
+    <g2:evaluate var="jvar_links" object="true" jelly="true">
+        var links = [];
+        if (((jelly.jvar_valid_article || '') + '') != 'true')
+            links = ["Knowledge Home"];
+        links;
+    </g2:evaluate>
+
+    <table class="wide" cellspacing="0" border="0" style="margin-bottom: 8px;">
+        <tr>
+            <td>
+                <form method="GET" action="${sysparm_base_form}.do" name="${sysparm_base_form}.do">
+                    <input type="HIDDEN" name="sys_action" id="sys_action" value="none" />
+                    <input type="HIDDEN" name="sys_id" id="sys_id" value="$[JS:kb.sys_id]" />
+                    <!-- view_id is used to consolidate actions from a single view, e.g. rating, feedback, etc. -->
+                    <input type="HIDDEN" name="view_id" id="view_id" value="$[gs.generateGUID()]" />
+                    <input type="HIDDEN" name="sysparm_modify_check" id="sysparm_modify_check" value="true" />
+                    <input type="HIDDEN" name="sysparm_search" id="sysparm_search" />
+                    <g2:emitParms suppress="sysparm_this_url_enc" />
+
+                    <table class="wide" cellspacing="0">
+                        <tr class="header kb_header_title_row">
+                            <td>
+                                <table border="0" class="wide" cellspacing="0" cellpadding="0">
+                                    <tr class="header" border="0" cellspacing="0">
+                                        <td width="100%">
+                                            <div class="caption" style="margin-top: 2px;">
+                                                <j2:if test="$[jvar_valid_article]">
+                                                    $[NS:kb.topic.getDisplayValue()]$[SP]&gt;
+                                                    <j2:if test="$[kb.category != '']">
+                                                        $[NS:kb.category.getDisplayValue()]$[SP]&gt;
+                                                    </j2:if>
+                                                    <g2:evaluate var="jvar_stripe_desc">
+                                                        var answer;
+                                                        if (GlideXMLUtil.isValidHTML(kb.short_description.getDisplayValue()))
+                                                            answer = kb.short_description.getDisplayValue();
+                                                        else
+                                                            answer = kb.short_description.getHTMLValue();
+                                                        
+                                                        if (answer == "")
+                                                            answer = kb.number;
+                                                        
+                                                        answer;
+                                                    </g2:evaluate>
+                                                    $[NS:jvar_stripe_desc]
+                                                </j2:if>
+                                                <j2:if test="$[!jvar_valid_article]">
+                                                    $[gs.getMessage("ARTICLE NOT FOUND")]
+                                                </j2:if>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="color:#999999;font-size: 80%;padding-top:6px;padding-bottom:8px;">
+                                <j2:if test="$[jvar_valid_article]">
+                                    <g:inline template="kb_article_header.xml" />
+                                </j2:if>
+                                <j2:if test="$[!jvar_valid_article]">
+                                    $[gs.getMessage("Unfortunately the article you are looking for could not be found.")]
+                                </j2:if>
+                            </td>
+                        </tr>
+
+                        <g2:evaluate var="jvar_display">new KnowledgeHelp(kb).findDisplayValue();</g2:evaluate>
+                        <g2:evaluate var="jvar_display_td_class">new KnowledgeHelp(kb).findDisplayClass();</g2:evaluate>
+
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <g:kb_languages />
+                                        </td>
+                                        <td class="$[jvar_display_td_class]" valign="top">
+                                            <g2:no_escape>$[NS:jvar_display]</g2:no_escape>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="kb_text" valign="top">
+                                <div style="padding-top:10px;" />
+                                <g:inline template="kb_view_custom.xml" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div style="padding-top:10px;" />
+                                <hr />
+                            </td>
+                        </tr>
+                    </table>
+                    <j2:if test="$[jvar_valid_article ${AND} jvar_has_rights]">
+                        <table class="wide" cellspacing="0">
+                            <tr>
+                                <td width="99%" style="padding-top:0px; vertical-align:top;">
+                                    <table class="wide">
+
+                                        <g:inline template="kb_feedback_section.xml" />
+
+                                        <!-- list of files attached to the article -->
+                                        <g:inline template="kb_attachment_list.xml" />
+
+                                        <!-- list of products to which this article pertains -->
+                                        <g:inline template="kb_affected_products.xml" />
+
+                                        <!-- list of tasks to which this article has been attached -->
+                                        <g:inline template="kb_attached_tasks.xml" />
+
+                                    </table>
+
+                                    <g:evaluate var="jvar_can_see_comments">
+                                        var roles = gs.getProperty("glide.knowman.show_user_feedback.roles");
+                                        gs.hasRole(roles);
+                                    </g:evaluate>
+                                    <j:if test="${jvar_can_see_comments}">
+                                        <j:set var="jvar_show_comments_onload" value="${gs.getProperty('glide.knowman.show_user_feedback') == 'onload'}" />
+                                        <g:evaluate var="jvar_comments_style_display" jelly="true">
+                                            if (((jelly.jvar_show_comments_onload || '') + '') == "true")
+                                                "block";
+                                            else
+                                                "none";
+                                        </g:evaluate>
+                                        <table class="wide">
+                                            <tr>
+                                                <td>
+                                                    <div id="feedback_comments" style="display:none; color:#404040;" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <j:if test="${jvar_show_comments_onload}">
+                                            <script language="javascript">
+                                                addLoadEvent(function() {feedbackCommentsToggle('$[JS:kb.sys_id]');});
+                                            </script>
+                                        </j:if>
+                                    </j:if>
+                                </td>
+
+                                <j2:if test="$[sysparm_no_rating != true]">
+                                <g:inline template="kb_ratings.xml" />
+                                </j2:if>
+
+                            </tr>
+                        </table>
+                    </j2:if>
+                </form>
+            </td>
+        </tr>
+    </table>
+
+</j:jelly>

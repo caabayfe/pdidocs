@@ -1,0 +1,80 @@
+<div ng-if="!loading && data.items && data.items.length > 0"
+  class="help-center-topics panel panel-default b panel-wrapper">
+  <div class="widget-header panel-heding b-b">
+    <ec-widget-header heading-level="{{data.headingLevel}}" widget-id="{{data.instanceId}}"
+      widget-title="{{data.widgetTitle}}" title-class="widget-title panel-title"></ec-widget-header>
+  </div>
+
+  <!-- Loaded content -->
+  <div class="item-card-grid" ng-class="{'item-card-list': !data.isSingleTopic && data.topicCardStyle === data.TOPIC_CARD_STYLES.DETAILED}"
+    aria-labelledby="{{data.instanceId}}-widget-title">
+    <div ng-repeat="item in data.items | limitTo:data.displayLimit track by $index" class="item-card-wrapper">
+      <div class="item-card-container">
+        <a ng-if="item && data.isCardClickable" class="item-card item-card-clickable" ng-href="{{item.link}}"
+           aria-label="{{item.name}}">
+          <div class="item-header">
+            <div class="item-icon-container" ng-if="item.icon">
+              <img ng-src="{{item.icon}}" alt="{{item.name}} icon" class="item-icon-img">
+            </div>
+            <h5 class="item-title multiline-ellipsis" ec-multiline-ellipsis-tooltip
+              ec-ellipsis-tooltip-title="{{item.name}}" ec-ellipsis-tooltip-data-toggle="tooltip"
+              ec-ellipsis-tooltip-data-placement="auto" ec-ellipsis-tooltip-data-container="body">{{item.name}}</h5>
+          </div>
+          <p class="multiline-ellipsis item-description" ec-multiline-ellipsis-tooltip
+            ec-ellipsis-tooltip-title="{{item.description}}" ec-ellipsis-tooltip-data-toggle="tooltip"
+            ec-ellipsis-tooltip-data-placement="auto" ec-ellipsis-tooltip-data-container="body">{{item.description}}</p>
+        </a>
+
+        <div ng-if="item && !data.isCardClickable" class="item-card content-limit-{{data.topicCardContentLimit}}" tabindex="0" aria-label="{{item.name}}">
+          <div class="item-header">
+            <div class="item-icon-container" ng-if="item.icon">
+              <img ng-src="{{item.icon}}" alt="{{item.name}} icon" class="item-icon-img">
+            </div>
+            <h5 class="item-title multiline-ellipsis" ec-multiline-ellipsis-tooltip
+              ec-ellipsis-tooltip-title="{{item.name}}" ec-ellipsis-tooltip-data-toggle="tooltip"
+              ec-ellipsis-tooltip-data-placement="auto" ec-ellipsis-tooltip-data-container="body">{{item.name}}</h5>
+          </div>
+          <p class="multiline-ellipsis item-description-list" ec-multiline-ellipsis-tooltip
+            ec-ellipsis-tooltip-title="{{item.description}}" ec-ellipsis-tooltip-data-toggle="tooltip"
+            ec-ellipsis-tooltip-data-placement="auto" ec-ellipsis-tooltip-data-container="body">{{item.description}}</p>
+          <!-- Connected content for list view -->
+          <div ng-if="!data.isSingleTopic && data.topicCardStyle === data.TOPIC_CARD_STYLES.DETAILED" class="connected-content-container">
+            <div class="connected-content-list content-limit-{{data.topicCardContentLimit}}">
+              <div ng-repeat="content in item.connectedContent" class="connected-content-item">
+                <div class="content-item-wrapper">
+                  <div class="content-icon">
+                    <i class="fa {{c.getIconClass(content.content_table)}}" aria-hidden="true"></i>
+                  </div>
+                  <a ng-href="{{content.link}}" class="content-link" ec-multiline-ellipsis-tooltip
+                    ec-ellipsis-tooltip-title="{{content.name}}" ec-ellipsis-tooltip-data-toggle="tooltip"
+                    ec-ellipsis-tooltip-data-placement="auto"
+                    ec-ellipsis-tooltip-data-container="body">{{content.name}}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <a ng-href="{{item.link}}" ng-if="!data.isSingleTopic && data.topicCardStyle === data.TOPIC_CARD_STYLES.DETAILED"
+            class="view-topic-link">${View topic}
+            <i class="fa fa-chevron-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View All/View Less links positioned at bottom of topics grid -->
+  <div ng-if="data.displayLimit < data.items.length" class="view-all-container">
+    <button ng-click="c.showAll(true)" class="view-all-link">
+      ${View all}
+      <i class="fa fa-chevron-right" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div ng-if="data.displayLimit > data.paginationLimit && data.displayLimit == data.items.length"
+    class="view-less-container">
+    <button ng-click="c.showAll(false)" class="view-less-link">
+      ${View less}
+      <i class="fa fa-chevron-up" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>

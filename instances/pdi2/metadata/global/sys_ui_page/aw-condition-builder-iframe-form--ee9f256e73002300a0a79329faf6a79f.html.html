@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:requires name="scripts/angular_includes_supported.js" includes="true"/>
+	<g2:requires name="scripts/heisenberg/heisenberg_all.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/util/js_includes_util.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/messaging/js_includes_messaging.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/controls/js_includes_controls.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/glide/js_includes_glide.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/i18n/js_includes_i18n.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/notification/js_includes_notification.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/ui/js_includes_ui.js" includes="true"/>
+	<g2:requires name="scripts/js_includes_filter_widget.js" includes="true"/>
+	<g2:requires name="scripts/js_includes_ng_form_elements.js" includes="true" />
+	<g2:requires name="/styles/filter.css" />
+	<g2:requires name="/styles/thirdparty/datetimepicker.css" />
+	<g:evaluate var="jvar_my_list_conditions" expression="RP.getParameterValue('sysparm_mylist_conditions')"/>
+	<g:evaluate var="jvar_my_list_table" expression="RP.getParameterValue('sysparm_mylist_table')"/>
+	<g:evaluate var="jvar_query_tiny_url" expression="RP.getParameterValue('sysparm_tiny')"/>
+	<g:evaluate object="true" jelly="true">
+		var encoded_conditions = encodeURIComponent(jelly.jvar_my_list_conditions);
+	</g:evaluate>
+	<style type="text/css">
+		HTML[data-doctype=true] button:not(.btn):hover, HTML[data-doctype=true] INPUT.button:hover {
+		    -moz-box-shadow: none;
+		    -webkit-box-shadow: none;
+		    box-shadow: none;
+		}
+
+		html[data-doctype="true"] button:not(.btn):active, html[data-doctype="true"] input.button:active {
+		    box-shadow: none;
+		}
+
+		#snawconditionbuilderwidget ul{
+			padding-left: 0;
+		}
+
+		#snawconditionbuilderwidget .ng-filter-widget{
+	        border: none;
+		    display: block;
+		    background: white;
+		    float: none;
+		    height: auto;
+		    clear: both;
+		}
+
+		#snawconditionbuilderwidget .filter-footer {
+			border-bottom: none;
+		}
+		
+		#snawconditionbuilderwidget .filter-footer .or-divider:before {
+			height: 0;
+		}
+		
+		#snawconditionbuilderwidget .filter-footer .or-divider span {
+			background-color: transparent;
+		}
+		
+		#snawconditionbuilderwidget input {
+			white-space: pre-wrap;
+		}
+
+		.outputmsg_div, #page_timing_div {
+			display:none !important;
+		}
+
+		.modal-alert, .modal-md {
+			height: 100%;
+			max-height: 100%;
+			margin: 12px 1px 1px;
+		}
+
+		.modal-alert .modal-footer {
+			padding: 10px 0px;
+		}
+
+		.modal-md .modal-footer {
+			padding: 7px 14px 0;
+		}
+
+		.sn-btn__primary {
+		    border-color: RGB(15, 67, 55) !important;
+			color: RGB(255, 255, 255) !important;
+			background-color: RGB(30, 133, 109) !important;
+		}
+
+		.sn-btn__default {
+		   	border-color: RGB(172, 180, 181) !important;
+			color: RGB(22, 27, 28)!important;
+			background-color: RGB(228, 230, 231)!important;
+		}
+		
+		.sn-btn__md {
+			height: 32px !important;
+			font-size: 16px !important;
+			padding-right: 16px !important;
+			padding-left: 16px! important;
+		}
+
+		.sn-btn {
+            display: inline-flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: inherit !important;
+            line-height: 1.25 !important;
+            font-family: inherit !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+            vertical-align: middle !important;
+            margin: 0 !important;
+            border-width: 1px !important;
+            border-style: solid !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border-radius: 1px !important;
+            min-height: 32px !important;
+		}
+
+		.sn-btn:first-of-type, .sn-btn.is-first-of-type {
+		    margin: 0;
+		}
+
+		.sn-btn:focus {
+    		outline-color: -webkit-focus-ring-color !important;
+			outline-style: auto !important;
+			outline-width: 5px !important;
+		}
+		
+		.sn-btn:disabled {
+			border-color: RGBA(var(--eds-color--neutral-18, 22, 27, 28), 0.35);
+    		cursor: not-allowed;
+			color: RGBA(var(--eds-color--neutral-18, 22, 27, 28), 0.35);
+			background-color: RGBA(var(--eds-color--neutral-0, 255, 255, 255), 0.35);
+		}
+
+		.sn-btn__primary:active, .sn-btn__primary.is-active {
+		    background-color: RGB(15, 67, 55) !important;
+		}
+
+		.sn-btn__primary:hover, .sn-btn__primary.is-hover {
+    		background-color: RGB(23, 100, 82) !important;
+		}
+		
+		.sn-btn__primary:disabled {
+			border-color: RGBA(var(--eds-color--neutral-18, 22, 27, 28), 0.35) !important;
+			cursor: not-allowed !important;
+			color: RGBA(var(--eds-color--neutral-18, 22, 27, 28), 0.35) !important;
+			background-color: RGBA(var(--eds-color--neutral-0, 255, 255, 255), 0.35) !important;
+		}
+
+		.sn-btn__default:active, .sn-btn__default.is-active {
+		    color: RGB(1, 60, 71) !important;
+			background-color: RGB(172, 180, 181) !important;
+		}
+
+		.sn-btn__default:hover, .sn-btn__default.is-hover {
+			color: RGB(1, 89, 107) !important;
+    		background-color: RGB(209, 214, 214) !important;
+		}
+	
+		p.ng-binding {
+			background: #ffffff !important;
+		}
+		
+	</style>
+	<script>				   
+		var iframeMsgHelper = (function () {
+		function createPayload(action, modalId, data) {
+			return {
+				messageType: 'IFRAME_MODAL_MESSAGE_TYPE',
+				modalAction: action,
+				modalId: modalId,
+				data: (data ? data : {})
+			};
+		}
+
+		function pm(window, payload) {
+			if (window.parent === window) {
+				console.warn('Parent is missing. Is this called inside an iFrame?');
+				return;
+			}
+			window.parent.postMessage(payload, location.origin);
+		}
+
+		function IFrameMessagingHelper(window) {
+			this.window = window;
+			this.src = location.href;
+			this.messageHandler = this.messageHandler.bind(this);
+			this.window.addEventListener('message', this.messageHandler);
+		}
+
+		IFrameMessagingHelper.prototype.messageHandler = function (e) {
+			if (e.data.messageType !== 'IFRAME_MODAL_MESSAGE_TYPE' || e.data.modalAction !== 'IFRAME_MODAL_ACTION_INIT') {
+				return;
+			}
+			this.modalId = e.data.modalId;
+		};
+
+		IFrameMessagingHelper.prototype.confirm = function (data) {
+			var payload = createPayload('IFRAME_MODAL_ACTION_CONFIRMED', this.modalId, data);
+			pm(this.window, payload);
+		};
+
+		IFrameMessagingHelper.prototype.cancel = function (data) {
+			var payload = createPayload('IFRAME_MODAL_ACTION_CANCELED', this.modalId, data);
+			pm(this.window, payload);
+		};
+
+		return new IFrameMessagingHelper(window);
+	}());
+	</script>
+	<form id="snawconditionbuilderwidget" name="awconditionbuilder" ng-controller="NgAwConditionBuilder">
+		<div class="modal-md">
+				<input hidden="true" id="jvar_my_list_conditions" name="my_list_conditions" value="${NG:jvar_my_list_conditions}"/>
+				<input hidden="true" id="encoded_conditions" name="encoded_conditions" value="${NG:encoded_conditions}"/>
+				<input hidden="true" id="jvar_my_list_table" name="my_list_table" value="${NG:jvar_my_list_table}"/>
+				<input hidden="true" id="jvar_query_tiny_url" name="jvar_query_tiny_url" value="${NG:jvar_query_tiny_url}"/>
+				<sn-filter-widget table='{{table}}' table-label='{{tableLabel}}' filter-config="filterConfig" tiny-url="tinyUrl"></sn-filter-widget>
+		</div>
+		<div align="right" class="modal-footer">
+			<button type="button" ng-click="cancelModal()" title="" style="min-width: 5em;" class="sn-btn sn-btn__md sn-btn__default">${gs.getMessage('Cancel')}</button>
+	<button type="button" ng-click="updateConditions()" ng-disabled="awconditionbuilder.$pristine" title="" style="min-width: 5em;    margin-left: 7px !important;" class="sn-btn sn-btn__md sn-btn__primary">${gs.getMessage('Update')}</button>
+		</div>
+	</form>
+</j:jelly>

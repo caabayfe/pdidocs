@@ -1,0 +1,1 @@
+answer = new VaAdminConsoleMetrics().getUnderPerformedTopics().length != 0 || new VaAdminConsoleMetrics().getNotCompletedTopics().length != 0 || new VaAdminConsoleMetrics().getLeastUsedTopics().length != 0;

@@ -1,0 +1,1 @@
+new KBVersioning().canReadVersion(current);

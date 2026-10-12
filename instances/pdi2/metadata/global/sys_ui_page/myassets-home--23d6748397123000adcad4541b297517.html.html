@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  my assets homepage
+-->
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <j:set var="jvar_newReports" value="${GlidePluginManager.isRegistered('com.glideapp.report.charting_v2')}" />
+  <j:if test="${jvar_newReports == 'true'}">
+    <g:inline template="reporting_includes.xml" />
+  </j:if>
+
+  <g:requires name="scripts/js_includes_listv2.js" includes="true" position="last"/>
+
+  <j2:set var="jvar_gridName" value="homepage_grid"/>
+  <g2:evaluate jelly="true">
+      var hu = new GlideappHome(jelly);
+      var current_page = hu.getCurrentPage();
+  </g2:evaluate>
+  
+
+  <g:inline template="grid_header.xml"/>
+  
+  <!-- layout -->
+   <g2:call function="layout_2_across.xml" name="$[jvar_gridName]"/>
+  
+   <!-- pre-rendered content -->
+   <g2:generate_grid id="$[current_page.getID()]" editable="false"/>
+  
+   <g:inline template="grid_script.xml"/>
+  
+   <g2:call function="grid_footer.xml" editable="$[jvar_editable_grid]" name="$[jvar_gridName]" view="$[sysparm_view]"/>
+   <script>
+        function addHomeContent() {
+            var pageID = glideGrid.getProperty('sys_id');
+            sectionDialog({ renderer: SECTIONS, title: "${gs.getMessage('Sections')}", filter : "$[gs.getProperty('glide.sc.home.filter')]", page_id : pageID, pinned: true });
+        }
+   </script>
+
+</j:jelly>

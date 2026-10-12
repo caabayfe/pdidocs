@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:ui_form>
+  <!-- Get values from dialog preferences passed in -->
+
+  <g:evaluate var="jvar_extension_list" object="true">
+	var resultList = [];
+	var objectManager = GlideDBObjectManager.get();
+	var baseTableName = RP.getWindowProperties().get('tableName');
+	var includeBaseTable = RP.getWindowProperties().containsKey('includeBaseTable') ? RP.getWindowProperties().get('includeBaseTable') : false;
+	var excludeTables = RP.getWindowProperties().containsKey('excludeTables') ? RP.getWindowProperties().get('excludeTables') : [];
+	var extensionList = String(objectManager.getTableExtensions(baseTableName).toString()); //this is return javascript string with java list representation: '[el1, el2, ....]'
+	var tablesList = extensionList.substring(1, extensionList.length - 1); 
+	if (includeBaseTable)
+		tablesList = baseTableName + ', ' + tablesList;
+
+	var processTables = tablesList.split(',');
+	processTables.forEach(function(tableName) {
+		var tableName = tableName.trim();
+		if(excludeTables.indexOf(tableName) >= 0)
+			return;
+
+		var tableLabel = GlideMetaData.getTableLabel(tableName);
+		var selected = tableName == baseTableName;
+		resultList.push({'name': tableName, 'label': tableLabel, 'selected' : selected});
+	});
+
+	resultList;
+  </g:evaluate>
+   <!-- Set up form fields and labels -->
+   <table width="100%">
+	   <tr>
+		   <td colspan="2">
+			   	 <select name="item_type_selector" id="item_type_selector">
+					 <j:forEach items="${jvar_extension_list}" var="jvar_extension" indexVar="jvar_index">
+						 <g:evaluate var="jvar_label" expression="jelly.jvar_extension.label" jelly="true"/>
+						 <g:evaluate var="jvar_name" expression="jelly.jvar_extension.name" jelly="true"/>
+						 <g:evaluate var="jvar_selected" expression="jelly.jvar_extension.selected" jelly="true"/>
+						 <j:choose>
+						  <j:when test="${jvar_selected == 'true'}">
+							<option selected="selected" value="${jvar_name}">${jvar_label}</option>
+						  </j:when>
+						  <j:otherwise>
+							<option value="${jvar_name}">${jvar_label}</option>
+						  </j:otherwise>
+						 </j:choose>
+					 </j:forEach>
+				</select>
+		   </td>
+	   </tr>
+	   <tr>
+		   <td>
+			   <br/>
+		   </td>
+	   </tr>	   
+	   <tr>
+		   <td colspan="2" align="right">
+			  <g:dialog_buttons_ok_cancel ok="return processUserInput()" />
+		   </td>
+	   </tr>
+  </table>
+</g:ui_form>
+</j:jelly>

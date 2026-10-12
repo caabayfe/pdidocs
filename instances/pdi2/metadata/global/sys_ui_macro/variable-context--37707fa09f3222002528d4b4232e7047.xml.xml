@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_personalizer" expression="gs.hasRole('personalize') || gs.hasRole('catalog_admin')" />
+	<j:if test="${jvar_personalizer}">
+		<g:evaluate jelly="true">
+			var sc_context_menu_table = 'item_option_new';
+			var sc_edit_variable = gs.getMessage('Configure Variable');
+			var sc_edit_variable_msg = gs.getMessage('Edit the definition of this Variable');
+			if (jelly.sysparm_variable_type ${AMP}${AMP} jelly.sysparm_variable_type == 'container') {
+				sc_context_menu_table = 'item_option_new_set';
+				sc_edit_variable =  gs.getMessage('Configure Variable Set');
+				sc_edit_variable_msg = gs.getMessage('Edit the definition of this Variable Set');
+			}
+		</g:evaluate>
+        <g:evaluate expression="var sc_watch_variable = gs.getMessage('Watch Variable');" />
+        <g:evaluate expression="var sc_unwatch_variable = gs.getMessage('Unwatch Variable');" />
+        <g:evaluate expression="var sc_watch_variable_msg = gs.getMessage('Logs changes related to this variable');" />
+		<g:evaluate expression="var sc_unwatch_variable_msg = gs.getMessage('Stop watching this variable');" />
+		<script language="javascript">
+			// we should display context menu only on catalog item page
+			if(ServiceCatalogForm ${AMP}${AMP} (g_form instanceof ServiceCatalogForm)) {
+				var id = "${sysparm_catalog_id}";
+				var variableId = "${sysparm_variable_id}";
+				var variableType = "${sysparm_variable_type}"  || null;
+
+				var gcm = new GwtContextMenu('context_question_label');
+				gcm.setTableName('${sc_context_menu_table}');
+				gcm.clear();
+	
+				gcm.addHref("${sc_edit_variable}", "showItem('${sc_context_menu_table}', 'sys_id', rowSysId)", "", "${sc_edit_variable_msg}");
+				
+				if(variableType != 'container' ${AMP}${AMP} canHaveWatchMenu()) {
+					// 11: Label, 12: Break, 19: Container start, 20: Container end, 24: Container split, 14: Macro, 17: Macro with Label
+					if(variableType ${AMP}${AMP} variableType !== '11' ${AMP}${AMP} variableType !== '32' ${AMP}${AMP} variableType !== '12' ${AMP}${AMP} variableType !== '19' ${AMP}${AMP} variableType !== '20' ${AMP}${AMP} variableType !== '24' ${AMP}${AMP} variableType !== '0' ${AMP}${AMP} variableType !== '14' ${AMP}${AMP} variableType !== '17') {
+						if (showUnWatchMenu()) {
+							gcm.addHref("${sc_unwatch_variable}", "clearWatchField(id+ '.IO:'+ rowSysId)", "", "${sc_unwatch_variable_msg}");
+						} else {
+							gcm.addHref("${sc_watch_variable}", "showWatchField(id+ '.IO:'+ rowSysId)", "", "${sc_watch_variable_msg}");
+						}
+					}
+				}
+			}
+
+			function canHaveWatchMenu() {
+                // We're checking document location against top to see if the full real estate is available
+                // or if we're isolated in a single page (Field Watcher panel not available).
+				return top.document.location.href != document.location.href;
+			}
+			function showUnWatchMenu() {
+                return ((id+ '.IO:'+ variableId === '${gs.getSession().getWatchField()}') ? true : false);
+            }
+		</script>
+	</j:if>
+</j:jelly>

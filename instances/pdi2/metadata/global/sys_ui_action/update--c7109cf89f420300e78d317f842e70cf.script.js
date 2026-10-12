@@ -1,0 +1,3 @@
+function updateCredStore() {
+	SNCredStoreFormUtil.update();
+}

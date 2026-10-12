@@ -1,0 +1,550 @@
+_meta:
+  hash: 71f0d403bbabf29f7b8bf25cf08e790cdbb9d3dfc30cfaff76dea19ec5d2a4ec
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2020-09-25 07:00:47
+  sys_domain: global
+  sys_id: b83c859073a3101066c7e9344ef6a7e6
+  sys_mod_count: '111'
+  sys_package: d2ddf2bf8c5d03100a22deb6dd2b4e97
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_b83c859073a3101066c7e9344ef6a7e6
+  sys_updated_by: admin
+  sys_updated_on: 2024-10-02 22:07:23
+compiled_topic: 7c3c819073a3101066c7e9344ef6a7e4
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"7172ad57814d4670bd8322413934eb3a","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"7172ad57814d4670bd8322413934eb3a"}],"goals":[{"name":"primary","trigger_id":"7172ad57814d4670bd8322413934eb3a","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"222af2f0606f4e1f9dc817965842027b","name":"Start","expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"c4563133ee3b41cf8a9b276406741797","name":"End","expert_mode":false},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"08420fdb3b724a13b421d9d83fa04447","name":"notifications","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"variable_id":"d6843611727b45e9bc62d522d0e9d6f6","message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"va:topic:50c480f1c31310102fa86e221f40dd47:node:08420fdb3b724a13b421d9d83fa04447:field:Message\", vaContext.getRequesterLang())"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var notifications = JSON.parse(vaVars.notifications);\n    var options = []; \n    \n\n    for (var i = 0 ; i < notifications.length ; i++) {\n        var regExp = new RegExp(''(\\\\r\\\\n)+'', ''g'');\n        var replacedMessage = '''';\n        if(notifications[i].content.messageHeading) {\n            var messageHeading = notifications[i].content.messageHeading;\n            replacedMessage = messageHeading.replace(regExp, '' '');\n        } else {\n            var message = notifications[i].content.message;\n            replacedMessage = message.replace(regExp, '' '');\n        }\n        options.push({\n            ''value'' : notifications[i].sysId,\n            ''label'' : replacedMessage,\n            ''render_style'': ''data''\n        });   \n    }\n    return options;\n})()\n","metadataScript":"","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No notifications found.\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var notifications = JSON.parse(vaVars.notifications);\n    var options = []; \n    \n\n    for (var i = 0 ; i < notifications.length ; i++) {\n        var regExp = new RegExp(''(\\\\r\\\\n)+'', ''g'');\n        var replacedMessage = '''';\n        if(notifications[i].content.messageHeading) {\n            var messageHeading = notifications[i].content.messageHeading;\n            replacedMessage = messageHeading.replace(regExp, '' '');\n        } else {\n            var message = notifications[i].content.message;\n            replacedMessage = message.replace(regExp, '' '');\n        }\n        options.push({\n            ''value'' : notifications[i].sysId,\n            ''label'' : replacedMessage,\n            ''render_style'': ''data''\n        });   \n    }\n    return options;\n})()\n"},"description":""},{"type":"LibraryCall","library_topic_name":"_notification_controller_topic_block_","library_topic_id":"bb9714a9530210106e61ddeeff7b1201","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"notification_content","value":{"type":"String","mode":"script","value":"(function execute() {\n    var notificationId = vaInputs.notifications;\n    var gr = new GlideRecord(\"sys_cs_notification\");\n    gr.get(notificationId);\n    var content = gr.getValue(\"content\");\n    gr.setValue(\"state\", \"sent\");\n    gr.setValue(\"conversation\", vaSystem.getConversationId());\n    gr.update();\n\n    var notifications = JSON.parse(vaVars.notifications);\n    for (var i = 0 ; i < notifications.length ; i++) {\n        if(notifications[i].sysId == notificationId) {\n           content = JSON.stringify(notifications[i].content);\n           break;\n        }\n    }\n    return content;\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}}],"return-value-mappings":[],"header_card_fields":[],"id":"50ee5663da4e4027a71f4de559b7bc7c","name":"_notification_controller_topic_block_","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var notifications = vaSystem.getPrevNotifications(true,100);\n    vaVars.notifications = notifications;\n})()\n","id":"ce566adc14524d9c9cb34ea811c926f6","name":"fetch notifications","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"number of notifications","branches":[{"type":"Branch","label":"More than one notification","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    var notifications = JSON.parse(vaVars.notifications);\n    return notifications.length > 1;\n})()\n"},"id":"f46c1e0bb12242cfa512dd016d6b3606","name":"More than one notification","expert_mode":false},{"type":"Branch","label":"one pending notification","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    var notifications = JSON.parse(vaVars.notifications);\n    return notifications.length == 1;\n})()\n"},"id":"6b10c59098744e6398459037095033d1","name":"one pending notification","expert_mode":false},{"type":"Branch","label":"No pending notifications","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    var notifications = JSON.parse(vaVars.notifications);\n    return notifications.length == 0;\n})()\n"},"id":"572a157491b24c6f8de6e63f2048fc38","name":"No pending notifications","expert_mode":false}],"id":"78c3789a11e04adf9e23c831b067240a","goal_id":"primary","expert_mode":false},{"type":"LibraryCall","library_topic_name":"_notification_controller_topic_block_","library_topic_id":"bb9714a9530210106e61ddeeff7b1201","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"notification_content","value":{"type":"String","mode":"script","value":"(function execute() {\n    var notifications = JSON.parse(vaVars.notifications);\n    var gr = new GlideRecord(\"sys_cs_notification\");\n    gr.get(notifications[0].sysId);\n    gr.setValue(\"state\",\"sent\");\n    gr.setValue(\"conversation\", vaSystem.getConversationId());\n    gr.update();\n    return JSON.stringify(notifications[0].content);\n})()\n"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}}],"return-value-mappings":[],"header_card_fields":[],"id":"edd8f382a1da4627afc46a90d53b39c4","name":"_notification_controller_topic_block_","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"string","value":"gs.getMessageLang(\"You have no actionable notifications to be viewed.\", vaContext.getRequesterLang())"}],"request_feedback":true,"id":"94f165bef0564d7485b1d0aa98f9f6d1","name":"No notifications msg","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"ScriptedAction","script":"(function execute() {\n    if (vaSystem.isMWebAMBClient(vaContext.deviceType)) {\n        var web_client_channel_id = ''ecc77b49533100102f40ddeeff7b125d'';\n        var channelGR = new GlideRecord(''sys_notification_channel'');\n        channelGR.get(web_client_channel_id);\n        vaVars._notifications_enabled = (channelGR.getValue(''active'') === ''1'') ? true : false;\n    } else if(vaSystem.isAMBClient(vaContext.deviceType)) {\n        var cschannel = new GlideRecord(''sys_cs_channel'');\n        cschannel.get(''sys_id'', ''b023fcb3537321106167ddeeff7b12a8'');\n        vaVars._notifications_enabled = (cschannel.getValue(''enable_notification'') === ''1'') ? true : false;\n    }  else {\n        var providerAppDetails = JSON.parse(sn_cs.VASystemObject.getProviderAppById(vaContext.providerAppId));\n        var providerDetails = JSON.parse(sn_cs.VASystemObject.getProviderById(providerAppDetails.providerId));\n        var channelSysId = providerDetails.channelId;\n        \n        var cschannel = new GlideRecord(''sys_cs_channel'');\n        cschannel.get(''sys_id'', channelSysId);\n        vaVars._notifications_enabled = (cschannel.getValue(''enable_notification'') === ''1'') ? true : false;\n    }\n     vaVars.global_show_notifications_run = true;\n})()","id":"0994285d7f1d42bb98af00b3bc91d3dd","name":"check notification enabled","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"notification enabled","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars._notifications_enabled;\n})()"},"id":"9380da14661f462bbb0530362df10e1c","name":"notification enabled","expert_mode":false},{"type":"Branch","label":"notification disabled","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars._notifications_enabled;\n})()"},"id":"6d8b1998acc841f08793b21863b253c7","name":"notification disabled","expert_mode":false}],"id":"8b34c64a7cbf43349d465131cc9c473a","goal_id":"primary","expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"string","value":"gs.getMessageLang(\"Looks like notifications have been turned off by your admin. Check with them for more info.\", vaContext.getRequesterLang())"}],"request_feedback":true,"id":"8932d22a23ee4a17b3d5926dcd382dad","name":"notification disabled msg","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"Decision","name":"Is triggered from system topic","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.global_show_notifications_system_topic_trigger;\n})()\n"},"id":"e5531654dfc3471e9589633395fb1c38","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.global_show_notifications_system_topic_trigger;\n})()\n"},"id":"53a2a4bd062c4809aaa45fefc6ebb718","name":"Yes","expert_mode":false}],"id":"00d0649b0f05425e8beff2d338ceddf4","goal_id":"primary","expert_mode":false},{"type":"InputPrompt","variable_id":"25694a4bfc1449d597a89213d0d8ab40","message":{"type":"String","mode":"script","value":"(function execute() {\n    var notifications = JSON.parse(vaVars.global_show_notifications_pending_notifications);\n    return notifications.length == 1 ?\n         gs.getMessageLang(\"You have a pending notification. Would you like to view it now?\", vaContext.getRequesterLang()) :\n         gs.getMessageLang(\"You have pending notifications. Would you like to view them now?\", vaContext.getRequesterLang());\n})()\n"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"f2e2678de4284d49bd514cbffd6c12ea","name":"Confirmation","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"description":""},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"query","value":"confirmation="},"id":"d34acc846ab04d909ebdedac095f1cc3","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"query","value":"confirmation=true"},"id":"d14770c6cf8c402fac8ddaa91841c0e8","name":"Yes","expert_mode":false}],"id":"b41edcf7370a4e9799afa256ae145e1b","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n     vaVars.notifications = vaVars.global_show_notifications_pending_notifications;\n     vaVars.global_show_notifications_pending_notifications = '''';\n})()\n","id":"7a9c2eb7eae14f9286932bfe3e415f8d","name":"Set Notifications variable","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false}],"edges":[{"type":"Edge","source_node_id":"78c3789a11e04adf9e23c831b067240a","target_node_id":"08420fdb3b724a13b421d9d83fa04447","branch_id":"f46c1e0bb12242cfa512dd016d6b3606","id":"afbb215be6b24b23bb97aaa769c9d47d","name":"f46c1e0bb12242cfa512dd016d6b3606"},{"type":"Edge","source_node_id":"08420fdb3b724a13b421d9d83fa04447","target_node_id":"50ee5663da4e4027a71f4de559b7bc7c","id":"c0a6e292a70343758f1eaa10314afa67"},{"type":"Edge","source_node_id":"ce566adc14524d9c9cb34ea811c926f6","target_node_id":"78c3789a11e04adf9e23c831b067240a","id":"965df5a8385541f4b9880d0ef3e4ed1b"},{"type":"Edge","source_node_id":"50ee5663da4e4027a71f4de559b7bc7c","target_node_id":"c4563133ee3b41cf8a9b276406741797","id":"ca64b90101ee425b9b302b09d11a8c06"},{"type":"Edge","source_node_id":"78c3789a11e04adf9e23c831b067240a","target_node_id":"edd8f382a1da4627afc46a90d53b39c4","branch_id":"6b10c59098744e6398459037095033d1","id":"df9e807e4eb44db0aafa1c0d84ed2831","name":"6b10c59098744e6398459037095033d1"},{"type":"Edge","source_node_id":"edd8f382a1da4627afc46a90d53b39c4","target_node_id":"c4563133ee3b41cf8a9b276406741797","id":"fa75e66ba1b94ac7947928d4052839f4"},{"type":"Edge","source_node_id":"78c3789a11e04adf9e23c831b067240a","target_node_id":"94f165bef0564d7485b1d0aa98f9f6d1","branch_id":"572a157491b24c6f8de6e63f2048fc38","id":"82693db2c337457ab80faceb5e227a67","name":"572a157491b24c6f8de6e63f2048fc38"},{"type":"Edge","source_node_id":"94f165bef0564d7485b1d0aa98f9f6d1","target_node_id":"c4563133ee3b41cf8a9b276406741797","id":"f6a9293495fc4c889f01cd74524465fe"},{"type":"Edge","source_node_id":"0994285d7f1d42bb98af00b3bc91d3dd","target_node_id":"8b34c64a7cbf43349d465131cc9c473a","id":"e910cb2b3be648b38e48bc52ff662f27"},{"type":"Edge","source_node_id":"8b34c64a7cbf43349d465131cc9c473a","target_node_id":"ce566adc14524d9c9cb34ea811c926f6","branch_id":"9380da14661f462bbb0530362df10e1c","id":"3ba8f7c6019d4b97bc904d24b9045757","name":"9380da14661f462bbb0530362df10e1c"},{"type":"Edge","source_node_id":"8b34c64a7cbf43349d465131cc9c473a","target_node_id":"8932d22a23ee4a17b3d5926dcd382dad","branch_id":"6d8b1998acc841f08793b21863b253c7","id":"fe29c0f9dccf480d944476f25e653854","name":"6d8b1998acc841f08793b21863b253c7"},{"type":"Edge","source_node_id":"8932d22a23ee4a17b3d5926dcd382dad","target_node_id":"c4563133ee3b41cf8a9b276406741797","id":"1e43c86f71384f788a55928299ba5edc"},{"type":"Edge","source_node_id":"222af2f0606f4e1f9dc817965842027b","target_node_id":"00d0649b0f05425e8beff2d338ceddf4","id":"53859238a6c44abdb80cf139a2b71d60"},{"type":"Edge","source_node_id":"00d0649b0f05425e8beff2d338ceddf4","target_node_id":"0994285d7f1d42bb98af00b3bc91d3dd","branch_id":"e5531654dfc3471e9589633395fb1c38","id":"30e7e369ef3549b4aa091e1de1ed03da","name":"e5531654dfc3471e9589633395fb1c38"},{"type":"Edge","source_node_id":"00d0649b0f05425e8beff2d338ceddf4","target_node_id":"f2e2678de4284d49bd514cbffd6c12ea","branch_id":"53a2a4bd062c4809aaa45fefc6ebb718","id":"6df3b5fe73ad4a0b8da2f7986cdff312","name":"53a2a4bd062c4809aaa45fefc6ebb718"},{"type":"Edge","source_node_id":"f2e2678de4284d49bd514cbffd6c12ea","target_node_id":"b41edcf7370a4e9799afa256ae145e1b","id":"c1e24e5fd59c4e11876727f245df6e75"},{"type":"Edge","source_node_id":"b41edcf7370a4e9799afa256ae145e1b","target_node_id":"c4563133ee3b41cf8a9b276406741797","branch_id":"d34acc846ab04d909ebdedac095f1cc3","id":"4ccb3680bfa345db8a80e1b97db7d1c0","name":"d34acc846ab04d909ebdedac095f1cc3"},{"type":"Edge","source_node_id":"b41edcf7370a4e9799afa256ae145e1b","target_node_id":"7a9c2eb7eae14f9286932bfe3e415f8d","branch_id":"d14770c6cf8c402fac8ddaa91841c0e8","id":"e48e79c41e6d4e5ea0eb8e00cd799029","name":"d14770c6cf8c402fac8ddaa91841c0e8"},{"type":"Edge","source_node_id":"7a9c2eb7eae14f9286932bfe3e415f8d","target_node_id":"78c3789a11e04adf9e23c831b067240a","id":"60958a28434e4f18837b3e7668d958af"}],"id":"primary"}],"script_variables":[],"glide_variables":[{"type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"Choice","choices":[],"id":"d6843611727b45e9bc62d522d0e9d6f6","name":"notifications","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false,"table":""},{"type":"True/False","id":"25694a4bfc1449d597a89213d0d8ab40","name":"confirmation","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":["public"],"scope":"global","domain":"global","topic_type":"STANDARD","channels":[],"dialog_acts_enabled":false,"id":"50c480f1c31310102fa86e221f40dd47","name":"Show Notification","key_phrases":["Show Notification","Show Notifications"],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"description":"displays all actionable notifications that are pending to be seen","model_type":"nlu_keyword","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"Show Notification","library":false,"csTopicId":"7c3c819073a3101066c7e9344ef6a7e4","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 50c480f1c31310102fa86e221f40dd47
+graph: |-
+  {
+    "graph_api_version": "1.0.68",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "222af2f0606f4e1f9dc817965842027b": {
+            "id": "222af2f0606f4e1f9dc817965842027b",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "c4563133ee3b41cf8a9b276406741797": {
+            "id": "c4563133ee3b41cf8a9b276406741797",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "08420fdb3b724a13b421d9d83fa04447": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "notifications",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Thanks, select the notification you'd like to view."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "d6843611727b45e9bc62d522d0e9d6f6",
+            "id": "08420fdb3b724a13b421d9d83fa04447",
+            "mode": "external",
+            "script": "(function execute() {\n    var notifications = JSON.parse(vaVars.notifications);\n    var options = []; \n    \n\n    for (var i = 0 ; i < notifications.length ; i++) {\n        var regExp = new RegExp('(\\\\r\\\\n)+', 'g');\n        var replacedMessage = '';\n        if(notifications[i].content.messageHeading) {\n            var messageHeading = notifications[i].content.messageHeading;\n            replacedMessage = messageHeading.replace(regExp, ' ');\n        } else {\n            var message = notifications[i].content.message;\n            replacedMessage = message.replace(regExp, ' ');\n        }\n        options.push({\n            'value' : notifications[i].sysId,\n            'label' : replacedMessage,\n            'render_style': 'data'\n        });   \n    }\n    return options;\n})()\n",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "No notifications found."
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var notifications = JSON.parse(vaVars.notifications);\n    var options = []; \n    \n\n    for (var i = 0 ; i < notifications.length ; i++) {\n        var regExp = new RegExp('(\\\\r\\\\n)+', 'g');\n        var replacedMessage = '';\n        if(notifications[i].content.messageHeading) {\n            var messageHeading = notifications[i].content.messageHeading;\n            replacedMessage = messageHeading.replace(regExp, ' ');\n        } else {\n            var message = notifications[i].content.message;\n            replacedMessage = message.replace(regExp, ' ');\n        }\n        options.push({\n            'value' : notifications[i].sysId,\n            'label' : replacedMessage,\n            'render_style': 'data'\n        });   \n    }\n    return options;\n})()\n",
+              "mode": "external_script"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "50ee5663da4e4027a71f4de559b7bc7c": {
+            "id": "50ee5663da4e4027a71f4de559b7bc7c",
+            "stepType": "ReusableTopic",
+            "name": "_notification_controller_topic_block_",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "_notification_controller_topic_block_",
+            "reusableTopicId": "bb9714a9530210106e61ddeeff7b1201",
+            "inputs": {
+              "notification_content": {
+                "value": "(function execute() {\n    var notificationId = vaInputs.notifications;\n    var gr = new GlideRecord(\"sys_cs_notification\");\n    gr.get(notificationId);\n    var content = gr.getValue(\"content\");\n    gr.setValue(\"state\", \"sent\");\n    gr.setValue(\"conversation\", vaSystem.getConversationId());\n    gr.update();\n\n    var notifications = JSON.parse(vaVars.notifications);\n    for (var i = 0 ; i < notifications.length ; i++) {\n        if(notifications[i].sysId == notificationId) {\n           content = JSON.stringify(notifications[i].content);\n           break;\n        }\n    }\n    return content;\n})()\n",
+                "mode": "script",
+                "type": "String"
+              }
+            },
+            "variableIds": [],
+            "outputs": [],
+            "outdatedNote": false,
+            "useTemplateTopic": false
+          },
+          "ce566adc14524d9c9cb34ea811c926f6": {
+            "id": "ce566adc14524d9c9cb34ea811c926f6",
+            "name": "fetch notifications",
+            "script": "(function execute() {\n    var notifications = vaSystem.getPrevNotifications(true,100);\n    vaVars.notifications = notifications;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "78c3789a11e04adf9e23c831b067240a": {
+            "id": "78c3789a11e04adf9e23c831b067240a",
+            "stepType": "Decision",
+            "name": "number of notifications"
+          },
+          "edd8f382a1da4627afc46a90d53b39c4": {
+            "id": "edd8f382a1da4627afc46a90d53b39c4",
+            "stepType": "ReusableTopic",
+            "name": "_notification_controller_topic_block_",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "_notification_controller_topic_block_",
+            "reusableTopicId": "bb9714a9530210106e61ddeeff7b1201",
+            "inputs": {
+              "notification_content": {
+                "value": "(function execute() {\n    var notifications = JSON.parse(vaVars.notifications);\n    var gr = new GlideRecord(\"sys_cs_notification\");\n    gr.get(notifications[0].sysId);\n    gr.setValue(\"state\",\"sent\");\n    gr.setValue(\"conversation\", vaSystem.getConversationId());\n    gr.update();\n    return JSON.stringify(notifications[0].content);\n})()\n",
+                "mode": "script",
+                "type": "String"
+              }
+            },
+            "variableIds": [],
+            "outputs": [],
+            "outdatedNote": false,
+            "useTemplateTopic": false
+          },
+          "94f165bef0564d7485b1d0aa98f9f6d1": {
+            "id": "94f165bef0564d7485b1d0aa98f9f6d1",
+            "stepType": "TextOutput",
+            "name": "No notifications msg",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "You have no actionable notifications to be viewed."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "0994285d7f1d42bb98af00b3bc91d3dd": {
+            "id": "0994285d7f1d42bb98af00b3bc91d3dd",
+            "name": "check notification enabled",
+            "script": "(function execute() {\n    if (vaSystem.isMWebAMBClient(vaContext.deviceType)) {\n        var web_client_channel_id = 'ecc77b49533100102f40ddeeff7b125d';\n        var channelGR = new GlideRecord('sys_notification_channel');\n        channelGR.get(web_client_channel_id);\n        vaVars._notifications_enabled = (channelGR.getValue('active') === '1') ? true : false;\n    } else if(vaSystem.isAMBClient(vaContext.deviceType)) {\n        var cschannel = new GlideRecord('sys_cs_channel');\n        cschannel.get('sys_id', 'b023fcb3537321106167ddeeff7b12a8');\n        vaVars._notifications_enabled = (cschannel.getValue('enable_notification') === '1') ? true : false;\n    }  else {\n        var providerAppDetails = JSON.parse(sn_cs.VASystemObject.getProviderAppById(vaContext.providerAppId));\n        var providerDetails = JSON.parse(sn_cs.VASystemObject.getProviderById(providerAppDetails.providerId));\n        var channelSysId = providerDetails.channelId;\n        \n        var cschannel = new GlideRecord('sys_cs_channel');\n        cschannel.get('sys_id', channelSysId);\n        vaVars._notifications_enabled = (cschannel.getValue('enable_notification') === '1') ? true : false;\n    }\n     vaVars.global_show_notifications_run = true;\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "8b34c64a7cbf43349d465131cc9c473a": {
+            "id": "8b34c64a7cbf43349d465131cc9c473a",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "8932d22a23ee4a17b3d5926dcd382dad": {
+            "id": "8932d22a23ee4a17b3d5926dcd382dad",
+            "stepType": "TextOutput",
+            "name": "notification disabled msg",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "Looks like notifications have been turned off by your admin. Check with them for more info."
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          },
+          "00d0649b0f05425e8beff2d338ceddf4": {
+            "id": "00d0649b0f05425e8beff2d338ceddf4",
+            "stepType": "Decision",
+            "name": "Is triggered from system topic"
+          },
+          "f2e2678de4284d49bd514cbffd6c12ea": {
+            "id": "f2e2678de4284d49bd514cbffd6c12ea",
+            "stepType": "BooleanPrompt",
+            "name": "Confirmation",
+            "prompt": {
+              "value": "(function execute() {\n    var notifications = JSON.parse(vaVars.global_show_notifications_pending_notifications);\n    return notifications.length == 1 ?\n         gs.getMessageLang(\"You have a pending notification. Would you like to view it now?\", vaContext.getRequesterLang()) :\n         gs.getMessageLang(\"You have pending notifications. Would you like to view them now?\", vaContext.getRequesterLang());\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "25694a4bfc1449d597a89213d0d8ab40",
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "b41edcf7370a4e9799afa256ae145e1b": {
+            "id": "b41edcf7370a4e9799afa256ae145e1b",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "7a9c2eb7eae14f9286932bfe3e415f8d": {
+            "id": "7a9c2eb7eae14f9286932bfe3e415f8d",
+            "name": "Set Notifications variable",
+            "script": "(function execute() {\n     vaVars.notifications = vaVars.global_show_notifications_pending_notifications;\n     vaVars.global_show_notifications_pending_notifications = '';\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "afbb215be6b24b23bb97aaa769c9d47d",
+            "edgeType": "Branch",
+            "source": "78c3789a11e04adf9e23c831b067240a",
+            "target": "08420fdb3b724a13b421d9d83fa04447",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    var notifications = JSON.parse(vaVars.notifications);\n    return notifications.length > 1;\n})()\n"
+            },
+            "label": "More than one notification"
+          },
+          {
+            "id": "c0a6e292a70343758f1eaa10314afa67",
+            "edgeType": "Edge",
+            "source": "08420fdb3b724a13b421d9d83fa04447",
+            "target": "50ee5663da4e4027a71f4de559b7bc7c",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "965df5a8385541f4b9880d0ef3e4ed1b",
+            "edgeType": "Edge",
+            "source": "ce566adc14524d9c9cb34ea811c926f6",
+            "target": "78c3789a11e04adf9e23c831b067240a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ca64b90101ee425b9b302b09d11a8c06",
+            "edgeType": "Edge",
+            "source": "50ee5663da4e4027a71f4de559b7bc7c",
+            "target": "c4563133ee3b41cf8a9b276406741797",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "df9e807e4eb44db0aafa1c0d84ed2831",
+            "edgeType": "Branch",
+            "source": "78c3789a11e04adf9e23c831b067240a",
+            "target": "edd8f382a1da4627afc46a90d53b39c4",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    var notifications = JSON.parse(vaVars.notifications);\n    return notifications.length == 1;\n})()\n"
+            },
+            "label": "one pending notification"
+          },
+          {
+            "id": "fa75e66ba1b94ac7947928d4052839f4",
+            "edgeType": "Edge",
+            "source": "edd8f382a1da4627afc46a90d53b39c4",
+            "target": "c4563133ee3b41cf8a9b276406741797",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "82693db2c337457ab80faceb5e227a67",
+            "edgeType": "Branch",
+            "source": "78c3789a11e04adf9e23c831b067240a",
+            "target": "94f165bef0564d7485b1d0aa98f9f6d1",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    var notifications = JSON.parse(vaVars.notifications);\n    return notifications.length == 0;\n})()\n"
+            },
+            "label": "No pending notifications"
+          },
+          {
+            "id": "f6a9293495fc4c889f01cd74524465fe",
+            "edgeType": "Edge",
+            "source": "94f165bef0564d7485b1d0aa98f9f6d1",
+            "target": "c4563133ee3b41cf8a9b276406741797",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e910cb2b3be648b38e48bc52ff662f27",
+            "edgeType": "Edge",
+            "source": "0994285d7f1d42bb98af00b3bc91d3dd",
+            "target": "8b34c64a7cbf43349d465131cc9c473a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3ba8f7c6019d4b97bc904d24b9045757",
+            "edgeType": "Branch",
+            "source": "8b34c64a7cbf43349d465131cc9c473a",
+            "target": "ce566adc14524d9c9cb34ea811c926f6",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars._notifications_enabled;\n})()"
+            },
+            "label": "notification enabled"
+          },
+          {
+            "id": "fe29c0f9dccf480d944476f25e653854",
+            "edgeType": "Branch",
+            "source": "8b34c64a7cbf43349d465131cc9c473a",
+            "target": "8932d22a23ee4a17b3d5926dcd382dad",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars._notifications_enabled;\n})()"
+            },
+            "label": "notification disabled"
+          },
+          {
+            "id": "1e43c86f71384f788a55928299ba5edc",
+            "edgeType": "Edge",
+            "source": "8932d22a23ee4a17b3d5926dcd382dad",
+            "target": "c4563133ee3b41cf8a9b276406741797",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "53859238a6c44abdb80cf139a2b71d60",
+            "edgeType": "Edge",
+            "source": "222af2f0606f4e1f9dc817965842027b",
+            "target": "00d0649b0f05425e8beff2d338ceddf4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "30e7e369ef3549b4aa091e1de1ed03da",
+            "edgeType": "Branch",
+            "source": "00d0649b0f05425e8beff2d338ceddf4",
+            "target": "0994285d7f1d42bb98af00b3bc91d3dd",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.global_show_notifications_system_topic_trigger;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "6df3b5fe73ad4a0b8da2f7986cdff312",
+            "edgeType": "Branch",
+            "source": "00d0649b0f05425e8beff2d338ceddf4",
+            "target": "f2e2678de4284d49bd514cbffd6c12ea",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.global_show_notifications_system_topic_trigger;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "c1e24e5fd59c4e11876727f245df6e75",
+            "edgeType": "Edge",
+            "source": "f2e2678de4284d49bd514cbffd6c12ea",
+            "target": "b41edcf7370a4e9799afa256ae145e1b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4ccb3680bfa345db8a80e1b97db7d1c0",
+            "edgeType": "Branch",
+            "source": "b41edcf7370a4e9799afa256ae145e1b",
+            "target": "c4563133ee3b41cf8a9b276406741797",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.confirmation=",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "e48e79c41e6d4e5ea0eb8e00cd799029",
+            "edgeType": "Branch",
+            "source": "b41edcf7370a4e9799afa256ae145e1b",
+            "target": "7a9c2eb7eae14f9286932bfe3e415f8d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.confirmation=true",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "60958a28434e4f18837b3e7668d958af",
+            "edgeType": "Edge",
+            "source": "7a9c2eb7eae14f9286932bfe3e415f8d",
+            "target": "78c3789a11e04adf9e23c831b067240a",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "d6843611727b45e9bc62d522d0e9d6f6": {
+        "id": "d6843611727b45e9bc62d522d0e9d6f6",
+        "name": "notifications",
+        "label": "Notifications",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs",
+        "nodeId": "08420fdb3b724a13b421d9d83fa04447",
+        "isHidden": false
+      },
+      "25694a4bfc1449d597a89213d0d8ab40": {
+        "id": "25694a4bfc1449d597a89213d0d8ab40",
+        "name": "confirmation",
+        "label": "Confirmation",
+        "varType": "boolean",
+        "secure": false,
+        "category": "vaInputs",
+        "nodeId": "f2e2678de4284d49bd514cbffd6c12ea",
+        "isHidden": false
+      }
+    }
+  }
+name: Show Notification
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

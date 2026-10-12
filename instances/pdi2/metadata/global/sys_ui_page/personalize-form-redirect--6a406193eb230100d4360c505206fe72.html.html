@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:evaluate var="jvar_section_id" jelly="true">
+  var section_id = '';
+  var gr = new GlideRecord('sys_ui_section');
+  gr.addQuery('name', jelly.sysparm_table);
+  gr.addQuery('view', 'Default view');
+  gr.query();
+  if (gr.next())
+    section_id = gr.sys_id;
+  else {
+    var ss = new GlideSysSection(jelly.sysparm_table);
+    var sections = ss.getSections();
+    if (sections.next())
+      section_id = sections.sys_id;
+    else
+      section_id = GlideSysForm.generateDefaultForm(jelly.sysparm_table);
+  }
+
+  section_id;
+</g:evaluate>
+
+<div id="section_id" style="display:none;">${jvar_section_id}</div>
+
+</j:jelly>

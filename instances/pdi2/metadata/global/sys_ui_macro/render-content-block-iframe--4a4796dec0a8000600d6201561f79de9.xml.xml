@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_frame_url">
+	// optionally remove javascript: prefix from iFrame URL before rendering content block
+        if (gs.getProperty('glide.ui.content_block.iframe.strip_javascript') === 'true')
+            current.url = GlideSecurityUtils.cleanURL(current.url);
+        var current_url = new GlideURL(current.url);
+        current_url.set("sysparm_nameofstack", GlideGuid.generate(null));
+        current_url.set("sysparm_clear_stack", "yes");
+        var url = current_url.toString();
+        url;
+    </g:evaluate>
+    <j:if test="${current.sizing != 'expand'}">
+        <iframe class="content_embedded" frameborder="0" style="height:${current.height}px;width:${current.width}px" src="${jvar_frame_url}" name="${current.frame_name}"/>
+    </j:if>
+    <j:if test="${current.sizing == 'expand'}">
+        <g:set_if test="${current.frame_name.nil()}" var="jvar_frame_name" true="${current.sys_id}" false="${current.frame_name}" />
+        <iframe width="100%" height="100%" name="${jvar_frame_name}" id="${jvar_frame_name}"  frameborder="0" border="0" allowtransparency="true" src="${jvar_frame_url}" scrolling="no"/>
+        <script>
+            (function() {
+                CustomEvent.observe('content_frame.resized', contentFrameResized);
+                CustomEvent.observe('content_frame.loaded', contentFrameResized);
+                var isFirefox = navigator.userAgent.indexOf('Firefox') > -1;
+
+                function contentFrameResized(name, height) {
+                    if (!name)
+                        return;
+
+                    var f = $(name);
+                    if (!f)
+                        return;
+
+					if(window.SNC) {
+						if(window.SNC.size) {
+							if(window.SNC.size.height) {
+								_resize(f, window.SNC.size.height);
+								return;
+							}
+						}
+					}
+                    // avoid using an AND here
+                    if (!isFirefox || height == 10)
+                        _resize(f, height);
+                    else {
+                        // delay resize for firefox
+                        setTimeout(function() {
+                            _resize(f, height);
+                        }, 0);                        
+                    }
+                }
+
+                function _resize(f, height) {
+					if (!height) {
+						f.height = f.contentWindow.document.body.scrollHeight + "px";
+					} else
+						f.height = height;
+                }
+			
+				$('${jvar_frame_name}').on('load', function() {
+					window.scrollTo(0, 0);
+				});
+            })();
+        </script>
+    </j:if>
+</j:jelly>

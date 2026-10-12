@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_elevated_privileges" expression="gs.getSession().getAvailableElevatedRoles()"/>
+	<j:if test="${!empty(jvar_elevated_privileges)}">
+		<span id="elevated_privilege_span">
+			<j:if test="${gs.getSession().hasRole(gs.getSession().getAvailableElevatedRoles()) == true}">
+				<span class="icon-unlocked sn-tooltip-basic" tabindex="0" data-container="body"
+					title="${gs.getMessage('Elevated privileges are granted for the current session. Click to make modifications to the selections')}" onclick="elevatedRole.selectElevatedRole();">
+					<span class="sr-only">
+						${gs.getMessage('Elevated privileges are granted for the current session. Click to make modifications to the selections')}
+					</span>
+				</span>
+			</j:if>
+
+			<j:if test="${gs.getSession().hasRole(gs.getSession().getAvailableElevatedRoles()) != true}">
+				<span class="icon-locked sn-tooltip-basic" tabindex="0" data-container="body"
+					title="${gs.getMessage('Select and activate elevated privileges for the current session')}"  onclick="elevatedRole.selectElevatedRole();">
+					<span class="sr-only">
+						${gs.getMessage('Select and activate elevated privileges for the current session')}
+					</span>
+				</span>
+			</j:if>
+		</span>
+		<g:include_script src="ElevatedRole.jsdbx"/>
+		<script language="javascript">
+			var elevatedRole = new ElevatedRole("elevated_privilege_span");
+			  CustomEvent.observe('glide:ui_notification.security', elevatedRole.expireElevatedRole.bind(this));
+
+		</script>
+	</j:if>
+</j:jelly>

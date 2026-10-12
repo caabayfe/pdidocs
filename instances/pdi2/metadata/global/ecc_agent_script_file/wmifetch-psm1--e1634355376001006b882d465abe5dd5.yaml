@@ -1,0 +1,1795 @@
+_meta:
+  hash: 17e465aad130f011f1c16c042f97a61436f3eddbe060d2b4506025ae8672298b
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: jimmy.yuan
+  sys_created_on: 2013-04-04 16:43:16
+  sys_domain: global
+  sys_id: e1634355376001006b882d465abe5dd5
+  sys_mod_count: '185'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_e1634355376001006b882d465abe5dd5
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-03 15:49:46
+active: 'true'
+checksum: ''
+description: Collection of functions used to fetch data from a target system through WMI
+directory: 'false'
+name: WMIFetch.psm1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  $fetchListType = [system.collections.generic.dictionary[string, system.collections.generic.dictionary[string, system.collections.generic.list[string]]]]; 
+  $fetchedWMIEntriesType = [system.collections.generic.dictionary[string, system.collections.generic.dictionary[string, system.collections.generic.list[system.collections.generic.dictionary[string, object]]]]];
+  $fetchedRegistryEntriesType = [system.collections.generic.dictionary[string, system.collections.generic.dictionary[string, system.collections.generic.dictionary[string, string]]]];
+
+  $registryHives = @{"HKEY_CLASSES_ROOT" = [uint32]"0x80000000"; "HKEY_CURRENT_USER" = [uint32]"0x80000001"; "HKEY_LOCAL_MACHINE" = [uint32]"0x80000002"; "HKEY_USERS" = [uint32]"0x80000003"; "HKEY_CURRENT_CONFIG" = [uint32]"0x80000005"; "HKEY_DYN_DATA" = [uint32]"0x80000006"}
+  $SNC_SEPERATOR = "---SNC-SEPERATOR---";
+  $SNC_SEPERATOR_REGISTRY = $script:SNC_SEPERATOR + "REGISTRY-SECTION---";
+  $EXTEND_TAG = "_EXTENDED_";
+  $EXTENDED_TAG_END = $EXTEND_TAG + "END!";
+  $EXTENDED_TAG_START = $EXTEND_TAG + "START:";
+
+  function filterHotfix {
+      param([string]$value)
+      if ($value){
+          $script:shouldFilterHotfix = $value;
+      }
+      else{
+          $script:shouldFilterHotfix = "false";
+      }
+  }
+
+  #####
+  # Initializes script scope variables in this module to their default values
+  #####
+  function initializeWmiFetchModule {
+  	$script:wmiEntriesToFetch = $null
+  	$script:fetchedWMIEntries = $null
+  	$script:registryEntriesToFetch = $null
+  	$script:fetchedRegistryEntries = $null
+  	$script:shouldFilterHotfix = "false";
+  	[System.Xml.XmlDocument]$script:xmlDocument = $null;
+      [System.Xml.XmlElement]$script:xmlResult = $null;
+      $script:CimSession = $null;
+  }
+
+  # invoke the initialization function immediately
+  initializeWmiFetchModule
+
+  #####
+  # Add the given path to the fetch entries.  The paths may take one of two forms, either:
+  #     HKEY_<registry key path>
+  # or
+  #     [<namespace>\]<class>.property
+  # The first form fetches a registry key value; the second a WMI class property.
+  #####
+  function addFetch {
+      param([string]$entry)
+
+      if ($script:shouldFilterHotfix -eq "true"){
+          $packagesIndex = $entry.indexOf("/Component Based Servicing/Packages/Package");
+          if ($packagesIndex -ne -1){
+              return;
+          }
+      }
+         
+      $parser = [regex]"(?i)^(HKCR|HKCU|HKLM|HKU|HKEY_CLASSES_ROOT|HKEY_CURRENT_USER|HKEY_LOCAL_MACHINE|HKEY_USERS)[\\\/].*$";
+      $parts = $parser.match($entry);
+      if ($parts.Success) {
+          addRegistryFetch($entry);
+      } else {
+          addWMIFetch($entry);
+      }
+  }
+
+  #####
+  # Adds WMI fetch entries with a path of the following form: 
+  #     [<namespace>\]<class>.property
+  # If the optional namespace is missing, the default (root\cimv2) is used.  All namespaces MUST begin with "root\".
+  # 
+  # path: the path to be fetched, in the form specified above.
+  #####
+  function addWMIFetch {
+      param([string]$entry)
+
+      if (!$script:wmiEntriesToFetch) {
+          # Dictionary for namespace and collection of tables which is dictionary for table name and list of fields
+          $script:wmiEntriesToFetch = new-object $fetchListType;
+      }
+         
+      $namespace = "root\cimv2";
+      $tableName = "";
+      $fieldName = "";
+      $parser = [regex]"^(?:(root\\(?:.*))\\)?([^\\]*)[\.\\\/](.*)$";
+      $parts = $parser.match($entry);
+
+      if (!$parts.Success) {
+          return;
+      }
+         
+      if ($parts.Groups[1].Value.Length -gt 0) {
+          $namespace = $parts.Groups[1].Value;
+      }
+     
+      $tableName = [string]$parts.Groups[2].Value;
+      $tableName = $tableName.Trim();
+      $fieldName = [string]$parts.Groups[3].Value;
+      $fieldName = $fieldName.Trim();
+         
+      if (!$script:wmiEntriesToFetch.ContainsKey($namespace)) {
+          [system.collections.generic.dictionary[string, system.collections.generic.list[string]]]$ns = 
+              new-object "system.collections.generic.dictionary[string, system.collections.generic.list[string]]";
+          $script:wmiEntriesToFetch.Add($namespace, $ns);
+      }
+      
+      if (!$script:wmiEntriesToFetch[$namespace].ContainsKey($tableName)) {
+          [system.collections.generic.list[string]]$fields = new-object "system.collections.generic.list[string]";
+          $script:wmiEntriesToFetch[$namespace].Add($tableName, $fields);
+      } 
+
+      $script:wmiEntriesToFetch[$namespace][$tableName].Add($fieldName);    
+  }
+
+  function fetch {
+      param([string]$computer, [System.Management.Automation.PSCredential]$cred)
+
+      $script:xmlDocument = createXmlDocument;
+      $script:xmlResult = createElement -xmlDocument $script:xmlDocument -name "wmi"
+      appendChild -parent $script:xmlDocument -child $script:xmlResult
+      fetchWMI -computer $computer -cred $cred
+      fetchRegistry -computer $computer -cred $cred
+      outputFetchedItems
+  }
+
+  function initRegistryVariables {
+
+      $script:registryEntriesToFetch = $null
+      $script:fetchedRegistryEntries = $null
+      $registryEntriesToFetch = $null
+      $fetchedRegistryEntries = $null
+      [System.Xml.XmlDocument]$xmlDocument = $null
+      [System.Xml.XmlElement]$xmlResult = $null
+  }
+
+  <#
+  This is a helper function to get the value of a property from an object returned by Get-CimInstance or Get-WmiObject.
+  Get-WwmiObject returns  System.Management.ManagementObject 
+  Get-CimInstance returns  Microsoft.Management.Infrastructure.CimInstance 
+  #>
+  function Get-WmiPropertyValue {
+      param([object]$wmiObject, [string]$propertyName)
+      
+      # Try to get regular property first (works for both PS5 and PS7)
+      $property = $wmiObject.PSObject.Properties[$propertyName];
+      if ($property) {
+          return $property.Value;
+      }
+      
+      # If property starts with "__" and object has CimSystemProperties, handle PS7 system properties
+      if ($propertyName.StartsWith("__") -and $wmiObject.CimSystemProperties) {
+          $value = switch ($propertyName) {
+              "__CLASS"     { $wmiObject.CimSystemProperties.ClassName }
+              "__NAMESPACE" { $wmiObject.CimSystemProperties.Namespace }
+              "__SERVER"    { $wmiObject.CimSystemProperties.ServerName }
+              "__PATH"      { $wmiObject.CimSystemProperties.Path }
+              default       { $null }
+          }
+          return $value;
+      }
+      
+      return $null;
+  }
+
+  function fetchWMI {
+      param([string]$computer, [System.Management.Automation.PSCredential]$cred)
+
+      if (!$script:wmiEntriesToFetch) {
+          return;
+      }
+          
+      if (!$script:fetchedWMIEntries) {
+          $script:fetchedWMIEntries = new-object $fetchedWMIEntriesType;
+      }
+      
+      foreach ($namespace in $script:wmiEntriesToFetch.Keys) {
+          [system.collections.generic.dictionary[string, system.collections.generic.list[system.collections.generic.dictionary[string, object]]]]$ns = 
+              new-object "system.collections.generic.dictionary[string, system.collections.generic.list[system.collections.generic.dictionary[string, object]]]";
+          $script:fetchedWMIEntries.Add($namespace, $ns);
+      
+          foreach ($table in $script:wmiEntriesToFetch[$namespace].Keys) {
+              [system.collections.generic.list[system.collections.generic.dictionary[string, object]]]$fetchedTableList = 
+                  new-object "system.collections.generic.list[system.collections.generic.dictionary[string, object]]";
+              $script:fetchedWMIEntries[$namespace].Add($table, $fetchedTableList);
+
+              try {
+                  if ($PSVersionTable.PSVersion.Major -lt 6) {
+                      if (($global:isMid -eq $False) -and $cred) {
+                          SNCLog-DebugInfo "WMIFetch.psm1 fetchWMI(PS5) with credential computer: $computer namespace: $namespace table: $table isMid: $global:isMid";
+                          $wmiClass = Get-WmiObject -Namespace $namespace -Class $table -ComputerName $computer -Credential $cred -Impersonation Impersonate -Authentication PacketPrivacy -EA "Stop"
+                      } else {
+                          SNCLog-DebugInfo "WMIFetch.psm1 fetchWMI(PS5) with no credential computer: $computer namespace: $namespace table: $table isMid: $global:isMid";
+                          $wmiClass = Get-WmiObject -Namespace $namespace -Class $table -ComputerName $computer -Impersonation Impersonate -Authentication PacketPrivacy -EA "Stop"
+                      }
+                  } else {
+                      # --- PowerShell 7+ branch (Get-CimInstance) ---------------------------------
+                      # Get-CimInstance requires a CimSession when using credentials
+                      if (($global:isMid -eq $False) -and $cred) {
+                          SNCLog-DebugInfo "WMIFetch.psm1 fetchWMI(PS7) with credential computer: $computer namespace: $namespace table: $table isMid: $global:isMid";
+                          $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+                          $wmiClass = Get-CimInstance -Namespace $namespace -ClassName $table -CimSession $cimSession -EA "Stop"
+                      } else {
+                          SNCLog-DebugInfo "WMIFetch.psm1 fetchWMI(PS7) with no credential computer: $computer namespace: $namespace table: $table isMid: $global:isMid";
+                          $wmiClass = Get-CimInstance -Namespace $namespace -ClassName $table -ComputerName $computer -EA "Stop"
+                      }
+                  }
+                  if (!$wmiClass) {
+                      continue;
+                  }
+              
+                  if ($wmiClass -is [array]) {
+                      foreach ($obj in $wmiClass) {
+                          [system.collections.generic.dictionary[string, object]]$fetchedTable = new-object "system.collections.generic.dictionary[string, object]";
+                          foreach ($entry in $script:wmiEntriesToFetch[$namespace][$table]) {
+                              $value = Get-WmiPropertyValue -wmiObject $obj -propertyName $entry;
+                              if ($entry.equals("CommandLine") -and $value -and ($value -like '*password*')) {
+                                  $value = $value -replace 'password\s*={0,1}\s*\S+', '******';
+                              }
+                              $fetchedTable.Add($entry, $value);
+                          }
+                          $script:fetchedWMIEntries[$namespace][$table].Add($fetchedTable);                        
+                      }
+                  } else {
+                      [system.collections.generic.dictionary[string, object]]$fetchedTable = new-object "system.collections.generic.dictionary[string, object]";
+                      foreach ($entry in $script:wmiEntriesToFetch[$namespace][$table]) {
+                          $value = Get-WmiPropertyValue -wmiObject $wmiClass -propertyName $entry;
+                          $fetchedTable.Add($entry, $value);
+                      }
+                      $script:fetchedWMIEntries[$namespace][$table].Add($fetchedTable);
+                  }
+              } catch [System.UnauthorizedAccessException] {
+                  continue;
+              } catch [System.Exception] {
+                  # 0x800706D9 is an endpoint mapper exception we'll skip because it is most likely from requesting cluster info from 
+                  # a machine that is not part of a cluster
+                  if ($_.Exception -is [System.Runtime.InteropServices.COMException] -and $_.Exception.ErrorCode -eq 0x800706D9) {
+                      continue;
+                  }
+
+                  # since we are targeting namespaces and classes that may not always exist, we shouldn't throw a warning
+                  if ($_.Exception.Message -like "Invalid Namespace*" -or $_.Exception.Message -like "Invalid Class*") {
+                      continue;
+                  }
+
+                  addWarning($_.Exception.Message);
+              }
+          }
+      }
+  }
+
+  function outputFetchedItems {
+      outputFetchedWMIItems
+      outputFetchedRegistryItems
+      $outputStr = getXmlString($script:xmlDocument)
+      write-host $outputStr
+  }
+
+  function outputFetchedWMIItems {
+      if ($script:fetchedWMIEntries) {
+          foreach ($namespace in $script:fetchedWMIEntries.Keys) {
+              foreach ($table in $script:fetchedWMIEntries[$namespace].Keys) {
+                  $tableObj = $script:fetchedWMIEntries[$namespace][$table];
+                  if ($tableObj -and $tableObj.Count -gt 0) {
+                      foreach ($listEntry in $script:fetchedWMIEntries[$namespace][$table]) {
+                          $tableElement = createElement -xmlDocument $script:xmlDocument -name $table
+                          appendChild -parent $script:xmlResult -child $tableElement
+                          foreach ($entry in $listEntry.Keys) {
+                              $value = $listEntry[$entry]
+                              
+                              if ($value -ne $null) {
+                                  # handle SecureBinding and ServerBinding fields from IIsWebServerSettting class
+                                  if ($value -is [System.Management.ManagementBaseObject]) {
+                                      $value = getManagementBaseObjectString -srcObject $value;
+                                  } elseif ($value -is  [Microsoft.Management.Infrastructure.CimInstance]) {
+                                      $value = getCimInstanceString -srcObject $value;
+                                  } elseif ($value -is [System.Management.ManagementBaseObject[]] -or $value -is [Microsoft.Management.Infrastructure.CimInstance[]]) {
+                                     if ($value.count -eq 0) {
+                                        $value = "";
+                                     } else {
+                                        $newValue = "";
+                                        foreach ($element in $value) {
+                                           if ($element -is [System.Management.ManagementBaseObject]) {
+                                               $string = getManagementBaseObjectString -srcObject $element;
+                                           } elseif ($element -is [Microsoft.Management.Infrastructure.CimInstance]) {
+                                               $string = getCimInstanceString -srcObject $element;
+                                           }
+                                           $newValue = $newValue + "," + $string;
+                                        }
+                                        # remove leading comma and save
+                                        $value = $newValue.SubString(1);
+                                     }
+                                  } elseif ($value -is [Array]) {
+                                      $value = getArrayString -srcArray $value;
+                                  } else {
+                                      $value = $value.ToString();
+                                  }
+                              } else {
+                                  $value = "";
+                              }
+                              
+                              if ($value -ne $null -and ($value -eq [char] 0x0 -or $value -eq "&#x0;")) {
+                                   $value = "";
+                              }
+                              
+                              $valueElement = createElement -xmlDocument $script:xmlDocument -name $entry -value $value
+                              appendChild -parent $tableElement -child $valueElement
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  }
+
+  function nextXmlNode {
+      param([System.Xml.XmlNode]$currentElement, [string]$name)
+      
+      $previousElement = $currentElement;
+      $currentElement = getChildWithNameAndAttribute -xmlNode $currentElement -name "entry" -attributeName "key" -attributeValue $name
+      if (!$currentElement) {
+          $newElement = createElementWithAttribute -xmlDocument $script:xmlDocument -name "entry" -attributeName "key" -attributeValue $name
+          appendChild -parent $previousElement -child $newElement
+          $currentElement = $newElement;       
+      }
+      
+      return $currentElement;
+  }
+
+  function getCimInstanceString {
+      param([Microsoft.Management.Infrastructure.CimInstance]$srcObject)
+      
+      $props = @{};
+      foreach ($property in $srcObject.CimInstanceProperties) {
+          $value = $srcObject.GetPropertyValue($property.Name);
+          if ($value -eq $null) {
+              continue;
+          }
+
+          if ($value -is [array]) {
+              $value = getArrayString -srcArray $value
+          }
+
+          if ($value.ToString().Length -gt 0) {
+              $props.Add($property.Name, $value);
+          }
+      }
+      
+      $outputStr = getHashtableString -srcHashtable $props;
+      return $outputStr;
+  }
+
+  function getManagementBaseObjectString {
+      param([System.Management.ManagementBaseObject]$srcObject)
+      
+      $props = @{};
+      foreach ($property in $srcObject.Properties) {
+          $value = $srcObject.GetPropertyValue($property.Name);
+          if ($value -eq $null) {
+              continue;
+          }
+
+          if ($value -is [array]) {
+              $value = getArrayString -srcArray $value
+          }
+
+          if ($value.ToString().Length -gt 0) {
+              $props.Add($property.Name, $value);
+          }
+      }
+      
+      $outputStr = getHashtableString -srcHashtable $props;
+      return $outputStr;
+  }
+
+  function getHashtableString {
+      param([HashTable]$srcHashtable)
+      
+      if ($srcHashtable.Count -eq 0) {
+          return "";
+      }
+          
+      $outputStr = "";
+      $index = 0;
+      foreach($key in $srcHashtable.Keys) {
+          if ($index -ne 0) {
+              $outputStr += ",";
+          }
+          
+          $outputStr += $key + "=" + $srcHashtable[$key];
+          $index++;
+      }
+      
+      return $outputStr;
+  }
+
+  function getArrayString {
+      param([array]$srcArray)
+
+      return [string]::Join(",", $srcArray);
+  }
+
+  function addWarning {
+      param([string]$warningStr)
+      
+      $warningElement = createElement -xmlDocument $script:xmlDocument -name 'Warning' -value $warningStr
+      appendChild -parent $script:xmlResult -child $warningElement
+  }
+
+
+  #################################
+  # REGISTRY FUNCTIONS
+  #################################
+  function clearRegistryFetchArrays{
+      $script:registryEntriesToFetch = $null;
+      $script:fetchedRegistryEntries = $null;
+  }
+  function addRegistryFetch {
+      param([string]$entry)
+
+      if (!$script:registryEntriesToFetch) {
+          $script:registryEntriesToFetch = new-object 'system.collections.generic.dictionary[string, system.collections.generic.dictionary[string, system.collections.generic.list[string]]]';
+      }
+      
+      $parser = [regex]"(?i)^(HKCR|HKCU|HKLM|HKU|HKEY_CLASSES_ROOT|HKEY_CURRENT_USER|HKEY_LOCAL_MACHINE|HKEY_USERS)[\\\/](.*)[\\\/](.*)$";
+      $parts = $parser.match($entry);
+
+      if (!$parts.Success) {
+          return;
+      }
+
+      $hive = getHiveString($parts.Groups[1].Value);
+      
+      if (!$script:registryEntriesToFetch.ContainsKey($hive)) {
+          $registryKeys = new-object 'system.collections.generic.dictionary[string, system.collections.generic.list[string]]';
+          $script:registryEntriesToFetch.Add($hive, $registryKeys);
+      }
+      
+      if (!$script:registryEntriesToFetch[$hive].ContainsKey($parts.Groups[2].Value)) {
+          $registryValues = new-object 'system.collections.generic.list[string]';
+          $script:registryEntriesToFetch[$hive].Add($parts.Groups[2].Value, $registryValues);
+      }
+
+      $script:registryEntriesToFetch[$hive][$parts.Groups[2].Value].Add($parts.Groups[3].Value);
+  }
+
+  function getHiveString() {
+      param([string]$hive)
+
+      $hiveStr = $null;
+      if ($hive -eq "HKCR" -or $hive -eq "HKEY_CLASSES_ROOT") {
+          $hiveStr = "HKEY_CLASSES_ROOT";
+      } elseif ($hive -eq "HKCU" -or $hive -eq "HKEY_CURRENT_USER") {
+          $hiveStr = "HKEY_CURRENT_USER";
+      } elseif ($hive -eq "HKLM" -or $hive -eq "HKEY_LOCAL_MACHINE") {
+          $hiveStr = "HKEY_LOCAL_MACHINE";
+      } elseif ($hive -eq "HKU" -or $hive -eq "HKEY_USERS") {
+          $hiveStr = "HKEY_USERS";
+      } elseif ($hive -eq "HKCC" -or $hive -eq "HKEY_CURRENT_CONFIG") {
+          $hiveStr = "HKEY_CURRENT_CONFIG";
+      }
+      
+      return $hiveStr;
+  }
+
+  # Get the StdRegProv object, and use it to fetch requested registry entries.  Call EnumValues to figure out the type of value - the function to call to fetch the value is based on the type.
+  function fetchRegistry {
+      param([string]$computer, [System.Management.Automation.PSCredential]$cred, [bool]$outputForWMIProvider)
+      
+      if (!$script:registryEntriesToFetch) {
+          return;
+      }
+          
+      if (!$script:fetchedRegistryEntries) {
+          $script:fetchedRegistryEntries = new-object $fetchedRegistryEntriesType;
+      }
+      
+      if (!$script:CimSession) {
+          $script:CimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+      }
+      
+      foreach ($hiveStr in $script:registryEntriesToFetch.Keys) {
+          $fetchedKeys = new-object "system.collections.generic.dictionary[string, system.collections.generic.dictionary[string, string]]";
+          # Adding to a dictionary a key that already exist, causes an error - this avoids this
+          try{
+              $script:fetchedRegistryEntries.Add($hiveStr, $fetchedKeys);
+          } catch {}
+
+          if ($script:CimSession) {
+              $reg = Get-CimClass -Namespace "root\default" -ClassName "StdRegProv" -CimSession $script:CimSession
+          } else {
+              $reg = Get-CimClass -Namespace "root\default" -ClassName "StdRegProv"
+          }
+   
+          $hive = $script:registryHives[$hiveStr];
+       
+          foreach ($key in $script:registryEntriesToFetch[$hiveStr].Keys) {
+              $keysToFetch = new-object 'system.collections.generic.list[string]';
+              # Replace forward slashes with backslashes - forward slashes cause the opening of the key to fail
+              $r = [regex]"/";
+              $updatedKey = $r.Replace($key, "\");
+              expandRegistryKey -computer $computer -reg $reg -hive $hive -key $updatedkey -expandedKeys $keysToFetch;
+         
+              foreach ($keyToFetch in $keysToFetch) {
+                  $fetchedValues = new-object "system.collections.generic.dictionary[string, string]";
+                  # Adding to a dictionary a key that already exist, causes an error - this avoids this
+                  try{
+                      $script:fetchedRegistryEntries[$hiveStr].Add($keyToFetch, $fetchedValues);
+                  } catch {}
+                  
+                  if ($script:CimSession) {
+                      $names = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "EnumValues" -Arguments @{hDefKey=$hive; sSubKeyName=$keyToFetch; } -ErrorAction Stop;
+                  } else {
+                      $names = $reg | Invoke-CimMethod -MethodName "EnumValues" -Arguments @{hDefKey=$hive; sSubKeyName=$keyToFetch; } -ErrorAction Stop;
+                  }
+                  
+                  if ($names.ReturnValue -ne 0) {
+                      continue;
+                  }
+
+                  # normalize value names
+                  $values = $script:registryEntriesToFetch[$hiveStr][$key] | ForEach-Object {
+                      # match returns sName value if $_ equals the sName value, case insensitive
+                      $normalizedName = $names.sNames -match "^$_$";
+                      if ($normalizedName) {
+                          $normalizedName;
+                      } else {
+                          $_;
+                      }
+                  }
+                  
+                  $types = new-object "system.collections.generic.dictionary[string, Int32]";
+                  
+                  for ($i = 0; $i -lt $names.sNames.Length; $i++) {
+                      $types.Add($names.sNames[$i], $names.Types[$i]);
+                  }
+
+                  foreach ($value in $values) {
+                      try {
+                          if ($value -eq "''"){
+                              $fetchedValue = getExpandedStringValue -reg $reg -hive $hive -key $keyToFetch -value ""
+                          } elseif ($types[$value] -eq 1) {
+                              $fetchedValue = getStringValue -reg $reg -hive $hive -key $keyToFetch -value $value
+                          } elseif ($types[$value] -eq 2) {
+                              $fetchedValue = getExpandedStringValue -reg $reg -hive $hive -key $keyToFetch -value $value
+                          } elseif ($types[$value] -eq 3) {
+                              $fetchedValue = getBinaryValue -reg $reg -hive $hive -key $keyToFetch -value $value
+                          } elseif ($types[$value] -eq 4) {
+                              $fetchedValue = getDWORDValue -reg $reg -hive $hive -key $keyToFetch -value $value
+                          } elseif ($types[$value] -eq 11) {
+                              $fetchedValue = getQWORDValue -reg $reg -hive $hive -key $keyToFetch -value $value
+                          } else {
+                              $fetchedValue = getMultiStringValue -reg $reg -hive $hive -key $keyToFetch -value $value -outputForWMIProvider $outputForWMIProvider
+                          }
+
+                          # successfully fetched value, add (value, data) mapping to fetchedRegistryEntries
+                          # Adding to a dictionary a key that already exist, causes an error - this avoids this
+                          try{
+                              $script:fetchedRegistryEntries[$hiveStr][$keyToFetch].Add($value, $fetchedValue);
+                          } catch {}
+                      } catch {
+                          # could not fetch registry value
+
+                          # if we are fetching for the WMIProvider, we should filter out non existent values
+                          # do not add to fetchedRegistryEntries
+                          if ($outputForWMIProvider) {
+                              continue;
+                          }
+
+                          # add (value, '') mapping to fetchedRegistryEntries
+                          $fetchedValue = '';
+                          # Adding to a dictionary a key that already exist, causes an error - this avoids this
+                          try{
+                              $script:fetchedRegistryEntries[$hiveStr][$keyToFetch].Add($value, $fetchedValue);
+                          } catch {}
+                      }
+                  }
+              }
+          }
+      }
+  }
+
+  function expandRegistryKey {
+      param([string]$computer, $reg, [uint32]$hive, [string]$key, [system.collections.generic.list[string]]$expandedKeys)
+    
+      $starIndex = $key.indexOf("*");
+      # If not contains a * then return
+      if ($starIndex -eq -1) {
+          $expandedKeys.Add($key);
+          return;
+      }
+      
+      
+      # Replace * with .* and make into a regex.
+      # Input: Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*
+      # Output: Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\.*
+      $regexForKey = $key -replace "(?<!\.)\*", ".*";
+      $regexForKey = $regexForKey.replace("\", "\\");
+      
+      # Split the registry path to before the slash of the start and after - so we can rebuild it later
+      $keyUpToStar = $key.Substring(0,$starIndex);
+      $leftSlashIndex = $keyUpToStar.lastIndexOf("\");
+      $subkey = "";
+      if ($leftSlashIndex -ge 0) {
+          $subkey = $key.SubString(0, $leftSlashIndex);
+      }
+
+      # $hive will have the hexa code of the, $reg is the registry representation
+      if ($script:CimSession) {
+          $openRegKey = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "EnumKey" -Arguments @{hDefKey=$hive; sSubKeyName=$subkey} -ErrorAction Stop;
+      } else {
+          $openRegKey = $reg | Invoke-CimMethod -MethodName "EnumKey" -Arguments @{hDefKey=$hive; sSubKeyName=$subkey} -ErrorAction Stop;
+      }
+   
+      if ($openRegKey.ReturnValue -ne 0 ) {
+          return;
+      }
+
+      [regex]$pattern = "[^\\]*\*[^\\]*"
+      foreach ($expandedKey in $openRegKey.sNames) {
+          # Replace the first star section with the expanded key
+          # input: Software\Microsoft\Windows\CurrentVersion\Installer\UserData\s*18\Products\1*0\InstallProperties
+          # output: Software\Microsoft\Windows\CurrentVersion\Installer\UserData\S-1-5-18\Products\1*0\InstallProperties
+          $newKey = $pattern.replace($key, ($expandedKey + "\") , 1);
+          # In case of an extra "\" due to repalce above
+          $newKey = $newKey.replace("\\", "\");
+          
+          # Only if the registry path matches the regex then add it to the list to be queried.
+          if ($newKey -match $regexForKey){
+              $s = $newKey.indexOf("*");
+              if ($s -ne -1) {
+                  expandRegistryKey -computer $computer -reg $reg -hive $hive -key $newKey -expandedKeys $expandedKeys;
+              } else {
+                  $expandedKeys.Add($newKey);
+              }
+          }
+      }
+  }
+
+  # Getter functions for each of the registry value types
+  function getStringValue {
+      param($reg, [uint32]$hive, [string]$key, [string]$value)
+
+      if ($script:CimSession){
+          $fetchedValue = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "GetStringValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      } else {
+          $fetchedValue = $reg | Invoke-CimMethod -MethodName "GetStringValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      }
+      if ($fetchedValue.ReturnValue -ne 0) {
+          throw "failed to get registry $hive\$key\$value";
+      }
+
+      return $fetchedValue.sValue;
+  }
+
+  function getExpandedStringValue {
+      param($reg, [uint32]$hive, [string]$key, [string]$value)
+      
+      if ($script:CimSession){
+          $fetchedValue = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "GetExpandedStringValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      } else {
+          $fetchedValue = $reg | Invoke-CimMethod -MethodName "GetExpandedStringValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      }
+      if ($fetchedValue.ReturnValue -ne 0) {
+          throw "failed to get registry $hive\$key\$value";
+      }
+      return $fetchedValue.sValue;
+  }
+
+  function getMultiStringValue {
+      param($reg, [uint32]$hive, [string]$key, [string]$value, [bool]$outputForWMIProvider)
+      
+      if ($script:CimSession){
+          $fetchedValue = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "GetMultiStringValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      } else {
+          $fetchedValue = $reg | Invoke-CimMethod -MethodName "GetMultiStringValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      }
+      if ($fetchedValue.ReturnValue -ne 0) {
+          throw "failed to get registry $hive\$key\$value";
+      }
+      $strs = $fetchedValue.sValue;
+
+      # use new lines for WMIProvider, commas for probes
+      $separator = if ($outputForWMIProvider) { "`n" } else { ',' };
+      return [string]::Join($separator, $strs);
+  }
+
+  function getBinaryValue {
+      param($reg, [uint32]$hive, [string]$key, [string]$value)
+      
+      if ($script:CimSession){
+          $fetchedValue = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "GetBinaryValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      } else {
+          $fetchedValue = $reg | Invoke-CimMethod -MethodName "GetBinaryValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      }
+      if ($fetchedValue.ReturnValue -ne 0) {
+          throw "failed to get registry $hive\$key\$value";
+      }
+      
+      $bytes = $fetchedValue.uValue | ForEach-Object { [String]::Format("{0:x2}", $_) };
+      return [string]::Join("", $bytes);
+  }
+
+  function getDWORDValue {
+      param($reg, [uint32]$hive, [string]$key, [string]$value)
+      
+      if ($script:CimSession){
+          $fetchedValue = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "GetDWORDValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      } else {
+          $fetchedValue = $reg | Invoke-CimMethod -MethodName "GetDWORDValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      }
+      if ($fetchedValue.ReturnValue -ne 0) {
+          throw "failed to get registry $hive\$key\$value";
+      }
+      return $fetchedValue.uValue;
+  }
+
+  function getQWORDValue {
+      param($reg, [uint32]$hive, [string]$key, [string]$value)
+      
+      if ($script:CimSession){
+          $fetchedValue = $reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "GetQWORDValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      } else {
+          $fetchedValue = $reg | Invoke-CimMethod -MethodName "GetQWORDValue" -Arguments @{hDefKey=$hive; sSubKeyName=$key; sValueName=$value} -ErrorAction Stop;
+      }
+      if ($fetchedValue.ReturnValue -ne 0) {
+          throw "failed to get registry $hive\$key\$value";
+      }
+      return $fetchedValue.uValue;
+  }
+
+  function outputFetchedRegistryItems {
+      param([switch]$shouldWriteHost, [bool]$shouldOutputEmptyItems)
+      
+      $didWriteHost = $false;
+      
+      if ($script:fetchedRegistryEntries) {
+          foreach ($hive in $script:fetchedRegistryEntries.Keys) {
+              foreach ($key in $script:fetchedRegistryEntries[$hive].Keys) {
+                  $createdKey = $false;
+                  
+                  foreach ($property in $script:fetchedRegistryEntries[$hive][$key].Keys) {
+                      $value = $script:fetchedRegistryEntries[$hive][$key][$property]
+                      if ($shouldOutputEmptyItems -or ![string]::IsNullOrEmpty($value)) {
+                          if (!$createdKey -and -not $shouldWriteHost) {
+                              $current = outputRegistryKey -hive $hive -key $key
+                              $createdKey = $true;
+                          }
+                          if ($shouldWriteHost){
+                              $didWriteHost = $true;
+                              if ($property -eq "''"){
+                                      $property = "";
+                              }
+                              write-output "$property : $value";
+                          } else{
+                              outputRegistryValue -node $current -name $property -value $value
+                          }
+                      }
+                  }
+
+              }
+          }
+      }
+  }
+
+  function outputRegistryKey {
+      param([string]$hive, [string]$key)
+
+      $xmlRegistry = getChild -xmlNode $script:xmlResult -name "Registry"
+      if (!$xmlRegistry) {
+          $xmlRegistry = createElement -xmlDocument $script:xmlDocument -name "Registry"
+          appendChild -parent $script:xmlResult -child $xmlRegistry
+      }
+
+      $hiveElement = getChildWithNameAndAttribute -xmlNode $xmlRegistry -name "entry" -attributeName "key" -attributeValue $hive
+      if (!$hiveElement) {
+          $hiveElement = createElementWithAttribute -xmlDocument $xmlDocument -name "entry" -attributeName "key" -attributeValue $hive
+          appendChild -parent $xmlRegistry -child $hiveElement
+      }
+      
+      $currentElement = $hiveElement;
+      $lastIndex = 0;
+      $index = $key.IndexOf("\");
+      while ($index -ne -1) {
+          $part = $key.SubString($lastIndex, $index - $lastIndex);
+          if (![string]::IsNullOrEmpty($part)) {
+              $currentElement = nextXmlNode -currentElement $currentElement -name $part
+          }
+          
+          $lastIndex = $index + 1;
+          $index = $key.IndexOf("\", $index + 1);
+      }
+      $part = $key.SubString($lastIndex);
+      if (![string]::IsNullOrEmpty($part)) {
+          $currentElement = nextXmlNode -currentElement $currentElement -name $part
+      }
+      
+      return $currentElement
+  }
+
+  function outputRegistryValue {
+      param([System.Xml.XmlNode]$node, [string]$name, [string]$value)
+      if (![string]::IsNullOrEmpty($value)) {
+          $keyElement = createElementWithAttribute -xmlDocument $script:xmlDocument -name "entry" -attributeName "key" -attributeValue $name
+          appendChild -parent $node -child $keyElement
+
+          $valueElement = createElement -xmlDocument $script:xmlDocument -name "value" -value $value
+          appendChild -parent $keyElement -child $valueElement
+      }
+  }
+
+  function addRegistryValuesToFetch{
+      param([string] $entry, [string[]]$specificKeys, [switch]$shouldThrow, [string]$computer, [System.Management.Automation.PSCredential]$cred)
+
+      if ($specificKeys){
+          foreach ($subKey in $specificKeys) {
+              addfetch($entry + "\" + $subKey);
+          }
+          
+          return;
+      }
+      
+      if (-not $script:CimSession){
+          $script:CimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred;
+      }
+      
+      if ($script:CimSession) {
+          $reg = Get-CimClass -Namespace "root\default" -ClassName "StdRegProv" -CimSession $script:CimSession
+      } else {
+          $reg = Get-CimClass -Namespace "root\default" -ClassName "StdRegProv";         
+      }
+
+      $parser = [regex]"^(HKCR|HKCU|HKLM|HKU|HKEY_CLASSES_ROOT|HKEY_CURRENT_USER|HKEY_LOCAL_MACHINE|HKEY_USERS|HKEY_CURRENT_CONFIG)[\\\/](.*)?";
+      $parts = $parser.match($entry);
+
+      if (!$parts.Success) {
+          if ($shouldThrow){
+              throw "Could not locate any hive (for example: HKCR|HKCU|HKLM|HKU|HKEY_CLASSES_ROOT|HKEY_CURRENT_USER|HKEY_LOCAL_MACHINE|HKEY_USERS|HKEY_CURRENT_CONFIG) in $entry";
+          }
+          return;
+      }
+      
+      [string]$hiveStr = $parts.Groups[1].Value.toString();
+      [uint32]$hive = $script:registryHives[$hiveStr];
+      [string]$key = $parts.Groups[2].toString();
+      
+      if ($script:CimSession){
+          $output = ($reg | Invoke-CimMethod -CimSession $script:CimSession -MethodName "EnumValues" -Arguments @{hDefKey=$hive; sSubKeyName=$key; } -ErrorAction Stop).sNames;
+      } else {
+          $output = ($reg | Invoke-CimMethod -MethodName "EnumValues" -Arguments @{hDefKey=$hive; sSubKeyName=$key; } -ErrorAction Stop).sNames;
+      }
+
+      foreach ($subKey in $output) {
+          $anyAdds = $true;
+          addfetch($entry + "\" + $subKey);
+      }
+  }
+
+  function fetchAndOutputRegistries{
+      param([string]$computer, [System.Management.Automation.PSCredential]$cred, [bool]$outputForWMIProvider)
+      
+      fetchRegistry -computer $computer -cred $cred -outputForWMIProvider $outputForWMIProvider;
+
+      # if we are fetching and outputting registries values for the WMIProvider, we need to output values with empty data
+      if ($outputForWMIProvider) {
+          outputFetchedRegistryItems -shouldWriteHost -shouldOutputEmptyItems $outputForWMIProvider;
+      } else {
+          outputFetchedRegistryItems -shouldOutputEmptyItems $outputForWMIProvider;
+      }
+  }
+
+  function Get-RegistryValues {
+      param([string] $entry, [string]$computer, [System.Management.Automation.PSCredential]$cred)
+      
+      addRegistryValuesToFetch -entry $entry -computer $computer -cred $cred;
+      fetch -computer $computer -cred $cred
+  }
+
+  function Get-RegistryKeysRemote {
+      param([string] $entry, [System.Management.Automation.Runspaces.PSSession]$ps)
+
+      $parser = [regex]"^(HKCR|HKCU|HKLM|HKU|HKEY_CLASSES_ROOT|HKEY_CURRENT_USER|HKEY_LOCAL_MACHINE|HKEY_USERS|HKEY_CURRENT_CONFIG)[\\\/](.*)?";
+      $parts = $parser.match($entry);
+
+      if (!$parts.Success) {
+          return;
+      }
+
+      $hiveStr = getHiveString($parts.Groups[1].Value);
+      [uint32] $hive = $script:registryHives[$hiveStr];
+      $key =$parts.Groups[2];
+
+      $finalOutput = invoke-command -session $ps -ArgumentList $entry, $hive, $key -scriptblock {
+          param($entry, $hive, $key)
+
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              $reg = Get-WmiObject -list -namespace root\default | where-object {$_.Name -eq "StdRegProv"};
+              $output = $reg.enumKey($hive, $key).sNames;
+          } else {
+              $reg = Get-CimClass -Namespace "root\default" -ClassName "StdRegProv";
+              $result = $reg | Invoke-CimMethod -MethodName "EnumKey" -Arguments @{hDefKey=$hive; sSubKeyName=$key}
+              $output = $result.sNames
+          }
+
+          $finalOutput = "";
+          foreach ($subKey in $output) {
+              $finalOutput = $finalOutput + $subKey + ","; 
+          }
+          return $finalOutput
+      }
+
+      write-host $finalOutput;
+  }
+
+  function Get-RegistryKeys {
+      param([string] $entry, [string]$computer, [System.Management.Automation.PSCredential]$cred)
+
+      $parser = [regex]"^(HKCR|HKCU|HKLM|HKU|HKEY_CLASSES_ROOT|HKEY_CURRENT_USER|HKEY_LOCAL_MACHINE|HKEY_USERS|HKEY_CURRENT_CONFIG)[\\\/](.*)?";
+      $parts = $parser.match($entry);
+
+      if (!$parts.Success) {
+          return;
+      }
+
+      $hiveStr = getHiveString($parts.Groups[1].Value);
+      [uint32]$hive = $script:registryHives[$hiveStr];
+      $key = $parts.Groups[2].Value;
+
+      SNCLog-DebugInfo "WMIFetch.psm1 Get-RegistryKeys with credential computer: $computer namespace: $namespace table: $table isMid: $global:isMid";
+      if ($PSVersionTable.PSVersion.Major -lt 6) {
+          if (($global:isMid -eq $False) -and $cred) {
+              $reg = Get-WmiObject -list -computer $computer -credential $cred -namespace root\default | where-object {$_.Name -eq "StdRegProv"}
+          } else {
+              $reg = Get-WmiObject -list -computer $computer -namespace root\default | where-object {$_.Name -eq "StdRegProv"}
+          }
+          $output = $reg.enumKey($hive, $key).sNames;
+      } else {
+          if (($global:isMid -eq $False) -and $cred) {
+              $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred;
+              $reg = Get-CimClass -CimSession $cimSession -Namespace "root\default" -ClassName "StdRegProv"
+              $result = $reg | Invoke-CimMethod -CimSession $cimSession -MethodName "EnumKey" -Arguments @{hDefKey=$hive; sSubKeyName=$key}
+          } else {
+              $reg = Get-CimClass -Namespace "root\default" -ClassName "StdRegProv";
+              $result = $reg | Invoke-CimMethod -MethodName "EnumKey" -Arguments @{hDefKey=$hive; sSubKeyName=$key}
+          }
+          $output = $result.sNames
+      }
+
+      $finalOutput = "";
+      foreach ($subKey in $output) {
+          $finalOutput = $finalOutput + $subKey + ","; 
+      }
+
+      write-host $finalOutput;
+   }
+
+  function Get-MultipleRegistryDataAsScript {
+      param
+      (
+          [Parameter(Mandatory=$true)] [string]$RegistryKeys
+      )
+
+      $regHash = @{};
+      # Properties to ignore
+      $defaultProps = @("PSParentPath","PSChildName","PSProvider", "PSDrive","PSComputerName","PSShowComputerName","RunspaceId");
+      # Translation between Get-ItemProperty restuls types and expected types in sensor
+      $regTypes = @{
+          "System.String"                 = "REG_SZ";
+          "System.Int32"                  = "REG_DWORD";
+          "System.Int64"                  = "REG_QWORD";
+          "System.Byte[]"                 = "REG_BINARY";
+          "Deserialized.System.String[]"  = "REG_MULTI_SZ";
+      }
+      # Shorten PSDrive names as expected in Get-ItemProperty command
+     $driveNames = @{
+          "HKEY_LOCAL_MACHINE"  = "HKLM:";
+          "HKEY_CLASSES_ROOT"   = "registry::HKEY_CLASSES_ROOT"
+          "HKEY_CURRENT_USER"   = "HKCU:";
+          "HKEY_USERS"          = "registry::HKEY_USERS";
+          "HKEY_CURRENT_CONFIG" = "registry::HKEY_CURRENT_CONFIG";
+      }
+      $scriptToRun = "";
+
+      # Split input into an array
+      $regKeys = $RegistryKeys.split(",");
+
+      # Loop over all input values and create a hash of Registry bases to values.
+      # Input: HKEY_LOCAL_MACHINE/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*/DisplayName and HKEY_LOCAL_MACHINE/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*/InstallDate
+      # Output: regHash["HKLM:/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*"] = "DisplayName,InstallDate," (will get rid of the extra comma later)
+      foreach($regKey in $regKeys){
+          $isDriveValid = "false";
+          $regKey = $regKey.trim();
+          
+          if ($script:shouldFilterHotfix -eq "true" -and $regKey.indexOf("/Package_*_KB*/") -gt -1){
+              continue;
+          }
+          
+          
+          $lastSlash =$regKey.lastIndexOf("/");
+          
+          if ($lastSlash -lt 0){
+              continue;
+          }
+
+          $attr = $regKey.substring($lastSlash+1 , $regKey.length-$lastSlash -1);
+          $base = $regKey.substring(0, $lastSlash);
+          
+          $firstSlash = $base.indexOf("/");
+          $driveSeg = $base.substring(0, $firstSlash);
+          
+          # Try and replace long name with short names
+          $drive = $driveNames[$driveSeg];
+          if ($drive){
+              $isDriveValid = "true";
+              $base = $drive + $base.substring($firstSlash, $base.length-$firstSlash);
+          }
+          
+          foreach($key in $driveNames.Keys) {
+              if ($driveSeg -eq $key){
+                  $isDriveValid = "true";
+                  break;
+              }
+          }
+          
+          # Only if we found a drive, add it to the hash
+          if ($isDriveValid -eq "true" -and $attr){
+              $regHash[$base] += $attr + ",";
+          }
+      }
+      
+      # For every registry base, create a Get-ItemProperty command and run it.
+      # Input: regHash["HKLM:/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*"] = "DisplayName,InstallDate,"
+      # Output: Get-ItemProperty -Path 'HKLM:/Software/Wow6432Node/Microsoft/Windows/CurrentVersion/Uninstall/*' -Name DisplayName,InstallDate -EA SilentlyContinue|Select-Object DisplayName,InstallDate|format-list;
+      foreach($regBase in $regHash.keys){
+          # Prepare the command
+          if (($regHash[$regBase]).indexOf('*') -gt -1 ){
+              # if require all - return all
+              $command = "Get-ItemProperty -Path '$regBase' -EA SilentlyContinue|Select-Object PSPath,* -EA SilentlyContinue|format-list;"
+          }
+          else{
+              # Remove PSPath if it is in the list of attributes as we set PSPath to be the first attribute (this is important for later parsing).
+              $query = $regHash[$regBase] -replace "\bPSPath,", "";
+              if ($query){
+                  $query = "PSPath," + $query;
+                  $query = $query.substring(0, $query.length-1);
+              }
+              # If we only got PSPath in the query
+              else{
+                  $query = "PSPath";
+              }
+              $command = "Get-ItemProperty -Path '$regBase' -EA SilentlyContinue|Select-Object $query|format-list;"
+          }
+
+          $scriptToRun += $command;
+      }
+      
+      return $scriptToRun;
+  }
+
+  function Get-MultipleWMIDataAsScript {
+      param
+      (
+          [Parameter(Mandatory=$true)] [string]$wmiKeys
+      )
+
+      $wmiHash = @{};
+
+      # Inogre if registry entry
+      $entriesToIgnore = @("HKEY_LOCAL_MACHINE","HKEY_CLASSES_ROOT","HKEY_CURRENT_USER", "HKEY_USERS","HKEY_CURRENT_CONFIG","HKLM","HKCR", "HKCU", "HKU", "HKCC");
+
+      # Define the printValues function that handles both PS5 and PS7 WMI/CIM objects
+      $printValuesFunction = @"
+  function printValues{
+      Process{
+          foreach-object{
+              try {
+                  `$a=`$_.Properties
+              } catch {
+                  `$a=`$null;
+              }
+              if (-not `$a){
+                  `$a=`$_.PsObject.Properties
+              }
+              foreach(`$p in `$a){
+                  `$o=`$p.Name+' : ';
+                  if (`$p.Value -is [Array]){
+                      `$o+=[string]::Join(',', `$p.Value);
+                  }else{
+                      `$o+=`$p.Value;
+                  }
+                  `$o;
+                  `$isWmiObject = (`$p.Value -is [System.Management.ManagementBaseObject]) -or (`$p.Value -is [Microsoft.Management.Infrastructure.CimInstance]);
+                  `$isWmiArray = (`$p.Value -is [System.Management.ManagementBaseObject[]]) -or (`$p.Value -is [Microsoft.Management.Infrastructure.CimInstance[]]);
+                  if(`$isWmiObject -or `$isWmiArray){
+                      ''+`$EXTENDED_TAG_START+'';
+                      `$p.Value|printValues;
+                      ''+`$EXTENDED_TAG_END+'';
+                  }
+              }
+          }
+      }
+  }
+  "@
+      
+      # Create compact version by removing comments, extra whitespace, and newlines
+      $scriptToRun = $printValuesFunction -replace '\r?\n', '' -replace '\s+', ' ' -replace ' \{', '{' -replace ' \}', '}' -replace '; ', ';' | ForEach-Object { $_.Trim() };
+
+      # Split input into an array
+      $wKeys = $wmiKeys.split(",");
+
+      # Loop over all input values and create a hash of Registry bases to values.
+      # Input: root\MSCluster\MSCluster_ClusterToNode.Antecedent, root\MSCluster\MSCluster_ClusterToNode.Dependent
+      # Output: wmiHash["root\MSCluster\MSCluster_ClusterToNode"] = "Antecedent,Dependent," (will get rid of the extra comma later)
+      foreach($wKey in $wKeys){
+          $wKey = $wKey.trim();
+          $firstSlash = $wKey.indexOf("/");
+          
+          $driveSeg = "WMI";
+          if ($firstSlash -gt -1){
+              $driveSeg = $wKey.substring(0, $firstSlash);
+          }
+          
+          # In case this is a registry query, skip
+          if ($entriesToIgnore -contains $driveSeg){
+              continue;
+          }
+          
+          $lastDot = $wKey.lastIndexOf(".");
+          
+          if ($lastDot -gt -1){
+              $attr = $wKey.substring($lastDot+1 , $wKey.length-$lastDot -1);
+              $base = $wKey.substring(0, $lastDot);
+              
+              $wmiHash[$base] += $attr + ",";
+          }
+      }
+
+  # Helper function to transform WMI system properties to CIM calculated properties
+  # Converts queries like "__CLASS,__NAMESPACE,Name" to "@{N='__CLASS';E={$_.CimSystemProperties.ClassName}},@{N='__NAMESPACE';E={$_.CimSystemProperties.Namespace}},Name"
+      $convertToCimQueryFunction = @"
+  function convertToCimQuery {
+      param([string]`$query)
+      
+      `$properties = @();
+      `$query.Split(',') | ForEach-Object {
+          `$prop = `$_.Trim();
+          if (`$prop.StartsWith('__')) {
+              `$sysProp = switch (`$prop) {
+                  '__CLASS' { 'ClassName' }
+                  '__NAMESPACE' { 'Namespace' }
+                  '__SERVER' { 'ServerName' }
+                  '__PATH' { 'Path' }
+                  '__RELPATH' { 'RelPath' }
+                  '__PROPERTY_COUNT' { 'PropertyCount' }
+                  default { `$prop.Substring(2) }
+              }
+              `$expression = "```$_.CimSystemProperties.`$sysProp";
+              `$calculatedProp = @{N="`$prop"; E = [scriptblock]::Create(`$expression)};
+              `$properties += `$calculatedProp;
+          } else {
+              `$properties += `$prop;
+          }
+      };
+      return `$properties;
+  }
+  "@
+      $scriptToRun += $convertToCimQueryFunction -replace '\r?\n', '' -replace '\s+', ' ' -replace ' \{', '{' -replace ' \}', '}' -replace '; ', ';' | ForEach-Object { $_.Trim() };
+
+      # For every registry base, create a Get-WmiObject (PS5) or Get-CimInstance (PS7) command and run it.
+      # Input: wmiHash["root\MSCluster\MSCluster_ClusterToNode"] = "Antecedent,Dependent,"
+      # Output (PS5): Get-WmiObject -Namespace "root\MSCluster" -ClassName MSCluster_ClusterToNode -EA SilentlyContinue | Select-Object __CLASS,Antecedent,Dependent;
+      # Output (PS7): Get-CimInstance -Namespace "root\MSCluster" -ClassName MSCluster_ClusterToNode -EA SilentlyContinue | Select-Object @{N='__CLASS';E={$_.CimSystemProperties.ClassName}},Antecedent,Dependent;
+      foreach($wBase in $wmiHash.keys){
+          # Prepare the command
+          $nameSpace = "root\cimv2";
+          $query = "__CLASS," + $wmiHash[$wBase];
+          $query = $query.substring(0, $query.length-1); # get rid of the last slash
+          
+          $lastSlash = $wBase.lastIndexOf("/");
+          $table = $wBase;
+          
+          if ($lastSlash -gt -1){
+              $table = $wBase.substring($lastSlash+1 , $wBase.length-$lastSlash -1);
+              $namespace = $wBase.substring(0, $lastSlash);
+          }
+
+          # Uses printValues to print strings and objects
+          $command = @"
+  if (`$PSVersionTable.PSVersion.Major -lt 6) {
+      Get-WmiObject -namespace $namespace -class $table -EA SilentlyContinue | Select-Object $query | printValues | format-list;
+  } else {
+      `$cimQuery = convertToCimQuery -query "$query";
+      Get-CimInstance -Namespace $namespace -ClassName $table -EA SilentlyContinue | Select-Object `$cimQuery | printValues | format-list;
+  }
+  "@
+          $scriptToRun += $command -replace '\r?\n', '' -replace '\s+', ' ' -replace ' \{', '{' -replace ' \}', '}' -replace '; ', ';' | ForEach-Object { $_.Trim() };
+      }
+      
+      return $scriptToRun;
+  }
+
+  # This is the command to run form the probes for all WMI queries
+  # If WMI is the protocol user use fetchMultipleWMI -computer <IP> -cred $cred -wmi "true" -WMI_FetchData <comma seperated WMI fetchs>
+  # Otherwise user fetchMultipleWMI -computer <IP> -cred $cred -wmi "false" -WMI_FetchData <comma seperated WMI fetchs>
+  function fetchMultipleWMI{
+      param([string]$computer, [System.Management.Automation.PSCredential]$cred, [string]$wmi, [string]$WMI_FetchData, [string]$filterHotfixValue, [string]$output_format, [int]$launchProcessWaitTime = 300)
+      
+      if ($filterHotfixValue -ne $null -and $filterHotfixValue -ne ""){
+          filterHotfix($filterHotfixValue);
+      }
+      
+      # Replace any number of back slashes with a single forward slash
+      $WMI_FetchData = $WMI_FetchData -replace "\\{1,}", "/";
+
+      $scriptToRun  = Get-MultipleWMIDataAsScript -wmiKeys $WMI_FetchData;
+      $scriptToRun +=  "'$script:SNC_SEPERATOR_REGISTRY';";
+      $scriptToRun += Get-MultipleRegistryDataAsScript -RegistryKeys $WMI_FetchData;
+      
+      $runWmi = $true;
+      if ($wmi -and $wmi.toLower() -eq "false"){
+          $runWmi = $false;
+      }
+
+
+      # Run script on a remote computer using executeRemote with a protocol flag ($runWmi = $true -> protocol is WMI else protocol is WinRM; Default is WMI)
+      if ($computer  -or -not $runWmi){
+          SNCLog-DebugInfo "[fetchMultipleWMI] executeRemote -computer `"$computer`" -scriptBlock `"$scriptToRun`" -wmi $runWmi -cred *** -launchProcessWaitTime $launchProcessWaitTime"
+          $rtn = executeRemote -computer "$computer" -scriptBlock "$scriptToRun" -wmi $runWmi -cred $cred -launchProcessWaitTime $launchProcessWaitTime | Out-String;
+      }
+      # Run the script locally on the MID server
+      else{
+          $rtn = Invoke-Expression "$scriptToRun" | Out-String -width $([int32]::MaxValue);
+      }
+
+      #write-host "RUN: $scriptToRun";
+      #write-host "We got back: $rtn";
+      
+      if ($output_format -eq "json" ){
+          # In PowerShell 3 there is a ConvertTo-Json cmdlet but we cannot use it just now as we support PowerShell 2.0 as well
+          $outputStr = rawResultsToJson -results $rtn;
+      }
+      elseif ($output_format -eq "raw"){
+          $outputStr = $rtn;
+      }
+      # Default is XML
+      else{
+          $script:xmlDocument = createXmlDocument;
+          $script:xmlResult = createElement -xmlDocument $script:xmlDocument -name "wmi"
+          appendChild -parent $script:xmlDocument -child $script:xmlResult
+          wmiDataToXml -results $rtn;
+          registryDataToXml -results $rtn;
+          
+          $outputStr = getXmlString($script:xmlDocument)
+      }
+      write-output $outputStr
+  }
+
+  # This method creates XML from the results of the Registry queries
+  function wmiDataToXml {
+      param([string] $results)
+      
+      $class = "";
+      $prevClass = "";
+      $att = "";
+      $val = "";
+      $extendedVal = 0;
+      
+      $parts = $results -split $SNC_SEPERATOR_REGISTRY;
+      
+      if ($parts[0] -eq $null){
+          return;
+      }
+      
+      $lines = $parts[0].Split([Environment]::NewLine);
+      $lineNumber = -1;
+      
+      foreach ($line in $lines){
+          $lineNumber++;
+          # If we got to registry lines - stop
+          if ($line -eq $SNC_SEPERATOR_REGISTRY -or $line.startsWith("PSPath")){
+              return;
+          }
+          
+          # Start handle extended values of object - read below for description
+          <# Example for objects returned, the PriavteProperties is a System.Management.ManagementBaseObject and right after it we start with the extended values of the object indicated by the EXTENDED_START and all the way till EXTENDED_END.
+          This is done with the printValues function
+              __CLASS           : MSCluster_Resource
+              Name              : SQL Server Agent (MSSQLCLUSTER)
+              Type              : SQL Server Agent
+              PrivateProperties : System.Management.ManagementBaseObject
+
+              EXTENDED_START:
+              __GENUS           : 2
+              __CLASS           : MSCluster_Property_Resource_SQL_Server_Agent
+              __SUPERCLASS      : MSCluster_Property
+              __DYNASTY         : MSCluster_Property
+              __RELPATH         : 
+              __PROPERTY_COUNT  : 2
+              __DERIVATION      : {MSCluster_Property}
+              __SERVER          : 
+              __NAMESPACE       : 
+              __PATH            : 
+              InstanceName      : MSSQLCLUSTER
+              VirtualServerName : VSQL
+              PSComputerName    : 
+
+              EXTENDED_END!
+          #>
+
+          if ($line.trim() -eq "" -or $line.startsWith("__[^C]") -or $line.startsWith("---") -or $line.startsWith(" ")){
+              continue;
+          }
+          
+          $parts = $line.split(":", 2);
+                  
+          # Check if there is a need to read the extension of the object, check the next line - because we would like to replace the "System.Management.ManagementBaseObject" string with actual values
+          if (areNextValuesExtendedObject -lines $lines -lineNumber $lineNumber){
+              # This is the first extended value - reset att and val
+              if ($parts[0] -and $extendedVal -eq 0){
+                  $att = $parts[0].trim();
+                  $val = "";
+              }
+              $extendedVal++;
+              continue;
+          }
+          
+          # Show extended value instead of System.Management.ManagementBaseObject
+          if ($extendedVal -gt 0){
+              if ($line -eq $EXTENDED_TAG_END){
+                  $extendedVal--;
+                  
+                  # When done with extended values, write the XML tag and reset $val
+                  if ($extendedVal -eq 0){
+                      createXmlTagAndVal -tableElement $tableElement -val $val -att $att -class $class
+                      $val = "";
+                  }
+              }
+              
+              if (-not $parts[0] -or $line.startsWith("__")){
+                  continue;
+              }
+              if (-not $parts[1] -or $parts[1].trim() -eq ""){
+                  continue;
+              }
+              $val += $parts[0].trim() + "=" + $parts[1].trim() + ",";
+              
+              continue;
+          }
+          # End handle extended values of object
+          
+          # Check if the line starts with __CLASS which indication a new item (if we do not have the class name (in $parts[1]) we will not create a new item).
+          # We also check if the line starts with BOM character + __CLASS when there is UTF-8 BOM Character as the first character (Should only be in the first line to indicate the UTF-8 stream).
+          if (($line.startsWith("__CLASS") -or $line.startsWith([char]0xFEFF + "__CLASS")) -and $parts[1] -ne $null){
+              $class = $parts[1].trim();
+              $tableElement = createElement -xmlDocument $script:xmlDocument -name $class;
+              continue;
+          }
+          
+          else{
+              if ($parts[0]){
+                  $att = $parts[0].trim();
+              }
+              if ($parts[1]){
+                  $val = $parts[1].trim();
+              }
+          }
+          
+          createXmlTagAndVal -tableElement $tableElement -val $val -att $att -class $class;
+          $val = "";
+          addNewLineToNode -parent $tableElement -xmlDocument $script:xmlDocument;
+      }
+  }
+
+  function createXmlTagAndVal {
+      param([System.Xml.XmlElement]$tableElement, [string]$val, [string]$att, [string]$class)
+      
+      if ($class -and $att -and $val -and $tableElement){    
+          appendChild -parent $script:xmlResult -child $tableElement
+          
+          if ($val.endsWith(",")){
+              $val = $val.substring(0,$val.length-1);
+          }
+          
+          $val = checkEmptyString -val $val;
+          if ($att.equals("CommandLine") -and $val -and ($val -like '*password*')) {
+                  $val = $val -replace 'password\s*={0,1}\s*\S+', '******';
+          }
+          $valueElement = createElement -xmlDocument $script:xmlDocument -name $att -value $val;
+          appendChild -parent $tableElement -child $valueElement;
+      }
+  }
+
+  # This method creates XML from the results of the Registry queries
+  function registryDataToXml {
+      param([string] $results)
+      
+      $parts = $results -split $SNC_SEPERATOR_REGISTRY;
+      
+      if ($parts[1] -eq $null){
+          return;
+      }
+
+      $value = "";
+      $tree = "";
+      $regRes = $parts[1];
+      $props = @{};
+      $current = $null;
+      
+      foreach ($line in $($regRes.Split([Environment]::NewLine))){
+          if ($line.trim() -eq "" -or $line.startsWith(" ")){
+              continue;
+          }
+          
+          $parts = $line.split(":", 2);
+          
+          if ($parts[0] -eq $null){
+              continue;
+          }
+          
+          $attName = $parts[0].trim();
+          $attValue = $parts[1];
+          if ($attValue){
+              $attValue = $attValue.trim();
+          }
+          
+          # Line with PSPath Example: PSPath : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters
+          if ($attName -eq "PSPath"){
+              if ($attValue){
+                  # tree = HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters
+                  $tree = $attValue.replace("Microsoft.PowerShell.Core\Registry::","");
+              }
+              else{
+                  continue;
+              }
+              
+              # Tree: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters
+              # hive: HKEY_LOCAL_MACHINE
+              # key:  SYSTEM\CurrentControlSet\Services\Tcpip\Parameters
+              $anotherParts = $tree.split("\", 2);
+              $hive = $anotherParts[0];
+              $key = $anotherParts[1];
+              $current = outputRegistryKey -hive $hive -key $key;
+          }
+          # Change of elseif to if will cause PSPath to show in XML
+          elseif ($attName -and $attValue -and $current){
+              $attValue = checkEmptyString -val $attValue;
+              outputRegistryValue -node $current -name $attName -value $attValue;
+          }
+          addNewLineToNode -parent $current -xmlDocument $script:xmlDocument
+      }
+  }
+
+  function rawResultsToJson {
+      param([string] $results)
+      
+      $parts = $results -split $script:SNC_SEPERATOR_REGISTRY;
+      "{";
+      
+      # WMI Is a set of objects with a known key (as we created the query).
+      if ($parts[0]){
+          "`"wmi`": {" ;
+          parseRawWmiToJson -results $parts[0];
+          "},";
+      }
+      # Registry are expandable and we cannot know the response in advance and that is why registry is an array
+      if ($parts[1]){
+          "`"registry`": [";
+          parseRawRegistryToJson -results $parts[1];
+          "]";
+      }
+      
+      "}";
+  }
+
+  function parseRawWmiToJson{
+      param([string] $results)
+      
+      $json = "";
+      $class = "";
+      $oldClass = "";
+      $extendedVal = 0;
+      $tmpObj = "";
+      $isObjArry = $false;
+      
+      $lines = $results.Split([Environment]::NewLine); # Changed to `r`n|`n
+      $lineNumber = -1;
+      
+      foreach ($line in $lines){
+          $lineNumber++;
+          if ($line.trim() -eq "" -or $line.startsWith(" ")){
+              continue;
+          }
+          
+          $parts = $line.split(":", 2);
+          
+          # Start handle extended values of object - read below for description
+          <# Example for objects returned, the PriavteProperties is a System.Management.ManagementBaseObject and right after it we start with the extended values of the object indicated by the EXTENDED_START and all the way till EXTENDED_END.
+              __CLASS           : MSCluster_Resource
+              Name              : SQL Server Agent (MSSQLCLUSTER)
+              Type              : SQL Server Agent
+              PrivateProperties : System.Management.ManagementBaseObject
+
+              EXTENDED_START:
+              __GENUS           : 2
+              __CLASS           : MSCluster_Property_Resource_SQL_Server_Agent
+              __SUPERCLASS      : MSCluster_Property
+              __DYNASTY         : MSCluster_Property
+              __RELPATH         : 
+              __PROPERTY_COUNT  : 2
+              __DERIVATION      : {MSCluster_Property}
+              __SERVER          : 
+              __NAMESPACE       : 
+              __PATH            : 
+              InstanceName      : MSSQLCLUSTER
+              VirtualServerName : VSQL
+              PSComputerName    : 
+
+              EXTENDED_END!
+          #>
+          
+          # Check if there is a need to read the extension of the object, check the next line - because we would like to replace the "System.Management.ManagementBaseObject" string with actual values
+          if (areNextValuesExtendedObject -lines $lines -lineNumber $lineNumber){
+              # This is the first extended value - reset att and val
+              if ($parts[0] -and $extendedVal -eq 0){
+                  $att = $parts[0].trim();
+                  $val = "";
+              }
+              $extendedVal++;
+              continue;
+          }
+          
+          # We should have all next values as comma separated values of the same object
+          if ($extendedVal -gt 0){
+              if ($line -eq $EXTENDED_TAG_END){
+                  $extendedVal--;
+                  
+                  # When done with extended values, write the XML tag and reset $val
+                  if ($extendedVal -eq 0){
+                      $val = removeLastComma -str $val;
+
+                      $tmpObj += createJsonValues -att $att -val $val;
+                      $val = "";
+                  }
+              }
+              
+              if (-not $parts[0] -or $line.startsWith("__")){
+                  continue;
+              }
+              if (-not $parts[1]){
+                  continue;
+              }
+              $val += $parts[0].trim() + "=" + $parts[1].trim() + ",";
+              
+              continue;
+          }
+          # End handle extended values of object.
+          
+          # Check if the line starts with __CLASS which indication a new item (if we do not have the class name (in $parts[1]) we will not create a new item).
+          # We also check if the line starts with BOM character + __CLASS when there is UTF-8 BOM Character as the first character (Should only be in the first line to indicate the UTF-8 stream).
+          if (($line.startsWith("__CLASS") -or $line.startsWith([char]0xFEFF + "__CLASS")) -and $parts[1] -ne $null){
+              $class = escapeJsonValue($parts[1].trim());
+
+              if ($oldClass -eq ""){
+                  $oldClass = $class;
+                  continue;
+              }
+              
+              # If we spot the same class - in a JSON we would like to have an array.
+              if ($class -eq $oldClass){
+                  $tmpObj = removeLastComma -str $tmpObj
+                  # Open the first item of the array
+                  if ($isObjArry -eq $false){
+                      $tmpObj = "{" + $tmpObj;
+                  }
+                  # Close item and open the next one
+                  if ($tmpObj -ne "{"){
+                      $tmpObj = $tmpObj + "},{";
+                  }
+                  # Turn array flag ON
+                  $isObjArry = $true;
+              }
+          }
+
+          # Different class than before - add the tmpObj to the JSON
+          if ($class -ne $oldClass){
+              # Time to write tmp obj; obj can be an array of JSONs (noted by the array flag isObjArry) or a single JSON
+              $json += createJsonObject -objId $oldClass -tmpObj $tmpObj -isObjArry $isObjArry;
+              $json += "`n";
+              # Reset values
+              $oldClass = $class;
+              $isObjArry = $false;
+              $tmpObj = "";
+          }
+          
+          if (-not $parts[0]){
+              continue;
+          }
+          
+          $att = $parts[0].trim();
+          if ($parts[1]){
+              $val = $parts[1].trim();
+          }
+          else {
+              $val = "";
+          }
+          
+          if ($class -ne "" -and $att -ne "__CLASS"){
+              $tmpObj += createJsonValues -att $att -val $val;
+              $val = "";
+          }
+      }
+      
+      # Add the tmpObj to the JSON
+      $json += createJsonObject -objId $oldClass -tmpObj $tmpObj -isObjArry $isObjArry;
+
+      $json = removeLastComma -str $json
+      if ($json -and -not $json.endsWith("}") -and -not$json.endsWith("]")){
+          $json += "}";
+      }
+      
+      return $json;
+  }
+
+  function createJsonObject{
+      param([string]$objId, [string]$tmpObj, [bool]$isObjArry)
+      
+      # if no id or object - return empty string
+      if (-not $tmpObj -or -not $objId){
+          return "";
+      }
+      
+      # Remove last comma if needed.
+      $tmpObj = removeLastComma -str $tmpObj
+      # If the object is an array - we should make sure JSON is well formatted.
+      if ($isObjArry -eq $true){
+          # If we are missing a closer for the last item in the array.
+          if ($tmpObj.endsWith('"')){
+              $tmpObj += "}";
+          }
+          return """$objId"": [$tmpObj],";
+      }
+      # This is not an array just an object
+      else{
+          return """$objId"": {$tmpObj},";
+      }
+  }
+
+  function createJsonValues{
+      param([string]$att, [string]$val)
+      
+      if (-not $att){
+          return "";
+      }
+      
+      $att = escapeJsonValue($att);
+      $val = escapeJsonValue($val);
+      if ($att.equals("CommandLine") -and $val -and ($val -like '*password*')) {
+          $val = $val -replace 'password\s*={0,1}\s*\S+', '******';
+      }
+      return "`"$att`": `"$val`",";
+  }
+
+  # This function builds key-value pairs for the registry. 
+  # The comma is added before adding the key-value pair.
+  # Helps with skipping last comma check in parseRawRegistryToJson()
+  function createJsonValuesForRegistry{
+      param([string]$att, [string]$val)
+
+      if ($att -ne ""){
+         $att = escapeJsonValue($att);
+         $val = escapeJsonValue($val);
+         ",`"$att`": `"$val`"";
+      }
+  }
+
+  function parseRawRegistryToJson{
+      param([string] $results)
+
+      $pspath = ""
+
+      foreach ($line in $($results.Split([Environment]::NewLine))){
+          $parts = $line.split(":", 2);
+          
+          if ($line.trim() -eq "" -or $line.startsWith(" ")){
+              continue;
+          }
+          
+          if (-not $parts[0]){
+              continue;
+          }
+          $att = $parts[0].trim();
+          
+          if ($parts[1]){
+              $val = $parts[1].trim();
+          }
+          else {
+              $val = "";
+          }
+          
+          if ($att -eq "PSPath"){
+              if ($pspath -ne ""){
+                  "}`n,";
+              }
+          
+              $pspath = $val;
+              
+              $escapedPath = $pspath.trim().replace("Microsoft.PowerShell.Core\Registry::","");
+              $escapedPath = escapeJsonValue($escapedPath);
+              "{ `"Path`": `"$escapedPath`"";
+              continue;
+          }
+          else{
+              createJsonValuesForRegistry -att $att -val $val;
+          }
+      }
+      "}";
+  }
+
+  function areNextValuesExtendedObject{
+      param([array]$lines, [int]$lineNumber)
+      $nextLine = $lines[$lineNumber+1];
+      $nextNextLine = $lines[$lineNumber+2];
+
+      if ($nextLine -ne $null -and ($nextLine -eq $EXTENDED_TAG_START -or ($nextLine.trim() -eq "" -and $nextNextLine -and $nextNextLine -eq $EXTENDED_TAG_START))){
+          return $true;
+      }
+      
+      return $false;
+  }
+
+  function removeLastComma{
+      param([string] $str)
+      
+      if (-not $str){
+          return "";
+      }
+      
+      if ($str.endsWith(",")){
+          return $str.substring(0, $str.length-1); # get rid of the last comma.
+      }
+      
+      return $str;
+  }
+
+  function checkEmptyString{
+      param([string] $val)
+      
+      # If we got a null character return empty string
+      if ($val -eq $null -or $val -eq [char] 0x0 -or $val -eq "&#x0;") {
+          return "";
+      }
+      return $val;
+  }
+
+  function escapeJsonValue{
+      param([string] $val)
+      
+      # If we got a null character return empty string
+      if ( (checkEmptyString -val $val) -eq "") {
+          return "";
+      }
+
+      if ($val){
+          $val = $val.replace("\", "\\");
+          $val = $val.replace("""", "\""");
+      }
+      
+      return $val;
+  }
+script_attachment: ''
+source: ''
+sys_name: WMIFetch.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

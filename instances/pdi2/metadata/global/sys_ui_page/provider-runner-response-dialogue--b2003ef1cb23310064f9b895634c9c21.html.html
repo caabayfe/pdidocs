@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	
+<g:ui_form>
+<g:evaluate>
+	
+var providerSysId = RP.getWindowProperties().get('sysparm_provider_sys_id');	
+var responsemsg = RP.getWindowProperties().get('response_msg');
+	
+var responseerror = RP.getWindowProperties().get('response_error');
+var showbuttons = (responseerror == 'true') ? false : true;
+
+var errorclass = (!showbuttons) ? 'error' : '';
+	
+function jsonformat(msg){
+	
+	if(responseerror == 'true'){
+		return msg;
+	}else if(msg == ''){
+		return '[Empty Response]';
+	}else{
+		var jsondata = new JSON().decode(msg);
+		var formattedresponsemsg = new JSON().prettify().encode(jsondata);
+
+		return formattedresponsemsg;
+	}
+}
+	
+function makebuttons(){
+	var myarray = [];
+    
+	jsondata = new JSON().decode(responsemsg);
+    
+	for (var k in jsondata) {
+		if (jsondata.hasOwnProperty(k)) {
+			myarray.push(k);
+		}
+	}
+	return myarray;
+}
+
+var formattedresponsemsg = jsonformat(responsemsg);
+var buttonsarray = makebuttons();
+
+</g:evaluate>
+	
+<style>
+	.error{
+		background-color:rgba(200,20,20,0.5);
+	}
+</style>
+
+<j:if test="${showbuttons}">
+	
+<div class="workflow-tabs-scroller-wrapper">
+    <ul id="palette-tabs-bar" class="nav nav-tabs">
+		
+		<li class="wf-tab-id active" onclick="changeresponse('',this)">
+            <a id="tablabel"><span class="tab_caption_text">RAW</span></a>
+        </li>
+	
+	<j:forEach items="${buttonsarray}" var="jvar_btn" indexVar="jvar_btnindex">
+		<li class="wf-tab-id" onclick="changeresponse('${jvar_btn}',this)">
+            <a id="tablabel"><span class="tab_caption_text">${jvar_btn}</span></a>
+        </li>
+	</j:forEach>
+		
+    </ul>
+</div>
+	
+</j:if>
+	
+		
+<input id="sysparm_provider_sys_id" value="${providerSysId}" type="hidden"/>
+		
+	<div id="response">
+		<pre style="word-wrap: break-word; white-space: pre-wrap;" id="responsemsgpre" class="${errorclass}">${formattedresponsemsg}</pre>
+	</div>
+	
+	<input type="hidden" value="${responsemsg}" id="originalresponsemsg"/>
+
+</g:ui_form>
+	
+	
+</j:jelly>

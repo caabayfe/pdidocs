@@ -1,0 +1,1617 @@
+_meta:
+  hash: 9ba7eabc0cdbf3573cb361563faab856c07afc3f517964260cdcf7ecb849789f
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2019-09-09 19:40:20
+  sys_domain: global
+  sys_id: a6baac293b77330074bc456993efc4e0
+  sys_mod_count: '169'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_a6baac293b77330074bc456993efc4e0
+  sys_updated_by: admin
+  sys_updated_on: 2025-02-07 18:53:53
+compiled_topic: 26baac293b77330074bc456993efc4dd
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"662c092e6109423b8fe85b0e0e7f2612","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"662c092e6109423b8fe85b0e0e7f2612"}],"goals":[{"name":"primary","trigger_id":"662c092e6109423b8fe85b0e0e7f2612","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"b90ef5f7024d4e34b5ceaf628345df9c","name":"Start","expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"da165a652daf475698c988c6427d008f","name":"End","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n\tvar gr = new GlideRecord(''asmt_metric_type'');\n\tgr.get(vaInputs.surveyid);vaVars.active = gr.active;vaVars.endNote = vaSystem.getTranslation(gr, ''end_note'', vaContext.getRequesterLang(), gr.end_note.getValue() || '''');vaVars.introduction = vaSystem.getTranslation(gr, ''introduction'', vaContext.getRequesterLang(), gr.introduction.getValue() || '''');vaVars.surveyName = gr.name.toString();vaVars.surveyVerificationMsg = vaSystem.getSurveyVerificationMessage();\n})()","id":"4761ab4e62324e3cb07ce4efc77ffd1f","name":"Load survey instance","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var gr = new GlideRecord(''asmt_metric_category'');\n    gr.addQuery(''metric_type'', vaInputs.surveyid);\n    gr.query();\n    gr.next();\n\n    var surveyCategory = gr.getUniqueValue();\n\n    var gr = new GlideRecord(''asmt_metric'')\n    gr.addQuery(''category'', surveyCategory);\n    gr.addQuery(''active'', true);\n    gr.orderBy(''order'');\n    gr.query();\n\n    var questions = [];\n    while (gr.next()) {\n        var question = {\n            sys_id: gr.getUniqueValue(),\n            scale: gr.scale + '''',\n            metric: gr.sys_id + '''',\n            type: gr.datatype + '''',\n            display: vaSystem.getTranslation(gr, ''question'', vaContext.getRequesterLang(), gr.question) + '''',\n            dependsOn: gr.depends_on + '''',\n            displayedWhen: gr.displayed_when + '''',\n            name: gr.name + '''',\n            max: gr.max + '''',\n            min: gr.min + '''',\n            mandatory: gr.mandatory + '''',\n            field_validation: gr.field_validation + '''',\n            reference_table: gr.reference_table + '''',\n            condition: gr.condition + '''',\n        };\n\n        // boolean and checkbox type questions use different displayed_when fields\n        var dependsOnType = gr.depends_on.datatype + '''';\n        if (dependsOnType === ''boolean'')\n            question[''displayedWhen''] = gr.displayed_when_yesno + '''';\n        else if (dependsOnType === ''checkbox'')\n            question[''displayedWhen''] = gr.displayed_when_checkbox + '''';\n\n        questions.push(question);\n    }\n    vaVars.surveyQuestions = JSON.stringify(questions);\n    vaVars.questionCount = questions.length;\n})()","id":"bbe4918b84a9426abbec7d055f7f555a","name":"Load questions","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.questionIndex++;\n    if (!(vaVars.questionCount && vaVars.questionIndex < vaVars.questionCount))\n        return;\n\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n\n    // Set question type & display value\n    vaVars.currentQuestionId = questions[i].sys_id;\n    vaVars.currentQuestionType = questions[i].type;\n    vaVars.currentQuestionMetric = questions[i].metric;\n    vaVars.currentQuestionDisplay = questions[i].display;\n    vaVars.currentQuestionMax = questions[i].max;\n    vaVars.currentQuestionMin = questions[i].min;\n    vaVars.currentQuestionMandatory = questions[i].mandatory;\n    vaVars.currentQuestionFieldValidator = questions[i].field_validation;\n    vaVars.currentQuestionReferenceTable = questions[i].reference_table;\n    vaVars.currentQuestionReferenceCondition = questions[i].condition;\n\n    // Load choices if relevant\n    if (questions[i].type === ''imagescale'' || vaVars.choiceTypes.split('','').indexOf(questions[i].type) > -1) {\n        questions[i].choices = getChoices(questions[i]);\n        vaVars.surveyQuestions = JSON.stringify(questions);\n    }\n})();\n\nfunction getChoices(q) {\n    var gr = new GlideRecord(''asmt_metric_definition'');\n    gr.addQuery(''metric'', q.metric);\n    gr.orderBy(''order'');\n    gr.query();\n\n    var choices = [];\n    while (gr.next()) {\n        choices.push({\n            sys_id: gr.getUniqueValue(),\n            display: vaSystem.getTranslation(gr, ''display'', vaContext.getRequesterLang(),gr.display),\n            value: gr.getValue(''value''),\n            selected: gr.getDisplayValue(''selected_image''),\n            unselected: gr.getDisplayValue(''unselected_image'')\n        });\n    }\n    return choices;\n}","id":"8ad01595341c4a6186e46eb203320658","name":"Set next question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Out of questions?","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.questionIndex < vaVars.questionCount;\n})()\n})()"},"id":"1b02ce71901d4416a046a04059236e52","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.questionIndex >= vaVars.questionCount;\n})()\n})()"},"id":"99eb73624c144caf886bc127d0761755","name":"Yes","expert_mode":false}],"id":"ca66aaa54c614102a4a2fd4bad818b9a","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var answers = JSON.parse(vaVars.surveyAnswers);\n    answers[vaVars.currentQuestionId] = getInput();\n    vaVars.surveyAnswers = JSON.stringify(answers);\n})();\n\nfunction getInput() {\n    var values = {''value'': null, ''Qtype'': vaVars.currentQuestionType, ''displayValue'':null};\n    if (vaVars.choiceTypes.split('','').indexOf(vaVars.currentQuestionType) > -1) {\n        values.value = getValueIfSet(vaInputs.show_choice_question);\n        values.displayValue = getDisplayValueIfSet(vaInputs.show_choice_question,values.value);\n    }\n\n    if (vaVars.textTypes.split('','').indexOf(vaVars.currentQuestionType) > -1) {\n        values.value = getValueIfSet(vaInputs.show_text_input_question);\n        values.displayValue = getDisplayValueIfSet(vaInputs.show_text_input_question,values.value);\n    }\n\n    switch (vaVars.currentQuestionType) {\n        case ''imagescale'':\n            values.value = getValueIfSet(vaInputs.show_image_scale_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_image_scale_question,values.value);\n            var questions = JSON.parse(vaVars.surveyQuestions);\n            //stores correct displayValue, vaInputs returns display+value\n            if(vaInputs.show_image_scale_question && vaInputs.show_image_scale_question != null){\n                questions[vaVars.questionIndex].choices.forEach(function(c){\n                    if(c.value === values.value)\n                        values.displayValue = c.display;\n                });\n            }\n            break;\n        case ''boolean'':\n            values.value = getValueIfSet(vaInputs.show_boolean_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_boolean_question,values.value);\n            break;\n        case ''checkbox'':\n            values.value= getValueIfSet(vaInputs.show_boolean_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_boolean_question,values.value);\n            break;\n        case ''attachment'':\n            values.value = getValueIfSet(vaInputs.show_attachment_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_attachment_question,values.value);\n            break;\n        case ''date'':\n            const date = getValueIfSet(vaInputs.show_date_question);\n            values.value = (date != null) ? date.toString() : null;\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_date_question,values.value);\n            break;\n        case ''datetime'':\n            const dateTime = getValueIfSet(vaInputs.show_datetime_question);\n            values.value = (dateTime != null) ? dateTime.toString() : null;\n            vaInputs.show_datetime_question.setTimeZone(vaContext.getDeviceTimeZone());\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_datetime_question,values.value);\n            break;\n        case ''reference'':\n            values.value = getValueIfSet(vaInputs.show_reference_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_reference_question,values.value);\n    }\n    return values;\n}\n\nfunction getValueIfSet(field){\n    return field && field.isValueSet() ? field.getValue() : null;\n}\n\nfunction getDisplayValueIfSet(field, val){\n    if (!field || field == null)\n       return val;\n    var dv = field.getDisplayValue();\n     return dv && dv.length > 0  ? dv : val;\n}","id":"280229f5f0f74d11a6d06328dfb8fa1a","name":"Set answers","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Does question satisfy dependency?","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.currentIsDependencySatisfied;\n})()\n})()"},"id":"3c693a1321bf41b59a914d1e8122ed3a","name":"Yes","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return !vaVars.currentIsDependencySatisfied;\n})()\n})()"},"id":"eec746f9c4ed4f89bca9306aaf84965a","name":"No","expert_mode":false}],"id":"9ee3c8b3d800414c89edc50c2746da57","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var q = questions[i];\n\n    var satisfied = true;\n    var hasDependency = !(!q.dependsOn);\n    vaVars.currentIsDependencySatisfied = !hasDependency || isSat(q);\n})();\n\nfunction isSat(q) {\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var answers = JSON.parse(vaVars.surveyAnswers);\n\n    var answerValid = false;\n    questions.forEach(function(question) {\n        if (question.metric !== q.dependsOn)\n            return;\n\n        var answerExists = question.sys_id in answers;\n        if (!answerExists)\n            return;\n\n        var selectedChoice = answers[question.sys_id][''value''];\n\n        if (question.type === ''boolean'' || question.type === ''checkbox'') {\n            if ((selectedChoice === true && q.displayedWhen === ''1'') || (selectedChoice === false && q.displayedWhen === ''0''))\n                answerValid = true;\n        } else {\n            var choices = question.choices.filter(function(c) {\n                return c.value === selectedChoice;\n            });\n\n            if (choices.length && choices[0].sys_id)\n                answerValid = q.displayedWhen.indexOf(choices[0].sys_id) !== -1;\n        }\n    });\n\n    return answerValid;\n}","id":"385869dc18c746b88db71bdd7c349c56","name":"Check question dependency","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"InputPrompt","variable_id":"3bd6649edfb04f1d870a98c96130be34","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"6fc30a2a583e40d2a737eee77bb5e73f","name":"Show boolean question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if ((vaVars.currentQuestionType === ''boolean'') || (vaVars.currentQuestionType === ''checkbox'')) {\n        return true;\n    }\n        return false;\n})()})()"},"expert_mode":false,"formatType":"Text","validationScript":"","description":""},{"type":"ScriptedAction","script":"(function execute() {\n    if(vaInputs.savequestionstocontext == ''true''){ \n        vaVars.surveyInstanceId = new sn_assessment_core.AssessmentCreation().createAssessments(vaInputs.surveyid, '''', gs.getUserID(), false, '''', false, '''', vaVars._interaction_record_sysid, false, ''interaction'');\n        vaVars.surveyInstanceId = vaVars.surveyInstanceId.substring(0, 32);\n        vaVars.LiveAgent_pre_assessment_instance = vaVars.surveyInstanceId;\n        vaVars.LiveAgent_pre_chat_survey_name = vaVars.surveyName;\n    } else{ \n        var userId = !gs.nil(vaVars._topic_postchat_user_id) ? vaVars._topic_postchat_user_id : gs.getUserID();\n        vaVars.surveyInstanceId = new sn_assessment_core.AssessmentCreation().createAssessments(vaInputs.surveyid, '''', userId, false, '''', false, '''', vaVars._interaction_record_sysid, false, ''interaction'');\n        vaVars.surveyInstanceId = vaVars.surveyInstanceId.substring(0, 32);\n        vaVars.LiveAgent_post_assessment_instance = vaVars.surveyInstanceId;\n        vaVars.LiveAgent_post_chat_survey_name = vaVars.surveyName;    \n    }\n\n    var answers = JSON.parse(vaVars.surveyAnswers);\n    var data = {\n        sysparm_instance_id: vaVars.surveyInstanceId,\n        sysparm_action: ''submit''\n    };\n data.channel = ''va''; \n    var questionData = new global.TopicPreChatUtil().getQuestionData(vaVars.surveyInstanceId);\n\n    Object.keys(answers).forEach(function(q) {\n        if (answers[q] && answers[q] && answers[q].value != null){ \n            if (answers[q][''Qtype''] === ''boolean'') {\n                data[''ASMTQUESTION:'' + questionData[q].instanceID] = (answers[q][''value''] === true) ? ''1'' : ''0'';\n            } else if (answers[q][''Qtype''] === ''checkbox'') {\n                data[''ASMTQUESTION:'' + questionData[q].instanceID] = (answers[q][''value''] === true) ? ''true'' : '''';\n            } else\n                data[''ASMTQUESTION:'' + questionData[q].instanceID] = answers[q][''value''];\n            if (vaInputs.savequestionstocontext == ''true'')\n                saveToContext(questionData[q].name, answers[q], questionData[q].contextVar, questionData[q].type);\n        }\n        \n    });\n    var response = new global.AssessmentSubmitProcessor().processRequest(data);\n})()\n\nfunction saveToContext(name, a, contextVar, type){\n        if(contextVar != \"\") {\n            var contextVarName = contextVar;\n        } else {\n            //remove all special characters and replace spaces with _\n            var questionName = name.toString().replace(/[^a-zA-Z0-9]/g, ''_'').replace(/_$/,'''');     \n            //append survey name to question name\n            var contextVarName = \"liveagent_\" +vaVars.surveyName +\".\"+ questionName;\n        }\n        vaVars[contextVarName] = a.value.toString();\n        //for choice questions, store response and not response index as context var\n        if (type === ''imagescale'' || vaVars.choiceTypes.split('','').indexOf(type) > -1) { \n             vaVars[contextVarName] = a.displayValue.toString();    \n        }\n}","id":"6460cac852834b46a4977c093a2b1a67","name":"Submit survey answers","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"InputPrompt","variable_id":"24bdbf9a7cc4465f9a4f4ab220cdb2c7","message":{"type":"String","mode":"script","value":"(function execute() {\n    if (vaVars.currentQuestionType === ''long'')\n        return gs.getMessageLang(''{0} (Range: {1} - {2})'', vaContext.getRequesterLang(), [vaVars.currentQuestionDisplay, vaVars.currentQuestionMin, vaVars.currentQuestionMax]);\n    else if (vaVars.currentQuestionType === ''percentage'')\n        return gs.getMessageLang(''{0} (Range: {1} - {2} %)'', vaContext.getRequesterLang(), [vaVars.currentQuestionDisplay,vaVars.currentQuestionMin, vaVars.currentQuestionMax]);\n    else\n        return vaVars.currentQuestionDisplay;\n})()"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":true,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"a37d9e0c9af54fbb93c16fe65d7f33e0","name":"Show text input question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (vaVars.textTypes.split('','').indexOf(vaVars.currentQuestionType) > -1) {\n        return true;\n    } else \n        return false;\n})()})()"},"expert_mode":false,"formatType":"Custom","validationScript":"function validate(value) {\n    // for \"skip\" which has input value as empty, long or percentage type, general string type with no validator defined\n    if ((gs.nil(value) && vaVars.currentQuestionMandatory === ''false'') || vaVars.currentQuestionType === ''long'' || vaVars.currentQuestionType === ''percentage'' || gs.nil(vaVars.currentQuestionFieldValidator))\n        return {\n            valid: true,\n        }; \n\n    // for string type with validator defined, and question is not skipped\n    var validatorGr = new GlideRecord(\"sys_cs_field_script_validator\");\n    if (!validatorGr.isValid())\n\t    return {\n           valid: false,\n           error: gs.getMessageLang(\"validator table does not exist\", vaContext.getRequesterLang())\n        };\n\n    if (validatorGr.get(vaVars.currentQuestionFieldValidator)) {\n        var scriptBuild = \"(\" + validatorGr.validator + \")(''\"+ value + \"'');\";\n        var isValidAnswer = eval(scriptBuild);\n        return {\n            valid: isValidAnswer,\n            error: isValidAnswer ? undefined : validatorGr.error_message + ''''\n        };\n    } else {\n        return {\n            valid: false,\n            error: gs.getMessageLang(\"validator record does not exist\", vaContext.getRequesterLang())\n        };\n    }\n}","description":""},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"string","value":"{{vaVars.endNote}}"}],"request_feedback":true,"id":"74fc296442cc4d7f8269e94e25cad5a4","name":"End note","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"string","value":"{{vaVars.introduction}}"}],"request_feedback":true,"id":"8351c5b9bf8942ff8d31f773b77a5ee3","name":"Introduction","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"9ecd2ca830064b97967dca21062c30fc","name":"Show choice question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (vaVars.choiceTypes.split('','').indexOf(vaVars.currentQuestionType) > -1) {\n        return true;\n    }\n        return false;\n})()\n})()"},"expert_mode":false,"variable_id":"43d0530ce6724cde95932f286155da8f","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var choices = questions[i].choices;\n    var options = [];\n    for (var j = 0; j < choices.length; j++) {\n        var c = choices[j];\n        options.push({\n            ''render_style'':''bubble'',\n            ''label'': c.display,\n            ''value'': c.value\n        });\n    }\n\n    return options;\n})()","metadataScript":"","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No data found\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var choices = questions[i].choices;\n    var options = [];\n    for (var j = 0; j < choices.length; j++) {\n        var c = choices[j];\n        options.push({\n            ''render_style'':''bubble'',\n            ''label'': c.display,\n            ''value'': c.value\n        });\n    }\n\n    return options;\n})()"},"description":""},{"type":"InputPrompt","variable_id":"bba30ac7475c47cc93da35130951478b","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"64d85b2098094a4fa02f25f7a1444c50","name":"Show attachment question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (vaVars.currentQuestionType === ''attachment'') {\n        return true;\n    } else \n        return false;\n})()})()"},"expert_mode":false,"formatType":"Text","validationScript":"","description":""},{"type":"InputPrompt","variable_id":"f7bd8a67b7874023816be1a2eccd99da","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"c86161c0b4ea42dab11005dd0f69556a","name":"Show date question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (vaVars.currentQuestionType === ''date'') {\n        return true;\n    } else \n        return false;\n})()})()"},"expert_mode":false,"formatType":"Text","validationScript":"","description":""},{"type":"InputPrompt","variable_id":"d5c40882740949d285112e17f40f7b2c","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"bab80169de204bdf98d7955c940792c7","name":"Show datetime question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (vaVars.currentQuestionType === ''datetime'') {\n        return true;\n    } else\n        return false;\n})()})()"},"expert_mode":false,"formatType":"Text","validationScript":"","description":""},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.currentAnswerValidation = true;\n    vaVars.currentAnswerErrorMsg = '''';\n\n    if (vaVars.currentQuestionType === ''long'' || vaVars.currentQuestionType === ''percentage'')\n        validateFieldLimits();\n})();\n\nfunction validateFieldLimits() {\n\tif ((!vaInputs.show_text_input_question.isValueSet() || vaInputs.show_text_input_question.getValue().length == 0)\n\t    && !vaInputs.show_text_input_question.isRequired())\n\t\treturn;\n\tvar max = vaVars.currentQuestionMax;\n\tvar min = vaVars.currentQuestionMin;\n\t\t\n\tvar value = vaInputs.show_text_input_question.getValue();\n\tvar newvalue = Number(value);\n\tif (isNaN(newvalue)) {vaVars.currentAnswerValidation = false;vaVars.currentAnswerErrorMsg = gs.getMessageLang(''The input value is not a valid number. Please try again'', vaContext.getRequesterLang());\n\t} else if (newvalue > max || newvalue < min) {vaVars.currentAnswerValidation = false;vaVars.currentAnswerErrorMsg = gs.getMessageLang(''The input value is outside the valid range. Please try again'', vaContext.getRequesterLang());\n\t}\n}","id":"f9950611be314fe6b0c891e8e65771d2","name":"Answer validation","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Check range","branches":[{"type":"Branch","label":"In range","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.currentAnswerValidation;\n})()})()"},"id":"c79876ed3ca745a28ab9a72fc86194a8","name":"In range","expert_mode":false},{"type":"Branch","label":"Out of range","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return !vaVars.currentAnswerValidation;\n})()})()"},"id":"0c18005bca6a4f39b0e98a7ef7a04c77","name":"Out of range","expert_mode":false}],"id":"607a63448c1a4acca85166124f375118","goal_id":"primary","expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentAnswerErrorMsg;\n})()"}],"request_feedback":true,"id":"194fae9f28f045ac94643564ef50c9db","name":"Validation failed","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"CarouselInputPrompt","carousel_options_script":"(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var choices = questions[i].choices;\n    var options = [];\n    for (var j = 0; j < choices.length; j++) {\n        var c = choices[j];\n        options.push({\n            ''Name'': c.display,\n            ''Value'': c.value,\n            ''Body'': c.unselected\n        });\n    }\n\n    return options;\n})()","no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No data found\", vaContext.getRequesterLang())"},"id":"786cec348ec048a78c4c2c6c4fed5ac2","name":"Show image scale question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (vaVars.currentQuestionType === ''imagescale'') {\n        return true;\n    } else\n        return false;\n})()\n})()"},"expert_mode":false,"variable_id":"7df928600c0b443a99b74c93a456775a","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"description":""},{"type":"ScriptOutputPrompt","output_type":"single_part","id":"c24324650a514984946fed64207f0c24","name":"Summary","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"value":{"type":"String","mode":"string","value":"(function execute() {\n      var questions = JSON.parse(vaVars.surveyQuestions);\n      var answers = JSON.parse(vaVars.surveyAnswers);\n      var questionAnswerPairs = [];\n\n      questions.forEach(function(q) {\n            var question = q.display.toString();\n            var answer = answers[q.metric];\n            var questionAnswer = answer.displayValue != null ? answer.displayValue :\n            answer.value != null ? answer.value : '''';\n            var questionType = q.type + '''';\n            \n            if(questionType == ''checkbox'' || questionType == ''boolean''){\n                  if (questionAnswer == \"1\") {\n                        questionAnswer = \"Yes\";\n                  } else if (questionAnswer == \"0\") {\n                        questionAnswer = \"No\"\n                  }\n            }\n            if(answer){questionAnswerPairs.push({\"fieldLabel\": question, \"fieldValue\": questionAnswer});}         \n      });\n      \n      var card_data = JSON.stringify({\n            \"title\":gs.getMessageLang(\"Response Summary\", vaContext.getRequesterLang()),\n            \"fields\":questionAnswerPairs,\n      });\n\n      return vaSystem.renderCard(\"PreChat\", card_data, true);\n})()\n"},"secure":false},{"type":"InputPrompt","variable_id":"5fdb137d926849b9a9e41edf8bb67509","message":{"type":"String","mode":"string","value":"{{vaVars.surveyVerificationMsg}}"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"e9cf114b0f3443a88c35756df8073df5","name":"Verify Response","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"formatType":"Text","validationScript":"","description":""},{"type":"Decision","name":"Summary Correct?","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"query","value":"verify_response=true"},"id":"70816f4b934e437ab6600a7ef5d8939c","name":"Yes","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"query","value":"verify_response="},"id":"df2106d073924b8daa3398104ead8715","name":"No","expert_mode":false}],"id":"8c9927f71ad04890afd342b20df99100","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.questionIndex = -1;\n})()","id":"3c232bba33f34219b4a554c511faa4da","name":"Reset Question Index","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Confirmation","branches":[{"type":"Branch","label":"Confirmation?","expression":{"type":"Applicability","mode":"query","value":"confirmationneeded=true"},"id":"93ed81677e6342c6af25d24989ac06d6","name":"Confirmation?","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"query","value":"confirmationneeded!=true"},"id":"b91fac085374460da979134a81f9e061","name":"No","expert_mode":false}],"id":"9f8dfc6260824d0b863c4275cbd6e2f3","goal_id":"primary","expert_mode":false},{"type":"ReferenceChoiceInputPrompt","mode":"external","id":"0f849053babf4775a81a81355823b3db","name":"Show reference question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if ((vaVars.currentQuestionType === ''reference'')) {\n        return true;\n    } else\n        return false;\n})()\n})()"},"expert_mode":false,"variable_id":"217beaae2c9b4289859d6b32fc9877e6","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n"},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == ''Bill'' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n})()"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"expression_mode":"script","script":"(function execute() {\n    var options = [];\n    var table = vaVars.currentQuestionReferenceTable;\n    var condition = vaVars.currentQuestionReferenceCondition;\n    if (!table)\n        return options;\n \n    var taskExtensions = new TableUtils(\"task\").getTableExtensions();\n    var isTask = (taskExtensions.indexOf(table) > -1) ? true : false;\n\n    var gr = new GlideRecord(table);\n    if (condition)\n        gr.addEncodedQuery(condition);\n    gr.query();\n    while (gr.next()) {\n        options.push({\n            ''render_style'':''bubble'',\n            ''value'': gr.sys_id + '''',\n            ''label'': (isTask)? gr.number + '': '' + gr.short_description : gr.getDisplayValue()\n        });\n    }\n    return options;\n})()","metadataScript":"","cardName":"","cardFields":[],"no_options_found_message":{"type":"String","mode":"string","value":"gs.getMessageLang(\"No reference found\", vaContext.getRequesterLang())"},"condition":{"type":"Condition","mode":"external_script","value":"(function execute() {\n    var options = [];\n    var table = vaVars.currentQuestionReferenceTable;\n    var condition = vaVars.currentQuestionReferenceCondition;\n    if (!table)\n        return options;\n \n    var taskExtensions = new TableUtils(\"task\").getTableExtensions();\n    var isTask = (taskExtensions.indexOf(table) > -1) ? true : false;\n\n    var gr = new GlideRecord(table);\n    if (condition)\n        gr.addEncodedQuery(condition);\n    gr.query();\n    while (gr.next()) {\n        options.push({\n            ''render_style'':''bubble'',\n            ''value'': gr.sys_id + '''',\n            ''label'': (isTask)? gr.number + '': '' + gr.short_description : gr.getDisplayValue()\n        });\n    }\n    return options;\n})()"},"description":""},{"type":"Decision","name":"Is Survey Active?","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    gs.warn(\"Survey is not active\")\n    return vaVars.active != true;\n})()\n})()"},"id":"b39bb956b60d488e8b971576b0f35432","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return vaVars.active == true;\n})()\n})()"},"id":"c62dc786f0714af2b5117f95e46ebbf5","name":"Yes","expert_mode":false}],"id":"ca955a1d346d48b09e9ce792dde52cc3","goal_id":"primary","expert_mode":false}],"edges":[{"type":"Edge","source_node_id":"ca955a1d346d48b09e9ce792dde52cc3","target_node_id":"da165a652daf475698c988c6427d008f","branch_id":"b39bb956b60d488e8b971576b0f35432","id":"d723d392011a4489b5e9707ea710ae01","name":"b39bb956b60d488e8b971576b0f35432"},{"type":"Edge","source_node_id":"b90ef5f7024d4e34b5ceaf628345df9c","target_node_id":"4761ab4e62324e3cb07ce4efc77ffd1f","id":"d5d8414f7d124779a993b68bf5fb0c83"},{"type":"Edge","source_node_id":"9ecd2ca830064b97967dca21062c30fc","target_node_id":"6fc30a2a583e40d2a737eee77bb5e73f","id":"9c490fb1ee7b48e2ab62d5120713a01f"},{"type":"Edge","source_node_id":"9ee3c8b3d800414c89edc50c2746da57","target_node_id":"a37d9e0c9af54fbb93c16fe65d7f33e0","branch_id":"3c693a1321bf41b59a914d1e8122ed3a","id":"380d37400e614773a95863c9a11548ab","name":"3c693a1321bf41b59a914d1e8122ed3a"},{"type":"Edge","source_node_id":"385869dc18c746b88db71bdd7c349c56","target_node_id":"9ee3c8b3d800414c89edc50c2746da57","id":"ad83e8a8966b4569bf2a2adc0acf21c0"},{"type":"Edge","source_node_id":"8ad01595341c4a6186e46eb203320658","target_node_id":"ca66aaa54c614102a4a2fd4bad818b9a","id":"e0feebc1fe63415aaa292ddf81cb735d"},{"type":"Edge","source_node_id":"280229f5f0f74d11a6d06328dfb8fa1a","target_node_id":"8ad01595341c4a6186e46eb203320658","id":"e9629798f480430ca040141729435c8a"},{"type":"Edge","source_node_id":"9ee3c8b3d800414c89edc50c2746da57","target_node_id":"8ad01595341c4a6186e46eb203320658","branch_id":"eec746f9c4ed4f89bca9306aaf84965a","id":"65ebda13c269463d875828687d4d02c5","name":"eec746f9c4ed4f89bca9306aaf84965a"},{"type":"Edge","source_node_id":"ca66aaa54c614102a4a2fd4bad818b9a","target_node_id":"385869dc18c746b88db71bdd7c349c56","branch_id":"1b02ce71901d4416a046a04059236e52","id":"87d89661bc144db1930085298213794f","name":"1b02ce71901d4416a046a04059236e52"},{"type":"Edge","source_node_id":"6460cac852834b46a4977c093a2b1a67","target_node_id":"74fc296442cc4d7f8269e94e25cad5a4","id":"af0cf0a9cffd4cb88e90a49da908d3aa"},{"type":"Edge","source_node_id":"74fc296442cc4d7f8269e94e25cad5a4","target_node_id":"da165a652daf475698c988c6427d008f","id":"a59671cb37be433ca9aad55c9f432474"},{"type":"Edge","source_node_id":"bbe4918b84a9426abbec7d055f7f555a","target_node_id":"8351c5b9bf8942ff8d31f773b77a5ee3","id":"921b07f0136140b3b3c3dd1ab561bb08"},{"type":"Edge","source_node_id":"8351c5b9bf8942ff8d31f773b77a5ee3","target_node_id":"8ad01595341c4a6186e46eb203320658","id":"4c33e19c61de47b6a365058f905ba7db"},{"type":"Edge","source_node_id":"6fc30a2a583e40d2a737eee77bb5e73f","target_node_id":"64d85b2098094a4fa02f25f7a1444c50","id":"ee2e867ed68047d794c46b45bc4ce496"},{"type":"Edge","source_node_id":"64d85b2098094a4fa02f25f7a1444c50","target_node_id":"c86161c0b4ea42dab11005dd0f69556a","id":"0ec6f85012064093931d18af01990021"},{"type":"Edge","source_node_id":"c86161c0b4ea42dab11005dd0f69556a","target_node_id":"bab80169de204bdf98d7955c940792c7","id":"4b32d599cc7145c9bef29624ed16ce09"},{"type":"Edge","source_node_id":"f9950611be314fe6b0c891e8e65771d2","target_node_id":"607a63448c1a4acca85166124f375118","id":"166e3abc2610434380c01a42e67a6e57"},{"type":"Edge","source_node_id":"607a63448c1a4acca85166124f375118","target_node_id":"280229f5f0f74d11a6d06328dfb8fa1a","branch_id":"c79876ed3ca745a28ab9a72fc86194a8","id":"240492096e0e4691a1481592d27639d2","name":"c79876ed3ca745a28ab9a72fc86194a8"},{"type":"Edge","source_node_id":"607a63448c1a4acca85166124f375118","target_node_id":"194fae9f28f045ac94643564ef50c9db","branch_id":"0c18005bca6a4f39b0e98a7ef7a04c77","id":"11d51d8d83d4441dbd99f5ddff1399a5","name":"0c18005bca6a4f39b0e98a7ef7a04c77"},{"type":"Edge","source_node_id":"194fae9f28f045ac94643564ef50c9db","target_node_id":"a37d9e0c9af54fbb93c16fe65d7f33e0","id":"fb80daf341154f44b06eed52008d631b"},{"type":"Edge","source_node_id":"a37d9e0c9af54fbb93c16fe65d7f33e0","target_node_id":"786cec348ec048a78c4c2c6c4fed5ac2","id":"f499ad9ec75d4d029dc327aeada3ff88"},{"type":"Edge","source_node_id":"786cec348ec048a78c4c2c6c4fed5ac2","target_node_id":"9ecd2ca830064b97967dca21062c30fc","id":"6932b81a81aa40239c7279a917bb3816"},{"type":"Edge","source_node_id":"c24324650a514984946fed64207f0c24","target_node_id":"e9cf114b0f3443a88c35756df8073df5","id":"1d4e280c848b4646967db37b37aa6971"},{"type":"Edge","source_node_id":"e9cf114b0f3443a88c35756df8073df5","target_node_id":"8c9927f71ad04890afd342b20df99100","id":"e5675c80eaaf4501b0872eb2375e31a7"},{"type":"Edge","source_node_id":"8c9927f71ad04890afd342b20df99100","target_node_id":"6460cac852834b46a4977c093a2b1a67","branch_id":"70816f4b934e437ab6600a7ef5d8939c","id":"8f26f9a4757b45299f913e7ca3b948d1","name":"70816f4b934e437ab6600a7ef5d8939c"},{"type":"Edge","source_node_id":"8c9927f71ad04890afd342b20df99100","target_node_id":"3c232bba33f34219b4a554c511faa4da","branch_id":"df2106d073924b8daa3398104ead8715","id":"d52c9a7bde9841f5a5fe1e96330547a2","name":"df2106d073924b8daa3398104ead8715"},{"type":"Edge","source_node_id":"3c232bba33f34219b4a554c511faa4da","target_node_id":"8ad01595341c4a6186e46eb203320658","id":"339812eec1c44e0ba4847f30f4f5e5d0"},{"type":"Edge","source_node_id":"ca66aaa54c614102a4a2fd4bad818b9a","target_node_id":"9f8dfc6260824d0b863c4275cbd6e2f3","branch_id":"99eb73624c144caf886bc127d0761755","id":"83c8dcc16e06476b8bdb8a991918171e","name":"99eb73624c144caf886bc127d0761755"},{"type":"Edge","source_node_id":"9f8dfc6260824d0b863c4275cbd6e2f3","target_node_id":"c24324650a514984946fed64207f0c24","branch_id":"93ed81677e6342c6af25d24989ac06d6","id":"8e5c522a68604d14b48d408ab8d30df0","name":"93ed81677e6342c6af25d24989ac06d6"},{"type":"Edge","source_node_id":"9f8dfc6260824d0b863c4275cbd6e2f3","target_node_id":"6460cac852834b46a4977c093a2b1a67","branch_id":"b91fac085374460da979134a81f9e061","id":"53df8ead704541ba8b2b12abd376513d","name":"b91fac085374460da979134a81f9e061"},{"type":"Edge","source_node_id":"bab80169de204bdf98d7955c940792c7","target_node_id":"0f849053babf4775a81a81355823b3db","id":"dfb7472e691f4770a126df453f8bd986"},{"type":"Edge","source_node_id":"0f849053babf4775a81a81355823b3db","target_node_id":"f9950611be314fe6b0c891e8e65771d2","id":"4771447e2c9e47a497c00226182f0aa2"},{"type":"Edge","source_node_id":"4761ab4e62324e3cb07ce4efc77ffd1f","target_node_id":"ca955a1d346d48b09e9ce792dde52cc3","id":"fe8bc0685a84441e85e38f22c6d8f929"},{"type":"Edge","source_node_id":"ca955a1d346d48b09e9ce792dde52cc3","target_node_id":"bbe4918b84a9426abbec7d055f7f555a","branch_id":"c62dc786f0714af2b5117f95e46ebbf5","id":"9f77c4762dd94e248ecc9bda5e2cf8d0","name":"c62dc786f0714af2b5117f95e46ebbf5"}],"id":"primary"}],"script_variables":[{"type":"String","name":"surveyInstanceId","value":{"type":"String","mode":"string"},"list":false,"id":"42731da272e043d29de8a18ae4abe8ec","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"surveyQuestions","value":{"type":"String","mode":"string"},"list":false,"id":"a019f4d9d2034f1e8ce4413ad6814d4c","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"questionIndex","value":{"type":"String","mode":"string","value":"-1"},"list":false,"id":"4606ff81e3b1466dba105ac8db0a3ff1","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"questionCount","value":{"type":"String","mode":"string","value":"0"},"list":false,"id":"701eeb0ead3946b4a95fc310996f51d5","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"surveyAnswers","value":{"type":"String","mode":"string","value":"{}"},"list":false,"id":"e0b97ea5de424260a17d367b713e6233","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"choiceTypes","value":{"type":"String","mode":"string","value":"choice,scale,numericscale"},"list":false,"id":"5fa5bab12ab3407fa0243a6e4b1e5b55","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionId","value":{"type":"String","mode":"string"},"list":false,"id":"953851ffa4294d04859d006bf28a4986","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionType","value":{"type":"String","mode":"string"},"list":false,"id":"1d2077df93314785b211efe410798278","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionMetric","value":{"type":"String","mode":"string"},"list":false,"id":"00d261d656824f6f8f150a2025f4eaae","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionDisplay","value":{"type":"String","mode":"string"},"list":false,"id":"601f508ef27a49a18330230ddcc12772","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"introduction","value":{"type":"String","mode":"string"},"list":false,"id":"b56216c2f682436d9e56d9ef36471bcb","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"endNote","value":{"type":"String","mode":"string"},"list":false,"id":"0c33e298eff44fc88364434b538e805f","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"textTypes","value":{"type":"String","mode":"string","value":"string,long,percentage"},"list":false,"id":"6545133e2b144832a1ecea359dcc39b9","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionMax","value":{"type":"String","mode":"string"},"list":false,"id":"dd7230f4e76642c4b1676e04fa2af480","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionMin","value":{"type":"String","mode":"string"},"list":false,"id":"3f8a633cceb94a7a8c29a2622f003795","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentAnswerValidation","value":{"type":"String","mode":"string"},"list":false,"id":"cf9a19900c7043bd817ff9f5794941ed","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentAnswerErrorMsg","value":{"type":"String","mode":"string","value":""},"list":false,"id":"607bdaced73d4d7fab9239c0d64a4210","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"surveyVerificationMsg","value":{"type":"String","mode":"string"},"list":false,"id":"e5e2dc8c74a64bf7ba531a2b734bd9cd","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionMandatory","value":{"type":"String","mode":"string","value":"true"},"list":false,"id":"f4cfc3cbbdca4d46b23a1de57709a8e0","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"_topic_postchat_user_id","value":{"type":"String","mode":"string"},"list":false,"id":"1ebd3fa354824ebcb2abd32c7f5a08ee","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"surveyName","value":{"type":"String","mode":"string"},"list":false,"id":"fbdedb6037d443fc94ac909130d72657","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"LiveAgent_pre_chat_survey_name","value":{"type":"String","mode":"string"},"list":false,"id":"62b3a6b4779d449faee2e5abee5678a5","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"LiveAgent_post_chat_survey_name","value":{"type":"String","mode":"string"},"list":false,"id":"b712f462443f422882112475625c1f51","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"LiveAgent_pre_assessment_instance","value":{"type":"String","mode":"string"},"list":false,"id":"c561d907f23a4ee485d105e3deefe041","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"LiveAgent_post_assessment_instance","value":{"type":"String","mode":"string"},"list":false,"id":"5f4fab2392e34755a790d59670b35294","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"defaultSurveyName","value":{"type":"String","mode":"string"},"list":false,"id":"b0a2dbc7899742b19e9f2d904b7bfc3e","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionFieldValidator","value":{"type":"String","mode":"string"},"list":false,"id":"9c7e90dca34b47489835d0bcdc8e4933","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionReferenceTable","value":{"type":"String","mode":"string"},"list":false,"id":"a7b460d515ca4a2087c92d2c8bf5fbc9","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"currentQuestionReferenceCondition","value":{"type":"String","mode":"string"},"list":false,"id":"6ec01bc01b7144ec90530b7f9af69bb2","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"active","value":{"type":"String","mode":"string","value":"false"},"list":false,"id":"3f44cb42666b408fbb6f952fe939d920","formatType":"text","secure":false,"sensitive":false,"aiInput":false}],"glide_variables":[{"type":"CarouselImage","id":"7df928600c0b443a99b74c93a456775a","name":"show_image_scale_question","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"show_text_input_question","list":false,"id":"24bdbf9a7cc4465f9a4f4ab220cdb2c7","formatType":"Custom","validationScript":"function validate(value) {\n    // for \"skip\" which has input value as empty, long or percentage type, general string type with no validator defined\n    if ((gs.nil(value) && vaVars.currentQuestionMandatory === ''false'') || vaVars.currentQuestionType === ''long'' || vaVars.currentQuestionType === ''percentage'' || gs.nil(vaVars.currentQuestionFieldValidator))\n        return {\n            valid: true,\n        }; \n\n    // for string type with validator defined, and question is not skipped\n    var validatorGr = new GlideRecord(\"sys_cs_field_script_validator\");\n    if (!validatorGr.isValid())\n\t    return {\n           valid: false,\n           error: gs.getMessageLang(\"validator table does not exist\", vaContext.getRequesterLang())\n        };\n\n    if (validatorGr.get(vaVars.currentQuestionFieldValidator)) {\n        var scriptBuild = \"(\" + validatorGr.validator + \")(''\"+ value + \"'');\";\n        var isValidAnswer = eval(scriptBuild);\n        return {\n            valid: isValidAnswer,\n            error: isValidAnswer ? undefined : validatorGr.error_message + ''''\n        };\n    } else {\n        return {\n            valid: false,\n            error: gs.getMessageLang(\"validator record does not exist\", vaContext.getRequesterLang())\n        };\n    }\n}","secure":false,"sensitive":false,"aiInput":false},{"type":"True/False","id":"3bd6649edfb04f1d870a98c96130be34","name":"show_boolean_question","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"Choice","choices":[],"id":"43d0530ce6724cde95932f286155da8f","name":"show_choice_question","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false,"auto_select":false,"table":""},{"type":"Image","id":"bba30ac7475c47cc93da35130951478b","name":"show_attachment_question","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"Date/Time","mode":"date","id":"f7bd8a67b7874023816be1a2eccd99da","name":"show_date_question","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"Date/Time","mode":"date_time","id":"d5c40882740949d285112e17f40f7b2c","name":"show_datetime_question","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"surveyid","list":false,"id":"1132a62678c24bbda688337615fd51bb","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"True/False","id":"5fdb137d926849b9a9e41edf8bb67509","name":"verify_response","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"confirmationneeded","list":false,"id":"75bc445130284002947077d668cac779","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"savequestionstocontext","list":false,"id":"ba2a161b94a3468a86603955cca630a1","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"Reference","table":"sys_user","auto_select":false,"id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"Choice","choices":[],"id":"217beaae2c9b4289859d6b32fc9877e6","name":"show_reference_question","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false,"auto_select":false,"table":""}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"surveyid","label":"surveyId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"1132a62678c24bbda688337615fd51bb","type":"String","hint":""},{"name":"confirmationneeded","label":"confirmationNeeded","default-value":"\"false\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"75bc445130284002947077d668cac779","type":"String","hint":""},{"name":"savequestionstocontext","label":"saveQuestionsToContext","default-value":"\"false\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"ba2a161b94a3468a86603955cca630a1","type":"String","hint":""}],"return-values-mapping":[]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"11d818213b77330074bc456993efc4c2","name":"Survey","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"description":"Enables users to provide feedback on their conversational experience, before the conversation ends.","model_type":"nlu_keyword","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"Survey","library":true,"csTopicId":"26baac293b77330074bc456993efc4dd","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 11d818213b77330074bc456993efc4c2
+graph: |-
+  {
+    "graph_api_version": "1.0.74",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "b90ef5f7024d4e34b5ceaf628345df9c": {
+            "id": "b90ef5f7024d4e34b5ceaf628345df9c",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "value": "",
+              "mode": "simple"
+            },
+            "parameters": [
+              {
+                "name": "surveyId",
+                "value": "",
+                "id": "1132a62678c24bbda688337615fd51bb",
+                "disabled": true,
+                "referenced": true,
+                "type": "String",
+                "hint": "",
+                "required": true
+              },
+              {
+                "name": "confirmationNeeded",
+                "value": "false",
+                "id": "75bc445130284002947077d668cac779",
+                "referenced": false,
+                "disabled": true,
+                "type": "String",
+                "hint": "",
+                "required": true
+              },
+              {
+                "name": "saveQuestionsToContext",
+                "value": "false",
+                "id": "ba2a161b94a3468a86603955cca630a1",
+                "referenced": true,
+                "disabled": true,
+                "type": "String",
+                "hint": "",
+                "required": true
+              }
+            ],
+            "variableIds": [
+              "1132a62678c24bbda688337615fd51bb",
+              "75bc445130284002947077d668cac779",
+              "ba2a161b94a3468a86603955cca630a1"
+            ]
+          },
+          "da165a652daf475698c988c6427d008f": {
+            "id": "da165a652daf475698c988c6427d008f",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": []
+          },
+          "4761ab4e62324e3cb07ce4efc77ffd1f": {
+            "id": "4761ab4e62324e3cb07ce4efc77ffd1f",
+            "name": "Load survey instance",
+            "script": "(function execute() {\n\tvar gr = new GlideRecord('asmt_metric_type');\n\tgr.get(vaInputs.surveyid);vaVars.active = gr.active;vaVars.endNote = vaSystem.getTranslation(gr, 'end_note', vaContext.getRequesterLang(), gr.end_note.getValue() || '');vaVars.introduction = vaSystem.getTranslation(gr, 'introduction', vaContext.getRequesterLang(), gr.introduction.getValue() || '');vaVars.surveyName = gr.name.toString();vaVars.surveyVerificationMsg = vaSystem.getSurveyVerificationMessage();\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "bbe4918b84a9426abbec7d055f7f555a": {
+            "id": "bbe4918b84a9426abbec7d055f7f555a",
+            "name": "Load questions",
+            "script": "(function execute() {\n    var gr = new GlideRecord('asmt_metric_category');\n    gr.addQuery('metric_type', vaInputs.surveyid);\n    gr.query();\n    gr.next();\n\n    var surveyCategory = gr.getUniqueValue();\n\n    var gr = new GlideRecord('asmt_metric')\n    gr.addQuery('category', surveyCategory);\n    gr.addQuery('active', true);\n    gr.orderBy('order');\n    gr.query();\n\n    var questions = [];\n    while (gr.next()) {\n        var question = {\n            sys_id: gr.getUniqueValue(),\n            scale: gr.scale + '',\n            metric: gr.sys_id + '',\n            type: gr.datatype + '',\n            display: vaSystem.getTranslation(gr, 'question', vaContext.getRequesterLang(), gr.question) + '',\n            dependsOn: gr.depends_on + '',\n            displayedWhen: gr.displayed_when + '',\n            name: gr.name + '',\n            max: gr.max + '',\n            min: gr.min + '',\n            mandatory: gr.mandatory + '',\n            field_validation: gr.field_validation + '',\n            reference_table: gr.reference_table + '',\n            condition: gr.condition + '',\n        };\n\n        // boolean and checkbox type questions use different displayed_when fields\n        var dependsOnType = gr.depends_on.datatype + '';\n        if (dependsOnType === 'boolean')\n            question['displayedWhen'] = gr.displayed_when_yesno + '';\n        else if (dependsOnType === 'checkbox')\n            question['displayedWhen'] = gr.displayed_when_checkbox + '';\n\n        questions.push(question);\n    }\n    vaVars.surveyQuestions = JSON.stringify(questions);\n    vaVars.questionCount = questions.length;\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "8ad01595341c4a6186e46eb203320658": {
+            "id": "8ad01595341c4a6186e46eb203320658",
+            "name": "Set next question",
+            "script": "(function execute() {\n    vaVars.questionIndex++;\n    if (!(vaVars.questionCount && vaVars.questionIndex < vaVars.questionCount))\n        return;\n\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n\n    // Set question type & display value\n    vaVars.currentQuestionId = questions[i].sys_id;\n    vaVars.currentQuestionType = questions[i].type;\n    vaVars.currentQuestionMetric = questions[i].metric;\n    vaVars.currentQuestionDisplay = questions[i].display;\n    vaVars.currentQuestionMax = questions[i].max;\n    vaVars.currentQuestionMin = questions[i].min;\n    vaVars.currentQuestionMandatory = questions[i].mandatory;\n    vaVars.currentQuestionFieldValidator = questions[i].field_validation;\n    vaVars.currentQuestionReferenceTable = questions[i].reference_table;\n    vaVars.currentQuestionReferenceCondition = questions[i].condition;\n\n    // Load choices if relevant\n    if (questions[i].type === 'imagescale' || vaVars.choiceTypes.split(',').indexOf(questions[i].type) > -1) {\n        questions[i].choices = getChoices(questions[i]);\n        vaVars.surveyQuestions = JSON.stringify(questions);\n    }\n})();\n\nfunction getChoices(q) {\n    var gr = new GlideRecord('asmt_metric_definition');\n    gr.addQuery('metric', q.metric);\n    gr.orderBy('order');\n    gr.query();\n\n    var choices = [];\n    while (gr.next()) {\n        choices.push({\n            sys_id: gr.getUniqueValue(),\n            display: vaSystem.getTranslation(gr, 'display', vaContext.getRequesterLang(),gr.display),\n            value: gr.getValue('value'),\n            selected: gr.getDisplayValue('selected_image'),\n            unselected: gr.getDisplayValue('unselected_image')\n        });\n    }\n    return choices;\n}",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "ca66aaa54c614102a4a2fd4bad818b9a": {
+            "id": "ca66aaa54c614102a4a2fd4bad818b9a",
+            "stepType": "Decision",
+            "name": "Out of questions?"
+          },
+          "280229f5f0f74d11a6d06328dfb8fa1a": {
+            "id": "280229f5f0f74d11a6d06328dfb8fa1a",
+            "name": "Set answers",
+            "script": "(function execute() {\n    var answers = JSON.parse(vaVars.surveyAnswers);\n    answers[vaVars.currentQuestionId] = getInput();\n    vaVars.surveyAnswers = JSON.stringify(answers);\n})();\n\nfunction getInput() {\n    var values = {'value': null, 'Qtype': vaVars.currentQuestionType, 'displayValue':null};\n    if (vaVars.choiceTypes.split(',').indexOf(vaVars.currentQuestionType) > -1) {\n        values.value = getValueIfSet(vaInputs.show_choice_question);\n        values.displayValue = getDisplayValueIfSet(vaInputs.show_choice_question,values.value);\n    }\n\n    if (vaVars.textTypes.split(',').indexOf(vaVars.currentQuestionType) > -1) {\n        values.value = getValueIfSet(vaInputs.show_text_input_question);\n        values.displayValue = getDisplayValueIfSet(vaInputs.show_text_input_question,values.value);\n    }\n\n    switch (vaVars.currentQuestionType) {\n        case 'imagescale':\n            values.value = getValueIfSet(vaInputs.show_image_scale_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_image_scale_question,values.value);\n            var questions = JSON.parse(vaVars.surveyQuestions);\n            //stores correct displayValue, vaInputs returns display+value\n            if(vaInputs.show_image_scale_question && vaInputs.show_image_scale_question != null){\n                questions[vaVars.questionIndex].choices.forEach(function(c){\n                    if(c.value === values.value)\n                        values.displayValue = c.display;\n                });\n            }\n            break;\n        case 'boolean':\n            values.value = getValueIfSet(vaInputs.show_boolean_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_boolean_question,values.value);\n            break;\n        case 'checkbox':\n            values.value= getValueIfSet(vaInputs.show_boolean_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_boolean_question,values.value);\n            break;\n        case 'attachment':\n            values.value = getValueIfSet(vaInputs.show_attachment_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_attachment_question,values.value);\n            break;\n        case 'date':\n            const date = getValueIfSet(vaInputs.show_date_question);\n            values.value = (date != null) ? date.toString() : null;\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_date_question,values.value);\n            break;\n        case 'datetime':\n            const dateTime = getValueIfSet(vaInputs.show_datetime_question);\n            values.value = (dateTime != null) ? dateTime.toString() : null;\n            vaInputs.show_datetime_question.setTimeZone(vaContext.getDeviceTimeZone());\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_datetime_question,values.value);\n            break;\n        case 'reference':\n            values.value = getValueIfSet(vaInputs.show_reference_question);\n            values.displayValue = getDisplayValueIfSet(vaInputs.show_reference_question,values.value);\n    }\n    return values;\n}\n\nfunction getValueIfSet(field){\n    return field && field.isValueSet() ? field.getValue() : null;\n}\n\nfunction getDisplayValueIfSet(field, val){\n    if (!field || field == null)\n       return val;\n    var dv = field.getDisplayValue();\n     return dv && dv.length > 0  ? dv : val;\n}",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "9ee3c8b3d800414c89edc50c2746da57": {
+            "id": "9ee3c8b3d800414c89edc50c2746da57",
+            "stepType": "Decision",
+            "name": "Does question satisfy dependency?"
+          },
+          "385869dc18c746b88db71bdd7c349c56": {
+            "id": "385869dc18c746b88db71bdd7c349c56",
+            "name": "Check question dependency",
+            "script": "(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var q = questions[i];\n\n    var satisfied = true;\n    var hasDependency = !(!q.dependsOn);\n    vaVars.currentIsDependencySatisfied = !hasDependency || isSat(q);\n})();\n\nfunction isSat(q) {\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var answers = JSON.parse(vaVars.surveyAnswers);\n\n    var answerValid = false;\n    questions.forEach(function(question) {\n        if (question.metric !== q.dependsOn)\n            return;\n\n        var answerExists = question.sys_id in answers;\n        if (!answerExists)\n            return;\n\n        var selectedChoice = answers[question.sys_id]['value'];\n\n        if (question.type === 'boolean' || question.type === 'checkbox') {\n            if ((selectedChoice === true && q.displayedWhen === '1') || (selectedChoice === false && q.displayedWhen === '0'))\n                answerValid = true;\n        } else {\n            var choices = question.choices.filter(function(c) {\n                return c.value === selectedChoice;\n            });\n\n            if (choices.length && choices[0].sys_id)\n                answerValid = q.displayedWhen.indexOf(choices[0].sys_id) !== -1;\n        }\n    });\n\n    return answerValid;\n}",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "6fc30a2a583e40d2a737eee77bb5e73f": {
+            "id": "6fc30a2a583e40d2a737eee77bb5e73f",
+            "stepType": "BooleanPrompt",
+            "name": "Show boolean question",
+            "prompt": {
+              "value": "(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if ((vaVars.currentQuestionType === 'boolean') || (vaVars.currentQuestionType === 'checkbox')) {\n        return true;\n    }\n        return false;\n})()"
+            },
+            "optional": false,
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "3bd6649edfb04f1d870a98c96130be34",
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "6460cac852834b46a4977c093a2b1a67": {
+            "id": "6460cac852834b46a4977c093a2b1a67",
+            "name": "Submit survey answers",
+            "script": "(function execute() {\n    if(vaInputs.savequestionstocontext == 'true'){ \n        vaVars.surveyInstanceId = new sn_assessment_core.AssessmentCreation().createAssessments(vaInputs.surveyid, '', gs.getUserID(), false, '', false, '', vaVars._interaction_record_sysid, false, 'interaction');\n        vaVars.surveyInstanceId = vaVars.surveyInstanceId.substring(0, 32);\n        vaVars.LiveAgent_pre_assessment_instance = vaVars.surveyInstanceId;\n        vaVars.LiveAgent_pre_chat_survey_name = vaVars.surveyName;\n    } else{ \n        var userId = !gs.nil(vaVars._topic_postchat_user_id) ? vaVars._topic_postchat_user_id : gs.getUserID();\n        vaVars.surveyInstanceId = new sn_assessment_core.AssessmentCreation().createAssessments(vaInputs.surveyid, '', userId, false, '', false, '', vaVars._interaction_record_sysid, false, 'interaction');\n        vaVars.surveyInstanceId = vaVars.surveyInstanceId.substring(0, 32);\n        vaVars.LiveAgent_post_assessment_instance = vaVars.surveyInstanceId;\n        vaVars.LiveAgent_post_chat_survey_name = vaVars.surveyName;    \n    }\n\n    var answers = JSON.parse(vaVars.surveyAnswers);\n    var data = {\n        sysparm_instance_id: vaVars.surveyInstanceId,\n        sysparm_action: 'submit'\n    };\n data.channel = 'va'; \n    var questionData = new global.TopicPreChatUtil().getQuestionData(vaVars.surveyInstanceId);\n\n    Object.keys(answers).forEach(function(q) {\n        if (answers[q] && answers[q] && answers[q].value != null){ \n            if (answers[q]['Qtype'] === 'boolean') {\n                data['ASMTQUESTION:' + questionData[q].instanceID] = (answers[q]['value'] === true) ? '1' : '0';\n            } else if (answers[q]['Qtype'] === 'checkbox') {\n                data['ASMTQUESTION:' + questionData[q].instanceID] = (answers[q]['value'] === true) ? 'true' : '';\n            } else\n                data['ASMTQUESTION:' + questionData[q].instanceID] = answers[q]['value'];\n            if (vaInputs.savequestionstocontext == 'true')\n                saveToContext(questionData[q].name, answers[q], questionData[q].contextVar, questionData[q].type);\n        }\n        \n    });\n    var response = new global.AssessmentSubmitProcessor().processRequest(data);\n})()\n\nfunction saveToContext(name, a, contextVar, type){\n        if(contextVar != \"\") {\n            var contextVarName = contextVar;\n        } else {\n            //remove all special characters and replace spaces with _\n            var questionName = name.toString().replace(/[^a-zA-Z0-9]/g, '_').replace(/_$/,'');     \n            //append survey name to question name\n            var contextVarName = \"liveagent_\" +vaVars.surveyName +\".\"+ questionName;\n        }\n        vaVars[contextVarName] = a.value.toString();\n        //for choice questions, store response and not response index as context var\n        if (type === 'imagescale' || vaVars.choiceTypes.split(',').indexOf(type) > -1) { \n             vaVars[contextVarName] = a.displayValue.toString();    \n        }\n}",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "a37d9e0c9af54fbb93c16fe65d7f33e0": {
+            "id": "a37d9e0c9af54fbb93c16fe65d7f33e0",
+            "stepType": "TextPrompt",
+            "name": "Show text input question",
+            "prompt": {
+              "value": "(function execute() {\n    if (vaVars.currentQuestionType === 'long')\n        return gs.getMessageLang('{0} (Range: {1} - {2})', vaContext.getRequesterLang(), [vaVars.currentQuestionDisplay, vaVars.currentQuestionMin, vaVars.currentQuestionMax]);\n    else if (vaVars.currentQuestionType === 'percentage')\n        return gs.getMessageLang('{0} (Range: {1} - {2} %)', vaContext.getRequesterLang(), [vaVars.currentQuestionDisplay,vaVars.currentQuestionMin, vaVars.currentQuestionMax]);\n    else\n        return vaVars.currentQuestionDisplay;\n})()",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaVars.textTypes.split(',').indexOf(vaVars.currentQuestionType) > -1) {\n        return true;\n    } else \n        return false;\n})()"
+            },
+            "optional": false,
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "24bdbf9a7cc4465f9a4f4ab220cdb2c7",
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "inputType": {
+              "format": "Custom",
+              "script": "function validate(value) {\n    // for \"skip\" which has input value as empty, long or percentage type, general string type with no validator defined\n    if ((gs.nil(value) && vaVars.currentQuestionMandatory === 'false') || vaVars.currentQuestionType === 'long' || vaVars.currentQuestionType === 'percentage' || gs.nil(vaVars.currentQuestionFieldValidator))\n        return {\n            valid: true,\n        }; \n\n    // for string type with validator defined, and question is not skipped\n    var validatorGr = new GlideRecord(\"sys_cs_field_script_validator\");\n    if (!validatorGr.isValid())\n\t    return {\n           valid: false,\n           error: gs.getMessageLang(\"validator table does not exist\", vaContext.getRequesterLang())\n        };\n\n    if (validatorGr.get(vaVars.currentQuestionFieldValidator)) {\n        var scriptBuild = \"(\" + validatorGr.validator + \")('\"+ value + \"');\";\n        var isValidAnswer = eval(scriptBuild);\n        return {\n            valid: isValidAnswer,\n            error: isValidAnswer ? undefined : validatorGr.error_message + ''\n        };\n    } else {\n        return {\n            valid: false,\n            error: gs.getMessageLang(\"validator record does not exist\", vaContext.getRequesterLang())\n        };\n    }\n}"
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": "",
+            "requestFeedback": true
+          },
+          "74fc296442cc4d7f8269e94e25cad5a4": {
+            "id": "74fc296442cc4d7f8269e94e25cad5a4",
+            "stepType": "TextOutput",
+            "name": "End note",
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.endNote}}",
+                          "displayValue": "vaVars➛endNote"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true
+          },
+          "8351c5b9bf8942ff8d31f773b77a5ee3": {
+            "id": "8351c5b9bf8942ff8d31f773b77a5ee3",
+            "stepType": "TextOutput",
+            "name": "Introduction",
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.introduction}}",
+                          "displayValue": "vaVars➛introduction"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true
+          },
+          "9ecd2ca830064b97967dca21062c30fc": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Show choice question",
+            "prompt": {
+              "value": "(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaVars.choiceTypes.split(',').indexOf(vaVars.currentQuestionType) > -1) {\n        return true;\n    }\n        return false;\n})()\n"
+            },
+            "optional": false,
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "43d0530ce6724cde95932f286155da8f",
+            "id": "9ecd2ca830064b97967dca21062c30fc",
+            "mode": "external",
+            "script": "(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var choices = questions[i].choices;\n    var options = [];\n    for (var j = 0; j < choices.length; j++) {\n        var c = choices[j];\n        options.push({\n            'render_style':'bubble',\n            'label': c.display,\n            'value': c.value\n        });\n    }\n\n    return options;\n})()",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "No data found"
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var choices = questions[i].choices;\n    var options = [];\n    for (var j = 0; j < choices.length; j++) {\n        var c = choices[j];\n        options.push({\n            'render_style':'bubble',\n            'label': c.display,\n            'value': c.value\n        });\n    }\n\n    return options;\n})()",
+              "mode": "external_script"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": "",
+            "isMultipleSelect": false
+          },
+          "64d85b2098094a4fa02f25f7a1444c50": {
+            "id": "64d85b2098094a4fa02f25f7a1444c50",
+            "stepType": "FilePrompt",
+            "name": "Show attachment question",
+            "prompt": {
+              "value": "(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaVars.currentQuestionType === 'attachment') {\n        return true;\n    } else \n        return false;\n})()"
+            },
+            "optional": false,
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": {
+              "id": ""
+            },
+            "variableId": "bba30ac7475c47cc93da35130951478b",
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "c86161c0b4ea42dab11005dd0f69556a": {
+            "id": "c86161c0b4ea42dab11005dd0f69556a",
+            "stepType": "DateTimePrompt",
+            "name": "Show date question",
+            "prompt": {
+              "value": "(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaVars.currentQuestionType === 'date') {\n        return true;\n    } else \n        return false;\n})()"
+            },
+            "optional": false,
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "variableId": "f7bd8a67b7874023816be1a2eccd99da",
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "bab80169de204bdf98d7955c940792c7": {
+            "id": "bab80169de204bdf98d7955c940792c7",
+            "stepType": "DateTimePrompt",
+            "name": "Show datetime question",
+            "prompt": {
+              "value": "(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaVars.currentQuestionType === 'datetime') {\n        return true;\n    } else\n        return false;\n})()"
+            },
+            "optional": false,
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "variableId": "d5c40882740949d285112e17f40f7b2c",
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "f9950611be314fe6b0c891e8e65771d2": {
+            "id": "f9950611be314fe6b0c891e8e65771d2",
+            "name": "Answer validation",
+            "script": "(function execute() {\n    vaVars.currentAnswerValidation = true;\n    vaVars.currentAnswerErrorMsg = '';\n\n    if (vaVars.currentQuestionType === 'long' || vaVars.currentQuestionType === 'percentage')\n        validateFieldLimits();\n})();\n\nfunction validateFieldLimits() {\n\tif ((!vaInputs.show_text_input_question.isValueSet() || vaInputs.show_text_input_question.getValue().length == 0)\n\t    && !vaInputs.show_text_input_question.isRequired())\n\t\treturn;\n\tvar max = vaVars.currentQuestionMax;\n\tvar min = vaVars.currentQuestionMin;\n\t\t\n\tvar value = vaInputs.show_text_input_question.getValue();\n\tvar newvalue = Number(value);\n\tif (isNaN(newvalue)) {vaVars.currentAnswerValidation = false;vaVars.currentAnswerErrorMsg = gs.getMessageLang('The input value is not a valid number. Please try again', vaContext.getRequesterLang());\n\t} else if (newvalue > max || newvalue < min) {vaVars.currentAnswerValidation = false;vaVars.currentAnswerErrorMsg = gs.getMessageLang('The input value is outside the valid range. Please try again', vaContext.getRequesterLang());\n\t}\n}",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "607a63448c1a4acca85166124f375118": {
+            "id": "607a63448c1a4acca85166124f375118",
+            "stepType": "Decision",
+            "name": "Check range"
+          },
+          "194fae9f28f045ac94643564ef50c9db": {
+            "id": "194fae9f28f045ac94643564ef50c9db",
+            "stepType": "TextOutput",
+            "name": "Validation failed",
+            "value": [
+              {
+                "value": "(function execute() {\n    return vaVars.currentAnswerErrorMsg;\n})()",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true
+          },
+          "786cec348ec048a78c4c2c6c4fed5ac2": {
+            "stepType": "CarouselPrompt",
+            "name": "Show image scale question",
+            "prompt": {
+              "value": "",
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaVars.currentQuestionType === 'imagescale') {\n        return true;\n    } else\n        return false;\n})()\n"
+            },
+            "optional": false,
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "7df928600c0b443a99b74c93a456775a",
+            "id": "786cec348ec048a78c4c2c6c4fed5ac2",
+            "carouselLabel": {
+              "value": "(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n",
+              "mode": "script"
+            },
+            "carouselItemExpression": "(function execute() {\n    var i = vaVars.questionIndex;\n    var questions = JSON.parse(vaVars.surveyQuestions);\n    var choices = questions[i].choices;\n    var options = [];\n    for (var j = 0; j < choices.length; j++) {\n        var c = choices[j];\n        options.push({\n            'Name': c.display,\n            'Value': c.value,\n            'Body': c.unselected\n        });\n    }\n\n    return options;\n})()",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "No data found"
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "c24324650a514984946fed64207f0c24": {
+            "id": "c24324650a514984946fed64207f0c24",
+            "stepType": "ScriptOutput",
+            "name": "Summary",
+            "output_type": "single_part",
+            "script": "(function execute() {\n      var questions = JSON.parse(vaVars.surveyQuestions);\n      var answers = JSON.parse(vaVars.surveyAnswers);\n      var questionAnswerPairs = [];\n\n      questions.forEach(function(q) {\n            var question = q.display.toString();\n            var answer = answers[q.metric];\n            var questionAnswer = answer.displayValue != null ? answer.displayValue :\n            answer.value != null ? answer.value : '';\n            var questionType = q.type + '';\n            \n            if(questionType == 'checkbox' || questionType == 'boolean'){\n                  if (questionAnswer == \"1\") {\n                        questionAnswer = \"Yes\";\n                  } else if (questionAnswer == \"0\") {\n                        questionAnswer = \"No\"\n                  }\n            }\n            if(answer){questionAnswerPairs.push({\"fieldLabel\": question, \"fieldValue\": questionAnswer});}         \n      });\n      \n      var card_data = JSON.stringify({\n            \"title\":gs.getMessageLang(\"Response Summary\", vaContext.getRequesterLang()),\n            \"fields\":questionAnswerPairs,\n      });\n\n      return vaSystem.renderCard(\"PreChat\", card_data, true);\n})()\n",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "e9cf114b0f3443a88c35756df8073df5": {
+            "id": "e9cf114b0f3443a88c35756df8073df5",
+            "stepType": "BooleanPrompt",
+            "name": "Verify Response",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "type": "datapill",
+                      "dataPill": {
+                        "value": "{{vaVars.surveyVerificationMsg}}",
+                        "displayValue": "vaVars➛surveyVerificationMsg"
+                      },
+                      "children": [
+                        {
+                          "text": ""
+                        }
+                      ]
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "optional": false,
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "variableId": "5fdb137d926849b9a9e41edf8bb67509",
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "8c9927f71ad04890afd342b20df99100": {
+            "id": "8c9927f71ad04890afd342b20df99100",
+            "stepType": "Decision",
+            "name": "Summary Correct?"
+          },
+          "3c232bba33f34219b4a554c511faa4da": {
+            "id": "3c232bba33f34219b4a554c511faa4da",
+            "name": "Reset Question Index",
+            "script": "(function execute() {\n    vaVars.questionIndex = -1;\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "mode": "query",
+              "value": ""
+            }
+          },
+          "9f8dfc6260824d0b863c4275cbd6e2f3": {
+            "id": "9f8dfc6260824d0b863c4275cbd6e2f3",
+            "stepType": "Decision",
+            "name": "Confirmation"
+          },
+          "0f849053babf4775a81a81355823b3db": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Show reference question",
+            "prompt": {
+              "value": "(function execute() {\n    return vaVars.currentQuestionDisplay;\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "mode": "script",
+              "value": "(function execute() {\n    if ((vaVars.currentQuestionType === 'reference')) {\n        return true;\n    } else\n        return false;\n})()\n"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate if the topic node can\n       be skipped (or not).  For example:\n\n       var skippable = vaInputs.first_name == 'Bill' ? true : false;\n       return skippable;\n    */\n    return vaVars.currentQuestionMandatory === \"false\";\n})()\n"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "217beaae2c9b4289859d6b32fc9877e6",
+            "id": "0f849053babf4775a81a81355823b3db",
+            "mode": "external",
+            "script": "(function execute() {\n    var options = [];\n    var table = vaVars.currentQuestionReferenceTable;\n    var condition = vaVars.currentQuestionReferenceCondition;\n    if (!table)\n        return options;\n \n    var taskExtensions = new TableUtils(\"task\").getTableExtensions();\n    var isTask = (taskExtensions.indexOf(table) > -1) ? true : false;\n\n    var gr = new GlideRecord(table);\n    if (condition)\n        gr.addEncodedQuery(condition);\n    gr.query();\n    while (gr.next()) {\n        options.push({\n            'render_style':'bubble',\n            'value': gr.sys_id + '',\n            'label': (isTask)? gr.number + ': ' + gr.short_description : gr.getDisplayValue()\n        });\n    }\n    return options;\n})()",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "No reference found"
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var options = [];\n    var table = vaVars.currentQuestionReferenceTable;\n    var condition = vaVars.currentQuestionReferenceCondition;\n    if (!table)\n        return options;\n \n    var taskExtensions = new TableUtils(\"task\").getTableExtensions();\n    var isTask = (taskExtensions.indexOf(table) > -1) ? true : false;\n\n    var gr = new GlideRecord(table);\n    if (condition)\n        gr.addEncodedQuery(condition);\n    gr.query();\n    while (gr.next()) {\n        options.push({\n            'render_style':'bubble',\n            'value': gr.sys_id + '',\n            'label': (isTask)? gr.number + ': ' + gr.short_description : gr.getDisplayValue()\n        });\n    }\n    return options;\n})()",
+              "mode": "external_script"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "entity": "",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": "",
+            "isMultipleSelect": false
+          },
+          "ca955a1d346d48b09e9ce792dde52cc3": {
+            "id": "ca955a1d346d48b09e9ce792dde52cc3",
+            "stepType": "Decision",
+            "name": "Is Survey Active?"
+          }
+        },
+        "edges": [
+          {
+            "id": "d723d392011a4489b5e9707ea710ae01",
+            "edgeType": "Branch",
+            "source": "ca955a1d346d48b09e9ce792dde52cc3",
+            "target": "da165a652daf475698c988c6427d008f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    gs.warn(\"Survey is not active\")\n    return vaVars.active != true;\n})()\n"
+            },
+            "label": "No",
+            "fromNode": "- Is Survey Active",
+            "toNode": "da165a652daf475698c988c6427d008f",
+            "toEdge": "d723d392011a4489b5e9707ea710ae01",
+            "addNode": {},
+            "nodeEntries": {}
+          },
+          {
+            "id": "d5d8414f7d124779a993b68bf5fb0c83",
+            "edgeType": "Edge",
+            "source": "b90ef5f7024d4e34b5ceaf628345df9c",
+            "target": "4761ab4e62324e3cb07ce4efc77ffd1f",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9c490fb1ee7b48e2ab62d5120713a01f",
+            "edgeType": "Edge",
+            "source": "9ecd2ca830064b97967dca21062c30fc",
+            "target": "6fc30a2a583e40d2a737eee77bb5e73f",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "380d37400e614773a95863c9a11548ab",
+            "edgeType": "Branch",
+            "source": "9ee3c8b3d800414c89edc50c2746da57",
+            "target": "a37d9e0c9af54fbb93c16fe65d7f33e0",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.currentIsDependencySatisfied;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "ad83e8a8966b4569bf2a2adc0acf21c0",
+            "edgeType": "Edge",
+            "source": "385869dc18c746b88db71bdd7c349c56",
+            "target": "9ee3c8b3d800414c89edc50c2746da57",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e0feebc1fe63415aaa292ddf81cb735d",
+            "edgeType": "Edge",
+            "source": "8ad01595341c4a6186e46eb203320658",
+            "target": "ca66aaa54c614102a4a2fd4bad818b9a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e9629798f480430ca040141729435c8a",
+            "edgeType": "Edge",
+            "source": "280229f5f0f74d11a6d06328dfb8fa1a",
+            "target": "8ad01595341c4a6186e46eb203320658",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "65ebda13c269463d875828687d4d02c5",
+            "edgeType": "Branch",
+            "source": "9ee3c8b3d800414c89edc50c2746da57",
+            "target": "8ad01595341c4a6186e46eb203320658",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.currentIsDependencySatisfied;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "87d89661bc144db1930085298213794f",
+            "edgeType": "Branch",
+            "source": "ca66aaa54c614102a4a2fd4bad818b9a",
+            "target": "385869dc18c746b88db71bdd7c349c56",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.questionIndex < vaVars.questionCount;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "af0cf0a9cffd4cb88e90a49da908d3aa",
+            "edgeType": "Edge",
+            "source": "6460cac852834b46a4977c093a2b1a67",
+            "target": "74fc296442cc4d7f8269e94e25cad5a4",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a59671cb37be433ca9aad55c9f432474",
+            "edgeType": "Edge",
+            "source": "74fc296442cc4d7f8269e94e25cad5a4",
+            "target": "da165a652daf475698c988c6427d008f",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "921b07f0136140b3b3c3dd1ab561bb08",
+            "edgeType": "Edge",
+            "source": "bbe4918b84a9426abbec7d055f7f555a",
+            "target": "8351c5b9bf8942ff8d31f773b77a5ee3",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4c33e19c61de47b6a365058f905ba7db",
+            "edgeType": "Edge",
+            "source": "8351c5b9bf8942ff8d31f773b77a5ee3",
+            "target": "8ad01595341c4a6186e46eb203320658",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ee2e867ed68047d794c46b45bc4ce496",
+            "edgeType": "Edge",
+            "source": "6fc30a2a583e40d2a737eee77bb5e73f",
+            "target": "64d85b2098094a4fa02f25f7a1444c50",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0ec6f85012064093931d18af01990021",
+            "edgeType": "Edge",
+            "source": "64d85b2098094a4fa02f25f7a1444c50",
+            "target": "c86161c0b4ea42dab11005dd0f69556a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4b32d599cc7145c9bef29624ed16ce09",
+            "edgeType": "Edge",
+            "source": "c86161c0b4ea42dab11005dd0f69556a",
+            "target": "bab80169de204bdf98d7955c940792c7",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "166e3abc2610434380c01a42e67a6e57",
+            "edgeType": "Edge",
+            "source": "f9950611be314fe6b0c891e8e65771d2",
+            "target": "607a63448c1a4acca85166124f375118",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "240492096e0e4691a1481592d27639d2",
+            "edgeType": "Branch",
+            "source": "607a63448c1a4acca85166124f375118",
+            "target": "280229f5f0f74d11a6d06328dfb8fa1a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.currentAnswerValidation;\n})()"
+            },
+            "label": "In range"
+          },
+          {
+            "id": "11d51d8d83d4441dbd99f5ddff1399a5",
+            "edgeType": "Branch",
+            "source": "607a63448c1a4acca85166124f375118",
+            "target": "194fae9f28f045ac94643564ef50c9db",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.currentAnswerValidation;\n})()"
+            },
+            "label": "Out of range"
+          },
+          {
+            "id": "fb80daf341154f44b06eed52008d631b",
+            "edgeType": "Edge",
+            "source": "194fae9f28f045ac94643564ef50c9db",
+            "target": "a37d9e0c9af54fbb93c16fe65d7f33e0",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f499ad9ec75d4d029dc327aeada3ff88",
+            "edgeType": "Edge",
+            "source": "a37d9e0c9af54fbb93c16fe65d7f33e0",
+            "target": "786cec348ec048a78c4c2c6c4fed5ac2",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6932b81a81aa40239c7279a917bb3816",
+            "edgeType": "Edge",
+            "source": "786cec348ec048a78c4c2c6c4fed5ac2",
+            "target": "9ecd2ca830064b97967dca21062c30fc",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "1d4e280c848b4646967db37b37aa6971",
+            "edgeType": "Edge",
+            "source": "c24324650a514984946fed64207f0c24",
+            "target": "e9cf114b0f3443a88c35756df8073df5",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e5675c80eaaf4501b0872eb2375e31a7",
+            "edgeType": "Edge",
+            "source": "e9cf114b0f3443a88c35756df8073df5",
+            "target": "8c9927f71ad04890afd342b20df99100",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "8f26f9a4757b45299f913e7ca3b948d1",
+            "edgeType": "Branch",
+            "source": "8c9927f71ad04890afd342b20df99100",
+            "target": "6460cac852834b46a4977c093a2b1a67",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "verify_response=true",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "d52c9a7bde9841f5a5fe1e96330547a2",
+            "edgeType": "Branch",
+            "source": "8c9927f71ad04890afd342b20df99100",
+            "target": "3c232bba33f34219b4a554c511faa4da",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "verify_response=",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "339812eec1c44e0ba4847f30f4f5e5d0",
+            "edgeType": "Edge",
+            "source": "3c232bba33f34219b4a554c511faa4da",
+            "target": "8ad01595341c4a6186e46eb203320658",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "83c8dcc16e06476b8bdb8a991918171e",
+            "edgeType": "Branch",
+            "source": "ca66aaa54c614102a4a2fd4bad818b9a",
+            "target": "9f8dfc6260824d0b863c4275cbd6e2f3",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.questionIndex >= vaVars.questionCount;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "8e5c522a68604d14b48d408ab8d30df0",
+            "edgeType": "Branch",
+            "source": "9f8dfc6260824d0b863c4275cbd6e2f3",
+            "target": "c24324650a514984946fed64207f0c24",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "confirmationneeded=true",
+              "mode": "query"
+            },
+            "label": "Confirmation?"
+          },
+          {
+            "id": "53df8ead704541ba8b2b12abd376513d",
+            "edgeType": "Branch",
+            "source": "9f8dfc6260824d0b863c4275cbd6e2f3",
+            "target": "6460cac852834b46a4977c093a2b1a67",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "confirmationneeded!=true",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "dfb7472e691f4770a126df453f8bd986",
+            "edgeType": "Edge",
+            "source": "bab80169de204bdf98d7955c940792c7",
+            "target": "0f849053babf4775a81a81355823b3db",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4771447e2c9e47a497c00226182f0aa2",
+            "edgeType": "Edge",
+            "source": "0f849053babf4775a81a81355823b3db",
+            "target": "f9950611be314fe6b0c891e8e65771d2",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "fe8bc0685a84441e85e38f22c6d8f929",
+            "edgeType": "Edge",
+            "source": "4761ab4e62324e3cb07ce4efc77ffd1f",
+            "target": "ca955a1d346d48b09e9ce792dde52cc3",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9f77c4762dd94e248ecc9bda5e2cf8d0",
+            "edgeType": "Branch",
+            "source": "ca955a1d346d48b09e9ce792dde52cc3",
+            "target": "bbe4918b84a9426abbec7d055f7f555a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return vaVars.active == true;\n})()\n"
+            },
+            "label": "Yes"
+          }
+        ]
+      }
+    },
+    "variables": {
+      "42731da272e043d29de8a18ae4abe8ec": {
+        "id": "42731da272e043d29de8a18ae4abe8ec",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "surveyInstanceId",
+        "label": "surveyInstanceId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "a019f4d9d2034f1e8ce4413ad6814d4c": {
+        "id": "a019f4d9d2034f1e8ce4413ad6814d4c",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "surveyQuestions",
+        "label": "surveyQuestions",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4606ff81e3b1466dba105ac8db0a3ff1": {
+        "id": "4606ff81e3b1466dba105ac8db0a3ff1",
+        "value": {
+          "mode": "simple",
+          "value": "-1"
+        },
+        "name": "questionIndex",
+        "label": "questionIndex",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "7df928600c0b443a99b74c93a456775a": {
+        "id": "7df928600c0b443a99b74c93a456775a",
+        "name": "show_image_scale_question",
+        "label": "Show Image Scale Question",
+        "varType": "carousel-image",
+        "category": "vaInputs",
+        "nodeId": "786cec348ec048a78c4c2c6c4fed5ac2",
+        "isHidden": false
+      },
+      "701eeb0ead3946b4a95fc310996f51d5": {
+        "id": "701eeb0ead3946b4a95fc310996f51d5",
+        "value": {
+          "mode": "simple",
+          "value": "0"
+        },
+        "name": "questionCount",
+        "label": "questionCount",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "24bdbf9a7cc4465f9a4f4ab220cdb2c7": {
+        "id": "24bdbf9a7cc4465f9a4f4ab220cdb2c7",
+        "name": "show_text_input_question",
+        "label": "Show Text Input Question",
+        "varType": "string",
+        "category": "vaInputs",
+        "secure": false,
+        "encryptionSalt": {
+          "value": "MTYxNDA5ODY2MTE1NSBWQSBEZXNpZ25lciBpcyBhd2Vzb21l",
+          "mode": "simple"
+        },
+        "encryptionHashFunction": "SHA-256",
+        "nodeId": "a37d9e0c9af54fbb93c16fe65d7f33e0",
+        "isHidden": false
+      },
+      "e0b97ea5de424260a17d367b713e6233": {
+        "id": "e0b97ea5de424260a17d367b713e6233",
+        "value": {
+          "mode": "simple",
+          "value": "{}"
+        },
+        "name": "surveyAnswers",
+        "label": "surveyAnswers",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "3bd6649edfb04f1d870a98c96130be34": {
+        "id": "3bd6649edfb04f1d870a98c96130be34",
+        "name": "show_boolean_question",
+        "label": "Show Boolean Question",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "nodeId": "6fc30a2a583e40d2a737eee77bb5e73f",
+        "isHidden": false
+      },
+      "5fa5bab12ab3407fa0243a6e4b1e5b55": {
+        "id": "5fa5bab12ab3407fa0243a6e4b1e5b55",
+        "value": {
+          "mode": "simple",
+          "value": "choice,scale,numericscale"
+        },
+        "name": "choiceTypes",
+        "label": "choiceTypes",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "43d0530ce6724cde95932f286155da8f": {
+        "id": "43d0530ce6724cde95932f286155da8f",
+        "name": "show_choice_question",
+        "label": "Show Choice Question",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs",
+        "nodeId": "9ecd2ca830064b97967dca21062c30fc",
+        "isHidden": false,
+        "autoSelect": false,
+        "autoSelectExpression": ""
+      },
+      "953851ffa4294d04859d006bf28a4986": {
+        "id": "953851ffa4294d04859d006bf28a4986",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "currentQuestionId",
+        "label": "currentQuestionId",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "1d2077df93314785b211efe410798278": {
+        "id": "1d2077df93314785b211efe410798278",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "currentQuestionType",
+        "label": "currentQuestionType",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "00d261d656824f6f8f150a2025f4eaae": {
+        "id": "00d261d656824f6f8f150a2025f4eaae",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "currentQuestionMetric",
+        "label": "currentQuestionMetric",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "601f508ef27a49a18330230ddcc12772": {
+        "id": "601f508ef27a49a18330230ddcc12772",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "currentQuestionDisplay",
+        "label": "currentQuestionDisplay",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "b56216c2f682436d9e56d9ef36471bcb": {
+        "id": "b56216c2f682436d9e56d9ef36471bcb",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "introduction",
+        "label": "introduction",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "0c33e298eff44fc88364434b538e805f": {
+        "id": "0c33e298eff44fc88364434b538e805f",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "endNote",
+        "label": "endNote",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "6545133e2b144832a1ecea359dcc39b9": {
+        "id": "6545133e2b144832a1ecea359dcc39b9",
+        "value": {
+          "mode": "simple",
+          "value": "string,long,percentage"
+        },
+        "name": "textTypes",
+        "label": "textTypes",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "dd7230f4e76642c4b1676e04fa2af480": {
+        "id": "dd7230f4e76642c4b1676e04fa2af480",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "currentQuestionMax",
+        "label": "currentQuestionMax",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "3f8a633cceb94a7a8c29a2622f003795": {
+        "id": "3f8a633cceb94a7a8c29a2622f003795",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "currentQuestionMin",
+        "label": "currentQuestionMin",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "cf9a19900c7043bd817ff9f5794941ed": {
+        "id": "cf9a19900c7043bd817ff9f5794941ed",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "currentAnswerValidation",
+        "label": "currentAnswerValidation",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "607bdaced73d4d7fab9239c0d64a4210": {
+        "id": "607bdaced73d4d7fab9239c0d64a4210",
+        "value": {
+          "mode": "simple",
+          "value": "''"
+        },
+        "name": "currentAnswerErrorMsg",
+        "label": "currentAnswerErrorMsg",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "bba30ac7475c47cc93da35130951478b": {
+        "id": "bba30ac7475c47cc93da35130951478b",
+        "name": "show_attachment_question",
+        "label": "Show Attachment Question",
+        "varType": "image",
+        "category": "vaInputs",
+        "nodeId": "64d85b2098094a4fa02f25f7a1444c50",
+        "isHidden": false
+      },
+      "f7bd8a67b7874023816be1a2eccd99da": {
+        "id": "f7bd8a67b7874023816be1a2eccd99da",
+        "name": "show_date_question",
+        "label": "Show Date Question",
+        "varType": "date_time",
+        "category": "vaInputs",
+        "mode": "date",
+        "nodeId": "c86161c0b4ea42dab11005dd0f69556a",
+        "isHidden": false
+      },
+      "d5c40882740949d285112e17f40f7b2c": {
+        "id": "d5c40882740949d285112e17f40f7b2c",
+        "name": "show_datetime_question",
+        "label": "Show Datetime Question",
+        "varType": "date_time",
+        "category": "vaInputs",
+        "mode": "date_time",
+        "nodeId": "bab80169de204bdf98d7955c940792c7",
+        "isHidden": false
+      },
+      "1132a62678c24bbda688337615fd51bb": {
+        "id": "1132a62678c24bbda688337615fd51bb",
+        "name": "surveyid",
+        "label": "SurveyId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b90ef5f7024d4e34b5ceaf628345df9c",
+        "isHidden": false
+      },
+      "5fdb137d926849b9a9e41edf8bb67509": {
+        "id": "5fdb137d926849b9a9e41edf8bb67509",
+        "name": "verify_response",
+        "label": "Verify Response",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "nodeId": "e9cf114b0f3443a88c35756df8073df5",
+        "isHidden": false
+      },
+      "e5e2dc8c74a64bf7ba531a2b734bd9cd": {
+        "id": "e5e2dc8c74a64bf7ba531a2b734bd9cd",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "surveyVerificationMsg",
+        "label": "surveyVerificationMsg",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "75bc445130284002947077d668cac779": {
+        "id": "75bc445130284002947077d668cac779",
+        "name": "confirmationneeded",
+        "label": "ConfirmationNeeded",
+        "defaultValue": "false",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b90ef5f7024d4e34b5ceaf628345df9c",
+        "isHidden": false
+      },
+      "f4cfc3cbbdca4d46b23a1de57709a8e0": {
+        "id": "f4cfc3cbbdca4d46b23a1de57709a8e0",
+        "value": {
+          "mode": "simple",
+          "value": "true"
+        },
+        "name": "currentQuestionMandatory",
+        "label": "currentQuestionMandatory",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "ba2a161b94a3468a86603955cca630a1": {
+        "id": "ba2a161b94a3468a86603955cca630a1",
+        "name": "savequestionstocontext",
+        "label": "SaveQuestionsToContext",
+        "defaultValue": "false",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b90ef5f7024d4e34b5ceaf628345df9c",
+        "isHidden": false
+      },
+      "1ebd3fa354824ebcb2abd32c7f5a08ee": {
+        "id": "1ebd3fa354824ebcb2abd32c7f5a08ee",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "_topic_postchat_user_id",
+        "label": "_topic_postchat_user_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "fbdedb6037d443fc94ac909130d72657": {
+        "id": "fbdedb6037d443fc94ac909130d72657",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "surveyName",
+        "label": "surveyName",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "62b3a6b4779d449faee2e5abee5678a5": {
+        "id": "62b3a6b4779d449faee2e5abee5678a5",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "LiveAgent_pre_chat_survey_name",
+        "label": "LiveAgent_pre_chat_survey_name",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "b712f462443f422882112475625c1f51": {
+        "id": "b712f462443f422882112475625c1f51",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "LiveAgent_post_chat_survey_name",
+        "label": "LiveAgent_post_chat_survey_name",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "c561d907f23a4ee485d105e3deefe041": {
+        "id": "c561d907f23a4ee485d105e3deefe041",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "LiveAgent_pre_assessment_instance",
+        "label": "LiveAgent_pre_assessment_instance",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "5f4fab2392e34755a790d59670b35294": {
+        "id": "5f4fab2392e34755a790d59670b35294",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "LiveAgent_post_assessment_instance",
+        "label": "LiveAgent_post_assessment_instance",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "b0a2dbc7899742b19e9f2d904b7bfc3e": {
+        "id": "b0a2dbc7899742b19e9f2d904b7bfc3e",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "defaultSurveyName",
+        "label": "defaultSurveyName",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "9c7e90dca34b47489835d0bcdc8e4933": {
+        "id": "9c7e90dca34b47489835d0bcdc8e4933",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "currentQuestionFieldValidator",
+        "label": "currentQuestionFieldValidator",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "217beaae2c9b4289859d6b32fc9877e6": {
+        "id": "217beaae2c9b4289859d6b32fc9877e6",
+        "name": "show_reference_question",
+        "label": "Show Reference Question",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs",
+        "nodeId": "0f849053babf4775a81a81355823b3db",
+        "isHidden": false,
+        "autoSelect": false,
+        "autoSelectExpression": ""
+      },
+      "a7b460d515ca4a2087c92d2c8bf5fbc9": {
+        "id": "a7b460d515ca4a2087c92d2c8bf5fbc9",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "currentQuestionReferenceTable",
+        "label": "currentQuestionReferenceTable",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "6ec01bc01b7144ec90530b7f9af69bb2": {
+        "id": "6ec01bc01b7144ec90530b7f9af69bb2",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "currentQuestionReferenceCondition",
+        "label": "currentQuestionReferenceCondition",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "3f44cb42666b408fbb6f952fe939d920": {
+        "id": "3f44cb42666b408fbb6f952fe939d920",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "active",
+        "label": "active",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+name: Survey
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

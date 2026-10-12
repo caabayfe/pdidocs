@@ -1,0 +1,135 @@
+_meta:
+  hash: 60f974fa3410659d7ba59f9787bb325dde671cfdcd6b34dfec5c44e56686e479
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: jimmy.yuan
+  sys_created_on: 2013-04-04 16:44:11
+  sys_domain: global
+  sys_id: 9ba30755376001006b882d465abe5d0b
+  sys_mod_count: '2'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_9ba30755376001006b882d465abe5d0b
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-09-06 11:03:23
+active: 'true'
+checksum: ''
+description: Collection of methods for managing XML content, primarily used to construct a payload to send to the instance
+directory: 'false'
+name: XMLUtil.psm1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  function createXmlDocument {
+      return new-object System.Xml.XmlDocument
+  }
+
+  function createElement {
+      param([System.Xml.XmlDocument]$xmlDocument, [string]$name, [string]$value = "")
+
+      if (!$xmlDocument) {
+          return $null
+      }
+      
+      $newElement = $xmlDocument.createElement($name)
+      $newElement.InnerText = $value
+      return $newElement
+  }
+
+  function createElementWithAttribute {
+      param([System.Xml.XmlDocument]$xmlDocument, [string]$name, [string]$attributeName, [string]$attributeValue)
+
+      if (!$xmlDocument) {
+          return $null;
+      }
+      
+      $newElement = $xmlDocument.createElement($name);
+      $newElement.SetAttribute($attributeName, $attributeValue);
+      return $newElement
+  }
+
+  function addAttribute {
+      param([System.Xml.XmlElement]$xmlElement, [string]$attributeName, [string]$attributeValue)
+      
+      $xmlElement.SetAttribute($attributeName, $attributeValue);
+  }
+
+  function getChild {
+      param([System.Xml.XmlNode]$xmlNode, [string]$name)
+      
+      if (!$xmlNode.HasChildNodes) {
+          return $null;
+      }
+      
+      $children = $xmlNode.ChildNodes;
+      foreach ($child in $children) {
+          if ($child.Name -eq $name) {
+              return $child;
+          }
+      }
+      
+      return $null;
+  }
+
+  function getChildWithNameAndAttribute {
+      param([System.Xml.XmlNode]$xmlNode, [string]$name, [string]$attributeName, [string]$attributeValue)
+      
+      if (!$xmlNode.HasChildNodes) {
+          return $null;
+      }
+      
+      $children = $xmlNode.ChildNodes;
+      foreach ($child in $children) {
+          if ($child.Name -eq $name -and $child.Attributes.Count -ne 0) {
+              $value = $child.Attributes.ItemOf($attributeName);
+
+              if ($value -and $value.Value -eq $attributeValue) {
+                  return $child;
+              }
+          }
+      }
+      
+      return $null;
+  }
+
+  function appendChild {
+      param([System.Xml.XmlNode]$parent, [System.Xml.XmlNode]$child)
+      
+      if ($parent -and $child) {
+          $ignore = $parent.appendChild($child)
+      }
+  }
+
+  function getXmlString {
+      param([System.Xml.XmlDocument]$xmlDocument)
+      
+      if (!$xmlDocument) {
+          return ""
+      }
+          
+      $stringWriter = new-object System.IO.StringWriter
+      $xmlTextWriter = new-object System.Xml.XmlTextWriter($stringWriter)
+      $xmlDocument.WriteTo($xmlTextWriter)
+      return $stringWriter.toString()
+  }
+
+  function addNewLineToNode {
+      param([System.Xml.XmlNode]$parent, [System.Xml.XmlDocument]$xmlDocument)
+      
+      $newLineNode = $xmlDocument.CreateWhitespace("`n");
+      appendChild -parent $parent -child $newLineNode;
+  }
+
+  function addNewLineToDocument {
+      param([System.Xml.XmlDocument]$xmlDocument)
+      
+      $newLineNode = $xmlDocument.CreateWhitespace("`n");
+      appendChild -parent $xmlDocument -child $newLineNode;
+  }
+script_attachment: ''
+source: ''
+sys_name: XMLUtil.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

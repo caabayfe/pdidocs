@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <link href="kb_styles.cssx" type="text/css" rel="stylesheet" />
+
+    <g:evaluate jelly="true">
+		
+        var title = jelly.jvar_cxs_result.title;
+        title = GlideStringUtil.escapeHTML(title);
+        var snippet = jelly.jvar_cxs_result.snippet;
+        var index = jelly.jvar_cxs_index;
+
+        var itemLinkTarget = JSUtil.notNil(jelly.jvar_cxs_result.link_target) ? jelly.jvar_cxs_result.link_target : "";
+        var itemLink = "";
+        if (jelly.jvar_cxs_result.link) {
+            var url = new GlideURL(jelly.jvar_cxs_result.link);
+            if (itemLinkTarget === "")
+                url.set("sysparm_stack", "no");
+            itemLink = url.toString();
+        }
+
+        var image = jelly.jvar_cxs_result.image.thumbnail.link;
+      
+        // this_helped : the action id will never change, this is used to show the checked pill if user clicked this helped
+		var thisHelpedActionLabel = '';
+		var thisHelpedActionValue = '';
+		var thisHelpedActionActive = false;
+		
+		if(jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.this_helped) {
+			thisHelpedActionActive = true;
+			var thisHelpedActionDetails = JSON.parse(jelly.jvar_cxs_result.searchResultActions.this_helped);
+			thisHelpedActionLabel = thisHelpedActionDetails.actionLabel;
+			thisHelpedActionValue = thisHelpedActionDetails.actionValue;
+		}
+		
+        var is_doctype = jelly.jvar_cxs_doctype;
+        var pill_button = '<div class="icon-button icon-cross"/>';
+        if (is_doctype != "true")
+            pill_button ='<div class="x-icon-cross">x</div>'
+    </g:evaluate>
+
+    <g:evaluate var="jvar_helped" jelly="true">
+        var feedbackClass = "cxs_hide_pill";
+
+         if (jelly.jvar_cxs_result.meta.relevance &amp;&amp; jelly.jvar_cxs_result.meta.relevance[thisHelpedActionValue])
+            feedbackClass = "cxs_show_pill";
+        
+        feedbackClass;
+    </g:evaluate>
+
+    <table style="width:100%">
+        <tr>
+            <td>
+                <h4 class="cxs_result_title">
+                    <a data-index="${index}" class="cxs_result" href="${itemLink}" target="${itemLinkTarget}">${title}</a>
+                </h4> 
+                <div class="smaller">${snippet}</div>
+            </td>
+        </tr>
+        <tr>
+        	<j:if test="${thisHelpedActionActive}">
+	            <td class="cxs_result_action">       
+	                <span class="cxs_pill ${jvar_helped}" data-index="${index}" action-value="${thisHelpedActionValue}">
+	                    ${thisHelpedActionLabel}<button class="cxs_close_button" id="cxs_result_action" data-index="${index}" action-value="${thisHelpedActionValue}">${pill_button}</button>
+	                </span>
+	            </td>
+            </j:if>
+        </tr>
+    </table>
+</j:jelly>

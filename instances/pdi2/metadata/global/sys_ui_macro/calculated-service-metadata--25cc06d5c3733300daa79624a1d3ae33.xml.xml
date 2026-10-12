@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+			<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+			
+			<div id="label.metadata_json">
+			<label for="metadata_json" dir="ltr" class=" col-xs-12 col-md-1_5 col-lg-2 control-label">
+			<span id="metadata_json_label_span" title="" data-html="false" data-original-title=""/>
+			</label>
+			</div>
+			
+			
+			<div class="col-xs-10 col-md-9 col-lg-8 form-field input_controls" ng-non-bindable="">
+			<div class="row" id="textarea_sizer.metadata_json">
+			<div class="col-sm-12 col-md-12 col-lg-12 col-xs-12">
+			<span class=" label_right pull-right" style="">
+			<script language="javascript">addLoadEvent(
+			function() {
+			if (window['textareaResize'])
+			textareaResize('metadata_json');
+			}
+			);</script>
+			</span>
+			</div>
+			</div>
+			
+			
+			<textarea id="metadata_json_textarea" 
+			onchange="this.isFocused=false;multiModified(this);" 
+			onkeydown="multiKeyDown(this);" 
+			style="width: 100%; overflow: hidden; overflow-wrap: break-word; resize: none; height: 64px; display: none" 
+			name="metadata_json"
+			wrap="soft" 
+			specialtype="" 
+			data-length="4096" 
+			data-charlimit="false" 
+			onfocus="this.isFocused=true;" 
+			onblur="this.isFocused=false;" 
+			class="form-control" 
+			aria-required="false" 
+			spellcheck="false" 
+			aria-label=""
+			readonly="true" />
+			
+			<div class="col-xs-2 col-md-1_5 col-lg-2 form-field-addons" />
+			</div>
+			
+			<script><![CDATA[
+			function getMetadataForDisplay() {
+			var metadataJSON = '$[${ref_parent}.metadata]';
+			var className = '$[${ref_parent}.sys_class_name]';
+			var type = '$[${ref_parent}.type]';
+			
+			var rtrnJSON = {};
+			// Initializing return value
+			rtrnJSON.label = "${gs.getMessage('Metadata')}";
+			rtrnJSON.title = "${gs.getMessage('General purpose service metadata to be (optionally) used during service population')}";
+			rtrnJSON.content = metadataJSON;
+			
+			try {
+			var metadata;
+			if (className == 'cmdb_ci_service_calculated' &amp;&amp; type == '5') {
+			// Dynamic manual services
+			metadata = JSON.parse(metadataJSON);
+			var levels = metadata.levels;
+			if (!levels)
+			levels = 3;
+			
+			rtrnJSON.label = "${gs.getMessage('Levels')}";
+			rtrnJSON.title = "${gs.getMessage('The number of levels of related CIs included in this application service')}";
+			rtrnJSON.content = levels;
+			} else if (className == 'cmdb_ci_service_by_tags') {
+			// Tag-based service
+			metadata = JSON.parse(metadataJSON);
+			var categoryValues = metadata.category_values;
+			if (!categoryValues)
+			categoryValues = [];
+			
+			rtrnJSON.label = "${gs.getMessage('Category Values')}";
+			rtrnJSON.title = "${gs.getMessage('The list of tag category values that define the service structure')}";
+			rtrnJSON.content = formatCategoryValues(categoryValues);
+			}
+			} catch (e) {
+			// Do nothing
+			}
+			
+			return rtrnJSON;
+			}
+			
+			function formatCategoryValues(categoryValues) {
+			var categoryLabel = "${gs.getMessage('Category')}";
+			var valueLabel = "${gs.getMessage('Value')}";
+			
+			var content = '';
+			
+			for (var i = 0 ; i &lt; categoryValues.length ; i++) {
+			var category2Value = categoryValues[i];
+			var category = category2Value.category;
+			var value = category2Value.value;
+			
+			if (content != '')
+			content += '\n';
+			
+			content += (i+1) + '. ' + categoryLabel + ': ' + category + ', ' + valueLabel + ': ' + value;
+			}
+			
+			return content;
+			}
+			
+			$j(document).ready(function() {
+			var metadata = getMetadataForDisplay();
+			var labelSpan = $j("#metadata_json_label_span");
+			var textArea = $j("#metadata_json_textarea");
+			labelSpan.html(metadata.label);
+			labelSpan.attr('title', metadata.title);
+			textArea.attr('aria-label', metadata.label);
+			textArea.css('display', 'inline');
+			textArea.html(metadata.content);
+			});
+			]]>
+			</script>
+			
+			</j:jelly>

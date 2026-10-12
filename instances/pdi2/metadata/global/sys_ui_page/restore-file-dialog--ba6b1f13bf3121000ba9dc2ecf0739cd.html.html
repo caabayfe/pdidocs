@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null">
+	<!--
+		Parameters
+			sysparm_sys_id - sys_id of the sys_metadata_delete record initiating the restore
+	 -->
+  <g2:evaluate jelly="true">
+	var metadataDeleteId = jelly.sysparm_sys_id;
+	var gr = new GlideRecord('sys_metadata_delete');
+	if (gr.get(metadataDeleteId)) {
+		var metadataId = gr.sys_metadata;
+		var metadataTableName = gr.sys_db_object;
+		var name = gr.sys_name;
+	}
+  </g2:evaluate>
+  <div id="restore_file_dialog_container" class="modal-dialog modal-sm modal-alert" width="100%">
+    <div class="modal-body" width="100%">
+	  <p>$[gs.getMessage("Are you sure you want to restore '{0}'?", name)]</p>
+
+	  <p>$[gs.getMessage("This will also restore any records that were deleted or changed during the deletion of this file.")]</p>
+    </div>
+
+    <footer class="modal-footer flex">
+      <button data-dismiss="modal" class="btn btn-default"
+	    onclick="gRestoreFileDialog.exit()">Cancel</button>
+	  <button data-dismiss="modal" class="btn btn-primary"
+	    onclick="gRestoreFileDialog.restoreFile()">OK</button>
+    </footer>
+</div>
+
+</j:jelly>

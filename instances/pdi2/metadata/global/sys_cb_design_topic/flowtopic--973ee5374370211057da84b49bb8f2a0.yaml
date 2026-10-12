@@ -1,0 +1,350 @@
+_meta:
+  hash: 2c326f0e43e74a262fd8d191013fe7e25c1d8a46c1effbb9fb2cb8d62d5b4ce7
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2023-02-10 18:31:19
+  sys_domain: global
+  sys_id: 973ee5374370211057da84b49bb8f2a0
+  sys_mod_count: '14'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_973ee5374370211057da84b49bb8f2a0
+  sys_updated_by: admin
+  sys_updated_on: 2023-02-10 21:46:16
+compiled_topic: 173ee5374370211057da84b49bb8f29c
+design_definition: '{"type":"FlowTopic","type":"FlowTopic","triggers":[{"type":"Trigger","name":"de53988ff6f94fbdb05cb1302d02e147","triggerType":"request","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"id":"de53988ff6f94fbdb05cb1302d02e147"}],"goals":[{"name":"primary","trigger_id":"de53988ff6f94fbdb05cb1302d02e147","nodes":[{"type":"StartGoal","type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"8ce0521d9a4d4a99bf9adc285f985f14","name":"Start"},{"type":"TerminateGoal","type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"b36f4837498045cc88d133b0169e9d92","name":"End"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var tableName = vaInputs.record_table;\n    var recordId = vaInputs.record_id;\n\n    var tableUtils = new TableUtils(tableName);\n    vaVars.isTaskBasedTable = (tableUtils.getAbsoluteBase() == ''task'');\n\n    var pageId = ''form'';\n    if (vaVars.isTaskBasedTable)\n        pageId = ''ticket'';\n\n    var link = '''';\n    var screenId = '''';\n    if (vaVars.portalName === ''mesp'') {\n        var mobileDLink = new global.MobileDeepLinkGenerator(''request'');\n        if (tableName == ''sc_req_item'')\n            screenId = ''7516f9d787232300e0ef0cf888cb0b4d'';\n        else if (tableName == ''sc_request'')\n            screenId = ''276dd3edb79033001befcd58de11a9c7'';\n        else if (tableName == ''incident'')\n            screenId = ''ebb94d9c0f2033001befa68ca8767e4e'';\n        else\n            screenId = ''d39eb2db87772300e0ef0cf888cb0bcb'';\n\n        link = mobileDLink.getFormScreenLink(screenId, tableName, recordId);\n    } else\n        link = vaVars.baseUri + vaVars.portalName + \"?id=\" + pageId + \"&table=\" + tableName + \"&sys_id=\" + recordId;\n\n    vaVars.recordLink = link;\n})()\n","id":"de6f6508b2984f1da80761ada0027468","name":"Process end state details","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Task based table","id":"271a29ccfc9a4fcdb80a9913193cf8bc","name":"Task based table","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.isTaskBasedTable;\n})()\n"}},{"type":"Branch","type":"Branch","label":"Non-Task based table","id":"0a5a26ea37394d5a8c6acf6bbc3f180a","name":"Non-Task based table","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.isTaskBasedTable;\n})()\n"}}],"id":"6633db3c19804c49b5d1eff3c25b040d","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Your request has been submitted. Here are the details:\", vaContext.getRequesterLang())"}],"id":"1423e7dbc90d4ff5bf1e5626f2829de4","name":"Request complete message","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"ScriptOutputPrompt","type":"ScriptOutputPrompt","output_type":"single_part","id":"a71461805bf541b5b58f210b025eb8e2","name":"Your request has been submitted.","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"value":{"type":"String","type":"String","mode":"string","value":"(function execute() {\n\n    var tableName = vaInputs.record_table;\n    var recordId = vaInputs.record_id;\n\n    var title = '''';\n    var subtitle = '''';\n    var fields = [];\n\n    var gr = new GlideRecord(tableName);\n    gr.addQuery(''sys_id'', recordId);\n    gr.query();\n    title = gr.getClassDisplayValue();\n    if (gr.next()) {\n        if (gr.isValidField(''task_effective_number''))\n            subtitle = gr.getValue(''task_effective_number'').toString();\n        else\n            subtitle = gr.number.toString();\n\n        if (gr.isValidField(''short_description'')) {\n            fields.push({\n                \"fieldLabel\": gr.getElement(''short_description'').getLabel(),\n                \"fieldValue\": gr.getDisplayValue(''short_description'').toString()\n            });\n        }\n        if (gr.isValidField(''state'')) {\n            fields.push({\n                \"fieldLabel\": gr.getElement(''state'').getLabel(),\n                \"fieldValue\": gr.getDisplayValue(''state'').toString()\n            });\n        }\n    }\n\n    var card_data = JSON.stringify({\n        \"title\": title,\n        \"subtitle\": subtitle,\n        \"fields\": fields,\n        \"url\": vaVars.recordLink.toString()\n    });\n    return vaSystem.renderCard(\"Card\", card_data);\n})()\n"},"secure":false},{"type":"LinkOutputPrompt","type":"LinkOutputPrompt","header":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Your request has been submitted\", vaContext.getRequesterLang())"},"label":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Click here to view the created record\", vaContext.getRequesterLang())"},"url":{"type":"String","type":"String","mode":"string","value":"{{vaVars.recordLink}}"},"link_type":"single","multi_link_script":"","id":"f204f270a57448959d342d2532271f9a","name":"Submitted record link","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}}],"edges":[{"type":"Edge","source_node_id":"8ce0521d9a4d4a99bf9adc285f985f14","target_node_id":"de6f6508b2984f1da80761ada0027468","id":"93a307d50ebe44e78ca1205726b5ff73"},{"type":"Edge","source_node_id":"de6f6508b2984f1da80761ada0027468","target_node_id":"6633db3c19804c49b5d1eff3c25b040d","id":"8e5e7d4108d74c03b6182c7693dbe2ab"},{"type":"Edge","source_node_id":"6633db3c19804c49b5d1eff3c25b040d","target_node_id":"1423e7dbc90d4ff5bf1e5626f2829de4","branch_id":"271a29ccfc9a4fcdb80a9913193cf8bc","id":"4a77c825421c4ac482237668399e1ca1","name":"271a29ccfc9a4fcdb80a9913193cf8bc"},{"type":"Edge","source_node_id":"1423e7dbc90d4ff5bf1e5626f2829de4","target_node_id":"a71461805bf541b5b58f210b025eb8e2","id":"e5d05d834995458f95b560163bacdef0"},{"type":"Edge","source_node_id":"a71461805bf541b5b58f210b025eb8e2","target_node_id":"b36f4837498045cc88d133b0169e9d92","id":"d67be8eb5001481d8b6cfbff2fa8b489"},{"type":"Edge","source_node_id":"6633db3c19804c49b5d1eff3c25b040d","target_node_id":"f204f270a57448959d342d2532271f9a","branch_id":"0a5a26ea37394d5a8c6acf6bbc3f180a","id":"ce41cf3ebfc146bfbc655663229fae08","name":"0a5a26ea37394d5a8c6acf6bbc3f180a"},{"type":"Edge","source_node_id":"f204f270a57448959d342d2532271f9a","target_node_id":"b36f4837498045cc88d133b0169e9d92","id":"5324a448ce7b4e53b5e5af09d1eb6aba"}],"id":"primary"}],"script_variables":[{"type":"VariableDto","type":"String","name":"baseUri","value":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    return gs.getProperty(''glide.servlet.uri'', '''');\n})()"},"list":false,"id":"e46067b350d94c8ea060a94e4c71e33c","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"isTaskBasedTable","value":{"type":"String","type":"String","mode":"string","value":"false"},"list":false,"id":"255f7286cf7a4dfea673673c4d4c81b9","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"portalName","value":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    if (vaContext.deviceType == ''ios'' || vaContext.deviceType == ''android'')\n        return ''mesp'';\n\n    var portalName = vaContext.liveagent_portal;\n\n    if (portalName)\n        return portalName;\n\n    return ''sp'';\n})()\n"},"list":false,"id":"10705689977341d39dc07e3fe83ecce5","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"recordLink","value":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    /* return ''a default value''; */\n    return '''';\n})()\n"},"list":false,"id":"fffc7c1088c041e2b02197dfc872397f","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","type":"Reference","table":"sys_user","id":"22358b8183c44e5c8cdbe356854a21e1","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"record_id","list":false,"id":"76a54136706b46d5bd7e6d391f308e72","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"record_table","list":false,"id":"31ff2beb4ee449a8a9c126060b922789","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false}],"applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"record_id","label":"record_id","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"76a54136706b46d5bd7e6d391f308e72","type":"String"},{"name":"record_table","label":"record_table","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"31ff2beb4ee449a8a9c126060b922789","type":"String"}],"return-values-mapping":[]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"id":"3d3ee5f34370211057da84b49bb8f22d","name":"End state card for Form Content Popup","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"library":true,"csTopicId":"173ee5374370211057da84b49bb8f29c","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 3d3ee5f34370211057da84b49bb8f22d
+graph: |-
+  {
+    "graph_api_version": "1.0.44",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "8ce0521d9a4d4a99bf9adc285f985f14": {
+            "id": "8ce0521d9a4d4a99bf9adc285f985f14",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "76a54136706b46d5bd7e6d391f308e72",
+                "name": "record_id",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "31ff2beb4ee449a8a9c126060b922789",
+                "name": "record_table",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              }
+            ],
+            "variableIds": [
+              "76a54136706b46d5bd7e6d391f308e72",
+              "31ff2beb4ee449a8a9c126060b922789"
+            ]
+          },
+          "b36f4837498045cc88d133b0169e9d92": {
+            "id": "b36f4837498045cc88d133b0169e9d92",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            }
+          },
+          "de6f6508b2984f1da80761ada0027468": {
+            "id": "de6f6508b2984f1da80761ada0027468",
+            "name": "Process end state details",
+            "script": "(function execute() {\n    var tableName = vaInputs.record_table;\n    var recordId = vaInputs.record_id;\n\n    var tableUtils = new TableUtils(tableName);\n    vaVars.isTaskBasedTable = (tableUtils.getAbsoluteBase() == 'task');\n\n    var pageId = 'form';\n    if (vaVars.isTaskBasedTable)\n        pageId = 'ticket';\n\n    var link = '';\n    var screenId = '';\n    if (vaVars.portalName === 'mesp') {\n        var mobileDLink = new global.MobileDeepLinkGenerator('request');\n        if (tableName == 'sc_req_item')\n            screenId = '7516f9d787232300e0ef0cf888cb0b4d';\n        else if (tableName == 'sc_request')\n            screenId = '276dd3edb79033001befcd58de11a9c7';\n        else if (tableName == 'incident')\n            screenId = 'ebb94d9c0f2033001befa68ca8767e4e';\n        else\n            screenId = 'd39eb2db87772300e0ef0cf888cb0bcb';\n\n        link = mobileDLink.getFormScreenLink(screenId, tableName, recordId);\n    } else\n        link = vaVars.baseUri + vaVars.portalName + \"?id=\" + pageId + \"&table=\" + tableName + \"&sys_id=\" + recordId;\n\n    vaVars.recordLink = link;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "6633db3c19804c49b5d1eff3c25b040d": {
+            "id": "6633db3c19804c49b5d1eff3c25b040d",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "1423e7dbc90d4ff5bf1e5626f2829de4": {
+            "id": "1423e7dbc90d4ff5bf1e5626f2829de4",
+            "stepType": "TextOutput",
+            "name": "Request complete message",
+            "secure": false,
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": "Your request has been submitted. Here are the details:"
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "_key": "3ad892d84e324da7bcfde7a737e34dfb"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "a71461805bf541b5b58f210b025eb8e2": {
+            "id": "a71461805bf541b5b58f210b025eb8e2",
+            "stepType": "ScriptOutput",
+            "name": "Your request has been submitted.",
+            "output_type": "single_part",
+            "script": "(function execute() {\n\n    var tableName = vaInputs.record_table;\n    var recordId = vaInputs.record_id;\n\n    var title = '';\n    var subtitle = '';\n    var fields = [];\n\n    var gr = new GlideRecord(tableName);\n    gr.addQuery('sys_id', recordId);\n    gr.query();\n    title = gr.getClassDisplayValue();\n    if (gr.next()) {\n        if (gr.isValidField('task_effective_number'))\n            subtitle = gr.getValue('task_effective_number').toString();\n        else\n            subtitle = gr.number.toString();\n\n        if (gr.isValidField('short_description')) {\n            fields.push({\n                \"fieldLabel\": gr.getElement('short_description').getLabel(),\n                \"fieldValue\": gr.getDisplayValue('short_description').toString()\n            });\n        }\n        if (gr.isValidField('state')) {\n            fields.push({\n                \"fieldLabel\": gr.getElement('state').getLabel(),\n                \"fieldValue\": gr.getDisplayValue('state').toString()\n            });\n        }\n    }\n\n    var card_data = JSON.stringify({\n        \"title\": title,\n        \"subtitle\": subtitle,\n        \"fields\": fields,\n        \"url\": vaVars.recordLink.toString()\n    });\n    return vaSystem.renderCard(\"Card\", card_data);\n})()\n",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "f204f270a57448959d342d2532271f9a": {
+            "id": "f204f270a57448959d342d2532271f9a",
+            "stepType": "LinkOutput",
+            "name": "Submitted record link",
+            "url": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "type": "datapill",
+                      "dataPill": {
+                        "value": "{{vaVars.recordLink}}",
+                        "displayValue": "Script Variables➛recordLink"
+                      },
+                      "children": [
+                        {
+                          "text": ""
+                        }
+                      ]
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "label": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Click here to view the created record"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "header": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Your request has been submitted"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "linkType": "single",
+            "introMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "listOfLinks": ""
+          }
+        },
+        "edges": [
+          {
+            "id": "93a307d50ebe44e78ca1205726b5ff73",
+            "edgeType": "Edge",
+            "source": "8ce0521d9a4d4a99bf9adc285f985f14",
+            "target": "de6f6508b2984f1da80761ada0027468",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "8e5e7d4108d74c03b6182c7693dbe2ab",
+            "edgeType": "Edge",
+            "source": "de6f6508b2984f1da80761ada0027468",
+            "target": "6633db3c19804c49b5d1eff3c25b040d",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "4a77c825421c4ac482237668399e1ca1",
+            "edgeType": "Branch",
+            "source": "6633db3c19804c49b5d1eff3c25b040d",
+            "target": "1423e7dbc90d4ff5bf1e5626f2829de4",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.isTaskBasedTable;\n})()\n"
+            },
+            "label": "Task based table"
+          },
+          {
+            "id": "e5d05d834995458f95b560163bacdef0",
+            "edgeType": "Edge",
+            "source": "1423e7dbc90d4ff5bf1e5626f2829de4",
+            "target": "a71461805bf541b5b58f210b025eb8e2",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "d67be8eb5001481d8b6cfbff2fa8b489",
+            "edgeType": "Edge",
+            "source": "a71461805bf541b5b58f210b025eb8e2",
+            "target": "b36f4837498045cc88d133b0169e9d92",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ce41cf3ebfc146bfbc655663229fae08",
+            "edgeType": "Branch",
+            "source": "6633db3c19804c49b5d1eff3c25b040d",
+            "target": "f204f270a57448959d342d2532271f9a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.isTaskBasedTable;\n})()\n"
+            },
+            "label": "Non-Task based table"
+          },
+          {
+            "id": "5324a448ce7b4e53b5e5af09d1eb6aba",
+            "edgeType": "Edge",
+            "source": "f204f270a57448959d342d2532271f9a",
+            "target": "b36f4837498045cc88d133b0169e9d92",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "22358b8183c44e5c8cdbe356854a21e1": {
+        "category": "vaInputs",
+        "id": "22358b8183c44e5c8cdbe356854a21e1",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "e46067b350d94c8ea060a94e4c71e33c": {
+        "id": "e46067b350d94c8ea060a94e4c71e33c",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return gs.getProperty('glide.servlet.uri', '');\n})()"
+        },
+        "name": "baseUri",
+        "label": "baseUri",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "255f7286cf7a4dfea673673c4d4c81b9": {
+        "id": "255f7286cf7a4dfea673673c4d4c81b9",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "isTaskBasedTable",
+        "label": "isTaskBasedTable",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "10705689977341d39dc07e3fe83ecce5": {
+        "id": "10705689977341d39dc07e3fe83ecce5",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    if (vaContext.deviceType == 'ios' || vaContext.deviceType == 'android')\n        return 'mesp';\n\n    var portalName = vaContext.liveagent_portal;\n\n    if (portalName)\n        return portalName;\n\n    return 'sp';\n})()\n"
+        },
+        "name": "portalName",
+        "label": "portalName",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "fffc7c1088c041e2b02197dfc872397f": {
+        "id": "fffc7c1088c041e2b02197dfc872397f",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    /* return 'a default value'; */\n    return '';\n})()\n"
+        },
+        "name": "recordLink",
+        "label": "recordLink",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "76a54136706b46d5bd7e6d391f308e72": {
+        "id": "76a54136706b46d5bd7e6d391f308e72",
+        "name": "record_id",
+        "label": "Record_id",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "8ce0521d9a4d4a99bf9adc285f985f14",
+        "isHidden": false
+      },
+      "31ff2beb4ee449a8a9c126060b922789": {
+        "id": "31ff2beb4ee449a8a9c126060b922789",
+        "name": "record_table",
+        "label": "Record_table",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "8ce0521d9a4d4a99bf9adc285f985f14",
+        "isHidden": false
+      }
+    }
+  }
+name: End state card for Form Content Popup
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

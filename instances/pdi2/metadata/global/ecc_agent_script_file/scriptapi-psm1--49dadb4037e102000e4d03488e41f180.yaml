@@ -1,0 +1,192 @@
+_meta:
+  hash: 1dca6eb8f0eb889f7c081fd00ab9d077790a6f818de5c99522725fba011798fc
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: will.swift
+  sys_created_on: 2015-07-24 22:59:41
+  sys_domain: global
+  sys_id: 49dadb4037e102000e4d03488e41f180
+  sys_mod_count: '44'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_49dadb4037e102000e4d03488e41f180
+  sys_updated_by: now.midserver
+  sys_updated_on: 2026-01-24 21:23:38
+active: 'true'
+checksum: ''
+description: ''
+directory: 'false'
+name: ScriptAPI.psm1
+parent: f81b00b1f711020028f47d78ac99d9be
+script: |-
+  $tmpDriveName = ""
+  $remoteDriveLetter = "C"
+
+  function launchProcess {
+      param([string]$computer, [System.Management.Automation.PSCredential]$cred, [string]$command)
+      # Don't add the cmd prefix if this is a JEA connection
+      if (-not $global:isJea) {
+          $command = 'cmd /c "' + $command +'"'
+      }
+      SNCLog-DebugInfo "ScriptAPI launchProcess with the command `"$command`"";
+      executeRemote -computer $computer -scriptBlock $command -wmi $false;
+  }
+
+  function handleExit {
+      param([int]$exitCode)
+
+      $output = ""
+
+      if ($exitCode -ne 0) {
+          $output = "$env:SNC_cmdFail $exitCode"
+      } else {
+          $output = "$env:SNC_cmdCmpl $exitCode"
+      }
+
+      write-host $output
+  }
+
+  function getFileContentWinRM {
+      param([string]$path)
+
+      $command = 'Get-Content "' + $path + '"';
+      executeRemote -computer $computer -scriptBlock $command -wmi $false;
+  }
+
+  function getFilePropertiesWinRM {
+      param([string]$path)
+
+      $command = 'Get-ItemProperty "' + $path + '" | Select-Object *;';
+      executeRemote -computer $computer -scriptBlock $command -wmi $false;
+  }
+
+  function convertPathToUnc {
+      param([string]$path)
+
+      $pathArr = $path.split(':')
+      $remoteDriveLetter = $pathArr[0]
+      $tmp = $path -replace ':', '$'
+
+      return '\\' + $computer + '\' + $tmp
+  }
+
+  function removeDrive {
+      #Remove-PSDrive -Name $tmpDriveName >$null
+      net use /delete \\$computer\$remoteDriveLetter$ >$null
+  }
+
+  function getTrustedHostsAuthority {
+      $xml = Get-WSManInstance -ResourceURI winrm/config/client | Select-Object -expandproperty OuterXml
+      $ns = @{cfg="http://schemas.microsoft.com/wbem/wsman/1/config/client"}
+      $n = select-xml -XPath '/cfg:Client/cfg:TrustedHosts' -Content $xml -Namespace $ns
+      $out = 'GPO'
+      if ([string]::isNullOrEmpty($n.node.source)) {
+          $out = 'HOST'
+      }
+
+      return $out
+  }
+
+  <#
+  .SYNOPSIS
+      Gets the TrustedHosts configuration from the local system.
+  .DESCRIPTION
+      Retrieves the WinRM TrustedHosts setting using a fallback strategy:
+      1. First attempts to read from WSMan PSDrive (WSMan:\localhost\client\TrustedHosts)
+         - Includes GPO-merged effective value
+         - Requires WinRM service running
+         - May require admin privileges
+      2. Falls back to GPO setting in the registry if WSMan PSDrive query fails
+         - Gets GPO setting in the registry which has higher precedence than the local non-policy setting
+         - Location: HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client\TrustedHostsList
+      3. Falls back to the local non-policy setting in registry if GPO registry query fails
+         - Gets local non-policy setting only (no GPO merge)
+         - Location: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Client\trusted_hosts
+      4. Returns empty string if neither method succeeds
+  .OUTPUTS
+      The TrustedHosts value, or empty string if not configured/accessible.
+  .NOTES
+      TrustedHosts can be configured by GPO policy and by local non-policy setting in the registry, with GPO taking precedence over local settings.
+  #>
+  function getTrustedHosts {
+      # Try WSMan PSDrive (GPO-aware)
+      try {
+          $value = (Get-Item WSMan:\localhost\client\TrustedHosts -ErrorAction Stop).Value
+          return $value
+      } catch {
+          # Silently continue to next fallback method
+      }
+
+      # Try GPO registry (non-admin readable, higher precedence)
+      try {
+          $gpoPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client"
+
+          # Check if GPO policy is enabled (TrustedHosts = 1 means enabled)
+          $policyEnabled = Get-ItemPropertyValue -Path $gpoPath -Name "TrustedHosts" -ErrorAction Stop
+
+          if ($policyEnabled -eq 1) {
+              # Policy is enabled, read the actual list from TrustedHostsList
+              $gpoValue = Get-ItemPropertyValue -Path $gpoPath -Name "TrustedHostsList" -ErrorAction Stop
+              # Return even if empty - GPO explicitly set to empty means "no trusted hosts"
+              return $gpoValue
+          }
+      } catch {
+          # Silently continue to next fallback method
+      }
+
+      # Try registry (non-admin readable, local configuration only)
+      try {
+          $value = Get-ItemPropertyValue -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Client -Name trusted_hosts -ErrorAction Stop
+          return $value
+      } catch {
+      }
+
+      # TrustedHosts not configured or not accessible
+      return ""
+  }
+
+  function hostInDomain {
+      if ((Get-CimInstance win32_computersystem).partofdomain) {
+          write-host true
+      } else {
+          write-host false
+      }
+  }
+
+  function testRemoteHostRunningWinRM {
+      param([System.Management.Automation.PSCredential]$credential)
+
+      $cmd = 'test-wsman -computer $computer -port $env:SNC_targetPort'
+
+      if ($env:SNC_useSSL -eq "true") {
+          $cmd += ' -UseSSL'
+      }
+
+      $cmd += ' -ErrorAction stop'
+      $sb = [Scriptblock]::Create($cmd)
+      try {
+          SNCLog-DebugInfo ("Running test script: " + $ExecutionContext.InvokeCommand.ExpandString($cmd))
+          & $sb
+          SNCLog-DebugInfo "`tWinRM service is running on $computer"
+      } catch [System.InvalidOperationException] {
+          # Note that if we get an SSL certificate error, WinRM service is most likely running.
+  		# Unfortunately, Test-WSMan does not provide a way to skip SSL certificate check so we have to assume that it is running.
+          if ($_.Exception.Message -NotMatch "SSL certificate") {
+              SNCLog-DebugInfo "`tWinRM access error"
+              throw
+          }
+      }
+  }
+
+  function testRemoteHostConnection {
+      $dummyCred = getDummyCredential "TestUser" "TestPassword"
+      testRemoteHostRunningWinRM -credential $dummyCred
+  }
+script_attachment: ''
+source: ''
+sys_name: ScriptAPI.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) { var process_sys_id = current.process_definition; if (process_sys_id) { var playerController = new sn_ads_setup.SNHelpSetupPlayerController(); return playerController.getInteractionStatus(current.getUniqueValue()); } else { return current.interaction_status; } })(current);

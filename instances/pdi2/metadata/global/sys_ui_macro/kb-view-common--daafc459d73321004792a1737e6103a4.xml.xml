@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate jelly="true">
+		var knowHelp = new SNC.KnowledgeHelper();
+		var showCreateIncident = !kbViewInfo.isInPopup &amp;&amp; !jelly.sysparm_no_create_incident &amp;&amp;!kbViewInfo.hideFeedbackOptions &amp;&amp; RP.getParameterValue('sysparm_class_name') != "kb_knowledge_block";
+		var showMoreInfo = !kbViewInfo.isInPopup &amp;&amp; !jelly.sysparm_no_info;
+		var showUpdateAction = !jelly.sysparm_no_update &amp;&amp; isEditable;
+		var canUserRead = knowledgeRecord.canRead();
+		var showFlagArticle = knowHelp.getBooleanProperty(knowledgeRecord, "glide.knowman.show_flag", true)
+								&amp;&amp; !jelly.sysparm_no_suggest
+								&amp;&amp; !disableSuggesting &amp;&amp; !kbViewInfo.hideFeedbackOptions;
+		if(showFlagArticle){
+			var roles = gs.getProperty('glide.knowman.show_flag.roles');
+			if (roles != null &amp;&amp; roles != '')
+					showFlagArticle = gs.hasRole(roles);
+		}
+		
+		var isMobileView = (RP.getParameterValue('sysparm_device') != "" &amp;&amp; RP.getParameterValue('sysparm_device') == "mobile");
+		isMobileView = isMobileView || GlideMobileExtensions.getDeviceType() == "m";
+		var showPillBox = (showCreateIncident || showMoreInfo || showFlagArticle || showUpdateAction || canUserRead);
+		
+		var attachToTaskLabel = GlideMetaData.getTableLabel(RP.getParameterValue('sysparm_kb_search_table'));
+        attachToTaskLabel = (attachToTaskLabel != null &amp;&amp; attachToTaskLabel != "") 
+        				? gs.getMessage("Attach to {0}", [attachToTaskLabel]) 
+        				: gs.getMessage("Attach to record"); 
+
+        var showAttachToTask = (RP.getParameterValue('sysparm_kb_search_table') != "" &amp;&amp; RP.getParameterValue('sysparm_nameofstack') == "kbpop");
+        
+	</g:evaluate>
+	<g2:evaluate var="jvar_item" object="true" jelly="true">
+		var kb = knowledgeRecord;
+		var kHelp = new KnowledgeHelp();
+		kHelp.createEvents(kb);
+		kb;
+	</g2:evaluate>
+		<j:if test="${isMobileView == true}">
+			<g:requires name='classes/util/StopWatch.js'/>
+			<g:requires name='doctype/utils14.js'/>
+		</j:if>
+		<g:inline template="kb_view_edit" />
+		<g:evaluate var="jvar_stamp">  
+			var gr = new GlideRecord("sys_ui_script");  
+			gr.orderByDesc("sys_updated_on");  
+			gr.query();  
+			gr.next();  
+			gr.getValue("sys_updated_on");  
+		</g:evaluate>
+		<g:include_script src="KnowledgeFunctions.jsdbx"/>
+		<g:requires name="KBViewArticle.jsdbx" params="cache=${jvar_stamp}" />
+	    
+		<g:inline template="kb_view_hidden_fields"/>
+		
+<!-- 		KB Extension point call to customize footer -->
+		<g:call_extension extension="global.KMArticleViewHeader" knowledgerecord="${knowledgeRecord}" limit="1" />
+	
+		<j:if test="${isMobileView == true}">
+			<div class="mobile">
+				<g:inline template="kb_view_common_body"/>
+			</div>
+		</j:if>
+		
+		<j:if test="${isMobileView != true}">
+			<g:inline template="kb_view_common_body"/>
+		</j:if>
+</j:jelly>

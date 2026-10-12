@@ -1,0 +1,1 @@
+new sn_entitlement.CalculatedFieldSubscriptionDetailStatus().calculateStatus(current)

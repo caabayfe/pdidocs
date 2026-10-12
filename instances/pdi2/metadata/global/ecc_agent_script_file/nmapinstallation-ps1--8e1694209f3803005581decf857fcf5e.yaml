@@ -1,0 +1,315 @@
+_meta:
+  hash: 303d014da91e246f87a31895d7047f343010004b5a961a3b0df4590694201c5c
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: thanh.phan
+  sys_created_on: 2017-08-21 23:54:58
+  sys_domain: global
+  sys_id: 8e1694209f3803005581decf857fcf5e
+  sys_mod_count: '15'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_8e1694209f3803005581decf857fcf5e
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-09-06 11:03:23
+active: 'true'
+checksum: ''
+description: Nmap Installation
+directory: 'false'
+name: NmapInstallation.ps1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  Param(
+      [string]$operation,
+      [string]$nmap_root_path,
+      [string]$nmap_self_installer,
+      [string]$nmap_command,
+      [string]$nmap_uninstall_command,
+      [string]$nmap_npcap_version,
+      [string]$nmap_safe_scripts
+  )
+
+  # PowerShell seems to have a lot of delay in when the installed files are actually accessible.
+  # These variables control the number of retries and delay while waiting for them.
+  $retries = 60
+  $retryDelay = 2;
+
+  # Remove the Nmap directory and its contents. 
+  # In the case that Nmap was installed it uninstalls Nmap first.
+  Function clean-nmap-folder {
+      Write-Host "Checking for existing Nmap installation at $nmap_root_path"
+      if (Test-Path -Path $nmap_root_path) {
+          Write-Host "...found existing Nmap installation at $nmap_root_path"
+          Write-Host "Checking for existing Nmap uninstaller $nmap_uninstall_command"
+          if (Test-Path -Path $nmap_uninstall_command) {
+              Write-Host "...found existing Nmap uninstaller, executing uninstaller"
+              & $nmap_uninstall_command /S > $null 
+          }
+
+          delete-nmap-folder
+
+      } else {
+          Write-Host "...$nmap_root_path not found"
+      }
+   }
+
+  # Delete the Nmap directory and its contents. 
+  # In the case that Nmap was installed it uninstalls Nmap first.
+  Function delete-nmap-folder {
+      Write-Host "Deleting Nmap directory $nmap_root_path"
+      for ($i=0; $i -le $retries; $i++) {
+          try {   
+              Remove-Item -Recurse -Force $nmap_root_path
+              if ($?) {
+                  Write-Host "Nmap directory $nmap_root_path deleted"
+                  return
+              }
+          } catch {
+              Write-Host "Error removing $nmap_root_path, $_"
+          }
+
+          Write-Host "Unable to remove $nmap_root_path, waiting $retryDelay seconds..."
+          Start-Sleep -Seconds $retryDelay
+      }
+
+      Write-Host "Unable to delete $nmap_root_path"
+   }
+
+  Function install-nmap { 
+      Write-Host "Checking free space on $(get-location).Drive.Name"
+      $free_size = $($(get-psdrive $(get-location).Drive.Name).Free)/1MB
+      if ($free_size -le 10) {
+          Write-Error  "Unable to install Nmap: Not enough disk space to install Nmap with $free_size MB remaining"
+          clean-nmap-folder
+          Exit 4
+      }
+      Write-Host "...enough disk space to install Nmap"
+
+      $nmap_installer_params = "/S /REGISTERPATH=NO /ZENMAP=NO"
+      # Checks if a higher version of Npcap is installed on the machine then adds NPCAP=NO to prevent re-installing Npcap
+      $def_version = [System.Version] "0.0"
+      if ($nmap_npcap_version -ne $def_version) {
+          if (npcap-was-installed) {
+               $nmap_installer_params = "$nmap_installer_params  /NPCAP=NO"
+           }
+       }
+      # Install Nmap in the silent mode&
+      $installer_cmd = "& `"$nmap_self_installer`" $nmap_installer_params /D=$nmap_root_path"
+
+      Write-Host "Installing Nmap: $installer_cmd"
+
+      Invoke-Expression $installer_cmd
+      if (-Not $?) {
+          Write-Error "Unable to install Nmap: $Error[0].ToString()"
+          clean-nmap-folder
+          Exit 4
+      }
+
+      # Verify Nmap installation
+      $nv = verify-nmap
+
+      # Select safe scripts
+      provide-safe-db
+
+      Write-Host "Nmap $nv was installed successfully "
+  }
+
+  #Check if a higher version of npcap was installed on the machine
+  Function npcap-was-installed {
+      $registery_path = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
+      
+      # Verify if Npcap was installed
+      if (-Not (Test-Path -Path $registery_path)) {
+          return $false
+      }
+     
+      # Verify if a higher verion of Npcap is available 
+      $npcap_version = [String](Get-ItemProperty $registery_path -Name "DisplayVersion")."DisplayVersion"
+      if (-Not (compatible-npcap-version  $npcap_version $nmap_npcap_version)) {
+          return $false
+      }
+   
+      Write-Host "Npcap$nmap_npcap_version is not installed: Npcap$npcap_version was already installed"
+      return $true
+  }
+
+  # Compare two npcap versions. Npcap version format follows the system format xx.xx.xx or
+  # some times is like xx.xx.xx-rx. the following funtion returns
+  # It returns true if version1 is the same as/ higher than version2 otherwise it returns false
+  Function compatible-npcap-version($version1, $version2) {
+      $version1_parts = $version1.Split("-r", [System.StringSplitOptions]::RemoveEmptyEntries)
+      $version2_parts = $version2.Split("-r", [System.StringSplitOptions]::RemoveEmptyEntries)
+
+      # Compare the first part of the version that follows Standard Version format
+      if ([System.Version]$version1_parts[0] -gt [System.Version]$version2_parts[0]) {
+           return $true
+       }
+       if ([System.Version]$version1_parts[0] -lt [System.Version]$version2_parts[0]) {
+          return $false
+       }
+
+       # If one of versions doesn't have -r part
+       if ($version1_parts.length -gt $version2_parts.length) {
+          return $true
+       }
+       if ($version1_parts.length -lt $version2_parts.length) {
+          return $false
+       }
+
+       # Compare the second part of the version after -r (not Standard Version)
+       if ([convert]::ToInt32($version1_parts[1], 10) -ge [convert]::ToInt32($version2_parts[1], 10)) {
+           return $true
+       }
+       return $false
+   }
+
+  Function verify-nmap {
+      # Because of directory caching, the Nmap executable may not appear yet so wait for it
+      for ($i=0; $i -le $retries; $i++) {
+          if (Test-Path "$nmap_command") {
+              Write-Host "$nmap_command ready"
+              break
+          }
+          Write-Host "$nmap_command does not exist yet, waiting $retryDelay seconds..."
+          Start-Sleep -Seconds $retryDelay
+      }
+
+      # Verify Nmap version
+      Write-Host "Verifying Nmap installation"
+      for ($i=0; $i -le $retries; $i++) {
+          $version_info = & "$nmap_command" --version
+          if ($?) {
+              #Success, return version
+              Write-Host $version_info
+              # For 7.92 OEM Version, first line has value like this below
+              # Nmap OEM version 7.92 ( https://nmap.org )
+              $version_number = $version_info[0].split()[3]
+              if(-not ($version_number)) {
+                  # For 7.50 Version, first line is empty and second line is like below
+                  # Nmap version 7.50 ( https://nmap.org )
+                  $version_number = $version_info[1].split()[2]
+              }
+              return $version_number
+          }
+
+          Write-Host "Unable to verify Nmap installed version, waiting $retryDelay seconds..."
+          Start-Sleep -Seconds $retryDelay
+      }
+
+      # If we got here, it failed after all retries
+      Write-Error "Timeout: Unable to verify Nmap installed version"
+      clean-nmap-folder
+      Exit 4
+  }
+
+
+  Function provide-safe-db {
+      $script_path = $nmap_root_path + "\scripts\*"
+      $safe_script_path = $nmap_root_path + "\safeScripts"
+
+      $safe_db = delete-unsafe-scripts $script_path
+
+      $lastStatus = $false 
+      for ($i=0; $i -le $retries; $i++) {
+          & $nmap_command --script-updatedb > $null
+          $lastStatus = $?
+          if ($lastStatus) {
+              Write-Host  "Nmap safe scripts DB updated"
+              break
+          }
+
+          Write-Host "Unable to update the script database with safe scripts, waiting $retryDelay seconds..."
+          Start-Sleep -Seconds $retryDelay
+      }
+
+      if (-Not $lastStatus) {
+              Write-Error  "Timeout: Unable to update the script database with safe scripts: $Error[0].ToString()"
+              clean-nmap-folder
+              Exit 4
+      }
+
+      try {
+          New-Item -ItemType directory -Path $safe_script_path > $null
+      } catch {
+          Write-Error  "Unable to create nmap directory under agent directory for this MID Server. $_"
+          clean-nmap-folder         
+          Exit 4
+      }
+
+      Copy-Item -Path "$script_path" -Destination "$safe_script_path"
+      Write-Host "Safe scripts compiled to $safe_script_path"
+  }
+
+
+
+  Function delete-unsafe-scripts ($db_scripts_path) {
+      $safe_script_names = $nmap_safe_scripts.split(", ")
+      $scripts = Get-ChildItem -Path "$db_scripts_path" -Filter *.nse
+
+      for ($i=0 ; $i -le $retries; $i++) {
+          foreach ($file in $scripts) {
+              if (-Not ($safe_script_names -contains $file.Name)) {
+                  Remove-Item -Path "$file"
+              }
+          }
+          $scripts = Get-ChildItem -Path "$db_scripts_path" -Filter *.nse
+          if (unsafe-db $safe_script_names $scripts) {
+              Write-Host "Unable to delete all unsafe scripts from database, waiting $retryDelay seconds..."
+              Start-Sleep -Seconds $retryDelay
+          } else {
+              return $true; 
+          }
+      }
+      # If we got here, it failed after all retries
+      Write-Error "Timeout: Unable to delete all unsafe scripts"
+      clean-nmap-folder
+      Exit 4
+
+  }
+
+  Function unsafe-db ($script_names, $scripts) {
+      foreach ($file in $scripts) {
+          if (-not ($script_names -contains $file.Name)) {
+               return $true
+          }
+      }
+      return $false
+  }
+
+  # Uninstall Nmap in the silent mode and remove the Nmap folder in the agent folder. 
+  Function uninstall-nmap {
+      Write-Host "Checking for existing Nmap installation at $nmap_root_path"
+      if (-Not (Test-Path -Path "$nmap_root_path")) {
+          Write-Error "Unable to uninstall Nmap. $nmap_root_path does not exist"
+          Exit 4
+      }
+
+      Write-Host "Checking for existing Nmap uninstaller $nmap_uninstall_command"
+      if (-Not (Test-Path -Path "$nmap_uninstall_command")) {
+          Write-Error "Unable to uninstall Nmap. $nmap_uninstall_command does not exist"
+          Exit 4
+      }
+
+      Write-Host "Executing Nmap uninstaller $nmap_uninstall_command"
+      & $nmap_uninstall_command /S
+      if (-Not $?) {
+          Write-Error "Unable to uninstall Nmap: $Error[0].ToString()"
+          Exit 4
+      }
+
+      delete-nmap-folder
+  }
+
+  switch ($operation) {
+      "clean" { clean-nmap-folder }
+      "install" { install-nmap }
+      "uninstall" { uninstall-nmap }
+  }
+script_attachment: ''
+source: ''
+sys_name: NmapInstallation.ps1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

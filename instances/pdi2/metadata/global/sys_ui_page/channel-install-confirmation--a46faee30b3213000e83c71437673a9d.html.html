@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true"/>
+
+	<j:set var = "jvar_info" value = "${sysparm_info}"/>
+
+	<g:evaluate jelly="true">
+		var nameMap = {
+			'slack' : 'workspace',
+			'teams' : 'tenant'
+		}
+		var iconMap = {
+			'slack' : 'images/slack-logo.png',
+		    'teams' : 'images/teams-logo.png'
+		}
+		var encodedInfo = '${jvar_info}';
+		var infoStr = GlideStringUtil.base64Decode(encodedInfo);
+		var info = JSON.parse(infoStr);
+		var channel = info['channel'];
+		var externalId = info['id'];
+		var appKey = info['app'];
+		var externalName = info['name'];
+		// error_page is attacker-controlled via sysparm_info and is emitted as an anchor href below.
+		// Jelly ${} only HTML-entity-escapes, which does not neutralize a javascript: URI in a URI context.
+		var denyPath = info['error_page'] ? GlideSecurityUtils.enforceRelativeUrlAndCleanJavascript(info['error_page']) : '';
+		var currentMapping = info['current_mapping'];
+		var emailTeams = info['email'];
+		var iconURL = iconMap[channel];
+
+		var msg = 'Your {0} {1} is currently registered with instance:';
+		var msgTeams = 'Your {0} associated with';
+		var ask = 'You are about to override it to this instance:';
+
+		var instanceURL = 'https://' + gs.getProperty('instance_name') + '.' + gs.getProperty('glide.channelproxy.instance_domain_suffix', 'service-now.com');
+		var urlGetter = new ChannelProxyInstallURLGetter(channel, appKey);
+		var url = urlGetter.getConfirmationURL(externalId);
+		var shouldUpdateUrl = gs.getProperty('sn_va_slack.enable_slack_branding', 'false') === 'false';
+		returnUrl = decodeURIComponent(url);
+		if (shouldUpdateUrl &amp;&amp; returnUrl.indexOf(',chat:write.customize') &gt;= 0) {
+			var replaceText = ',chat:write.customize';
+			returnUrl = returnUrl.replaceAll(replaceText, '');
+		}
+
+		var enable_override = gs.getProperty('sn_va_teams.enable_va_override') || false;
+		var docURL = '/api/now/v1/context_doc_url/uninstall-msteams-integration';
+	</g:evaluate>
+
+	<g:evaluate var="jvar_show_new_ui" jelly="true">
+		var show_new_ui = gs.getProperty('sn_oe_sfs.show_new_channels_admin_screen') || false;
+		show_new_ui;
+	</g:evaluate>
+	
+	<j:if test="${jvar_show_new_ui}">
+		<j:if test="${!empty(jvar_info)}">
+			<script>
+				var url = `/now/conversation/settings/channel-install-confirmation/${channel}/override/params/info/${jvar_info}`;
+				window.location = url;
+			</script>
+		</j:if>
+	</j:if>	
+
+	<center>
+		<div id="icon" style="margin-top:10em; margin-bottom: 60px;">
+			<img src="images/now-logo.png" width="50" height="50"/>
+			<i class="icon-arrow-left color-darkset" style="position: relative; bottom:10px; left:5px; margin-left:10px;" />
+			<i class="icon-arrow-right color-darkset" style="position: relative; top:10px; right:5px; margin-right:10px;"/>
+			<img src="${iconURL}" width="50" height="50"/>
+		</div>
+
+		<div id="message" style="margin-bottom: 30px;">
+			<j2:choose>
+				<j2:when test="$[channel == 'teams']">
+					<span style="font-size:15px;">${gs.getMessage(msgTeams, [nameMap[channel]])}<strong>&#160; ${emailTeams}</strong>&#160;${gs.getMessage('is currently registered with instance')}<strong>&#160; ${currentMapping}</strong>.</span>
+					<br></br>
+					<j2:choose>
+						<j2:when test="$[enable_override]">
+							<span style="font-size:15px;">${gs.getMessage(ask)} <strong>&#160; ${instanceURL}</strong> </span>
+						</j2:when>
+						<j2:otherwise>
+							<span style="font-size:15px;">${gs.getMessage('If you want to proceed with installing, reach out to your system administrator to first uninstall from')}<strong>&#160; ${currentMapping}</strong>.
+							</span>
+							<br></br>
+							<span style="font-size:15px;">
+								<strong><i class="icon-warning-circle" style="margin-right:5px;vertical-align:text-bottom;"/>${gs.getMessage('Note:')}</strong>&#160; ${gs.getMessage('If your current instance is on')}&#160;
+								<strong>${gs.getMessage('Tokyo')}</strong>&#160; ${gs.getMessage('release but')}<strong>&#160; ${currentMapping}</strong>&#160; ${gs.getMessage('is on')}<strong>&#160; ${gs.getMessage('pre-Tokyo')}</strong>&#160; ${gs.getMessage('release, please refer to the')}
+							</span>
+							<a style="font-size:15px;" target="_blank" href="${docURL}">&#160; ${gs.getMessage('product documentation')} </a>
+							<span style="font-size:15px;">&#160; ${gs.getMessage('for important instructions.')}</span>
+						</j2:otherwise>
+					</j2:choose>
+				</j2:when>
+				<j2:otherwise>
+					<span style="font-size:15px;">${gs.getMessage(msg, [nameMap[channel], externalName])} <strong>&#160; ${currentMapping}</strong> </span>
+					<br></br>
+					<span style="font-size:15px;">${gs.getMessage(ask)} <strong>&#160; ${instanceURL}</strong> </span>
+				</j2:otherwise>
+			</j2:choose>
+		</div>
+
+		<div id="button" style="margin-bottom: 20px;">
+			<j2:choose>
+				<j2:when test="$[channel == 'teams']">
+					<j2:choose>
+						<j2:when test="$[enable_override]">
+							<a href="${denyPath}" class="btn btn-default" style="width:100px">${gs.getMessage('Cancel')}</a>
+							<span style="margin-right:20px;"></span>
+							<a href="${url}" class="btn btn-destructive" style="width:100px">${gs.getMessage('Override')}</a>
+						</j2:when>
+						<j2:otherwise>
+							<a href="$bot-install-ui.do" class="btn btn-default" style="width:140px">${gs.getMessage('Go To Manage Apps')}</a>
+						</j2:otherwise>
+					</j2:choose>
+				</j2:when>
+				<j2:otherwise>
+					<a href="${denyPath}" class="btn btn-default" style="width:100px">${gs.getMessage('Cancel')}</a>
+					<span style="margin-right:20px;"></span>
+					<a href="${returnUrl}" class="btn btn-destructive" style="width:100px">${gs.getMessage('Override')}</a>
+				</j2:otherwise>
+			</j2:choose>
+		</div>
+	</center>
+
+</j:jelly>

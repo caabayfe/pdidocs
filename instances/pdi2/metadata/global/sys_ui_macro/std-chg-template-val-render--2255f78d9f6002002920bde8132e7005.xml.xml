@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<j:set var="jvar_std_change_rp" value="true"/>
+	<j:set var="jvar_templ_on_table" value="change_request"/>
+	
+	<g:evaluate var="jvar_chgProposalId" jelly="true" expression="RP.getParameterValue('sys_id')"/>
+
+	<g:evaluate var="jvar_template_value_readonly" jelly="true">
+		var jvar_template_value_readonly = false;
+		var stdChangeUtils = new StdChangeUtils();
+		var gr = new GlideRecord(stdChangeUtils.TABLE_NAME_PROPOSAL);
+		if(gr.get(jelly.jvar_chgProposalId)) {
+			if(stdChangeUtils.isClosed(gr)) {
+				jvar_template_value_readonly = true;
+			}
+		} 
+		jvar_template_value_readonly;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_chgReqId" jelly="true" expression="RP.getParameterValue('sysparm_chgReqId')"/>
+	<g:evaluate var="jvar_stdChgJson" jelly="true">
+		new StdChangeUtils().getFieldConfigsJson(jelly.jvar_chgReqId);
+	</g:evaluate>
+
+	<g:evaluate var="jvar_modStdChgProducer" jelly="true" expression="RP.getParameterValue('std_change_producer')"/>
+	<g:evaluate var="jvar_orig_templ_values" jelly="true">
+		new StdChangeUtilsSNC().getOriginalTemplate(jelly.jvar_modStdChgProducer);
+	</g:evaluate>
+	<g:macro_invoke macro="std_chg_template_handler"/>
+
+	<script language="javascript">
+		var g_sncStdChg = ${NOESC:jvar_stdChgJson};
+		var originalTemplateVal = "${JS_STRING:jvar_orig_templ_values}"; 
+		if(originalTemplateVal){
+			g_sncStdChg.orig_templ_values = originalTemplateVal;
+		}
+	</script>
+
+	<script language="javascript" src="StdChgProposalRPScript.jsdbx"></script>
+</j:jelly>

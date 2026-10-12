@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate jelly="true" object="true" var="jvar_visualisationList">
+		function getAttachmentDetails(tableName, recordSysId){
+			var attachmentDetails = [], grRecord = new GlideRecord(tableName);
+
+			if(gs.nil(tableName) || gs.nil(recordSysId) || !grRecord.get(recordSysId) || !grRecord.canRead()){
+				gs.addErrorMessage(gs.getMessage("Invalid parameters passed in URL or you do not have required permission to access the record."));
+			} else {
+				var grAttachment =new GlideRecord('sys_attachment');
+				grAttachment.addQuery("table_name", tableName)
+				grAttachment.addQuery('table_sys_id', recordSysId);
+				grAttachment.query();
+				while(grAttachment.next()){
+					var fileInfo = {};
+					fileInfo.sys_id = grAttachment.getUniqueValue();
+					fileInfo.file_name = grAttachment.getValue('file_name');
+					attachmentDetails.push(fileInfo);
+				}
+			}
+			return attachmentDetails;
+		}
+
+		var tableName = "promin_model_def_version", versionId = RP.getParameterValue('sysparm_versionId');
+		var response = {
+			"attachmentDetails": [],
+		};
+			
+		if(versionId == "" || gs.nil(versionId)){
+			gs.addErrorMessage(gs.getMessage("Invalid parameters passed in URL."));
+		} else {
+			response.attachmentDetails = getAttachmentDetails(tableName, versionId);
+		}
+        response;
+    </g:evaluate>
+	<j:if test="${HTML:jvar_visualisationList.attachmentDetails.length > 0}">
+		<div class="col-md-6">
+			<h4>Click on below link to open file</h4>
+			<table class="table">
+				<thead>
+				<tr>
+					<th>File name</th>
+				</tr>
+				</thead>
+				<tbody>
+				<j:forEach begin="0" end="2" var="jvar_attachment" items="${HTML:jvar_visualisationList.attachmentDetails}">  
+					<tr>
+						<td>
+						<a href="/promin_open_visualisation.do?attachmentSysId=${HTML:jvar_attachment.sys_id}" target="_blank">${jvar_attachment.file_name}</a>
+						</td>
+					</tr>
+				</j:forEach> 
+				</tbody>
+			</table>
+		</div>
+	</j:if>
+
+</j:jelly>

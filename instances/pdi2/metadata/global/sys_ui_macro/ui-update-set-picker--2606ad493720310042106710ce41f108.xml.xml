@@ -1,0 +1,59 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<!-- Add an Update Set picker -->
+	<g:requires name="scripts/UpdateSetPicker.js" inline="true" />
+	<g:requires name="scripts/UpdateSetChangeNotificationHandler.js" position="last" inline="true" />
+
+	<span id="update_set_picker" version="2">
+		<legend>${gs.getMessage("Update Set")}</legend><ul>
+    		<li class="row form-control-row three-controls">
+        <SELECT id="update_set_picker_select" name="update_set_picker_select" class="form-control pull-left" 
+			onchange="g_update_set_picker.changeUpdateSet();setUpdateSetDrill();">
+			<option value="">${gs.getMessage("Loading...")}</option>
+		</SELECT>
+		<a title="${gs.getMessage('View current Update Set')}" class="icon-view btn btn-icon" target="gsft_main" name="update_set_drill" id="update_set_drill" href=""
+			onClick="return navToCurrentUpdateSet(this);">
+			<span class="sr-only">${gs.getMessage('View current Update Set')}</span>
+        </a>
+		<a class="icon-list btn btn-icon" title="${gs.getMessage('View list of Update Sets')}" target="gsft_main" href="sys_update_set_list.do">
+		</a>
+		<a title="${gs.getMessage('Refresh update set picker')}" class="icon-refresh btn btn-icon" name="update_set_refresh" id="update_set_refresh">
+		</a>
+		<script language="javascript">
+			g_update_set_picker = new UpdateSetPicker("update_set_picker");
+			g_update_set_picker.on("afterload", setUpdateSetDrill);
+
+			function setUpdateSetDrill() {
+			  var select = gel("update_set_picker_select");
+			  var chosen = select.options[select.selectedIndex].value
+			  // first, build the href for the drill through
+			  var drill = document.getElementById("update_set_drill");
+			  drill.href = "sys_update_set.do?sys_id=" + chosen;
+			}
+
+			// Required to target the ui11 form frame if it is open.
+			function navToCurrentUpdateSet(elem) {
+				if (typeof g_navManager === "undefined") {
+					// g_navManager is undefined if ui11 is off
+					elem.target = 'gsft_main';
+				} else if (g_navManager.getFormTarget()) {
+					elem.target = g_navManager.getFormTarget();
+				} else {
+					elem.target = 'gsft_main';
+				}
+			}
+
+			g_update_set_picker.on("afterload", function () {
+				$("update_set_refresh").on("click", function (event) {
+					g_update_set_picker.fillUpdateSets();
+					event.stopPropagation ? event.stopPropagation() : (event.cancelBubble = true);
+				});
+			});
+		</script>
+		<script id="glide:usn_change" type="application/xml">
+		   ${HTML:gs.getMessage('Your current update set has been changed to #{HTML:name}')}
+		</script>
+    </li>
+		</ul>
+		
+	</span>
+</j:jelly>

@@ -1,0 +1,1 @@
+new CriticalUpdateUtil().calcPriority(current);

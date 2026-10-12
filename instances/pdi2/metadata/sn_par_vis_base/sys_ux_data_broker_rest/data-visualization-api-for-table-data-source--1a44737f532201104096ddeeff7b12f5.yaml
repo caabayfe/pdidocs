@@ -1,0 +1,452 @@
+_meta:
+  hash: 15dd5a6705a01fe1fb70dc1a53c1ac1fda36c00406bf31f5f566d483555dcb93
+  hash_version: 1
+  scope: sn_par_vis_base
+  sys_class_name: sys_ux_data_broker_rest
+  sys_created_by: maint
+  sys_created_on: 2022-04-06 11:47:44
+  sys_id: 1a44737f532201104096ddeeff7b12f5
+  sys_mod_count: '3'
+  sys_package: 2926d7e8a2ac632a750a9c9101f4cff0
+  sys_scope: 2926d7e8a2ac632a750a9c9101f4cff0
+  sys_update_name: sys_ux_data_broker_rest_1a44737f532201104096ddeeff7b12f5
+  sys_updated_by: maint
+  sys_updated_on: 2024-01-23 10:30:00
+api_name: global.Data Visualization API for table data source
+api_url: /api/now/analytics/data?invalidate_cache_entry={{invalidateCacheEntry}}&expiration_time_duration={{cacheExpirationTime}}&cache_enabled={{useDataCache}}&additional_key={{additionalKey}}
+batch_exclude: 'false'
+description: |-
+  Returns Data visualization API results for the table data source. Supports single data source.
+  For simple visualizations, do not set Trend by field and Group by field.
+  For group visualizations, set the Group by field and do not set Trend by field.
+  For trend visualizations, set the Trend by field, also can set Group by field (Only one group is supported.)
+http_method: POST
+mutates_server_data: 'false'
+name: Data Visualization API for table data source
+output_schema: ''
+parameters: |-
+  {
+    "invalidate_cache_entry": "{{invalidateCacheEntry}}",
+    "expiration_time_duration": "{{cacheExpirationTime}}",
+    "cache_enabled": "{{useDataCache}}",
+    "additional_key": "{{additionalKey}}"
+  }
+private: 'false'
+props: |-
+  [
+    {
+      "name": "table",
+      "label": "Table",
+      "description": "Table to use as data source",
+      "readOnly": false,
+      "fieldType": "table_name",
+      "mandatory": true,
+      "defaultValue": "incident"
+    },
+    {
+      "name": "filterQuery",
+      "label": "Data source condition",
+      "description": "The query conditions used for table data source",
+      "readOnly": false,
+      "fieldType": "condition_string",
+      "mandatory": false,
+      "typeMetadata": {
+        "table": "@table"
+      },
+      "defaultValue": "active=true"
+    },
+    {
+      "name": "aggregateFunction",
+      "label": "Aggregate function",
+      "description": "The mathematical calculation to be performed on data",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": true,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Count",
+            "value": "COUNT"
+          },
+          {
+            "label": "Sum",
+            "value": "SUM"
+          },
+          {
+            "label": "Average",
+            "value": "AVG"
+          },
+          {
+            "label": "Count distinct",
+            "value": "COUNT(DISTINCT"
+          },
+          {
+            "label": "Min",
+            "value": "MIN"
+          },
+          {
+            "label": "Max",
+            "value": "MAX"
+          }
+        ]
+      },
+      "defaultValue": "COUNT(DISTINCT"
+    },
+    {
+      "name": "aggregateField",
+      "label": "Aggregate field",
+      "description": "The field name that mathematical calculation will be performed on. Required for non-Count aggregation functions.",
+      "readOnly": false,
+      "fieldType": "string",
+      "mandatory": false,
+      "defaultValue": "sys_id"
+    },
+    {
+      "name": "trendBy",
+      "label": "Trend by field",
+      "description": "Trend results by the field. Required for trend visualizations.",
+      "readOnly": false,
+      "fieldType": "string",
+      "mandatory": false,
+      "defaultValue": "sys_created_on"
+    },
+    {
+      "name": "trendInterval",
+      "label": "Trend by interval",
+      "description": "Trend results by selected interval. Required for trend visualizations. Set to '--None--' for other visualization types.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "--None--",
+            "value": ""
+          },
+          {
+            "label": "Minute",
+            "value": "minute"
+          },
+          {
+            "label": "Date",
+            "value": "date"
+          },
+          {
+            "label": "Hour of day",
+            "value": "hourOfDay"
+          },
+          {
+            "label": "Day of week",
+            "value": "dayOfWeek"
+          },
+          {
+            "label": "Week",
+            "value": "week"
+          },
+          {
+            "label": "Month",
+            "value": "month"
+          },
+          {
+            "label": "Quarter",
+            "value": "quarter"
+          },
+          {
+            "label": "Year",
+            "value": "year"
+          }
+        ]
+      },
+      "defaultValue": "date"
+    },
+    {
+      "name": "trendMinuteInterval",
+      "label": "Trend by interval in minutes",
+      "description": "Trend results by minute intervals. Required when Trend by interval is Minute.",
+      "readOnly": false,
+      "fieldType": "number",
+      "mandatory": false,
+      "defaultValue": 15
+    },
+    {
+      "name": "groupBy",
+      "label": "Group by fields",
+      "description": "Group results by fields. Required for group visualizations and supports multiple groups. Optional for trend visualizations and supports only one group.",
+      "readOnly": false,
+      "fieldType": "json",
+      "mandatory": false,
+      "defaultValue": [
+        "assigned_to.active"
+      ]
+    },
+   {
+      "name": "numberOfGroups",
+      "label": "Max number of groups",
+      "description": "Maximum number of groups to display. Required when Group by is set.",
+      "readOnly": false,
+      "fieldType": "number",
+      "mandatory": false,
+      "defaultValue": 10
+    },
+    {
+      "name": "showOther",
+      "label": "Include other groups",
+      "description": "Include other groups for results. Applied when Group by is set.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": true
+    },
+    {
+      "name": "sortBy",
+      "label": "Sort type",
+      "description": "Defines the attribute used to sort groups or categories.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Name",
+            "value": "name"
+          },
+          {
+            "label": "Value",
+            "value": "value"
+          },
+          {
+            "label": "Report range",
+            "value": "report_range"
+          },
+          {
+            "label": "Element order",
+            "value": "choice"
+          }
+        ]
+      },
+      "defaultValue": "value"
+    },
+    {
+      "name": "sortOrder",
+      "label": "Sort order",
+      "description": "Specifies whether to sort groups or categories in ascending or descending order. Required for group visualizations.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "Ascending",
+            "value": "asc"
+          },
+          {
+            "label": "Descending",
+            "value": "desc"
+          }
+        ]
+      },
+      "defaultValue": "desc"
+    },
+    {
+      "name": "useDataCache",
+      "label": "Use data cache",
+      "description": "Original load of data visualization will use visualization cache data when available to ensure better performance. User can get current data on demand by using the \"Invalidate cache\" property.",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": false
+    },
+    {
+      "name": "cacheExpirationTime",
+      "label": "Cache expiration time",
+      "description": "Defines the time that cache will be valid. If existing cache is older than specified time the cache is deleted and new query will be done upon next request and new cache entry created.",
+      "readOnly": false,
+      "fieldType": "choice",
+      "mandatory": false,
+      "typeMetadata": {
+        "choices": [
+          {
+            "label": "1 hour",
+            "value": "3600"
+          },
+          {
+            "label": "2 hours",
+            "value": "7200"
+          },
+          {
+            "label": "4 hours",
+            "value": "14400"
+          },
+          {
+            "label": "8 hours",
+            "value": "28800"
+          },
+          {
+            "label": "12 hours",
+            "value": "43200"
+          },
+          {
+            "label": "24 hours",
+            "value": "86400"
+          }
+        ]
+      },
+        "defaultValue": "86400"
+    },
+    {
+      "name": "invalidateCacheEntry",
+      "label": "Invalidate cache",
+      "description": "Mark existing cache as invalid and replace with current data",
+      "readOnly": false,
+      "fieldType": "boolean",
+      "mandatory": false,
+      "defaultValue": false
+    },
+    {
+      "name": "additionalKey",
+      "label": "Additional key",
+      "description": "Unique identifier used by the data resource",
+      "readOnly": false,
+      "fieldType": "string",
+      "mandatory": false,
+      "defaultValue": ""
+    },
+    {
+      "name": "filterConfigurations",
+      "label": "Filter configurations",
+      "description": "Bind this to @state.parFilters to make the data resource react to filters on the page.",
+      "readOnly": false,
+      "fieldType": "json",
+      "mandatory": false,
+      "defaultValue": []
+    }
+  ]
+request_body: |-
+  {
+    "dataConfigurations": [
+      {
+        "sortBy": "{{sortBy}}",
+        "sortOrder": "{{sortOrder}}",
+        "sourceType": "table",
+        "order": 0,
+        "filterQuery": "{{filterQuery}}",
+        "tableOrViewName": "{{table}}",
+        "aggregateFunction": "{{aggregateFunction}}",
+        "aggregateField": "{{aggregateField}}",
+        "groupBy": {{groupBy}},
+        "numberOfGroups": {{numberOfGroups}},
+        "showOther": {{showOther}},
+        "trendBy": "{{trendBy}}",
+        "trendInterval": "{{trendInterval}}",
+        "trendMinuteInterval": {{trendMinuteInterval}}
+      }
+    ],
+    "filterConfigurations": {{filterConfigurations}}
+  }
+required_translations: |-
+  [ {
+    "message" : "Additional key",
+    "comment" : ""
+  }, {
+    "message" : "Aggregate field",
+    "comment" : ""
+  }, {
+    "message" : "Aggregate function",
+    "comment" : ""
+  }, {
+    "message" : "Cache expiration time",
+    "comment" : ""
+  }, {
+    "message" : "Data source condition",
+    "comment" : ""
+  }, {
+    "message" : "Defines the time that cache will be valid. If existing cache is older than specified time the cache is deleted and new query will be done upon next request and new cache entry created.",
+    "comment" : ""
+  }, {
+    "message" : "Group by fields",
+    "comment" : ""
+  }, {
+    "message" : "Group results by fields. Required for group visualizations and supports multiple groups. Optional for trend visualizations and supports only one group.",
+    "comment" : ""
+  }, {
+    "message" : "Include other groups",
+    "comment" : ""
+  }, {
+    "message" : "Include other groups for results. Applied when Group by is set.",
+    "comment" : ""
+  }, {
+    "message" : "Invalidate cache",
+    "comment" : ""
+  }, {
+    "message" : "Mark existing cache as invalid and replace with current data",
+    "comment" : ""
+  }, {
+    "message" : "Max number of groups",
+    "comment" : ""
+  }, {
+    "message" : "Maximum number of groups to display. Required when Group by is set.",
+    "comment" : ""
+  }, {
+    "message" : "Original load of data visualization will use visualization cache data when available to ensure better performance. User can get current data on demand by using the \"Invalidate cache\" property.",
+    "comment" : ""
+  }, {
+    "message" : "Specifies whether to sort groups or categories in ascending or descending order. Required for group visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Defines the attribute used to sort groups or categories.",
+    "comment" : ""
+  }, {
+    "message" : "Sort order",
+    "comment" : ""
+  }, {
+    "message" : "Sort type",
+    "comment" : ""
+  }, {
+    "message" : "Table",
+    "comment" : ""
+  }, {
+    "message" : "Table to use as data source",
+    "comment" : ""
+  }, {
+    "message" : "The field name that mathematical calculation will be performed on. Required for non-Count aggregation functions.",
+    "comment" : ""
+  }, {
+    "message" : "The mathematical calculation to be performed on data",
+    "comment" : ""
+  }, {
+    "message" : "The query conditions used for table data source",
+    "comment" : ""
+  }, {
+    "message" : "Trend by field",
+    "comment" : ""
+  }, {
+    "message" : "Trend by interval",
+    "comment" : ""
+  }, {
+    "message" : "Trend by interval in minutes",
+    "comment" : ""
+  }, {
+    "message" : "Trend results by minute intervals. Required when Trend by interval is Minute.",
+    "comment" : ""
+  }, {
+    "message" : "Trend results by selected interval. Required for trend visualizations. Set to '--None--' for other visualization types.",
+    "comment" : ""
+  }, {
+    "message" : "Trend results by the field. Required for trend visualizations.",
+    "comment" : ""
+  }, {
+    "message" : "Unique identifier used by the data resource",
+    "comment" : ""
+  }, {
+    "message" : "Use data cache",
+    "comment" : ""
+  }, {
+    "message" : "Bind this to @state.parFilters to make the data resource react to filters on the page.",
+    "comment" : ""
+  }, {
+    "message" : "Filter configurations",
+    "comment" : ""
+  } ]
+schema_version: 1.0.0
+sys_name: Data Visualization API for table data source
+sys_policy: ''

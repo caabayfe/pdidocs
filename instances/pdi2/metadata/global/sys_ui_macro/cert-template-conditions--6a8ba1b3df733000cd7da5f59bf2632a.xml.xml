@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  
+  <g:messages>
+        Insert a new row…
+        Field for this condition is not applicable to the filter
+        View
+        Mark deleted
+        Some template conditions are incompatible with the selected filter. Incompatible conditions will not be used for auditing.
+        Cannot undelete. The attribute is already being used.
+        Cannot undelete. The relationship is already being used.
+        Save
+        Cancel
+        Delete
+   </g:messages>
+   <j:if test="${!GlideMobileExtensions.getDeviceType() != 'doctype';}">
+    <g:requires name="classes/GlideFilter.js" />
+  </j:if>
+  <j:if test="${GlideMobileExtensions.getDeviceType() == 'doctype';}">
+    <g:requires name="doctype/GlideFilter14.js" />
+  </j:if>
+  <g:requires name="lib/jquery_includes.js" includes="true" />
+  <g:requires name="GlideFilterCurrency.js" />
+   <g:inline template="dynamic_filter_options.xml"/>
+   <g:inline template="cert_glide_filter.xml" />
+   <g:inline template="cert_template_conditions_js.xml" />
+  
+    <g2:evaluate>
+        var certTemplate = new GlideRecord('cert_template');
+        certTemplate.get(current.sys_id);
+        
+        var conditionTables = [
+            "cert_attr_cond", 
+            "cert_ci_rel_cond",
+            "cert_user_rel_cond",
+            "cert_group_rel_cond",
+            "cert_related_list_cond"
+        ];
+        
+        var auditTypeTables = {
+            'desired_state': {
+                'cert_attr_cond': true, 
+                'cert_ci_rel_cond': true, 
+                'cert_user_rel_cond': true, 
+                'cert_group_rel_cond': true,
+                'cert_related_list_cond': true
+            },
+            'arch_cert': {'cert_attr_cond': true, 'cert_related_list_cond': true},
+            'comp_cert': {'cert_attr_cond': true, 'cert_related_list_cond': true}
+        };
+        
+        var auditType = current.audit_type;
+        if(auditType == '' || auditType === undefined || auditType == null)
+            auditType = 'desired_state';
+        var displayTables = auditTypeTables[auditType];
+    </g2:evaluate>
+    <g2:evaluate var="jvar_dependent_table">
+        var dependentTable = certTemplate.getValue('table');
+        dependentTable;
+    </g2:evaluate>
+    <g2:evaluate var="jvar_dependent_table_related_lists" jelly="true">
+      var json = '';
+      if (dependentTable != null ${AMP}amp;${AMP}amp; dependentTable != '') {
+           var gr = new GlideRecord(jelly.jvar_dependent_table);
+      var map = gr.getRelatedLists();
+      var iterator = map.keySet().iterator();
+      var key = null;
+      var relatedLists = {};
+      var relatedListsArry = new Array();
+    
+      while(iterator.hasNext()) {
+        key = iterator.next();
+            relatedListsArry.push({
+                'key': key,
+                'label': map.get(key)
+            });
+        }  
+
+      // add customized relationships
+      // code hinted from SlushbucketRelatedList.get
+      var cls = new GlideChoiceListSet();
+      var util = new GlideRelationshipUtil();
+      util.addChoices(jelly.jvar_dependent_table, cls);
+      var iterChoice = cls.getColumns().iterator();
+      while (iterChoice.hasNext()) {
+          var choice = iterChoice.next();
+          relatedListsArry.push({
+  	    'key': choice.getValue(),
+  	    'label': choice.getLabel()
+          });
+      }
+      
+      // sort by label
+      relatedListsArry.sort(function(objA, objB){
+        if (objA.label ${AMP}lt; objB.label)
+          return -1;
+        else if (objA.label == objB.label)
+          return 0;
+        else
+          return 1;
+      });
+
+      relatedLists['relatedLists'] = relatedListsArry;
+      json = new JSON();
+      json = json.encode(relatedLists);  
+    }
+    json;
+    </g2:evaluate>
+    <g2:evaluate var="jvar_dependent_record">
+        var dependentRecord = new GlideRecord(certTemplate.getValue('table'));
+    </g2:evaluate>
+    <g2:evaluate var="jvar_template_id">
+        current.sys_id;
+    </g2:evaluate>
+    <g2:evaluate>
+        var restrictedFields = {
+            "cert_attr_cond": [],
+            "cert_ci_rel_cond": [],
+            "cert_user_rel_cond": [],
+            "cert_group_rel_cond": [],
+            "cert_related_list_cond": []
+        };
+        
+        var idPrefixes = {
+            'cert_ci_rel_cond': '',
+            'cert_user_rel_cond': 'sys_user:',
+            'cert_group_rel_cond': 'sys_user_group:'
+        };
+        
+        dependentTable = (dependentTable == null)? '' : dependentTable;
+    </g2:evaluate>
+    <script type="text/javascript">
+        CertificationTemplateUtils.dependentTable = "$[dependentTable]";
+        CertificationTemplateUtils.certTemplateTable = "$[dependentTable]";
+        CertificationTemplateUtils.templateId = "$[jvar_template_id]";
+        CertificationTemplateUtils.sysId = "$[jvar_template_id]";
+        CertificationTemplateUtils.dependentTableRelatedLists = '$[jvar_dependent_table_related_lists]';
+    </script>
+    <style>
+      .cert-template-row .filter_row table {
+        background-color: inherit;
+      }
+      .cert-template-row table {
+        margin-bottom: 0px;
+      }
+      
+      .cert-template-row .navbar:before, .navbar:after {
+        content: none;
+      }
+    </style>
+    <j2:forEach items="$[conditionTables]" var="jvar_tablename">
+        <g2:evaluate jelly="true">
+            var tableName = jelly.jvar_tablename;
+        </g2:evaluate>
+        <g2:evaluate var="jvar_cond_table">
+            tableName;
+        </g2:evaluate>
+         <g2:evaluate var="jvar_conditions">
+            var condition = new GlideRecord(tableName);
+            var plural = condition.getPlural();
+            var element = condition.getElement('condition');
+            var relTypeTable = "";
+            if(element.getAttribute('rel_type_table'))
+                relTypeTable = element.getAttribute('rel_type_table');
+            var isRelationship = "";
+            if(element.getAttribute('is_relationship'))
+                isRelationship = element.getAttribute('is_relationship');
+              
+            condition.addQuery('cert_template', current.sys_id);
+            condition.query();
+            condition;
+        </g2:evaluate>
+        
+        <g2:evaluate>
+            var displaySetting = (!(tableName in displayTables) || !current.table)?
+                "display:none" : "display:''";
+        </g2:evaluate>
+        
+        <g2:evaluate var="jvar_rel_type_table">
+            relTypeTable;
+        </g2:evaluate>
+        <g2:evaluate var="jvar_is_relationship">
+            isRelationship;
+        </g2:evaluate>
+        <g2:evaluate>
+          var headerClass = "embedded";
+          var headerStyle = "padding-bottom: 4px;";
+          var isNewUI = GlideMobileExtensions.getDeviceType() == 'doctype';
+          if (!isNewUI)
+            headerClass += " list_header";
+          else
+            headerStyle += " border-left: none";
+        </g2:evaluate>
+        
+        <tr class="cert-template-row" id="$[jvar_cond_table]_row" style="$[displaySetting];">
+            <td colspan="99" style="margin: 0px; padding: 0px">
+                <table cellspacing="0" cellpadding="0" style="width: 100%; margin-bottom: 24px">
+                    <tr class="embedded navbar navbar-default list_nav list_nav_top  list_nav_top_border">
+                        <td colspan="2" class="list_nav_top" style="padding:4px 9px;background-color: inherit">
+                            <div class="navbar-title" style="display:table; width:100%">
+                                <div style="display:table-row">
+                                    <div style="display:table-cell">$[plural]</div>
+                                    <div style="display:table-cell; text-align: right">
+                                        <j2:if test="$[tableName != 'cert_attr_cond' ${AMP}${AMP} tableName != 'cert_related_list_cond']">
+                                          <j2:if test="$[condition.canCreate() || condition.canWrite()]">
+                                            <j2:if test="$[!isNewUI]">
+                                              <input 
+                                                  type='checkbox' 
+                                                  id='$[jvar_cond_table]_show_all_relationships' 
+                                                  class='show-rel-cb'
+                                                  table-name="$[jvar_cond_table]"/> 
+                                                  ${gs.getMessage('Show all relationships')}
+                                            </j2:if>
+                                            <j2:if test="$[isNewUI]">
+                                              <span class="input-group-checkbox">
+                                                  <input 
+                                                    type="checkbox" 
+                                                    id="$[jvar_cond_table]_show_all_relationships"
+                                                    class="checkbox show-rel-cb" 
+                                                    table-name="$[jvar_cond_table]" />
+                                                  <label for="$[jvar_cond_table]_show_all_relationships" class="checkbox-label">
+                                                    ${gs.getMessage('Show all relationships')}
+                                                  </label>
+                                              </span>
+                                            </j2:if>
+                                          </j2:if>
+                                        </j2:if>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="list_div_cell">
+                            <table id="$[jvar_cond_table]" class="table cond-table list_table" cellspacing="0" cellpadding="0" style="width: 100%" >
+                                <thead>
+                                    <tr class="$[headerClass]">
+                                        <th style="width: 64px" class="embedded"/>
+                                        <j2:if test="$[isNewUI]">
+                                          <th style="width: 44px" class="embedded"/>
+                                        </j2:if>
+                                        <th align="left" style="$[headerStyle]" class="list_hdrcell"> 
+                                          ${gs.getMessage('Condition')}
+                                        </th>
+                                    </tr>
+                                </thead>
+                <g2:evaluate>
+                  var rowIndex = 1;
+                  var conditionRowClass = "list_odd";
+                </g2:evaluate>
+                
+                                <j2:while test="$[condition.next()]">
+                                <j2:if test="$[condition.canRead()]">
+                                <g2:evaluate jelly="true">
+                                    if(tableName in restrictedFields) {
+                                        var rf = condition.column_name + '';
+
+                                        if(tableName in idPrefixes){
+                                            rf = condition.descriptor + ':' + idPrefixes[tableName] + rf;
+                                        }
+                                        restrictedFields[tableName].push(rf);
+                                    }
+                                    var link = tableName + ".do?sys_id=" + condition.sys_id;
+                                    var columnName = condition.column_name;
+                                    var warningStyle = "visibility:hidden;";
+                                    var spanStyle = 'float:left; width: 100%';
+                                    if(tableName == 'cert_attr_cond' ${AMP}amp;${AMP}amp; dependentRecord.getElement(columnName)==null ${AMP}amp;${AMP}amp; columnName != '123TEXTQUERY321') {
+                                        warningStyle = '';
+                                        spanStyle = 'float:left; width: 100%; font-style: italic';
+                                    }
+                                    var writePermissionsClass = condition.canWrite() ? 'active' : '';
+                                    
+                                    var relatedListId = condition.join_table + '.' + condition.join_column;
+                                    if (isNewUI) {
+                                      warningStyle += ' color: #FFCA1F; font-size: 20px'
+                                    }
+                                </g2:evaluate>
+                                <tr class="list_row_compact $[conditionRowClass]" id="condition_row_$[jvar_cond_table]_$[condition.sys_id]">
+                                    <td class="vt row-controls-td col-control" style="width: 64px">
+                                      <j2:if test="$[condition.canDelete()]">
+                                        <j2:if test="$[!isNewUI]">
+                                          <img 
+                                              id="cert_condition_delete_$[jvar_cond_table]_$[condition.sys_id]"
+                                              src="images/delete_row.gifx" 
+                                              title="${gs.getMessage('Mark deleted')}" 
+                                              style="cursor:pointer"
+                                              state="delete"
+                                              table-name="$[jvar_cond_table]"
+                                              sys-id="$[condition.sys_id]"
+                                              class="cond-delete-icon" />
+                                         </j2:if>
+                                         <j2:if test="$[isNewUI]">
+                                            <i 
+                                                id="cert_condition_delete_$[jvar_cond_table]_$[condition.sys_id]"
+                                                class="cond-delete-icon list_delete_row list_decoration clsshort button icon-cross btn"
+                                                title="${gs.getMessage('Mark deleted')}" 
+                                                state="delete"
+                                                table-name="$[jvar_cond_table]"
+                                                sys-id="$[condition.sys_id]"
+                                                style="color: #FF402C"
+                                              ></i>
+                                         </j2:if>
+                                       </j2:if>
+                                       <j2:if test="$[!isNewUI]">
+                                          <a id="cert_cond_link_$[jvar_cond_table]_$[condition.sys_id]"
+                                             href="$[link]">
+                                              <img class="list_popup list_decoration" width="16" height="16"
+                                                  src="images/icons/hover_icon.gifx" title="${gs.getMessage('View')}"/>
+                                          </a>
+                                          <img id="cert_condition_warning_$[jvar_cond_table]_$[condition.sys_id]"
+                                              src="images/warning.gifx"
+                                              title="${gs.getMessage('Field for this condition is not applicable to the filter')}" 
+                                              class="condition-warning"
+                                              style="$[warningStyle]"/>
+                                        </j2:if>
+                                        <j2:if test="$[isNewUI]">
+                                          <i
+                                            id="cert_condition_warning_$[jvar_cond_table]_$[condition.sys_id]"
+                                            class="condition-warning icon-alert"
+                                            title="${gs.getMessage('Field for this condition is not applicable to the filter')}" 
+                                            style="$[warningStyle]"
+                                          ></i>
+                                        </j2:if>
+                                        <j2:if test="$[condition.canWrite()]">
+                                        <img
+                                            id="cert_cond_dirty_$[jvar_cond_table]_$[condition.sys_id]"
+                                            width="16"
+                                            height="16"
+                                            style="margin: 2px 4px; display:none"
+                                            src="images/dirty.gifx" />
+                                        </j2:if>
+                                    </td>
+                                    <j2:if test="$[isNewUI]">
+                                    <td class="list_decoration_cell col-small col-center embedded">
+                                      <a id="cert_cond_link_$[jvar_cond_table]_$[condition.sys_id]"
+                                         class="btn btn-icon table-btn-lg icon-info list_popup"
+                                         title="${gs.getMessage('View')}"
+                                         style="margin-left: 0px;"
+                                             href="$[link]">
+                                            <span class="sr-only">${gs.getMessage('Preview')}</span>
+                                          </a>
+                                    </td>
+                                    </j2:if>
+                                    <td class="vt filter-td">
+                                      <j2:if test="$[condition.canWrite()]">
+                                        <span 
+                                            id="$[jvar_cond_table]_$[condition.sys_id]"
+                                            style="$[spanStyle]"
+                                            table-name="$[jvar_cond_table]"
+                                            sys-id="$[condition.sys_id]"
+                                            class="cert-cond-display-span $[writePermissionsClass]"
+                                            original-data="$[condition.condition]" 
+                                            data="$[condition.condition]"
+                                            descriptor="$[condition.descriptor]"
+                                            related-list-table="$[relatedListId]"
+                                            checked="$[condition.applies_to_all]"
+                                            original-checked="$[condition.applies_to_all]">
+                                            <j2:if test="$[jvar_cond_table == 'cert_attr_cond']">     
+                                              <g2:com.snc.cert_attr_cond_display 
+                                                query="$[condition.condition]" 
+                                                table="$[condition.table]" 
+                                                conditionId="$[condition.sys_id]"/>
+                                          </j2:if>
+                                          <j2:if test="$[jvar_cond_table != 'cert_attr_cond']"> 
+                                              <g2:com.snc.cert_rel_cond_display 
+                                                query="$[condition.condition]" 
+                                                certConditionTable="$[jvar_cond_table]" 
+                                                conditionId="$[condition.sys_id]"/>
+                                          </j2:if>
+                                        </span>
+                                        </j2:if>
+                                        <j2:if test="$[!condition.canWrite()]">
+                                            <span 
+                                                id="$[jvar_cond_table]_$[condition.sys_id]"
+                                                style="$[spanStyle]">
+                                                $[condition.condition_display]
+                                            </span>
+                                        </j2:if>
+                                        
+                                        <table style="background-color: transparent">
+                                            <tr>
+                                                <td>
+                                                    <span
+                                                        id="cert_condition_filter_$[jvar_cond_table]_$[condition.sys_id]"
+                                                        class="cert-cond-filter-span"
+                                                        style="display:none">
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span id="cert_condition_controls_$[jvar_cond_table]_$[condition.sys_id]"
+                                                        class="cert-cond-filter-controls"
+                                                        style="display:none">
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                </j2:if>
+                                <g2:evaluate>
+                                  rowIndex++;
+                                  conditionRowClass = (rowIndex % 2 == 0)? "list_even" : "list_odd";
+                                </g2:evaluate>
+                                </j2:while>
+                                <j2:if test="$[condition.canCreate()]">
+                                 <tr class="list_row_compact $[conditionRowClass]">
+                                     <td class="vt row-controls-td col-control" style="width: 64px">
+                                       <j2:if test="$[isNewUI]">
+                                         <span class="list_decoration">
+                                           <i class="list_edit_image icon-add btn disabled">
+                                             <span class="sr-only">${gs.getMessage('Insert a new row...')}</span>
+                                           </i>
+                                         </span>
+                                       </j2:if>
+                                     </td>
+                                     <j2:if test="$[isNewUI]">
+                                       <td/>
+                                     </j2:if>
+                                     <g2:evaluate>
+                                         var insertStyle = "font-style:italic; float: left; width: 100%;";
+                                         if (isNewUI)
+                                           insertStyle += " margin: 10px 0;";
+                                     </g2:evaluate>
+                                     <td class="vt filter-td" style="">
+                                        <span class="insert-condition" 
+                                            table-name-insert="$[jvar_cond_table]" 
+                                            style="$[insertStyle]"> 
+                                            ${gs.getMessage('Insert a new row...')} 
+                                        </span>
+                                     </td>
+                                 </tr>
+                                </j2:if>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <script type="text/javascript">
+            CertificationTemplateUtils.isRelationship['$[jvar_cond_table]'] =
+                '$[jvar_is_relationship]';
+            CertificationTemplateUtils.relTypeTable['$[jvar_cond_table]'] =
+                '$[jvar_rel_type_table]';
+            CertificationTemplateUtils.allTables.push('$[jvar_cond_table]');
+        </script>
+    </j2:forEach>
+    <g2:evaluate>
+      var json = new JSON();
+    var restrictedFieldStr = json.encode(restrictedFields);
+   </g2:evaluate>
+   
+    <script type="text/javascript">   
+       CertificationTemplateUtils.restrictedFields =
+                '$[restrictedFieldStr]'.evalJSON();
+      CertificationTemplateUtils.isNewUI = $[isNewUI];        
+    </script>
+</j:jelly>

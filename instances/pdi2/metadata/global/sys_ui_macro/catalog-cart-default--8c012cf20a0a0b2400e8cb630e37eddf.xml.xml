@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:set_if test="${sysparm_cartless == 'true'}" var="jvar_cart_style" true="display: none" false=""/>
+	<table data-sn-macro-sys-id="${jvar_macro_sys_id}" role="presentation"><tr><td>
+    <table style="float: right" role="presentation">
+        <tr>
+            <td id="cart" style="${jvar_cart_style}"></td>
+        </tr>
+    </table>
+    <input type="hidden" id="sysparm_id" value="${sysparm_id}" />
+    <input type="hidden" id="sysparm_catalog" value="${sysparm_catalog}" />
+    <input type="hidden" id="sysparm_catalog_view" value="${sysparm_catalog_view}" />
+	<input type="hidden" id="sysparm_cart_name" value="${sysparm_cart_name}" />
+    <script>
+        function alertPriceUpdate(elem) {
+            if ($$(".order_buttons .disabled_order_button").length > 0) {
+                alert("${gs.getMessage('Please wait - price being updated')}");
+                return true;
+            }
+            return false;
+        }
+    </script> 
+    <table id="qty" style="display:none; width:100%" border="0" role="presentation">
+        <g:sc_cart_main />
+        <tr class="sc_cart_buttons">
+            <td colspan="2" class="order_buttons" style="min-width: 200px; max-width: 200px;">
+		        <j:if test="${sysparm_show_cart_guide != null}">
+		            <j:if test="${sc_cat_item.no_order != true}">
+		                <j:if test="${sysparm_no_checkout != true}">
+		                    <j:if test="${sc_cat_item.no_order_now != true}">
+		                        <g:sc_button img="images/button_cursor.gifx" classes="request_catalog_button_with_icon" id="order_now" onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderNow(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }" label="Order Now" title="Order Now" isPrimary="true"/>
+		                    </j:if>
+		                </j:if>
+		                <j:if test="${sc_cat_item.no_cart != true}">
+		                        <g:sc_button img="images/button_cart.gifx" classes="request_catalog_button_with_icon" id="add_to_cart_button" onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { addToCart(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }" label="Add to Cart" title="Add to Cart"/>
+		                </j:if>
+		            </j:if>
+		        </j:if>
+		        <j:if test="${sysparm_show_cart_guide == null}">
+		            <j:if test="${sysparm_cart_edit == null}">
+		                <j:if test="${sc_cat_item.no_order != true}">
+		                    <j:if test="${sysparm_no_checkout != true}">
+		                        <j:if test="${sc_cat_item.no_order_now != true}">
+										<g:sc_button img="images/button_cursor.gifx" classes="request_catalog_button_with_icon" id="order_now" onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderNow(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }" label="Order Now" title="Order Now" isPrimary="true"/>
+								</j:if>
+		                    </j:if>
+		                    <j:if test="${sc_cat_item.no_cart != true}">
+		                        <g:sc_button img="images/button_cart.gifx" classes="request_catalog_button_with_icon" id="add_to_cart_button" onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { addToCart(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }" label="Add to Cart" title="Add to Cart"/>
+		                    </j:if>
+		                </j:if>
+		            </j:if>
+		            <j:if test="${sysparm_cart_edit != null}">
+		            	<j:if test="${sysparm_cart_name!='saved_items'}">
+		                	<g:sc_button img="images/button_cart.gifx" classes="request_catalog_button_with_icon" id="add_to_cart_button" onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderEdit(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }" label="Update Cart" title="Update Cart"/>
+		            	</j:if>
+		            	
+		            	<j:if test="${sysparm_cart_name=='saved_items'}">
+		                	<j:if test="${sc_cat_item.no_order != true}">
+			                    <j:if test="${sysparm_no_checkout != true}">
+			                        <j:if test="${sc_cat_item.no_order_now != true}">
+											<g:sc_button img="images/button_cursor.gifx" classes="request_catalog_button_with_icon" id="order_now" onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { orderNow(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }" label="Order Now" title="Order Now" isPrimary="true"/>
+									</j:if>
+			                    </j:if>
+			                    <j:if test="${sc_cat_item.no_cart != true}">
+			                        <g:sc_button img="images/button_cart.gifx" classes="request_catalog_button_with_icon" id="add_to_cart_button" onclick="if ($$('.order_buttons .disabled_order_button').length == 0) { addToCart(); } else { alert('${gs.getMessage('Please wait - price being updated')}'); }" label="Add to Cart" title="Add to Cart"/>
+			                    </j:if>
+			                </j:if>
+		           		</j:if>
+		            </j:if>
+		        </j:if>
+            </td>
+        </tr>
+    </table>
+    <script language="javascript">
+        var g_cart = null;
+    
+		function scCartOnRender() {
+			g_cart = new SCCart();
+			<j:if test="${sc_cat_item.no_order != true}">
+				g_cart.attachWindow('qty', 'cart', "${gs.getMessage('Order this Item')}");
+			</j:if>
+			<j:if test="${sc_cat_item.no_cart == true}">
+				g_cart.setCartVisible(false);
+			</j:if>
+			g_cart.addCartContent();
+			g_cart.editID = '${sysparm_cart_edit}';
+			<j:if test="${sysparm_show_cart_guide == null}">
+				g_cart.getWithBackButton();
+			</j:if>
+			if ($('price_subtotal_value'))
+				g_cart.price_subtotal = $('price_subtotal_value').value;
+			if ($('recurring_price_subtotal_value'))
+				g_cart.recurring_price_subtotal = $('recurring_price_subtotal_value').value;
+			if ($('recurring_frequency_subtotal_value'))
+				g_cart.recurring_frequency_subtotal = $('recurring_frequency_subtotal_value').value;
+		}
+
+        addRenderEvent(scCartOnRender);
+
+        function addToCart() {
+            var m = g_form.catalogOnSubmit();
+            if (!m)
+                return;
+
+			if (GlideWebAnalytics $[AMP]$[AMP] NOW $[AMP]$[AMP] NOW.catalog $[AMP]$[AMP] NOW.catalog.webanalytics) {
+				GlideWebAnalytics.trackEvent('com.glideapp.servicecatalog', 'CartV1', 'Add to Cart');
+			}
+
+            var guid;
+            var item_guid = gel("sysparm_item_guid");
+            if (item_guid)
+                guid = item_guid.value
+            // To prevent duplicate key violations due to multiple rapid clicks
+            // clear the item_guid if not empty and continue with the addToCart
+            // else return until a new item_guid is returned from the server
+            if (guid == "")
+                return;
+            item_guid.value = "";
+            
+            // hide the attachment header and delete out attachment name spans
+            var attachmentList = gel("header_attachment_list");
+            if (attachmentList) {
+                var count = attachmentList.childNodes.length;
+                while (count > 1) {
+                    count--;
+                    var node = attachmentList.childNodes[count];
+                    rel(node);
+                }
+                var listLabel = gel("header_attachment_list_label");
+                listLabel.style.display = "none";
+		
+		var attachmentsLine = gel("header_attachment_line");
+		attachmentsLine.style.display = "none";
+		
+                var spanNodes = $(listLabel).select("span");
+                if (spanNodes $[AMP]$[AMP] spanNodes.length != 0)
+                    spanNodes[0].update("");
+            }
+            
+            <j:if test="${sysparm_cart_name=='saved_items' and sysparm_cart_edit != null}">
+            	//guid points to cart-item-id
+            	//So while adding saved item to Shopping cart we need to generate new guid 
+            	guid = "";
+            </j:if>
+
+            g_cart.add(gel("sysparm_id").value, getQuantity(), guid);
+        }
+
+		function orderNow() {
+			var m = g_form.catalogOnSubmit();
+			if (!m)
+				return;
+
+			if (GlideWebAnalytics $[AMP]$[AMP] NOW $[AMP]$[AMP] NOW.catalog $[AMP]$[AMP] NOW.catalog.webanalytics) {
+				GlideWebAnalytics.trackEvent('com.glideapp.servicecatalog', 'CartV1', 'Add to Cart');
+			}
+
+			// Disable the Order Now button to prevent muliple item order
+			// as a result of muliple clicks before navigating away
+			gel("order_now").onclick = "";
+			var item_guid = gel("sysparm_item_guid");
+			if (item_guid)
+				item_guid = item_guid.value
+			var catalog_guid = gel("sysparm_catalog");
+			if (catalog_guid)
+				catalog_guid = catalog_guid.value
+			var catalog_view = gel("sysparm_catalog_view");
+			if (catalog_view)
+				catalog_view = catalog_view.value;
+			<j:if test="${gs.getProperty('glide.sc.enable_order_now', false) == 'true'}">
+				var cart_name = "cart_" + gel("sysparm_id").value;
+				g_cart.order(gel("sysparm_id").value, getQuantity(), item_guid, catalog_guid, catalog_view, cart_name);
+			</j:if>
+			<j:if test="${gs.getProperty('glide.sc.enable_order_now', false) == 'false'}">
+				g_cart.order(gel("sysparm_id").value, getQuantity(), item_guid, catalog_guid, catalog_view, "DEFAULT");
+			</j:if>
+		}
+		
+        function calcPrice() {
+            g_cart.recalcPrice(gel("sysparm_id").value, getQuantity());
+        }
+        
+        function orderEdit(target) {
+            if (!target)
+                target = '${sysparm_cart_edit}';
+            var m = g_form.catalogOnSubmit();
+            if (!m)
+                return;
+            g_cart.edit(target, getQuantity());
+        }
+        
+        function proceedCheckout(target) {
+            var m = g_form.catalogOnSubmit();
+            if (!m)
+                return;
+            g_cart.orderUpdate(target, getQuantity());
+        }
+        
+        function getQuantity() {
+            var quantity = 1;
+            var quan_widget = gel("quantity");
+            if (quan_widget)
+                quantity = quan_widget.value;
+            return quantity;
+        }
+    </script>
+		</td></tr></table>
+</j:jelly>

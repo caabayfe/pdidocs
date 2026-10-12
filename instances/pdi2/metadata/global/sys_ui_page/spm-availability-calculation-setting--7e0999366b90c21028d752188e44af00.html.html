@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:doctype name="html" />
+	<html data-doctype="true" title="Availability calculation setting">
+	<style>
+		select {
+			margin-top:5px;
+			margin-left: 5px;
+			border: 1px solid #000000;
+    		border-radius: 5px 5px 5px 5px;
+		}
+
+		.header {
+			overflow:hidden;
+			background-color: #E6E8EA;
+			font-size: 14px;
+			color: #485563;
+			padding: .25em;
+			padding-left: 10px;
+			padding-right: 10px;
+			margin-bottom: .3em;
+			border-radius: 2px;
+		}
+		
+		.header div {
+			display:inline-block;
+			vertical-align:middle;
+			width:50%;
+			padding-top: .5em;
+			padding-bottom: .5em;
+		}
+		
+		.header div:first-child {
+			font-weight: bold;
+		}
+		
+		#description {
+            margin-left: 10px;
+        }
+
+        #subHeaderDescription {
+            margin-left: 10px;
+            width: 60%;
+            font-size: 16px;
+        }
+
+        #propertydescription {
+            margin-left: 10px;
+            width: 60%;
+        }
+		
+		.label {
+			color: black;
+			background-color: #D8D8D8;
+			padding-left: 5px;
+			font-size: 18px;
+		}
+
+		.warning {
+			color: red;
+			margin-left: 5px;
+			margin-top: 5px;
+			font-size: 12px;
+		}
+	</style>
+	<title>Availability calculation settings</title>
+	<j2:if test="$[(gs.hasRole('app_service_admin') || gs.hasRole('portfolio_admin'))]">
+		<form name="availability_time_zone_setting" id="availability_time_zone_setting" action="system_properties_ui_update.do" method="post"> 
+			<g:evaluate >
+                var gr = new GlideRecord("sys_choice");
+                gr.addQuery('name', 'sys_user');
+                gr.addQuery('element', 'time_zone');
+                gr.addQuery('language', gs.getSession().getLanguage());
+                gr.addQuery('inactive', '0');
+                gr.addQuery('value', '!=', 'NULL_OVERRIDE');
+                gr.orderBy('label');
+                gr.query();
+				
+				var tzSelected = "${gs.getProperty('spm.availability.global.tz')}";
+
+                var tz_array = [];
+                var tz_default = 'System (' + gs.getSysTimeZone() + ')';
+                tz_array.push({value: '', label: tz_default, selected: true});
+                while (gr.next()) {
+					if (gr.getValue('value') == tzSelected) {
+						tz_array.push({value:gr.getValue('value'), label:gr.getValue('label'), selected: true});
+					} else {
+						tz_array.push({value:gr.getValue('value'), label:gr.getValue('label'), selected: false});
+					}
+                }
+                /* Replace any ampersand present in the time zone label to avoid entity name related error */
+                new JSON().encode(tz_array).replace(/&amp;/g, '$[AMP]');
+            </g:evaluate> 
+			<g:evaluate >
+				var commitmentPropertyValue = "${gs.getProperty('spm.availability.commitment.tz')}";
+            </g:evaluate> 
+
+			<div class="header">
+				<div>${gs.getMessage("Availability calculation settings")}</div>
+				<div align="right"><g:dialog_button id="update_btn">${gs.getMessage('Save')}</g:dialog_button></div>
+			</div>
+			<div id="sub-header">
+				<div id="description"><h4>${gs.getMessage('Use either of the system properties to configure the time zone and availability calculation approach.')}</h4></div>
+                <div id="subHeaderDescription"> The Global time zone property allows you to choose the time zone you want to calculate all availability results. By default, availability is calculated using the system time zone. The Commitment time zone property allows you to calculate availability results based the commitment time zone.</div>
+			</div>
+
+			<div class="form-group">
+				<div id='commitment_property'>
+					<br><div class="label" style="margin-top:15px">${gs.getMessage('Calculate availability with commitment time zone')}</div></br>
+						<div id="sub-header">
+							<div id="propertydescription" class="large-font"><h5>${gs.getMessage('When this property is set to Yes, availability will be calculated using the time zone set on the availability commitments. You have the option to recalculate all previous results using the updated time zone on the Availability results table.')}</h5></div>
+						</div>
+						<div>
+							<j:if test="${commitmentPropertyValue == 'false'}">
+								<select class="form-control-static" id="sysparm_availability_commitment_tz" name="sysparm_availability_commitment_tz" onchange="onCommitmentChange()">  
+									<option value="true">${gs.getMessage('Yes')}</option>
+									<option value="false" selected="selected">${gs.getMessage('No')}</option>  
+								</select>
+							</j:if>
+							<j:if test="${commitmentPropertyValue == 'true'}">
+								<select class="form-control-static" id="sysparm_availability_commitment_tz" name="sysparm_availability_commitment_tz" onchange="onCommitmentChange()">  
+									<option value="true" selected="selected">${gs.getMessage('Yes')}</option>
+									<option value="false">${gs.getMessage('No')}</option>  
+								</select>
+							</j:if>
+						</div> 
+				</div>
+				 
+				<div id='availability_property'>
+					<br><div class="label" style="margin-top:15px">${gs.getMessage('Set the global availability time zone')}</div></br>
+						<div id="sub-header">
+							<div id="propertydescription" class="large-font"><h5>${gs.getMessage('When you update the time zone, all availability results are calculated using this time zone. You have the option to recalculate all previous results using the updated time zone on the Availability results table.')}</h5></div>
+						</div>
+						<div>
+							<select class="form-control-static" id="sysparm_availability_global_tz" name="sysparm_availability_global_tz">  
+								<j:forEach items="${tz_array}" var="jvar_choice" indexVar="jvar_choice_id">
+									<j:if test="${jvar_choice.selected == true}">
+										<option value="${jvar_choice.value}" selected="selected">${jvar_choice.label}</option>
+									</j:if>
+									<j:if test="${jvar_choice.selected == false}">
+										<option value="${jvar_choice.value}">${jvar_choice.label}</option>
+									</j:if>
+								</j:forEach>  
+							</select>  
+							<a style="margin-left: 10px" href="/slushbucket_choice.do?sysparm_ref=sys_user.time_zone$[AMP]sysparm_form=sys_choice$[AMP]sysparm_dependent=$[AMP]sysparm_stack=no" target="_blank" rel="nofollow"> ${gs.getMessage('Configure available time zones')}</a>
+							<br><div class="warning" id="warning_text" hidden='true'>${gs.getMessage('When the commitment time zone is set to “Yes,” this property is disabled.')}</div></br>
+  							<div class="help-block">
+  								<j:if test="${!empty(jvar_choice)}">
+  									<label for="help_method_selected" id="help_method_selected"></label>
+ 								</j:if>
+  							</div>  
+						</div>	
+				</div>	
+		
+				<div align="left" style="margin-top: 50px"><g:dialog_button id="update_btn">${gs.getMessage('Save')}</g:dialog_button></div>
+			</div> 
+		</form>
+	</j2:if>
+	</html>
+</j:jelly>

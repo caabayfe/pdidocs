@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <j2:set var="jvar_hide_response_time" value="true" />
+    <j:set var="jvar_is_search_result" value="true"/>
+    
+    <g:evaluate var="jvar_item" jelly="true" object="true" expression="GlideappCatalogItem.get(jelly.sysparm_id)" />
+    <g2:evaluate var="jvar_item" jelly="true" object="true" expression="GlideappCatalogItem.get(jelly.sysparm_id)" />
+    <g:evaluate jelly="true">
+        sc_cat_item = new GlideRecordSecure('sc_cat_item');
+        sc_cat_item.get(jelly.jvar_item.getID());
+    </g:evaluate>
+    <j:set var="jvar_target" value="${jvar_item.getTarget()}" />
+    <j:if test="${jvar_item.getType() == 'external'}">
+       <g:evaluate var="jvar_item_url" jelly="true">
+          var jvar_item_url = GlideappCatalogURLGenerator.getItemBaseURL(jelly.jvar_item);
+          jvar_item_url;
+       </g:evaluate>
+       <j:set var="jvar_href" value="${jvar_item_url}"/>
+    </j:if>
+    <j:if test="${jvar_item.getType() != 'external'}">
+    	<g:set_if var="jvar_h" test="${empty(jvar_hint)}" false="${jvar_hint}"/>
+    	<g:set_if var="jvar_h" test="${empty(sysparm_processing_hint)}" false="${JS:sysparm_processing_hint}"/>
+    	<g:evaluate var="categories" jelly="true">
+    		var categories = jelly.jvar_item.getCategoriesNoDuplicates(jelly.sysparm_catalog);
+    		categories;
+    	</g:evaluate>
+    	<g:evaluate var="jvar_p" jelly="true">
+    		var jvar_p = '';
+    		if (!JSUtil.nil(jelly.jvar_link_parent))
+    			jvar_p = jelly.jvar_link_parent;
+    		else if (!JSUtil.nil(jelly.jvar_link_category))
+    			jvar_p = jelly.jvar_link_category;
+    		else if (categories.size() != 0) 
+    			jvar_p = categories.get(0);
+    		jvar_p;
+    	</g:evaluate>
+    	<g:evaluate var="catArr" jelly="true">
+    		var catArr = [];
+    		var catSize = categories.size();
+    		for (var i = 0; catSize > i; i++) {
+    			var cat = categories.get(i) + '';
+    			if (SNC.CatalogCMS.canViewBreadcrumbCrossSite(cat, jelly.sysparm_catalog, jelly.sysparm_catalog_view)) {
+    				if (jelly.jvar_is_search_result || cat != jelly.sysparm_parent)
+    					catArr.push(cat);
+    				if (jelly.jvar_is_search_result)
+    					jelly.jvar_item_categories.add(cat);
+    			}
+    		}
+    		catArr;
+    	</g:evaluate>
+    	<g:evaluate var="jvar_href_calc" jelly="true">
+    		var categorySysId = jelly.jvar_p;
+    		if (JSUtil.nil(categorySysId))
+    			categorySysId = catArr[0];
+    		var catalogSysId = jelly.sysparm_catalog;
+    		if (JSUtil.nil(catalogSysId))
+    			catalogSysId = GlideappCategory.get(categorySysId).getCatalog();
+    		var jvar_href_calc = GlideappCatalogURLGenerator.getItemURL(jelly.jvar_item, catalogSysId, jelly.sysparm_catalog_view, categorySysId, jelly.jvar_h, jelly.RP);
+    		jvar_href_calc;
+    	</g:evaluate>
+    	<j:set var="jvar_href" value="${jvar_href_calc}"/>
+    </j:if>
+    
+    <g:inline template="com.glideapp.servicecatalog_show_price_function.xml" />
+    <j:if test="${jvar_target.equals('internal')}">
+    	<j:set var="jvar_target" value="" />
+    </j:if>
+    <style>
+    	.item_cell_over .service_catalog {
+    		text-decoration: underline;
+    	}
+    </style>
+    <tr>
+    	<td>
+    		<div class="sc_category_item">
+    			<table style="background-color:transparent; padding:0px 2px; width: 100%;"> 
+    				<tr>
+    					<td style="width: 100%;">
+    							<div style="font-size: 120%">
+    								<strong>${jvar_item.getName()}</strong>
+    							</div>
+    							<div>
+    								<table class="no_underline_table" style="background: transparent;">
+    									<tr>
+    										<td>
+    											${jvar_item.getShortDescription()}
+    										</td>
+    									</tr>
+    								</table>
+    							</div>
+    							<j:if test="${jvar_item.getDescription().trim().length() != 0}">
+									<g:evaluate var="jvar_has_image" jelly="true">
+										var image_src = jelly.jvar_item.getPicture();
+										var has_image = image_src != null ${AMP}${AMP} image_src != '';
+										has_image;
+									</g:evaluate>
+									<div style="display: block; padding-left: 2px;" id="full_detail_${jvar_item.getID()}" class="no_underline_table">
+										<table class="no_underline_table" style="width: 100%; border-collapse: collapse; background-color:transparent;" padding="0" border="0">
+											<tr id="detail_${jvar_item.getID()}" style="list-style-position: inside; display: table-row;">
+												<td style="padding-top: 3px; padding-bottom: 3px;">
+													<table style="width: 100%; background-color:transparent;" padding="0" border="0">
+														<tr>
+															<td class="sc_item_details">
+																<div>
+																	<table style="border-collapse: collapse;" padding="0" border="0" margin="0">
+																		<tr>
+																			<j:if test="${jvar_has_image}">
+																				<td style="vertical-align: top;">
+																					<div style="margin-right: 5px;">
+																						<img src="${image_src}" alt="" style="width: 100%; height:auto;"/>
+																					</div>
+																				</td>
+																			</j:if>
+																			<td style="vertical-align: top;">
+																				<g2:no_escape>
+																					$[NS:jvar_item.getDescription()]
+																				</g2:no_escape>
+																			</td>
+																		</tr>
+																	</table>
+																</div>
+															</td>
+														</tr>
+													</table>
+												</td>
+											</tr>
+										</table>
+									</div>
+    							</j:if>
+    					</td>
+    					<td style="vertical-align: top; white-space: nowrap; text-align: right;">
+    						<g:evaluate var="jvar_show_price" jelly="true">
+    							var jvar_show_price = new CatalogItemTypeProcessor().canViewPrice(jelly.jvar_item.getRecordClass()) == true;
+    							jvar_show_price;
+    						</g:evaluate>
+    						<g:evaluate var="jvar_show_recurring_price" jelly="true">
+    							var jvar_show_recurring_price = new CatalogItemTypeProcessor().canViewPrice(jelly.jvar_item.getRecordClass()) == true;
+    							jvar_show_recurring_price;
+    						</g:evaluate>
+    						<j:if test="${(!jvar_show_price || !show_price) and (!jvar_show_recurring_price || !show_recurring_price)}">
+    							<div style="font-size: 0; width: 80px;"></div>
+    						</j:if>
+    						<j:if test="${jvar_show_price}">
+    							<j:if test="${show_price}">
+    								<div style="font-size: 0; width: 80px;"></div>
+    								<g:currency_format value="${sc_cat_item.price.getDisplayValue()}"/> 
+    							</j:if>
+    						</j:if>
+    						<j:if test="${jvar_show_recurring_price}">
+    						 	<j:if test="${!JSUtil.nil(jvar_item.getRecurringFrequencyDisplay())}">
+    								<j:if test="${show_recurring_price}">
+    									<j:if test="${(!jvar_show_price || !show_price)}">
+    										<br/>
+    									</j:if>
+    									<div style="font-size: 0; width: 80px;"></div>
+    									<span class="recurring_price_span"><j:if test="${(!jvar_show_price || !show_price)}">+ </j:if><g:currency_format value="${sc_cat_item.recurring_price.getDisplayValue()}"/></span>
+    									<div style="font-size: 0; width: 80px;"></div>
+    									<span class="recurring_frequency_span" style="font-size: smaller;">${jvar_item.getRecurringFrequencyDisplay()}</span> 
+    								</j:if>
+    							</j:if>
+    						</j:if>
+    					</td>
+    				</tr>
+    			</table>
+    		</div>
+    	</td>
+    </tr>
+</j:jelly>
