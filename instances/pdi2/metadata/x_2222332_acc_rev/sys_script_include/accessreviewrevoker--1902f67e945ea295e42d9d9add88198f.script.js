@@ -2,23 +2,28 @@ var AccessReviewRevoker = Class.create();
 AccessReviewRevoker.prototype = {
     initialize: function() {},
 
-    // Removes the access a revocation task names, only if the source assignment still grants
-    // exactly that access to that user (SR-06), then closes the task (FR-09).
+    // Removes the access a revocation task names (FR-09, SR-06). The platform does not let a
+    // scoped application delete role assignments or memberships, so a global helper removes
+    // it after checking the task. A refused removal keeps the task open: the evidence must
+    // never say access is gone when it is not.
     revoke: function(task) {
-        var role = task.getValue('access_type') == 'role';
-        var source = new GlideRecord(role ? 'sys_user_has_role' : 'sys_user_grmember');
-        var granted = source.get(task.getValue('source_id'))
-            && source.getValue('user') == task.getValue('subject_user')
-            && source.getValue(role ? 'role' : 'group') == task.getValue(role ? 'role' : 'group');
-        var removed = granted && source.deleteRecord();
-        task.setValue('outcome', removed ? 'removed' : 'already_removed');
-        task.work_notes = removed
-            ? 'Removed ' + task.getDisplayValue(role ? 'role' : 'group') + ' from '
-                + task.subject_user.getDisplayValue() + ' (assignment ' + task.getValue('source_id') + ').'
+        var outcome = new global.AccessReviewAccessRemover().remove(task.getUniqueValue());
+        var access = task.getDisplayValue(task.getValue('access_type') == 'role' ? 'role' : 'group');
+        if (outcome == 'refused') {
+            gs.addErrorMessage(gs.getMessage('The access could not be removed, so the task stays open.'));
+            task.work_notes = 'Removal of ' + access + ' from ' + task.subject_user.getDisplayValue()
+                + ' was refused: the task is closed, or the assignment no longer matches it.';
+            task.update();
+            return false;
+        }
+        task.setValue('outcome', outcome);
+        task.work_notes = outcome == 'removed'
+            ? 'Removed ' + access + ' from ' + task.subject_user.getDisplayValue()
+                + ' (assignment ' + task.getValue('source_id') + ').'
             : 'The access was already removed; nothing to do.';
         task.setValue('state', '3');
         task.update();
-        return removed;
+        return outcome == 'removed';
     },
 
     type: 'AccessReviewRevoker'
