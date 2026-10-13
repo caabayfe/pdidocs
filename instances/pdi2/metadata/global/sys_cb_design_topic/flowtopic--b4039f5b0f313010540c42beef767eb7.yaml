@@ -1,0 +1,851 @@
+_meta:
+  hash: 8b2b9a555807b3640c83866d65b1f85f9bd319f2c8a84edd6ff305f07a873833
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2021-08-11 17:03:58
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: b4039f5b0f313010540c42beef767eb7
+  sys_mod_count: '26'
+  sys_package: 0a73779783fb8710292aca75eeaad3f0
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_b4039f5b0f313010540c42beef767eb7
+  sys_updated_by: admin
+  sys_updated_on: 2025-10-22 16:34:08
+compiled_topic: 78039f5b0f313010540c42beef767eb3
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"22ad41d26e844b78b4eaf5964b604424","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"22ad41d26e844b78b4eaf5964b604424"}],"goals":[{"name":"primary","trigger_id":"22ad41d26e844b78b4eaf5964b604424","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"94bae31782e14e5990078c454259f556","name":"Start","expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"ccdf32dbfc6f444c9e487394d32758b8","name":"End","expert_mode":false},{"type":"FDIHInvocation","name":"Detect Language","kind":"action","mode":"sync","inputs":[{"supported_input_modes":[],"name":"utterance","type":"string","order":0,"required":false,"value":[{"type":"String","mode":"string","value":"{{vaInputs.utterance}}"}],"is_list_data_entry":false}],"outputs":[{"name":"language_code","order":0,"value":[],"is_list_data_entry":false,"topicVariableName":"language_code"},{"name":"__action_status__","order":0,"value":[],"is_list_data_entry":false,"topicVariableName":"action_status"},{"name":"__dont_treat_as_error__","order":0,"value":[],"is_list_data_entry":false,"topicVariableName":"don_t_treat_as_error"}],"metadata":{"runAs":"session_user"},"id":"2251ec5b9c8d45b1894eb0be10ef619e","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"sys_id":"012c01a80fd13010540c42beef767e01","scope":"global"},{"type":"ScriptedAction","script":"(function execute() {\n    //If no error set runtime detected language\n    if (String(vaInputs.language_code) !== \"notalanguage\") {\n        vaVars.global_runtime_detected_language = vaInputs.language_code;\n    } else {\n        vaInputs.change_language = false;\n    }\n})()\n\n","id":"5c47da72186548c8bd1a4e225ba6738b","name":"Set Runtime Detected Language","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Should change language?","branches":[{"type":"Branch","label":"Shouldn''t change language","expression":{"type":"Applicability","mode":"query","value":"change_language="},"id":"936f101fec90440cbc3dbd8b42803ee2","name":"Shouldn''t change language","expert_mode":false},{"type":"Branch","label":"Should change language","expression":{"type":"Applicability","mode":"query","value":"change_language=true"},"id":"49742e9d3c1b4f8db63bf237f11d5c72","name":"Should change language","expert_mode":false}],"id":"1a714224c7b04b509997c075c2d9bb6c","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.language_supported = false;\n\n    // Check if the detected language is supported\n    if (gs.tableExists(\"sys_language\")) {\n        var gr = new GlideRecord(\"sys_language\");\n        var queryString = ''id='' + vaInputs.language_code;\n        gr.addEncodedQuery(queryString);\n        gr.query();\n    \n       if(gr.next()){\n           if (gr.active) {\n              vaVars.language_supported = true;\n           }\n            vaVars.language_name = gr.name;\n        }\n    }\n    \n})()\n","id":"b710268b22b94e46bd158445db9203bf","name":"Check if installed","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Is language supported?","branches":[{"type":"Branch","label":"Not Supported","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return !vaVars.language_supported;\n})()\n})()"},"id":"26a6a25627ff43338346c16dcfe7cf00","name":"Not Supported","expert_mode":false},{"type":"Branch","label":"Supported","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n   return vaVars.language_supported;\n})()\n})()"},"id":"77ca5117e26f4832a34954741bfcb8b0","name":"Supported","expert_mode":false}],"id":"eef92ca8a65544d191e2f1f75b5b6233","goal_id":"primary","expert_mode":false},{"type":"TextOutputPrompt","value":[{"type":"String","mode":"script","value":"(function execute() {\n    // Find the name of the language currently being used\n    if (gs.tableExists(\"sys_language\")) {\n        var gr = new GlideRecord(\"sys_language\");\n        var queryString = ''id='' + vaContext.getRequesterLang();\n        gr.addEncodedQuery(queryString);\n        gr.query();\n    \n        gr.next();\n\n        // Notify the user their language is unsupported\n        if (typeof vaVars.language_name !== ''undefined'' && typeof gr.name !== ''undefined'') {\n            return \"You typed in \" + vaVars.language_name\n            + \". I do not have support for that language at this time \"\n            + \"so I will continue this conversation in \"\n            +  gr.name + \".\";\n        } else if (typeof vaVars.language_name == ''undefined'' && typeof gr.name !== ''undefined'') {\n            return \"I do not have support for that language at this time \"\n            + \"so I will continue this conversation in \"\n            +  gr.name + \".\";\n        } else {\n            return \"I do not have support for that language at this time.\";\n        }\n    }else{\n        return \"I do not have support for that language at this time.\";\n    }\n})()\n"}],"request_feedback":true,"isCollapsible":true,"id":"db5d31f86cd148b7a8a796404ef9c389","name":"Language not supported","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"secure":false},{"type":"Decision","name":"Is language different from default?","branches":[{"type":"Branch","label":"Language is not different from default","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    // True if the detected language is the same as the current language\n    return vaContext.getRequesterLang() == vaVars.global_runtime_detected_language;\n})()\n})()"},"id":"a155e8e2b68149f4afb177158103b592","name":"Language is not different from default","expert_mode":false},{"type":"Branch","label":"Language is different from default","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    // True if language detected is different from the current language\n    return vaContext.getRequesterLang() != vaVars.global_runtime_detected_language;\n})()\n})()"},"id":"784a89ab75664c2bb87b1c3600f9b310","name":"Language is different from default","expert_mode":false}],"id":"999cd4e547b449328555becf075bfe4d","goal_id":"primary","expert_mode":false},{"type":"LibraryCall","library_topic_name":"Language Switch Control","library_topic_id":"60ce473853b230103296ddeeff7b1211","library_topic_is_template":false,"parameter-mappings":[],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"answer","main_topic_mapped_variable_name":"answer"}],"header_card_fields":[],"input_parameters_mode":"dynamic","output_parameters_mode":"dynamic","id":"9b8735e6f8af45849fc68260c52dad19","name":"Language Switch Control","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Change thank you text","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaInputs.answer != \"Yes\";\n})()\n})()"},"id":"3516ed86d7ff4c268d27bdaa3f112005","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaInputs.answer == \"Yes\";\n})()\n})()"},"id":"14880856fa2b431e97f71e6abbd02440","name":"Yes","expert_mode":false}],"id":"46b7db460fd54d8f9b211aca8256dcde","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_requester_session_language = vaVars.global_runtime_detected_language;\n})()\n","id":"25630a43972a43b29e53367bdb1cc997","name":"Change thank you message language","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"mweb","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return vaContext.deviceType == ''mweb'';\n})()\n})()"},"id":"23b6ac5aa35f46aba910d0a37bac8a90","name":"mweb","expert_mode":false},{"type":"Branch","label":"Not mweb","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return vaContext.deviceType != ''mweb'';\n})()\n})()"},"id":"6ae5b3d32e47426d9a570aafa177fd87","name":"Not mweb","expert_mode":false}],"id":"37ce51cfe2d24eed9b22377c3dda49e1","goal_id":"primary","expert_mode":false},{"type":"InputPrompt","variable_id":"f4e824adca6e4c56ba9033c342792868","message":{"type":"String","mode":"script","value":"(function execute() {\n    var language = ''English'';\n    var languageGR = new GlideRecord(''sys_language'');\n    if (languageGR.isValid()) {\n      languageGR.addQuery(''id'', vaVars.global_runtime_detected_language);\n      languageGR.query();\n    \n      if(languageGR.next()) {\n          language = languageGR.getValue(''name'');\n      }\n    }\n\n    var detectedLanguageCode = vaVars.global_runtime_detected_language;\n    var requesterLanguage = gs.getMessageLang(language, vaContext.getRequesterLang());\n    var translatedLanguage = gs.getMessageLang(language, detectedLanguageCode);\n\n    return gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', vaContext.getRequesterLang(), requesterLanguage) + ''\\n\\n'' +\n        gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', detectedLanguageCode, translatedLanguage);\n})()\n"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"request_feedback":false,"skippable":{"type":"Applicability","mode":"script","value":"false"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"metadataScript":"","cardName":"","cardFields":[],"id":"ee193da5f36e48b2a0c28eeb3be1bf63","name":"Switch Language","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"description":""},{"type":"Decision","name":"Switch Language","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"query","value":"switch_language=true"},"id":"675707d12e10486e915ec0a4a2b81ba4","name":"Yes","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"query","value":"switch_language="},"id":"59cf5a9662bf4d1ea1968022a356066d","name":"No","expert_mode":false}],"id":"9a01007719274d0c901c838c8d97bac8","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_skip_translating_next_message = true;\n})()","id":"37616ce8f3ae4285a392ebccd3cc06f4","name":"enable global translation skip flag","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_skip_translating_next_message = false;\n})()\n","id":"3a7a4c2e47574383a4562ee341000ad6","name":"disable global translation skip flag","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false}],"edges":[{"type":"Edge","source_node_id":"46b7db460fd54d8f9b211aca8256dcde","target_node_id":"ccdf32dbfc6f444c9e487394d32758b8","branch_id":"3516ed86d7ff4c268d27bdaa3f112005","id":"1bffb99ae698468d9101324204d4fc9f","name":"3516ed86d7ff4c268d27bdaa3f112005"},{"type":"Edge","source_node_id":"999cd4e547b449328555becf075bfe4d","target_node_id":"ccdf32dbfc6f444c9e487394d32758b8","branch_id":"a155e8e2b68149f4afb177158103b592","id":"ce3084ad89b348a79e490f512cfd4d20","name":"a155e8e2b68149f4afb177158103b592"},{"type":"Edge","source_node_id":"1a714224c7b04b509997c075c2d9bb6c","target_node_id":"ccdf32dbfc6f444c9e487394d32758b8","branch_id":"936f101fec90440cbc3dbd8b42803ee2","id":"dccf21e7512b4570b1b5e844a0146b08","name":"936f101fec90440cbc3dbd8b42803ee2"},{"type":"Edge","source_node_id":"999cd4e547b449328555becf075bfe4d","target_node_id":"b710268b22b94e46bd158445db9203bf","branch_id":"784a89ab75664c2bb87b1c3600f9b310","id":"bb9027c303e449fbb7786a385699250c","name":"784a89ab75664c2bb87b1c3600f9b310"},{"type":"Edge","source_node_id":"5c47da72186548c8bd1a4e225ba6738b","target_node_id":"1a714224c7b04b509997c075c2d9bb6c","id":"0cc2850111b1483196862e56616872ae"},{"type":"Edge","source_node_id":"94bae31782e14e5990078c454259f556","target_node_id":"2251ec5b9c8d45b1894eb0be10ef619e","id":"08a958c4f8e34ae19d46ab31c029e7ed"},{"type":"Edge","source_node_id":"1a714224c7b04b509997c075c2d9bb6c","target_node_id":"999cd4e547b449328555becf075bfe4d","branch_id":"49742e9d3c1b4f8db63bf237f11d5c72","id":"ebbae3822b9f4b2ab4a6bc8062c4fc75","name":"49742e9d3c1b4f8db63bf237f11d5c72"},{"type":"Edge","source_node_id":"2251ec5b9c8d45b1894eb0be10ef619e","target_node_id":"5c47da72186548c8bd1a4e225ba6738b","id":"f443f9f37c744f999f9371cf3969cbb1"},{"type":"Edge","source_node_id":"b710268b22b94e46bd158445db9203bf","target_node_id":"eef92ca8a65544d191e2f1f75b5b6233","id":"7a954c3f6279484f97d853ba5c09d855"},{"type":"Edge","source_node_id":"eef92ca8a65544d191e2f1f75b5b6233","target_node_id":"db5d31f86cd148b7a8a796404ef9c389","branch_id":"26a6a25627ff43338346c16dcfe7cf00","id":"6a9d2bc4300e4a22958dbadbc37fdcfc","name":"26a6a25627ff43338346c16dcfe7cf00"},{"type":"Edge","source_node_id":"db5d31f86cd148b7a8a796404ef9c389","target_node_id":"ccdf32dbfc6f444c9e487394d32758b8","id":"38e95e2a897849878febcdad0a5d75c7"},{"type":"Edge","source_node_id":"9b8735e6f8af45849fc68260c52dad19","target_node_id":"46b7db460fd54d8f9b211aca8256dcde","id":"0dc928e9056d4645b59870f653dca4fe"},{"type":"Edge","source_node_id":"46b7db460fd54d8f9b211aca8256dcde","target_node_id":"25630a43972a43b29e53367bdb1cc997","branch_id":"14880856fa2b431e97f71e6abbd02440","id":"08382d8ff8cc48f6913caef8e4fb672c","name":"14880856fa2b431e97f71e6abbd02440"},{"type":"Edge","source_node_id":"25630a43972a43b29e53367bdb1cc997","target_node_id":"ccdf32dbfc6f444c9e487394d32758b8","id":"dd9cb525a14740b4853f3cb4033da909"},{"type":"Edge","source_node_id":"eef92ca8a65544d191e2f1f75b5b6233","target_node_id":"37ce51cfe2d24eed9b22377c3dda49e1","branch_id":"77ca5117e26f4832a34954741bfcb8b0","id":"99ef2a23a99d4978a4db894dfa944277","name":"77ca5117e26f4832a34954741bfcb8b0"},{"type":"Edge","source_node_id":"37ce51cfe2d24eed9b22377c3dda49e1","target_node_id":"9b8735e6f8af45849fc68260c52dad19","branch_id":"23b6ac5aa35f46aba910d0a37bac8a90","id":"fb03f23e7caf48db920160377f388317","name":"23b6ac5aa35f46aba910d0a37bac8a90"},{"type":"Edge","source_node_id":"9a01007719274d0c901c838c8d97bac8","target_node_id":"25630a43972a43b29e53367bdb1cc997","branch_id":"675707d12e10486e915ec0a4a2b81ba4","id":"afb2c570f002437fa5a3f887fd737718","name":"675707d12e10486e915ec0a4a2b81ba4"},{"type":"Edge","source_node_id":"9a01007719274d0c901c838c8d97bac8","target_node_id":"ccdf32dbfc6f444c9e487394d32758b8","branch_id":"59cf5a9662bf4d1ea1968022a356066d","id":"b7f260eafa294bf8a42e2091f907d4cc","name":"59cf5a9662bf4d1ea1968022a356066d"},{"type":"Edge","source_node_id":"37ce51cfe2d24eed9b22377c3dda49e1","target_node_id":"37616ce8f3ae4285a392ebccd3cc06f4","branch_id":"6ae5b3d32e47426d9a570aafa177fd87","id":"594c9d52abeb4516b61d6099845e8e74","name":"6ae5b3d32e47426d9a570aafa177fd87"},{"type":"Edge","source_node_id":"37616ce8f3ae4285a392ebccd3cc06f4","target_node_id":"ee193da5f36e48b2a0c28eeb3be1bf63","id":"78b2d1a3b2754bb3af27200bfcaa847a"},{"type":"Edge","source_node_id":"ee193da5f36e48b2a0c28eeb3be1bf63","target_node_id":"3a7a4c2e47574383a4562ee341000ad6","id":"559adff19543477ba10fbe7287c67599"},{"type":"Edge","source_node_id":"3a7a4c2e47574383a4562ee341000ad6","target_node_id":"9a01007719274d0c901c838c8d97bac8","id":"a6efdb5826a044fcbee60a6a2cb6c583"}],"id":"primary"}],"script_variables":[],"glide_variables":[{"type":"Reference","table":"sys_user","auto_select":false,"id":"1cd996e062134aa68bd6e35a8ae969d7","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"utterance","list":false,"id":"43141340fb2248cc8af8c4e8c6ae795e","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"language_code","list":false,"id":"d6ef2142fbb541198346e18f092f649c","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"action_status","list":false,"id":"870f966c7dc94cec8b90e1f66b4f2226","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false},{"type":"True/False","id":"d40a9b8e0a494fba939b0df26ba6b78d","name":"don_t_treat_as_error","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"True/False","id":"0800b5c1d6954409accfbeb1d1571e5b","name":"change_language","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"yesorno","list":false,"id":"1951d74fe87c4fc0abeed1592b4bbfff","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false},{"type":"True/False","id":"f4e824adca6e4c56ba9033c342792868","name":"switch_language","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"answer","list":false,"id":"626a64f63ddc4db68cf5ceca94b5c45d","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"utterance","label":"utterance","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"43141340fb2248cc8af8c4e8c6ae795e","type":"String"},{"name":"change_language","label":"Change language","default-value":"false","required":false,"metadata":{"type":"True/False","list":false,"items":[],"use_items":false},"id":"0800b5c1d6954409accfbeb1d1571e5b","type":"True/False"}],"return-values-mapping":[]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"c3f2d75b0f313010540c42beef767e97","name":"Runtime Language Detection","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"model_type":"nlu_keyword","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"Runtime Language Detection","library":true,"csTopicId":"78039f5b0f313010540c42beef767eb3","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: c3f2d75b0f313010540c42beef767e97
+graph: |-
+  {
+    "graph_api_version": "1.0.82",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "94bae31782e14e5990078c454259f556": {
+            "id": "94bae31782e14e5990078c454259f556",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "43141340fb2248cc8af8c4e8c6ae795e",
+                "name": "utterance",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "True/False",
+                "value": "false",
+                "id": "0800b5c1d6954409accfbeb1d1571e5b",
+                "name": "Change language",
+                "referenced": true,
+                "required": false,
+                "disabled": true
+              }
+            ],
+            "variableIds": [
+              "43141340fb2248cc8af8c4e8c6ae795e",
+              "0800b5c1d6954409accfbeb1d1571e5b"
+            ],
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "ccdf32dbfc6f444c9e487394d32758b8": {
+            "id": "ccdf32dbfc6f444c9e487394d32758b8",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "2251ec5b9c8d45b1894eb0be10ef619e": {
+            "id": "2251ec5b9c8d45b1894eb0be10ef619e",
+            "name": "Detect Language",
+            "invocationType": "action",
+            "stepType": "FlowAction",
+            "actionSpoke": "global",
+            "actionSpokeAction": "012c01a80fd13010540c42beef767e01",
+            "actionWaitType": "sync",
+            "actionRunAs": "session_user",
+            "actionSecureField": false,
+            "actionSelectSecureField": "",
+            "actionPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionConfirmPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionNonSecureChannelMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "actionInputs": {
+              "input-utterance": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.utterance}}",
+                          "displayValue": "Input Variables➛Utterance"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string"
+              }
+            },
+            "actionOutputs": {
+              "output-language_code": [
+                {
+                  "id": "d6ef2142fbb541198346e18f092f649c",
+                  "mapping": "language_code",
+                  "value": "language_code",
+                  "disabled": false,
+                  "type": "string"
+                }
+              ],
+              "output-__action_status__": [
+                {
+                  "id": "870f966c7dc94cec8b90e1f66b4f2226",
+                  "mapping": "Action Status",
+                  "value": "Action Status",
+                  "disabled": false,
+                  "type": "object"
+                }
+              ],
+              "output-__dont_treat_as_error__": [
+                {
+                  "id": "d40a9b8e0a494fba939b0df26ba6b78d",
+                  "mapping": "Don't Treat as Error",
+                  "value": "Don't Treat as Error",
+                  "disabled": false,
+                  "type": "boolean"
+                }
+              ]
+            },
+            "actionDefinition": {
+              "id": "012c01a80fd13010540c42beef767e01",
+              "latest_snapshot_id": "012c01a80fd13010540c42beef767e01",
+              "type": "action",
+              "name": "detect_language",
+              "label": "Detect Language",
+              "scope_id": "global",
+              "description": "Detects language of an utterance",
+              "category": "",
+              "parameters_have_loaded": true,
+              "input_parameters": [
+                {
+                  "supported_input_modes": [
+                    "script",
+                    "data_pill",
+                    "data_entry"
+                  ],
+                  "name": "utterance",
+                  "label": "utterance",
+                  "type": "string",
+                  "order": 1,
+                  "required": false
+                }
+              ],
+              "output_parameters": [
+                {
+                  "name": "language_code",
+                  "label": "language_code",
+                  "type": "string",
+                  "order": 1,
+                  "required": false
+                },
+                {
+                  "name": "__action_status__",
+                  "label": "Action Status",
+                  "type": "object",
+                  "order": 2,
+                  "required": false
+                },
+                {
+                  "name": "__dont_treat_as_error__",
+                  "label": "Don't Treat as Error",
+                  "type": "boolean",
+                  "order": 3,
+                  "required": false
+                }
+              ]
+            },
+            "subflowSecureField": false,
+            "subflowSelectSecureField": "",
+            "subflowPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "subflowConfirmPromptSecureField": {
+              "mode": "simple",
+              "value": ""
+            },
+            "subflowNonSecureChannelMessage": {
+              "mode": "simple",
+              "value": "This action is not supported on this channel."
+            },
+            "variableIds": [
+              "d6ef2142fbb541198346e18f092f649c",
+              "870f966c7dc94cec8b90e1f66b4f2226",
+              "d40a9b8e0a494fba939b0df26ba6b78d"
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "5c47da72186548c8bd1a4e225ba6738b": {
+            "id": "5c47da72186548c8bd1a4e225ba6738b",
+            "name": "Set Runtime Detected Language",
+            "script": "(function execute() {\n    //If no error set runtime detected language\n    if (String(vaInputs.language_code) !== \"notalanguage\") {\n        vaVars.global_runtime_detected_language = vaInputs.language_code;\n    } else {\n        vaInputs.change_language = false;\n    }\n})()\n\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "1a714224c7b04b509997c075c2d9bb6c": {
+            "id": "1a714224c7b04b509997c075c2d9bb6c",
+            "stepType": "Decision",
+            "name": "Should change language?",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "b710268b22b94e46bd158445db9203bf": {
+            "id": "b710268b22b94e46bd158445db9203bf",
+            "name": "Check if installed",
+            "script": "(function execute() {\n    vaVars.language_supported = false;\n\n    // Check if the detected language is supported\n    if (gs.tableExists(\"sys_language\")) {\n        var gr = new GlideRecord(\"sys_language\");\n        var queryString = 'id=' + vaInputs.language_code;\n        gr.addEncodedQuery(queryString);\n        gr.query();\n    \n       if(gr.next()){\n           if (gr.active) {\n              vaVars.language_supported = true;\n           }\n            vaVars.language_name = gr.name;\n        }\n    }\n    \n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "eef92ca8a65544d191e2f1f75b5b6233": {
+            "id": "eef92ca8a65544d191e2f1f75b5b6233",
+            "stepType": "Decision",
+            "name": "Is language supported?",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "db5d31f86cd148b7a8a796404ef9c389": {
+            "id": "db5d31f86cd148b7a8a796404ef9c389",
+            "stepType": "TextOutput",
+            "name": "Language not supported",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    // Find the name of the language currently being used\n    if (gs.tableExists(\"sys_language\")) {\n        var gr = new GlideRecord(\"sys_language\");\n        var queryString = 'id=' + vaContext.getRequesterLang();\n        gr.addEncodedQuery(queryString);\n        gr.query();\n    \n        gr.next();\n\n        // Notify the user their language is unsupported\n        if (typeof vaVars.language_name !== 'undefined' && typeof gr.name !== 'undefined') {\n            return \"You typed in \" + vaVars.language_name\n            + \". I do not have support for that language at this time \"\n            + \"so I will continue this conversation in \"\n            +  gr.name + \".\";\n        } else if (typeof vaVars.language_name == 'undefined' && typeof gr.name !== 'undefined') {\n            return \"I do not have support for that language at this time \"\n            + \"so I will continue this conversation in \"\n            +  gr.name + \".\";\n        } else {\n            return \"I do not have support for that language at this time.\";\n        }\n    }else{\n        return \"I do not have support for that language at this time.\";\n    }\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "isCollapsible": true
+          },
+          "999cd4e547b449328555becf075bfe4d": {
+            "id": "999cd4e547b449328555becf075bfe4d",
+            "stepType": "Decision",
+            "name": "Is language different from default?",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "9b8735e6f8af45849fc68260c52dad19": {
+            "id": "9b8735e6f8af45849fc68260c52dad19",
+            "stepType": "CustomControl",
+            "name": "Language Switch Control",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "Language Switch Control",
+            "reusableTopicId": "60ce473853b230103296ddeeff7b1211",
+            "inputs": {},
+            "variableIds": [
+              "626a64f63ddc4db68cf5ceca94b5c45d"
+            ],
+            "outputs": [
+              {
+                "id": "626a64f63ddc4db68cf5ceca94b5c45d",
+                "value": "answer",
+                "mapping": "answer",
+                "preventDisable": false
+              }
+            ],
+            "outdatedNote": false,
+            "loading": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "46b7db460fd54d8f9b211aca8256dcde": {
+            "id": "46b7db460fd54d8f9b211aca8256dcde",
+            "stepType": "Decision",
+            "name": "Change thank you text",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "25630a43972a43b29e53367bdb1cc997": {
+            "id": "25630a43972a43b29e53367bdb1cc997",
+            "name": "Change thank you message language",
+            "script": "(function execute() {\n    vaVars.global_requester_session_language = vaVars.global_runtime_detected_language;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "37ce51cfe2d24eed9b22377c3dda49e1": {
+            "id": "37ce51cfe2d24eed9b22377c3dda49e1",
+            "stepType": "Decision",
+            "name": "Decision",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "ee193da5f36e48b2a0c28eeb3be1bf63": {
+            "id": "ee193da5f36e48b2a0c28eeb3be1bf63",
+            "stepType": "BooleanPrompt",
+            "name": "Switch Language",
+            "prompt": {
+              "value": "(function execute() {\n    var language = 'English';\n    var languageGR = new GlideRecord('sys_language');\n    if (languageGR.isValid()) {\n      languageGR.addQuery('id', vaVars.global_runtime_detected_language);\n      languageGR.query();\n    \n      if(languageGR.next()) {\n          language = languageGR.getValue('name');\n      }\n    }\n\n    var detectedLanguageCode = vaVars.global_runtime_detected_language;\n    var requesterLanguage = gs.getMessageLang(language, vaContext.getRequesterLang());\n    var translatedLanguage = gs.getMessageLang(language, detectedLanguageCode);\n\n    return gs.getMessageLang('I have detected you are typing in {0}. Would you like to continue the conversation in {0}?', vaContext.getRequesterLang(), requesterLanguage) + '\\n\\n' +\n        gs.getMessageLang('I have detected you are typing in {0}. Would you like to continue the conversation in {0}?', detectedLanguageCode, translatedLanguage);\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "f4e824adca6e4c56ba9033c342792868",
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": "",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false
+          },
+          "9a01007719274d0c901c838c8d97bac8": {
+            "id": "9a01007719274d0c901c838c8d97bac8",
+            "stepType": "Decision",
+            "name": "Switch Language",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "37616ce8f3ae4285a392ebccd3cc06f4": {
+            "id": "37616ce8f3ae4285a392ebccd3cc06f4",
+            "name": "enable global translation skip flag",
+            "script": "(function execute() {\n    vaVars.global_skip_translating_next_message = true;\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "3a7a4c2e47574383a4562ee341000ad6": {
+            "id": "3a7a4c2e47574383a4562ee341000ad6",
+            "name": "disable global translation skip flag",
+            "script": "(function execute() {\n    vaVars.global_skip_translating_next_message = false;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "1bffb99ae698468d9101324204d4fc9f",
+            "edgeType": "Branch",
+            "source": "46b7db460fd54d8f9b211aca8256dcde",
+            "target": "ccdf32dbfc6f444c9e487394d32758b8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.answer != \"Yes\";\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "ce3084ad89b348a79e490f512cfd4d20",
+            "edgeType": "Branch",
+            "source": "999cd4e547b449328555becf075bfe4d",
+            "target": "ccdf32dbfc6f444c9e487394d32758b8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    // True if the detected language is the same as the current language\n    return vaContext.getRequesterLang() == vaVars.global_runtime_detected_language;\n})()\n"
+            },
+            "label": "Language is not different from default"
+          },
+          {
+            "id": "dccf21e7512b4570b1b5e844a0146b08",
+            "edgeType": "Branch",
+            "source": "1a714224c7b04b509997c075c2d9bb6c",
+            "target": "ccdf32dbfc6f444c9e487394d32758b8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.change_language=",
+              "mode": "query"
+            },
+            "label": "Shouldn't change language"
+          },
+          {
+            "id": "bb9027c303e449fbb7786a385699250c",
+            "edgeType": "Branch",
+            "source": "999cd4e547b449328555becf075bfe4d",
+            "target": "b710268b22b94e46bd158445db9203bf",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    // True if language detected is different from the current language\n    return vaContext.getRequesterLang() != vaVars.global_runtime_detected_language;\n})()\n"
+            },
+            "label": "Language is different from default"
+          },
+          {
+            "id": "0cc2850111b1483196862e56616872ae",
+            "edgeType": "Edge",
+            "source": "5c47da72186548c8bd1a4e225ba6738b",
+            "target": "1a714224c7b04b509997c075c2d9bb6c",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "08a958c4f8e34ae19d46ab31c029e7ed",
+            "edgeType": "Edge",
+            "source": "94bae31782e14e5990078c454259f556",
+            "target": "2251ec5b9c8d45b1894eb0be10ef619e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ebbae3822b9f4b2ab4a6bc8062c4fc75",
+            "edgeType": "Branch",
+            "source": "1a714224c7b04b509997c075c2d9bb6c",
+            "target": "999cd4e547b449328555becf075bfe4d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.change_language=true",
+              "mode": "query"
+            },
+            "label": "Should change language"
+          },
+          {
+            "id": "f443f9f37c744f999f9371cf3969cbb1",
+            "edgeType": "Edge",
+            "source": "2251ec5b9c8d45b1894eb0be10ef619e",
+            "target": "5c47da72186548c8bd1a4e225ba6738b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "7a954c3f6279484f97d853ba5c09d855",
+            "edgeType": "Edge",
+            "source": "b710268b22b94e46bd158445db9203bf",
+            "target": "eef92ca8a65544d191e2f1f75b5b6233",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6a9d2bc4300e4a22958dbadbc37fdcfc",
+            "edgeType": "Branch",
+            "source": "eef92ca8a65544d191e2f1f75b5b6233",
+            "target": "db5d31f86cd148b7a8a796404ef9c389",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.language_supported;\n})()\n"
+            },
+            "label": "Not Supported"
+          },
+          {
+            "id": "38e95e2a897849878febcdad0a5d75c7",
+            "edgeType": "Edge",
+            "source": "db5d31f86cd148b7a8a796404ef9c389",
+            "target": "ccdf32dbfc6f444c9e487394d32758b8",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0dc928e9056d4645b59870f653dca4fe",
+            "edgeType": "Edge",
+            "source": "9b8735e6f8af45849fc68260c52dad19",
+            "target": "46b7db460fd54d8f9b211aca8256dcde",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "08382d8ff8cc48f6913caef8e4fb672c",
+            "edgeType": "Branch",
+            "source": "46b7db460fd54d8f9b211aca8256dcde",
+            "target": "25630a43972a43b29e53367bdb1cc997",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.answer == \"Yes\";\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "dd9cb525a14740b4853f3cb4033da909",
+            "edgeType": "Edge",
+            "source": "25630a43972a43b29e53367bdb1cc997",
+            "target": "ccdf32dbfc6f444c9e487394d32758b8",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "99ef2a23a99d4978a4db894dfa944277",
+            "edgeType": "Branch",
+            "source": "eef92ca8a65544d191e2f1f75b5b6233",
+            "target": "37ce51cfe2d24eed9b22377c3dda49e1",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n   return vaVars.language_supported;\n})()\n"
+            },
+            "label": "Supported"
+          },
+          {
+            "id": "fb03f23e7caf48db920160377f388317",
+            "edgeType": "Branch",
+            "source": "37ce51cfe2d24eed9b22377c3dda49e1",
+            "target": "9b8735e6f8af45849fc68260c52dad19",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return vaContext.deviceType == 'mweb';\n})()\n"
+            },
+            "label": "mweb"
+          },
+          {
+            "id": "afb2c570f002437fa5a3f887fd737718",
+            "edgeType": "Branch",
+            "source": "9a01007719274d0c901c838c8d97bac8",
+            "target": "25630a43972a43b29e53367bdb1cc997",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.switch_language=true",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "b7f260eafa294bf8a42e2091f907d4cc",
+            "edgeType": "Branch",
+            "source": "9a01007719274d0c901c838c8d97bac8",
+            "target": "ccdf32dbfc6f444c9e487394d32758b8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.switch_language=",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "594c9d52abeb4516b61d6099845e8e74",
+            "edgeType": "Branch",
+            "source": "37ce51cfe2d24eed9b22377c3dda49e1",
+            "target": "37616ce8f3ae4285a392ebccd3cc06f4",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return vaContext.deviceType != 'mweb';\n})()\n"
+            },
+            "label": "Not mweb"
+          },
+          {
+            "id": "78b2d1a3b2754bb3af27200bfcaa847a",
+            "edgeType": "Edge",
+            "source": "37616ce8f3ae4285a392ebccd3cc06f4",
+            "target": "ee193da5f36e48b2a0c28eeb3be1bf63",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "559adff19543477ba10fbe7287c67599",
+            "edgeType": "Edge",
+            "source": "ee193da5f36e48b2a0c28eeb3be1bf63",
+            "target": "3a7a4c2e47574383a4562ee341000ad6",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a6efdb5826a044fcbee60a6a2cb6c583",
+            "edgeType": "Edge",
+            "source": "3a7a4c2e47574383a4562ee341000ad6",
+            "target": "9a01007719274d0c901c838c8d97bac8",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "1cd996e062134aa68bd6e35a8ae969d7": {
+        "category": "vaInputs",
+        "id": "1cd996e062134aa68bd6e35a8ae969d7",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "43141340fb2248cc8af8c4e8c6ae795e": {
+        "id": "43141340fb2248cc8af8c4e8c6ae795e",
+        "name": "utterance",
+        "label": "Utterance",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "94bae31782e14e5990078c454259f556",
+        "isHidden": false
+      },
+      "d6ef2142fbb541198346e18f092f649c": {
+        "id": "d6ef2142fbb541198346e18f092f649c",
+        "name": "language_code",
+        "label": "Language_code",
+        "defaultValue": "language_code",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "nodeId": "2251ec5b9c8d45b1894eb0be10ef619e",
+        "isHidden": false
+      },
+      "870f966c7dc94cec8b90e1f66b4f2226": {
+        "id": "870f966c7dc94cec8b90e1f66b4f2226",
+        "name": "action_status",
+        "label": "Action Status",
+        "defaultValue": "Action Status",
+        "varType": "object",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "nodeId": "2251ec5b9c8d45b1894eb0be10ef619e",
+        "isHidden": false
+      },
+      "d40a9b8e0a494fba939b0df26ba6b78d": {
+        "id": "d40a9b8e0a494fba939b0df26ba6b78d",
+        "name": "don_t_treat_as_error",
+        "label": "Don't Treat As Error",
+        "defaultValue": "Don't Treat as Error",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "nodeId": "2251ec5b9c8d45b1894eb0be10ef619e",
+        "isHidden": false
+      },
+      "0800b5c1d6954409accfbeb1d1571e5b": {
+        "id": "0800b5c1d6954409accfbeb1d1571e5b",
+        "name": "change_language",
+        "label": "Change Language",
+        "defaultValue": "false",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "94bae31782e14e5990078c454259f556",
+        "isHidden": false
+      },
+      "1951d74fe87c4fc0abeed1592b4bbfff": {
+        "id": "1951d74fe87c4fc0abeed1592b4bbfff",
+        "name": "yesorno",
+        "label": "Yesorno",
+        "defaultValue": "yesorno",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true
+      },
+      "f4e824adca6e4c56ba9033c342792868": {
+        "id": "f4e824adca6e4c56ba9033c342792868",
+        "name": "switch_language",
+        "label": "Switch Language",
+        "varType": "boolean",
+        "secure": false,
+        "category": "vaInputs",
+        "nodeId": "ee193da5f36e48b2a0c28eeb3be1bf63",
+        "isHidden": false
+      },
+      "626a64f63ddc4db68cf5ceca94b5c45d": {
+        "id": "626a64f63ddc4db68cf5ceca94b5c45d",
+        "name": "answer",
+        "label": "Answer",
+        "defaultValue": "answer",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": false,
+        "nodeId": "9b8735e6f8af45849fc68260c52dad19",
+        "isHidden": false
+      }
+    }
+  }
+name: Runtime Language Detection
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

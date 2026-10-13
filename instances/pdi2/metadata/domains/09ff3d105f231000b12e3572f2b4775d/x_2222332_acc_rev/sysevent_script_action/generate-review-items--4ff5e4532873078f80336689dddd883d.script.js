@@ -1,0 +1,1 @@
+new AccessReviewGenerator().generate(current);
