@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:g="glide" xmlns:g2="null" xmlns:j="jelly:core" xmlns:j2="null">
+	<g:evaluate jelly="true" object="true" var="jvar_aggregator_options">
+		var currentAggr = new sn_clotho.MetricPreference(jelly.sysparm_list, jelly.sysparm_list_element).getAggregatorPreference();
+		var aggrOptions = [
+			{'label': 'Last', 'value': 'last', 'selected': false},
+			{'label': 'Max', 'value': 'max', 'selected': false},
+			{'label': 'Min', 'value': 'min', 'selected': false},
+			{'label': 'Average', 'value': 'avg', 'selected': false}
+		];
+		
+		for(var i in aggrOptions) {
+			var op = aggrOptions[i];
+			if(currentAggr == op.value)
+				op['selected'] = true;
+		}
+		
+		aggrOptions;
+		
+	</g:evaluate>
+	<g:evaluate jelly="true" object="true" var="jvar_filter_hr_options">
+		var currentDuration = new sn_clotho.MetricPreference(jelly.sysparm_list, jelly.sysparm_list_element).getFilterHoursPreference();
+		var filterHrOptions = [
+			{'label': 'last hour', 'value': '1', 'selected': false},
+			{'label': 'last 4 hours', 'value': '4', 'selected': false},
+			{'label': 'last 8 hours', 'value': '8', 'selected': false},
+			{'label': 'last 24 hours', 'value': '24', 'selected': false}
+		];
+		
+		for(var i in filterHrOptions) {
+			var op = filterHrOptions[i];
+			if(currentDuration == op.value)
+				op['selected'] = true;
+		}
+		
+		filterHrOptions;
+	</g:evaluate>
+	<g:ui_table>
+		<tr>
+			<td>
+				<span style="color:#666666;">${gs.getMessage('Choose an aggregate function and duration to show metric element display value. If average and last 4 hr is chosen, the metric display value would be the average value of last 4 hours.')}</span>
+			</td>
+		</tr>
+		<tr id="aggregator_tr" name="aggregator_tr">
+			<td colspan="16" nowrap="true">
+				<g:ui_spacer pixels="6"/>
+				<g:ui_choice_input_field for="aggregator_choice" id="aggregator_choice" label="${gs.getMessage('Aggregate Function')}" mandatory="true" name="aggregator_choice">
+					<j:forEach items="${jvar_aggregator_options}" var="jvar_current_item">
+						<j:choose>
+							<j:when test="${jvar_current_item.selected == true}">
+								<option selected="selected" value="${jvar_current_item.value}">${jvar_current_item.label}</option>
+							</j:when>
+							<j:otherwise>
+								<option value="${jvar_current_item.value}">${jvar_current_item.label}</option>
+							</j:otherwise>
+						</j:choose>
+					</j:forEach>
+				</g:ui_choice_input_field>
+			</td>
+		</tr>
+		<tr id="filter_hr_tr" name="filter_hr_tr">
+			<td colspan="16" nowrap="true">
+				<g:ui_spacer pixels="6"/>
+				<g:ui_choice_input_field for="filter_hr_choice" id="filter_hr_choice" label="${gs.getMessage('Aggregate Duration')}" mandatory="true" name="filter_hr_choice">
+					<j:forEach items="${jvar_filter_hr_options}" var="jvar_current_item">
+						<j:choose>
+							<j:when test="${jvar_current_item.selected == true}">
+								<option selected="selected" value="${jvar_current_item.value}">${jvar_current_item.label}</option>
+							</j:when>
+							<j:otherwise>
+								<option value="${jvar_current_item.value}">${jvar_current_item.label}</option>
+							</j:otherwise>
+						</j:choose>
+					</j:forEach>
+				</g:ui_choice_input_field>
+			</td>
+		</tr>
+		<tr>
+			<td align="right">
+				<g:dialog_buttons_ok_cancel ok="return actionOK()" ok_id="ok_button"/>
+			</td>
+		</tr>
+	</g:ui_table>
+</j:jelly>

@@ -8,11 +8,4 @@
 	var breakdownSourceId = "6cc8e0e53bb232001e68455353efc43c";
 	var dashboarURL =  new global.MLSolutionHelper().getDashboardWithBreakdownUrl(urlConfig,breakdownSourceId,current);
   action.setRedirectURL(dashboarURL);
-	
-	var grTD = new GlideRecord('ml_trainer_definition'); grTD.addEncodedQuery('name=classification_trainer^sys_id=' + current.sys_id); 	grTD.query(); 
-	if(grTD.hasNext()){
-		g_form.setDisplay("Prediction Results", false);
-	}
-	g_form.setDisplay("Prediction Results", false);
-	
 })();

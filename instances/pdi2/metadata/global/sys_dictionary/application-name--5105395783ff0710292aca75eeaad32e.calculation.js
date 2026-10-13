@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) {       if (current.retention_policy.name == 'Operational Intelligence')               return 'Operational Intelligence';             else if (current.application_name != '')        return current.application_name;       return 'Platform';     })(current);

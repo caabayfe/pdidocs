@@ -1,0 +1,2 @@
+
+answer = MetricLicensingUtil.getCount();
