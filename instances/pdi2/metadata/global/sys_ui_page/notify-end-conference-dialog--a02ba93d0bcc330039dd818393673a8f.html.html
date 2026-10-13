@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_serviceProviderDetails">
+		var confUtils = new NotifyConferenceUtils();
+		var spDetails = confUtils.getServiceProviderDetails();
+		JSON.stringify(spDetails);
+	</g:evaluate>
+	<g:evaluate var="jvar_confDetails">
+		var data = confUtils.getSanitizedJSON(RP.getParameterValue('sysparm_data'));
+		if(!data.serviceProvider)
+			data.serviceProvider = confUtils.getConferenceDetails(data.confId).serviceProvider;
+		JSON.stringify(data);
+	</g:evaluate>
+	<style>
+		html {
+			overflow: hidden;
+		}
+		body {
+			padding: 15px 15px 0px 15px;
+		}
+		#bottomMarker {
+			margin-top: 15px;
+		}
+		#conference_call_end .btn.btn-icon.close.icon-cross {
+			display: none
+		}
+
+		#conference_call_end .modal-header {
+			border: none
+		}
+		#page_timing_div {
+			display: none !important;
+		}
+		.modal-footer {
+			padding: 10px;
+		}
+		.container {
+			text-align: center;
+			position: relative;
+			top: 20px;
+		}
+	</style>
+	<script>
+		var confData = ${NOESC:jvar_confDetails};
+		var serviceProviderDetails = ${NOESC:jvar_serviceProviderDetails};
+	</script>
+	
+	<div style="line-height: 23px;" id="container">
+		<div>${gs.getMessage("Are you sure you want to end the conference?")}</div>
+		<div class="modal-footer flex" style="text-align: right;">
+			<button id="btn-conf-cancel" onclick="return continueCancel();" class="btn btn-default">${gs.getMessage("Cancel")}</button>
+			<button id="btn-conf-ok" onclick="return continueOK();" class="btn btn-danger">${gs.getMessage("End")}</button>
+		</div>
+	</div>
+	<div id="upgrade_error_message"
+			 class="alert alert-info text-center" style="margin: 15px; display:none" >
+			${gs.getMessage('Looks like NotifyOnTaskClient UI Script is customized. Please contact your System Administrator')}
+	</div>
+	<div id="bottomMarker"></div>
+</j:jelly>

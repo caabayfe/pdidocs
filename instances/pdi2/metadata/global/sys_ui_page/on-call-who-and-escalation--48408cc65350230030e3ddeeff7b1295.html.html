@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:doctype name="html" />
+	<g:inline template="dir_checker.xml" />
+	<g:evaluate var="jvar_prop_jsincludes">
+		gs.getProperty("glide.ui.js_includes", "true");
+	</g:evaluate>
+	<!-- Third Party JS -->
+	<g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+	<g:requires name="scripts/angular_includes_1.5.11.js" includes="true" />
+	<g:requires name="scripts/angular_1.5.11/angular-animate.js" includes="true" />
+	<g:requires name="scripts/heisenberg/bootstrap/tooltip.js" includes="true" />
+	<g:requires name="scripts/heisenberg/bootstrap/popover.js" includes="true" />
+	<g:requires name="scripts/angular_1.5.11/ui-bootstrap-tpls-2.5.0.min.js" includes="true" />
+	<!-- SNC JS -->
+	<g:requires name="scripts/sn/common/js_includes_common.js" includes="true" />
+	<g:requires name="scripts/sn/common/util/js_includes_util.js" includes="true" />
+	<g:requires name="scripts/sn/common/glide/js_includes_glide.js" includes="true" />
+	<j:if test="${jvar_prop_jsincludes == 'false'}">
+		<g:requires name="script/app_com.jsdbx" />
+		<g:requires name="script/app_com.modelUtil.jsdbx" />
+	</j:if>
+	<j:if test="${jvar_prop_jsincludes == 'true'}">
+		<g:requires name="script/app_com.jsdbx" includes="true" />
+		<g:requires name="script/app_com.modelUtil.jsdbx" includes="true" />
+	</j:if>
+	<g:requires name="scripts/heisenberg/heisenberg_all.js" includes="true" />
+	<g:requires name="scripts/js_includes_ng_form_elements.js" includes="true" />
+	<!-- CSS -->
+	<j2:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]"/>
+	<g2:requires name="styles/sn/concourse/css_includes_concourse.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=$[jvar_theme]" />
+	<link href="58ea9c83d7110300532c24837e6103dc.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	<link href="8ce988c55394230030e3ddeeff7b1274.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	<j:if test="${GlideAccessibility.isEnabled()}">
+		<link href="8c6b50c3d7110300532c24837e610352.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	</j:if>
+	<j:if test="${jvar_text_direction == 'rtl'}">
+		<g:requires name="styles/heisenberg/heisenberg_rtl.css" includes="true" />
+		<link href="986c469e53a5f300eac3ddeeff7b12cd.cssdbx?v=${gs.getProperty('glide.builddate')}" rel="stylesheet" type="text/css" />
+	</j:if>
+	
+	<g2:evaluate var="jvar_connect_installed_and_enabled">
+		GlideCollaborationCompatibility.isChatEnabled() $[AND] GlideCollaborationCompatibility.isFrameSetEnabled();
+	</g2:evaluate>
+	<g2:evaluate var="jvar_group_id" expression="RP.getParameterValue('sysparm_group_id')"/>
+	<g2:evaluate var="jvar_full_webrtc" expression="RP.getParameterValue('sysparm_full_webrtc')"/>
+	<g2:evaluate var="jvar_communication_types" object="true">
+		var choices = new OnCallContactPreferenceUtil().getAllCommunicationTypes();
+		choices = JSON.stringify(choices);
+		choices;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_is_preview_slack_enabled" object="true">
+		var previewSlack = true;
+		if (global.JSUtil.notNil(GlideApplicationProperty.getValue('com.snc.on_call_rotation.preview_slack_preference_section')))
+			previewSlack = GlideApplicationProperty.getValue('com.snc.on_call_rotation.preview_slack_preference_section');
+		previewSlack;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_use_slack_dm">
+		var slackEnabledForDM = new OnCallCommon().shouldUseSlackForDM();
+		slackEnabledForDM;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_use_msteams_dm">
+		var teamsEnabledForDM = new OnCallCommon().shouldUseTeamsForDM();
+		teamsEnabledForDM;
+	</g2:evaluate>
+	<div ng-app="sn.on_call.esc_path">
+		<g:inline template="oc_esc_modal_translations.xml" />
+		<script>
+			angular.module('sn.on_call.esc_path.extra', []);
+			var textDirection = "${jvar_text_direction}";
+		</script>
+		<j:set var="jvar_isNotifyInstalled" value="${pm.isActive('com.snc.notify')}" />
+		<j:if test="${jvar_isNotifyInstalled}">
+			<j2:if test="$[jvar_full_webrtc != 'true']">
+				<g2:inline template="notify_ng_webrtc_inline_proxy" app_name="sn.on_call.esc_path.extra" />
+			</j2:if>
+			<j2:if test="$[jvar_full_webrtc == 'true']">
+				<g2:inline template="notify_ng_webrtc_inline" app_name="sn.on_call.esc_path.extra" number_ppty="com.snc.on_call_rotation.notify_webrtc_number" />
+			</j2:if>
+		</j:if>
+		<div id="rosters-modal" ng-controller="ModalInstanceCtrl as modalInstanceCtrl">
+			<div class="modal-header">
+				<h1 class="modal-title h4" aria-live="polite">
+					<span class="oc-modal-title-truncate" uib-tooltip="{{modalTitle}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{modalTitle}}</span>
+				</h1>
+				<div class="modal-header-right">
+					<div class="oc-esc-path-next-prev" ng-keydown="focusLastElement($event)">
+						<button class="btn btn-default oc-esc-path-prev" ng-class="{'disabled': showingRotaIndex == 0 || rotasLoading, 'icon-chevron-left next-prev-btn-border remove-border-right': !isRTL, 'icon-chevron-right next-prev-left-border remove-border-left': isRTL}" ng-click="getPrevRotaEscalationPart()" tabindex="{{showingRotaIndex == 0 ? -1 : 0}}"
+							tooltip-append-to-body="true" uib-tooltip="${gs.getMessage('Previous')}" tooltip-placement="bottom" ng-disabled="showingRotaIndex == 0 || rotasLoading">
+							<span class="sr-only">${gs.getMessage('Previous Shift')}</span>
+						</button>
+						<button class="btn btn-default oc-esc-path-next" ng-class="{'disabled': nextRotas.length == 0 || rotasLoading, 'icon-chevron-left next-prev-btn-border': isRTL, 'icon-chevron-right next-prev-left-border': !isRTL}" ng-disabled="nextRotas.length == 0 || rotasLoading" ng-click="getNextRotaEscalationPlan()" tooltip-append-to-body="true" uib-tooltip="${gs.getMessage('Next')}" tooltip-placement="bottom">
+							<span class="sr-only">${gs.getMessage('Next Shift')}</span>
+						</button>
+					</div>
+					<button data-dismiss="GlideModal" class="btn btn-icon close icon-cross" ng-click="destroyModal()">
+						<span class="sr-only">${gs.getMessage('Close')}</span>
+					</button>
+				</div>
+			</div>
+			<div id="rosters-modal-body" class="oc-rosters-modal-body">
+				<div class="oc-modal-body-container row">
+					<div class="col-sm-6 oc-heading-left oc-shift-esc-wrapper">
+					<div class="oc-modal-header-row">
+						<div class="sn-navhub">
+							<div class="sn-navhub-content" id="oc-shifts-tab-container" role="tablist">
+								<div id="shift_rosters_tab" class="btn sn-navhub-btn sn-navhub-btn_text" ng-class="{'state-active': tabDetails.selectedTab == tabDetails.tabs[0]}" ng-keyup="arrowPressHandler($event, tabDetails)" ng-click="tabClickHandler(tabDetails, 0, rosterTabCallback)" tabindex="{{tabDetails.selectedTab == tabDetails.tabs[0] ? 0 : -1}}" role="tab" aria-controls="oc-shift-details" aria-selected="{{tabDetails.selectedTab == tabDetails.tabs[0]}}">${gs.getMessage("Roster")}</div>
+								<div id="shift_esc_path_tab" class="btn sn-navhub-btn sn-navhub-btn_text" ng-class="{'state-active': tabDetails.selectedTab == tabDetails.tabs[1]}" ng-keyup="arrowPressHandler($event, tabDetails)" ng-click="tabClickHandler(tabDetails, 1, escalationTabCallback)" role="tab" aria-controls="oc-esc-timeline" aria-selected="{{tabDetails.selectedTab == tabDetails.tabs[1]}}" tabindex="{{tabDetails.selectedTab == tabDetails.tabs[1] ? 0 : -1}}">${gs.getMessage("Escalation Path")}</div>
+							</div>
+						</div>
+					</div>
+					
+						<div class="oc-heading-left shift-escalation-wrapper" ng-class="{'oc-tab-content-hide': tabDetails.selectedTab != tabDetails.tabs[0]}" ng-show="tabDetails.selectedTab == tabDetails.tabs[0]" id="oc-shift-details" role="tabpanel" aria-labelledby="shift_rosters_tab">
+							<ul class="member-list-container">
+								<li class="member-row oc-member-row" ng-repeat="member in filteredValues = (modalInstanceCtrl.members | memberfilter:textMemberSearch) track by member.id">
+									<div class="member-cell oc-roster-member" ng-click="selectRosterProfile(member, profile.profileTypeMap.user, $event)" role="button" tabindex="0" ng-attr-autofocus="{{$first}}" ng-class="{'selected': member.user.sys_id == profile.profileData.user.sys_id}">
+										<div class="user-avatar">
+											<div class="user-presence user-presence-modal">
+												<sn-avatar show-presence="true" class="" enable-context-menu="false" enable-tooltip="false" primary="member.user" />
+											</div>
+											<div class="user-info">
+												<span class="user-name full-width normal-line-height" uib-tooltip="{{modalInstanceCtrl.highlight(member.user.name.display_value, textMemberSearch)}}" show-tooltip-on-text-overflow=""
+														tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" ng-bind-html="modalInstanceCtrl.highlight(member.user.name.display_value, textMemberSearch)"></span>
+												<span class="info">
+													<span class="roster oc-truncate" uib-tooltip="{{modalInstanceCtrl.getRosterName(member.roster)}}" show-tooltip-on-text-overflow=""
+														tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false"
+														aria-label="{{modalInstanceCtrl.getRosterName(member.roster)}}">{{modalInstanceCtrl.getRosterName(member.roster)}}</span>
+												</span>
+											</div>
+										</div>
+									</div>
+								</li>
+								<div class="oc-no-esc-steps" ng-if="modalInstanceCtrl.members.length == 0">
+									${gs.getMessage('Nobody is On-Call now')}
+								</div>
+							</ul>
+						</div>
+						<div id="oc-esc-timeline" class="shift-escalation-wrapper" ng-class="{'oc-tab-content-hide': tabDetails.selectedTab != tabDetails.tabs[1]}" ng-show="tabDetails.selectedTab == tabDetails.tabs[1]" role="tabpanel" aria-labelledby="shift_esc_path_tab">
+							<div ng-if="!loadingEscalationPlan">
+								<g:inline template="sn_oc_esc_timeline.xml" />
+							</div>
+							<div class="oc-esc-path-loading" ng-if="loadingEscalationPlan">
+								<i class="icon-loading"></i>
+							</div>
+						</div>
+					</div>
+					<g:inline template="user_profile_contact_preference.xml"/>
+				</div>
+				<span tabindex="0" class="sr-only" id="end_of_dialog" ng-keyup="focusFirstElement($event)">${gs.getMessage("End Of Dialog")}</span>
+			</div>
+		</div>
+	</div>
+</j:jelly>

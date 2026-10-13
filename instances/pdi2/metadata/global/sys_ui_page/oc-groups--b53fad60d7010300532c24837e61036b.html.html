@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:doctype name="html" />
+	<g:inline template="dir_checker.xml" />
+	<g2:evaluate var="jvar_has_rights">
+		var rights = new OCCalendarUtils().canRead();
+		rights;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_use_slack_dm">
+		var slackEnabledForDM = new OnCallCommon().shouldUseSlackForDM();
+		slackEnabledForDM;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_use_msteams_dm">
+		var teamsEnabledForDM = new OnCallCommon().shouldUseTeamsForDM();
+		teamsEnabledForDM;
+	</g2:evaluate>
+	<g:evaluate var="jvar_is_ui16_enabled">
+		var isUI16Enabled = new OCCalendarUtils().isUI16Enabled();
+		isUI16Enabled;
+	</g:evaluate>
+	<g2:evaluate var="jvar_is_dark_theme_enabled" jelly="true">
+        var isDarkThemeEnabled = false;
+        var user = gs.getUser();
+        var isPolarisEnabled = sn_ui.PolarisUI.isEnabled();
+        var variant = user.getPreference('glide.ui.polaris.theme.variant');
+        if (isPolarisEnabled &amp;&amp; variant) {
+                var uxStyle = new GlideRecord('sys_ux_style');
+                uxStyle.get(variant);
+                try {
+                    var style = JSON.parse(uxStyle.getValue('style'));
+                    isDarkThemeEnabled = style.isDark || false;
+                }  catch(e) {
+                }
+        }
+        isDarkThemeEnabled;
+    </g2:evaluate>
+	<j2:if test="$[jvar_has_rights]">
+		<g2:evaluate var="jvar_compatibility">
+			var onCallRotaProcessor = new OnCallRotationProcessor();
+			new OnCallRotation().getBrowserCompatibility(onCallRotaProcessor.UI_APPS.ON_CALL);
+		</g2:evaluate>
+		<j2:if test="$[jvar_compatibility != 'block']">
+			<html ng-app="sn.on_call.now" class="${jvar_text_direction}" lang="$[gs.getSession().getLanguage()]">
+				<head>
+					<link rel="icon" href="${gs.getEscapedProperty('glide.product.icon', 'favicon.ico')}"></link>
+					<g:inline template="on_call_requires.xml" />
+					<j:set var="jvar_isNotifyInstalled" value="${pm.isActive('com.snc.notify')}" />
+					<j:if test="${jvar_isNotifyInstalled}">
+						<g:inline template="notify_ng_webrtc_inline" app_name="sn.on_call.now.groups" number_ppty="com.snc.on_call_rotation.notify_webrtc_number" />
+					</j:if>
+				</head>
+				<body ng-controller="GroupOnCallController as groupOnCallCtrl" ng-init="groupOnCallCtrl.init()">
+					<input type="HIDDEN" id="schedules_page_title" name="schedules_page_title" data-form-title="${gs.getMessage('On-Call Schedules')}"/>
+					<g:inline template="on_call_groups_translations.xml" />
+					<g:inline template="ng_translations.xml" />
+					<div class="oc-board-list-body sn-oc" ng-cloak="">
+						<div class="oc-board-list-wrapper">
+							<sn-oncall-header />
+							<section ng-cloak="" class="col-sm-12 oc-board-list-content clearfix" aria-hidden="false">
+								<div class="oc-board-lists">
+									<sn-oncall-pinned-notification />
+									<div class="sn-navhub sn-navhub_transparent">
+										<div class="sn-navhub-content" role="tablist">
+											<div ng-class="{'state-active':groupOnCallCtrl.groupFilter == 'pinned'}" aria-selected="{{groupOnCallCtrl.groupFilter == 'pinned'}}" ng-click="groupOnCallCtrl.filterBy('pinned')" role="tab" aria-label="{{groupOnCallCtrl.form.pinnedOnCallSchedulesTitle}}" class="btn sn-navhub-btn sn-navhub-btn_text" tabindex="{{(groupOnCallCtrl.groupFilter == 'pinned') ? 0 : -1}}" ng-keydown="groupOnCallCtrl.handleKeyAction('pinned', $event)">{{groupOnCallCtrl.form.pinnedOnCallSchedulesTitle}}
+											</div>
+											<div ng-class="{'state-active':groupOnCallCtrl.groupFilter == 'manage_belong'}" aria-selected="{{groupOnCallCtrl.groupFilter == 'manage_belong'}}" ng-click="groupOnCallCtrl.filterBy('manage_belong')" role="tab" aria-label="{{groupOnCallCtrl.form.myOnCallSchedules}}" class="btn sn-navhub-btn sn-navhub-btn_text" tabindex="{{(groupOnCallCtrl.groupFilter == 'manage_belong') ? 0 : -1}}" ng-keydown="groupOnCallCtrl.handleKeyAction('manage_belong', $event)">{{groupOnCallCtrl.form.myOnCallSchedules}}
+											</div>
+											<div ng-class="{'state-active':groupOnCallCtrl.groupFilter == 'all'}" aria-selected="{{groupOnCallCtrl.groupFilter == 'all'}}" ng-click="groupOnCallCtrl.filterBy('all')" role="tab" aria-label="{{groupOnCallCtrl.form.allOnCallSchedules}}" class="btn sn-navhub-btn sn-navhub-btn_text" tabindex="{{(groupOnCallCtrl.groupFilter == 'all') ? 0 : -1}}" ng-keydown="groupOnCallCtrl.handleKeyAction('all', $event)">{{groupOnCallCtrl.form.allOnCallSchedules}}
+											</div>
+										</div>
+									</div>
+									<div class="oc-board-list clearfix" ng-if="groupOnCallCtrl.showOnCallRotas" i-scroll="groupOnCallCtrl.getGroups()" i-scroll-disabled="{{groupOnCallCtrl.isLoading}}" i-scroll-distance="1" i-scroll-container=".oc-board-list-content" i-scroll-immediate-check="{{groupOnCallCtrl.immediateCheck()}}">
+                    <div class="oc-card" ng-repeat="group in filteredGroups = (groupOnCallCtrl.groups | groupfilter:groupOnCallCtrl.groupFilter:groupOnCallCtrl.textSearch:groupOnCallCtrl.textSearchType:groupOnCallCtrl.pinnedGroups) track by group.id" ng-click="groupOnCallCtrl.redirectFromGroupsCard(group.sys_id)" ng-focus="group.showPin=true" ng-blur="group.showPin=false" ng-mouseenter="group.showPin=true" ng-mouseleave="group.showPin=false" aria-label="{{group.name}}" role="group">
+											<!-- GROUP/ROTA card -->
+											<sn-oncall-group-card />
+											<!--  EMPTY CARD -->
+											<sn-oncall-empty-card />
+										</div>
+									</div>
+									<!-- Splash screens when no GROUP/ROTA data available -->
+									<sn-oncall-splash-screens />
+									<!-- Bottom of page decoration e.g. loading and limit reached -->
+									<sn-oncall-page-decoration />
+ 									<div class="sr-only" role="alert" aria-live="polite" aria-atomic="true">
+										<div ng-if="groupOnCallCtrl.isLoading">
+											${gs.getMessage('Loading')}
+										</div>
+										{{groupOnCallCtrl.getGroupCountMessage(groupOnCallCtrl.groups)}}
+									</div>
+								</div>
+							</section>
+						</div>
+					</div>
+				</body>
+			</html>
+		</j2:if>
+		<g:inline template="on_call_not_compatible.xml" />
+		<j:if test="${jvar_is_ui16_enabled}">
+			<g:inline template="magellan_create_favorites_modal.xml" />
+		</j:if>
+	</j2:if>
+	<g:inline template="on_call_no_access.xml" />
+</j:jelly>

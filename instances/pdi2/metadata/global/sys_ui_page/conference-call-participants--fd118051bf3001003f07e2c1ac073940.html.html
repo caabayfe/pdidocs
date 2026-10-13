@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_on_call_active" jelly="true">
+        pm.isActive("com.snc.on_call_rotation");
+    </g:evaluate>
+    <style>
+        .slushbucket .glide-list select {
+            height: 200px !important;
+        }
+    </style>
+    <div id="loading" style="display:none">
+        <div style="height:100px" />
+        <div align="center">
+            <span class="icon-loading" style="height:100px;width:100px;font-size:100px" />
+        </div>
+
+        <div style="height:100px" />
+    </div>
+    <div id="content">
+        <table align="center">
+            <tr>
+                <td>$[gs.getMessage("Please select the participants you wish to add to the Incident Communication Plan conference call")]</td>
+            </tr>
+            <tr style="height: 10px" />
+            <tr>
+                <td>
+                    <!-- Include the 'ui_slushbucket' UI macro -->
+                    <g:ui_slushbucket left_header="${gs.getMessage('Recommended')}" />
+                </td>
+            </tr>
+            <tr>
+                <td><i>$[gs.getMessage("Users displayed in red do not have a mobile phone number")]</i></td>
+            </tr>
+            <tr style="height: 10px" />
+            <j:if test="${jvar_on_call_active}">
+                <tr>
+                    <td>$[gs.getMessage("Use the following fields to select specific user, group or phone numbers of people you would like to add to the call")]</td>
+                </tr>
+            </j:if>
+            <j:if test="${!jvar_on_call_active}">
+                <tr>
+                    <td>$[gs.getMessage("Use the following fields to select specific user or phone numbers of people you would like to add to the call")]</td>
+                </tr>
+            </j:if>
+            <tr style="height: 10px" />
+            <tr>
+                <td>
+                    <table width="100%">
+                        <tr>
+                            <td style="width:50%">
+                                <div class="form-group">
+                                	<div class="col-xs-2" />
+                                    <div class="col-xs-1">
+                                    	<div>
+                                    		<span class="icon-user" style="font-size:2rem"></span>
+                                    	</div>
+                                	</div>
+                                	<div class="col-xs-6">
+                            			<div>
+                                			<g:ui_reference name="ref_sys_users" table="sys_user" columns="mobile_phone" query="active=true"/>
+                               			</div>
+                            		</div>
+                                	<div class="col-xs-3" />
+    							</div>
+    						</td>
+    					</tr>
+    					<tr style="height: 10px" />
+    					<j:if test="${jvar_on_call_active}">
+        					<tr>
+            					<td style="width:50%">
+                					<div class="form-group">
+                						<div class="col-xs-2" />
+                						<div class="col-xs-1">
+                							<div>
+                								<span class="icon-user-group" style="font-size:2rem"></span>
+                							</div>
+                						</div>
+                						<div class="col-xs-6">
+                                			<div>
+                                    			<g:ui_reference name="ref_sys_groups" table="sys_user_group" query="active=true"/>
+                                   	 		</div>
+                                		</div>
+                						<div class="col-xs-3" />
+                					</div>
+            					</td>
+        					</tr>
+        					<tr style="height: 10px" />
+    					</j:if>
+    					<tr>
+        					<td style="width:50%">
+            					<div class="form-group">
+            						<div class="col-xs-2" />
+            						<div class="col-xs-1">
+            							<div>
+            								<span class="icon-phone" style="font-size:2rem"></span>
+            							</div>
+            						</div>
+            						<div class="col-xs-6">
+							 			<g:requires position="last" inline="true" name="scripts/elements/element_phone_number_e164.js" />
+							   			<input id="notifynow_participant.phone_number" name="notifynow_participant.phone_number" class="form-control" value="" onBlur="validateNumber()" aria-label="${gs.getMessage('Add Phone number')}"/>
+						   			</div>
+            						<div class="col-xs-3" />
+            					</div>
+
+        					</td>
+    					</tr>
+
+    					<tr>
+        					<td colspan="2" align="middle" style="padding-top:10px"><button id="add_to_selected" onclick="addToSelected()" type="button">$[gs.getMessage("Add to selected")]</button></td>
+    					</tr>
+    				</table>
+
+    			</td>
+    		</tr>
+    		<tr>
+        		<td align="right">
+        			<div class="form-group">
+        				<div class="col-xs-8" />
+        				<div class="col-xs-4">
+        					<!-- Include the 'dialog_buttons_ok_cancel' UI macro -->
+        					<g:dialog_buttons_ok_cancel ok="return continueOK()" cancel="return continueCancel()" ok_type="button" cancel_type="button" />
+        				</div>
+        			</div>
+        		</td>
+        	</tr>
+        </table>
+	</div>
+</j:jelly>

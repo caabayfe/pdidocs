@@ -1,0 +1,521 @@
+_meta:
+  hash: 25f37c0f97b84722fb2d2fc5ba6f3465eecc646c81958cadc424b4eeb9b071d3
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: nisan.barzion
+  sys_created_on: 2019-08-22 22:26:46
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 7814ecf753df73008ec4ddeeff7b125f
+  sys_mod_count: '21'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_7814ecf753df73008ec4ddeeff7b125f
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-09-06 11:03:23
+active: 'true'
+checksum: ''
+description: Commons util for PowerShell scripts - WMI and WinRM
+directory: 'false'
+name: CommonUtils.psm1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  <#
+      This method search a key in a string and returns the value.
+      Supports multi lines strings
+  #>
+  function lookupValueByKeyFromString {
+      param([string]$str, [string]$lookupValue, [string]$delimiter)
+      
+      
+      if (-not $str) {
+          return "";
+      }
+      
+      # Fetch the lookupValue
+      $parser = [regex]"^$lookupValue\s*$delimiter\s*(.*)";
+      foreach ($line in $($str.Split([Environment]::NewLine))) {
+          if (-not $line -or -not $line.startsWith($lookupValue)) {
+              continue;
+          }
+          
+          $parts = $parser.match($line);
+
+          if ($parts.Success -and $parts.Groups[1] -and $parts.Groups[1].Value) {
+              SNCLog-DebugInfo ("Found $lookupValue = " + $parts.Groups[1].Value.trim());
+              return $parts.Groups[1].Value.trim();
+          }
+      }
+      
+      return "";
+  }
+
+  function isUncPath {
+  <#
+      .SYNOPSIS
+          Checks to see if the given path is an UNC path.
+
+      .PARAMETER path
+          Specifies the path to check.
+  #>
+      param([string]$path = $(throw 'The path parameter is required'))
+      
+      (New-Object System.Uri($path)).IsUnc;
+  }
+
+  function getFileContentUncPath {
+  <#
+      .SYNOPSIS
+          Gets the file content of the given UNC path.
+
+      .PARAMETER uncPath
+          Specifies the UNC path of the text file.
+      .PARAMETER encoding
+          Specifies the encoding of the text file.
+      .PARAMETER credential
+          Optional credential object that will be used to access the UNC path.
+
+      .OUTPUTS
+          System.String
+              The file content as a string.
+  #>
+      param(
+          [string]$uncPath = $(throw 'The uncPath parameter is required'),
+          [string]$encoding = 'Default',
+          [System.Management.Automation.PSCredential]$credential
+      )
+
+      if (-Not (isUncPath -path $uncPath)) {
+          throw "$uncPath is not a valid UNC path"
+      }
+
+      $parentDir = Split-Path -Path $uncPath
+      $fileName = Split-Path -Path $uncPath -Leaf
+
+      if (-not $credential) {
+          $credential = $cred;
+      }
+
+      $drive = mapDrive -path $parentDir -credential $credential;
+      $mappedPath = mapDrivePath -drive $drive -relativePath $fileName;
+      try {
+          SNCLog-DebugInfo "About to get file content: Get-Content -Path $mappedPath -Encoding $encoding";
+          Get-Content -Path $mappedPath -Encoding $encoding;
+      } finally {
+          unmapDrive -drive $drive;
+      }
+  }
+
+  function putFileUncPath {
+  <#
+      .SYNOPSIS
+          Copies the given source file to the given destination UNC path.
+
+      .PARAMETER sourcePath
+          Specifies the path of the source file.
+      .PARAMETER encoding
+          Specifies the destination UNC path.
+      .PARAMETER changeFilePermission
+          Specifies whether to change the file permissions on the destination file
+      .PARAMETER credential
+          Optional credential object that will be used to access the UNC path.
+
+      .OUTPUTS
+          None.
+  #>
+      param(
+          [string]$sourcePath = $(throw 'The sourcePath parameter is required.'),
+          [string]$destinationUncPath = $(throw 'The destinationUncPath parameter is required.'),
+          [bool]$changeFilePermission = $false,
+          [System.Management.Automation.PSCredential]$credential
+      )
+
+      if (-Not (isUncPath -path $destinationUncPath)) {
+          throw "$uncPath is not a valid UNC path"
+      }
+
+      if (-not (Test-Path $sourcePath -PathType Leaf)) {
+          throw "The source file $sourcePath does not exist or is a directory";
+      }
+
+      $parentDir = Split-Path -Path $destinationUncPath
+      $fileName = Split-Path -Path $destinationUncPath -Leaf
+
+      if (-not $credential) {
+          $credential = $cred;
+      }
+
+      $drive = mapDrive -path $parentDir -credential $credential;
+      $mappedPath = mapDrivePath -drive $drive -relativePath $fileName;
+
+      try {
+          SNCLog-DebugInfo "About to put file through UNC path: Copy-Item -Path $sourcePath -Destination $mappedPath";
+
+          # Check if the same file before put by calculating checksum, assuming source file exists
+          $srcHash = (Get-FileHash $sourcePath).hash;
+          $destHash = "";
+          if (Test-Path -Path $mappedPath) {
+              try {
+                  [IO.File]::OpenWrite($mappedPath).close();
+                  $destHash = (Get-FileHash $mappedPath).hash;
+              } catch {
+                  $tmpDest = $mappedPath + (Get-Date -UFormat "%s");
+                  Copy-Item $mappedPath $tmpDest;
+                  $destHash = (Get-FileHash $tmpDest).hash;
+                  Remove-Item $tmpDest;
+              }
+          }
+          if ($srcHash -ne $destHash) {
+              $null = Copy-Item -Path $sourcePath -Destination $mappedPath -ErrorAction Stop;
+          }
+
+          if ($changeFilePermission) {
+              SNCLog-DebugInfo "About to change file permissions: ICACLS $destinationUncPath /grant:r ADMINISTRATORS:F /grant:r EVERYONE:RX";
+              try {
+                  $allOutput = & ICACLS $destinationUncPath /grant:r ADMINISTRATORS:F /grant:r EVERYONE:RX 2>&1;
+                  # only interested in stderr
+                  $stderr = $allOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] };
+                  if ($LASTEXITCODE -and $stderr) {
+                      SNCLog-DebugInfo ("Could not change file permissions of $destinationUncPath. " + ($stderr | Out-String));
+                  }
+              } catch {
+                  SNCLog-DebugInfo ("Could not change file permissions of $destinationUncPath. " + $_.Exception.Message);
+              }
+          }
+      } finally {
+          unmapDrive -drive $drive;
+      }
+  }
+
+  function deleteFileUncPath {
+  <#
+      .SYNOPSIS
+          Delete the file at the given destination UNC path.
+
+      .PARAMETER sourcePath
+          Specifies the UNC path of the file to be deleted.
+      .PARAMETER credential
+          Optional credential object that will be used to access the UNC path.
+
+      .OUTPUTS
+          None.
+  #>
+      param(
+          [string]$uncPath = $(throw 'The uncPath parameter is required'),
+          [System.Management.Automation.PSCredential]$credential
+      )
+
+      if (-Not (isUncPath -path $uncPath)) {
+          throw "$uncPath is not a valid UNC path"
+      }
+
+      $parentDir = Split-Path -Path $uncPath
+      $fileName = Split-Path -Path $uncPath -Leaf
+
+      if (-not $credential) {
+          $credential = $cred;
+      }
+
+      $drive = mapDrive -path $parentDir -credential $credential;
+      $mappedPath = mapDrivePath -drive $drive -relativePath $fileName;
+      try {
+          SNCLog-DebugInfo "About to delete file through UNC path: Remove-Item -Path $mappedPath";
+          $null = Remove-Item -Path $mappedPath -Force -ErrorAction Stop;
+      } catch [System.Management.Automation.ItemNotFoundException] {
+          throw
+      }
+      finally {
+          unmapDrive -drive $drive;
+      }
+  }
+
+  function mapDrive {
+  <#
+      .SYNOPSIS
+          Maps the given path to a drive.
+
+      .PARAMETER path
+          Specifies the path to map.
+      .PARAMETER credential
+          Optional credential object that will be used to map the drive.
+
+      .OUTPUTS
+          System.Management.Automation.PSDriveInfo
+              The mapped drive.
+  #>
+      param(
+          [string]$path = $(throw 'The path parameter is required'),
+          [System.Management.Automation.PSCredential]$credential
+      )
+
+      $driveName = [Guid]::NewGuid().ToString()
+
+      if (-not $credential) {
+          $credential = $cred;
+      }
+
+      if ($credential) {
+          SNCLog-DebugInfo "About to create a map drive: New-PSDrive -Name $driveName -PSProvider FileSystem -Root $path -Credential $($credential.UserName) -Scope Script -ErrorAction Stop";
+          try {
+              return New-PSDrive -Name $driveName -PSProvider FileSystem -Root $path -Credential $credential -Scope Global -ErrorAction Stop;
+          } catch [System.ComponentModel.Win32Exception] {
+              # if UNC path already exists, most likely it's already mapped with a different credential
+              # all we can do is to use the same mapping (by not specifying credential below) even if it's
+              # not the right credential since Windows allows only 1 SMB connection to each remote host
+              if (Test-Path -Path $path) {
+                  SNCLog-DebugInfo "Unable to map drive for user $($credential.UserName) because drive might have been mapped for a different user"
+              } else {
+                  # rethrow exception
+                  throw;
+              }
+          }
+      }
+
+      SNCLog-DebugInfo "About to create a map drive without using credential: New-PSDrive -Name $driveName -PSProvider FileSystem -Root $path -Scope Script -ErrorAction Stop";
+      return New-PSDrive -Name $driveName -PSProvider FileSystem -Root $path -Scope Global -ErrorAction Stop;
+  }
+
+  function unmapDrive {
+  <#
+      .SYNOPSIS
+          Unmaps the given drive.
+
+      .PARAMETER drive
+          Specifies the drive to unmap.
+  #>
+      param([System.Management.Automation.PSDriveInfo]$drive = $(throw 'The drive parameter is required.'))
+
+      Remove-PSDrive -Name $drive.Name -ErrorAction SilentlyContinue;
+  }
+
+  function mapDrivePath {
+  <#
+      .SYNOPSIS
+          Maps the given relative path to the drive's root.
+
+      .PARAMETER drive
+          Specifies the drive as the root of the relative path.
+      .PARAMETER relativePath
+          Specifies the path relative to the drive's root.
+
+      .OUTPUTS
+          System.String
+              The absolute path rooted by the drive.
+  #>
+      param(
+          [System.Management.Automation.PSDriveInfo]$drive = $(throw 'The drive parameter is required.'),
+          [string]$relativePath = $(throw 'The relativePath parameter is required')
+      )
+
+      Join-Path -Path "$($drive.Name):" -ChildPath $relativePath;
+  }
+
+  function standardizePath {
+      param([string]$path)
+      
+      if ($path){
+          return ($path.replace("/", "\"));
+      }
+  }
+
+  function httpRequest {
+  <#
+      .SYNOPSIS
+          Perform an HTTP request
+
+      .PARAMETER User
+          The username used to authenticate the request.
+      .PARAMETER Password
+          The password used to authenticate the request.
+      .PARAMETER URI
+          The resource to request.
+
+      .OUTPUTS
+          The HTTP status code followed by the response body, newline-separated.
+  #>
+      param(
+          [string]$User,
+          [string]$Password,
+          [string]$URI = $(throw 'URI is required')
+      )
+
+      if ($User -and $Password) {
+          $httpCred = getCredential -User $User -Password $Password;
+          $httpResponse = Invoke-WebRequest -Credential $httpCred -URI $URI -UseBasicParsing;
+      } else {
+          $httpResponse = Invoke-WebRequest -UseDefaultCredentials -URI $URI -UseBasicParsing;
+      }
+
+
+      return $httpResponse.StatusCode, $httpResponse.Content;
+  }
+
+  function standardizeNamespace {
+      param([string]$namespace)
+      
+      # If we did not get a namespace, use the default
+      if (-not $namespace){
+          $nameSpace = "root\cimv2";
+      }elseif ($namespace.startsWith("\")){
+          $namespace = $namespace.substring(1); #namespace should not start with a \
+      }
+      
+      return $namespace;
+  }
+
+
+  <#
+      This method returns a comma separated values of the array items and expand CIM Intances if needed
+  #>
+  function arrayToString{
+      param([Array]$arr)
+      
+      $items = @();
+      foreach ($item in $arr){
+          
+          if ($item -is [CimInstance]){
+              # In case we got an array of objects, we will create many arrays of its properties
+              $keyValues = @("$INTERNAL_NAMESPACE=$($item.CimSystemProperties.Namespace)", "$INTERNAL_CLASSNAME=$($item.CimSystemProperties.ClassName)");
+              $keyValues += ($item.CimInstanceProperties | ForEach-Object {
+                  if ($_.Value -ne $null) {
+                      "$($_.Name)=$($_.Value)";
+                  }
+              });
+
+              $commaSeparatedKeyValues = $keyValues -join $OBJECT_DELIMITER
+              if ($commaSeparatedKeyValues) {
+                  $items += "${OBJECT_INDICATOR_START}$commaSeparatedKeyValues${OBJECT_INDICATOR_END}";
+              }
+          } else {
+              $items += $item;
+          }
+      }
+
+      $commaSeparatedItems = $items -join $ARRAY_DELIMITER;
+      return "${ARRAY_INDICATOR_START}${commaSeparatedItems}${ARRAY_INDICATOR_END}";
+  }
+
+  <#
+      When we moved from Get-WmiObject to Get-CimInstance, we noticed that the format of the output is very different.
+      This method is intended to match that output
+  #>
+  function cimInstanceToString{
+      param([CimInstance]$cimObj, [string]$objName)
+      
+      $rtn = New-Object -TypeName System.Text.StringBuilder;
+      # A fix prefix found in Get-WmiObject
+      $PREFIX = "\\.\";
+      
+      if ($cimObj -and $cimObj.CimInstanceProperties -and $cimObj.CimInstanceProperties.count -gt 0 -and $objName){
+          $null = $rtn.Append("$objName`t:`t");
+          $null = $rtn.Append($PREFIX + ($cimObj.CimSystemProperties.Namespace + ":" + $cimObj.CimSystemProperties.ClassName).replace("/", "\") + ".");
+      }
+
+      foreach ($p in $cimObj.CimInstanceProperties) {
+          if ($p.Value){
+              $str = $p.Value;
+              $name = $p.Name;
+              if ($str -is [string]){
+                  # escape \ by replacing \ with \\
+                  $str = $str.Replace("\", "\\");
+
+                  # escape " by replacing " with \"
+                  $str = $str.Replace("`"", "\`"");
+              }
+              $null = $rtn.Append("$name=""$str"",");
+          }
+          
+      }
+      
+      $rtnStr = $rtn.toString();
+      
+      if ($rtnStr.length -gt 0){
+          $rtnStr = $rtnStr.substring(0, $rtnStr.length - 1);
+      }
+
+      return $rtnStr;
+  }
+
+  function propertyToString{
+      param($property)
+      
+      if ($property.Value -is [array]){
+          # arrayToString method is in CommonUtils
+          $property.Name + "`t:`t" + (arrayToString -arr $property.Value);
+      } elseif ($property.Value -is [CimInstance]){
+          # cimInstanceToString method is in CommonUtils
+          cimInstanceToString -cimObj $property.Value -objName $property.Name;
+      } elseif ($property.Value -is [DateTime]) {
+          $property.Name + "`t:`t" + [Management.ManagementDateTimeConverter]::ToDmtfDateTime($property.Value);
+      }
+      else {
+          $property.Name + "`t:`t" + $property.Value;
+      }
+  }
+
+  function getInternalWhere {
+       param([string]$query, [string]$namespace)
+
+      $parser = [regex]"(?i).*\s+from\s+\S+(?:\s+where\s+(.+))?";
+      $parts = $parser.match($query);
+
+      if ($parts.Success -and $parts.Groups[1] -and $parts.Groups[1].Value){
+          $rtn = "$INTERNAL_WHERE`t:`t{0}" -f $parts.Groups[1].Value.toString();
+          return $rtn.Trim();
+      }
+  }
+
+  function isNum{
+      param($value)
+      
+      return $value -match "^\d+\.?\d*$";
+  }
+
+  function getFileAclUncPath {
+  <#
+      .SYNOPSIS
+          Gets the owner of the specified file
+
+      .PARAMETER uncPath
+          The UNC path to the file
+      .PARAMETER credential
+          Credentials to use
+
+      .OUTPUTS
+          The acl of the file
+  #>
+      param(
+          [string]$uncPath = $(throw "uncPath parameter is required"),
+          [System.Management.Automation.PSCredential]$credential
+      )
+
+      if (-Not (isUncPath -path $uncPath)) {
+          throw "$uncPath is not a valid UNC path"
+      }
+
+      $parentDir = Split-Path -Path $uncPath
+      $fileName = Split-Path -Path $uncPath -Leaf
+
+      if (-not $credential) {
+          $credential = $cred;
+      }
+
+      $drive = mapDrive -path $parentDir -credential $credential;
+      $mappedPath = mapDrivePath -drive $drive -relativePath $fileName;
+      try {
+          SNCLog-DebugInfo "About to get file ACL: Get-Acl -Path $mappedPath";
+          $acl = Get-Acl -Path $uncPath;
+      } finally {
+          unmapDrive -drive $drive;
+      }
+
+      return $acl;
+  }
+script_attachment: ''
+source: ''
+sys_name: CommonUtils.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

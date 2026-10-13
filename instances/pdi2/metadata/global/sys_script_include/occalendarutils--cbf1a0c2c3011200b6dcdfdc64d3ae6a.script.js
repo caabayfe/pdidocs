@@ -1,0 +1,181 @@
+var OCCalendarUtils = Class.create();
+OCCalendarUtils.DEFAULT_READ_ROLES = "itil,roster_admin,rota_admin,rota_manager";
+OCCalendarUtils.UTC_DATE_FORMAT = "yyyy-MM-dd";
+OCCalendarUtils.UTC_TIME_FORMAT = "HH:mm:ss";
+
+OCCalendarUtils.prototype = Object.extendsObject(AbstractAjaxProcessor, {
+
+	DATE_FORMAT_DHTMLX : {
+		"%Y" : "yyyy",
+		"%y" : "yy",
+		"%M" : "MMM",
+		"%m" : "MM",
+		"%d" : "dd"
+	},
+
+	UI_16_PLUGIN: 'com.glide.ui.ui16',
+
+	USE_CONCOURSE_PREFERENCE: 'use.concourse',
+
+	TIME_FORMAT_DHTMLX : {
+		"%H" : "HH",
+		"%h" : "hh",
+        "%g:" : /^h:/,
+		"%i" : "mm",
+		"%s" : "ss",
+		"%a" : "a"
+	},
+
+	GLIDE_AJAX_PARAM: {
+		GROUP: 'sysparm_group',
+		SUBSCRIPTION_URL: 'sysparm_subscription_url'
+	},
+
+	FIELDS: {
+		GROUP: 'group',
+		FIRST_DAY_OF_WEEK: 'first_day_of_the_week',
+	},
+	
+	TABLES: {
+		SYS_CHOICE: 'sys_choice',
+		GROUP_PREFERENCE: 'on_call_group_preference'
+	},
+	
+	/*set of recommended colors*/
+	PALLETE_COLORS:      ['#D8EAFD', '#ABE2E8', '#C3F1C6', '#FBEAB7', '#FFDCC6', '#FACFD7', '#FBC8EB', '#D8D9F9', '#B8DAE6', '#FECEAD', "#D9F4F9", "#F4E9DD", "#E8EAEA", "#D4EED8", "#F1F6DB", "#F9DAEF", "#FFE2DC", "#F7DFE7", "#EFDEFA", "#D4F0F0", "#FFF1D4", "#F8C8CD", "#FFE5BF", "#FBF7BF", "#DDD5FB", "#BDDCF2", "#CADFC0", "#DBDBDE"],
+	/*set of recommended dark colors in exact matching sequence of the set of recommended colors*/
+	PALLETE_DARK_COLORS: ['#A0C6ED', '#89C6CC', '#98D49E', '#F8DE8E', '#FDB481', '#F595A8', '#F89BDC', '#B1B4F2', '#88C2D5', '#F48C45', "#ABE7F2", "#E7D0B6", "#CCD1D1", "#AFDFB6", "#E1ECB1", "#F2B0DD", "#FFB7A8", "#EDB6C8", "#DAB4F4", "#B0E3E3", "#FFE1A3", "#F29BA5", "#FFCF8A", "#F8F191", "#B7A7F7", "#94C7EA", "#ACCD9D", "#BFBFC4"],
+
+	initialize: function (request, responseXML, gc) {
+		this.log = new GSLog("com.snc.on_call_rotation.log.level", this.type);
+		AbstractAjaxProcessor.prototype.initialize.call(this, request, responseXML, gc);
+	},
+
+	/**
+ 	* Get the first day of week from system property.
+ 	*
+ 	* glide.ui.date_format.first_day_of_week stipulates that first day of week is 1 (Sunday).
+ 	* Example: Sunday=1, Monday=2, Tuesday=3 etc.
+ 	*
+ 	* @return Integer first day of week
+ 	**/
+	getSystemFirstDayOfWeek: function() {
+		var firstDayOfWeekProperty = parseInt(gs.getProperty('glide.ui.date_format.first_day_of_week', 1), 10);
+		var isValid = (typeof firstDayOfWeekProperty === 'number' && (firstDayOfWeekProperty % 1) === 0) &&
+		(firstDayOfWeekProperty > 0 && firstDayOfWeekProperty <= 7);
+		return isValid ? firstDayOfWeekProperty : 1;
+	},
+	/**
+ 	* Get the first day of week from on call group preference.
+ 	*
+ 	* first_day_of_the_week stipulates that first day of week is 1 (Sunday).
+ 	* Example: Sunday=1, Monday=2, Tuesday=3 etc.
+	* If no group preference is found, then the glide.ui.date_format.first_day_of_week system property is used.
+ 	*
+ 	* @return Integer first day of the week as per group preference
+ 	**/
+	getGroupFirstDayOfWeek: function (groupId) {
+		var groupSysId = null;
+		var firstDayOfWeek = this.getSystemFirstDayOfWeek();
+		if(this.canRead()) {
+			if(!gs.nil(groupId)) {
+				groupSysId = groupId;
+			} else {
+				groupSysId = this.getParameter(this.GLIDE_AJAX_PARAM.GROUP);
+			}
+			var groupPrefGR = new GlideRecord(this.TABLES.GROUP_PREFERENCE);
+			groupPrefGR.addQuery(this.FIELDS.GROUP, groupSysId);
+			groupPrefGR.query();
+			if (groupPrefGR.next()) {
+				var groupFirstDayOfWeek = parseInt(groupPrefGR.getValue(this.FIELDS.FIRST_DAY_OF_WEEK));
+				firstDayOfWeek = (groupFirstDayOfWeek == 0 || isNaN(groupFirstDayOfWeek)) ? firstDayOfWeek : groupFirstDayOfWeek;
+			}
+		}
+		return firstDayOfWeek;
+	},
+	getSubscriptionURL: function() {
+		if(this.canRead()) {
+			var subscriptionURL = this.getParameter(this.GLIDE_AJAX_PARAM.SUBSCRIPTION_URL);
+			var apiKeyName = gs.getUserID() + " on-call subscription api key";
+			var token = new OnCallCommonSNC().generateAPIKey(apiKeyName);
+			var tinyURL = new GlideTinyURL().createTinyURLWithCustomLength(subscriptionURL, 10);
+			return tinyURL + "?ni.nolog.token=" + token;
+		} else {
+			return "";
+		}
+	},
+
+	/**
+ 	* Get date format from user defined format or system format if not found, but converted
+	* to DHTMLX format as per spec:
+ 	*
+	* http://docs.dhtmlx.com/scheduler/settings_format.html
+	*
+	* Add additional formats to the DATE_FORMAT_DHTMLX property of this object.
+	*
+ 	**/
+	getUserDateFormat: function() {
+		var userDateFormat = gs.getUser().getDateFormat() + "";
+
+		for (var dateFormat in this.DATE_FORMAT_DHTMLX)
+			userDateFormat = userDateFormat.replace(this.DATE_FORMAT_DHTMLX[dateFormat], dateFormat);
+
+		this.log.debug("[getUserDateFormat] userDateFormat: " + userDateFormat);
+		return userDateFormat;
+	},
+
+	/**
+ 	* Get time format from user defined format or system format if not found, but converted
+	* to DHTMLX format as per spec:
+ 	*
+	* http://docs.dhtmlx.com/scheduler/settings_format.html
+	*
+	* Add additional formats to the TIME_FORMAT_DHTMLX property of this object.
+	*
+ 	**/
+	getUserTimeFormat: function() {
+		var userTimeFormat = gs.getUser().getTimeFormat() + "";
+
+		for (var timeFormat in this.TIME_FORMAT_DHTMLX)
+			userTimeFormat = userTimeFormat.replace(this.TIME_FORMAT_DHTMLX[timeFormat], timeFormat);
+
+		userTimeFormat = userTimeFormat.replace(/z/i, "");
+		
+		this.log.debug("[getUserTimeFormat] userTimeFormat: " + userTimeFormat);
+		return userTimeFormat;
+	},
+
+	canRead: function() {
+		return GlideSecurityManager.get().hasRole(gs.getProperty("com.snc.on_call_rotation.calendar_read_roles", OCCalendarUtils.DEFAULT_READ_ROLES));
+	},
+
+	/**
+ 	* Checks if the current session's user can write for the currently selected group on the calendar.
+ 	*
+ 	* Used by OnCallRotation Scripted REST API's
+ 	*
+ 	* @param String sys_user_group
+ 	* @return Boolean does the user have write privileges for the group
+ 	**/
+	canWriteByGroupSysId: function(groupSysId) {
+		if (!groupSysId)
+			return false;
+		return new OnCallSecurityNG().rotaMgrAccess(groupSysId);
+	},
+
+	canWriteByGroupRecord: function(groupGR) {
+		return this.canWriteByGroupSysId(groupGR.getUniqueValue());
+	},
+
+	getPalleteDarkColors: function(lightColor) {
+		var matchedIndex = this.PALLETE_COLORS.indexOf(lightColor + '');
+		if (matchedIndex > -1)
+			return this.PALLETE_DARK_COLORS[matchedIndex];
+	},
+
+	isUI16Enabled: function() {
+		return GlidePluginManager.isActive(this.UI_16_PLUGIN) && gs.getUser().getPreference(this.USE_CONCOURSE_PREFERENCE) == 'true';
+	},
+	
+	type: 'OCCalendarUtils'
+});

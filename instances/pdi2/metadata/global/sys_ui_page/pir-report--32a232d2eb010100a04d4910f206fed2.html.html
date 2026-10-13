@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g2:evaluate jelly="true">
+        var found = false;
+        var gr = new GlideRecord("incident_alert");
+        gr.addQuery("sys_id", jelly.sysparm_record_sys_id);
+        gr.query();
+        if (gr.next())
+            gr;
+        if (jelly.sysparm_record_sys_id != null $[AMP]$[AMP] gr.sys_id != null)
+            found = true;
+    </g2:evaluate>
+    <j2:if test="$[!found]">
+        <p>Found = $[found]</p>
+        <p>sysparm_record_sys_id = $[sysparm_record_sys_id]</p>
+        <p>gr.sys_id = $[gr.sys_id]</p>
+        <g:insert_form name="not_found.xml" />
+    </j2:if>
+    <j2:if test="$[found]">
+        <style type="text/css">
+            table.incident{
+                border-spacing:0;
+                border-collapse:collapse;
+            }
+            th.incident{
+                background:#E6E6E6;
+                border-top:solid #999999 1.5pt;
+                border-left:none;
+                border-bottom:solid #999999 1.5pt;
+                border-right:none;
+            }
+            td.incident{
+                border-top:solid #000000 1pt;
+                border-left:none;
+                border-bottom:solid #000000 1pt;
+                border-right:none;
+            }
+        </style>
+        <j2:if test="${sysparm_media == 'print'}">
+             <script>window.print()</script>
+        </j2:if>
+        <j2:if test="${empty(sysparm_media)}">
+            <div style="width: 98%; text-align: right">
+                <a href="PIR_Report.do?sysparm_record_sys_id=$[gr.sys_id]&amp;sysparm_media=print" target="_blank"><img id="openPrintView" src="images/printer.gifx" /></a>
+            </div>
+        </j2:if>
+        <div id="post-incident-review">
+            <j2:if test="$[JSUtil.notNil(gr.source_incident)]">
+            <h1>$[gs.getMessage("Post incident review")]</h1>
+            <h3>$[gr.source_incident.number] - $[gr.source_incident.short_description]</h3>
+            <div id="source-incident-details">
+                <h2>$[gs.getMessage('Source incident details')]</h2>
+                <table>
+                    <tr>
+                        <td>$[gs.getMessage('Number')]:</td>
+                        <td>$[gr.source_incident.number]</td>
+                    </tr>
+                    <tr>
+                        <td>$[gs.getMessage('Caller')]:</td>
+                        <td>$[gr.source_incident.caller_id.name]</td>
+                    </tr>
+                    <tr>
+                        <td>$[gs.getMessage('Configuration item')]:</td>
+                        <td>$[gr.source_incident.cmdb_ci.name]</td>
+                    </tr>
+                    <tr>
+                        <td>$[gs.getMessage('Duration')]:</td>
+                        <td>$[gr.source_incident.calendar_duration.getDisplayValue()]</td>
+                    </tr>
+                    <tr>
+                        <td>$[gs.getMessage('Short description')]:</td>
+                        <td>$[gr.source_incident.short_description]</td>
+                    </tr>
+                    <tr>
+                        <td>$[gs.getMessage('Opened')]:</td>
+                        <td>$[gr.source_incident.opened_at.getDisplayValue()]</td>
+                    </tr>
+                    <tr>
+                        <td>$[gs.getMessage('Opened by')]:</td>
+                        <td>$[gr.source_incident.opened_by.name]</td>
+                    </tr>
+                    <tr>
+                        <td>$[gs.getMessage('Resolved')]:</td>
+                        <td>$[gr.source_incident.resolved_at.getDisplayValue()]</td>
+                    </tr>
+                </table>
+            </div>
+            </j2:if>
+            <div id="incident-alert-details">
+                <h2>$[gs.getMessage('Incident alert details')]</h2>
+                <table>
+                    <tr>
+                        <td>$[gs.getMessage('Resolution code')]:</td>
+                        <td>$[gr.resolution_code.getDisplayValue()]</td>
+                    </tr>
+					<j2:if test="$[JSUtil.notNil(gr.resolution_notes)]">
+					<tr>
+						<td>$[gs.getMessage('Resolution notes')]:</td>
+						<td>$[gr.resolution_notes]</td>
+					</tr>
+					</j2:if>
+					<j2:if test="$[JSUtil.notNil(gr.summary)]">
+					<tr>
+						<td>$[gs.getMessage('Summary')]:</td>
+						<td>$[gr.summary]</td>
+					</tr>
+					</j2:if>
+					<j2:if test="$[JSUtil.notNil(gr.lessons_learned)]">
+					<tr>
+						<td>$[gs.getMessage('Lessons learned')]:</td>
+						<td>$[gr.lessons_learned]</td>
+					</tr>
+					</j2:if>
+                </table>
+            </div>
+        </div>
+    </j2:if>
+</j:jelly>

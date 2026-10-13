@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:evaluate var="jvar_isNextPg" expression="RP.getParameterValue('sysparm_next_pg')"/>
+	<j:if test="${jvar_isNextPg == 'true'}">
+		<style>
+			.no_next {
+				display: none !important;
+			}
+		</style>
+	</j:if>
+	<style>
+		body {
+			overflow-x: hidden;
+		}
+	#mim-propose-form {
+		overflow: hidden;
+	}
+	.form-horizontal {
+		margin-top: 5px;
+		margin-bottom: 20px;
+	}
+	.propose-modal-textarea {
+		resize: vertical;
+		min-height: 120px
+	}
+	#dialog_buttons .btn{
+		margin-left: 10px;
+		padding-left: 15px;
+		padding-right: 15px;
+		text-align: right;
+	}
+	#work-notes-wrapper .required-marker{
+		display: inline-block;
+	}
+	#work-notes-wrapper label{
+		overflow-wrap: break-word;
+	}
+	#page_timing_div {
+		display:none !important;
+	}
+</style>
+	<script>
+			var config = {
+				workspace: '${JS_STRING:RP.getParameterValue('sysparm_workspace')}' == 'true'
+			};
+		var iframeMsgHelper = (function () {
+				function createPayload(action, modalId, data) {
+					return {
+						messageType: 'IFRAME_MODAL_MESSAGE_TYPE',
+						modalAction: action,
+						modalId: modalId,
+						data: (data ? data : {})
+					};
+				}
+
+				function pm(window, payload) {
+					if (window.parent === window) {
+						console.warn('Parent is missing. Is this called inside an iFrame?');
+						return;
+					}
+					window.parent.postMessage(payload, location.origin);
+				}
+
+				function IFrameMessagingHelper(window) {
+					this.window = window;
+					this.src = location.href;
+					this.messageHandler = this.messageHandler.bind(this);
+					this.window.addEventListener('message', this.messageHandler);
+				}
+
+				IFrameMessagingHelper.prototype.messageHandler = function (e) {
+					if (e.data.messageType !== 'IFRAME_MODAL_MESSAGE_TYPE' || e.data.modalAction !== 'IFRAME_MODAL_ACTION_INIT') {
+						return;
+					}
+					this.modalId = e.data.modalId;
+				};
+
+				IFrameMessagingHelper.prototype.confirm = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CONFIRMED', this.modalId, data);
+					pm(this.window, payload);
+				};
+
+				IFrameMessagingHelper.prototype.cancel = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CANCELED', this.modalId, data);
+					pm(this.window, payload);
+				};
+
+				return new IFrameMessagingHelper(window);
+			}());
+
+	</script>
+<div id="mim-propose-form">
+<div class="form-horizontal no_next">
+	<div class="form-group" id="work-notes-wrapper">
+		<label class="col-sm-2 control-label" for="mim-propose-work-notes">
+			<span mandatory="true" class="required-marker"></span>
+			${gs.getMessage('Work notes')}
+		</label>
+		<div class="col-sm-10">
+			<textarea required="true" class="form-control propose-modal-textarea" id="mim-propose-work-notes" type="text" oninput="proposeModal.workNotesOnChange()" onchange="proposeModal.workNotesOnChange()"></textarea>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="mim-propose-business-impact">${gs.getMessage('Business Impact')}</label>
+		<div class="col-sm-10">
+			<textarea class="form-control propose-modal-textarea" name="mim-propose-business-impact" id="mim-propose-business-impact"></textarea>
+		</div>
+	</div>
+</div>
+<div id="dialog_buttons" class="clearfix pull-right no_next">
+		<button type="button" class="btn btn-default" onclick="proposeModal.close()" title="${gs.getMessage('Close the dialog')}">${gs.getMessage('Cancel')}</button>
+		<button type="button" class="btn btn-primary disabled" aria-disabled="true" id="mim-propose-button" title="${gs.getMessage('Propose Major Incident')}" onclick="proposeModal.propose()">${gs.getMessage('Propose')}</button>
+</div>
+</div>
+</j:jelly>

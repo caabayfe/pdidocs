@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:evaluate>
+		var error_message;
+		var warn_message;
+
+		function isValidDiscoverySchedule(schedule) {         
+			var disco = new Discovery();
+
+			if (disco.isValidDiscoverySchedule(schedule))
+				return true;
+
+			if (disco.hasZeroRange)
+				errorMsg(sn_i18n.Message.getMessage("global-discovery", "schedule_invalid_range"));
+			else
+				warnMsg(sn_i18n.Message.getMessage("global-discovery", "schedule_no_active_range_service"));
+			return false;
+		}
+
+		function warnMsg(msg) {
+			warn_message = msg;
+			gs.addInfoMessage(msg);
+		}
+
+		function errorMsg(msg) {
+			error_message = msg;
+			gs.addErrorMessage(msg);
+		}
+
+		function isValidMIDServer(scheduleGR) {
+			// log error if mid server is not valid
+			if (specificMID(scheduleGR) &amp;&amp; !MIDServerIsValid(scheduleGR)) {
+				var message = sn_i18n.Message.getMessage("global-discovery", "schedule_no_mids");
+				warnMsg(message);
+				return false;
+			}
+			return true;
+		}
+
+		function MIDServerIsValid(scheduleGR) {
+			var mid = scheduleGR.mid_server;
+			// if the mid value is null/blank, we will not check for the validity and instead return true
+			if (gs.nil(mid))
+				return true;
+
+			var midServer = new MIDServer(mid);
+			return midServer.valid;
+		}
+
+		function specificMID(scheduleGR) {
+			return (scheduleGR.mid_select_method + "" === "specific_mid");
+		} 
+		
+		var isWorkspace = RP.getParameterValue("sysparm_workspace") == "true";
+		var schedule_sys_id = isWorkspace ? RP.getParameterValue("sysparm_schedule_sysid") : RP.getWindowProperties().get("schedule_sys_id") + "";
+		var start_discovery = false;
+		var schedGR = new GlideRecord("discovery_schedule");
+		schedGR.addQuery("sys_id", schedule_sys_id);
+		schedGR.query();
+		if (schedGR.next())
+			start_discovery = isValidDiscoverySchedule(schedGR) &amp;&amp; isValidMIDServer(schedGR);
+		
+	</g:evaluate>
+	
+	<input type="hidden" id="schedule_sys_id" value="${schedule_sys_id}" />
+	<input type="hidden" id="start_discovery" value="${start_discovery}" />
+	<input type="hidden" id="error_message" value="${error_message}" />
+	<input type="hidden" id="warn_message" value="${warn_message}" />
+	
+	<style>
+		#container-td {
+			padding-top: 5px;
+		}
+
+		.top-buffer {
+			padding-top: 3px;
+		}
+
+		.bottom-buffer {
+			padding-bottom: 5px;
+		}
+	</style>
+
+	<table width="100%">
+		<tr>
+			<td align="center" valign="middle" id="container-td">
+				<div class="centerAlignContent bottom-buffer">
+						<span id="poll_text" >${gs.getMessage("Starting Discovery")} </span>
+					</div>
+				<div id="loading_icon" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-loading"/>
+					</div>
+					
+				</div>
+			</td>
+		</tr>
+	</table>
+
+	<script>
+		var e = $("srcip");
+		if (e)
+			e.focus();
+		var isWorkspace = "${JS_STRING:isWorkspace}";
+	</script>
+</j:jelly>

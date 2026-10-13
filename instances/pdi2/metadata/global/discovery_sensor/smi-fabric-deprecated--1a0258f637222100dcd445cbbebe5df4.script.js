@@ -1,0 +1,1 @@
+new DiscoverySmiFabricSensor_deprecated();

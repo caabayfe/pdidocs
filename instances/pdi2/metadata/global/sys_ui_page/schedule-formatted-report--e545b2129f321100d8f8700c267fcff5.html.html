@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <j:set var="jvar_start" value="${sysparm_start_date}"/>
+  <j:set var="jvar_end" value="${sysparm_end_date}"/>
+  <j:set var="jvar_groups" value="${sysparm_groups}"/>
+  <g:evaluate var="jvar_html" jelly="true">
+    var fsr = new FormattedScheduleReport();
+    var start = jelly.jvar_start;
+    var end = jelly.jvar_end;
+    var groups = fsr.validGroupSysIds(jelly.jvar_groups);
+    if(!start || !end || !groups) 
+    	gs.addInfoMessage(gs.getMessage('Required params are missing'));
+    else
+    	fsr.buildSchedule(groups, start, end);
+    var html = fsr.getReport();
+    if (JSUtil.nil(html) &amp; start &amp; end &amp; groups) {
+        var groupNames = fsr.getGroupNames(groups);
+        var params = [GlideStringUtil.escapeHTML(groupNames), GlideStringUtil.escapeHTML(start), GlideStringUtil.escapeHTML(end)];
+        gs.addInfoMessage(gs.getMessage('No data available for report based on groups: "{0}" and start date: "{1}" and end date: "{2}"', params));
+    }  
+    html;
+  </g:evaluate>
+  <style>
+     #schedule table, #schedule th, #schedule td {
+      border-collapse: collapse;
+      border: 1px solid black;
+      text-align: center;
+      padding: 5px;
+      font-size: ${gs.getProperty("css.base.font-size", "10pt")};
+      font-family: ${gs.getProperty("css.base.font-family", "Arial")};
+    }
+    #schedule th {
+      background-color: ${gs.getProperty("css.base.color", "#767676")};
+      color: white;
+    }
+    .print-button-position {
+      position: fixed;
+      right: 6px;
+    }
+  </style>
+  <div style="height: 20px" class="print_hide text-align-right">
+    <button type="submit" class="print-button-position" onclick="javascript: window.print();">
+    <img src="images/printer.gifx" alt="${gs.getMessage('Click to Print')}"/>
+    <span>
+    ${gs.getMessage("Click to Print")}
+    </span>
+    </button>
+  </div>
+  <div id="schedule" style="margin:20px">
+  </div>
+  <script>
+    document.getElementById('schedule').innerHTML = '${JS:jvar_html}';
+  </script>
+</j:jelly>

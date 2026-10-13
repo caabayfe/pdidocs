@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false"
+    xmlns:j="jelly:core"
+    xmlns:g="glide"
+    xmlns:j2="null"
+    xmlns:g2="null">
+    <style>
+        html, body {
+            font-family: SourceSansPro, "Helvetica Neue", Arial;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+		p {
+			font-size: 13px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: normal;
+		}
+
+        h1 {
+            color: #4285F4;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+			font-size: 18px;
+			font-style: normal;
+			font-weight: 600;
+			line-height: normal;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #208476 !important;
+            color: white !important;
+            padding: 10px 20px;
+            border: 0.50px #10463F solid !important;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+			color: #FFF;
+			font-size: 13px !important;
+			font-style: normal !important;
+			font-weight: 400 !important;
+			line-height: normal !important;
+        }
+
+        button:hover {
+            background-color: #3367d6;
+        }
+
+        #response-box {
+			display: none;
+            border: 1px solid #ccc;
+            padding: 10px;
+			margin-top: 20px;
+        }
+
+        #response-box h2 {
+            margin-bottom: 10px;
+        }
+
+        #response-box p {
+            word-wrap: break-word;
+        }
+
+		#response {
+			display: none;
+		}
+
+        .alert {
+            background-color: rgba(181, 221, 229, 0.50);
+            color: #1A424B;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+		#container {
+			max-width: 60%;
+		}
+		.navbar, #container, #invalidUserError {
+			padding-left: 20px !important;
+		}
+
+		.secondary-btn {
+			color: black !important;
+			border: 1px solid #CBCBCB !important;
+			background-color: rgba(255, 255, 255, 0.45) !important;
+		}
+    </style>
+	<g2:evaluate var="jvar_user_id" jelly="true">
+		var userId = RP.getParameterValue('userId');
+		// Make sure userId is a sys_id
+		if(gs.nil(userId) || !GlideStringUtil.isEligibleSysID(userId)) {
+			userId = "";
+		}
+		userId;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_group_id" jelly="true">
+		var groupId = RP.getParameterValue('groupId');
+		// Make sure groupId is a sys_id
+		if(gs.nil(groupId) || !GlideStringUtil.isEligibleSysID(groupId)) {
+			groupId = "";
+		}
+		groupId;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_rota_id" jelly="true">
+		var rotaId = RP.getParameterValue('rotaId');
+		// Make sure rotaId is a sys_id
+		if((gs.nil(rotaId) || !GlideStringUtil.isEligibleSysID(rotaId)) $[AND] (rotaId != 'all')) {
+			rotaId = "";
+		}
+		rotaId;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_is_user_correct" jelly="true">
+		var userId = jelly.jvar_user_id;
+		var isUserIdCorrect = gs.nil(userId) ? false : (userId == gs.getUserID());
+		isUserIdCorrect;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_group_name" jelly="true">
+		var groupId = jelly.jvar_group_id;
+		var groupName;
+		if(!gs.nil(groupId)) {
+			var userGroupGr = new GlideRecord('sys_user_group');
+			if (userGroupGr.get(groupId) $[AND] userGroupGr.canRead()) {
+				groupName = userGroupGr.getValue('name');
+			}
+		}
+		groupName;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_shift_name" jelly="true">
+		var rotaId = jelly.jvar_rota_id;
+		var shiftName;
+		if(!gs.nil(rotaId)) {
+			var rotaGr = new GlideRecord('cmn_rota');
+			if (rotaGr.get(rotaId) $[AND] rotaGr.canRead()) {
+				shiftName = rotaGr.getValue('name');
+			}
+		}
+		shiftName;
+	</g2:evaluate>
+
+    <nav class="navbar navbar-default section_zero" data-type="section_head" role="navigation">
+        <h3>${gs.getMessage("On-call calendar subscription")}</h3>
+    </nav>
+    <br/>
+	<j2:if test="$[!jvar_is_user_correct]">
+		<div id="invalidUserError"> 
+			<p>${gs.getMessage("The 'userId' in the url does not match your user ID. Please use correct URL.")}</p>
+		</div>
+	</j2:if>
+	<j2:if test="$[jvar_is_user_correct]">
+		<div id="container">
+			<p>${gs.getMessage("Obtain an .ics file of your schedule instantly by clicking the 'Download schedule' button.")}</p>
+			<button onclick="onDownloadClick()">${gs.getMessage("Download schedule")}</button>
+			<br/>
+			<br/>
+			<p>${gs.getMessage("Obtain a publicly accessible URL for subscribing to the schedule using the 'Generate subscription URL' button.")}</p>
+			<button onclick="onGenerateClick()">${gs.getMessage("Generate subscription URL")}</button>
+
+			<div id="response-box">
+				<h3 style="margin-top: 0px;">${gs.getMessage("Generated subscription URL")}</h3>
+				<p>${gs.getMessage("To subscribe to the schedule, use this uniquely generated URL. For security reasons, refrain from sharing this URL with others.")}</p>
+				<p id="response"></p>
+				<button onclick="copyToClipboard()" id="copyBtn" class="secondary-btn">${gs.getMessage("Copy URL to Clipboard")}</button>
+				<div class="alert" id="alert-message">${gs.getMessage("URL copied to clipboard!")}</div>
+			</div>
+		</div>
+	</j2:if>
+    
+</j:jelly>

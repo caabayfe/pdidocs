@@ -1,0 +1,1 @@
+action.setRedirectURL('exportvCenterHardwareInfoAsZip.do');

@@ -1,0 +1,94 @@
+_meta:
+  hash: cdd50006afaf3c1918bfed7d344503b58a913f679727c61554ac1ef4c7bbce24
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: amit.dhuleshia
+  sys_created_on: 2015-07-14 20:15:06
+  sys_id: 6b4517b447510200d06d6f2ccee4909f
+  sys_mod_count: '6'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_6b4517b447510200d06d6f2ccee4909f
+  sys_updated_by: thanh.phan
+  sys_updated_on: 2018-06-20 00:53:35
+active: 'true'
+name: storage.2012.ps1
+probe: 0f2557b447510200d06d6f2ccee49082
+sys_name: storage.2012.ps1
+sys_policy: ''
+value: |-
+  function warn($warnStr) {
+      Write-Host '[[==PROBE:warning==]]'
+      Write-Host '{' -NoNewLine
+      Write-Host '"warning":"' -NoNewLine; writeJson $warnStr -NoNewLine; Write-Host '"' -NoNewLine
+      Write-Host '}' -NoNewLine
+  }
+
+  function writeJson($str) {
+      if ($str -eq $null) {
+          Write-Host ""
+      }
+
+      $str = $str.ToString().Replace('"','\"').Replace('\','\\\\').Replace("`n",'\n').Replace("`r",'\r').Replace("`t",'\t')
+      Write-Host $str -NoNewline
+  }
+
+  ##
+  # Get powershell from first host name and then try evenutually 
+  # ignore any exceptions and just return empty string, will be handled by sensor as needed
+  # @return ps session
+  function getPSSession() {
+      try { $computerName = [System.Net.DNS]::GetHostEntry($computer).HostName } catch {}
+
+      if ($cred) {
+          if ($computerName) {
+              $ps = CreatePSSessionWithComputerName -Host $computerName -Credential $cred -ErrorAction SilentlyContinue
+          }
+          if (!$ps) {
+              $ps = CreatePSSessionWithComputerName -Host $computer -Credential $cred -ErrorAction SilentlyContinue
+          }       
+      } else {
+          if ($computerName) {
+              $ps = CreatePSSessionWithComputerName -Host $computerName -ErrorAction SilentlyContinue
+          }
+          if (!$ps) {
+              $ps = CreatePSSessionWithComputerName -Host $computer -ErrorAction SilentlyContinue
+          }
+      }
+
+      return $ps
+  }
+
+  if ($SNC_session -eq $null) {
+      $ps = getPSSession
+  } else {
+      $ps = $SNC_session
+  }
+
+  if (!$ps) {
+      warn "Unable to establish a powershell session to obtain the fibre channel information. Please check that you have proper credentials. Also check that WinRM is enabled and that either the MID server host and the target host are in the same domain or the target host is a trusted host."
+      return
+  }
+
+  Write-Host '[[==PROBE:fcinfo_details==]]'
+  invoke-command  -Session $ps -scriptblock {fcinfo /details} -ErrorAction SilentlyContinue -ErrorVariable a
+  if ($a[0]) {
+      warn "Unable to invoke fcinfo command on the target host. Please check to see if fcinfo is installed."
+      return
+  }
+
+  Write-Host $cmd 
+
+  Write-Host '[[==PROBE:fcinfo_ports==]]'
+  invoke-command  -Session $ps -scriptblock {fcinfo /ports} -ErrorAction SilentlyContinue
+
+  [regex]$numAdaptersRegex = "There are (\d+) adapters"
+  $numAdaptersOutput = invoke-command -Session $ps -scriptblock {fcinfo} -ErrorAction SilentlyContinue
+  $numAdapters = $numAdaptersRegex.Matches($numAdaptersOutput) | foreach { $_.Groups[1].Value }
+
+  Write-Host '[[==PROBE:fcinfo_fcpmap==]]'
+  for ($i = 0; $i -lt $numAdapters; $i++) {
+      invoke-command -Session $ps -scriptblock { param($p) fcinfo /fcpmap /ai:$p } -Args $i -ErrorAction SilentlyContinue
+  }
+value_script: ''

@@ -1,0 +1,1 @@
+EvtMgmtAlertPriorityGroups.get().calculatePriorityGroups();

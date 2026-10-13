@@ -1,0 +1,808 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/angular_includes_1.5.11.js" includes="true" />
+	<g:requires name="scripts/sn/common/js_includes_common.js" includes="true" />
+	<g:requires name="scripts/angularjs-1.4/thirdparty/angular-ui-bootstrap/ui-bootstrap-tpls-1.1.2.js" includes="true"/>
+	
+	<g:requires name="scripts/heisenberg/bootstrap/tooltip.js" includes="true" />
+	<g:requires name="scripts/heisenberg/bootstrap/popover.js" includes="true" />
+	<g:requires name="js_includes_ng_form_elements.js" includes="true" />
+	
+	<g:requires name="scripts/incident/glide_modal_accessibility.js" includes="true" />
+	<g:requires name="script/sn_major_inc_mgmt.workbench.jsdbx" includes="true" />
+	<g:requires name="script/sn_major_inc_mgmt.a11yUtils.jsdbx" includes="true" />
+	<g2:evaluate var="jvar_sysparm_sys_id" expression="RP.getParameterValue('sysparm_sys_id')" jelly="true"/>
+	<g2:evaluate var="jvar_sysparm_standalone" expression="RP.getParameterValue('sysparm_stand_alone')" jelly="true"/>
+	<g2:evaluate var="jvar_sysparm_table" expression="'incident'" jelly="true"/>
+	<g2:evaluate var="jvar_task" jelly="true" object="true">
+		var gr = new GlideRecord(jelly.jvar_sysparm_table);
+		gr.get(jelly.jvar_sysparm_sys_id);
+		gr;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_record_number" jelly="true">
+		jelly.jvar_task.getValue('number');
+	</g2:evaluate>
+	<g2:evaluate var="jvar_record_title" jelly="true">
+		jelly.jvar_task.getValue('short_description');
+	</g2:evaluate>
+	<g2:evaluate var="jvar_record_description" jelly="true">
+		var desc = jelly.jvar_task.getValue('description');
+		if (desc)
+			desc;
+		else
+			'';
+	</g2:evaluate>
+	<g2:evaluate var="jvar_record_notes" jelly="true">
+		new global.MIMWorkbenchUtil().getNotesUrl(jelly.jvar_sysparm_table, jelly.jvar_sysparm_sys_id);
+	</g2:evaluate>
+	<g2:evaluate var="jvar_record_add_affected" jelly="true">
+		new global.MIMWorkbenchUtil().canAddAffected(jelly.jvar_task);
+	</g2:evaluate>
+	<g2:evaluate var="jvar_record_add_impacted" jelly="true">
+		new global.MIMWorkbenchUtil().canAddImpacted(jelly.jvar_task);
+	</g2:evaluate>
+	<g2:evaluate var="jvar_access_workbench" jelly="true">
+		new global.MIMWorkbenchUtil().canAccessWorkbench();
+	</g2:evaluate>
+	<g:evaluate var="jvar_escape_text" jelly="true">
+		gs.getProperty('glide.ui.escape_text') == 'true';
+	</g:evaluate>
+	<g:evaluate var="jvar_iatask_types_with_compose_email">
+		JSON.stringify(gs.getProperty('sn_major_inc_mgmt.com.snc.incident.mim.compose_email_on_iatasks', 'initial,update,resolution').split(','));
+	</g:evaluate>
+	<g:evaluate var="jvar_disable_auto_add_members">
+		gs.getProperty('sn_major_inc_mgmt.com.snc.incident.mim.disable_auto_add_members', 'false');
+	</g:evaluate>
+	<g:inline template="dir_checker.xml" />
+	<g2:inline template="sn_itsm_conversation_details_inline.xml" check_is_chat_available="true" get_conversation_id="true" ref_record="$[jvar_task]" ref_record_sysid="$[jvar_sysparm_sys_id]" />
+	<html ng-app="sn.mim.bench" class="${jvar_text_direction}" lang="$[gs.getSession().getLanguage()]">
+		<head>
+			<title>${gs.getMessage('Major Incident Workbench')}</title>
+			<link rel="stylesheet" href="/styles/heisenberg/source_sans_pro.css?v=${gs.getCssCacheVersionString()}"></link>
+			<link rel="stylesheet" href="/styles/dist/common/sn_common.css?v=${gs.getCssCacheVersionString()}"></link>
+			<link rel="stylesheet" href="/styles/heisenberg/heisenberg_all.css?v=${gs.getCssCacheVersionString()}"></link>
+			<link rel="stylesheet" href="/styles/sn_avatar.css?v=${gs.getCssCacheVersionString()}"></link>
+			<link rel="stylesheet" href="/styles/sn_presence.css?v=${gs.getCssCacheVersionString()}"></link>
+			<script>
+				function resizeFrame(frameIdOrFrameDom, formBodySelector, extraPadding, isBodySelectorLastElement) {
+					var frame;
+					if (typeof frameIdOrFrameDom === 'string')
+						frame = $j(frameIdOrFrameDom);
+					else
+						frame = $j(frameIdOrFrameDom);
+					if (!frame.length)
+						return;
+					var contents = frame.contents();
+					if (!contents)
+						return;
+					if (typeof formBodySelector === 'undefined')
+						formBodySelector = '.form_body';
+					var formBody = contents.find(formBodySelector);
+					if (!formBody)
+						return;
+					if (typeof extraPadding === 'undefined')
+						extraPadding = 200;
+					if (isBodySelectorLastElement $[AND] formBody.length) {
+						frame.height(formBody.offset().top + formBody.height() + extraPadding);
+					} else {
+						frame.height(formBody.height() + extraPadding);
+					}
+					jQuery(document).trigger('iframe_resize');
+				}
+
+				function notesFrameLoaded(formFrameId, thisFrame) {
+					var frame = $j(formFrameId);
+					if (!frame)
+						return;
+					var contents = frame.contents();
+					if (!contents)
+						return;
+					contents.find('.form_action_button_container').hide();
+					contents.find('#page_timing_div').hide();
+					contents.find('.section_header_content_no_scroll').css('overflow', 'hidden');
+					var windowObject = frame[0].contentWindow || frame[0].contentDocument;
+					if (!windowObject)
+						return;
+					windowObject._frameChanged = window._frameChanged;
+					resizeFrame(formFrameId);
+					if (formFrameId === '#sumNotesFrame') {
+						var doc = thisFrame.contentDocument;
+							doc.on('click', function() {
+								window.NOW.CustomEvent.fireAll('close_preview_popover');
+							});
+					}
+				}
+
+				function injectIntoEmailClient() {}
+
+				CustomEvent.observe("frame.resized", resizeFrame.bind(null, "#sumNotesFrame"));
+				CustomEvent.observe("frame.resized", resizeFrame.bind(null, "#confNotesFrame"));
+				CustomEvent.observe("frame.resized", resizeFrame.bind(null, "#comNotesFrame"));
+
+				angular.module('sn.mim.bench').factory('hasComposeEmail', function () {
+					var allowed = ${NOESC:jvar_iatask_types_with_compose_email};
+					return function (task) {
+						return allowed.filter(function (a){
+							return a.trim() === task.type.value;
+						}).length != 0;
+					};
+				}).constant('DisableAutoAddMembers', "${JS_STRING:jvar_disable_auto_add_members}" === "true");
+
+				var task = {};
+				task.sys_id = "$[jvar_sysparm_sys_id]";
+				task.table = "$[jvar_sysparm_table]"; 
+				task.conversation_id = "$[jvar_record_conversation_id]";
+				task.short_description = "$[JS_STRING:jvar_record_title]";
+				task.description = "$[JS_STRING:jvar_record_description]";
+				task.add_affected = $[jvar_record_add_affected];
+				task.add_impacted = $[jvar_record_add_impacted];
+				var props = {};
+				props.notifyNumber = "$[gs.getProperty('com.snc.iam.notify_number')]";
+				props.is_ia_admin = "$[gs.hasRole('ia_admin')]" == "true";
+				props.canJoin = "$[gs.hasRole('ia_admin')]" == "true" || "$[gs.hasRole('itil')]" == "true" || "$[gs.hasRole('sn_incident_write')]" == "true";
+				props.loggedInUserId = "$[gs.getUser().getID()]";
+				props.notifyInstalled = "$[new GlideRecord("notify_conference_call").isValid()]" == "true";
+				props.isChatEnabled = "$[jvar_is_chat_available]" == "true";
+				props.isStandalone = "$[JS_STRING:jvar_sysparm_standalone]" == "true";
+				var g_incident_alert_conversations = {};
+			</script>
+			<g2:evaluate var="jvar_incident_alerts" jelly="true" object="true">
+				var incAlertGr = new GlideRecordSecure("incident_alert");
+				incAlertGr.addQuery('source_incident', jelly.jvar_sysparm_sys_id);
+				incAlertGr.query();
+				incAlertGr;
+			</g2:evaluate>
+			<g2:for_each_record file="$[jvar_incident_alerts]">
+				<g2:inline template="sn_itsm_conversation_details_inline.xml" get_conversation_id="true" ref_record_sysid="$[current.sys_id]" />
+				<script> g_incident_alert_conversations["$[JS_STRING:current.sys_id]"] = "$[JS_STRING:jvar_record_conversation_id]"; </script>
+			</g2:for_each_record>
+			<script type="text/ng-template" id="iframe_modal.html">
+				  <span class="sr-only" id="modal_id">{{title}}</span>
+				  <div class="modal-body" style="padding: 0px">
+					<iframe id="modalIframe" frameBorder="0" ng-attr-src="{{url}}" onload="modalFrameLoaded(this);" ng-class="{noCloseButton: element == 'childIncidents'}"/>
+				  </div>
+				<span class="sr-only" tabindex="0">${gs.getMessage('End of dialog')}</span>
+			</script>
+			<script type="text/ng-template" id="incident_preview.html">
+				<sn-record-preview record-title="{{incident.number.display_value}}" popover-config="recordPreviewPopoverConfig" target-table="incident" sys-id="{{incident.sys_id.value}}" class="task_preview list_table_tbody" ref="child_incident_{{index}}" view="viewName" style="display: none"></sn-record-preview>
+			</script>
+			<script id="outage.html" type="text/ng-template">
+				<div class="popoverWrapper">
+					<div class="popoverHeader">
+						<div style="padding: 10px">
+							${gs.getMessage('Outage')}
+						</div>
+					</div>
+					<div class="popoverBody">
+						<div class="row item">
+							<div class="col-sm-6 key">${gs.getMessage('Configuration Item')}</div>
+							<div class="col-sm-6 value">{{ci.name.display_value}}</div>
+						</div>
+						<div class="row item" ng-if="ci.current_outage">
+							<div class="col-sm-6 key">${gs.getMessage('Outage Type')}</div>
+							<div class="col-sm-6 value">{{ci.current_outage.type.display_value}}</div>
+						</div>
+						<div class="row item" ng-if="ci.current_outage &amp;&amp; ci.current_outage.begin.display_value">
+							<div class="col-sm-6 key">${gs.getMessage('Begin')}</div>
+							<div class="col-sm-6 value">{{ci.current_outage.begin.display_value}}</div>
+						</div>
+						<div class="row item" ng-if="ci.current_outage &amp;&amp; ci.current_outage.end.display_value">
+							<div class="col-sm-6 key">${gs.getMessage('End')}</div>
+							<div class="col-sm-6 value">{{ci.current_outage.end.display_value}}</div>
+						</div>
+						<div class="row item" ng-if="ci.current_outage &amp;&amp; ci.current_outage.duration.display_value">
+							<div class="col-sm-6 key">${gs.getMessage('Duration')}</div>
+							<div class="col-sm-6 value">{{ci.current_outage.duration.display_value}}</div>
+						</div>
+						<div class="row item" ng-if="!ci.current_outage">
+							<div class="col-sm-6 key">${gs.getMessage('Outage Type')}</div>
+							<div class="col-sm-6 value">${gs.getMessage('None')}</div>
+						</div>
+					</div>
+				</div>
+			</script>
+			<script>
+				angular.element("script[type=\"text/ng-template\"]").each(function () {
+					var s = angular.element(this);
+					var h = s.html();
+					h = h.substring(2, h.length - 4);
+					s.html(h);
+				});
+			</script>
+		<g:requires name="/styles/css_includes_mim_workbench.css" includes="true" params="c=$[gs.getCssCacheVersionString()]" />
+		</head>
+		<body ng-controller="BenchController as mimBenchCtrl" ng-init="mimBenchCtrl.setup()" ng-class="{'accessibility': mimBenchCtrl.isA11yEnabled}">
+			<script>
+				var isA11yEnabled = $[JS_STRING:gs.getUser().getPreference('glide.ui.accessibility')];
+				var g_accessibility ="false";
+				if(isA11yEnabled)
+					g_accessibility = "true";
+			</script>
+			<now-message key="Add Affected CIs" value="${gs.getMessage('Add Affected CIs')}"/>
+			<now-message key="Add Impacted Services/CIs" value="${gs.getMessage('Add Impacted Services/CIs')}"/>
+			<now-message key="Mail queued for sending" value="${gs.getMessage('Mail queued for sending')}"/>
+			<now-message key="Incident Alert Task closed" value="${gs.getMessage('Incident Alert Task closed')}" />
+			<now-message key="Incident Alert Task closure failed" value="${gs.getMessage('Incident Alert Task closure failed')}" />
+			<now-message key="Edit Child Incidents" value="${gs.getMessage('Edit Child Incidents')}"/>
+			<now-message key="Child Incidents" value="${gs.getMessage('Child Incidents')}"/>
+			<now-message key="Edit Affected CIs" value="${gs.getMessage('Edit Affected CIs')}"/>
+			<now-message key="Affected CIs" value="${gs.getMessage('Affected CIs')}"/>
+			<now-message key="Edit Impacted Services/CIs" value="${gs.getMessage('Edit Impacted Services/CIs')}"/>
+			<now-message key="Impacted Services/CIs" value="${gs.getMessage('Impacted Services/CIs')}"/>
+			<now-message key="Create Outage" value="${gs.getMessage('Create Outage')}"/>
+			<now-message key="Create Child Incident" value="${gs.getMessage('Create Child Incident')}"/>
+			<now-message key="Child Incidents Count" value="${gs.getMessage('{0} Child Incidents')}"/>
+			<now-message key="Affected CIs Count" value="${gs.getMessage('{0} Affected CIs')}"/>
+			<now-message key="Impacted Services/CIs Count" value="${gs.getMessage('{0} Impacted Services/CIs')}"/>
+			<now-message key="Add Child Incidents" value="${gs.getMessage('Add Child Incidents')}"/>
+			<now-message key="Initiate Conference Call" value="${gs.getMessage('Initiate Conference Call')}"/>
+			<now-message key="End Of Dialog" value="${gs.getMessage('End Of Dialog')}"/>
+
+			<g:evaluate var="jvar_init_chat_text" jelly="true">gs.getMessage('Initiate chat for this Incident Alert')</g:evaluate>
+			<g:evaluate var="jvar_open_mini_chat_text" jelly="true">gs.getMessage('Open mini chat for this Incident Alert')</g:evaluate>
+			<g:evaluate var="jvar_open_full_chat_text" jelly="true">gs.getMessage('Open full chat for this Incident Alert')</g:evaluate>
+			<div id="alert-container" class="ng-cloak">
+				<div uib-alert="" aria-live="assertive" type="{{alert.type}}" ng-repeat="alert in mimBenchCtrl.alerts" close="mimBenchCtrl.closeAlert($index)">{{alert.msg}}</div>
+			</div>
+			<span id="load_element" tabindex='0' class='sr-only'>${gs.getMessage('Major incident workbench')}</span>
+			<j2:if test="$[jvar_record_number == 'null']">
+				<div class="notification notification-danger" style="margin: 10px;">
+					<div class="outputmsg_text">
+						${gs.getMessage('Invalid Incident SysId.')}
+					</div>
+				</div>
+			</j2:if>
+			<j2:if test="$[jvar_record_number != 'null' ${AND} jvar_access_workbench == 'false']">
+				<div class="notification notification-danger" style="margin: 10px;">
+					<div class="outputmsg_text">
+						${gs.getMessage('Security constraints prevent viewing this page')}
+					</div>
+				</div>
+			</j2:if>
+			<j2:if test="$[jvar_record_number != 'null' ${AND} jvar_access_workbench != 'false']">
+			<div style="" class="workbench_wrapper">
+				<nav class="sn-navhub">
+					<div class="col-xs-12 sn-navhub-text">
+						<button ng-if="!mimBenchCtrl.props.isStandalone" uib-tooltip="${gs.getMessage('Back')}" tooltip-placement="bottom-left" style="margin-left:-15px;height: 34px;" class="btn btn-default icon-chevron-left back_button pull-left" ng-click="back()"><span class="sr-only">${gs.getMessage('Back')}</span></button>
+						<div ng-style="{'margin-left': mimBenchCtrl.props.isStandalone ? '0': '26px'}" class="pull-left">
+							<div class="row" style="margin-top: 1px;">
+								$[HTML:jvar_record_number]
+							</div>
+							<div class="row" style="margin-top: -3px;">
+								<j:if test="${jvar_escape_text}">
+									$[jvar_record_title]
+								</j:if>
+								<j:if test="${!jvar_escape_text}">
+									$[HTML,JS:jvar_record_title]
+								</j:if>
+							</div>
+						</div>
+						<div class="pull-right" style="height: 34px;margin-top: 2px;margin-right: -15px;">
+							<g:evaluate var="jvar_mini_chat_text" jelly="true">gs.getMessage('Open mini chat for the Major Incident')</g:evaluate>
+							<g:evaluate var="jvar_full_chat_text" jelly="true">gs.getMessage('Open full chat for the Major Incident')</g:evaluate>
+							<button ng-if="isChatEnabled()"
+									uib-tooltip="{{isMiniChat() ? '${JS_STRING:jvar_mini_chat_text}' : '${JS_STRING:jvar_full_chat_text}'}}"
+									tooltip-placement="bottom"
+									ng-click="openChat()"
+									style="margin-right: 8px;"
+									class="btn btn-icon icon-collaboration"><span class="sr-only">{{isMiniChat() ? '${JS_STRING:jvar_mini_chat_text}' : '${JS_STRING:jvar_full_chat_text}'}}</span></button>
+							<button style="margin-right: 8px;" class="btn btn-default" ng-click="createchildIncident()">${gs.getMessage('Create Child Incident')}</button>
+							<button style="margin-right: 8px;" class="btn btn-default" ng-click="createOutage()">${gs.getMessage('Create Outage')}</button>
+							<button ng-if="!mimBenchCtrl.props.isStandalone" class="btn btn-default" ng-click="viewForm()">${gs.getMessage('View Form')}</button>
+						</div>
+					</div>
+				</nav>
+				<div class="tabs_wrapper ng-cloak sn-navhub sn-navhub-transparent">
+					<div class="sn-navhub-content sn-tabs-basic-keyboard" role="tablist" >
+						<div ng-class="{'state-active': mimBenchCtrl.view == 'summary'}" ng-click="selectView('summary')" class="btn sn-navhub-btn sn-navhub-btn_text col-xs-4 tab" role="tab" tabindex="0" aria-selected="true">
+							${gs.getMessage('Summary')}
+						</div>
+						<div ng-class="{'state-active': mimBenchCtrl.view == 'communication'}" ng-click="selectView('communication')" class="btn sn-navhub-btn sn-navhub-btn_text col-xs-4 tab" role="tab" tabindex="-1" aria-selected="false">
+							${gs.getMessage('Communication')}
+						</div>
+						<div ng-if="mimBenchCtrl.props.notifyInstalled" ng-class="{'state-active': mimBenchCtrl.view == 'conference'}" ng-click="selectView('conference')" class="btn sn-navhub-btn sn-navhub-btn_text col-xs-4 tab" role="tab" tabindex="-1" aria-selected="false">
+							${gs.getMessage('Conference')}
+						</div>
+					</div>
+					<div class="sn-navhub-content">
+						<div class="pull-right sn-navhub-text">
+							
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-12 content_wrapper">
+					<div ng-if="mimBenchCtrl.view == 'conference'" class="row conference_wrapper" ng-cloak="">
+						<div ng-if="!mimBenchCtrl.props.notifyInstalled">
+							<div class="sn-welcome-wrapper ng-scope">
+								<div class="sn-welcome clearfix">
+									<div class="sn-welcome-badge icon-phone"></div>
+									<h1 class="sn-welcome-title">${gs.getMessage('Welcome to Conferencing')}</h1>
+									<div class="sn-welcome-content">
+										<p>${gs.getMessage("Conferencing allows you to initiate your technical and business calls to your major incident's stakeholders.")}</p>
+										<p>${gs.getMessage('Unfortunately this feature has not been connected to your workbench platform. Please contact your Administrator to learn about how to enable conferencing.')}</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div ng-if="mimBenchCtrl.props.notifyInstalled">
+							<div ng-if="incidentAlerts &amp;&amp; incidentAlerts.length == 0" ng-cloak="" class="alert_message">
+								<div class="notification notification-info">
+										<div class="outputmsg_text">
+											${gs.getMessage('This incident does not have any incident alerts.')}
+										</div>
+								</div>
+							</div>
+							<div ng-if="incidentAlerts.length > 0">
+								<div class="col-xs-3 left_pane">
+									<div class="row sn-navhub-text">
+										<div class="col-xs-12 incident_alert_wrapper left_panel sn-tabs-basic-keyboard" role="tablist" data-vertical-tabs="true">	
+											<div class="tab h-card h-card_max h-card_sm h-card_sm_attachment" ng-class="{active: selectedIncidentAlert.sys_id.value == incidentAlert.sys_id.value}" ng-repeat="incidentAlert in incidentAlerts track by $index" ng-click="selectIncidentAlert(incidentAlert);" role="tab" ng-attr-tabindex="{{selectedIncidentAlert.sys_id.value == incidentAlert.sys_id.value?0:-1}}" ng-attr-aria-selected="{{selectedIncidentAlert.sys_id.value == incidentAlert.sys_id.value?true:false}}">	
+												<div class="sn-card-component sn-card-component_first sn-card-component_headline">{{incidentAlert.short_description.display_value}}</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="col-xs-9 rightpane" style="padding: 20px;">
+									<div ng-if="selectedIncidentAlert" class="conf_details_wrapper">
+										<div style="position:relative;">
+											<ul role="tablist" class="nav nav-tabs sn-tabs-basic pull-left sn-tabs-basic-keyboard">
+												<li role="tab" ng-class="{active: conference.tab == 'information'}" ng-click="selectTab('conference', 'information')" class="tab"
+	 ng-attr-aria-selected="{{conference.tab == 'information'}}" ng-attr-tabindex="{{conference.tab == 'information'?0:-1}}">
+													<a>${gs.getMessage('Information')}</a>
+												</li>
+												<li role="tab" ng-class="{active: conference.tab == 'activity'}" ng-click="selectTab('conference', 'activity')" class="tab"
+	 ng-attr-aria-selected="{{conference.tab == 'activity'}}" ng-attr-tabindex="{{conference.tab == 'activity'?0:-1}}">
+													<a>${gs.getMessage('Activity')}</a>
+												</li>
+											</ul>
+											<button ng-if="isChatEnabled()"
+												ng-disabled="processingChat[selectedIncidentAlert.sys_id.value]"
+												uib-tooltip="{{isChatNotInit() ? '${JS_STRING:jvar_init_chat_text}' : (isMiniChat() ? '${JS_STRING:jvar_open_mini_chat_text}' : '${JS_STRING:jvar_open_full_chat_text}')}}"
+												tooltip-placement="bottom-right"
+												ng-click="openAlertChat()"
+												style="margin-right: 8px;top:-5px;position:relative;"
+												class="btn btn-icon icon-collaboration pull-right"><span class="sr-only">{{isChatNotInit() ? '${JS_STRING:jvar_init_chat_text}' : (isMiniChat() ? '${JS_STRING:jvar_open_mini_chat_text}' : '${JS_STRING:jvar_open_full_chat_text}')}}</span></button>
+											<div class="clearfix"></div>
+										</div>
+										<div class="tab-content">
+											<div class="tab-pane active" ng-if="conference.tab == 'information'">
+												<div ng-if="mimBenchCtrl.props.notifyInstalled &amp;&amp; mimBenchCtrl.props.notifyNumber" style="    padding-top: 5px;">
+													<div class="row">
+														<div class="col-xs-12">
+															<button class="btn btn-primary userAction" ng-if="selectedIncidentAlert.conference.userAction == 'initiate'" ng-click="initiateConferenceCall($event)">${gs.getMessage('Initiate Conference Call')}</button>
+															<button class="btn btn-primary userAction" ng-if="selectedIncidentAlert.conference.userAction == 'join'" ng-click="joinConferenceCall($event)" ng-disabled="joinConferenceCallInProgress">
+																<span ng-if="joinConferenceCallInProgress"><i class="icon icon-loading" style="margin-right: 10px"></i> ${gs.getMessage('Joining')}</span>
+																<span ng-if="!joinConferenceCallInProgress">${gs.getMessage('Join Conference Call')}</span>
+															</button>
+															<div class="alert alert-info" ng-if="selectedIncidentAlert.conference.userAction == 'joined'">
+																${gs.getMessage('You are in the conference call.')}
+															</div>
+														</div>
+													</div>
+													<div class="row" style="margin-top: 25px;margin-bottom: 25px;">
+														<div class="col-xs-2">
+															<span class="conf_detail_key">${gs.getMessage('Number')}</span>
+														</div>
+														<div class="col-xs-10">
+															<span class="conf_detail_value">{{mimBenchCtrl.props.notifyNumber}}</span>
+														</div>
+													</div>
+													<div class="row" ng-if="selectedIncidentAlert.current_conference_call.code.value">
+														<div class="col-xs-2">
+															<span class="conf_detail_key">${gs.getMessage('Access Code')}</span>
+														</div>
+														<div class="col-xs-10">
+															<span class="conf_detail_value">{{selectedIncidentAlert.current_conference_call.code.display_value}}</span>
+														</div>
+													</div>
+													<hr></hr>
+													<div class="row">
+														<div class="col-xs-12 participants_wrapper">
+																<div class="header">
+																	${gs.getMessage('Participants')} ({{selectedIncidentAlert.conference.participants.length}})
+																	</div>
+																	<div ng-if="selectedIncidentAlert.conference.active">
+																		<div ng-if="mimBenchCtrl.props.is_ia_admin" class="add_participant">
+																			<i class="icon-add-circle-empty" ng-click="addParticipants($event)">
+																				<span class="sr-only">${gs.getMessage('Add Participants')}</span>
+																			</i>${gs.getMessage('Add Participants')}
+																		</div>
+																		<div class="participant" ng-repeat="participant in selectedIncidentAlert.conference.participants track by $index" ng-if="showConferenceParticipants &amp;&amp; participant.sys_id">
+																			<sn-avatar-popover primary="participant.liveProfile" show-presence="true"></sn-avatar-popover>
+																			<span class="username">{{participant.name}}</span>
+																			<span class="group">
+																				<span ng-repeat="group in participant.groups">
+																					{{groups[group].name.display_value}}
+																					<span ng-if="!$last">, </span>
+																				</span>
+																			</span>
+																		</div>
+																	</div>
+																	<div ng-if="selectedIncidentAlert.conference.userAction == 'initiate'" class="message">
+																		${gs.getMessage('Conference call is not initiated yet.')}
+																	</div>
+																	<div ng-if="!selectedIncidentAlert.isActive" class="message">
+																		${gs.getMessage('This incident alert is ')} {{selectedIncidentAlert.state.display_value}}
+																	</div>
+															</div>
+													</div>
+												</div>
+												<div ng-if="mimBenchCtrl.props.notifyInstalled &amp;&amp; !mimBenchCtrl.props.notifyNumber">
+													<div class="alert alert-info">
+														${gs.getMessage('System property "com.snc.iam.notify_number" is not configured.')}
+													</div>
+												</div>
+												<div ng-if="!mimBenchCtrl.props.notifyInstalled">
+													<div class="alert alert-info">
+														${gs.getMessage('Notify plugin "com.snc.notify" is not installed.')}
+													</div>
+												</div>
+											</div>
+											<div class="tab-pane active" ng-if="conference.tab == 'activity'">
+												<iframe id="confNotesFrame" frameBorder="0" ng-attr-src="{{selectedIncidentAlert.notesLink}}" scrolling="no" onload="notesFrameLoaded('#confNotesFrame');" />
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div ng-if="mimBenchCtrl.view == 'communication'" class="row communication_wrapper" ng-cloak="">
+						<div ng-if="incidentAlerts &amp;&amp; incidentAlerts.length == 0" ng-cloak="" class="alert_message">
+							<div class="notification notification-info">
+									<div class="outputmsg_text">
+										${gs.getMessage('This incident does not have any incident alerts.')}
+									</div>
+							</div>
+						</div>
+						<div ng-if="incidentAlerts.length > 0">
+							<div class="col-xs-3 left_pane">
+								<div class="row sn-navhub-text">
+									<div class="sn-tabs-basic-keyboard col-xs-12 incident_alert_wrapper left_panel" role="tablist" data-vertical-tabs="true">
+										<div class="tab h-card h-card_max h-card_sm h-card_sm_attachment" ng-class="{active: selectedIncidentAlert.sys_id.value == incidentAlert.sys_id.value}" ng-repeat="incidentAlert in incidentAlerts track by $index" ng-click="selectIncidentAlert(incidentAlert);" role="tab" ng-attr-tabindex="{{selectedIncidentAlert.sys_id.value == incidentAlert.sys_id.value?0:-1}}" ng-attr-aria-selected="{{selectedIncidentAlert.sys_id.value == incidentAlert.sys_id.value?true:false}}">	
+											<div class="sn-card-component sn-card-component_first sn-card-component_headline">{{incidentAlert.short_description.display_value}}</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-9 rightpane" style="padding: 20px;">
+								<div ng-if="selectedIncidentAlert">
+									<div style="position:relative;">
+										<ul role="tablist" class="nav nav-tabs sn-tabs-basic pull-left" sn-tabs-basic-keyboard="">
+											<li role="tab" ng-class="{active: communication.tab == 'information'}" ng-click="selectTab('communication', 'information')" class="tab"
+												ng-attr-aria-selected="{{communication.tab == 'information'}}" ng-attr-tabindex="{{communication.tab == 'information'?0:-1}}" id="communication_info">
+												<a>${gs.getMessage('Information')}</a>
+											</li>
+											<li role="tab" ng-class="{active: communication.tab == 'activity'}" ng-click="selectTab('communication', 'activity')" class="tab"
+												ng-attr-aria-selected="{{communication.tab == 'activity'}}" ng-attr-tabindex="{{communication.tab == 'activity'?0:-1}}" id="communication_activity">
+												<a>${gs.getMessage('Activity')}</a>
+											</li>
+											<li role="tab" ng-class="{active: communication.tab == 'email_log'}" ng-click="selectTab('communication', 'email_log')" class="tab"
+												ng-attr-aria-selected="{{communication.tab == 'email_log'}}" ng-attr-tabindex="{{communication.tab == 'email_log'?0:-1}}" id="communication_email_log">
+												<a>${gs.getMessage('Email Log')}</a>
+											</li>
+										</ul>
+										<button ng-if="isChatEnabled()"
+											ng-disabled="processingChat[selectedIncidentAlert.sys_id.value]"
+											uib-tooltip="{{isChatNotInit() ? '${JS_STRING:jvar_init_chat_text}' : (isMiniChat() ? '${JS_STRING:jvar_open_mini_chat_text}' : '${JS_STRING:jvar_open_full_chat_text}')}}"
+											tooltip-placement="bottom-right"
+											ng-click="openAlertChat()"
+											style="margin-right: 8px;top:-5px;position:relative;"
+											class="btn btn-icon icon-collaboration pull-right"><span class="sr-only">{{isChatNotInit() ? '${JS_STRING:jvar_init_chat_text}' : (isMiniChat() ? '${JS_STRING:jvar_open_mini_chat_text}' : '${JS_STRING:jvar_open_full_chat_text}')}}</span></button>
+										<div class="clearfix"></div>
+									</div>
+									<div class="tab-content">
+										<div class="tab-pane active" ng-if="communication.tab == 'information'">
+											<div ng-if="!showEmailClient">
+												<div ng-if="!selectedIncidentAlert.ia_tasks.length" class="alert alert-info">${gs.getMessage("This Incident Alert has no tasks")}</div>
+												<div ng-if="selectedIncidentAlert.ia_tasks.length" ng-repeat="iaTask in selectedIncidentAlert.ia_tasks track by $index" class="ia_task_email_item">
+													<div>
+														<div>
+															<h2 style="font-size: 16px;">{{iaTask.short_description.display_value}}</h2>
+														</div>
+														<div style="margin-bottom:25px;"><p>{{iaTask.description.display_value}}</p></div>
+														<div style="margin-bottom:25px;" ng-if="hasComposeEmail(iaTask)">
+															<button ng-disabled="iaTask.active.value == 'false'" class="btn" ng-class="isUpdateDue($index) ? 'btn-primary' : 'btn-default'" ng-click="openEmailClient(iaTask)">
+																${gs.getMessage('Compose Email')}
+															</button>
+														</div>
+														<div>
+															<a ng-href="nav_to.do?uri=incident_alert_task.do?sys_id={{iaTask.sys_id.value}}" target="_blank">${gs.getMessage('View Task')} <span class="sr-only">${gs.getMessage('View task - {0}', '{{iaTask.short_description.display_value}}')}</span></a>
+															<a style="margin-left:10px;" ng-if="iaTask.active.value == 'true' &amp;&amp; iaTask.can_write" href="#" ng-click="closeTask(iaTask)">${gs.getMessage('Close Task')} <span class="sr-only">${gs.getMessage('Close task - {0}', '{{iaTask.short_description.display_value}}')}</span></a>
+														</div>
+													</div>
+												</div>
+											</div>
+											<div ng-if="showEmailClient">
+												<div style="border-bottom: 1px solid #dedfe1;padding-bottom:20px;margin-bottom: 10px;">
+													<h1 style="font-size: 18px;">{{selectedTask.short_description.display_value}}
+														<span class="pull-right">
+															<button role="button" class="btn btn-default a11y_no_next" ng-click="hideEmailClient()" data-a11y-target-after-click="communication_info">${gs.getMessage('Cancel')}</button>
+															<button style="margin-left:10px;" role="button" class="btn btn-primary" onClick="sendMail()" data-a11y-target-after-click="communication_email_log">${gs.getMessage('Send')}</button>
+														</span>
+													</h1>
+												</div>
+												<iframe id="emailFrame" frameBorder="0" ng-attr-src="{{emailClientUrl}}" scrolling="no" onload="resizeFrame('#emailFrame');injectIntoEmailClient(this);" />
+											</div>
+										</div>
+										<div class="tab-pane active" ng-if="communication.tab == 'activity'">
+											<iframe id="comNotesFrame" frameBorder="0" ng-attr-src="{{selectedIncidentAlert.notesLink}}" scrolling="no" onload="notesFrameLoaded('#comNotesFrame');" />
+										</div>
+										<div class="tab-pane active" ng-if="communication.tab == 'email_log'">
+											<!-- Email Log start -->
+											<div ng-controller="EmailLogCtrl" style="padding-top:32px;">
+												<div ng-if="emails &amp;&amp; !emails.length" class="notification notification-info">
+													<div class="outputmsg_text">
+														${gs.getMessage("No emails have been sent via this Incident Alert's tasks")}
+													</div>
+												</div>
+												<div ng-if="emails.length" class="sn-form-inline-stream-entries sn-form-inline-stream-entries-only col-xs-10 col-md-9 col-lg-8 form-field">
+												   <ul class="h-card-wrapper activities-form">
+													  <li class="h-card h-card_md h-card_comments" ng-repeat="email in emails | orderBy:'-sys_created_on.timestamp'">
+														 <div class="sn-card-component sn-card-component_first sn-card-component_meta sn-card-component_meta_sibling">
+															<div class="sn-card-component-avatar sn-avatar_xs sn-avatar_v2">
+																<sn-avatar primary="email.sys_created_by.user_id" ng-if="email.sys_created_by.user_id">
+																   <sn-presence user="primary"></sn-presence>
+																</sn-avatar>
+																<sn-avatar primary="{initials: email.sys_created_by.initials}" ng-if="email.sys_created_by.initials">
+																</sn-avatar>
+															</div>
+															<span class="sn-card-component-createdby">{{email.sys_created_by.name || email.sys_created_by.display_value}}</span>
+														 </div>
+														 <div class="sn-card-component sn-card-component_first sn-card-component_meta">
+															<span class="sn-card-component-time">
+															   <span>${gs.getMessage('Email log')}</span>
+															   <span class="sn-card-component_accent-bar_bullet">•</span>
+															   <div class="date-calendar">{{email.sys_created_on.display_value}}</div>
+															   <sn-time-ago timestamp="email.created.value"/>
+															</span>
+														 </div>
+														 <div class="sn-card-component sn-card-component_records">
+															<div class="sn-widget">
+															   <ul class="sn-widget-list sn-widget-list-table">
+																  <li>
+																	 <span class="sn-widget-list-table-cell">
+																		<span class="icon-mail" />
+																	 </span>
+																	 <span ng-switch="email.type.value" class="sn-widget-list-table-cell">
+																		 <span ng-switch-when="send-ready">${gs.getMessage('Email queued for send')}</span>
+																		 <span ng-switch-when="sent">${gs.getMessage('Email sent')}</span>
+																		 <span ng-switch-when="send-ignored">${gs.getMessage('Email send ignored')}</span>
+																		 <span ng-switch-when="send-failed">${gs.getMessage('Email send failed')}</span>
+																		 <span ng-switch-when="	received-ignored">${gs.getMessage('Incoming email')}</span>
+																		 <span ng-switch-when="	received">${gs.getMessage('Incoming email')}</span>
+																	  </span>
+																  </li>
+																  <li>
+																	 <span class="sn-widget-list-table-cell">${gs.getMessage('Subject:')}</span>
+																	 <span class="sn-widget-list-table-cell">{{email.subject.display_value}}</span>
+																  </li>
+																  <li>
+																	 <span class="sn-widget-list-table-cell">${gs.getMessage('From:')}</span>
+																	  <span class="sn-widget-list-table-cell">{{email.sys_created_by.name}}</span>
+																  </li>
+																  <li>
+																	 <span class="sn-widget-list-table-cell">${gs.getMessage('To:')}</span>
+																	 <span class="sn-widget-list-table-cell">{{email.recipients.display_value}}</span>
+																  </li>
+																  <li>
+																	 <span class="sn-widget-list-table-cell">${gs.getMessage('Cc:')}</span>
+																	 <span class="sn-widget-list-table-cell">{{email.copied.display_value}}</span>
+																  </li>
+																  <li>
+																	 <span class="sn-widget-list-table-cell" />
+																	 <span class="sn-widget-list-table-cell">
+																		<a ng-if="!email.isEmailDetailsShown" class="stream-action" href="#" ng-click="email.isEmailDetailsShown=true">${gs.getMessage('Show email details')}</a>
+																		 <a ng-if="email.isEmailDetailsShown" class="stream-action" href="#" ng-click="email.isEmailDetailsShown=false">${gs.getMessage('Hide email details')}</a>
+																	 </span>
+																  </li>
+															   </ul>
+															</div>
+														 </div>
+														  <div class="sn-card-component sn-card-component_summary sn-card-component_summary_spacing" style="">
+															  <div class="sn-widget sn-widget-textblock">
+																  <iframe
+																		  class="card email_detail"
+																		  ng-if="email.isEmailDetailsShown"
+																		  scrolling="no"
+																		  ng-attr-src="{{'/email_display.do?email_id=' + email.sys_id.value}}"
+																		  style="width:100%;"
+																		  onload="resizeFrame(this, 'body > *:last', 10, true)"></iframe>
+															  </div>
+														  </div>
+														  <div class="sn-card-component_accent-bar"></div>
+													  </li>
+												   </ul>
+												</div>
+											</div>
+											<!-- Email Log end -->
+										</div>
+									</div>
+								</div>	
+							</div>
+						</div>
+					</div>		
+					<div ng-if="mimBenchCtrl.view == 'summary'" class="row summary_wrapper" ng-cloak="">
+						<div class="col-xs-3 leftpane">
+							<div class="row sn-navhub-text">
+								<div class="col-xs-12">
+									<h3 class="pull-left">
+										${gs.getMessage('Major Incident')}
+									</h3>
+								</div>
+								<div class="col-xs-6">
+									
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-xs-12">
+									<iframe id="formFrame" frameBorder="0" src="$[jvar_sysparm_table].do?sys_id=$[jvar_sysparm_sys_id]&amp;sysparm_view=mim_form&amp;sysparm_titleless=true&amp;sysparm_link_less=true&amp;sysparm_view_forced=true&amp;sysparm_stack=no&amp;sysparm_nofocus=true" scrolling="no" onload="formFrameLoaded(this)"/>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-9 rightpane" style="padding: 20px;">
+							<div class="row">
+								<div class="col-xs-4 list-box">
+									<div class="list-item">
+										<div class="list-header">
+											<div class="col-xs-12">
+												<div class="row">
+													<div class="col-xs-9 text_wrapper">
+														<span class='sr-only'>{{mimBenchCtrl.formatMessage("Child Incidents Count", [mimBenchCtrl.childIncidents.count])}}</span>
+														<span class="count" aria-hidden='true'>{{mimBenchCtrl.childIncidents.count}}</span>
+														<span class="text" aria-hidden='true'>${gs.getMessage('Child Incidents')}</span>
+													</div>
+													<div class="col-xs-3">
+														<button class="btn btn-icon icon-add pull-right" ng-click="addChildIncidents($event)" uib-tooltip="${gs.getMessage('Add Child Incidents')}" tooltip-placement="bottom" href="#"><span class="sr-only">${gs.getMessage("Add Child Incidents")}</span></button>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="list-body">
+											<div ng-if="!mimBenchCtrl.summayApiInProgress">
+												<div class="col-xs-12">
+													<div class="item" id="child_incident_{{$index}}" ng-repeat="incident in mimBenchCtrl.childIncidents.data | limitTo: 5 track by $index">
+														<mim-record-preview incident="incident" index="$index"></mim-record-preview>
+														<a ng-click="viewIncident(incident.sys_id.value)" class="name" aria-describedby= "{{incident.sys_id.value}}_describedby" href="#">{{incident.number.display_value}}</a>
+														<span id="{{incident.sys_id.value}}_describedby" class="desc">{{incident.short_description.display_value}}</span>
+													</div>
+												</div>
+												<div class="col-sm-12 no_message" ng-if="mimBenchCtrl.childIncidents.count == 0">
+													${gs.getMessage('No Child Incidents found')}
+												</div>
+											</div>
+											<div ng-if="mimBenchCtrl.summayApiInProgress">
+												<div class="col-xs-12" style="text-align: center;">
+													<i style="margin-top: 50px;" class="icon icon-loading"></i>
+												</div>
+											</div>
+										</div>
+										<div class="list-footer">
+											<div class="ng-cloak col-xs-12">
+											<div>
+												<div class="pull-left">
+														<button ng-if="mimBenchCtrl.childIncidents.data.length > 0" class="btn btn-default" ng-click="open('childIncidents', 'list')">${gs.getMessage('View List')}</button>
+													</div>
+													<div class="pull-right">
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="col-xs-4 list-box">
+									<div class="list-item">
+										<div class="list-header">
+											<div class="col-xs-12">
+												<div class="row">
+													<div class="col-xs-9 text_wrapper">
+														<span class='sr-only'>{{mimBenchCtrl.formatMessage("Affected CIs Count", [mimBenchCtrl.affectedCIs.count])}}</span>
+														<span class="count" aria-hidden='true'>{{mimBenchCtrl.affectedCIs.count}}</span>
+														<span class="text" aria-hidden='true'>${gs.getMessage('Affected CIs')}</span>
+													</div>
+													<div class="col-xs-3">
+														<button ng-if="mimBenchCtrl.task.add_affected" class="btn btn-icon icon-add pull-right" ng-click="openCI('affectedCIs', $event)" uib-tooltip="${gs.getMessage('Add Affected CIs')}" tooltip-placement="bottom"><span class="sr-only">${gs.getMessage("Add Affected CIs")}</span></button>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="list-body">
+											<div ng-if="!mimBenchCtrl.summayApiInProgress">
+												<div class="col-xs-12">
+													<div class="item" ng-repeat="ci in mimBenchCtrl.affectedCIs.data | limitTo: 5 track by $index">
+														<span class="desc">
+															<i class="icon icon-alert-triangle" ng-show="ci.current_outage" uib-popover-template="'outage.html'" popover-placement="bottom" popover-trigger="mouseenter" popover-class="outagePopover" aria-hidden="true"></i>
+															<i class="icon icon-info" ng-show="!ci.current_outage" uib-popover-template="'outage.html'" popover-placement="bottom" popover-trigger="mouseenter" popover-class="outagePopover" aria-hidden="true"></i>
+															<a ng-click="viewCI(ci.sys_id.value)" class="name" href="#">{{ci.name.display_value}}</a>
+														</span>
+													</div>
+												</div>
+												<div class="col-sm-12 no_message" ng-if="mimBenchCtrl.affectedCIs.count == 0">
+													${gs.getMessage('No Affected CIs found')}
+												</div>
+											</div>
+											<div ng-if="mimBenchCtrl.summayApiInProgress">
+												<div class="col-xs-12" style="text-align: center;">
+													<i style="margin-top: 50px;" class="icon icon-loading"></i>
+												</div>
+											</div>
+										</div>
+										<div class="list-footer">
+											<div class="ng-cloak col-xs-12">
+											<div>
+												<div class="pull-left">
+														<button ng-if="mimBenchCtrl.affectedCIs.data.length > 0" class="btn btn-default" ng-click="open('affectedCIs', 'list')">${gs.getMessage('View List')}</button>
+													</div>
+													<div class="pull-right">
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="col-xs-4 list-box">
+									<div class="list-item">
+										<div class="list-header">
+											<div class="col-xs-12">
+												<div class="row">
+													<div class="col-xs-9 text_wrapper">
+														<span class='sr-only'>{{mimBenchCtrl.formatMessage("Impacted Services/CIs Count", [mimBenchCtrl.impactedServices.count])}}</span>
+														<span class="count" aria-hidden='true'>{{mimBenchCtrl.impactedServices.count}}</span>
+														<span class="text" aria-hidden='true'>${gs.getMessage('Impacted Services/CIs')}</span>
+													</div>
+													<div class="col-xs-3">
+														<button ng-if="mimBenchCtrl.task.add_impacted" class="btn btn-icon icon-add pull-right" ng-click="openCI('impactedServices', $event)" uib-tooltip="${gs.getMessage('Add Impacted Services/CIs')}" tooltip-placement="bottom-right"><span class="sr-only">${gs.getMessage("Add Impacted Services/CIs")}</span></button>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="list-body">
+											<div ng-if="!mimBenchCtrl.summayApiInProgress">
+												<div class="col-xs-12">
+													<div class="item" ng-repeat="ci in mimBenchCtrl.impactedServices.data | limitTo: 5 track by $index">
+														<span class="desc">
+															<i class="icon icon-alert-triangle" ng-show="ci.current_outage" uib-popover-template="'outage.html'" popover-placement="bottom" popover-trigger="mouseenter" popover-class="outagePopover" aria-hidden="true"></i>
+															<i class="icon icon-info" ng-show="!ci.current_outage" uib-popover-template="'outage.html'" popover-placement="bottom" popover-trigger="mouseenter" popover-class="outagePopover" aria-hidden="true"></i>
+															<a ng-click="viewCI(ci.sys_id.value)" class="name" href="#">{{ci.name.display_value}}</a>
+														</span>
+													</div>
+												</div>
+												<div class="col-sm-12 no_message" ng-if="mimBenchCtrl.impactedServices.count == 0">
+													${gs.getMessage('No Impacted Services/CIs found')}
+												</div>
+											</div>
+											<div ng-if="mimBenchCtrl.summayApiInProgress">
+												<div class="col-xs-12" style="text-align: center;">
+													<i style="margin-top: 50px;" class="icon icon-loading"></i>
+												</div>
+											</div>
+										</div>
+										<div class="list-footer">
+											<div class="ng-cloak col-xs-12">
+											<div>
+												<div class="pull-left">
+														<button ng-if="mimBenchCtrl.impactedServices.data.length > 0" class="btn btn-default" ng-click="open('impactedServices', 'list')">${gs.getMessage('View List')}</button>
+													</div>
+													<div class="pull-right">
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-xs-12" style="margin-top: 20px;border-bottom: 1px solid #e6e8ea;margin-bottom: 20px"></div>
+							<div class="row">
+								<div class="col-xs-12">
+									<h3 style="margin-top: 0px">${gs.getMessage('Notes')}</h3>
+									<iframe id="sumNotesFrame" frameBorder="0" src="$[jvar_record_notes]" scrolling="no" onload="notesFrameLoaded('#sumNotesFrame', this)" />
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			</j2:if>
+		</body>
+	</html>
+</j:jelly>

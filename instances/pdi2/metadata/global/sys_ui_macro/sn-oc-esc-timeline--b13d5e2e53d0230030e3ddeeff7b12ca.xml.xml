@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<div>
+	<div class="notification notification-info" ng-show="notification.visible">
+		<div class="notification-message">${gs.getMessage("Tasks will also be escalated to overlapping Shift ")}
+			<span ng-repeat="rota in notification.rotas track by rota.rotaSysId">
+				<span class="oc-modal-msg-rota alert-link" ng-click="showOverlappingRota(rota)">{{"'" + rota.name + "'"}}</span>
+				<span ng-if="!$last">,</span>
+			</span>
+		</div>
+		<button class="btn close icon-cross" ng-click="notification.visible=false" tabindex="0">
+			<span class="sr-only">${gs.getMessage("Close")}</span>
+		</button>
+	</div>
+	<div class="esc-path-start-msg" ng-if="escPathData.type === responseType.success">{{escPathStartTimeMessage}}</div>
+	<div class="escalation-set-wrapper" ng-if="currentRota.isCustomEscalation">
+		<div ng-if="task &amp;&amp; task.table &amp;&amp; task.sys_id">
+			<div class="notification notification-info">
+				<div class="notification-message">{{customEscalationMessage}}</div>
+			</div>
+		</div>
+		<div class="col-sm-12">
+			<div class="escalation-set-selector">
+				<div class="col-sm-3">
+					<label for="escalation-set-dropdown">${gs.getMessage('Escalation policy')}</label>
+				</div>
+				<div class="col-sm-9">
+					<select id="escalation-set-dropdown" sn-esc-path-custom-select="" ng-options="escalationSet.sys_id as escalationSet.name for escalationSet in escalationSets track by escalationSet.sys_id" ng-model="currentEscalationSet.sys_id" ng-change="changeEscalationSet()" aria-label="${gs.getMessage('Escalation policy')}">
+						<option value=""></option>
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	<div class="oc-escalation-wrapper" ng-if="escPathData.type === responseType.success">
+		<div class="oc-esc-path-tl">
+			<div class="oc-per-level-details" ng-if="escPathData.data.length > 0" ng-repeat="escalation in escPathData.data track by escalation.level">
+				<div class="oc-level-time-delayed">{{escalation.rosterDetails.timeToStart}}</div>
+				<div class="oc-esc-data-container">
+					<div class="oc-tl-vert-bar"></div>
+					<div class="oc-esc-tl-data">
+						<div class="oc-esc-tl-icon">
+							<div class="oc-esc-tl-level">{{escalation.level}}</div>
+						</div>
+						<div class="oc-esc-tl-roster">
+							<div ng-class="{'oc-level-user-background': escalation.isLevelFocused}"></div>
+							<div class="oc-esc-tl-user">
+								<div>
+									<span class="oc-esc-tl-user-name oc-esc-tl-user-name-truncate" uib-tooltip="{{getLevelTitle(escalation)}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" role="button" tabindex="0" ng-click="updateAvatarsPerLevel(escalation); escalation.isLevelFocused = true" ng-blur="escalation.isLevelFocused = false">{{getLevelTitle(escalation)}}</span>
+								</div>
+								<span class="oc-esc-tl-roster-name oc-truncate" uib-tooltip="{{escalation.rosterDetails.name}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{escalation.rosterDetails.name}}</span>
+							</div>
+							<div class="oc-esc-notif-wrapper" ng-if="escalation.rosterDetails.notifications">
+								<span class="icon-history oc-modal-icon-history" ng-if="escalation.rosterDetails.notifications.overallTime"></span>
+								<div class="oc-esc-notif-row">
+									<div class="oc-esc-notif-left">
+										<span class="oc-notif-left-spacing oc-level-delay" ng-click="escalation.isVisible = escalation.isVisible ? false : true;">{{escalation.rosterDetails.notifications.overallTime}}</span>
+									</div>
+								</div>
+
+								<div class="oc-esc-notif-row oc-esc-notif-info" ng-if="escalation.isVisible" ng-repeat="notification in escalation.rosterDetails.notifications.repeats track by $index">
+									<div class="oc-esc-notif-left">
+										<span class="icon-notification-bell oc-vertical-middle oc-reminder-icon-spacing"></span>
+										<span class="oc-notif-left-spacing oc-truncate oc-shifts-reminder oc-vertical-middle" uib-tooltip="{{notification.reminder}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{notification.reminder}}</span>
+									</div>
+								</div>
+
+								<div class="oc-esc-notif-row oc-esc-notif-info" ng-if="escalation.rosterDetails.gapBetweenSteps &amp;&amp; escalation.isVisible">
+									<div class="oc-esc-notif-left">
+										<span class="icon-arrow-up-rounded oc-reminder-icon-spacing oc-vertical-middle"></span>
+										<span class="oc-truncate oc-notif-left-spacing oc-vertical-middle" uib-tooltip="{{escalation.rosterDetails.gapBetweenSteps}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{escalation.rosterDetails.gapBetweenSteps}}</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="oc-per-level-details" ng-if="escPathData.data.length > 0">
+				<div class="oc-level-time-delayed">{{endLevelOverallDelay}}</div>
+				<div class="oc-esc-data-container">
+					<div class="oc-esc-tl-data">
+						<div class="oc-esc-tl-icon">
+							<div class="oc-esc-tl-level"></div>
+						</div>
+						<div class="oc-esc-tl-roster oc-timeline-end">${gs.getMessage('End')}</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div ng-if="currentRota &amp;&amp; escPathData.type === responseType.error" class="oc-no-esc-steps">
+	{{escPathData.msg}}
+</div>
+<div ng-if="!currentRota" class="oc-no-esc-steps">
+	${gs.getMessage("Nobody is On-Call now")}
+</div>
+</j:jelly>

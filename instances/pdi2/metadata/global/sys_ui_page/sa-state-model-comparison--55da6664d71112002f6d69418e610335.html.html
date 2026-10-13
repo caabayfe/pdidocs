@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:client_script type="user" />
+	
+	
+	<!-- Set the app title -->
+	<j:set var="jvar_title" value="${gs.getMessage('Run RCA Model Configuration Comparison')}" />
+	
+	
+	<!-- Using existing BSM function to determine the browser compatibility -->
+	<g2:evaluate var="jvar_compatibility">
+        SNC.BSMCompatibility.checkCompatibility();
+    </g2:evaluate>	
+	
+	<!-- If blocked, give unsupported message -->
+	<j2:if test="$[jvar_compatibility == 'block']" >
+		<g:inline template="cmdb_browser_compatibility.xml"/>
+	</j2:if>
+	
+	 <!-- If allowed, show comparison UI -->
+	<j2:if test="$[jvar_compatibility == 'allow']" >
+		<div class="sa-state-model-comparison-wrapper">
+			<g:inline template="sa_config_compare.xml"/>
+		</div>
+		
+		<script type="text/javascript">
+			jQuery(".sa-state-model-comparison-wrapper").each(function () {
+				var content = jQuery(this);
+				angular.element(document).injector().invoke(function($compile) {
+				var scope = angular.element(content).scope();
+					$compile(content)(scope);
+				});
+			});
+		</script>
+	</j2:if>
+	
+
+</j:jelly>

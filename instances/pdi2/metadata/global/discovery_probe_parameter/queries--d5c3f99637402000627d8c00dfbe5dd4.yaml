@@ -1,0 +1,51 @@
+_meta:
+  hash: 98b5a6f334083f780ac8195fa17b6cf5037c8f377fe25140bd16c443cdff83c5
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: now.discovery_infra
+  sys_created_on: 2012-02-10 00:38:15
+  sys_id: d5c3f99637402000627d8c00dfbe5dd4
+  sys_mod_count: '13'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_d5c3f99637402000627d8c00dfbe5dd4
+  sys_updated_by: now.discovery_infra
+  sys_updated_on: 2025-10-09 23:31:32
+active: 'true'
+name: queries
+probe: 5355955237402000627d8c00dfbe5ddf
+sys_name: queries
+sys_policy: ''
+value: ''
+value_script: |-
+  // Aggregates CIM statements for all classifiers
+
+  var cimQueries = [];
+  var classifierRecord = new GlideRecord('discovery_classy_cim');
+  classifierRecord.addActiveQuery();
+  classifierRecord.query();
+  while (classifierRecord.next()) {
+    var classifierId = '' + classifierRecord.sys_id;
+    var criteriaRecord = new GlideRecord('discovery_class_criteria');
+    criteriaRecord.addActiveQuery();
+    criteriaRecord.addQuery('classy', classifierId);
+    criteriaRecord.query();
+    while (criteriaRecord.next()) {
+      var query = '' + criteriaRecord.criterion;
+      if (!JSUtil.contains(cimQueries, query))
+        cimQueries.push(query);
+    }
+  }
+
+  // Get queries that CIM - Classify wants to make
+  var classifyQueries = new GlideRecord('discovery_probes_cim_query');
+  classifyQueries.addQuery('probe', '5355955237402000627d8c00dfbe5ddf');    // sys_id of CIM - Classify probe
+  classifyQueries.query();
+  while (classifyQueries.next()) {
+     var result = SncDiscoveryCodeSigningUtil.isRecordTrusted('discovery_probes_cim_query', classifyQueries.getUniqueValue(), 'ecc_queue');
+     if (result)
+         cimQueries.push('' + classifyQueries.query);
+  }
+
+  answer = cimQueries.join(ProbeHandlerCim.STATEMENT_PARAMETER_DELIMITER);

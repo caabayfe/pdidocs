@@ -1,0 +1,236 @@
+/**
+ * @typedef {{
+ 	conferenceObj: global.NotifyConferenceAPI;
+	isAvailable(): boolean;
+	getConferenceTableName(): string;
+	getParticipantTableName(): string;
+	getEventHandlerAPI(): global.ConferenceEventHandlerConstructor;
+	createEventHandlerInstance(): global.ConferenceEventHandler;
+	getConferenceAPI(): global.NotifyConferenceAPIConstructor;
+	createConferenceInstance(): global.NotifyConferenceAPI;
+	getParticipantAPI(): global.NotifyConferenceParticipantConstructor;
+	createParticipantInstance(): global.NotifyConferenceParticipant;
+	throwImplementationError():  Error;
+	getName(): string;
+	initialize(confInstance?: global.NotifyConferenceAPI): void;
+	setConferenceObject(confInstance: global.NotifyConferenceAPI): void;
+	startConference(confObj: global.NotifyConferenceAPI, participants: Array<global.NotifyConferenceParticipant>, sourceGR: GlideRecord): global.ConferenceActionResult;
+	validateConferenceObject(): Error | void;
+	isValidConferenceObject(): boolean;
+	addParticipant(participant: global.NotifyConferenceParticipant): global.ConferenceActionResult;
+	addParticipants(participants: Array<global.NotifyConferenceParticipant>): global.ConferenceActionResult;
+	mute(participant: global.NotifyConferenceParticipant): global.ConferenceActionResult;
+	multiMute(paticipants: Array<global.NotifyConferenceParticipant>): global.ConferenceActionResult;
+	unmute(participant: global.NotifyConferenceParticipant): global.ConferenceActionResult;
+	multiUnmute(participants: Array<global.NotifyConferenceParticipant>): global.ConferenceActionResult;
+	removeParticipant(participant: global.NotifyConferenceParticipant): global.ConferenceActionResult;
+	removeParticipants(participants: Array<global.NotifyConferenceParticipant>): global.ConferenceActionResult;
+	endConference(): global.ConferenceActionResult;
+	getCapabilities(): {[name: string]: number;};
+	makeHost(participant: global.NotifyConferenceParticipant): global.ConferenceActionResult;
+ }} global.NotifyConferenceDriver
+ */
+
+var ConferenceFactory = Class.create();
+ConferenceFactory.getCapabilityTypes = function () {
+	return {
+		NOT_SUPPORTED: 0,
+		FULLY_SUPPORTED: 1
+	};
+};
+ConferenceFactory.getCapabilitiesTemplate = function () {
+	return {
+		start: {
+			isSupported: 0,
+			meta: {}
+		},
+		end: {
+			isSupported: 0,
+			meta: {}
+		},
+		selfJoin: {
+			isSupported: 0,
+			meta: {}
+		},
+		join: {
+			isSupported: 0,
+			meta: {}
+		},
+		multiJoin: {
+			isSupported: 0,
+			meta: {}
+		},
+		mute: {
+			isSupported: 0,
+			meta: {}
+		},
+		multiMute: {
+			isSupported: 0,
+			meta: {}
+		},
+		unmute: {
+			isSupported: 0,
+			meta: {}
+		},
+		multiUnmute: {
+			isSupported: 0,
+			meta: {}
+		},
+		kick: {
+			isSupported: 0,
+			meta: {}
+		},
+		multiKick: {
+			isSupported: 0,
+			meta: {}
+		},
+		record: {
+			isSupported: 0,
+			meta: {}
+		},
+		speaking: {
+			isSupported: 0,
+			meta: {}
+		},
+		recording: {
+			isSupported: 0,
+			meta: {}
+		},
+		screenSharing: {
+			isSupported: 0,
+			meta: {}
+		},
+		fileSharing: {
+			isSupported: 0,
+			meta: {}
+		},
+		archive: {
+			isSupported: 0,
+			meta: {}
+		},
+		muteOnJoin: {
+			isSupported: 0,
+			meta: {}
+		},
+		beepOnJoin: {
+			isSupported: 0,
+			meta: {}
+		},
+		beepOnLeave: {
+			isSupported: 0,
+			meta: {}
+		},
+		hideCallInfo: {
+			isSupported: 0,
+			meta: {}
+		},
+		title: {
+			isSupported: 0,
+			meta: {}
+		},
+		asyncStart: {
+			isSupported: 0,
+			meta: {}
+		},
+		asyncMultiJoin: {
+			isSupported: 0,
+			meta: {}
+		}
+	};
+};
+/**
+ * @param {NotifyParticipantGR} participantGR
+ * @returns {global.NotifyConferenceAPI}
+*/
+ConferenceFactory.createConferenceObjectFromParticipantGR = function (participantGR) {
+	var confUtils = new NotifyConferenceUtils();
+	if (!confUtils.isValidParticipantGR(participantGR))
+		throw new Error('Invalid parameters passed');
+	if (participantGR.notify_conference_call.nil())
+		throw new Error('Found null conference record');
+	var confGR = participantGR.notify_conference_call.getRefRecord();
+	return ConferenceFactory.createConferenceObjectFromConferenceGR(confGR);
+};
+/**
+ * @param {string} confId
+ * @returns {global.NotifyConferenceAPI}
+ */
+ConferenceFactory.createConferenceObjectFromConferenceId = function (confId) {
+	var db = new NotifyDatabase();
+	var confGR = /** @type {NotifyConferenceCallGR}*/(db.getConferenceGRFromConfId(confId));
+	return ConferenceFactory.createConferenceObjectFromConferenceGR(confGR);
+};
+/**
+ * @param {NotifyConferenceCallGR} confGR - 'notify_conference_call' or sub class
+ * @returns {global.NotifyConferenceAPI}
+ */
+ConferenceFactory.createConferenceObjectFromConferenceGR = function (confGR) {
+	var confUtils = new NotifyConferenceUtils();
+	if (!confUtils.isValidConfGR(confGR))
+		throw new Error('Invalid conference record passed');
+	var serviceProvider = '';
+	if (confGR.service_provider.nil()) {
+		confGR = confUtils.fixServiceProviderDetails(confGR);
+		if (confGR.notify_number.nil())
+			throw new Error('Unable find driver implementation');
+		serviceProvider = confUtils.DEFAULT_TELEPHONY_SERVICE_PROVIDER;
+	} else
+		serviceProvider = confGR.service_provider + '';
+	if (serviceProvider.length === 0)
+		throw new Error('Unable to find service provider implementation');
+	var confObj = ConferenceFactory.createConferenceInstance(serviceProvider);
+	confObj.setActiveConferenceGR(confGR);
+	return confObj;
+};
+
+/**
+ * @param {string} serviceProviderName
+ * @returns {global.NotifyConferenceDriver}
+ */
+ConferenceFactory.getDriverInstance = function (serviceProviderName) {
+	if (typeof serviceProviderName !== 'string')
+		throw new Error('Service provider name must be a string');
+	if (serviceProviderName.length === 0)
+		throw new Error('Invalid driver name');
+	var confUtils = new NotifyConferenceUtils();
+	var spMap = confUtils.getServiceProviderMap();
+	if (!spMap[serviceProviderName])
+		throw new Error("We didn't find any service provider with name '" + serviceProviderName + "', please provide valid service provider");
+	return spMap[serviceProviderName];
+};
+
+/**
+ * @param {string} serviceProviderName
+ * @returns {global.NotifyConferenceAPI}
+ */
+ConferenceFactory.createConferenceInstance = function (serviceProviderName) {
+	/**
+	 * @type {global.NotifyConferenceDriver}
+	 */
+	var driver = ConferenceFactory.getDriverInstance(serviceProviderName);
+	return driver.createConferenceInstance();
+};
+
+/**
+ * @param {string} serviceProviderName
+ * @returns {global.NotifyConferenceParticipant}
+ */
+ConferenceFactory.createParticipantInstance = function (serviceProviderName) {
+	/**
+	 * @type {global.NotifyConferenceDriver}
+	 */
+	var driver = ConferenceFactory.getDriverInstance(serviceProviderName);
+	return driver.createParticipantInstance();
+};
+
+/**
+ * @param {string} serviceProviderName
+ * @returns {global.ConferenceEventHandler}
+ */
+ConferenceFactory.createEventHandlerInstance = function (serviceProviderName) {
+	/**
+	 * @type {global.NotifyConferenceDriver}
+	 */
+	var driver = ConferenceFactory.getDriverInstance(serviceProviderName);
+	return driver.createEventHandlerInstance();
+};

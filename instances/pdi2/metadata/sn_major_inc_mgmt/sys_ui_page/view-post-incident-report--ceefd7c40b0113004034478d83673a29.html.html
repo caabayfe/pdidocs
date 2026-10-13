@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		body {
+			padding: 0px !important;
+		}
+		.preview-header {
+			height: 46px;
+			padding-left: 13px;
+			padding-right: 13px;
+			background-color: RGB(var(--now-color_background--secondary, var(--now-color--neutral-1, 246, 247, 247)));
+			box-shadow: inset 1px 0 0 0 rgba(212,215,219,0.5), inset -1px 0 0 0 rgba(212,215,219,0.5), inset 0 1px 0 0 rgba(212,215,219,0.5), inset 0 -1px 0 0 #BDC0C4, 0 1px 2px 0 rgba(0,0,0,0.08);
+		}
+		.preview-header .left {
+			float: left;
+		}
+		.preview-header .right {
+			float: right;
+		}
+		.preview-header h2 {
+			margin-top: 13px;
+			font-size: 18px;
+		}
+		.preview-header .right .btn {
+			margin-top: 7px;
+
+		}
+		.preview_iframe iframe {
+			height: calc(100vh - 51px);
+			border: none;
+		}
+		#page_timing_div {
+			display: none;
+		}
+		.drag_section_header span[role="button"]  {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 17px;
+			height: 15px;
+		}
+
+		#popup_close_image {
+			margin: 0;
+		}
+	</style>
+	<g:evaluate var="jvar_sysparm_sys_id" expression="RP.getParameterValue('sysparm_sys_id')" jelly="true"/>
+
+	<g:evaluate var="jvar_incidentgr" jelly="true" object="true">
+		var incidentGr = new GlideRecord('incident');
+		incidentGr.get(RP.getParameterValue('sysparm_sys_id'));
+		incidentGr;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_iframeUrl" jelly="true" object="true">
+		var uiPage = gs.getProperty('sn_major_inc_mgmt.pir_export_pdf_ui_page');
+		var iframeUrl = uiPage + '?sysparm_sys_id=' + RP.getParameterValue('sysparm_sys_id');
+		iframeUrl;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_canExportPIR" jelly="true" object="true">
+		var canExportPIR = new global.MIMWorkbenchUtil().canExportPIR(jelly.jvar_incidentgr);
+		canExportPIR;
+	</g:evaluate>
+	
+	<g:evaluate var="jvar_canExportToPDF" jelly="true">
+		var canExportToPDF = new global.MIMWorkbenchUtil().canExportToPDF();
+		canExportToPDF;
+	</g:evaluate>
+
+	<j:if test="${incidentGr.isValid() == false}">
+		<div class="notification notification-danger" style="margin: 10px;">
+			<div class="outputmsg_text">
+				${gs.getMessage('Invalid Incident SysId')}
+			</div>
+		</div>
+	</j:if>
+
+	<j:if test="${incidentGr.isValid() == true &amp;&amp; canExportPIR == false}">
+		<div class="notification notification-danger" style="margin: 10px;">
+			<div class="outputmsg_text">
+				${gs.getMessage('Security constraints prevent viewing this page')}
+			</div>
+		</div>
+	</j:if>
+
+	<j:if test="${incidentGr.isValid() == true &amp;&amp; canExportPIR == true}">
+	<div class="preview-header">
+		<div class="left">
+			<h2>${gs.getMessage('Post Incident Report')}</h2>
+		</div>
+		<j:if test="${jvar_canExportToPDF == true}">
+			<div class="right">
+				<button onclick="exportPDF();" class="btn btn-primary download-report">${gs.getMessage('Download Report PDF')}</button>
+			</div>
+		</j:if>
+	</div>
+	<div class="preview_iframe">
+		<iframe src="${jvar_iframeUrl}" width="100%" height="100%"/>
+	</div>
+	<input type="hidden" id="url" name='url' value="${jvar_iframeUrl}" />
+	</j:if>
+</j:jelly>

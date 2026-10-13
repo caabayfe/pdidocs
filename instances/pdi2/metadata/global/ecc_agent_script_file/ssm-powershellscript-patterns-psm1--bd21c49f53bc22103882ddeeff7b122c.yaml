@@ -1,0 +1,474 @@
+_meta:
+  hash: 24e2f24b07c857bf75c917148479b4a515e1bbbb7f51397375542d75a4fe1624
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: now.discovery_infra
+  sys_created_on: 2025-04-15 06:02:22
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: bd21c49f53bc22103882ddeeff7b122c
+  sys_mod_count: '0'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_bd21c49f53bc22103882ddeeff7b122c
+  sys_updated_by: now.discovery_infra
+  sys_updated_on: 2025-04-15 06:02:22
+active: 'true'
+checksum: ''
+description: This module is used by AWSPowershellProvider.java when executing Powershell related command/scripts
+directory: 'false'
+name: SSM_PowerShellScript_Patterns.psm1
+parent: d504f65753b462103882ddeeff7b12fd
+script: |-
+  $global:ARRAY_INDICATOR="__SNCARR__"
+  $global:ARRAY_INDICATOR_START = $ARRAY_INDICATOR + "["
+  $global:ARRAY_INDICATOR_END = "]" + $ARRAY_INDICATOR
+
+  <######
+  Execute Command Function - called by various pattern eval scripts
+  ######>
+
+  function executeCommand{
+      param([string]$command, [int]$timeoutSec, [bool]$stdErrInStdOut=$true)
+      
+      if (-not $command){
+          write-error "Command is required for this operation, quit";
+          return;
+      }
+
+      return invoke-expression $command;
+  }
+
+  <######
+  Enum Functions - called by various functions in APowerShellProvider.java
+  ######>
+
+  function enumClass{
+      param([string]$namespace, [string]$classname)
+      
+      # If we did not get a namespace, use the default
+      if (-not $namespace){
+          $namespace = "root\cimv2";
+      }
+      
+      try{
+          $obj = Get-WmiObject -List -Class $classname -namespace $namespace -ErrorAction Stop;
+          return $obj;
+      } catch{
+          write-error ("Could not get an object from $namespace/$classname. " + $_.Exception.Message);
+      }
+      
+      return "";
+  }
+
+  function enumRootClass {
+      param([string]$namespace, [string]$class)
+      
+      try {
+          $sb = { Get-WmiObject -namespace $namespace -class $class -ErrorAction Stop }
+          Invoke-Command $sb | Format-Single-Property -Property "Name";
+      } catch {
+          Write-Error ("Could not get query $query on namespace=$namespace. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  function enumKeys{
+      param([string]$hive, [string]$parentKey)
+
+      try{
+         $reg = Get-WmiObject -list -namespace root\default -ErrorAction Stop | where-object {$_.Name -eq "StdRegProv"}
+      } catch{
+          Write-error ("Could not get $hive. " + $_.Exception.Message);
+      }
+
+      try{
+          $res = $reg.EnumKey($hive, $parentKey);
+      } catch {
+          Write-error ("Could not query '$parentKey' from $hive." + $_.Exception.Message);
+      }
+      
+      if ($res -and $res.sNames){
+          return $res.sNames;
+      }
+      
+      return "";
+  }
+
+  function enumClasses{
+      param([string]$namespace)
+      
+      # If we did not get a namespace, use the default
+      if (-not $namespace){
+          $namespace = "root\cimv2";
+      }
+      
+      return enumRootClass -namespace $namespace -class "meta_class";
+  }
+
+  function enumNamespaces{
+      param([string]$namespace)
+      
+      # If we did not get a namespace, use the default
+      if (-not $namespace){
+          $namespace = "root";
+      }
+
+      return enumRootClass -namespace $namespace -class "__NAMESPACE";
+  }
+
+  function enumProperties{
+      param([string]$namespace, [string]$classname)
+      
+      $obj = enumClass -namespace $namespace -classname $classname;
+      if ($obj -and $obj.Properties){
+          return $obj.Properties.Name;
+      }
+  }
+
+  function enumMethods{
+      param([string]$namespace, [string]$classname)
+      
+      $obj = enumClass -namespace $namespace -classname $classname;
+      $output = @();
+      
+      if ($obj -and $obj.Methods){
+          foreach ($item in $obj.Methods){
+              # look for methods with no input/output parameters
+              if (-not $item.InParameters -and $item.OutParameters -and $item.OutParameters.Properties.Count -eq 1) {
+                  $output += $item.Name;
+              }
+          };
+      }
+      
+      return $output -join "`n";
+  }
+
+  <######
+  InvokeMethod Function - called by invokeMethod function in APowershell.java
+  ######>
+
+  function invokeMethodOnClass {
+      param([string]$class, [string]$method)
+      
+      try {
+          $info = invoke-wmimethod -class $class -name $method -EA Stop;
+          
+          if ($info.ReturnValue -eq 0) {
+              return $true
+          } else{
+              write-error ("Could not invoke $method on $class, got return value: " + $info.ReturnValue + "($info)");
+          }
+      } catch{
+          write-error ("Could not invoke wmi method $method on ${class}: " + $_.Exception.Message);
+      }
+  }
+
+  function invokeMethodOnObjects {
+      param([string]$query, [string]$namespace, [string]$method)
+      
+      $namespace = standardizeNamespace -namespace $namespace;
+      
+      try{
+          $objClass = Get-WmiObject -namespace $namespace -Query $query -ErrorAction Stop | ForEach-Object { Invoke-WmiMethod -InputObject $_ -Name $method } ;
+          
+          # We would like to return all properties requested - this way we walk over all properties better than Get-WMIObject -query
+          $output = @();
+          $objClass | ForEach-Object {
+              foreach($property in $_.Properties) {
+                  if ($property.Value -is [array]){
+                      $output += $property.Name + "`t:`t" + $ARRAY_INDICATOR_START + ($property.Value -join ",") + $ARRAY_INDICATOR_END;
+                  } else {
+                      $output += $property.Name + "`t:`t" + $property.Value;
+                  }
+              }
+          }
+          return ($output -join "`n").trim()
+      } catch{
+          write-error ("Could not get query $query on namespace=$namespace. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  <######
+  Get Process Function - called by getProcessUserAndDomain function in APowershell.java
+  ######>
+
+  function getProcessUserAndDomain {
+      param([string]$commaSeparatedPids);
+      $pids = $commaSeparatedPids -split "," | ForEach-Object { $_.Trim() };
+      $processes = Get-WmiObject -ClassName 'Win32_Process' -ErrorAction Stop | Where-Object -Property 'processid' -Value $pids -In;
+      foreach ($process in $processes) {
+          $owner = $process | Invoke-WmiMethod -Name 'GetOwner' -ErrorAction Stop;
+          "ProcessId:$($process.ProcessId),User:$($owner.User),Domain:$($owner.Domain)";
+      }
+  }
+
+  <######
+  HTTP Functions - called by httpGet function in APowershell.java
+  ######>
+
+  function httpRequest {
+      param(
+          [string]$User,
+          [string]$Password,
+          [string]$URI = $(throw 'URI is required')
+      )
+
+      if ($User -and $Password) {
+          $httpCred = getCredential -User $User -Password $Password;
+          $httpResponse = Invoke-WebRequest -Credential $httpCred -URI $URI -UseBasicParsing;
+      } else {
+          $httpResponse = Invoke-WebRequest -UseDefaultCredentials -URI $URI -UseBasicParsing;
+      }
+
+      return $httpResponse.StatusCode, $httpResponse.Content;
+  }
+
+  <######
+  Get File Functions - called by getFile function in APowershell.java
+  ######>
+
+  function getFileContent {
+      param(
+          [string]$path = $(throw 'The path parameter is required'),
+          [string]$encoding = 'Default'
+      )
+
+      if (isUncPath -path $path) {
+          $output = getFileContentUncPath -uncPath $path -encoding $encoding
+      } else {
+          $output = getFileContentLocalPath -localPath $path -encoding $encoding
+      }
+      
+      $output;
+  }
+
+  function getFileContentUncPath {
+      param(
+          [string]$uncPath = $(throw 'The uncPath parameter is required'),
+          [string]$encoding = 'Default'
+      )
+
+      if (-Not (isUncPath -path $uncPath)) {
+          throw "$uncPath is not a valid UNC path"
+      }
+
+      $parentDir = Split-Path -Path $uncPath
+      $fileName = Split-Path -Path $uncPath -Leaf
+
+      $drive = mapDrive -path $parentDir
+      $mappedPath = mapDrivePath -drive $drive -relativePath $fileName;
+      try {
+          Get-Content -Path $mappedPath -Encoding $encoding;
+      } finally {
+          unmapDrive -drive $drive;
+      }
+  }
+
+  function getFileContentLocalPath {
+      param(
+          [string]$localPath = $(throw 'The localPath parameter is required'),
+          [string]$encoding = 'Default'
+      )
+
+      if (isUncPath -path $localPath) {
+          throw "$localPath is a UNC path"
+      }
+
+      Get-Content -Path $localPath -Encoding $encoding
+  }
+
+  function getFileOwner {
+      param([string]$path = $(throw "path parameter is required"))
+
+      if (isUncPath -path $path) {
+          $acl = getFileAclUncPath -uncPath $path;
+      } else {
+          $acl = getFileAclLocalPath -localPath $path;
+      }
+
+      return $acl.Owner;
+  }
+
+  function getFileAclUncPath {
+      param(
+          [string]$uncPath = $(throw "uncPath parameter is required")
+      )
+
+      if (-Not (isUncPath -path $uncPath)) {
+          throw "$uncPath is not a valid UNC path"
+      }
+
+      $parentDir = Split-Path -Path $uncPath
+      $fileName = Split-Path -Path $uncPath -Leaf
+
+      $drive = mapDrive -path $parentDir
+      try {
+          $acl = Get-Acl -Path $uncPath;
+      } finally {
+          unmapDrive -drive $drive;
+      }
+
+      return $acl;
+  }
+
+  function getFileAclLocalPath {
+      param([string]$localPath = $(throw "localPath parameter is required"))
+
+      try {
+          $acl = Get-Acl $localPath;
+      } catch {
+          Write-Error ("Could not get file ACL from $localPath. Original exception: " + $_.Exception.Message);
+      }
+
+      return $acl;
+  }
+
+  <######
+  Delete File Functions - called by deleteFile function in APowershell.java
+  ######>
+
+  function deleteFile {
+      param([string]$path = $(throw 'The path parameter is required'))
+
+      # isUncPath and deleteFileUncPath are in CommonUtils.psm1
+      if (isUncPath -path $path) {
+          deleteFileUncPath -uncPath $path -credential $snccred;
+      } else {
+          deleteFileLocalPath -localPath $path;
+      }
+  }
+
+  function deleteFileUncPath {
+      param(
+          [string]$uncPath = $(throw 'The uncPath parameter is required')
+      )
+
+      if (-Not (isUncPath -path $uncPath)) {
+          throw "$uncPath is not a valid UNC path"
+      }
+
+      $parentDir = Split-Path -Path $uncPath
+      $fileName = Split-Path -Path $uncPath -Leaf
+
+      $drive = mapDrive -path $parentDir;
+      $mappedPath = mapDrivePath -drive $drive -relativePath $fileName;
+      try {
+          $null = Remove-Item -Path $mappedPath -Force -ErrorAction Stop;
+      } catch [System.Management.Automation.ItemNotFoundException] {
+          throw
+      }
+      finally {
+          unmapDrive -drive $drive;
+      }
+  }
+
+  function deleteFileLocalPath{
+      param([string]$localPath = $(throw 'The path parameter is required'))
+      
+      if (isUncPath -path $localPath) {
+          throw "$localPath is an UNC path"
+      }
+
+      try{
+          $null = Remove-Item -Path $localPath -Force -ErrorAction Stop;
+      } catch{
+          throw ("Could not remove item at $localPath. Exception: " + $_.Exception.Message);
+      }
+  }
+
+  <######
+  Helper Functions
+  ######>
+
+  function Format-Single-Property {
+      [cmdletbinding()]
+      param([parameter(Mandatory=$true, ValueFromPipeline=$true)]$pipelineInput, [string]$Property)
+
+      Process {
+          ForEach ($input in $pipelineInput) {
+              $input.$Property;
+          }
+      }
+  }
+
+  function getCredential {
+  	param([string]$user, [string]$password)
+
+  	$user = unprotect $user
+  	if ($password) {
+  		$passwordSecure = convertto-securestring -string (unprotect $password) -asplaintext -force;
+  	} else {
+  		# If no password was supplied, use an empty instance of SecureString
+  		$passwordSecure = new-object System.Security.SecureString;
+  	}
+  	
+  	$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist "$user",$passwordSecure;
+  	return $cred;
+  }
+
+  function unprotect {
+  	param([string]$protectedText)
+
+  	# when protected, the text has the format of "ENC_VAL[base64_encoding]"
+  	# use regex to detect the pattern and pluck out the base64_ecoding part
+  	if (-Not ($protectedText -match "^ENC_VAL\[((?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?)\]$")) {
+  		# not protected, just return original string
+  		return $protectedText
+  	}
+
+  	Add-Type -AssemblyName System.Security
+  	$base64String = $Matches[1]
+  	$protectedData = [Convert]::FromBase64String($base64String)
+  	$unprotectedData = [Security.Cryptography.ProtectedData]::Unprotect($protectedData, $null, 'CurrentUser')
+  	return [Text.Encoding]::UTF8.GetString($unprotectedData)
+  }
+
+  function standardizeNamespace {
+      param([string]$namespace)
+      
+      if (-not $namespace){
+          $nameSpace = "root\cimv2";
+      }elseif ($namespace.startsWith("\")){
+          $namespace = $namespace.substring(1);
+      }
+      
+      return $namespace;
+  }
+
+  function isUncPath {
+      param([string]$path = $(throw 'The path parameter is required'))
+      
+      (New-Object System.Uri($path)).IsUnc;
+  }
+
+  function mapDrive {
+      param(
+          [string]$path = $(throw 'The path parameter is required')
+      )
+
+      $driveName = [Guid]::NewGuid().ToString()
+      return New-PSDrive -Name $driveName -PSProvider FileSystem -Root $path -Scope Global -ErrorAction Stop;
+  }
+
+  function mapDrivePath {
+      param(
+          [System.Management.Automation.PSDriveInfo]$drive = $(throw 'The drive parameter is required.'),
+          [string]$relativePath = $(throw 'The relativePath parameter is required')
+      )
+
+      Join-Path -Path "$($drive.Name):" -ChildPath $relativePath;
+  }
+
+  function unmapDrive {
+      param([System.Management.Automation.PSDriveInfo]$drive = $(throw 'The drive parameter is required.'))
+
+      Remove-PSDrive -Name $drive.Name -ErrorAction SilentlyContinue;
+  }
+script_attachment: ''
+source: ''
+sys_name: SSM_PowerShellScript_Patterns.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

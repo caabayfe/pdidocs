@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <j:set var="jvar_canShowContactOverrides" value="${new OnCallContactPreferenceUtil().canCreateContactOverrides()}" />
+	<script type="text/ng-template" id="oc_user_contact_prefereces.html">
+		<div class="user-pref-attempts" id="oc-user-contact-preference" role="tabpanel" aria-labelledby="oc-preference-tab">
+			<div class="contact-prefs-message">{{startTimeMessage}}</div>
+			<div class="contact-pref-user-name">{{userPreferenceExtraDetails.userName}}</div>
+			<div class="contact-pref-roster-name">{{userPreferenceExtraDetails.rosterName}}</div>
+			<div class="oc-attempt-wrapper" ng-repeat="contactAttempt in contactPreferenceDetails track by contactAttempt.attempt">
+				<div class="vertical-line"></div>
+				<div class="oc-attempt-level">
+					<span class="oc-attempt-number">{{contactAttempt.attempt}}</span>
+				</div>
+				<div class="oc-attempt-details preference-source">{{getPreferenceSourceBadge(contactAttempt.preferenceSource)}}</div>
+				<div class="oc-attempt-details" ng-repeat="preference in contactAttempt.userContactPreference track by $index">
+					<span class="type-icon" ng-class=" preference.type == 'email' ? 'icon-mail' : preference.type == 'voice' ? 'icon-phone' : preference.type == 'sms' ? 'icon-collaboration' : comm.communication_type.value == 'task' ? 'icon-work-note' : preference.type == 'slack' ? 'icon-slack' : preference.type == 'mobile_notification' ? 'icon-mobile' : preference.type == 'teams' ? 'icon-microsoft-teams' :  'icon-comment' "></span>
+					<span class="oc-preference-type">{{typeMap[preference.type] ? typeMap[preference.type].label : preference.type}}</span>
+					<span class="oc-preference-value oc-truncate" uib-tooltip="{{preference[typeMap[preference.type].valueField] ? preference[typeMap[preference.type].valueField] : typeMap[preference.type] ?  dataNotAvailable : preference.type}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom-right" tooltip-enable="false" tooltip-append-to-body="true">
+						<span ng-if="preference[typeMap[preference.type].valueField]">
+							<a ng-if="preference.type === 'email'" href="mailto: {{preference[typeMap[preference.type].valueField]}}">{{preference[typeMap[preference.type].valueField]}}</a>
+							<a ng-if="preference.type === 'slack'" href="#" ng-click="openSlackApp(userPreferenceExtraDetails.userId)">{{preference[typeMap[preference.type].valueField]}}</a>
+							<a ng-if="preference.type === 'teams'" href="{{contactAttempt.teamsChatLink}}" target="_blank">{{preference[typeMap[preference.type].valueField]}}</a>
+							<span ng-if="preference.type === 'voice'">
+								<a aria-label="{{typeMap[preference.type].label}} {{preference[typeMap[preference.type].valueField]}}" href="tel: {{preference[typeMap[preference.type].valueField]}}">{{preference[typeMap[preference.type].valueField]}}</a>
+								<a class="preference-start-call" href="" ng-if="isNotifyCallAvailable(preference[typeMap[preference.type].valueField])" ng-class="{disabled: !isNotifyCallEnabled(preference[typeMap[preference.type].valueField])}" ng-click="callPerson($event, preference[typeMap[preference.type].valueField], userPreferenceExtraDetails.userId)" aria-label="${gs.getMessage('Start a call')}">${gs.getMessage('Call')}</a>
+							</span>
+						</span>
+						<span ng-if="preference.type === 'sms' || !preference[typeMap[preference.type].valueField]">{{preference[typeMap[preference.type].valueField] ? preference[typeMap[preference.type].valueField] : typeMap[preference.type] ? dataNotAvailable : preference.type}}</span>
+					</span>
+				</div>
+			</div>
+			<div class="oc-attempt-wrapper">
+				<div class="oc-attempt-level">
+				</div>
+				<div class="oc-attempt-details">
+					<span class="preference-end">${gs.getMessage('End')}</span>
+				</div>
+			</div>
+		</div>
+	</script>
+	<div class="oc-heading-right col-sm-6 oc-audience-profile-wrapper">
+		<div class="oc-headings" ng-if="(getAdditionalMembers(esclationAudiences) > 1) &amp;&amp; (tabDetails.selectedTab == tabDetails.tabs[1])">
+			<div class="right-section-heading oc-level-members-wrapper">
+				<div class="sn-oc-shift-members-avatar" ng-class="{'active': member.user &amp;&amp; member.user.sys_id &amp;&amp; member.user.sys_id == profile.profileData.user.sys_id}" ng-repeat="member in esclationAudiences.userDetails track by $index">
+					<div class="sn-oc-member-avatar oc-profile-avatar-container" ng-click="updateProfileDetails(member, profile.profileTypeMap.user)">
+						<div class="sn-avatar-container" aria-label="{{member.user.name}}">
+							<span class="sn-avatar-initials">{{member.user.initials}}</span>
+							<span class="sn-avatar-image" ng-style="getBackgroundStyle(member)"></span>
+						</div>
+					</div>
+				</div>
+				<div class="sn-oc-shift-members-avatar oc-audience-avatar" ng-class="{'active': member.sys_id &amp;&amp; member.sys_id == profile.profileData.sys_id}" ng-repeat="member in esclationAudiences.groupDetails track by $index">
+					<div class="sn-oc-member-avatar oc-profile-avatar-container" ng-click="updateProfileDetails(member, profile.profileTypeMap.group)">
+						<div class="sn-avatar-container" aria-label="{{member.name.value}}">
+							<span class="sn-avatar-initials">{{member.initials}}</span>
+							<span class="sn-avatar-image"></span>
+						</div>
+					</div>
+				</div>
+				<div class="sn-oc-shift-members-avatar oc-audience-avatar" ng-class="{'active': member.sys_id &amp;&amp; member.sys_id == profile.profileData.sys_id}" ng-repeat="member in esclationAudiences.deviceDetails track by $index">
+					<div class="sn-oc-member-avatar oc-profile-avatar-container" ng-click="updateProfileDetails(member, profile.profileTypeMap.device)">
+						<div class="sn-avatar-container" aria-label="{{member.name.value}}">
+							<span class="sn-avatar-initials">{{member.initials}}</span>
+							<span class="sn-avatar-image"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="oc-headings" ng-if="profile.profileTypeMap.user !== profile.selectedProfile || tabDetails.selectedTab === tabDetails.tabs[0] || escPathData.type === responseType.error || (!${jvar_canShowContactOverrides})">
+			<div class="right-section-heading oc-profile-header" ng-if="profile.selectedProfile">
+				<h2>{{modalInstanceCtrl.form.profile}}</h2>
+			</div>
+		</div>
+		<div class="right-section">
+			<div class="oc-modal-header-row" ng-if="profile.profileTypeMap.user === profile.selectedProfile &amp;&amp; tabDetails.selectedTab !== tabDetails.tabs[0] &amp;&amp; escPathData.type !== responseType.error &amp;&amp; ${jvar_canShowContactOverrides}">
+				<div class="sn-navhub right-section-tab-container" ng-class="{'remove-border-top': getAdditionalMembers(esclationAudiences) > 1}">
+					<ul class="sn-navhub-content profile-pref-tabs" role="tablist" id="profile-pref-tab-container">
+						<li class="btn sn-navhub-btn sn-navhub-btn_text" id="oc-profile-tab" role="tab" aria-controls="oc-user-profile" ng-attr-tabindex="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0] ? 0 : -1}}" aria-selected="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0] ? true : false}}" ng-class="{'state-active': profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0]}" ng-click="tabClickHandler(profilePreferenceTabConfig, 0)" ng-keyup="arrowPressHandler($event, profilePreferenceTabConfig)">${gs.getMessage('Profile')}</li>
+						<li class="btn sn-navhub-btn sn-navhub-btn_text" id="oc-preference-tab" role="tab" aria-controls="oc-user-contact-preference" ng-attr-tabindex="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1] ? 0 : -1}}" aria-selected="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1] ? true : false}}" ng-class="{'state-active': profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1]}" ng-click="tabClickHandler(profilePreferenceTabConfig, 1)" ng-keyup="arrowPressHandler($event,profilePreferenceTabConfig)">${gs.getMessage('Contact Preferences')}</li>
+					</ul>
+				</div>
+			</div>
+			<div class="profile-preference-wrapper" ng-class="{'right-section-height': getAdditionalMembers(esclationAudiences) > 1}" ng-if="!isUserPreferenceLoading &amp;&amp; profile.selectedProfile">
+				<sn-oncall-audience-profile selected-profile="{{profile.selectedProfile}}" profile-map="profile.profileTypeMap" audience-detail="profile.profileData" group-details="modalInstanceCtrl.groupDetails" ng-if="profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0]"/>
+				<sn-user-contact-preference contact-preference-details="contactPreference" user-preference-extra-details="userPreferenceExtraDetails" ng-if="profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1]"/>
+			</div>
+			<div ng-if="isUserPreferenceLoading" class="oc-user-preference-loading">
+				<i class="icon-loading"></i>
+			</div>
+			<div ng-if="hasNoEscalatee()" class="oc-esc-no-escalatee">
+				<span>${gs.getMessage('No Escalatees are defined for this step')}</span>
+			</div>
+		</div>
+	</div>
+</j:jelly>

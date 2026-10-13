@@ -1,0 +1,679 @@
+_meta:
+  hash: 44105e08a79e59bb088d10c3ad67723b9476d01a85b53860ea0951755a1febb2
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: evan.qu
+  sys_created_on: 2017-04-20 11:44:11
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: d2a19c705352320023bdae4a16dc343c
+  sys_mod_count: '38'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_d2a19c705352320023bdae4a16dc343c
+  sys_updated_by: now.discovery.content
+  sys_updated_on: 2025-03-11 13:05:33
+active: 'true'
+checksum: ''
+description: ''
+directory: 'false'
+name: adme_collector.sh
+parent: ec515c705352320023bdae4a16dc3488
+script: |-
+  #!/bin/sh
+  # Copyright © ServiceNow, Inc. 2017. All rights reserved.
+  #
+  # adme_collector.sh
+  #    Collector Script For Application Dependency Mapping (Ehnanced)
+  #
+  # Parameters:
+  #     base_dir
+  #     sampling_interval
+  #     max_total_samples
+  #
+  # File system structure:
+  #    $BASE_DIR
+  #        |
+  #        ————/scripts                  - location of adme_collector.sh and helper scripts 
+  #        ----/logs                     - location of stdout and stderr redirection
+  #        ————/process_samples          - location of process sample files
+  #        ————/connection_samples       - location of connection sample files
+  #        ————/result                   - location of processes.logs and connections.log
+  #
+
+
+  #################################################################################
+  #
+  # PUBLIC PARAMETERS 
+  # 
+  #################################################################################
+
+  BASE_DIR=
+  SAMPLING_INTERVAL=
+  MAX_TOTAL_SAMPLES=
+  USE_NET_TOOLS=
+
+  #################################################################################
+  #
+  # MAIN VARIABLES 
+  # 
+  #################################################################################
+
+  CONNECTION_INFO_COMMAND=
+  PROCESS_INFO_COMMAND=
+
+  CURRENT_SAMPLE_COUNT=0
+
+  UNIX_FLAVOR=
+  UNIX_PREFIX=
+  CURRENT_USER=
+  EFFECTIVE_USER_ID=
+
+  USE_NETSTAT="false"
+  USE_LSOF="false"
+
+  ERROR_LOG_FILENAME="stderr.log"
+  CONSOLE_LOG_FILENAME="stdout.log"
+
+
+
+
+  #################################################################################
+  #
+  # CONSTANTS 
+  # 
+  #################################################################################
+
+
+  #CURRENT_DATE_COMMAND="env LC_ALL=C date '+%a %b %e %H:%M %Z %Y'";
+  #CURRENT_DATE_COMMAND="env LC_ALL=C date '+%Y-%m-%d__%H_%M_%S'";
+
+  # -u flag tells the command to get UTC time, so we don't worry about time zone
+  CURRENT_DATE_COMMAND="env LC_ALL=C date -u +%Y_%m_%d_%Hh_%Mm_%Ss";
+
+
+  #################################################################################
+  #
+  # Print usage message
+  # 
+  #################################################################################
+  print_usage()
+  {
+      echo "Usage:"
+      echo "    $0 <base_dir> <sampling_interval> <max_total_samples>"
+      echo "        base_dir                   - an already existing base directory for on disk data structures "
+      echo "                                           - must be a absolute path to a directory "
+      echo "                                           - effective user running this script must have rwx privileges on this directory"
+      echo "        sampling_interval          - how often to sample process and connection data in seconds"
+      echo "                                           - must be a minimum of 5 seconds "
+      echo "        max_total_samples          - the limit of samples being taken by the script"
+      echo "                                           - the script will stop running after max_total_samples samples are taken"
+      echo "                                                                                   "
+  }
+
+
+  #################################################################################
+  #
+  # Validate soft dependency - print a warning if we don't have it
+  #
+  #################################################################################
+  validate_soft_dependency()
+  {
+      COMMAND_LOCATION=`command -v "$1"`
+      
+      if [ $? -ne 0 ] ; then
+      	COMMAND_LOCATION=`which "$1"`
+      	
+      	if [ $? -ne 0 ] ; then
+          	echo >&2 "    WARNING: Could not locate soft dependency '$1' on system...parts of Application Dependency (Enhanced) may not work."
+          	echo >&2 "         "      
+     
+          	echo "    WARNING: Could not locate soft dependency '$1' on system...parts of Application Dependency (Enhanced) may not work."
+          	echo " "
+          	return
+          fi
+      fi
+      
+      echo "    Located soft dependency '$1' in '$COMMAND_LOCATION'"
+  }
+
+
+  #################################################################################
+  #
+  # Validate dependency - to find out errors
+  #
+  #################################################################################
+  validate_dependency_for_errors()
+  {
+  	echo "Validate command $1" >&2
+      COMMAND_LOCATION=`command -v "$1"`
+      
+      if [ $? -ne 0 ] ; then
+      	COMMAND_LOCATION=`which "$1"`
+      	
+      	if [ $? -ne 0 ] ; then
+          	echo  "    WARNING: Could not locate soft dependency '$1' on system...parts of Application Dependency (Enhanced) may not work." >&2
+         		echo  "         "    >&2 
+         		return
+         	fi
+      fi
+
+      echo "    Located soft dependency '$1' in '$COMMAND_LOCATION'" >&2
+      
+      if [ "$1" = "netstat" ] ; then
+      	echo " Possible error in sudoer configuration or requiretty is not configured" >&2
+      fi
+      
+      if [ "$1" = "lsof" ] ; then
+      	echo " Possible error in sudoer configuration or requiretty is not configured" >&2
+      fi    
+      
+  }
+
+
+  #################################################################################
+  #
+  # Validate dependencies 
+  #
+  #################################################################################
+  validate_dependencies()
+  {
+      echo "Validating soft (partial functionality without these) dependencies...."
+
+      validate_soft_dependency 'awk'
+      validate_soft_dependency 'basename'
+      validate_soft_dependency 'bc'
+      validate_soft_dependency 'cat'
+      validate_soft_dependency 'chmod'
+      validate_soft_dependency 'cp'
+      validate_soft_dependency 'cut'
+      validate_soft_dependency 'dirname'
+      validate_soft_dependency 'env'
+      validate_soft_dependency 'expr'
+      validate_soft_dependency 'find'
+      validate_soft_dependency 'grep'
+      validate_soft_dependency 'head'
+      validate_soft_dependency 'mkdir'
+      validate_soft_dependency 'printf'
+      validate_soft_dependency 'ps'
+      validate_soft_dependency 'read'
+      validate_soft_dependency 'rm'
+      validate_soft_dependency 'sed'
+      validate_soft_dependency 'sort'
+      validate_soft_dependency 'tr'
+      validate_soft_dependency 'uname'
+      validate_soft_dependency 'wc'
+      validate_soft_dependency 'which'
+      validate_soft_dependency 'whoami'
+      validate_soft_dependency 'netstat' 
+      validate_soft_dependency 'lsof'
+
+      echo " "
+  }
+
+
+  #################################################################################
+  #
+  # Validate arguments
+  #
+  #################################################################################
+  validate_arguments()
+  {
+
+      echo "Validating arguments..."
+
+      if [ $# -ne 4 ] ;  then
+          echo "Incorrect number of arguments....expecting 4, saw $#"
+          echo " "
+          print_usage;
+          exit 1;
+      fi
+
+      BASE_DIR="$1";
+
+      if [ ! -d "$BASE_DIR" ]; then
+          echo "'$BASE_DIR' does not appear to exist, or is not a valid directory!"
+          echo " "
+          print_usage;
+          exit 1;       
+      fi
+
+
+      if [ ! -w "$BASE_DIR" ]; then
+          echo "'$BASE_DIR' does not appear to a writeable directory!"
+          echo " "
+          print_usage;
+          exit 1;       
+      fi
+
+
+      if [ ! -d "$BASE_DIR/scripts" ]; then
+          echo "'$BASE_DIR/scripts' does not appear to exist, or is not a valid directory!"
+          echo "A valid installation of Application Dependency (Enhanced) will have this directory present...aborting." 
+          echo " "
+          print_usage;
+          exit 1;       
+      fi
+
+
+
+      SAMPLING_INTERVAL="$2";
+      case "$SAMPLING_INTERVAL" in
+          *[!0-9]*|'') 
+              echo "Provided sampling interval of '$SAMPLING_INTERVAL' is not a valid integer!"
+              echo " "
+              print_usage;
+              exit 1;
+              ;;
+          *)   
+              echo "    Provided sampling interval of '$SAMPLING_INTERVAL' seconds"
+              ;;
+
+      esac
+   
+
+      MAX_TOTAL_SAMPLES="$3"
+      case "$MAX_TOTAL_SAMPLES" in
+          *[!0-9]*|'') 
+              echo "Provided total sample count limit of '$MAX_TOTAL_SAMPLES' is not a valid integer!"
+              echo " "
+              print_usage;
+              exit 1;
+              ;;
+          *)   
+              echo "    Provided total sample count of '$MAX_TOTAL_SAMPLES' samples"
+              ;;
+      esac
+
+      
+      # Check to make sure $SAMPLING_INTERVAL is at least 5 seconds
+      if [ "$SAMPLING_INTERVAL" -lt 5 ]; then
+          echo "sampling_interval '$SAMPLING_INTERVAL' needs to be at least 5 seconds." 
+          echo " "
+          print_usage;
+          exit 1;
+      fi
+   
+      USE_NET_TOOLS="$4"
+
+      echo " "
+  }
+
+  #################################################################################
+  #
+  # Create PID file - easier management/killing of collector processes later
+  #
+  #################################################################################
+  create_pid_file()
+  {
+      CALLING_SCRIPT_FULL_NAME="$0"
+      CALLING_SCRIPT_NAME=`basename "$CALLING_SCRIPT_FULL_NAME" .sh`
+      PID_FILE_FILENAME="${BASE_DIR}/${CALLING_SCRIPT_NAME}.pid"
+
+      echo "Creating PID file for '$CALLING_SCRIPT_FULL_NAME' at '$PID_FILE_FILENAME'"
+      echo $$ 1> "$PID_FILE_FILENAME"
+
+      echo "  "
+  }
+
+
+
+  #################################################################################
+  #
+  # Set up stdout and stderr redirection
+  #
+  #################################################################################
+  setup_redirection()
+  {
+
+      CONSOLE_LOG_FILENAME="${BASE_DIR}/logs/${CONSOLE_LOG_FILENAME}"
+      ERROR_LOG_FILENAME="${BASE_DIR}/logs/${ERROR_LOG_FILENAME}"
+
+      echo "Setting up redirection...."
+      echo "    All future console logging will be in '$CONSOLE_LOG_FILENAME'" 
+      echo "    All future error logging will be in '$ERROR_LOG_FILENAME'" 
+
+      exec  >>  "$CONSOLE_LOG_FILENAME"
+      exec  2>> "$ERROR_LOG_FILENAME"
+      echo " ";
+  }
+
+
+
+
+  #################################################################################
+  #
+  # Helper function to create or clean a directory 
+  #
+  #################################################################################
+  create_or_clean_directory()
+  {
+
+      if [ -d "$1" ]; then
+          echo "    '$1 already exists...wiping it clean!";
+          rm -rf $1
+      else
+          echo "    '$1' does not exist yet...creating it!";
+      fi
+      
+      mkdir -p "$1"
+
+  }
+
+
+
+  #################################################################################
+  #
+  # Set up directory structure
+  #
+  #################################################################################
+  setup_directory_structure()
+  {
+      echo "Setting up directory structure....in '$BASE_DIR'";
+
+      create_or_clean_directory "${BASE_DIR}/logs"
+      create_or_clean_directory "${BASE_DIR}/process_samples"
+      create_or_clean_directory "${BASE_DIR}/connection_samples"
+      create_or_clean_directory "${BASE_DIR}/result"
+
+     echo " "
+  }
+
+
+
+
+
+  #################################################################################
+  #
+  # Detect Unix Flavor
+  #
+  #################################################################################
+  detect_unix_flavor()
+  {
+      UNIX_FLAVOR=`uname -s`
+      echo "Detected *NIX flavor of '$UNIX_FLAVOR'"
+  }
+
+
+
+
+  #################################################################################
+  #
+  # Detect Current User
+  #
+  #################################################################################
+  detect_current_user()
+  {
+     COMMAND_LOCATION=`command -v whoami`
+     if [ $? -eq 0 ] ; then
+        CURRENT_USER=`whoami`
+        echo "Detected current user of '$CURRENT_USER'"
+  	fi
+
+      if [ "$UNIX_PREFIX" != "solaris" ] ; then
+  		 EFFECTIVE_USER_ID=`id -u`
+  		 echo "Effective user id is $EFFECTIVE_USER_ID"
+  		 if [ "$EFFECTIVE_USER_ID" -eq 0 ] ; then
+   
+  			 echo "    This script is being run with super user privileges "
+  		 else
+  			 echo "    This script is NOT being run with superuser privileges "    
+  		 fi 
+  	fi
+
+      echo " "    
+  }
+
+
+
+  #################################################################################
+  #
+  # Set the canonical unix prefix
+  #
+  #################################################################################
+  set_unix_prefix()
+  {
+
+      case "$UNIX_FLAVOR" in
+          AIX)
+              UNIX_PREFIX="aix";
+              ;;
+  	SunOS)
+              UNIX_PREFIX="solaris"
+              ;;
+          HP-UX)
+              UNIX_PREFIX="hpux"
+              ;;
+          *)
+              UNIX_PREFIX="linux"
+              ;;
+      esac
+
+
+      echo "Setting canonical unix prefix to '$UNIX_PREFIX'"
+      echo " "
+  }
+
+
+
+
+  #################################################################################
+  #
+  # Determine if netstat should be used
+  #
+  #################################################################################
+  determine_netstat_use()
+  {
+  	#Default netstat is enabled
+      check_netstat=`command -v netstat`
+  	if [ $? -eq 0 ] ; then
+  		USE_NETSTAT="true"
+  	fi    
+  	case "$UNIX_PREFIX" in
+  		solaris)
+  			# If netstat command has the -u option, use it
+  			if [ "`netstat -u`" ]
+  			then
+  				USE_NETSTAT="true"
+  			else
+  				USE_NETSTAT="false"
+  			fi
+  			;;
+  		hpux)
+  			# HPUX always use lsof
+  			USE_NETSTAT="false"
+  			;;
+  		*)
+  			;;
+  	esac
+  }
+
+  # For Solaris always use lsof even if it is not present because we have a fallback in solaris_lsof_command.sh on pfiles
+  determine_lsof_use()
+  {
+  	check_lsof=`command -v lsof`;
+  	if [ $? -eq 0 ] ; then
+  		USE_LSOF="true"
+  	elif [ "$UNIX_PREFIX" = "solaris" ] ; then
+  		USE_LSOF="true"
+  	fi
+  }
+
+
+  #################################################################################
+  #
+  # Set the connection information command we will use
+  #
+  #################################################################################
+  set_connection_info_command()
+  {
+      # Prepend full executable path
+      if [ "$USE_NETSTAT" = "true" ] && [ "$USE_NET_TOOLS" = "true" ];
+      then
+          CONNECTION_INFO_COMMAND="${BASE_DIR}/scripts/${UNIX_PREFIX}_netstat_command.sh"
+      elif [ "$USE_LSOF" = "true" ]
+      then
+          CONNECTION_INFO_COMMAND="${BASE_DIR}/scripts/${UNIX_PREFIX}_lsof_command.sh"
+      else
+          CONNECTION_INFO_COMMAND="${BASE_DIR}/scripts/${UNIX_PREFIX}_ss_command.sh"
+      fi
+
+      if [ "$USE_LSOF" = "true" ] && [ "$UNIX_PREFIX" = "aix" ]
+      then
+          CONNECTION_INFO_COMMAND="${BASE_DIR}/scripts/${UNIX_PREFIX}_lsof_command.sh"
+      fi
+
+      echo "Setting command we will use to collect connection information to '$CONNECTION_INFO_COMMAND'"
+      echo " "
+  }
+
+
+
+
+  #################################################################################
+  #
+  # Set the process information command we will use
+  #
+  #################################################################################
+  set_process_info_command()
+  {
+
+      # Prepend full executable path
+      PROCESS_INFO_COMMAND="${BASE_DIR}/scripts/${UNIX_PREFIX}_ps_command.sh"
+
+      echo "Setting command we will use to collect process information to '$PROCESS_INFO_COMMAND'"
+      echo " "
+
+  }
+
+  #################################################################################
+  #
+  #  After reaching the sample count limitation, or errors delete everything except 
+  #  the pid file, the results and stderr
+  #
+  #################################################################################
+  cleanup()
+  {
+  	rm -rf $BASE_DIR/connection_samples
+  	rm -rf $BASE_DIR/process_samples
+  	rm -rf $BASE_DIR/logs/stdout.log
+  }
+
+  #################################################################################
+  #
+  # Echo out error validation and logging
+  #
+  #################################################################################
+  error_logging()
+  {
+  	echo "Error validation" >&2
+  	if [ "$USE_NETSTAT" = "true" ]
+      then
+  	    validate_dependency_for_errors 'netstat' 
+  	else
+      	validate_dependency_for_errors 'lsof'
+      fi
+  	echo "Exiting process." >&2
+  	cleanup   
+  }
+
+  #################################################################################
+  #
+  # Main Body of Script
+  #
+  #################################################################################
+
+
+  validate_arguments $*
+
+  create_pid_file; 
+
+  setup_directory_structure;
+
+  setup_redirection;
+
+  validate_dependencies;
+
+  detect_unix_flavor;
+
+  set_unix_prefix;
+
+  determine_netstat_use;
+
+  determine_lsof_use;
+
+  detect_current_user;
+
+  set_connection_info_command;
+
+  set_process_info_command;
+
+  CURRENT_DATE="`${CURRENT_DATE_COMMAND}`"
+  echo "    The current timestamp is $CURRENT_DATE"
+  echo " "
+
+  cp /dev/null "${BASE_DIR}/connection_samples/all_connections.log"
+  cp /dev/null "${BASE_DIR}/process_samples/all_processes.log"
+  CURRENT_SAMPLE_COUNT=1
+   while [ "$CURRENT_SAMPLE_COUNT" -le "$MAX_TOTAL_SAMPLES" ]
+   do
+   	CURRENT_DATE="`${CURRENT_DATE_COMMAND}`"
+   	echo "About to take sample $CURRENT_SAMPLE_COUNT. Current timestamp is $CURRENT_DATE"
+      "$CONNECTION_INFO_COMMAND" "$BASE_DIR"  2>>  "$ERROR_LOG_FILENAME"
+
+      if [ "$CURRENT_SAMPLE_COUNT" -eq 1 ]
+      then
+      	if [ -s "${BASE_DIR}/connection_samples/all_connections.log"  ]
+      	then
+      		echo "Connection sample file is not empty"
+      	else
+      		echo "Connection sample file size is 0" >&2
+      		error_logging
+      		exit 1
+      	fi
+      fi
+      
+      #matching with ADM in text based tabular format
+      #if type=to ip is remote ip, port is remote port
+      #if type=on ip is local ip, port is local port 
+      echo "COUNT TYPE PID IP PORT LOCAL_IP LOCAL_PORT" > 	"${BASE_DIR}/result/connections.log" 
+      cat "${BASE_DIR}/connection_samples/all_connections.log"  | sort | uniq -c >> "${BASE_DIR}/result/connections.log"
+
+
+  	"$PROCESS_INFO_COMMAND" "$BASE_DIR"  2>>  "$ERROR_LOG_FILENAME"
+
+      if [ "$CURRENT_SAMPLE_COUNT" -eq 1 ]
+      then
+      	if [ -s "${BASE_DIR}/process_samples/all_processes.log" ]
+      	then
+      		echo "Process sample file is not empty"
+      	else
+      		echo "Process sample file size is 0" >&2
+      		error_logging
+      		exit 1
+      	fi
+      fi
+
+  	#matching with ADM in text based tabular format with added count
+      #Column order: COUNT PID PPID COMMAND
+   	echo "COUNT PID PPID COMMAND" >     "${BASE_DIR}/result/processes.log" 
+   	cat "${BASE_DIR}/process_samples/all_processes.log" | awk '{count[$0]++} END {for (line in count) print count[line], line}' | sort >> "${BASE_DIR}/result/processes.log"
+
+      CURRENT_SAMPLE_COUNT=`expr "$CURRENT_SAMPLE_COUNT" + 1`    
+      sleep "$SAMPLING_INTERVAL"    
+   done
+
+  # After reaching the sample count limitation, delete everything except the pid file and the result
+  cleanup
+  echo "    "
+  echo "    total sample count limit of $MAX_TOTAL_SAMPLES is reached, exiting."
+
+  exit 0
+script_attachment: ''
+source: ''
+sys_name: adme_collector.sh
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

@@ -1,0 +1,1 @@
+new DiscoverySensor(VCenterESXHostsStorageSensor);

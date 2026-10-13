@@ -1,0 +1,947 @@
+_meta:
+  hash: 48820cc3f19dae0eea0b5c74a07104ad8e7ead8a801181f1e07f48f39ae5cd0a
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: chris.nguyen
+  sys_created_on: 2017-06-28 00:46:05
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 29125176e72332002ded0a6103f6a91e
+  sys_mod_count: '14'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_29125176e72332002ded0a6103f6a91e
+  sys_updated_by: now.discovery.content
+  sys_updated_on: 2025-12-01 12:02:20
+active: 'true'
+checksum: BCEPLrv4sLEopy213M/w/A==
+description: PowerShell script that may be executed continuously on a target to collect TCP connection and process information
+directory: 'false'
+name: CollectConnectionsAndProcessesInfo.ps1
+parent: 43886e96e701030058890a6103f6a96c
+script: |-
+  [CmdletBinding()]
+  Param(
+      [Parameter(Position=1)]
+      [ValidateScript({
+      $pollingIntervalAsInt = [Int]$_
+         
+      If ($pollingIntervalAsInt -ge 5) {
+          $True
+      }
+      Else{
+          Throw "SamplingInterval parameter needs to be at least 5 seconds."
+      }
+      })]
+      [Long]$SamplingInterval = 60,
+                 
+      [Parameter(Position=2)]
+      [ValidateScript({
+      $chunkAggregationIntervalAsInt = [Int]$_
+         
+      If ($chunkAggregationIntervalAsInt -ge 5) {
+         
+          If (($chunkAggregationIntervalAsInt % $SamplingInterval) -Eq 0){
+              $True
+          }
+          Else{
+              Throw "ChunkAggregationInterval parameter needs to be a multiple of SamplingInterval."
+          }
+      }
+      Else{
+          Throw "ChunkAggregationInterval parameter needs to be at least 5 seconds."
+      }
+      })]
+      [Int]$ChunkAggregationInterval = 60,
+   
+      [Parameter(Position=3)]
+      [ValidateScript({
+      $rollingWindowSizeAsInt = [Int]$_
+     
+      If ($rollingWindowSizeAsInt -gt 0){
+          $True
+      }
+      })]
+      [Int]$RollingWindowSize = 168,
+   
+                  [Parameter(Position=4)]
+      [String]$BaseDir = $null,
+     
+      [Parameter(Position=5)]
+      [String]$Mode = "INSTALL",
+     
+      [Parameter(Position=6)]
+      [ValidateScript({
+      $maxTotalSamplesAsInt = [Int]$_
+     
+      If($maxTotalSamplesAsInt -gt 0){
+          $True
+      }
+      })]
+      [Int]$MaxTotalSamples = 100
+  )
+   
+      Set-Variable LISTENING_STATE -Value "LISTENING" -Option Constant
+      Set-Variable ALL_ADDRESSES -Value "0.0.0.0" -Option Constant
+      Set-Variable LOCALHOST -Value "127.0.0.1" -Option Constant
+      Set-Variable NETSTAT_TCP_RECORD_PATTERN -Value "\s+TCP" -Option Constant
+      Set-Variable LOG_FILE -Value "adme_log.log" -Option Constant
+      Set-Variable OUTPUT_FILE -Value "processesAndConnections.json" -Option Constant
+      Set-Variable ADME_WORKSPACE_NAME -Value "com.service_now.adme" -Option Constant
+     
+      $processes = @{}
+      $connections = New-Object System.Collections.Generic.List[PSCustomObject]
+      $localIPv4Addresses = @()
+      $samplesPerChunk = 0
+      $currentSampleIndex = 0
+      $currentChunkIndex = 0
+      $totalSamplesTaken = 0
+      $isCurrentChunkWasReset = $False
+      $shouldContinueRunning = $False
+      $logsBeforeBaseDirIsDetermined = ""
+      $logFile = ""
+      $outputFile = ""
+      $isFirstTime = $True
+
+      Function Log (){
+        Param(
+          [Parameter(Mandatory=$False, ValueFromPipeline=$True, Position=0)]
+          [String]$message
+        )
+       
+        If ($message.length){
+          $message = "$([System.DateTime]::Now): $message"
+        }
+       
+        Add-Content $logFile "$message"
+      }
+   
+      Function Get-All-IPv4-Addresses (){
+                  $ipv4Addresses = @($LOCALHOST)
+                 
+          Get-WmiObject Win32_NetworkAdapterConfiguration -Filter "IpEnabled = 'True'" | Select-Object IpAddress `
+              | ForEach-Object {
+                                  $ipv4Addresses += $_.IpAddress -notlike "*:*"
+                  }
+                 
+                  Return $ipv4Addresses
+      }
+   
+      Function Get-Netstat-Output (){
+          Return netstat -anop TCP
+      }
+   
+      Function Get-Parameters ($process){
+          If (($process.CommandLine -ne $Null) -and ($process.CommandLine -ne '')){
+              Return $process.CommandLine.Trim()
+          }
+                 
+          Return ''
+      }
+   
+      Function Get-CommandLine($process){
+          If (($process.ExecutablePath -ne $Null) -and ($process.ExecutablePath -ne '')){
+              Return $process.ExecutablePath.Trim()
+          }
+                 
+          Return $process.Name
+      }
+   
+      Function Collect-And-Update-Process-Information{
+          Log "Collecting processes data..."
+                  $wmiObjProcesses = Get-WmiObject Win32_Process | Select-Object CommandLine,ParentProcessId,ProcessId,Name,ExecutablePath,@{N='CreationDate'; E={$_.ConvertToDateTime($_.CreationDate)}} | Where-Object {$_.ProcessId -ne $PID}
+          $processIdAsString = ""
+   
+          ForEach ($wmiObjProcess In $wmiObjProcesses){
+              $processIdAsString = $wmiObjProcess.ProcessId.ToString()
+
+              If ($wmiObjProcess.Name -eq "System Idle Process"){
+                  $wmiObjProcess.ParentProcessId = "99999" + $wmiObjProcess.ParentProcessId
+              }
+             
+              If ($processes.ContainsKey($processIdAsString)){
+                 $processes.Item($processIdAsString).Counters[$currentChunkIndex]++
+              }
+              Else{
+                  Add-Member -InputObject $wmiObjProcess -MemberType NoteProperty -Name Parameters `
+                      -Value (Get-Parameters -Process $wmiObjProcess)
+                  Add-Member -InputObject $wmiObjProcess -MemberType NoteProperty -Name IncomingConnections -Value @{}
+                  Add-Member -InputObject $wmiObjProcess -MemberType NoteProperty -Name OutgoingConnections -Value @{}
+                  Add-Member -InputObject $wmiObjProcess -MemberType NoteProperty -Name Counters -Value (@(0) * $RollingWindowSize)
+                  Add-Member -InputObject $wmiObjProcess -MemberType NoteProperty -Name Count -Value 0
+                  $wmiObjProcess.CommandLine = Get-CommandLine -Process $wmiObjProcess
+                  $wmiObjProcess.Counters[$currentChunkIndex]++
+                  $processes.Add($processIdAsString, $wmiObjProcess)
+              }
+          }
+          Log "Processes data collection finished"
+      }
+   
+      Function Set-Connection-ID ([PSObject]$connection){
+                  $connection.ConnectionID = $connection.Type +":"+ $connection.PID +":"+ $connection.IP +":"+ $connection.Port
+      }
+   
+      Function Parse-Connection ($netstatConnectionLine){
+                  $properties = 'Protocol','LocalAddress','LocalPort','RemoteAddress','RemotePort','State',`
+                          'ConnectionID','PID','Type','Count'
+                  $item = $netstatConnectionLine.line.split(' ',[System.StringSplitOptions]::RemoveEmptyEntries)
+                        
+          $localAddress = $item[1].split(':')[0]
+          $localPort = $item[1].split(':')[-1]
+                  $remoteAddress = $item[2].split(':')[0]
+          $remotePort = $item[2].split(':')[-1]                        
+          $proto = $item[0]
+                  $status  = $item[3] 
+          $procId = "-1"
+         
+          If ($item.Length -Eq 5){
+              $procId = $item[-1]
+          }         
+                                     
+                  $connection = New-Object -TypeName PSObject -Property @{
+                                  PID = $procId
+              ConnectionID = ""
+              Protocol = $proto
+              LocalAddress = $localAddress
+              LocalPort = $localPort
+              RemoteAddress = $remoteAddress
+              RemotePort = $remotePort
+              State = $status
+              Type = ""
+              Counters = (@(0) * $RollingWindowSize)
+              Count = 0;
+          }
+          $connection.Counters[$currentChunkIndex]++
+                 
+                  Return $connection
+      }
+   
+      Function Is-Listening-To-All-Addresses ($connection){
+                  Return (($connection.State -eq $LISTENING_STATE) -And $connection.LocalAddress -eq $ALL_ADDRESSES)
+      }
+   
+      Function Clone-Custom-Object ($objectToClone){
+                  $clonedObject = New-Object PsObject
+         
+                  $objectToClone.PsObject.Properties | ForEach-Object {
+                                  $clonedObject | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value
+                  }
+                 
+                  Return $clonedObject
+      }
+   
+      Function Create-Connection-ForEach-IPv4 ($connection){
+                  $allIpsConnections = @()
+                 
+                  $localIPv4Addresses | ForEach-Object{
+                                  $clonedObject = Clone-Custom-Object -ObjectToClone $connection
+                                  $clonedObject.LocalAddress = $_
+                                  $allIpsConnections += $clonedObject
+                  }
+                                 
+                  Return $allIpsConnections
+      }
+   
+      Function Is-Listening-To-All-Addresses ($connection){
+                  Return (($connection.State -eq $LISTENING_STATE) -and $connection.LocalAddress -eq $ALL_ADDRESSES)
+      }
+   
+      Function Is-Incoming-Connection ($listeningRecordObjects, $connection){
+          Return (($listeningRecordObjects | Where-Object {$_.Port -eq $connection.Local_Port}) -ne $Null)
+      }
+   
+      Function Find-TCP-Connections-For-Processes (){
+          Log "Collecting connections data..."
+                  $netstatOutput = Get-Netstat-Output        
+                  $netstatListeningStateRecords = $netstatOutput | Select-String -Pattern $LISTENING_STATE `
+                                          | Select-String -Pattern $NETSTAT_TCP_RECORD_PATTERN
+                  $netstatNotListeningStateRecords = $netstatOutput | Select-String -Pattern $LISTENING_STATE -NotMatch `
+                                             | Select-String -Pattern $NETSTAT_TCP_RECORD_PATTERN
+                  $listeningRecordObjects = @()
+                                                 
+                  $netstatListeningStateRecords | ForEach-Object {
+                                  $connectionObject = Parse-Connection -NetstatConnectionLine $_
+                                  
+                                  If ($connectionObject.PID -eq 0){
+                                      Return;
+                                  }
+              $connectionObject.Type = "on"
+                                  $matchedProcess = $processes.Item($connectionObject.PID)
+                                  $connectionsToAdd = @()
+                                                                                 
+                                  If (Is-Listening-To-All-Addresses -Connection $connectionObject){
+                                     $connectionsToAdd = Create-Connection-ForEach-IPv4 -Connection $connectionObject
+                                  }
+                                  Else{
+                  $connectionsToAdd += $connectionObject
+                                  }              
+              $connectionsToAdd = $connectionsToAdd | Select-Object ConnectionID,Count,Counters,Type,PID,@{N="IP";E={$_.LocalAddress}},@{N="Port";E={$_.LocalPort}},@{N="Local_IP";E={"undefined"}},@{N="Local_Port";E={"undefined"}}
+                   
+              $connectionsToAdd | ForEach-Object {
+                  Set-Connection-ID -Connection ($_)
+                 
+                                                  If ($matchedProcess -ne $Null){
+                 
+                                                                  If (-not $matchedProcess.IncomingConnections.ContainsKey($_.ConnectionID)){
+                                                                                  $matchedProcess.IncomingConnections.Add($_.ConnectionID, $_)
+                                                                  }
+                                                                  Else{
+                                                                                  $matchedProcess.IncomingConnections.Item($_.ConnectionID).Counters[$currentChunkIndex]++
+                                                                  }
+                  }
+                  $listeningRecordObjects += $_
+                                  }
+                  }
+                                 
+                  $netstatNotListeningStateRecords | ForEach-Object {
+                                  $connectionObject = (Parse-Connection -NetstatConnectionLine $_) | Select-Object ConnectionID,Count,Counters,Type,PID,@{N="IP";E={$_.RemoteAddress}},@{N="Port";E={$_.RemotePort}},@{N="Local_IP";E={$_.LocalAddress}},@{N="Local_Port";E={$_.LocalPort}} 
+              If ($connectionObject.PID -eq 0){
+                  Return;
+              }
+              $matchedProcess = $processes.Item($connectionObject.PID)
+                                                 
+                                  If (-not (Is-Incoming-Connection -ListeningRecordObjects $listeningRecordObjects `
+                                               -Connection $connectionObject)){
+                  $connectionObject.Type = "to"
+                  Set-Connection-ID -Connection ($connectionObject)
+             
+                  If (($matchedProcess -ne $Null) -and `
+                      (-not $matchedProcess.OutgoingConnections.ContainsKey($connectionObject.ConnectionID))){
+                      $matchedProcess.OutgoingConnections.Add($connectionObject.ConnectionID, $connectionObject)
+                  }
+                  Else{
+                      $matchedProcess.OutgoingConnections.Item($connectionObject.ConnectionID).Counters[$currentChunkIndex]++
+                  }
+                                  }
+                  }              
+          Log "Connections data collection finished"
+      }
+   
+      Function Detect-Cycle ($process, $visitedProcessesId ,$processesInCycle, $ppidsToReplace){
+          $cycleStart = -1
+         
+          For ($i = 0; $i -lt $visitedProcessesId.Length; $i++){
+             
+              If ($process.ProcessId -eq $visitedProcessesId[$i]){
+                  $cycleStart = $i
+                  Break
+              }
+          }
+         
+          If ($cycleStart -gt -1){
+              $smallestCreationDate = $process.CreationDate
+              $eldestProcessId = $process.ProcessId
+             
+              For ($i = $cycleStart; $i -lt $visitedProcessesId.Length; $i++){
+                  $processId = $visitedProcessesId[$i]
+                  $processesInCycle[$processId] = $True
+                  $creationDate = $processes[$processId.toString()].CreationDate
+                 
+                  If ((-not $creationDate) -or ([datetime]$creationDate) -lt ([datetime]$smallestCreationDate)){
+                     $smallestCreationDate = $creationDate
+                     $eldestProcessId = $processId
+                  }
+              }
+              
+              Log "Cycle detected at process $($processes.Item([string]$eldestProcessId).ParentProcessId)"
+              $ppidsToReplace.Add($processes.Item([string]$eldestProcessId).ParentProcessId,$True)
+              Return
+          }
+         
+          $parentProcess = $processes[[string]($process.ParentProcessId)]
+         
+          If ($parentProcess){
+             
+              If ($processesInCycle.ContainsKey($process.ProcessId)){
+                  Return
+              }
+             
+              $visitedProcessesId += $process.ProcessId
+              Detect-Cycle -Process $parentProcess -VisitedProcesses $visitedProcessesId `
+                           -ProcessesInCycle $processesInCycle -PPIDsToReplace $ppidsToReplace
+          }
+      }
+   
+      Function Replace-ParentProcessId ($ppidsToReplace){
+          Log "Starting breaking PIDs cycles"
+         
+          $processes.Keys | ForEach-Object {
+              $process = $processes.Item($_)
+             
+              If ($ppidsToReplace.ContainsKey($process.ParentProcessId)){
+                  $process.ParentProcessId = [Int]("99999" + $process.ParentProcessId)
+              }
+          }
+          Log "Finished breaking PIDs cycles"
+      }
+   
+      Function Handle-ProcessId-Reuse (){
+          $ppidsToReplace = @{}
+          $processesInCycle = @{}
+          Log "Searching for PIDs cycles"
+         
+          $processes.Keys | ForEach-Object {
+             
+              If ($processesInCycle.ContainsKey($_)){
+                  Return
+              }
+              Detect-Cycle -Process $processes.Item($_) -VisitedProcesses @() `
+                              -ProcessesInCycle $processesInCycle -PPIDsToReplace $ppidsToReplace
+          }
+         
+          Replace-ParentProcessId -PPIDsToReplace $ppidsToReplace
+      }
+   
+      Function Escape-JSONString($str){
+                 
+          If ($str -eq $null) {Return ""}
+                  $str = $str.ToString().Replace('\','\\').Replace('"','\"')
+                  Return $str
+      }
+   
+      #https://gist.github.com/mdnmdn/6936714
+      Function ConvertTo-JSON($maxDepth = 4,$forceArray = $false) {
+                  Begin {
+                                  $data = @()
+                  }
+         
+                  Process{
+                                  $data += $_
+                  }
+                 
+                  End{
+                 
+                                  If ($data.length -eq 1 -and $forceArray -eq $false) {
+                                                  $value = $data[0]
+                                  }
+              Else {         
+                                                  $value = $data
+                                  }
+   
+                                  If ($value -eq $null) {
+                                                  return "null"
+                                  }
+   
+                                 
+   
+                                  $dataType = $value.GetType().Name
+                                 
+                                  Switch -regex ($dataType) {
+                              'String'  {
+                                                                                  return  "`"{0}`"" -f (Escape-JSONString $value)
+                                                                  }
+                              '(System\.)?DateTime'  {Return  "`"{0:yyyy-MM-dd}T{0:HH:mm:ss}`"" -f $value}
+                              'Int32|Double' {return  "`"{0}`"" -f  $value}
+                                                                  'Boolean' {Return  "$value".ToLower()}
+                              '(System\.)?Object\[\]' { # array
+                                                                                
+                                                                                  If ($maxDepth -le 0){Return "`"$value`""}
+                                                                                 
+                                                                                  $jsonResult = ''
+                         
+                                                                                  ForEach($elem in $value){
+   
+                                                                                                  If ($jsonResult.Length -gt 0) {$jsonResult +=', '}                                                         
+                                                                                                  $jsonResult += ($elem | ConvertTo-JSON -maxDepth ($maxDepth -1))
+                                                                                  }
+                                                                                  Return "[" + $jsonResult + "]"
+                              }
+                                                                  '(System\.)?Hashtable' { # hashtable
+                                                                                  $jsonResult = ''
+                                                                                 
+                          ForEach($key in $value.Keys){
+                                                                                                 
+                              If ($jsonResult.Length -gt 0) {$jsonResult +=', '}
+                                                                                                  $jsonResult +=
+  @"
+                  "{0}": {1}
+  "@ -f $key.ToLower() , ($value[$key] | ConvertTo-JSON -maxDepth ($maxDepth -1) )
+                                                                                  }
+                                                                                  Return "{" + $jsonResult + "}"
+                                                                  }
+                              Default { #object
+                                                                                  If ($maxDepth -le 0){Return  "`"{0}`"" -f (Escape-JSONString $value)}
+                                                                                 
+                                                                                  Return "{" +
+                                                                                                  (($value | Get-Member -MemberType *property | % {
+  @"
+                  "{0}": {1}
+  "@ -f $_.Name.ToLower() , ($value.($_.Name) | ConvertTo-JSON -maxDepth ($maxDepth -1) )                                
+                                                                                 
+                                                                                  }) -join ', ') + "}"
+                                                  }
+                                  }
+                  }
+     }
+   
+      Function Create-Data-Json-File{
+          $finalOutput = '{'
+     
+          $processesJson = $processes.Values | Select-Object @{N="Command";E={$_.CommandLine}},`
+                                      @{N='PPID';E={$_.ParentProcessId}},@{N='PID';E={$_.ProcessId}},Name,Parameters,Count | ConvertTo-JSON
+         
+          $processes.Values | Select-Object IncomingConnections,OutgoingConnections | ForEach-Object {
+         
+              If ($_.IncomingConnections.Values -ne $Null){
+                  $connections.Add(($_.IncomingConnections.Values | Select-Object -Property * -ExcludeProperty ConnectionID,Counters))
+              }
+             
+              If ($_.OutgoingConnections.Values -ne $Null){
+                  $connections.Add(($_.OutgoingConnections.Values | Select-Object -Property * -ExcludeProperty ConnectionID,Counters))
+              }
+          }
+         
+          $connectionsJson = $connections | ConvertTo-JSON
+         
+          If (($processes.Count -gt 0) -or ($connections.Count -gt 0)){
+              $finalOutput += '"related_data": {"processes":' + $processesJson + ', "connections": ' + $connectionsJson + '}'
+          }
+         
+          $finalOutput += '}'
+          $finalOutput | Set-Content -Path $outputFile
+          Log "Data has been written to $outputFile"
+          $connections.Clear()
+      }
+   
+      Function Reset-Chunk-Counters ($chunkIndex){
+          $processes.Values | ForEach-Object {
+              $_.Counters[$chunkIndex] = 0;
+             
+              If ($_.IncomingConnections.Values -ne $Null){
+                  $_.IncomingConnections.Values | ForEach-Object {
+                      $_.Counters[$chunkIndex] = 0; 
+                  }
+              }
+             
+              If ($_.OutgoingConnections.Values -ne $Null){
+                  $_.OutgoingConnections.Values | ForEach-Object {
+                      $_.Counters[$chunkIndex] = 0;   
+                  }
+              }
+          }
+      }
+   
+      Function Aggregate-Data{
+         Log "Aggregating data..."
+     
+          $processes.Values | ForEach-Object {
+              $_.Count = ($_.Counters | Measure-Object -sum).Sum
+             
+              If ($_.IncomingConnections.Values -ne $Null){
+             
+                  $_.IncomingConnections.Values | ForEach-Object {
+                      $_.Count = ($_.Counters | Measure-Object -sum).Sum  
+                  }
+              }
+             
+              If ($_.OutgoingConnections.Values -ne $Null){
+             
+                  $_.OutgoingConnections.Values | ForEach-Object {
+                      $_.Count = ($_.Counters | Measure-Object -sum).Sum   
+                  }
+              }
+          }
+          Log "Data aggregation finished"
+      }
+   
+      Function Remove-Old-Processes (){
+          $processesToDelete = @()
+        
+          $processes.Values | ForEach-Object {
+             
+              If ($_.Count -eq 0){
+                  $processesToDelete += [string]$_.ProcessId
+              }
+          }
+         
+          ForEach ($processId in $processesToDelete) {
+              $processes.Remove($processId)
+          }
+          Log "Old data has been removed"
+      }
+   
+      Function Create-PID-Locking-File (){
+                  $PID | Set-Content -Path "$HomeDir\$PID.pid"
+          Log "$HomeDir\$PID.pid was created"
+     }
+     
+      Function Create-Directory-If-Does-Not-Exist ($directory){                                 
+          
+          If (-not (Test-Path $directory)) {
+              $Null = New-Item -ItemType Directory -Path $directory -Force -ErrorAction Stop
+          }
+      }
+   
+      Function Validate-And-Create-HomeDir-If-Needed (){
+         
+          Try{
+              Create-Directory-If-Does-Not-Exist -Directory $HomeDir
+          }
+          Catch{
+              $script:logsBeforeBaseDirIsDetermined += "$([System.DateTime]::Now): $($_.Exception.Message)`r`n"
+          }
+      }
+     
+      Function Is-First-Run (){
+          If (($HomeDir -ne "") -and (Test-Path $HomeDir)){
+              Return $False
+          }
+
+          Return $True
+      }
+     
+      Function GetDefaultBaseDir() {
+          $pathToTest = "$env:TEMP"
+         
+          If (Test-Path $pathToTest){
+              Return $pathToTest
+          }
+
+          $pathToTest = "$env:TMP"
+         
+          If (Test-Path $pathToTest){
+              Return $pathToTest
+          }
+
+          Return "."
+      }
+
+      Function Clear-HomeDir (){
+          If (Test-Path $HomeDir) {
+             Remove-Item $HomeDir -Recurse
+          }
+      }
+     
+      Function Kill-Current-Process-If-Exists (){
+          $processes = Get-Process
+   
+                  Get-ChildItem $HomeDir | Where {$_.Extension -eq ".pid"} | ForEach-Object {
+                                  $baseName = [Int]$_.BaseName
+                                  $processRepresentedByFile = $processes | Where-Object {($_.Id -eq $baseName) -and ($_.Name -like "*powershell*")}
+   
+                                  If ($processRepresentedByFile -ne $Null){
+                  $script:logsBeforeBaseDirIsDetermined += "$([System.DateTime]::Now): Killing Process #$baseName - $($processRepresentedByFile.Name)`r`n"
+                                                  $processRepresentedByFile.Kill()
+                  $script:logsBeforeBaseDirIsDetermined += "$([System.DateTime]::Now): Process #$baseName was killed`r`n"
+                                  }
+                                                  $_.Delete()
+              $script:logsBeforeBaseDirIsDetermined += "$([System.DateTime]::Now): $_ was deleted"
+                  }
+      }
+     
+      Function Set-Script-Files-And-Directories (){
+          $script:logFile = "$HomeDir\$LOG_FILE"
+          $script:outputFile = "$HomeDir\$OUTPUT_FILE"
+      }
+     
+      Function Clear-All (){
+          If (-not (Is-First-Run)){
+              Kill-Current-Process-If-Exists
+              Clear-HomeDir
+          }
+      }
+     
+      Function Prepare (){
+          Clear-All
+          Validate-And-Create-HomeDir-If-Needed
+          Set-Script-Files-And-Directories
+          Add-Content $logFile $logsBeforeBaseDirIsDetermined
+          Log "Prepare for data collection..."
+          Create-PID-Locking-File
+      }
+     
+      if (($BaseDir -eq "") -or ($BaseDir -eq $null)) {
+           $BaseDir = GetDefaultBaseDir
+      }    
+      $HomeDir = "$BaseDir\$ADME_WORKSPACE_NAME" 
+
+      If ($Mode -eq "UNINSTALL"){
+          Clear-All
+          Return
+      }
+     
+      Prepare
+     
+      $localIPv4Addresses = Get-All-IPv4-Addresses
+      $samplesPerChunk = $ChunkAggregationInterval / $SamplingInterval
+      $shouldContinueRunning = Test-Path "$HomeDir\$PID.pid"
+   
+      While ($shouldContinueRunning){
+          If (-not $isCurrentChunkWasReset){
+              Log "Clear data for chunk #$($currentChunkIndex+1)"
+              Reset-Chunk-Counters -ChunkIndex $currentChunkIndex
+              $isCurrentChunkWasReset = $True
+          }
+          
+          Collect-And-Update-Process-Information
+          Handle-ProcessId-Reuse
+          Find-TCP-Connections-For-Processes
+          $currentSampleIndex++
+          $totalSamplesTaken++
+          Log "Finished sample #$currentSampleIndex in chunk #$($currentChunkIndex+1)"
+         
+          If ($totalSamplesTaken -eq $MaxTotalSamples){
+              $shouldContinueRunning = $False
+              Log "Reached to maximum number of samples configured. Finishing data collection..."
+              Continue
+          }
+         
+          If ($currentSampleIndex -eq $samplesPerChunk){
+              Aggregate-Data
+              Remove-Old-Processes
+              Create-Data-Json-File
+              $currentSampleIndex = 0;
+              $currentChunkIndex++;
+              $isCurrentChunkWasReset = $False
+             
+              If ($currentChunkIndex -eq $RollingWindowSize){
+                  $currentChunkIndex = 0;
+              }
+              Log "Finished aggregation of chunk #$currentChunkIndex"
+          }
+   
+                  $shouldContinueRunning = Test-Path "$HomeDir\$PID.pid"
+                 
+          #This condition is for skipping the sleep statement in case we need to end the program
+                  If (-not $shouldContinueRunning){
+              Log "$PID.pid was deleted. Exit process"
+                                  Continue
+                  }
+                 
+          Start-Sleep -S $SamplingInterval
+      }
+      Aggregate-Data
+      Remove-Old-Processes
+      Create-Data-Json-File
+      Exit
+
+  # SIG # Begin signature block
+  # MIIpLgYJKoZIhvcNAQcCoIIpHzCCKRsCAQExDzANBglghkgBZQMEAgEFADB5Bgor
+  # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
+  # KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCCyh7qh49nWe84i
+  # xr3h+jZfqKgbvJ8CHA2qhdoThk2A5aCCDh0wggawMIIEmKADAgECAhAIrUCyYNKc
+  # TJ9ezam9k67ZMA0GCSqGSIb3DQEBDAUAMGIxCzAJBgNVBAYTAlVTMRUwEwYDVQQK
+  # EwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5jb20xITAfBgNV
+  # BAMTGERpZ2lDZXJ0IFRydXN0ZWQgUm9vdCBHNDAeFw0yMTA0MjkwMDAwMDBaFw0z
+  # NjA0MjgyMzU5NTlaMGkxCzAJBgNVBAYTAlVTMRcwFQYDVQQKEw5EaWdpQ2VydCwg
+  # SW5jLjFBMD8GA1UEAxM4RGlnaUNlcnQgVHJ1c3RlZCBHNCBDb2RlIFNpZ25pbmcg
+  # UlNBNDA5NiBTSEEzODQgMjAyMSBDQTEwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAw
+  # ggIKAoICAQDVtC9C0CiteLdd1TlZG7GIQvUzjOs9gZdwxbvEhSYwn6SOaNhc9es0
+  # JAfhS0/TeEP0F9ce2vnS1WcaUk8OoVf8iJnBkcyBAz5NcCRks43iCH00fUyAVxJr
+  # Q5qZ8sU7H/Lvy0daE6ZMswEgJfMQ04uy+wjwiuCdCcBlp/qYgEk1hz1RGeiQIXhF
+  # LqGfLOEYwhrMxe6TSXBCMo/7xuoc82VokaJNTIIRSFJo3hC9FFdd6BgTZcV/sk+F
+  # LEikVoQ11vkunKoAFdE3/hoGlMJ8yOobMubKwvSnowMOdKWvObarYBLj6Na59zHh
+  # 3K3kGKDYwSNHR7OhD26jq22YBoMbt2pnLdK9RBqSEIGPsDsJ18ebMlrC/2pgVItJ
+  # wZPt4bRc4G/rJvmM1bL5OBDm6s6R9b7T+2+TYTRcvJNFKIM2KmYoX7BzzosmJQay
+  # g9Rc9hUZTO1i4F4z8ujo7AqnsAMrkbI2eb73rQgedaZlzLvjSFDzd5Ea/ttQokbI
+  # YViY9XwCFjyDKK05huzUtw1T0PhH5nUwjewwk3YUpltLXXRhTT8SkXbev1jLchAp
+  # QfDVxW0mdmgRQRNYmtwmKwH0iU1Z23jPgUo+QEdfyYFQc4UQIyFZYIpkVMHMIRro
+  # OBl8ZhzNeDhFMJlP/2NPTLuqDQhTQXxYPUez+rbsjDIJAsxsPAxWEQIDAQABo4IB
+  # WTCCAVUwEgYDVR0TAQH/BAgwBgEB/wIBADAdBgNVHQ4EFgQUaDfg67Y7+F8Rhvv+
+  # YXsIiGX0TkIwHwYDVR0jBBgwFoAU7NfjgtJxXWRM3y5nP+e6mK4cD08wDgYDVR0P
+  # AQH/BAQDAgGGMBMGA1UdJQQMMAoGCCsGAQUFBwMDMHcGCCsGAQUFBwEBBGswaTAk
+  # BggrBgEFBQcwAYYYaHR0cDovL29jc3AuZGlnaWNlcnQuY29tMEEGCCsGAQUFBzAC
+  # hjVodHRwOi8vY2FjZXJ0cy5kaWdpY2VydC5jb20vRGlnaUNlcnRUcnVzdGVkUm9v
+  # dEc0LmNydDBDBgNVHR8EPDA6MDigNqA0hjJodHRwOi8vY3JsMy5kaWdpY2VydC5j
+  # b20vRGlnaUNlcnRUcnVzdGVkUm9vdEc0LmNybDAcBgNVHSAEFTATMAcGBWeBDAED
+  # MAgGBmeBDAEEATANBgkqhkiG9w0BAQwFAAOCAgEAOiNEPY0Idu6PvDqZ01bgAhql
+  # +Eg08yy25nRm95RysQDKr2wwJxMSnpBEn0v9nqN8JtU3vDpdSG2V1T9J9Ce7FoFF
+  # UP2cvbaF4HZ+N3HLIvdaqpDP9ZNq4+sg0dVQeYiaiorBtr2hSBh+3NiAGhEZGM1h
+  # mYFW9snjdufE5BtfQ/g+lP92OT2e1JnPSt0o618moZVYSNUa/tcnP/2Q0XaG3Ryw
+  # YFzzDaju4ImhvTnhOE7abrs2nfvlIVNaw8rpavGiPttDuDPITzgUkpn13c5Ubdld
+  # AhQfQDN8A+KVssIhdXNSy0bYxDQcoqVLjc1vdjcshT8azibpGL6QB7BDf5WIIIJw
+  # 8MzK7/0pNVwfiThV9zeKiwmhywvpMRr/LhlcOXHhvpynCgbWJme3kuZOX956rEnP
+  # LqR0kq3bPKSchh/jwVYbKyP/j7XqiHtwa+aguv06P0WmxOgWkVKLQcBIhEuWTatE
+  # QOON8BUozu3xGFYHKi8QxAwIZDwzj64ojDzLj4gLDb879M4ee47vtevLt/B3E+bn
+  # KD+sEq6lLyJsQfmCXBVmzGwOysWGw/YmMwwHS6DTBwJqakAwSEs0qFEgu60bhQji
+  # WQ1tygVQK+pKHJ6l/aCnHwZ05/LWUpD9r4VIIflXO7ScA+2GRfS0YW6/aOImYIbq
+  # yK+p/pQd52MbOoZWeE4wggdlMIIFTaADAgECAhAGpShNbhCf/xyMa/TFJChDMA0G
+  # CSqGSIb3DQEBCwUAMGkxCzAJBgNVBAYTAlVTMRcwFQYDVQQKEw5EaWdpQ2VydCwg
+  # SW5jLjFBMD8GA1UEAxM4RGlnaUNlcnQgVHJ1c3RlZCBHNCBDb2RlIFNpZ25pbmcg
+  # UlNBNDA5NiBTSEEzODQgMjAyMSBDQTEwHhcNMjIwODIzMDAwMDAwWhcNMjUwODIy
+  # MjM1OTU5WjBqMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTESMBAG
+  # A1UEBxMJU2FuIERpZWdvMRgwFgYDVQQKEw9TZXJ2aWNlTm93IEluYy4xGDAWBgNV
+  # BAMTD1NlcnZpY2VOb3cgSW5jLjCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC
+  # ggIBANw/o17WzF3aDC0KMzLqiMumYI5ufsZ5vU6LV81IafPfFvIHNMT5wbQVZWrN
+  # 4+/LyMwmL6U1mnRzxndx4Bv9AiYU8Iv1ACFRUbbndF7bRdtPUm1uld0qqnL/YWEh
+  # +hvdenEHFM1pB5V5R+Z3YGqIDXlBwQu3VUgabvA9Tsdrs+tecyalRJUGohusOnxs
+  # 6emve85av/jL4IRu3qXF/75DmxRwwku3BOjz5CxpkDM1CsNte8vizHiyt1pxBaUu
+  # tBgK6jRCs3y66xpRkkKB54vIYTWOH3ayc/+tRi5CfqmMl6zGVKdTxdgrdYpdl0kw
+  # rN/LKpSCQHg4t8ZJCYcPFEFiyghAR9o4xxFffGUUiVu4GfHZJl3F7kvgSEr6fwpu
+  # 9nhATX12eNv27WryelcujJqVZiE9B3jyGmgnFCKkkVEDUN4McQlCCMzM8xyq4I+M
+  # IIulbh9y5jnGp2TDSLOgpBzshgx56cfn6779Yb2Cq/O+c4vYRBYD+I7LMxPDuswl
+  # 1sm2LraXPf3PbtGreBUJkiQNGwEiIL+wQzTzQ67CWfcVlcnHnbndAR/GuYVxsG2U
+  # QC9gCmeBX47arySdKWRncUVBc+SwZ0Ujp42RWuyZIyBSNH/qmCYxyUWaYwFK4x5b
+  # CJ4GjXTtt+tUDE5Fj1ZUxmQN7ZUbsI8oK8VCqgPHOIAGulvpAgMBAAGjggIGMIIC
+  # AjAfBgNVHSMEGDAWgBRoN+Drtjv4XxGG+/5hewiIZfROQjAdBgNVHQ4EFgQUKJ+A
+  # Kvzki2EFahEULt1kotH6AJowDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsG
+  # AQUFBwMDMIG1BgNVHR8Ega0wgaowU6BRoE+GTWh0dHA6Ly9jcmwzLmRpZ2ljZXJ0
+  # LmNvbS9EaWdpQ2VydFRydXN0ZWRHNENvZGVTaWduaW5nUlNBNDA5NlNIQTM4NDIw
+  # MjFDQTEuY3JsMFOgUaBPhk1odHRwOi8vY3JsNC5kaWdpY2VydC5jb20vRGlnaUNl
+  # cnRUcnVzdGVkRzRDb2RlU2lnbmluZ1JTQTQwOTZTSEEzODQyMDIxQ0ExLmNybDA+
+  # BgNVHSAENzA1MDMGBmeBDAEEATApMCcGCCsGAQUFBwIBFhtodHRwOi8vd3d3LmRp
+  # Z2ljZXJ0LmNvbS9DUFMwgZQGCCsGAQUFBwEBBIGHMIGEMCQGCCsGAQUFBzABhhho
+  # dHRwOi8vb2NzcC5kaWdpY2VydC5jb20wXAYIKwYBBQUHMAKGUGh0dHA6Ly9jYWNl
+  # cnRzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydFRydXN0ZWRHNENvZGVTaWduaW5nUlNB
+  # NDA5NlNIQTM4NDIwMjFDQTEuY3J0MAwGA1UdEwEB/wQCMAAwDQYJKoZIhvcNAQEL
+  # BQADggIBACUB0tOubQhkx0lJ2tmNvdD6RNcEiClVbr1/9UfQsrouJAfMaRCk+tls
+  # Ti/TAHZrg/ES/y2a49lu2oerlxUZqYpCe68xLnanDUYUOk0z5uPt3QQ29F64iU+T
+  # vP/YisTYxsHfFWaZod9qoa3BhIPm0TAZubYJnEuBbtTDkpJ+8GBJCLmrlTQDvvqD
+  # rmWKfes6u18xk6xcDypmbNazglM8AbvHh6Fd7G+ODIb2LZA/WIHsERaC0VJ8jWd9
+  # OlzO4vLPMD8duqhsJmc5k2cfQb68OU7WvujbjBILtgBWiCcex/T/tLS07mjm047g
+  # XCGp2E2v4BZbsU49A6+0E5GK5f97Der9+dd/IJKWRjo9toj9RfBmU+awQgITzyVa
+  # U/O0yMpopJkjozKtUfZ0XRGfNFr7nzmDGziUIwE1kblVI15OKQhX6FOhWzXsyedd
+  # 7lvFJrhFR5C+o1kxrCEc2Dh6zwm1faPYvLefaKfkXJDGXnsYmDbeOsAdbP3kI5Dv
+  # d4zhrt/vvo/8nLWKU7MWDAK++b0jJnczMdFoJLUAhWFyNhH88MNqa/IxhCkwWwSI
+  # Fj0NxO/laGjcdm8xhuq3Vr5HeQoiUTJ0ZfArxFCaiHbVq+RhCAPc/atFY49Pm4gy
+  # JUxyLMdXM4GgWgwDYPnp1oQZ9H1nHhHSs/aEKuISy+yL6wXwstTMMYIaZzCCGmMC
+  # AQEwfTBpMQswCQYDVQQGEwJVUzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/
+  # BgNVBAMTOERpZ2lDZXJ0IFRydXN0ZWQgRzQgQ29kZSBTaWduaW5nIFJTQTQwOTYg
+  # U0hBMzg0IDIwMjEgQ0ExAhAGpShNbhCf/xyMa/TFJChDMA0GCWCGSAFlAwQCAQUA
+  # oHwwEAYKKwYBBAGCNwIBDDECMAAwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcCAQQw
+  # HAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwLwYJKoZIhvcNAQkEMSIEIBwz
+  # SHeRahpyA9gEg+BE8LZZP+UN+IIvw6Sdunv7kXd1MA0GCSqGSIb3DQEBAQUABIIC
+  # ANsJ1gYNqFhSptH0XoceSTNsH5tYuAYkxS5OJVR5NeT65Tkg39MFVKb+SWUbNKCN
+  # ey4kfx/YRmKHSuHYc3BHc8aEgK2dil5mAzrHilcsAYlLRw2/d9LY9yo945d02yyf
+  # Xk4quozQaCQjPePBbTOQXX9kzwA2eOnLlOhBwLh0qiwrGx2wvM/CjsFtbFSCA/dd
+  # cC8Hx0+xwZX2ETxXXUOtceVaUzdA3Plt74MmQ7aECU2N0LdO9nCJLj+c92Qa/Uce
+  # 4DhPKEx/F1a6S7YTyeT8n4SxXvRKtUpC3Ob18mOSZRkTicg17q98qWpNL4MCFeBz
+  # 2BVyKf2dLYYJ1cn/De2G2VtAraR6TzECy4SoLbHGyaDf2sAwa4N3eG0aROVIB4W2
+  # v1W3sbgtymDSMCKnyyKZuaFJ75YKGK369wW1mXpAPnEKUpSHmz7fnXCHYroyIKIs
+  # 0fUO1koZ/rM6xYBLzNj5dT8N0IezWcl6GnBqOLtnpZP/pSbGkhOquxmUx33ecjyp
+  # qzA7x3KScgPl3+H55i9S/tJLhoWPtSCv3M40svIJSdU7C+rCb+ogR4WpY081twDG
+  # b+quy86d7MO29oiOOmEb0eWlZUTviAEJPqsxA+mPZjj4hqoYI9n9soV8kynZcQnE
+  # 5kv4xIU2QGh+RYa60nR5e8dUJMf5xXX1Ps5cuhPx6UYCoYIXPTCCFzkGCisGAQQB
+  # gjcDAwExghcpMIIXJQYJKoZIhvcNAQcCoIIXFjCCFxICAQMxDzANBglghkgBZQME
+  # AgEFADB3BgsqhkiG9w0BCRABBKBoBGYwZAIBAQYJYIZIAYb9bAcBMDEwDQYJYIZI
+  # AWUDBAIBBQAEIDHSE/hV6NyFgQNG5HMyPdpfW6H6/i7v2GgggpkTmGrLAhBDkMz2
+  # htI2Bk0J6Tspd4L9GA8yMDIzMDUyMzA4MjAwMFqgghMHMIIGwDCCBKigAwIBAgIQ
+  # DE1pckuU+jwqSj0pB4A9WjANBgkqhkiG9w0BAQsFADBjMQswCQYDVQQGEwJVUzEX
+  # MBUGA1UEChMORGlnaUNlcnQsIEluYy4xOzA5BgNVBAMTMkRpZ2lDZXJ0IFRydXN0
+  # ZWQgRzQgUlNBNDA5NiBTSEEyNTYgVGltZVN0YW1waW5nIENBMB4XDTIyMDkyMTAw
+  # MDAwMFoXDTMzMTEyMTIzNTk1OVowRjELMAkGA1UEBhMCVVMxETAPBgNVBAoTCERp
+  # Z2lDZXJ0MSQwIgYDVQQDExtEaWdpQ2VydCBUaW1lc3RhbXAgMjAyMiAtIDIwggIi
+  # MA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDP7KUmOsap8mu7jcENmtuh6BSF
+  # dDMaJqzQHFUeHjZtvJJVDGH0nQl3PRWWCC9rZKT9BoMW15GSOBwxApb7crGXOlWv
+  # M+xhiummKNuQY1y9iVPgOi2Mh0KuJqTku3h4uXoW4VbGwLpkU7sqFudQSLuIaQyI
+  # xvG+4C99O7HKU41Agx7ny3JJKB5MgB6FVueF7fJhvKo6B332q27lZt3iXPUv7Y3U
+  # TZWEaOOAy2p50dIQkUYp6z4m8rSMzUy5Zsi7qlA4DeWMlF0ZWr/1e0BubxaompyV
+  # R4aFeT4MXmaMGgokvpyq0py2909ueMQoP6McD1AGN7oI2TWmtR7aeFgdOej4TJEQ
+  # ln5N4d3CraV++C0bH+wrRhijGfY59/XBT3EuiQMRoku7mL/6T+R7Nu8GRORV/zbq
+  # 5Xwx5/PCUsTmFntafqUlc9vAapkhLWPlWfVNL5AfJ7fSqxTlOGaHUQhr+1NDOdBk
+  # +lbP4PQK5hRtZHi7mP2Uw3Mh8y/CLiDXgazT8QfU4b3ZXUtuMZQpi+ZBpGWUwFjl
+  # 5S4pkKa3YWT62SBsGFFguqaBDwklU/G/O+mrBw5qBzliGcnWhX8T2Y15z2LF7OF7
+  # ucxnEweawXjtxojIsG4yeccLWYONxu71LHx7jstkifGxxLjnU15fVdJ9GSlZA076
+  # XepFcxyEftfO4tQ6dwIDAQABo4IBizCCAYcwDgYDVR0PAQH/BAQDAgeAMAwGA1Ud
+  # EwEB/wQCMAAwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwgwIAYDVR0gBBkwFzAIBgZn
+  # gQwBBAIwCwYJYIZIAYb9bAcBMB8GA1UdIwQYMBaAFLoW2W1NhS9zKXaaL3WMaiCP
+  # nshvMB0GA1UdDgQWBBRiit7QYfyPMRTtlwvNPSqUFN9SnDBaBgNVHR8EUzBRME+g
+  # TaBLhklodHRwOi8vY3JsMy5kaWdpY2VydC5jb20vRGlnaUNlcnRUcnVzdGVkRzRS
+  # U0E0MDk2U0hBMjU2VGltZVN0YW1waW5nQ0EuY3JsMIGQBggrBgEFBQcBAQSBgzCB
+  # gDAkBggrBgEFBQcwAYYYaHR0cDovL29jc3AuZGlnaWNlcnQuY29tMFgGCCsGAQUF
+  # BzAChkxodHRwOi8vY2FjZXJ0cy5kaWdpY2VydC5jb20vRGlnaUNlcnRUcnVzdGVk
+  # RzRSU0E0MDk2U0hBMjU2VGltZVN0YW1waW5nQ0EuY3J0MA0GCSqGSIb3DQEBCwUA
+  # A4ICAQBVqioa80bzeFc3MPx140/WhSPx/PmVOZsl5vdyipjDd9Rk/BX7NsJJUSx4
+  # iGNVCUY5APxp1MqbKfujP8DJAJsTHbCYidx48s18hc1Tna9i4mFmoxQqRYdKmEIr
+  # UPwbtZ4IMAn65C3XCYl5+QnmiM59G7hqopvBU2AJ6KO4ndetHxy47JhB8PYOgPvk
+  # /9+dEKfrALpfSo8aOlK06r8JSRU1NlmaD1TSsht/fl4JrXZUinRtytIFZyt26/+Y
+  # siaVOBmIRBTlClmia+ciPkQh0j8cwJvtfEiy2JIMkU88ZpSvXQJT657inuTTH4YB
+  # ZJwAwuladHUNPeF5iL8cAZfJGSOA1zZaX5YWsWMMxkZAO85dNdRZPkOaGK7DycvD
+  # +5sTX2q1x+DzBcNZ3ydiK95ByVO5/zQQZ/YmMph7/lxClIGUgp2sCovGSxVK05iQ
+  # RWAzgOAj3vgDpPZFR+XOuANCR+hBNnF3rf2i6Jd0Ti7aHh2MWsgemtXC8MYiqE+b
+  # vdgcmlHEL5r2X6cnl7qWLoVXwGDneFZ/au/ClZpLEQLIgpzJGgV8unG1TnqZbPTo
+  # ntRamMifv427GFxD9dAq6OJi7ngE273R+1sKqHB+8JeEeOMIA11HLGOoJTiXAdI/
+  # Otrl5fbmm9x+LMz/F0xNAKLY1gEOuIvu5uByVYksJxlh9ncBjDCCBq4wggSWoAMC
+  # AQICEAc2N7ckVHzYR6z9KGYqXlswDQYJKoZIhvcNAQELBQAwYjELMAkGA1UEBhMC
+  # VVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3LmRpZ2ljZXJ0
+  # LmNvbTEhMB8GA1UEAxMYRGlnaUNlcnQgVHJ1c3RlZCBSb290IEc0MB4XDTIyMDMy
+  # MzAwMDAwMFoXDTM3MDMyMjIzNTk1OVowYzELMAkGA1UEBhMCVVMxFzAVBgNVBAoT
+  # DkRpZ2lDZXJ0LCBJbmMuMTswOQYDVQQDEzJEaWdpQ2VydCBUcnVzdGVkIEc0IFJT
+  # QTQwOTYgU0hBMjU2IFRpbWVTdGFtcGluZyBDQTCCAiIwDQYJKoZIhvcNAQEBBQAD
+  # ggIPADCCAgoCggIBAMaGNQZJs8E9cklRVcclA8TykTepl1Gh1tKD0Z5Mom2gsMyD
+  # +Vr2EaFEFUJfpIjzaPp985yJC3+dH54PMx9QEwsmc5Zt+FeoAn39Q7SE2hHxc7Gz
+  # 7iuAhIoiGN/r2j3EF3+rGSs+QtxnjupRPfDWVtTnKC3r07G1decfBmWNlCnT2exp
+  # 39mQh0YAe9tEQYncfGpXevA3eZ9drMvohGS0UvJ2R/dhgxndX7RUCyFobjchu0Cs
+  # X7LeSn3O9TkSZ+8OpWNs5KbFHc02DVzV5huowWR0QKfAcsW6Th+xtVhNef7Xj3OT
+  # rCw54qVI1vCwMROpVymWJy71h6aPTnYVVSZwmCZ/oBpHIEPjQ2OAe3VuJyWQmDo4
+  # EbP29p7mO1vsgd4iFNmCKseSv6De4z6ic/rnH1pslPJSlRErWHRAKKtzQ87fSqEc
+  # azjFKfPKqpZzQmiftkaznTqj1QPgv/CiPMpC3BhIfxQ0z9JMq++bPf4OuGQq+nUo
+  # JEHtQr8FnGZJUlD0UfM2SU2LINIsVzV5K6jzRWC8I41Y99xh3pP+OcD5sjClTNfp
+  # mEpYPtMDiP6zj9NeS3YSUZPJjAw7W4oiqMEmCPkUEBIDfV8ju2TjY+Cm4T72wnSy
+  # Px4JduyrXUZ14mCjWAkBKAAOhFTuzuldyF4wEr1GnrXTdrnSDmuZDNIztM2xAgMB
+  # AAGjggFdMIIBWTASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBS6FtltTYUv
+  # cyl2mi91jGogj57IbzAfBgNVHSMEGDAWgBTs1+OC0nFdZEzfLmc/57qYrhwPTzAO
+  # BgNVHQ8BAf8EBAMCAYYwEwYDVR0lBAwwCgYIKwYBBQUHAwgwdwYIKwYBBQUHAQEE
+  # azBpMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2VydC5jb20wQQYIKwYB
+  # BQUHMAKGNWh0dHA6Ly9jYWNlcnRzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydFRydXN0
+  # ZWRSb290RzQuY3J0MEMGA1UdHwQ8MDowOKA2oDSGMmh0dHA6Ly9jcmwzLmRpZ2lj
+  # ZXJ0LmNvbS9EaWdpQ2VydFRydXN0ZWRSb290RzQuY3JsMCAGA1UdIAQZMBcwCAYG
+  # Z4EMAQQCMAsGCWCGSAGG/WwHATANBgkqhkiG9w0BAQsFAAOCAgEAfVmOwJO2b5ip
+  # RCIBfmbW2CFC4bAYLhBNE88wU86/GPvHUF3iSyn7cIoNqilp/GnBzx0H6T5gyNgL
+  # 5Vxb122H+oQgJTQxZ822EpZvxFBMYh0MCIKoFr2pVs8Vc40BIiXOlWk/R3f7cnQU
+  # 1/+rT4osequFzUNf7WC2qk+RZp4snuCKrOX9jLxkJodskr2dfNBwCnzvqLx1T7pa
+  # 96kQsl3p/yhUifDVinF2ZdrM8HKjI/rAJ4JErpknG6skHibBt94q6/aesXmZgaNW
+  # hqsKRcnfxI2g55j7+6adcq/Ex8HBanHZxhOACcS2n82HhyS7T6NJuXdmkfFynOlL
+  # AlKnN36TU6w7HQhJD5TNOXrd/yVjmScsPT9rp/Fmw0HNT7ZAmyEhQNC3EyTN3B14
+  # OuSereU0cZLXJmvkOHOrpgFPvT87eK1MrfvElXvtCl8zOYdBeHo46Zzh3SP9HSjT
+  # x/no8Zhf+yvYfvJGnXUsHicsJttvFXseGYs2uJPU5vIXmVnKcPA3v5gA3yAWTyf7
+  # YGcWoWa63VXAOimGsJigK+2VQbc61RWYMbRiCQ8KvYHZE/6/pNHzV9m8BPqC3jLf
+  # BInwAM1dwvnQI38AC+R2AibZ8GV2QqYphwlHK+Z/GqSFD/yYlvZVVCsfgPrA8g4r
+  # 5db7qS9EFUrnEw4d2zc4GqEr9u3WfPwwggWNMIIEdaADAgECAhAOmxiO+dAt5+/b
+  # UOIIQBhaMA0GCSqGSIb3DQEBDAUAMGUxCzAJBgNVBAYTAlVTMRUwEwYDVQQKEwxE
+  # aWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5jb20xJDAiBgNVBAMT
+  # G0RpZ2lDZXJ0IEFzc3VyZWQgSUQgUm9vdCBDQTAeFw0yMjA4MDEwMDAwMDBaFw0z
+  # MTExMDkyMzU5NTlaMGIxCzAJBgNVBAYTAlVTMRUwEwYDVQQKEwxEaWdpQ2VydCBJ
+  # bmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5jb20xITAfBgNVBAMTGERpZ2lDZXJ0
+  # IFRydXN0ZWQgUm9vdCBHNDCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIB
+  # AL/mkHNo3rvkXUo8MCIwaTPswqclLskhPfKK2FnC4SmnPVirdprNrnsbhA3EMB/z
+  # G6Q4FutWxpdtHauyefLKEdLkX9YFPFIPUh/GnhWlfr6fqVcWWVVyr2iTcMKyunWZ
+  # anMylNEQRBAu34LzB4TmdDttceItDBvuINXJIB1jKS3O7F5OyJP4IWGbNOsFxl7s
+  # Wxq868nPzaw0QF+xembud8hIqGZXV59UWI4MK7dPpzDZVu7Ke13jrclPXuU15zHL
+  # 2pNe3I6PgNq2kZhAkHnDeMe2scS1ahg4AxCN2NQ3pC4FfYj1gj4QkXCrVYJBMtfb
+  # BHMqbpEBfCFM1LyuGwN1XXhm2ToxRJozQL8I11pJpMLmqaBn3aQnvKFPObURWBf3
+  # JFxGj2T3wWmIdph2PVldQnaHiZdpekjw4KISG2aadMreSx7nDmOu5tTvkpI6nj3c
+  # AORFJYm2mkQZK37AlLTSYW3rM9nF30sEAMx9HJXDj/chsrIRt7t/8tWMcCxBYKqx
+  # YxhElRp2Yn72gLD76GSmM9GJB+G9t+ZDpBi4pncB4Q+UDCEdslQpJYls5Q5SUUd0
+  # viastkF13nqsX40/ybzTQRESW+UQUOsxxcpyFiIJ33xMdT9j7CFfxCBRa2+xq4aL
+  # T8LWRV+dIPyhHsXAj6KxfgommfXkaS+YHS312amyHeUbAgMBAAGjggE6MIIBNjAP
+  # BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTs1+OC0nFdZEzfLmc/57qYrhwPTzAf
+  # BgNVHSMEGDAWgBRF66Kv9JLLgjEtUYunpyGd823IDzAOBgNVHQ8BAf8EBAMCAYYw
+  # eQYIKwYBBQUHAQEEbTBrMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2Vy
+  # dC5jb20wQwYIKwYBBQUHMAKGN2h0dHA6Ly9jYWNlcnRzLmRpZ2ljZXJ0LmNvbS9E
+  # aWdpQ2VydEFzc3VyZWRJRFJvb3RDQS5jcnQwRQYDVR0fBD4wPDA6oDigNoY0aHR0
+  # cDovL2NybDMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0QXNzdXJlZElEUm9vdENBLmNy
+  # bDARBgNVHSAECjAIMAYGBFUdIAAwDQYJKoZIhvcNAQEMBQADggEBAHCgv0NcVec4
+  # X6CjdBs9thbX979XB72arKGHLOyFXqkauyL4hxppVCLtpIh3bb0aFPQTSnovLbc4
+  # 7/T/gLn4offyct4kvFIDyE7QKt76LVbP+fT3rDB6mouyXtTP0UNEm0Mh65ZyoUi0
+  # mcudT6cGAxN3J0TU53/oWajwvy8LpunyNDzs9wPHh6jSTEAZNUZqaVSwuKFWjuyk
+  # 1T3osdz9HNj0d1pcVIxv76FQPfx2CWiEn2/K2yCNNWAcAgPLILCsWKAOQGPFmCLB
+  # sln1VWvPJ6tsds5vIy30fnFqI2si/xK4VC0nftg62fC2h5b9W9FcrBjDTZ9ztwGp
+  # n1eqXijiuZQxggN2MIIDcgIBATB3MGMxCzAJBgNVBAYTAlVTMRcwFQYDVQQKEw5E
+  # aWdpQ2VydCwgSW5jLjE7MDkGA1UEAxMyRGlnaUNlcnQgVHJ1c3RlZCBHNCBSU0E0
+  # MDk2IFNIQTI1NiBUaW1lU3RhbXBpbmcgQ0ECEAxNaXJLlPo8Kko9KQeAPVowDQYJ
+  # YIZIAWUDBAIBBQCggdEwGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAEEMBwGCSqG
+  # SIb3DQEJBTEPFw0yMzA1MjMwODIwMDBaMCsGCyqGSIb3DQEJEAIMMRwwGjAYMBYE
+  # FPOHIk2GM4KSNamUvL2Plun+HHxzMC8GCSqGSIb3DQEJBDEiBCAYgkbNeUr27gfA
+  # +qVaOvd2F4GfggFdIE5AOZJ58zp+pDA3BgsqhkiG9w0BCRACLzEoMCYwJDAiBCDH
+  # 9OG+MiiJIKviJjq+GsT8T+Z4HC1k0EyAdVegI7W2+jANBgkqhkiG9w0BAQEFAASC
+  # AgBiNByoIiyxk1QmVkJgcDSKTp1K+8Qu+/QN0AGJ4BU42R4lpid31VOXIxjZsQto
+  # SGt2P3wet7y4wMZvDitKTuhP6+D1QYyfRH/p2TMsFWZddBYjnZ7iUvwwXgYKdf69
+  # /0imPk0et95ddee5273+SvrLrv4e0N2KT0gNYXNAaqNZXethVkYL+3gekFAgQUj7
+  # zbky+aFjToHrjyJSxwgiCZjALd4EWxp1ORb1ECY1YlItx7sIw/41JdMUJnSKDUNZ
+  # tl+TYEl442Pi+q0RHoTT9ucuxtspalG2MJT4tCyqxRGOgfHTwLSzobtV3vzzjs57
+  # GgRR4vpjGTDYDRHRPEXqO1Y90HlsOeIHyXgLcfBMWyyq6ZELD+QyVJxHky6k7kQr
+  # r9AoT0SGIWZ667ZZi4n3dkFYToqgAX/0IMaWLzUU0h/dNJAMMp8VGAghmtKfU7J3
+  # BTqEug0n5A3PoO+rFBzjvU4uYiCB2QgTbPBL3aqFkmWxiCD6OgtkPqAWnyFfamAF
+  # OUmppLIjgGDmPWHEg9ecyANG7a8zZgH5HmDlRbtLkrsGNWnbxkxk5gCGK0LnQ33R
+  # II2EbLU4/o+WHJEHYgD7/DPbcgozraaGJRRlpujXy0c3qfop63r9sTuKDj0TGggg
+  # 0XHE53D7qV9k2Bs6bB7z5EuhzFrnSEntCeXMBae37r1mrA==
+  # SIG # End signature block
+script_attachment: 5f4015e043032110c42154249ab8f206
+source: ''
+sys_name: CollectConnectionsAndProcessesInfo.ps1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'true'
+version: ''

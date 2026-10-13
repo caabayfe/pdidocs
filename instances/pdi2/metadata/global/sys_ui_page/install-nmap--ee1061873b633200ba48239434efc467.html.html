@@ -1,0 +1,153 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:evaluate> 
+		var agent_sys_id = RP.getWindowProperties().get('agent_sys_id');
+	</g:evaluate>
+	<style>
+		.installationFail {
+			font-size:200%;
+			vertical-align:sub;
+			color:#f95050;
+		}
+		.divider{
+			width:20px;
+			height:auto;
+			display:inline-block;
+		}
+		.container-td {
+			padding-top: 5px;
+		}
+
+		.top-buffer {
+			padding-top: 3px;
+		}
+
+		.bottom-buffer {
+			padding-bottom: 5px;
+		}
+
+		#ok-cancel-btns {
+			padding-left: 10px;
+			padding-right: 10px;
+		}
+		
+		#install_progress {
+			display: none;
+		}
+		
+		#install_successful {
+			display: none;
+		}
+		
+		#install_failed {
+			display: none;
+		}
+		
+		.installSuccess {
+			font-size:200%;
+			vertical-align:sub;
+			color:#71e279;
+		}
+
+		.centerAlignContent {
+			text-align: center;
+		}
+
+		#cancelButton {
+			min-width: 5em;
+		}
+		
+		#yesButton {
+			min-width: 5em;
+		    padding-left: 5px;
+		}
+
+		#noButton {
+			min-width: 5em;
+		    padding-right:5px;
+			margin-right: 5px;
+		}
+	</style>
+	<input type="hidden" id="agent_sys_id" value="${agent_sys_id}"/>
+	<table width="100%">
+		<tr>
+			<td align="center" valign="middle" class="container-td">
+				<!-- Parent form div -->
+				<div id="nmap_form" class="container-fluid form-horizontal">
+					<div class="row bottom-buffer">
+							<span id="confirm_text">${gs.getMessage('Enabling Credential-less Discovery will install NMAP on the MID Server host. Are you sure you want to continue?')}</span>
+					</div>
+					<div class="row bottom-buffer">
+							<button id="yesButton" onclick="handleInstallNmap();" class="btn btn-default">${gs.getMessage('Yes')}</button>
+							<div class="divider"/>
+							<button id="noButton"  onclick="closeInstallationWindow();" class="btn btn-default">${gs.getMessage('No')}</button>
+					</div>
+				</div>
+				<!-- End Parent form div -->
+
+				<!-- install progress div -->
+				<div id="install_progress" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-loading"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="poll_text">${gs.getMessage('Installing Nmap ...')}</span>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="poll_text"> ${gs.getMessage('Nmap installation is running in the background and you can close the window and it will continue installing')}</span>
+					</div>
+					<div class="row bottom-buffer">
+						<div>
+							<button id="okButton" onclick="closeInstallationWindow();" class="btn btn-primary">${gs.getMessage('OK')}</button>
+						</div>
+					</div>
+				</div>
+				<!-- install progress div -->
+				
+				
+				<!-- installing successful div -->
+				<div id="install_successful" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-check-circle installSuccess"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="complete_text">${gs.getMessage('Nmap installation successful')}</span>
+					</div>
+					<div class="row bottom-buffer">
+						<div>
+							<button id="okButton" onclick="closeInstallationWindow();" class="btn btn-primary">${gs.getMessage('OK')}</button>
+						</div>
+					</div>
+				</div>
+				<!-- End installing successful div -->
+				
+				
+				<!-- installation failed div -->
+				<div id="install_failed" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-cross-circle installationFail"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="err_text">${gs.getMessage('Error')}</span>
+					</div>
+
+					<div class="row bottom-buffer">
+						<div>
+							<button id="okButton" onclick="closeInstallationWindow();" class="btn btn-default">${gs.getMessage('OK')}</button>
+						</div>
+					</div>
+				</div>
+				<!-- End installation failed div -->
+				
+					
+
+			</td>
+		</tr>
+	</table>
+	
+	<script>
+	var e = $("target");
+	if (e)
+	   e.focus();
+	</script>
+</j:jelly>

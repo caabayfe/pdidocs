@@ -1,0 +1,310 @@
+_meta:
+  hash: 56e845ebfa3f8b62b01106b5d567673d7cf04d62a60704633d401274d5e90b69
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: now.discovery_infra
+  sys_created_on: 2025-04-15 05:59:03
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: b73a330353bc22103882ddeeff7b120a
+  sys_mod_count: '1'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_b73a330353bc22103882ddeeff7b120a
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-05-07 11:40:03
+active: 'true'
+checksum: ''
+description: This module is used by AWSPowershell.java when executing Powershell related commands/scripts
+directory: 'false'
+name: SSM_PowerShellScript_Probes.psm1
+parent: d504f65753b462103882ddeeff7b12fd
+script: |-
+  $executingScriptDirectory = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+  $global:computer = "localhost"
+
+  <######
+  LaunchProcess Function - called mainly by PS1 scripts linked to Powershell Probe records (ex. WMI_ActiveConnections.ps1)
+  ######>
+
+  function launchProcess {
+      param([string]$computer, [System.Management.Automation.PSCredential]$cred, [string]$command, [int]$secondsToWait = 10, [switch]$UTF8,[string]$remoteBaseDir, [bool]$shouldKillProcess=$false, [bool]$stdErrInStdOut=$false)
+
+      $signature = @"
+      [DllImport("advapi32.dll", SetLastError = true)]
+      public static extern bool LogonUser(string lpszUsername, string lpszDomain, string lpszPassword, int dwLogonType, int dwLogonProvider, ref IntPtr phToken);
+  "@;
+
+      $LogOnUser = Add-Type -memberDefinition $signature -name "Win32LogOnUser" -namespace Win32Functions -passThru;
+      [IntPtr]$userToken = [Security.Principal.WindowsIdentity]::GetCurrent().Token;
+
+      $guid = [Guid]::NewGuid().ToString()
+
+      if ($remoteBaseDir){
+          $baseDir = $remoteBaseDir;
+      }else{
+          $baseDir = getConfigurableParm -variable "SNC_base_dir" -defaultvalue "admin$\temp"
+      }
+      
+      $outputFile = "\\$computer\$baseDir\psscript_output_$($guid).txt"
+      $localOutputFile = "\\127.0.0.1\$baseDir\psscript_output_$($guid).txt"
+      
+      $errorFile = "\\$computer\$baseDir\psscript_err_$($guid).txt"
+      $localErrorFile = "\\127.0.0.1\$baseDir\psscript_err_$($guid).txt"
+
+      $items = $command -split " ";
+      $mainCommand = $items[0];
+      
+      if (-not $stdErrInStdOut){
+          $commandWithSuffix = "$command > `"$localOutputFile`" 2>`"$localErrorFile`"";
+      } else {
+          $commandWithSuffix = "$command > `"$localOutputFile`" 2>&1";
+      }
+
+      # need to wrap everything after /c in double quotes so the following commands, including any piping
+      # should be treated as one command.  wrapping with double quotes is needed since if $command starts with a
+      # quote character, cmd will remove the starting char and the last quote character. (see cmd /?)
+      if ($UTF8) {
+          # changes code page to 65001 so that unicode characters are written to the output file properly
+          # need to wrap the files with quotes in case they have spaces in them
+          $fullCommand = "cmd /c `"chcp 65001 & $commandWithSuffix`"";
+      } else {
+          $fullCommand = "cmd /c `"$commandWithSuffix`"";
+      }
+
+      $commandLength = $fullCommand.length;
+      if ($fullCommand.length -gt 8191) {
+          $errMsg = "launchProcess command has length $commandLength, which exceeds the command line max length of 8191.";
+          if (-not $stdErrInStdOut){
+              throw $errMsg;
+          } else {
+              write-output $errMsg;
+          }
+      }
+
+      $processInfo = invoke-wmimethod win32_process -name create -computer $computer -argumentlist $fullCommand -EA "Stop"
+
+      if ($processInfo.ReturnValue -eq 0) {
+          $pid = $processInfo.processId
+          $proc = Get-WmiObject win32_process -computer $computer -filter "processId=$pid"
+
+          $date = get-date
+          $enddate = $date.AddSeconds($secondsToWait);
+
+          while ($proc -and ($date -lt $enddate)) {
+              Start-Sleep -Milliseconds 250
+              $proc = Get-WmiObject win32_process -computer $computer -filter "processId=$pid"
+              $date = get-date
+          }
+          
+          if ($proc) {
+              $errMsg = "Command timeout after more than $secondsToWait seconds";
+              cleanup
+              if ($shouldKillProcess) {
+                  # try and kill the process; No need to wait for a response
+                  $null = launchProcess -computer $computer -command "taskkill /T /F /PID $pid";
+                  $errMsg += ", killing remote process $pid";
+              }
+              if (-not $stdErrInStdOut){
+                  throw $errMsg;
+              } else {
+                  write-output $errMsg;
+                  return;
+              }
+          }
+          
+          $isStdOut = $false;
+          if ([System.IO.File]::Exists($outputFile)) {
+              # Check the output file size.
+              # We often get a 0 bytes file if we have an error.
+              $outputFileSize = (Get-ChildItem $outputFile -ErrorAction SilentlyContinue).Length;
+              if ($outputFileSize -gt 0){
+                  $isStdOut = $true;
+                 
+                  $encoding = if ($UTF8) {
+                      [System.Text.Encoding]::UTF8
+                  }
+                  else {
+                      [System.Text.Encoding]::Default
+                  }
+                  [System.IO.File]::ReadAllText($outputFile, $encoding)
+              }
+              removeFileGracefully -fileName $outputFile
+          }
+          if ((Test-Path $errorFile) -and ((Get-Item $errorFile).Length -gt 0)) {
+              $err = type $errorFile;
+
+              if ($err){
+  		$errStr = "";
+  		if ($err -is [System.Object[]]) {
+  			$errStr = $err -join "`n";
+  		}
+  		else{
+  			$errStr = $err;
+  		}
+                      
+  		if ($errStr.indexOf("'$mainCommand' is not recognized as an internal or external command") -eq 0){
+                          $errstr = "Error: $mainCommand is required to complete this operation; Original message: $errStr";
+  		}
+  		else{
+                          $errstr = "Error: $errStr";
+  		}
+                      
+  		# We have both StdOut and StdErr
+  		if (-not $isStdOut){
+                          # Only StdErr no StdOut
+                          removeFileGracefully -fileName $errorFile;
+                          if (-not $stdErrInStdOut){
+                              throw (New-Object -TypeName System.IO.FileNotFoundException -ArgumentList $errstr);
+                          } else{
+                              write-output $errstr;
+                          }
+  		}
+              }
+              # make sure we clean it
+              removeFileGracefully -fileName $errorFile;
+  	}
+  	# We got no StdOut and no StdErr
+  	elseif (-not $isStdOut) {
+              $err = "The result file $outputFile can't be fetched because it doesn't exist"
+              if (-not $stdErrInStdOut) {
+  		throw $err
+              }
+              cleanup
+              return;
+          }
+      } else {
+          $err = "Failed to launch process $command with error $processInfo"
+          if (-not $stdErrInStdOut) {
+              throw $err
+          }
+          return;
+      }
+
+      cleanup
+      return;
+  }
+
+  <######
+  Session Functions - Called mainly by Windows Storage probes (ex. Windows - Storage 2012)
+  ######>
+
+  function CreatePSSessionWithComputerName {
+      param([string]$Host, [string]$Port, [Nullable[bool]]$UseSSL,
+            [System.Management.Automation.PSCredential]$Credential, [string]$ConfigurationName, [string]$AdditionalOptions)
+
+      $connectionOption = FormConnectionOptionWithComputerName -Host $Host -Port $Port -UseSSL $UseSSL
+      CreateNewPSSession -ConnectionOption $connectionOption -Credential $Credential -ConfigurationName $ConfigurationName -AdditionalOptions $AdditionalOptions
+  }
+
+  function CreateNewPSSession {
+      param([string]$ConnectionOption, [string]$ConfigurationName, [string]$AdditionalOptions)
+
+      # if additional options are not explicitly specified, use environment variable
+      if ([string]::IsNullOrEmpty($AdditionalOptions)) {
+          $AdditionalOptions = $env:SNC_additionalPSSessionOptions
+      }
+
+      # form the New-PSSession command, using the connection option as the base,
+      # adding credential, SSL certificate options, and other options if applicable
+      $cmd = "New-PSSession $connectionOption"
+      $cmd += ' -Authentication NegotiateWithImplicitCredential'
+
+      if ($env:SNC_skipSSLCertCheckOptions) {
+          $soCmd = "New-PSSessionOption $env:SNC_skipSSLCertCheckOptions"
+          $soSb = [Scriptblock]::Create($soCmd)
+          $so = & $soSb
+          # care must be taken in using single quote here: $so is an object
+          $cmd += ' -SessionOption $so'
+      }
+
+      if (-not [string]::IsNullOrEmpty($ConfigurationName)) {
+          $cmd += " -ConfigurationName `"$ConfigurationName`""
+      }
+
+      if (-not [string]::IsNullOrEmpty($AdditionalOptions)) {
+          $cmd += " $AdditionalOptions"
+      }
+
+      $sb = [Scriptblock]::Create($cmd)
+      & $sb
+  }
+
+  <######
+  Helper Functions
+  ######>
+
+  function getConfigurableParm {
+     param([string]$variable, [string]$defaultValue)
+     $value = [Environment]::GetEnvironmentVariable($variable)
+     if (-not $value) {
+          $value = $defaultValue;
+      }
+      return $value;
+  }
+
+  function cleanup{
+     if ([System.IO.File]::Exists( $errorFile) ) {
+                   removeFileGracefully -fileName $errorFile;
+       }
+
+      if ([System.IO.File]::Exists( $outputFile) ) {
+                   removeFileGracefully -fileName $outputFile;
+      }
+  }
+
+  function removeFileGracefully{
+      param([string] $fileName)
+
+      $triesNumber = 0
+       $maxTries = 2;
+       while  ($triesNumber -le  $maxTries){
+          try {
+              remove-item $fileName -ErrorAction Stop
+              return
+           } catch {
+              Start-Sleep -Seconds 3
+              $triesNumber = $triesNumber + 1
+              if ($triesNumber -le  $maxTries) {
+                   #write-output "Retry to delete $fileName"
+              } else {
+                    write-error "Failed to delete $fileName"
+             }
+          }
+      }
+  }
+
+
+  function FormConnectionOptionWithComputerName {
+      param([string]$Host, [string]$Port, [Nullable[bool]]$UseSSL)
+
+      #
+      # handle optional parameters: if not speficied, use default values from environment variables
+      #
+      if ([string]::IsNullOrEmpty($Port)) {
+          $Port = $env:SNC_targetPort
+      }
+      if ($UseSSL -eq $null) {
+          $UseSSL = ($env:SNC_useSSL -eq "true")
+      }
+
+      $options = "-ComputerName $Host";
+
+      if (-not [string]::IsNullOrEmpty($Port)) {
+          $options +=  " -Port $Port"
+      }
+
+  	if ($UseSSL) {
+          $options +=  " -UseSSL"
+      }
+
+      $options
+  }
+script_attachment: ''
+source: ''
+sys_name: SSM_PowerShellScript_Probes.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

@@ -1,0 +1,553 @@
+_meta:
+  hash: 88a764ed679e82813d0e0e477221b14a03c370603657f10b02a0fcacdf53199d
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: benjamin.phan
+  sys_created_on: 2019-08-09 22:05:57
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 9eff59a773033300d4c1b7385ef6a79b
+  sys_mod_count: '85'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_9eff59a773033300d4c1b7385ef6a79b
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-22 11:14:43
+active: 'true'
+checksum: ''
+description: WinRM implementation of functions for querying Windows registry and WMI tables
+directory: 'false'
+name: WinRMQueryOperations.psm1
+parent: d90565b173533300d4c1b7385ef6a714
+script: |-
+  function executeQuery {
+      param([string]$namespace, [string]$query = $(throw 'The query parameter is required.'))
+      # If we did not get a namespace, use the default
+      $namespace = standardizeNamespace -namespace $namespace;
+
+      $sb = {
+          param([string]$namespace, [string]$query, [string]$internalNamespace, [string]$internalClassname, [string]$internalWhere, [string]$ARRAY_INDICATOR_START, [string]$ARRAY_INDICATOR_END, [string]$OBJECT_INDICATOR_START, [string]$OBJECT_INDICATOR_END, [string]$ARRAY_DELIMITER, [string]$OBJECT_DELIMITER);
+          
+          function ConvertTo-DmtfDateTime {
+              param($value)
+              if ($value -is [DateTime]) {
+                  return [Management.ManagementDateTimeConverter]::ToDmtfDateTime($value);
+              } else {
+                  return $value;
+              }
+          }
+          
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              $wmiQueryResults = Get-WmiObject -Namespace $namespace -Query $query -ErrorAction Stop;
+          } else {
+              $wmiQueryResults = Get-CimInstance -Namespace $namespace -Query $query -ErrorAction Stop;
+          }
+
+          $wmiQueryResults | ForEach-Object {
+              if ($internalWhere) {
+                  "$internalWhere";
+              }
+              
+              if ($_.CimSystemProperties) {
+                  $objNamespace = $_.CimSystemProperties.Namespace;
+                  $objClass = $_.CimSystemProperties.ClassName;
+              } else {
+                  $objNamespace = $_.__NAMESPACE;
+                  $objClass = $_.__CLASS;
+              }
+              
+              "{0}`t:`t{1}" -f $internalNamespace, $objNamespace;
+              "{0}`t:`t{1}" -f $internalClassname, $objClass;
+              "__CLASS`t:`t{0}" -f $objClass;
+              
+              if ($_.Properties) {
+                  # PS5 ManagementBaseObject - use .Properties
+                  $propertiesToIterate = $_.Properties;
+              } elseif ($_.CimInstanceProperties) {
+                  # PS7 CimInstance - use .CimInstanceProperties (excludes metadata)
+                  $propertiesToIterate = $_.CimInstanceProperties;
+              } else {
+                  # Fallback for other object types
+                  $propertiesToIterate = $_.PSObject.Properties;
+              }
+              
+              foreach ($property in $propertiesToIterate) {
+                  $value = $property.Value;
+                  if ($value -is [array]) {
+                      $value = $property.Value;
+                      $items = @();
+                      foreach ($item in $value) {
+                          $isWmiObject = ($item -is [System.Management.ManagementBaseObject]) -or ($item -is [Microsoft.Management.Infrastructure.CimInstance]);
+                          
+                          if ($isWmiObject) {
+                              if ($item.CimSystemProperties) {
+                                  $itemNamespace = $item.CimSystemProperties.Namespace;
+                                  $itemClass = $item.CimSystemProperties.ClassName;
+                              } else {
+                                  $itemNamespace = $item.__NAMESPACE;
+                                  $itemClass = $item.__CLASS;
+                              }
+                              
+                              $keyValues = @("$internalNamespace=$itemNamespace", "$internalClassname=$itemClass");
+                              $itemProps = if ($item.Properties) { $item.Properties } elseif ($item.CimInstanceProperties) { $item.CimInstanceProperties } else { $item.PSObject.Properties };
+                              $keyValues += ($itemProps | ForEach-Object {
+                                  if ($_.Value -ne $null) {
+                                      $convertedValue = ConvertTo-DmtfDateTime -value $_.Value;
+                                      "$($_.Name)=$convertedValue";
+                                  }
+                              });
+
+                              $commaSeparatedKeyValues = $keyValues -join $OBJECT_DELIMITER
+                              if ($commaSeparatedKeyValues) {
+                                  $items += "${OBJECT_INDICATOR_START}$commaSeparatedKeyValues${OBJECT_INDICATOR_END}";
+                              }
+                          } else {
+                              # the item is not an object, so add it as is to the list of itemStrings
+                              $items += $item;
+                          }
+                      }
+
+                      $commaSeparatedItems = $items -join $ARRAY_DELIMITER;
+                      "$($Property.Name)`t:`t${ARRAY_INDICATOR_START}${commaSeparatedItems}${ARRAY_INDICATOR_END}";
+                  } elseif (($value -is [System.Management.ManagementBaseObject]) -or ($value -is [Microsoft.Management.Infrastructure.CimInstance])) {
+                      # expand a single object (check for both PS5 and PS7 types)
+                      $valueProps = if ($value.Properties) { $value.Properties } elseif ($value.CimInstanceProperties) { $value.CimInstanceProperties } else { $value.PSObject.Properties };
+                      $keyValues = ($valueProps | ForEach-Object {
+                          if ($_.Value -ne $null) {
+                              $convertedValue = ConvertTo-DmtfDateTime -value $_.Value;
+                              $stringValue = $convertedValue;
+                              if($stringValue -isNot [string]) {
+                                  $stringValue = [string]$stringValue;
+                              }
+                              $escapedValue = ($stringValue).Replace("\", "\\").Replace("`"", "\`"");
+                              ("$($_.Name)=`"$escapedValue`"");
+                          }
+                      });
+
+                      $commaSeparatedKeyValues = $keyValues -join ',';
+                      if ($commaSeparatedKeyValues) {
+                          # construct prefix
+                          # this prefix attempts to match how the path to the object is printed when objects are expanded by Get-WMIObject/Get-CimInstance itself
+                          
+                          # Get system properties for prefix
+                          if ($value.CimSystemProperties) {
+                              $valueNamespace = $value.CimSystemProperties.Namespace;
+                              $valueClass = $value.CimSystemProperties.ClassName;
+                          } else {
+                              $valueNamespace = $value.__NAMESPACE;
+                              $valueClass = $value.__CLASS;
+                          }
+                          
+                          $prefix = "\\.\${valueNamespace}:${valueClass}.";
+                          "$($Property.Name)`t:`t$prefix$commaSeparatedKeyValues";
+                      }
+
+                  } elseif ($property.Value -ne $null) {
+                      $convertedValue = ConvertTo-DmtfDateTime -value $property.Value;
+                      "$($Property.Name)`t:`t$convertedValue";
+                  }
+              }
+              # output an empty line to separate objects
+              Write-Output '';
+          }
+      }
+
+      $internalWhere = getInternalWhere -query $query -namespace $namespace;
+      try {
+          # If we have a PowerShell session for remoting
+          if ($SNC_session) {
+              $sessionString = 'remote session';
+              SNCLog-DebugInfo "Running wmi query through the $sessionString. Namespace: $namespace and Query: $query"
+              
+              if (isJEACodeSigning) {
+                  $_params = @{  
+                      "namespace" = $namespace
+                      "query" = $query
+                      "internalNamespace" = $INTERNAL_NAMESPACE
+                      "internalClassname" = $INTERNAL_CLASSNAME
+                      "internalWhere" = $internalWhere
+                      "ARRAY_INDICATOR_START" = $ARRAY_INDICATOR_START
+                      "ARRAY_INDICATOR_END" = $ARRAY_INDICATOR_END
+                      "OBJECT_INDICATOR_START" = $OBJECT_INDICATOR_START
+                      "OBJECT_INDICATOR_END" = $OBJECT_INDICATOR_END
+                      "ARRAY_DELIMITER" = $ARRAY_DELIMITER
+                      "OBJECT_DELIMITER" = $OBJECT_DELIMITER
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $namespace,$query,$INTERNAL_NAMESPACE,$INTERNAL_CLASSNAME,$internalWhere,$ARRAY_INDICATOR_START,$ARRAY_INDICATOR_END,$OBJECT_INDICATOR_START,$OBJECT_INDICATOR_END,$ARRAY_DELIMITER,$OBJECT_DELIMITER -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = 'local session';
+              # pass $query and $namespace as parameters to the script block and run it
+              SNCLog-DebugInfo "Running wmi query through the $sessionString. Namespace: $namespace and Query: $query";
+              $output = & $sb -namespace $namespace -query $query -internalNamespace $INTERNAL_NAMESPACE -internalClassname $INTERNAL_CLASSNAME -internalWhere $internalWhere -ARRAY_INDICATOR_START $ARRAY_INDICATOR_START -ARRAY_INDICATOR_END $ARRAY_INDICATOR_END -OBJECT_INDICATOR_START $OBJECT_INDICATOR_START -OBJECT_INDICATOR_END $OBJECT_INDICATOR_END -ARRAY_DELIMITER $ARRAY_DELIMITER -OBJECT_DELIMITER $OBJECT_DELIMITER;
+          }
+          
+          return ($output | Out-String).Trim();
+      } catch {
+          Write-Error ("Could not get query $query on namespace=$namespace through the $sessionString. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  function getRegistryValues {
+      param([string]$hive, [string]$key, [string]$commaSeparatedNames)
+
+      $sb = {
+          param([string]$hive, [string]$key, [string]$commaSeparatedNames);
+          $path = "Registry::$hive\$key";
+          if (-not $commaSeparatedNames -or $commaSeparatedNames -match '\*') {
+              # retrieves a list of all the names in the key
+              $registryKey = Get-Item $path -ErrorAction SilentlyContinue;
+              if (-not $registryKey) {
+                  return;
+              }
+              $valueNames = ($registryKey | Select-Object Property).Property;
+          }
+          else {
+              # grab specific values from the key and select the specific values
+              $valueNames = ($commaSeparatedNames -split ',') | foreach { $_.Trim() };
+          }
+
+          # '' in the valueNames means to get default
+          $valueNames = $valueNames | ForEach-Object {
+              if ($_ -eq "''") {
+                  '(default)';
+              } else {
+                  $_;
+              }
+          }
+
+          $values = Get-ItemProperty -Path $path -Name $valueNames -ErrorAction SilentlyContinue;
+          $properties = $values.PSObject.Properties;
+          
+          $didOutputDefault = $false;
+
+          # iterate over the properties that were returned
+          # this guarantees we only output registry values that exist 
+          $properties | ForEach-Object {
+              # do not output properties that are not in the list of registry values that we requested
+              if (-not ($valueNames -match $_.Name)) {
+                  return;
+              }
+               
+              # expand any values that are arrays, modifies $values object directly
+              if ($_.TypeNameOfValue -match 'String\[\]') {
+                  # legacy WMICollector separated strings with a line feed
+                  $values.($_.Name) = $values.($_.Name) -join "`n";
+              } elseif ($_.TypeNameOfValue -match 'Byte\[\]') {
+                  $hexString = '';
+                  foreach ($decimalValue in $values.($_.Name)) {
+                      # convert decimal values to 2 digit hex and concatenate
+                      $hexString = $hexString + [String]::Format("{0:x2}", $decimalValue);
+                  }
+                  $values.($_.Name) = $hexString.ToUpper();
+              }
+
+
+              if ($_.Name -eq '(default)') {
+                  $didOutputDefault = $true;
+                  # parser expects the default with a key of ' '
+                  " : $($values.'(default)')";
+              } else {
+                  "$($_.Name) : $($values.($_.Name))";
+              }
+          }
+
+          # output default if it was requested but was not output earlier
+          # if it was not output earlier, it is empty
+          if (-not $didOutputDefault -and ($valueNames -match '(default)')) {
+              " : ";
+          }
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = 'remote session';
+              SNCLog-DebugInfo "Running registry query through the $sessionString with hive: $hive, key: $key, value names: $commaSeparatedNames";
+              if (isJEACodeSigning) {  
+                  $_params = @{
+                      "hive" = $hive
+                      "key" = $key
+                      "commaSeparatedNames" = $commaSeparatedNames
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $hive,$key,$commaSeparatedNames -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Running registry query through the $sessionString with hive: $hive, key: $key, value names: $commaSeparatedNames";
+              # pass function parameters to the script block and run it
+              $output = & $sb -hive $hive -key $key -commaSeparatedNames $commaSeparatedNames;
+          }
+          
+          return $output;
+      } catch {
+          $valuesString = if ($commaSeparatedNames) { " ($commaSeparatedNames)" } else { '' };
+          Write-Error ("Could not get registry values$valuesString of base key $hive and key $key through the $sessionString. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  <#
+      This method enumurates the keys under a parent key.
+      Parent key may be empty and will return the keys directly under the hive
+      $hive should be a hex decimal value of the hive as a String.
+      For example: 
+          HKEY_CLASSES_ROOT = 0x80000000
+          HKEY_CURRENT_USER = 0x80000001
+          HKEY_LOCAL_MACHINE = 0x80000002
+          HKEY_USERS = 0x80000003
+          HKEY_CURRENT_CONFIG = 0x80000005
+          HKEY_DYN_DATA = 0x80000006
+  #>
+  function enumKeys {
+      param([string]$hive, [string]$parentKey)
+
+      $sb = {
+          param([string]$hive, [string]$parentKey);
+          
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              $reg = Get-WmiObject -List -Namespace 'root\default' -ErrorAction Stop | Where-Object {$_.Name -eq "StdRegProv"};
+              $res = $reg.EnumKey($hive, $parentKey);
+              if ($res -and $res.sNames) {
+                  return $res.sNames;
+              }
+              return '';
+          } else {
+              $reg = Get-CimClass -Namespace 'root\default' -ClassName 'StdRegProv' -ErrorAction Stop;
+              $res = $reg | Invoke-CimMethod -MethodName 'EnumKey' -Arguments @{
+                          hDefKey = [uint32]$hive
+                          sSubKeyName = $parentKey
+                      } -ErrorAction Stop;
+
+              if ($res -and $res.sNames) {
+                  return $res.sNames;
+              }
+              return '';
+          }
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = 'remote session';
+              SNCLog-DebugInfo "Enumerating the subkeys of $hive\$parentKey through the $sessionString";
+              if (isJEACodeSigning) {  
+                  $_params = @{
+                      "hive" = $hive
+                      "parentKey" = $parentKey
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $hive,$parentKey -ErrorAction Stop;
+              }   
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Enumerating the subkeys of $hive\$parentKey through the $sessionString";
+              # pass function parameters to the script block and run it
+              $output = & $sb -hive $hive -parentKey $parentKey;
+          }
+          
+          return $output;
+      } catch {
+          Write-Error ("Could not get enumerate the subkeys of hive: $hive and parent key: $parentKey through the $sessionString. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  function enumClass {
+      param([string]$namespace, [string]$class)
+
+      $sb = {
+          param([string]$namespace, [string]$class);
+
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              Get-WmiObject -Namespace $namespace -Class $class -ErrorAction Stop | ForEach-Object { $_.Name };
+          } else {
+              Get-CimInstance -Namespace $namespace -ClassName $class -Property Name -ErrorAction Stop | Select-Object -ExpandProperty Name;
+          }
+      }
+      
+      try {
+          if ($SNC_session) {
+              $sessionString = 'remote session';
+              SNCLog-DebugInfo "Enumerating class $class of namespace $namespace through the $sessionString";
+              if (isJEACodeSigning) {  
+                  $_params = @{
+                      "namespace" = $namespace
+                      "class" = $class
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $namespace,$class -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Enumerating class $class of namespace $namespace through the $sessionString";
+              # pass function parameters to the script block and run it
+              $output = & $sb -namespace $namespace -class $class;
+          }
+
+          return ($output | Out-String).Trim();
+      } catch {
+          Write-Error "Could not get enumerate class $class of namespace $namespace through the $sessionString. Original Exception: $($_.Exception.Message)";
+      }
+  }
+
+  function enumClasses {
+      param([string]$namespace)
+      # If we did not get a namespace, use the default
+      $namespace = standardizeNamespace -namespace $namespace;
+
+      enumClass -namespace $namespace -class 'meta_class';
+  }
+
+  function enumNamespaces {
+      param([string]$namespace)
+      if (-not $namespace) {
+          $namespace = 'root';
+      }
+
+      enumClass -namespace $namespace -class '__NAMESPACE';
+  }
+
+  function enumProperties {
+      param([string]$namespace, [string]$classname)
+      # If we did not get a namespace, use the default
+      $namespace = standardizeNamespace -namespace $namespace;
+
+      $sb = {
+          param([string] $namespace, [string]$classname);
+          $cimClass = Get-CimClass -Namespace $namespace -ClassName $classname -ErrorAction Stop;
+          return $cimClass.CimClassProperties.Name;
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = 'remote session';
+              SNCLog-DebugInfo "Enumerating properties from classname $classname in namespace $namespace through the $sessionString";
+              if (isJEACodeSigning) {  
+                  $_params = @{
+                      "namespace" = $namespace
+                      "classname" = $classname
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $namespace,$classname -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Enumerating properties from classname $classname in namespace $namespace through the $sessionString";
+              # pass function parameters to the script block and run it
+              $output = & $sb -namespace $namespace -classname $classname;
+          }
+          
+          return $output;
+      } catch {
+          write-error ("Could not enumerate properties from classname $classname in namespace $namespace through the $sessionString. " + $_.Exception.Message);
+      }
+  }
+
+  function enumMethods {
+      param([string]$namespace, [string]$classname)
+      # If we did not get a namespace, use the default
+      $namespace = standardizeNamespace -namespace $namespace;
+
+      $sb = {
+          param([string] $namespace, [string]$classname);
+          $cimClass = Get-CimClass -Namespace $namespace -ClassName $classname -ErrorAction Stop;
+          foreach ($method in $cimClass.CimClassMethods) {
+              # look for methods with no input parameters
+              if ($method.Parameters.count -eq 0) {
+                  $method.Name;
+              }
+          }
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = 'remote session';
+              SNCLog-DebugInfo "Getting methods from classname $classname in namespace $namespace through the $sessionString";
+              if (isJEACodeSigning) {  
+                  $_params = @{
+                      "namespace" = $namespace
+                      "classname" = $classname
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $namespace,$classname -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Getting methods from classname $classname in namespace $namespace through the $sessionString";
+              # pass function parameters to the script block and run it
+              $output = & $sb -namespace $namespace -classname $classname;
+          }
+          
+          return $output;
+      } catch {
+          write-error ("Could not get methods from classname $classname in namespace $namespace through the $sessionString. " + $_.Exception.Message);
+      }
+  }
+
+  function getProcessUserAndDomain {
+      param([string]$commaSeparatedPids);
+      
+      $sb = {
+          param([string]$commaSeparatedPids);
+          $pids = $commaSeparatedPids -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ };
+          if (-not $pids) { return @() }
+
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              $processes = Get-WmiObject -Class 'Win32_Process' | Where-Object -Property 'ProcessId' -In -Value $pids
+              foreach ($process in $processes) {
+                  $owner = $process | Invoke-WmiMethod -Name 'GetOwner'
+                  "ProcessId:$($process.ProcessId),User:$($owner.User),Domain:$($owner.Domain)"
+              }
+          } else {
+              $pidList = ($pids | ForEach-Object { [int]$_ }) -join ','
+              $query = "SELECT ProcessId FROM Win32_Process WHERE ProcessId IN ($pidList)"
+              Get-CimInstance -Query $query | ForEach-Object {
+                  try {
+                      $owner = Invoke-CimMethod -InputObject $_ -MethodName 'GetOwner'
+                      "ProcessId:$($_.ProcessId),User:$($owner.User),Domain:$($owner.Domain)"
+                  } catch {
+                      write-error ("Could not get the owner of the process $($_.ProcessId). Exception: " + $_.Exception.Message);
+                  }
+              }
+          }
+      }
+
+      try {
+          # If we have a PowerShell session for remoting
+          if ($SNC_session) {
+              $sessionString = 'remote session';
+              SNCLog-DebugInfo "Getting user and domain info for processes $commaSeparatedPids through the $sessionString.";
+              if (isJEACodeSigning) {  
+                  $_params = @{
+                      "commaSeparatedPids" = $commaSeparatedPids
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $commaSeparatedPids -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = 'local session';
+              # pass $query and $namespace as parameters to the script block and run it
+              SNCLog-DebugInfo "Getting user and domain info for processes $commaSeparatedPids through the $sessionString.";
+              $output = & $sb -commaSeparatedPids $commaSeparatedPids;
+          }
+          
+          return ($output | Out-String).Trim();
+      } catch {
+          Write-Error ("Could not get user and domain info for processes $commaSeparatedPids through the $sessionString. Original Exception: " + $_.Exception.Message);
+      }
+
+  }
+script_attachment: ''
+source: ''
+sys_name: WinRMQueryOperations.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

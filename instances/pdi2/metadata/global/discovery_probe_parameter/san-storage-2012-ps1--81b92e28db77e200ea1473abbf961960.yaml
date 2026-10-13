@@ -1,0 +1,107 @@
+_meta:
+  hash: 92a7d588cd2e5f652d1c0746beda60e5bc18ca44cb040d7f46e926f63c0fa7dc
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: steve.francis@snc
+  sys_created_on: 2016-12-16 21:28:28
+  sys_id: 81b92e28db77e200ea1473abbf961960
+  sys_mod_count: '27'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_81b92e28db77e200ea1473abbf961960
+  sys_updated_by: steve.francis
+  sys_updated_on: 2019-09-20 21:00:39
+active: 'true'
+name: san.storage.2012.ps1
+probe: d569e628db77e200ea1473abbf961989
+sys_name: san.storage.2012.ps1
+sys_policy: ''
+value: |-
+  function Get-HBAWin {
+  	try {
+  		$Params = @{
+  			Namespace    = 'root\WMI';
+  			Class        = 'MSFC_FCAdapterHBAAttributes';
+  			ErrorAction  = 'Stop';
+  		};
+
+  		$Params2 = @{
+  			ErrorAction  = 'Stop';
+  			Class = 'Win32_DiskDrive';
+  		};
+
+  		$Results = @();
+
+  		Get-WmiObject @Params  | ForEach-Object {
+  			$InstanceName = $_.InstanceName -replace '\\','\\';
+  			$Params['class']='MSFC_FibrePortHBAAttributes';
+  			$Params['filter']="InstanceName='$InstanceName'";
+  			$fpAttr = Get-WmiObject @Params | Select -Expandproperty Attributes;
+  			$PortWWN = $fpAttr.PortWWN;
+  			$ports = ($PortWWN | % {"{0:x2}" -f $_}) -join ":";
+
+  			$params['class'] = 'MSFC_HBAFCPInfo';
+  			$fc = Get-WmiObject @Params | % { $_.GetFcpTargetMapping($portwwn,1)};
+  			$Details = @();
+
+  			if ($fc.hbastatus -ne 0) {
+  				$FC = Get-WmiObject @Params | % { $_.GetFcpTargetMapping($portwwn,$fc.totalentrycount)};
+  				for ($i = 0; $i -lt $fc.totalentrycount; $i++) {
+  					$Detail = "" | select "FCPWWN","FCNWWN", "FCID", "FCLun", "ScsiBus", "ScsiOSLun", "ScsiTarget", "DeviceID", "LunNum", "FrameSerialNumber", "Size", "SCSITargetId", "SCSILogicalUnit","Name","SystemName";
+  					$Detail.FCPWWN = ($fc.entry[$i].fcpid.portwwn | ForEach-Object {'{0:x2}' -f $_}) -join ':';
+  					$Detail.FCNWWN = ($fc.entry[$i].fcpid.nodewwn | ForEach-Object {'{0:x2}' -f $_}) -join ':';
+  					$Detail.fcid = '{0:x2}' -f ($fc.entry[$i].fcpid.fcid);
+  					$Detail.fcLun = $fc.entry[$i].fcpid.fcpLun;
+  					$Detail.ScsiBus = $fc.entry[$i].ScsiId.ScsiBusNumber;
+  					$Detail.ScsiOSLun = $fc.entry[$i].ScsiId.ScsiOSLun;
+  					$Detail.ScsiTarget = $fc.entry[$i].ScsiId.ScsiTargetNumber;
+  					$LunDetail = ((Get-WmiObject @Params2) | Where-Object {($_.SCSITargetId -eq $Detail.SCSITarget) -and ($_.scsilogicalunit -eq $Detail.ScsiOSLun) -and ($_.SCSIbus -eq $Detail.SCSIbus)});
+  					if ($LunDetail) {
+  						$Detail.DeviceID = $LunDetail.DeviceID;
+  						$Detail.LUNNum = $LunDetail.SCSILogicalUnit;
+  						$Detail.FrameSerialNumber = $LunDetail.SerialNumber;
+  						$Detail.Size = $LunDetail.Size;
+  						$Detail.SCSITargetId = $LunDetail.SCSITargetId;
+  						$Detail.SCSILogicalUnit = $LunDetail.SCSILogicalUnit;
+  						$Detail.Name = $LunDetail.Name;
+  						$Detail.SystemName = $LunDetail.SystemName;
+  						$Details += $Detail;
+  					}
+  				}
+  			}
+
+  			[HashTable]$hash=@{
+  					ComputerName     = $_.__SERVER;
+  					NodeWWN          = (($_.NodeWWN) | ForEach-Object {'{0:x2}' -f $_}) -join ':';
+  					PortWWN          = $Ports;
+  					Active           = $_.Active;
+  					DriverName       = $_.DriverName;
+  					DriverVersion    = $_.DriverVersion;
+  					FirmwareVersion  = $_.FirmwareVersion;
+  					Manufacturer     = $_.Manufacturer;
+  					Model            = $_.Model;
+  					SerialNumber     = $_.SerialNumber;
+  					ModelDescription = $_.ModelDescription;
+  					UniqueAdapterId  = $_.UniqueAdapterId;
+  					NumberOfPorts    = $_.NumberOfPorts;
+  					FabricName       = (($fpAttr.FabricName )| ForEach-Object {'{0:x2}' -f $_}) -join ':';
+  					PortFcId         = $fpAttr.PortFcId;
+  					PortType         = $fpAttr.PortType;
+  					PortState        = $fpAttr.PortState;
+  					PortSpeed        = $fpAttr.PortSpeed;
+  					NumberofDiscoveredPorts = $fpAttr.NumberofDiscoveredPorts;
+  					Misc             = $Details;
+  				  };
+  			$Results += $hash;
+  		};
+
+  		$Results | ConvertTo-Json -Depth 5;
+  	}
+  	catch {
+  		Write-Warning -Message $_.Exception.Message;
+  	}
+  }
+
+  get-hbawin
+value_script: ''

@@ -1,0 +1,1 @@
+var res;     if (!gs.nil(current.group)) {      res = current.group.source;      if (res == 7) {          res = 1;      }     } else if (current.correlation_group == 2) {      res = 5;     } else      res = 6;          current.group_source = res;

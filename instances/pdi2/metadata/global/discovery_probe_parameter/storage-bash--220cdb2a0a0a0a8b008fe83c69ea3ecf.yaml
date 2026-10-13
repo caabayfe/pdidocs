@@ -1,0 +1,330 @@
+_meta:
+  hash: 476bc8d0bcdc285305302a7addf0a82916904ea5e906bb679f89f221d498fb02
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2007-06-12 22:28:01
+  sys_id: 220cdb2a0a0a0a8b008fe83c69ea3ecf
+  sys_mod_count: '112'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_220cdb2a0a0a0a8b008fe83c69ea3ecf
+  sys_updated_by: vishal.rao
+  sys_updated_on: 2019-04-24 23:21:12
+active: 'true'
+name: storage.bash
+probe: 9f9f9bf30a0a1467007642ca5a5fb6f0
+sys_name: storage.bash
+sys_policy: ''
+value: |-
+  #!/bin/bash
+
+  id=/proc/ide
+  sd=/sys/bus/scsi/devices
+  ld=/var/log/dmesg
+  dn=/dev/null
+
+  shopt -s extglob
+
+  echo "[[==PROBE:vxvm==]]"
+  if [ -x "$(command -v vxprint)" ]; then
+    echo 'Veritas is installed.' >&2;
+  fi
+
+  echo "[[==PROBE:proc_ide==]]"
+
+  if [ -d $id ]; then
+    for dev in `ls $id | grep ide`; do
+     for disk in `ls $id/$dev`; do
+      pdev="$id/$dev/$disk"
+
+      if [ -f $pdev/driver ]; then
+       printf "ide:/dev/$disk,`cat $pdev/model 2>$dn`,`cat $pdev/capacity 2>$dn`,`cat $pdev/media 2>$dn`\n"
+      fi
+     done
+    done
+  fi
+
+  echo "[[==PROBE:sys_block==]]"
+  if [ -d /sys/block ]; then
+      # List all /sys/blocks that are LVM devices (dm-*), SCSI (sd*), and CD/DVD (sr*)
+      for blockDir in $(ls -d /sys/block/* | grep '^/sys/block/\(dm-\|sd\|sr\)'); do
+          blockName=$(basename ${blockDir})
+          echo "sysBlock:"
+          echo "  name: $blockName"
+          echo "  deviceMajorMinor: $(cat $blockDir/dev)"
+          echo "  sectors: $(cat $blockDir/size)"
+          echo "  sectorSize: $(cat $blockDir/queue/hw_sector_size 2>/dev/null || echo 0)"
+
+          # Device
+          if [ -d ${blockDir}/device ]; then
+              blockHost=$(basename $(readlink ${blockDir}/device) | egrep '[0-9]+:[0-9]+:[0-9]+:[0-9]+')
+              if [ -n "${blockHost}" ]; then
+                  echo "  host: $blockHost"
+                  echo "  vendor: $(cat $blockDir/device/vendor)"
+                  echo "  model: $(cat $blockDir/device/model)"
+
+                  # The uevent file write-only until kernel 2.6.24
+                  uevent=$(cat $blockDir/device/uevent 2>/dev/null)
+                  if [ $? -eq 0 ]; then
+                      echo "  devType: $(echo $uevent | grep DEVTYPE | awk -F= '{ print $2 }')"
+                  else
+                      # Grabs the "scsi" or "ide" in paths like "../../../sys/bus/scsi" or "../../../sys/bus/ide"
+                      echo "  devType: $(basename $(ls -ld $blockDir/device/subsystem | awk '{ print $NF }'))"
+                  fi
+              fi
+          fi
+
+          # Device Mapper (DM)
+          if [ -d ${blockDir}/dm ]; then
+              echo "  dmName: $(cat $blockDir/dm/name)"
+              echo "  dmId: $(cat $blockDir/dm/uuid)"
+          fi
+
+          # Partitions
+          partitionDirs=$(ls -d $blockDir/$blockName* 2>/dev/null)
+          for partitionDir in $partitionDirs; do
+              echo "  partitions:"
+              echo "    name: $(basename $partitionDir)"
+              echo "    deviceMajorMinor: $(cat $partitionDir/dev)"
+              echo "    number: $(cat $partitionDir/partition 2>/dev/null || basename $partitionDir | sed -re 's/[^0-9]+//g')"
+              echo "    beginOffset: $(cat $partitionDir/start)"
+              echo "    sectors: $(cat $partitionDir/size)"
+          done
+      done
+  elif [ -d $sd ]; then
+    echo "[[==PROBE:scsi_path_map==]]"
+    for dev in `ls $sd | egrep '[0-9]+:[0-9]+:[0-9]+:[0-9]+'`; do
+     for block in `ls $sd/${dev} | grep ^block`; do
+      echo -n ${dev},
+      if test ${block} = 'block'
+      then
+       echo `ls $sd/${dev}/${block}`
+      else
+       echo `expr ${block} : 'block:\(.*\)'`
+      fi
+     done
+    done
+  fi
+
+  echo "[[==PROBE:proc_mounts==]]"
+  if [ -e /proc/mounts ]; then
+      cat /proc/mounts | awk '{ print "procMount:" ; print "  name: " $1 ; print "  mountPoint: " $2 ; print "  filesystem: " $3 ; print "  options: " $4 }'
+  fi
+
+  echo "[[==PROBE:fdisk==]]"
+  ${sudo:fdisk} -l | grep 'Disk /'
+
+  echo "[[==PROBE:proc_scsi==]]"
+  if [ -f /proc/scsi/scsi ]; then
+    cat /proc/scsi/scsi
+  fi
+
+  echo "[[==PROBE:dmesg_scsi==]]"
+  if [ -f $ld ]; then
+    grep -i 'attached scsi' $ld
+    grep 'SCSI device' $ld
+  fi
+
+  echo "[[==PROBE:dmsetup==]]"
+  # List each device mapping along with its component parts (which may be other device mappings)
+
+  # Get a list of all device mappings. Format: alias (major:minor) E.g., mpathb (235:0)
+  dmsetupLsOutput=$(${sudo:dmsetup ls})
+  # For each mapped device ...
+  if [ "$dmsetupLsOutput" != "No devices found" ]; then
+      # Rows separated by spaces, columns separated by semi-colons, all extra characters removed
+      # Example input:
+      # root--vg-swap--lv (253, 1)
+      # root--vg-root--lv (253, 0)
+      # Example output: root--vg-swap--lv 253:1;root--vg-root--lv 253:0
+      dmsetupLsOutput=$(echo $dmsetupLsOutput | sed -e's/\s//g' | sed -e"s/(/;/g" | sed -e 's/,/:/g' | sed -e"s/)/ /g")
+
+      for dmsetupLsLine in $dmsetupLsOutput; do
+          dmAlias=$(echo $dmsetupLsLine | awk 'BEGIN { FS=";" } ; { print $1 }')
+          dmMajorMinor=$(echo $dmsetupLsLine | awk 'BEGIN { FS=";" } ; { print $2 }')
+
+          # Each section starts with "mappedDevice:"
+          echo "mappedDevice: $dmAlias $dmMajorMinor "
+
+          # Print a list of storage components
+          dmsetupTable='${sudo:dmsetup table}'
+          ${dmsetupTable} /dev/mapper/$dmAlias
+      done
+  fi
+
+  echo "[[==PROBE:multipath_ll==]]"
+  if [ -x "$(command -v multipath)" ]; then
+      # Dump the output of multipath -ll, which shows any device mappings for MPIO.
+      multipathLL='${sudo:multipath -ll}'
+      multipathOutput="$($multipathLL 2>/dev/null)"
+
+      if [ $? -eq 0 ] && [ -n "$multipathOutput" ]; then
+          # Trim bold.
+          echo "$multipathOutput" | tr -d '^'
+      fi
+  fi
+
+  echo "[[==PROBE:df==]]"
+  df -kP 2>/dev/null
+
+  # df -T isn't POSIX and usually isn't necessary.  I don't want to break the
+  # call to df above by adding a parameter that may not be accepted so I'm
+  # just going to execute both "df -kP" and "df -kPT"
+  echo "[[==PROBE:dft==]]"
+  df -kPT 2>/dev/null
+
+  echo "[[==PROBE:findmnt==]]"
+  findmnt -l -n -o SOURCE,TARGET 2>/dev/null
+
+  echo "[[==PROBE:sys_iscsi==]]"
+  # Probe for SAN (Storage Attached Network) device information.
+
+  if [ -d /sys/class/iscsi_session ]; then
+      ISCSI_SESSION_DIRS=$(find /sys/class/iscsi_session -maxdepth 1 -type l)
+
+      for ISCSI_SESSION_DIR in $ISCSI_SESSION_DIRS; do
+          echo "iscsiSession:"
+          IQN=$(cat $ISCSI_SESSION_DIR/targetname)
+          echo "  targetIqn: ${IQN}"
+
+          TARGET_DIRS=$(ls -d $ISCSI_SESSION_DIR/device/target+([0-9]):+([0-9]):+([0-9])/+([0-9]):+([0-9]):+([0-9]):+([0-9]))
+      
+          for TARGET_DIR in $TARGET_DIRS; do
+              echo "  device:"
+              LUN=$(basename $TARGET_DIR | awk '{ split($0, o, ":"); print o[4]; }')
+          
+              DEVICE_DIRS=$(ls -d $TARGET_DIR/block)
+
+              for DEVICE_DIR in $DEVICE_DIRS; do
+                  DEVICE_NAME=$(cat $TARGET_DIR/block/[a-zA-Z0-9_-]*/uevent | grep DEVNAME | sed -e's/DEVNAME=//g')
+                  echo "    id: $DEVICE_NAME"
+                  echo "    lun: $LUN"
+              done
+
+          done
+      done
+  fi
+
+  echo "[[==PROBE:sys_iscsi_initiator==]]"
+  # Get our iSCSI initiator
+  cat /etc/iscsi/initiatorname.iscsi
+
+  echo "[[==PROBE:fcoe==]]"
+  fcoeadm -i
+
+  echo "[[==PROBE:fc==]]"
+  # Probe for FC Host information
+
+  if [ -d /sys/class/fc_host ]; then
+      #HBAs
+      baseScsiDir=/sys/class/scsi_host
+      scsiHostProtocols=$(ls $baseScsiDir/host*/protocol 2> /dev/null)
+
+      # Old style - each driver has its own way.
+      for scsiHostProtocol in $scsiHostProtocols; do
+          if [ $(cat $scsiHostProtocol) != "fc" -a $(cat $scsiHostProtocol) != "fcoe" ]; then
+              continue
+          fi
+
+          fcHostDir=$(dirname $scsiHostProtocol)
+          fcHostId=$(basename $fcHostDir)
+          echo "fcHba:"
+          echo "  serialNumber: $(cat $fcHostDir/serialnum)"
+          echo "  model: $(cat $fcHostDir/modelname)"
+          echo "  modelDescription: $(cat $fcHostDir/modeldesc)"
+      done
+
+      # Old style attempt 2
+      scsiHostProtocols=$(ls $baseScsiDir/host*/info 2> /dev/null)
+      for scsiHostProtocol in $scsiHostProtocols; do
+          grep -i "FC HBA" $scsiHostProtocol >/dev/null
+          if [ $? -ne 0 ]; then
+             continue
+          fi
+          fcHostDir=$(dirname $scsiHostProtocol)
+          fcHostId=$(basename $fcHostDir)
+          echo "fcHba:"
+          echo "  serialNumber: $(cat $fcHostDir/serialnum)"
+          echo "  model: $(cat $fcHostDir/modelname)"
+          echo "  modelDescription: $(cat $fcHostDir/modeldesc)"
+      done
+
+      # New style - FC info in /sys/class/fc_host/host*, generic info at /sys/class/scsi_host/host*
+      fcHostDirs=$(ls -d /sys/class/fc_host/host*)
+      for fcHostDir in $fcHostDirs; do
+          fcHostId=$(basename $fcHostDir)
+          fcHostDir=$baseScsiDir/$fcHostId
+          if [ -e $fcHostDir/serial_num ]; then
+              echo "fcHba:"
+              echo "  serialNumber: $(cat $fcHostDir/serial_num)"
+              echo "  model: $(cat $fcHostDir/model_name)"
+              echo "  modelDescription: $(cat $fcHostDir/model_desc)"
+          fi
+      done
+
+      # Ports
+      fcHostDirs=$(ls -d /sys/class/fc_host/host*)
+
+  printBlockDeviceNames() {
+      echo "  targetPort:"
+      echo "    wwpn: $(cat $fcRemotePortDir/port_name 2> /dev/null)" 
+      echo "    wwnn: $(cat $fcRemotePortDir/node_name 2> /dev/null)"
+      # Display each block device for this remote port
+      if [ -n "$portBlockDirs" ]; then
+          ## echo line prefix
+          echo -n  "    blockDeviceNames:"
+          separator=" "
+          for portBlockDir in $portBlockDirs; do
+              echo -n "$separator"
+              separator=","
+              if [ "$alternatePath" = true ]; then
+                  printf '%s' $(echo -n "$(basename $portBlockDir)" | cut -d : -f 2)
+              else
+                  echo -n "$(basename $portBlockDir)"
+              fi
+          done
+          ## terminate list of blockDeviceNames
+          echo "    " 
+      fi
+  }
+
+      for fcHostDir in $fcHostDirs; do
+          fcHostId=$(basename $fcHostDir)
+          echo "fcPort:"
+          echo "  wwpn: $(cat $fcHostDir/port_name 2> /dev/null)"
+          echo "  wwnn: $(cat $fcHostDir/node_name 2> /dev/null)"
+          echo "  speed: $(cat $fcHostDir/speed 2> /dev/null)"
+          echo "  port_type: $(cat $fcHostDir/port_type)"
+          if [ -e  $fcHostDir/device/scsi_host/host*/serialnum ]; then
+              echo "  hbaSerialNumber: $(cat $fcHostDir/device/scsi_host/host*/serialnum 2> /dev/null)"
+          elif [ -e $baseScsiDir/$fcHostId/serialnum ]; then
+              echo "  hbaSerialNumber: $(cat $baseScsiDir/$fcHostId/serialnum 2> /dev/null)"
+          elif [ -e $fcHostDir/device/scsi_host:${fcHostId}/serialnum ]; then
+          	echo "  hbaSerialNumber: $(cat $fcHostDir/device/scsi_host:${fcHostId}/serialnum 2> /dev/null)"
+          else
+              echo "  hbaSerialNumber: $(cat $baseScsiDir/$fcHostId/serial_num 2> /dev/null)"
+          fi
+
+          # Print block device names assigned to this port
+          remotePortDirs=$(ls -d $fcHostDir/device/rport-* 2> /dev/null)
+          for remotePortDir in $remotePortDirs; do
+              # Display information about each target port
+              alternatePath=false
+              if [ -e $remotePortDir/fc_remote_ports/$(basename $remotePortDir) ]; then
+                  fcRemotePortDir="$remotePortDir/fc_remote_ports/$(basename $remotePortDir)"
+                  portBlockDirs=$(ls -d $remotePortDir/target*/[0-9]*/block/* 2>/dev/null)
+                  printBlockDeviceNames 
+              else
+                  alternatePath=true
+                  fcRemotePortDir="$remotePortDir/fc_remote_ports:$(basename $remotePortDir)"
+                  portBlockDirs=$(ls -d $fcRemotePortDir/device/target*/*/block* 2>/dev/null)
+                  printBlockDeviceNames
+              fi
+          done
+      done
+  fi
+
+  exit 0
+value_script: ''

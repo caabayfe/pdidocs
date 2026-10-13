@@ -1,0 +1,48 @@
+_meta:
+  hash: 41ffb5c7b1ec75e7fcd39190baa9cef68f3cb5aa3524f04bef55a4831022ab4d
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: shiri.hameiri@snc
+  sys_created_on: 2023-09-14 10:09:24
+  sys_id: 10929819475139109710e052846d43d5
+  sys_mod_count: '71'
+  sys_package: 54ddf983837f4310292aca75eeaad34c
+  sys_scope: global
+  sys_update_name: sys_script_include_10929819475139109710e052846d43d5
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-02 14:16:05
+access: public
+active: 'true'
+api_name: global.RedundantAlertsClosing
+caller_access: ''
+client_callable: 'false'
+description: |-
+  This script can handle two problems:
+  A. Empty Log Analytics grouped alert closing.
+  B. Duplicate alerts closing - depends on property.
+  It is working on alerts that were created in the last timeframe defined by property:  evt_mgmt.delete_duplicate_alerts_in_timeframe_sec (default 2 minutes ).
+  The scripts is NOT checking the described issues on the alerts that were created whithin the timeframe but before the timeframe.
+  By default the job will run scenario A.
+  In case there is a need to run scenario B as well - please define through property: evt_mgmt.close_duplicate_alerts
+
+  A.
+  1. We collect all empty grouped Log Analytics alerts created in the last timeframe.
+  2. Each alert we find we close with notes to the worknote if property is defined evt_mgmt.delete_duplicate_alerts_add_to_worknote (default true)).
+
+  B:
+  1. We collect all alerts created in the last timeframe.
+  2. We check foreach alert if another one from eralier time exist with the same message_key.
+  3. If found we;
+      * keep open the oldest one created
+      * adopt the severity of the new alert
+      * close the new alert arrived, with worknote (Depends on property - evt_mgmt.delete_duplicate_alerts_add_to_worknote (default true))
+      * Update all the events that were related to closed alert with the alert that remained open.
+
+  The OOB job is handling scenario A. 
+  Scenario B should be triggered by property setting.
+mobile_callable: 'false'
+name: RedundantAlertsClosing
+sandbox_callable: 'false'
+sys_name: RedundantAlertsClosing
+sys_policy: ''

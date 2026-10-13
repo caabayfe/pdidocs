@@ -1,0 +1,39 @@
+_meta:
+  hash: 262407e21788b989b6e3be193e973734bb564fd5020c9b6e74569d0194fe2c59
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: evan.qu
+  sys_created_on: 2017-05-16 12:35:55
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 3a889605537a320023bdae4a16dc3408
+  sys_mod_count: '2'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_3a889605537a320023bdae4a16dc3408
+  sys_updated_by: hardik.modi
+  sys_updated_on: 2017-08-01 00:22:10
+active: 'true'
+checksum: ''
+description: ''
+directory: 'false'
+name: solaris_netstat_command.sh
+parent: ec515c705352320023bdae4a16dc3488
+script: |-
+  #!/bin/sh
+  # Copyright © ServiceNow, Inc. 2017. All rights reserved.
+
+  BASE_DIR=$1
+  cp "${BASE_DIR}/connection_samples/all_connections.log" "${BASE_DIR}/connection_samples/all_connections_tmp.log"
+  #netstat output for IPv4 | match LISTEN | print result | separate ip.port 
+  sudo netstat -anuP tcp -f inet | grep LISTEN | awk -F' ' '{print "on " $4 " " $1}' | sed 's/\(.*\)\./\1 /' | sort | uniq > "${BASE_DIR}/connection_samples/connection_sample.log"
+  sudo netstat -anuP tcp -f inet | grep ESTABLISHED | awk -F' ' '{print "to " $4 " " $1 " " $2}' | sed 's/\(.*\)\./\1 /' | awk -F' ' '{print $1 " " $2 " " $4 " " $5 " " $3 }' | sed 's/\(.*\)\./\1 /' | sort | uniq >> "${BASE_DIR}/connection_samples/connection_sample.log"
+  cat "${BASE_DIR}/connection_samples/connection_sample.log" "${BASE_DIR}/connection_samples/all_connections_tmp.log" | sort > "${BASE_DIR}/connection_samples/all_connections.log"
+script_attachment: ''
+source: ''
+sys_name: solaris_netstat_command.sh
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

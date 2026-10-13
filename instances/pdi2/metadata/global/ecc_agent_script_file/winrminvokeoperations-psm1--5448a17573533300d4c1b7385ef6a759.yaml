@@ -1,0 +1,104 @@
+_meta:
+  hash: f3a4a43fdb548f18700223ed94fe5b3498824062de3f45aabd9159eb926d70d5
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: benjamin.phan
+  sys_created_on: 2019-08-16 22:16:45
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 5448a17573533300d4c1b7385ef6a759
+  sys_mod_count: '14'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_5448a17573533300d4c1b7385ef6a759
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-10-21 18:57:00
+active: 'true'
+checksum: ''
+description: WinRM implementation of functions for invoking commands and methods
+directory: 'false'
+name: WinRMInvokeOperations.psm1
+parent: d90565b173533300d4c1b7385ef6a714
+script: |-
+  function executeCommand {
+      # the timeoutSec parameter is not used for the WinRM implementation of this function
+      param([string]$command = $(throw "The command parameter is required."), [int]$timeoutSec=120, [bool]$stdErrInStdOut=$true);
+
+      # If the JEA flag is set, and we do not have a cert for signing, we must use the JEAExecute-Command function to run the command
+      # Keep this to maintain backward compatibility to the JEA_DISCO (v1) profile
+      if ($global:isJea -and $SNC_session -and -not $global:SNC_jea_disco_cert) {
+          SNCLog-DebugInfo "The remote session is configured to work with the JEA endpoint $env:SNC_ConfigurationName";
+          $sb = {
+              param([string]$command)
+              JEAExecute-Command $command;
+          }
+      } else {
+          # use cmd to run the command
+          $sb = {
+              param([string]$command, [int]$timeoutSec, [bool]$stdErrInStdOut=$false)
+              
+              # An inner scriptblock to run the command
+              $isb = {
+                  param([string]$command, [bool]$stdErrInStdOut=$false);
+                  if ($stdErrInStdOut){
+                      # This is done in order to get the StdOut and StdErr together but with no PowerShell related prefix messages.
+                      $output = cmd /c $command 2>&1 ;
+                      foreach ($line in $output){
+                          if ($line -and $line.exception -and $line.Exception.message){
+                              $line.Exception.message;
+                          }else{
+                              $line;
+                          }
+                      }
+                  } else {
+                      cmd /c $command;
+                  }
+              };
+              
+              # Starts the job and move to the next line
+              $j = Start-Job -ScriptBlock $isb -ArgumentList $command, $stdErrInStdOut;
+              # Waits for $j: finished on the timeout or when $j is done - the earlier
+              if (Wait-Job $j -Timeout $timeoutSec) {
+                  # Redirect $j results to the console
+                  Receive-Job $j
+              }
+              # Kill the process if not ended and remove the job.
+              Remove-Job -force $j > $null;
+          }
+      }
+      
+      try {
+          if ((isJEACodeSigning) -and $SNC_session) {
+              $_params = @{
+                  "command" = $command
+                  "timeoutSec" = $timeoutSec
+                  "stdErrInStdOut" = $stdErrInStdOut
+              }
+              $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+          } elseif ($SNC_session) {
+              SNCLog-DebugInfo "Executing command through remote session: $command";
+              $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $command, $timeoutSec, $stdErrInStdOut -ErrorAction Stop;
+          } else {
+              SNCLog-DebugInfo "Executing command through local session: $command";
+              $output = Invoke-Command -ScriptBlock $sb -ArgumentList $command, $timeoutSec, $stdErrInStdOut -ErrorVariable 'err';
+
+              # error handling here is different because Invoke-Command in local session won't throw an exception
+              # however, we can still set an error variable and send it to stderr
+              if ($err) {
+                  Write-Error "Failed to execute command: $sb.`n$($err | Out-String)";
+              }
+          }
+
+          return $output;
+      } catch {
+          Write-Error "Failed to execute command: $command. Original Exception: $($_.Exception | Out-String)";
+      }
+  }
+script_attachment: ''
+source: ''
+sys_name: WinRMInvokeOperations.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

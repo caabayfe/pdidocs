@@ -1,0 +1,2 @@
+current.fields = '';
+current.update();

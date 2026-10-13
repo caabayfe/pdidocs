@@ -1,0 +1,56 @@
+_meta:
+  hash: b0e9d21887a0a4a4c7bb6d48c4408467206ee721c94d26b39203adab50ce4501
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: marjan.marzban
+  sys_created_on: 2014-08-13 20:05:18
+  sys_id: b54646c1d7622100a866ee5b5e610363
+  sys_mod_count: '44'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_b54646c1d7622100a866ee5b5e610363
+  sys_updated_by: marjan.marzban
+  sys_updated_on: 2014-11-21 22:45:02
+active: 'true'
+name: get-hacfg.sh
+probe: 86b5c2c1d7622100a866ee5b5e6103fe
+sys_name: get-hacfg.sh
+sys_policy: ''
+value: |-
+  #!/bin/sh
+  #
+  CFG_LOCATION=$1
+
+  # If the configuration path contains some white spaces it was wrapped in double quotes
+  # Following command removes doublequotes from the begining and the end of the path
+  CFG_LOCATION=`echo $CFG_LOCATION | sed -e 's/^\"*//' -e 's/\"*$//'`
+
+  IFS='
+  '
+
+  # if  no path for haproxy.cfg then exit 
+  if [ ! -f $CFG_LOCATION ]; then
+  	echo "Cannot locate config file: $CFG_LOCATION"
+  	exit 1
+  fi
+
+  KeyWords='defaults|frontend|backend|listen|bind|disabled|default_backend|balance|acl|mode|server|use_backend'
+  grep -v '^\s*#' $CFG_LOCATION | egrep $KeyWords
+
+  echo "<HOST-IP-INFORMATION>"
+
+  HOSTLIST=`grep -v '^\s*#' $CFG_LOCATION | grep '^\s*server'`
+  for i in $HOSTLIST;do
+  	HOST=`echo $i | sed -e 's/^[ \t]*//'`
+  	HOSTINFO=`echo $HOST | sed 's/\s\+/ /g' | cut -d ' ' -f3`
+  	HOSTNAME=`echo $HOSTINFO | cut -d ':' -f1`
+  	if [ `echo "$HOSTNAME" | grep [A-Za-z]` ];then
+  		PINGINFO=`ping -c 1 $HOSTNAME 2>/dev/null | grep PING` 
+  		IP=`echo $PINGINFO | cut -d '(' -f2 | cut -d ')' -f1`
+  		if [ ! -z "$IP" -a "$IP" != " " ];then
+  			echo $HOSTNAME ':' $IP
+  		fi
+  	fi
+  done
+value_script: ''

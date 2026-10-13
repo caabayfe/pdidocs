@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+   <span id="probeProgress"></span>
+
+   <stages id="mystages" style="display: none;">
+       <stage>
+           <name>Sending probe to MID Server</name>
+           <complete_condition>
+             ${jvar_ecc_queue_id}
+           </complete_condition>
+       </stage>
+
+   <j:if test="${jvar_skip_sensor == 'true'}">
+       <stage>
+           <name>Running probe</name>
+           <complete_condition>
+               ${jvar_ecc_queue_id}
+           </complete_condition>
+           <oncomplete>
+               ${jvar_oncomplete}
+           </oncomplete>
+       </stage>
+   </j:if>
+   <j:if test="${jvar_skip_sensor != 'true'}">
+       <stage>
+           <name>Running probe</name>
+           <complete_condition>
+               ${jvar_ecc_queue_id}
+           </complete_condition>
+       </stage>
+       <stage>
+           <name>Processing sensor</name>
+           <complete_condition>
+              ${jvar_ecc_queue_id}
+           </complete_condition>
+           <oncomplete>
+               ${jvar_oncomplete}
+           </oncomplete>
+       </stage>
+   </j:if>
+   </stages>
+
+   <g:include_script src="AJAXProgress.jsdbx"/>
+   <script>
+       var ajp = new AJAXProgress('probeProgress', 'mystages');
+       ajp.start();
+   </script>
+</j:jelly>

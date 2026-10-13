@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<!-- To use <g:ui_reference/> in this UI page, below are the required JS.
+		<g:requires name="scripts/functions.js" includes="true" />
+		<g:requires name="scripts/functions_reference.js" includes="true" />
+		<g:requires name="scripts/utils.js" includes="true" />
+		<g:requires name="scripts/accessibility_tabindex.js" includes="true" />
+		<g:requires name="scripts/slushbucket.js" includes="true" />
+		<g:requires name="scripts/ac.js" includes="true" />
+		<g:requires name="scripts/ac_derived_field_support.js" includes="true" />
+		<g:requires name="scripts/popups.js" includes="true" />
+		<g:requires name="scripts/classes/AutoComplete.js" includes="true" />
+		<g:requires name="scripts/classes/SlushBucket.js" includes="true" />
+		<g:requires name="scripts/classes/ajax/AJAXCompleter.js" includes="true" />
+		<g:requires name="scripts/classes/ajax/AJAXReferenceControls.js" includes="true" />
+		<g:requires name="scripts/classes/ajax/AJAXOtherCompleter.js" includes="true" />
+		<g:requires name="scripts/classes/ajax/AJAXReferenceCompleter.js" includes="true" />
+		<g:requires name="scripts/classes/ajax/AJAXReferenceCompleterMulti.js" includes="true" />
+		<g:requires name="scripts/classes/ajax/AJAXTableCompleter.js" includes="true" />
+		<g:requires name="scripts/classes/ajax/AJAXEmailClientCompleter.js" includes="true" />
+		<j2:set var="jvar_theme" value="$[gs.getProperty('glide.css.theme.ui16')]"/>
+		<g2:requires name="styles/css_includes_doctype.css" includes="true" params="c=$[gs.getCssCacheVersionString()]$[jvar_theme]" />
+	-->
+	<g:evaluate var="jvar_isNextPg" expression="RP.getParameterValue('sysparm_next_pg')"/>
+	<j:if test="${jvar_isNextPg == 'true'}">
+		<style>
+			.no_next {
+				display: none !important;
+			}
+		</style>
+	</j:if>
+	<style>
+	body {
+		overflow-x: hidden;
+	}
+	#mim-promote-form {
+		overflow: hidden;
+	}
+	.form-horizontal {
+		margin-top: 5px;
+		margin-bottom: 20px;
+	}
+	.promote-modal-textarea {
+		resize: vertical;
+		min-height: 120px
+	}
+	#dialog_buttons .btn{
+		margin-left: 10px;
+		padding-left: 15px;
+		padding-right: 15px;
+		text-align: right;
+	}
+	#work-notes-wrapper .required-marker {
+		display: inline-block;
+	}
+	#work-notes-wrapper label {
+		overflow-wrap: break-word;
+	}
+</style>
+<script>
+	var config = {
+		workspace: '${JS_STRING:RP.getParameterValue('sysparm_workspace')}' == 'true'
+	};
+	var iframeMsgHelper = (function () {
+		function createPayload(action, modalId, data) {
+			return {
+				messageType: 'IFRAME_MODAL_MESSAGE_TYPE',
+				modalAction: action,
+				modalId: modalId,
+				data: (data ? data : {})
+			};
+		}
+		function pm(window, payload) {
+			if (window.parent === window) {
+				console.warn('Parent is missing. Is this called inside an iFrame?');
+				return;
+			}
+			window.parent.postMessage(payload, location.origin);
+		}
+		function IFrameMessagingHelper(window) {
+			this.window = window;
+			this.src = location.href;
+			this.messageHandler = this.messageHandler.bind(this);
+			this.window.addEventListener('message', this.messageHandler);
+		}
+		IFrameMessagingHelper.prototype.messageHandler = function (e) {
+			if (e.data.messageType !== 'IFRAME_MODAL_MESSAGE_TYPE' || e.data.modalAction !== 'IFRAME_MODAL_ACTION_INIT') {
+				return;
+			}
+			this.modalId = e.data.modalId;
+		};
+		IFrameMessagingHelper.prototype.confirm = function (data) {
+			var payload = createPayload('IFRAME_MODAL_ACTION_CONFIRMED', this.modalId, data);
+			pm(this.window, payload);
+		};
+		IFrameMessagingHelper.prototype.cancel = function (data) {
+			var payload = createPayload('IFRAME_MODAL_ACTION_CANCELED', this.modalId, data);
+			pm(this.window, payload);
+		};
+		return new IFrameMessagingHelper(window);
+	}());
+</script>
+<div id="mim-promote-form">
+<div class="form-horizontal no_next">
+	<div class="form-group" id="work-notes-wrapper">
+		<label class="col-sm-2 control-label" for="mim-promote-work-notes">
+                    <span mandatory="true" class="required-marker label_description"></span>
+			${gs.getMessage('Work notes')}
+		</label>
+		<div class="col-sm-10">
+			<textarea required="true" class="form-control promote-modal-textarea" id="mim-promote-work-notes" type="text" oninput="promoteModal.workNotesOnChange()" onchange="promoteModal.workNotesOnChange()"></textarea>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 control-label" for="mim-promote-business-impact">${gs.getMessage('Business Impact')}</label>
+		<div class="col-sm-10">
+			<textarea class="form-control promote-modal-textarea" name="mim-promote-business-impact" id="mim-promote-business-impact"></textarea>
+		</div>
+	</div>	
+</div>
+<div id="dialog_buttons" class="clearfix pull-right no_next">
+		<button type="button" class="btn btn-default" onclick="promoteModal.close()" title="${gs.getMessage('Close the dialog')}">${gs.getMessage('Cancel')}</button>
+		<button type="button" class="btn btn-primary disabled" aria-disabled="true" id="mim-promote-button" title="${gs.getMessage('Promote to Major Incident')}" onclick="promoteModal.promote()">${gs.getMessage('Promote')}</button>
+</div>
+</div>
+</j:jelly>

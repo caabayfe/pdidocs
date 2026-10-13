@@ -1,0 +1,55 @@
+_meta:
+  hash: 1c8959f4abedf7cf0cbf5d26d00f1c291de07d7608d904d50ae08060b2c3c593
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: eugene.lockett
+  sys_created_on: 2013-04-26 18:33:52
+  sys_id: 2abe60e4c381010031e65ad8cbba8f20
+  sys_mod_count: '7'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_2abe60e4c381010031e65ad8cbba8f20
+  sys_updated_by: admin
+  sys_updated_on: 2013-06-25 15:29:08
+active: 'true'
+name: get_domains.sh
+probe: 2e6eeca4c381010031e65ad8cbba8fdd
+sys_name: get_domains.sh
+sys_policy: ''
+value: |-
+  #!/bin/bash
+  ROOT_TAG=domains
+  LIST_TAG=domain_list
+  DISK_DATA_TAG=disk_data
+
+  echo "<$ROOT_TAG>"
+
+  echo "<$LIST_TAG>"
+  virsh list --all
+  RESULT=$?
+  if [ $RESULT -ne 0 ] ; then
+  	exit $RESULT
+  fi
+  echo "</$LIST_TAG>"
+
+  for DOMID in `virsh list --all | tail -n +3 | awk '{print $2}'`
+  do
+  	virsh dumpxml $DOMID
+  	 
+  	#the greps track down the <source file='XYZ'> tags
+  	#the first sed removes all the stuff leading up to and including the first quote
+  	#the second sed removes everything after the second quote
+  	for DISKID in `virsh dumpxml $DOMID | 
+  		grep source | 
+  		grep 'file\s*=\s*' | 
+  		sed -e 's/\s*<source .*file\s*=\s*['"'"'"]//' | 
+  		sed -e 's/['"'"'"].*//'`
+  	do
+  		echo "<$DISK_DATA_TAG file='$DISKID'>"
+  		virsh domblkinfo $DOMID $DISKID
+  		echo "</$DISK_DATA_TAG>"
+  	done
+  done
+  echo "</$ROOT_TAG>"
+value_script: ''

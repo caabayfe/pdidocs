@@ -1,0 +1,456 @@
+_meta:
+  hash: fb25215f564ae8b513e2ce5a6ec41c27346411c0886292cc9288e515c583f0b1
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: benjamin.phan
+  sys_created_on: 2019-08-16 22:52:00
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 2b5071f973533300d4c1b7385ef6a704
+  sys_mod_count: '45'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_2b5071f973533300d4c1b7385ef6a704
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-03 15:50:34
+active: 'true'
+checksum: ''
+description: WinRM implementation of functions for file operations
+directory: 'false'
+name: WinRMFileOperations.psm1
+parent: d90565b173533300d4c1b7385ef6a714
+script: |-
+  function getTempDirectory {
+      param([string] $subdirectory, [string]$serviceName, [boolean]$useSecureTemp)
+      # If already set - return
+      if ($tmpDir) {
+          return $tmpDir;
+      }
+
+      $sb = {
+          param([string] $subdirectory, [string] $discoveryUser, [boolean]$useSecureTemp);
+          $psTargetBaseDir =  [Environment]::GetEnvironmentVariable("SNC_base_dir")
+          if ( $psTargetBaseDir ) {
+                     $tmpDir =  $psTargetBaseDir 
+          } else {
+                     $tmpDir = $env:TEMP;
+        }
+          if (-not $tmpDir -or ($tmpDir -match 'system32')) {
+              # Get-CimInstance works in both PS5.1+ and PS7
+              $tmpDir = (Get-CimInstance -Query 'Select TempDirectory from Win32_BootConfiguration' -ErrorAction Stop).TempDirectory;
+              if (-not $tmpDir -or ($tmpDir -match 'system32')) {
+                  $tmpDir = 'C:\temp';
+              }
+          }
+
+          $tmpDir = Join-Path -Path $tmpDir -ChildPath $subdirectory;
+          SNCLog-DebugInfo "tmpDir on target is $tmpDir";
+          if ($useSecureTemp) {
+              # createFolder is imported into remote session at provider startup, from SecureTempFolder.psm1
+              if (createFolder -folder $tmpDir -secureFolder $true) {
+                  return $tmpDir;
+              }
+              SNCLog-DebugInfo "Failed to create secure folder $tmpDir";
+          }
+
+          SNCLog-DebugInfo "Attempting to create unsecure folder $tmpDir";
+          if (createFolder -folder $tmpDir -secureFolder $false) {
+              return $tmpDir;
+          }
+
+          SNCLog-DebugInfo "Failed to create unsecure folder $tmpDir";
+      }
+
+      if ($useSecureTemp) {
+          if ($snccred) {
+              $discoveryUser = $snccred.UserName;
+          }
+
+          $discoveryUser = getNormalizedUser -discoveryUser $discoveryUser -serviceName $serviceName;
+
+          # Append discoveryUser to parentFolder path
+          $subdirectory = Join-Path -Path $subdirectory -ChildPath $discoveryUser;
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = "remote session ($($SNC_session.ComputerName))";
+              SNCLog-DebugInfo "Getting temp directory through the ${sessionString}: subdirectory $subdirectory";
+              
+              if (isJEACodeSigning) {
+                  $_params = @{
+                      "subdirectory" = $subdirectory
+                      "discoveryUser" = $discoveryUser
+                      "useSecureTemp" = $useSecureTemp
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $subdirectory,$discoveryUser,$useSecureTemp -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Getting temp directory through the $sessionString";
+              # pass function parameters to the script block and run it
+              $output = & $sb -subdirectory $subdirectory -discoveryUser $discoveryUser -useSecureTemp $useSecureTemp;
+          }
+          return $output;
+      } catch {
+          Write-Error ("Could not get temp directory from $sessionString. Original exception: " + $_.Exception.Message);
+      }
+  }
+
+  function putFileToTarget {
+  <#
+      .SYNOPSIS
+          Copies the source file to the temp directory specified by $tmpDir.
+          Can optionally rename the destination file with the destFileName parameter.
+          Can optionally change the file permissions with the changeFilePermission parameter.
+
+      .PARAMETER sourcePath
+          Specifies the path of the source file.
+      .PARAMETER destFileName
+          Specifies the name of the destination file.
+      .PARAMETER changeFilePermission
+          Specifies whether to change the permissions on the file.
+
+      .OUTPUTS
+          System.String
+              The destination file path.
+  #>
+      param([string]$sourcePath = $(throw 'The sourcePath parameter is required.'), [string]$destFileName, [bool]$changeFilePermission)
+      if (-not $tmpDir) {
+          throw 'Could not put file because $tmpDir is null';
+      }
+
+      if (-not (Test-Path $sourcePath -PathType Leaf)) {
+          Write-Error "The source file $sourcePath does not exist or is a directory";
+          return;
+      }
+
+      if (-not $destFileName) {
+          # extract the file name from the source path
+          $destFileName = Split-Path -Path $sourcePath -Leaf;
+      }
+
+      $sb = {
+          param([string]$destFilePath);
+          $allOutput = & ICACLS $destFilePath /grant:r ADMINISTRATORS:F /grant:r EVERYONE:RX 2>&1;
+          $stderr = $allOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] };
+          return @{ exitCode = $LASTEXITCODE; stderr = $stderr };
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = "remote session ($($SNC_session.ComputerName))";
+
+              SNCLog-DebugInfo "Calling SendFileExecuteRemote -Path $sourcePath -Destination $tmpDir -Name $destFileName -Session $SNC_session";
+              # SendFileExecuteRemote comes from ExecuteRemote.psm1
+              $destFilePath = (SendFileExecuteRemote -Path $sourcePath -Destination $tmpDir -Name $destFileName -Session $SNC_session).FullName;
+              SNCLog-DebugInfo "Done putting source file $sourcePath to $destFilePath, change file permission $changeFilePermission, through $sessionString";
+              
+              if ($changeFilePermission) {
+                  SNCLog-DebugInfo "Changing file permissions of $destFilePath through $sessionString";
+                  
+                  if (isJEACodeSigning) {
+                      $_params = @{
+                          "destFilePath" = $destFilePath
+                      }
+                      $exitAndError = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+                  } else {
+                      $exitAndError = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $destFilePath -ErrorAction Stop;
+                  }
+                  $exitCode = $exitAndError['exitCode'];
+                  $stderr = $exitAndError['stderr'];
+                  if ($exitCode -and $stderr) {
+                      SNCLog-DebugInfo ("Could not change file permissions of $destFilePath. " + ($stderr | Out-String));
+                  }
+              }
+          } else {
+              $sessionString = 'local session';
+
+              $destFilePath = Join-Path -Path $tmpDir -ChildPath $destFileName
+              SNCLog-DebugInfo "Putting source file $sourcePath to $destFilePath, change file permission $changeFilePermission, through $sessionString";
+              Copy-Item -Path $sourcePath -Destination $destFilePath -ErrorAction Stop;
+
+              if ($changeFilePermission) {
+                  SNCLog-DebugInfo "Changing file permissions of $destFilePath through $sessionString";
+                  $exitAndError = & $sb -destFilePath $destFilePath;
+                  $exitCode = $exitAndError['exitCode'];
+                  $stderr = $exitAndError['stderr'];
+                  if ($exitCode -and $stderr) {
+                      SNCLog-DebugInfo ("Could not change file permissions of $destFilePath. " + ($stderr | Out-String));
+                  }
+              }
+          }
+          
+          return $destFilePath;
+      } catch {
+          Write-Error ("Could not put source file $sourcePath to $destFilePath through $sessionString. Original exception: " + $_.Exception.Message);
+      }
+  }
+
+  <# 
+      This function is duplicated in the both WMI and WinRM FileOperations modules rather than
+      placed in the CommonUtils module in order to prevent someone from calling the function
+      without the necessary WMI or WinRM module loaded
+  #>
+  function getFileContent {
+  <#
+      .SYNOPSIS
+          Gets the file content of the given path.
+
+      .PARAMETER path
+          Specifies the path of the text file.
+      .PARAMETER encoding
+          Specifies the encoding of the text file.
+
+      .OUTPUTS
+          System.String
+              The file content as a string.
+  #>
+      param(
+          [string]$path = $(throw 'The path parameter is required'),
+          [string]$encoding = 'Default'
+      )
+
+      # isUncPath and getFileContentUncPath are in CommonUtils.psm1
+      if (isUncPath -path $path) {
+          SNCLog-DebugInfo "Getting file content through UNC path $path";
+          $output = getFileContentUncPath -uncPath $path -encoding $encoding -credential $snccred;
+      } else {
+          SNCLog-DebugInfo "Getting file content through local path $path";
+          $output = getFileContentLocalPath -localPath $path -encoding $encoding;
+      }
+
+      $output;
+  }
+
+  function getFileContentLocalPath {
+  <#
+      .SYNOPSIS
+          Gets the file content of the given local path.
+
+      .PARAMETER localPath
+          Specifies the local path of the text file.
+      .PARAMETER encoding
+          Specifies the encoding of the text file.
+
+      .OUTPUTS
+          System.String
+              The file content as a string.
+  #>
+      param([string]$localPath = $(throw 'The localPath parameter is required'), [string]$encoding = 'Default')
+
+      $sb = {
+          param([string]$localPath, [string]$encoding);
+          try {
+              Get-Content -Path $localPath -Encoding $encoding -ErrorAction Stop;
+          } catch [System.Management.Automation.ParameterBindingException] {
+              # the Encoding parameter on Get-Content is only available in file system drives, so the above call may result in
+              # a parameter binding exception. if so, try Get-Content without the Encoding parameter
+              if ($_.Exception -match 'Encoding') {
+                  Get-Content -Path $localPath -ErrorAction Stop;
+              } else {
+                  throw;
+              }
+          }
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = "remote session ($($SNC_session.ComputerName))";
+              SNCLog-DebugInfo "Getting file $localPath using encoding $encoding through $sessionString";
+              if (isJEACodeSigning) {
+                  $_params = @{
+                      "localPath" = $localPath
+                      "encoding" = $encoding
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else { 
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $localPath,$encoding -ErrorAction Stop;
+              }    
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Getting file $localPath using encoding $encoding through $sessionString";
+              # pass function parameters to the script block and run it
+              $output = & $sb -localPath $localPath -encoding $encoding;
+          }
+          
+          return $output;
+      } catch {
+          Write-Error ("Could not get file $localPath through $sessionString. Original exception: " + $_.Exception.Message);
+      }
+  }
+
+  <# 
+      This function is duplicated in the both WMI and WinRM FileOperations modules rather than
+      placed in the CommonUtils module in order to prevent someone from calling the function
+      without the necessary WMI or WinRM module loaded
+  #>
+  function deleteFile {
+  <#
+      .SYNOPSIS
+          Deletes the file at the given path.
+
+      .PARAMETER path
+          Specifies the path of the file to delete.
+
+      .OUTPUTS
+          None.
+  #>
+      param([string]$path = $(throw 'The path parameter is required'))
+
+      # isUncPath and deleteFileUncPath are in CommonUtils.psm1
+      if (isUncPath -path $path) {
+          SNCLog-DebugInfo "Deleting file through UNC path $path";
+          deleteFileUncPath -uncPath $path -credential $snccred;
+      } else {
+          SNCLog-DebugInfo "Deleting file through local path $path";
+          deleteFileLocalPath -localPath $path;
+      }
+  }
+
+  function deleteFileLocalPath {
+  <#
+      .SYNOPSIS
+          Deletes the file at the given local path.
+
+      .PARAMETER path
+          Specifies the local path of the file to delete.
+
+      .OUTPUTS
+          None.
+  #>
+      param([string]$localPath = $(throw 'The localPath parameter is required'))
+      
+      $sb = {
+          param([string]$localPath);
+          Remove-Item -Path $localPath -ErrorAction Stop;
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = "remote session ($($SNC_session.ComputerName))";
+              SNCLog-DebugInfo "Deleting file $localPath through $sessionString";
+               if (isJEACodeSigning) {
+                  $_params = @{
+                      "localPath" = $localPath
+                  }
+                  $output = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $output = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $localPath -ErrorAction Stop;
+               }
+          } else {
+              $sessionString = 'local session';
+              SNCLog-DebugInfo "Deleting file $localPath through $sessionString";
+              # pass function parameters to the script block and run it
+              $output = & $sb -localPath $localPath;
+          }
+          
+          return $output;
+      } catch {
+          Write-Error ("Could not delete file $localPath through $sessionString. Original exception: " + $_.Exception.Message);
+      }
+  }
+
+  function getFileOwner {
+  <#
+      .SYNOPSIS
+          Gets the owner of the specified file
+
+      .PARAMETER path
+          The path to the file
+
+      .OUTPUTS
+          The owner of the file
+  #>
+      param([string]$path = $(throw "path parameter is required"))
+
+      if (isUncPath -path $path) {
+          $acl = getFileAclUncPath -uncPath $path;
+      } else {
+          $acl = getFileAclLocalPath -localPath $path;
+      }
+
+      return $acl.Owner;
+  }
+
+  function getFileAclLocalPath {
+  <#
+      .SYNOPSIS
+          Gets the acl of the specified file
+
+      .PARAMETER localPath
+          The local path to the file
+
+      .OUTPUTS
+          The acl of the file
+  #>
+      param([string]$localPath = $(throw "localPath parameter is required"))
+
+      $sb = {
+          param([string]$localPath);
+          Get-Acl $localPath -ErrorAction Stop;
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = "remote session ($($SNC_session.ComputerName))";
+              SNCLog-DebugInfo "getting ACL for file $localPath through $sessionString";
+               if (isJEACodeSigning) {
+                  $_params = @{
+                      "localPath" = $localPath
+                  }
+                  $acl = invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  $acl = Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $localPath -ErrorAction Stop;
+              }
+          } else {
+              $sessionString = "local session";
+              SNCLog-DebugInfo "getting ACL for file $localPath through $sessionString";
+              $acl = & $sb -localPath $localPath;
+          }
+      } catch {
+          Write-Error ("Could not get file ACL from $localPath through $sessionString. Original exception: " + $_.Exception.Message);
+      }
+
+      return $acl;
+  }
+
+  function importModuleIntoSession {
+      param([string] $modulePath)
+      $fileContent = Get-Content -Path $modulePath -Raw;
+
+      $sb = {
+          param([string] $moduleString);
+          $scriptBlock = [ScriptBlock]::Create($moduleString);
+          New-Module -ScriptBlock $scriptBlock | Import-Module -Force;
+      }
+
+      try {
+          if ($SNC_session) {
+              $sessionString = "remote session ($($SNC_session.ComputerName))";
+              SNCLog-DebugInfo "importing module $modulePath into $sessionString";
+              if (isJEACodeSigning) {
+                  $_params = @{
+                      "moduleString" = $fileContent
+                  }
+                  invokeJEAExecuteScript $SNC_session $sb.toString() $_params -ErrorAction Stop;
+              } else {
+                  Invoke-Command -Session $SNC_session -ScriptBlock $sb -ArgumentList $fileContent -ErrorAction Stop;
+              }
+          } else {
+              SNCLog-DebugInfo "The session is local, skipping importing module";
+          }
+      } catch {
+          Write-Error ("Could import module $modulePath into $sessionString. Original exception: " + $_.Exception.Message);
+      }
+  }
+script_attachment: ''
+source: ''
+sys_name: WinRMFileOperations.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

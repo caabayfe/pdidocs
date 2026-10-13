@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <style>
+        #content_row .reference-label {
+            padding-right: 15px;
+        }
+        #content_row .form-group {
+	      align-items: center;
+	  }
+        #page_timing_div {
+           display: none;
+        }
+        .-polaris .input-group-btn {
+            align-items: start;
+        }
+    </style>
+    <g:ui_form>
+        <g2:set_if var="jvar_selected_incidents" test="$[RP.getParameterValue('selected_incidents') == '']"
+            true="$[RP.getWindowProperties().selected_incidents]"
+            false="$[RP.getParameterValue('selected_incidents')]"/>
+        <!-- Set up form fields and labels -->
+        <table width="100%">
+            <tr id="content_row" valign="top">
+                <td colspan="2">
+                    <!-- Short description value used as a label -->
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <label class="reference-label">${gs.getMessage('Major Incident')}</label>
+                            	<g:ui_reference name="incident_sysid" table="incident" show_popup="true" show_lookup="true" query="major_incident_state=accepted^active=true" completer="AJAXTableCompleter" columns="short_description" onChange="enableButton()"/>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+            </tr>
+            <tr id="dialog_buttons">
+                <td colspan="2" align="right">
+                    <g:dialog_button
+                         id="cancel_button"
+                         type="button"
+                         style_class="btn btn-default"
+                         onclick="actionCancel()" style="min-width: 5em;">${gs.getMessage('Cancel')}</g:dialog_button>$[SP]
+
+                    <g:dialog_button
+                         id="ok_button"
+                         type="button"
+                         onclick="actionOK()"
+                         style_class="btn btn-primary disabled"
+                         style="min-width: 5em;">${gs.getMessage('OK')}</g:dialog_button>
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" value="$[jvar_selected_incidents]" name="selected_incidents" id="selected_incidents" />
+    </g:ui_form>
+</j:jelly>

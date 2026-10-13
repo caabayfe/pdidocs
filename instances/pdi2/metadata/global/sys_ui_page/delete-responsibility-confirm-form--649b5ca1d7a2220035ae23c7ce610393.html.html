@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <style type="text/css">
+        div.warning-msg-body { margin: 5px 5px 0px; }
+        div.warning-page { text-align:left; }
+        div.modal-alert { width: 600px; }
+        div.modal-content { line-height: normal; }
+    </style>
+    <div class="warning-page">
+        <br />
+        <j:set var="jvar_objList" value="${sysparm_delobj_list}" />
+        <g:evaluate var="jvar_msg" jelly="true">
+                    var jvar_msg = '';
+                    var listSysIds = jelly.sysparm_contact_list.split(',');
+                    if (listSysIds == '')
+                        jvar_msg = gs.getMessage('Delete the selected record(s)?');
+                    else {
+                            var count = parseInt(listSysIds.length);
+                            var contactDefinitions = jelly.sysparm_obj_id.split(',');
+                            if (count &lt;= 1) {
+                            	if(contactDefinitions.length &lt;= 1)
+                            		jvar_msg = gs.getMessage('The selected contact definition is associated with {0} Incident Communication Plan record',count);
+                            	else
+                            		jvar_msg = gs.getMessage('The selected contact definitions are associated with {0} Incident Communication Plan record.',count);
+                            }
+                            else {
+                            	if(contactDefinitions.length &lt;= 1)
+                                	jvar_msg = gs.getMessage('The selected contact definition is associated with {0} Incident Communication Plan records.',count);
+                            	else
+                            		jvar_msg = gs.getMessage('The selected contact definitions are associated with {0} Incident Communication Plan records.',count);
+                            }
+                    }
+                    jvar_msg;
+        </g:evaluate>
+		<g:evaluate var="jvar_note" jelly="true">
+			var jvar_note = gs.getMessage("The contact definitions associated with the selected record will be deleted.");
+			var contactDefinitions = jelly.sysparm_obj_id.split(',');
+			if (contactDefinitions.length > 1)
+				jvar_note = gs.getMessage("The contact definitions associated with the selected records will be deleted.");
+			jvar_note;
+		</g:evaluate>
+        <div class="warning-msg">
+            ${jvar_msg}<br/><br/>
+			<b>${gs.getMessage("Note")}: $[AMP]nbsp;</b>${jvar_note}
+        </div>
+        <br />
+        <j:choose>
+			<div align="right" class="modal-footer">
+				<g:dialog_buttons_ok_cancel 
+											ok="return ok()" 
+											ok_style_class="btn btn-destructive"
+											ok_text="${gs.getMessage('Delete')}" 
+											cancel="return cancel()" 
+											ok_type="button" 
+											cancel_type="button" />
+			</div>
+		</j:choose>
+    </div>
+    <script>
+        document.getElementById("ok_button").focus();
+    </script>
+</j:jelly>

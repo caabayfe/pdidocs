@@ -1,0 +1,1 @@
+var res = 2;                                    if (!gs.nil(current.it_alert)) {                                      res = 1;                                    }                          current.is_promoted = res;
