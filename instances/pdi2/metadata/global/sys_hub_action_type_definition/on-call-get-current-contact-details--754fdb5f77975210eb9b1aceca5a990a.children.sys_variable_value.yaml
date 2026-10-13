@@ -1,0 +1,229 @@
+- document: sys_hub_action_type_definition
+  document_key: 754fdb5f77975210eb9b1aceca5a990a
+  order: '4'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-02-11 05:50:39
+  sys_id: 21eb289b77a35210eb9b1aceca5a991a
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-02-11 05:53:39
+  value: ''
+  variable: 0517641777a35210eb9b1aceca5a9935
+- document: sys_hub_action_type_definition
+  document_key: 754fdb5f77975210eb9b1aceca5a990a
+  order: '7'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:41
+  sys_id: 2ef7ebd777d75210eb9b1aceca5a9969
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-30 09:16:41
+  value: ''
+  variable: aef7ebd777d75210eb9b1aceca5a994e
+- document: sys_hub_step_instance
+  document_key: 39f7abd777d75210eb9b1aceca5a99de
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:39
+  sys_id: 4af7ebd777d75210eb9b1aceca5a9921
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-30 09:16:39
+  value: ''
+  variable: 39f7abd777d75210eb9b1aceca5a99f5
+- document: sys_hub_action_type_definition
+  document_key: 754fdb5f77975210eb9b1aceca5a990a
+  order: '3'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:41
+  sys_id: 6af7ebd777d75210eb9b1aceca5a9969
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-30 09:16:41
+  value: '0'
+  variable: 92f7ebd777d75210eb9b1aceca5a9930
+- document: sys_hub_step_instance
+  document_key: 39f7abd777d75210eb9b1aceca5a99de
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:39
+  sys_id: 82f7ebd777d75210eb9b1aceca5a991f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-30 09:16:39
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 39f7abd777d75210eb9b1aceca5a99de
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:39
+  sys_id: 8af7ebd777d75210eb9b1aceca5a991f
+  sys_mod_count: '41'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-08-17 19:48:19
+  value: |-
+    (function execute(inputs, outputs) {
+    // ... code ...
+        var onCallContactPrefUtil = new OnCallContactPreferenceUtil();
+    	var currentContactNumber = inputs.currentContactNumber;
+        var sentUserIds = inputs.sentUserIDs;
+        var rejectedUserSysIDs = inputs.rejectedUserSysIDs;
+        var contacts = JSON.parse(inputs.contacts);
+        if (!sentUserIds) {
+            sentUserIds = [];
+        }
+        if (!rejectedUserSysIDs) {
+            rejectedUserSysIDs = [];
+        }
+
+        var currentContact;
+        var wentIn = false;
+        while (contacts.length > currentContactNumber) {
+            currentContact = contacts[currentContactNumber];
+    		var currentUserId = (currentContact.type === 'device' && currentContact.device_has_user) ? currentContact.user_id : currentContact.sys_id;
+            if (rejectedUserSysIDs.indexOf(currentUserId) >= 0) {
+                var journalField = inputs.journalField;
+                if (inputs.current.isValidField(journalField)) {
+                    var reminders = inputs.reminderSentNum;
+                    var levels = ['', 'st', 'nd', 'rd'];
+                    var levelName = reminders + ((reminders > 3) ? 'th' : levels[reminders]);
+                    var message = gs.getMessage("Skipping communication to user {0} - {1} reminder", [currentContact.name, levelName]);
+                    if (currentContact.type === 'device' && currentContact.device_has_user)
+                        message = gs.getMessage("Skipping communication to device {0} - {1} reminder", [currentContact.name, levelName]);
+                    inputs.current[journalField] = message;
+                    inputs.current.update();
+                }
+                currentContactNumber++;
+                continue;
+            }
+            outputs.current_preference_number = 0;
+            var preferences = onCallContactPrefUtil.getPreferencesByContact(currentContact, true);
+            outputs.current_contact_preferences = JSON.stringify(preferences);
+            addCommunicationComment(currentContact, preferences);
+            if (sentUserIds.indexOf(currentUserId) == -1)
+                sentUserIds.push(currentUserId);
+            currentContactNumber++;
+            outputs.current_contact_number = currentContactNumber;
+            outputs.sent_user_ids = sentUserIds;
+            outputs.current_contact = currentContact;
+            outputs.more_contacts_available = true;
+            wentIn = true;
+            break;
+        }
+        if(!wentIn) {
+            outputs.more_contacts_available = false;
+        }
+
+
+    function addCommunicationComment(contact, preferences) {
+        var onCallConstants = new OnCallConstants();
+        var name = contact.name;
+        var communicationTypes = [];
+        var preferenceTypes = [];
+        
+        for (var j = 0; j < preferences.length; j++) {
+            var pref = preferences[j];
+
+            var eps = new GlideScriptedExtensionPoint().getExtensions(onCallConstants.EXTENSION_POINT.ON_CALL_COMMUNICATION);
+    		for (var i = 0; i < eps.length; i++) {
+    			if (eps[i].handle(pref.type)) {
+                    var channelLabel = eps[i].getCommunicationTypeLabel();
+    				preferenceTypes.push(channelLabel);
+                    if (eps[i].isValidPreference(pref) && eps[i].isChannelPluginInstalled()) 
+                        communicationTypes.push(channelLabel);
+    			}
+    		}
+        }
+
+        communicationTypes = communicationTypes.join(', ');
+        preferenceTypes = preferenceTypes.join(', ');
+    	var journalField = inputs.journalField;
+    	if (!inputs.current.isValidField(journalField))
+    		return;
+
+        var reminders = inputs.reminderSentNum;
+        var message = "";
+        if (reminders > 0) {
+            var levels = ['', 'st', 'nd', 'rd'];
+            var levelName = reminders + ((reminders > 3) ? 'th' : levels[reminders]);
+            if (communicationTypes)
+                message = gs.getMessage("Sent communication to {0} (by {1}) - {2} reminder", [name, communicationTypes, levelName]);
+            else
+                message = gs.getMessage("Unable to send communication to {0} (by {1}) - {2} reminder", [name, preferenceTypes, levelName]);
+        } else {
+            if (communicationTypes)
+                message = gs.getMessage("Sent communication to {0} (by {1})", [name, communicationTypes]);
+            else
+                message = gs.getMessage("Unable to send communication to {0} (by {1})", [name, preferenceTypes]);
+        }
+        inputs.current[journalField] = message;
+        inputs.current.update();
+    }
+
+    function getUserGr(userId) {
+        var userGr = new GlideRecord('sys_user');
+        if (userId)
+            if (userGr.get(userId))
+                return userGr;
+    }
+
+    function getDeviceGr(deviceId) {
+        var deviceGr = new GlideRecord('cmn_notif_device');
+        if (deviceId)
+            if (deviceGr.get(deviceId))
+                return deviceGr;
+    }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: 754fdb5f77975210eb9b1aceca5a990a
+  order: '8'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:41
+  sys_id: a2f7ebd777d75210eb9b1aceca5a996a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-30 09:16:41
+  value: '0'
+  variable: aaf7ebd777d75210eb9b1aceca5a9952
+- document: sys_hub_action_type_definition
+  document_key: 754fdb5f77975210eb9b1aceca5a990a
+  order: '5'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:41
+  sys_id: a6f7ebd777d75210eb9b1aceca5a9969
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-30 09:16:41
+  value: ''
+  variable: 12f7ebd777d75210eb9b1aceca5a9947
+- document: sys_hub_action_type_definition
+  document_key: 754fdb5f77975210eb9b1aceca5a990a
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-30 09:16:41
+  sys_id: eef7ebd777d75210eb9b1aceca5a9969
+  sys_mod_count: '6'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-08-17 19:48:20
+  value: '{"version":"1.0","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON"}'
+  variable: 16f7ebd777d75210eb9b1aceca5a9927

@@ -1,0 +1,148 @@
+- document: sys_hub_action_type_definition
+  document_key: a7ad436593330300415c74aff67ffb1b
+  order: '3'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2018-03-13 13:39:31
+  sys_id: 63ade0ce67f013001e44007d2685ef98
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2018-03-13 13:39:31
+  value: ''
+  variable: 23ade0ce67f013001e44007d2685ef81
+- document: sys_hub_step_instance
+  document_key: 9a13132993330300415c74aff67ffbeb
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2018-03-22 12:01:51
+  sys_id: a8ade634678113004cdb007d2685efc8
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2018-03-22 12:01:51
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 9a13132993330300415c74aff67ffbeb
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2018-01-21 19:22:29
+  sys_id: d613132993330300415c74aff67ffbf3
+  sys_mod_count: '57'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-04-08 09:21:59
+  value: |-
+    (function execute(inputs, outputs) {
+      //helper functions
+      var getNodeOrCi = function() {
+        var lCI = inputs.ci;
+        var lNode = inputs.node;
+        
+        if (lCI == null)
+          lCI = "";
+        
+        if (lNode == null) 
+          lNode = "";
+       
+        if(inputs.ci) {
+          return "CI: [" + lCI + "]";
+        }
+        return "Node: [" + lNode + "]";
+      }
+      
+      var getIncidentUrgency = function(){
+        var incidentSeverity;
+        if(inputs.severity == 1 || inputs.severity == 2)
+          incidentSeverity = 1;
+        else if (inputs.severity == 3 || inputs.severity == 4)
+           incidentSeverity = 2;
+        else if (inputs.severity == 5)
+           incidentSeverity = 3;
+        
+        return incidentSeverity;
+      }
+      
+      var getImpactedServicesText = function(impactedServicesList, ci) {
+        var numberOfImpactedServices = 0;
+        if (impactedServicesList){
+          numberOfImpactedServices = impactedServicesList.split(",").length;
+        }
+        
+    	var impactedServicesText="";
+       
+    	if(ci != null && ci !== "") {
+           
+    		if(numberOfImpactedServices > 0) {
+             
+    			var lCi = ci; 
+    			if (lCi == null) {
+    				lCi = "";
+    			}
+    			impactedServicesText="Total impacted services by the CI: "+ "["+ lCi +"] ";
+    			if(numberOfImpactedServices > 1){
+    				impactedServicesText+="are ";
+    			} else {
+    				impactedServicesText+="is ";
+    			}
+    			impactedServicesText+=numberOfImpactedServices+".";
+    		} else {
+    			impactedServicesText="";
+    		} 
+    	} 
+        
+    	return impactedServicesText;
+      }
+      
+      var getIncidentImpact = function(){
+        var incidentImpact;
+        if (inputs.alertGr.sn_priority_group){
+        	if(inputs.alertGr.sn_priority_group == 1 || inputs.alertGr.sn_priority_group == 2)
+          		incidentImpact = 1;
+        	else if (inputs.alertGr.sn_priority_group == 3)
+           		incidentImpact = 2;
+        	else if (inputs.alertGr.sn_priority_group == 4)
+           		incidentImpact = 3;
+        }
+        return incidentImpact;
+      }
+      
+      var impactedServicesList;
+      var affectedCis = '';
+      try {
+        var evtMgmtAlertUtils = new global.EvtMgmtAlertUtils();
+        var isLegacy = typeof evtMgmtAlertUtils.getGroupCisAndImpactedServices !== 'function';
+        if (!isLegacy) {
+          var cisAndImpactedServicesJson = evtMgmtAlertUtils.getGroupCisAndImpactedServices(inputs.alertGr.group, inputs.alertGr.cmdb_ci);
+          if (!cisAndImpactedServicesJson) {
+          	// this is a corner case where the JS is updated but the node isn't, so we have to revert to legacy code
+            isLegacy = true;
+          } else {
+            var cisAndImpactedServices = JSON.parse(cisAndImpactedServicesJson);
+            impactedServicesList = cisAndImpactedServices.impactedServices;
+            affectedCis = cisAndImpactedServices.cis;
+          }
+        }
+        if (isLegacy) {
+          impactedServicesList = evtMgmtAlertUtils.getAllImpactedServices(inputs.alertGr.group, inputs.alertGr.cmdb_ci);
+        } 
+      } catch (ex) {
+        var commons = new global.EvtMgmtCommons();
+        gs.error(commons.getExceptionMessage(ex, true));
+        // just log the error, but allow execution to continue so we still create the incident
+      }
+      
+      //setting the calculated fields
+      outputs.ciOrNode=getNodeOrCi();
+      outputs.incidentUrgency=getIncidentUrgency();
+      outputs.impactedServices = getImpactedServicesText(impactedServicesList, inputs.ci);
+      outputs.affectedcis = affectedCis;
+      outputs.contacttype = "Alert";
+      outputs.impactedserviceslist = impactedServicesList;
+      outputs.incidentimpact = getIncidentImpact();
+      
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b

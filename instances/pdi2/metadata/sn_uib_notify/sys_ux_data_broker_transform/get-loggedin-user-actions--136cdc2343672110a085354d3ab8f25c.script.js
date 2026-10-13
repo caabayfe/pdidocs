@@ -1,0 +1,7 @@
+function transform(input) {
+    if (!input.conferenceId) {
+        return;
+    }
+    var confUtils = new NotifyUXFConferenceUtil();
+    return confUtils.getLoggedInUserActions(input.conferenceId);
+}
