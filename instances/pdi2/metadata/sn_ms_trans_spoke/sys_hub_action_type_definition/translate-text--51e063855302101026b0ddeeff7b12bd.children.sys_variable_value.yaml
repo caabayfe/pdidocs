@@ -1,0 +1,342 @@
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '25'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: 01d767c95342101026b0ddeeff7b129a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:41:59
+  value: post
+  variable: e85b7ebf47222200b4fad7527c9a71e3
+- document: sys_hub_step_instance
+  document_key: 70d767c95342101026b0ddeeff7b1236
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:58
+  sys_id: 0dd767c95342101026b0ddeeff7b125d
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-09 19:20:26
+  value: |-
+    (function execute(inputs, outputs) {
+        if (inputs.additionalParameters) {
+            var additionalParameters = inputs.additionalParameters;
+            if (Array.isArray(additionalParameters)) {
+                for (var index = 0; index < additionalParameters.length; index++) {
+                    var eachParameter = additionalParameters[index];
+                    if (eachParameter['parameter_name'] && eachParameter['parameter_name'].toUpperCase() === 'TEXTTYPE') {
+                        outputs.text_type = eachParameter['parameter_value'];
+                        break;
+                    }
+                }
+            }
+        }
+        if (inputs.exclusionFrameworkApplied) {
+            outputs.text_type = "html";
+        }
+        var textsToTranslate = inputs.textsToTranslate;
+        if (inputs.targetLanguages)
+            outputs.to = inputs.targetLanguages.join();
+        var requestPayload = [];
+        for (var i = 0; i < textsToTranslate.length; i++) {
+            requestPayload.push({
+                'Text': textsToTranslate[i]
+            });
+        }
+        outputs.request_payload = JSON.stringify(requestPayload);
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '13'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: 0dd767c95342101026b0ddeeff7b129a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:41:59
+  value: 18409d8007482000dada43c0d1021e8f
+  variable: c30a451d2f201300a09a839fb18c95b4
+- document: sys_hub_step_instance
+  document_key: 85d767c95342101026b0ddeeff7b129f
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: 1dd767c95342101026b0ddeeff7b12c3
+  sys_mod_count: '24'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-03 11:05:49
+  value: |-
+    (function execute(inputs, outputs) {
+        var responseBody = JSON.parse(inputs.responseBody);
+        var texts = inputs.texts;
+        var indices = inputs.textIndices;
+        var temporaryTranslations = inputs.temporaryTranslations;
+        if ((temporaryTranslations !== undefined) && (temporaryTranslations !== null) && (temporaryTranslations !== "")) {
+            try {
+                temporaryTranslations = JSON.parse(inputs.temporaryTranslations);
+            } catch (error) {
+                gs.error("Temporary Translations is not JSON format. Error:" + error + "Flow Variable received:" + temporaryTranslations);
+            }
+        } else {
+            temporaryTranslations = {};
+        }
+        if (inputs.statusCode === 200) {
+            outputs.status = "Success";
+            var translations = [];
+            for (var i = 0; i < responseBody.length; i++) {
+                var translation = {
+                    'text_translations': []
+                };
+                var eachResponse = responseBody[i];
+                var translationMap = eachResponse.translations;
+                if (eachResponse["detectedLanguage"]) {
+                    translation['detected_language'] = eachResponse["detectedLanguage"].language;
+                }
+                for (var j = 0; j < translationMap.length; j++) {
+                    var targetLanguage = translationMap[j].to;
+                    var translatedText = translationMap[j].text;
+                    var text_translation = {
+                        'translated_text': translatedText,
+                        'target_language': targetLanguage
+                    };
+                    if (temporaryTranslations[indices[i]]) {
+                        if (temporaryTranslations[indices[i]].status === "Success") {
+                            temporaryTranslations[indices[i]].text_translations[targetLanguage] = translatedText;
+                        }
+                    } else {
+                        temporaryTranslations[indices[i]] = {};
+                        if (translation.detected_language) {
+                            temporaryTranslations[indices[i]]['detected_language'] = translation.detected_language;
+                        }
+                        temporaryTranslations[indices[i]].text_translations = {};
+                        temporaryTranslations[indices[i]].text_translations[targetLanguage] = translatedText;
+                        temporaryTranslations[indices[i]]['status'] = "Success";
+                        translation['text_translations'].push(text_translation);
+                    }
+                }
+                translations.push(translation);
+            }
+            outputs.translations = translations;
+        } else {
+            var errorObj = new MicrosoftTranslationErrorHandler().translateTextHandler(responseBody.error.code, responseBody.error.message);
+            outputs.status = "Error";
+            outputs.error_code = errorObj.errorCode;
+            outputs.error_message = errorObj.errorMessage;
+            for (var j = 0; j < texts.length; j++) {
+                var translation = {
+                    'status': 'Error',
+                    'error_code': errorObj.errorCode,
+                    'error_message': errorObj.errorMessage
+                };
+                temporaryTranslations[indices[j]] = translation;
+            }
+            gs.error("Error while translating the text to language using Microsoft Translator. Error:" + responseBody.error.message + " Response received:" + inputs.responseBody);
+        }
+        outputs.temporary_translations = JSON.stringify(temporaryTranslations);
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-09 17:01:32
+  sys_id: 3107f465436012104df765e96fb8f280
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-09 17:01:32
+  value: '1'
+  variable: 15288f755bd24110ab933520b881c713
+- document: sys_hub_step_instance
+  document_key: 70d767c95342101026b0ddeeff7b1236
+  order: '300'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-09 17:01:32
+  sys_id: 3d07f465436012104df765e96fb8f264
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-09 17:01:32
+  value: '0'
+  variable: f507f465436012104df765e96fb8f258
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '25'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: 45d767c95342101026b0ddeeff7b129b
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:41:59
+  value: '{}'
+  variable: 4328e2fb47222200b4fad7527c9a7164
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '30'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: 49d767c95342101026b0ddeeff7b129a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:41:59
+  value: '{}'
+  variable: 371837f1c71003007b237f48cb9763b0
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-05-22 11:39:22
+  sys_id: 58fffc990f143010c0774ee7c8767e49
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-05-22 11:39:22
+  value: '1'
+  variable: 58715a1c53f22010d3a8ddeeff7b1248
+- document: sys_hub_action_type_definition
+  document_key: 51e063855302101026b0ddeeff7b12bd
+  order: '6'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-05-22 11:39:23
+  sys_id: 64fffc990f143010c0774ee7c8767e93
+  sys_mod_count: '4'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-09 17:01:42
+  value: '{"version":"1.0","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FD94fffc990d1430103781e2b97b539570":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"choiceOption\":\"\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"choiceOption\":\"\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FD94fffc990d1430103781e2b97b539570.$type_facets":{"SimpleMapFacet":"{\"sourceId\":\"\",\"choiceOption\":\"\",\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"72ab1eb2-5c5b-40ff-9f9b-510658c573d0\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FD94fffc990d1430103781e2b97b539570\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"sourceUiUniqueId\":\"\",\"sourceType\":\"\",\"hint\":\"\",\"uiType\":\"object\",\"order\":\"6\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON"}'
+  variable: 14fffc990f143010c0774ee7c8767e7c
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '12'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: 81d767c95342101026b0ddeeff7b129b
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:41:59
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f11ebf865f101300a09a2abd7f466652
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '20'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: 85d767c95342101026b0ddeeff7b129a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:41:59
+  value: /translate
+  variable: 3d090af03b23320057a4a2e334efc455
+- document: sys_hub_action_type_definition
+  document_key: 51e063855302101026b0ddeeff7b12bd
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:42:00
+  sys_id: 9dd767c95342101026b0ddeeff7b12f4
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:42:00
+  value: ''
+  variable: 55d767c95342101026b0ddeeff7b12e9
+- document: sys_hub_action_type_definition
+  document_key: 51e063855302101026b0ddeeff7b12bd
+  order: '7'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-05-22 11:39:23
+  sys_id: a0fffc990f143010c0774ee7c8767e93
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-05-22 11:39:23
+  value: '0'
+  variable: 94fffc990f143010c0774ee7c8767e85
+- document: sys_hub_step_instance
+  document_key: 70d767c95342101026b0ddeeff7b1236
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:43:48
+  sys_id: b3386fc95342101026b0ddeeff7b12ed
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:43:48
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '10'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: c1d767c95342101026b0ddeeff7b129a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:41:59
+  value: d25680a6b720330030e88c28ee11a923
+  variable: 262882f03b23320057a4a2e334efc4f0
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '15'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:41:59
+  sys_id: cdd767c95342101026b0ddeeff7b129a
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-05-22 11:39:22
+  value: https://api.cognitive.microsofttranslator.com
+  variable: a67a8ef03b23320057a4a2e334efc472
+- document: sys_hub_step_instance
+  document_key: 49d767c95342101026b0ddeeff7b1261
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-05-22 11:39:22
+  sys_id: d8fffc990f143010c0774ee7c8767e4a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-05-22 11:39:22
+  value: ''
+  variable: 7a59009bc7522010820469467ec260c0
+- document: sys_hub_step_instance
+  document_key: 85d767c95342101026b0ddeeff7b129f
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-07-15 12:43:49
+  sys_id: f738afc95342101026b0ddeeff7b122e
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-07-15 12:43:49
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
