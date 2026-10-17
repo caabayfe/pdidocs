@@ -72,6 +72,30 @@ Marked OPEN-QUESTION on the pages:
 8. **Not documented yet**: the configuration index lists the active records on the incident tables
    that no page cites; review them for anything people notice.
 
+## Major incident management (2026-10-17)
+
+`processes/major-incident/`: 3 shared pages, 1 end-user page (following an outage), 6 operator
+pages (propose, decide, link, run, communicate, review) and 6 configure pages. Linked from
+incident's *Escalate* page.
+
+Answered on screen: no trigger rules exist (candidates are proposed by hand only); no
+communication plan definitions exist for incidents (every communication is started by hand); the
+major incident group property is **empty**, so promotion reassigns nobody; the *System status*
+quick link opens `?id=services_status`.
+
+Open questions:
+
+1. **Major incident team**: set `sn_major_inc_mgmt.major_incident_management_group` if promotion
+   should hand the incident to a team.
+2. **Comment copies to child incidents** run through a flow action marked inactive. Test: create
+   two incidents, link one as the other's child, add a comment on the parent, and check the
+   child's activity and the caller's email.
+3. **The workbench**: pdi2 has no major incident yet, so the workbench hasn't been seen.
+4. **System status for employees**: its outage data is readable only with a support role; open it
+   as a plain employee during an outage.
+5. **Reject without the role**: the list reject and the workbench REST reject check only itil or
+   workbench access on the server; only the UI requires a major incident manager.
+
 ## The mirror
 
 Since 2026-10-17 this workspace has its own pdi2 mirror (`servicenow-remote/pdi2`, integrated

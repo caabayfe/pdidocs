@@ -67,38 +67,19 @@ evidence:
     result: 'true'
     hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
 ---
-## When it's bigger than one incident: major incidents
+## When it's bigger than one incident: major incidents {label=CHANGED}
 
-A **major incident** is an outage or degradation that hits many people or a critical service. It
-gets a dedicated manager, a response team and regular communication.
+A **major incident** is one failure that hits many people or a critical service. It gets a
+dedicated manager, a response team and regular communication; the full guide is
+[Major incident management](see:major-incident).
 
-### Agents and resolvers: propose it
-
-1. Open the incident **on the classic form** and choose **Propose Major Incident** in the form's
-   menu. [E01] [E08] The workspace doesn't offer it. [E07]
-2. Say why: who is affected, what doesn't work, since when.
-3. The incident becomes a **major incident candidate**. Its team is emailed, and major incident
-   managers see it in their list of candidates.
-
-Use it when several people report the same outage, or when a critical service is down. Don't wait
-to be sure: the major incident manager decides.
-
-### Major incident managers: decide
-
-From **Incident › Major Incidents › Candidates**, open the candidate and choose: [E02]
-
-- **Promote to Major Incident** (classic form) to start the major incident response; [E05]
-  [E09]
-- **Reject Major Incident Candidate** when it's an ordinary incident.
-
-Once accepted, use **View Workbench** to run the response: timeline, communications and the
-post-incident report.
-
-### Link the other reports
-
-Link every other incident about the same outage to the major incident as a **child**: open it,
-set **Parent incident** in *Related Records*. Children get the parent's updates and are resolved
-with it.
+- **Propose it** on the classic form's menu with **Propose Major Incident**; the workspace
+  doesn't offer it. [E01] [E07] [E08] See [Propose a major incident](see:major-incident/propose).
+- A major incident manager **promotes** it (on pdi2 the candidate itself becomes the major
+  incident) or **rejects** it. [E02] [E05] [E09] See
+  [Promote or reject a candidate](see:major-incident/decide).
+- **Link** every other report of the same failure to it: they follow it and are resolved with it.
+  See [Link the other reports](see:major-incident/link).
 
 ## Create related work from an incident {label=CORRECTED}
 
