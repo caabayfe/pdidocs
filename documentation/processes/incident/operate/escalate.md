@@ -101,6 +101,8 @@ overflow menu (⋯). [E07] Copying and child incidents are switched on. [E10] [E
 There is no **Create problem** or **Create change request** on either screen. [E06] [E08] Create
 the problem from **Problem › Create New** and set it in the incident's **Related Records › Problem**
 (see [Raise a problem](see:problem/raise) and [Link incidents to a problem](see:problem/link)).
+For a change, use **Change › Create New** and set it in **Related Records › Change request** (see
+[Raise a change](see:change/raise)).
 
 ## Tips
 

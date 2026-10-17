@@ -119,6 +119,26 @@ Open questions:
 5. **Legacy rules that can't fire**: *SNC - ITIL - Update Related Incidents* and *Problem Create
    Knowledge* are active but test a state value that no longer exists.
 
+## Change management (2026-10-17)
+
+`processes/change/`: 4 shared pages (with *Who approves*), 1 end-user page (approving as a
+business approver), 7 operator pages and 6 configure pages. Incident's *Escalate* page links to it.
+
+Answered on screen: *Create New* opens *Create a change request* with cards per kind and template;
+the classic form's tabs, buttons, related links and menu; the three approval definitions
+(Assignment Group, Assignment Group Manager, CAB); the workspace has no change lists.
+
+Open questions:
+
+1. **CAB coverage**: the only CAB definition is the demo *Network CAB* (network changes only).
+   Where do other changes needing CAB approval go?
+2. **Email**: whether the instance sends and reads email isn't in the mirror; approval emails
+   depend on it.
+3. **Conflict detection**: its mode and options aren't in the mirror; blackout and maintenance
+   schedules are demo data.
+4. **Test template visible**: the ATF template *Replace printer toner* shows to requesters.
+5. **CAB meetings**: none exists, so the meeting pages haven't been seen.
+
 ## The mirror
 
 Since 2026-10-17 this workspace has its own pdi2 mirror (`servicenow-remote/pdi2`, integrated
