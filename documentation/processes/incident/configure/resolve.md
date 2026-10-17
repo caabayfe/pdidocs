@@ -59,8 +59,9 @@ On submit [E03] and on load [E04]. Codes [E05]; the known error check [E06]. On 
 `resolved_by` and `resolved_at` are filled and the durations computed [E07]; a caller who
 resolves gets default values [E08]; the caller is notified [E09].
 
-## Label mismatch {label=OPEN-QUESTION}
+## Labels {label=CORRECTED}
 
-The dictionary labels are *Close code* and *Close notes*; the guide uses *Resolution code* and
-*Resolution notes*, the usual incident form labels (from `sys_documentation`, not mirrored).
-Check the labels on the form.
+The dictionary labels are *Close code* and *Close notes*, but the form shows **Resolution code**
+and **Resolution notes** (from `sys_documentation`, which the mirror doesn't hold). Checked on
+screen on 2026-10-17, on the classic form's *Resolution Information* section; see the operator
+guide's evidence.

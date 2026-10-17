@@ -17,6 +17,12 @@ evidence:
     how: read the Incident application menu
     result: the classic interface's Incident menu, for itil and sn_incident_read
     hash: 74c534b5e9f71aca880f1ef69e87cd243576092e352644a8a91f71474f0a5e4b
+  E04:
+    record: sys_properties/d5c62446c0a8011800cdf450892cec2d
+    field: value
+    how: 'read glide.ui.autoclose.time'
+    result: '7 days'
+    hash: 7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451
 ---
 ## What an incident is
 
@@ -33,7 +39,7 @@ Each incident gets a number starting with **INC**. Quote it whenever you talk ab
 2. The service desk records it, decides how urgent it is, and sends it to the right support team.
 3. A person in that team works on it, and asks the caller when they need something.
 4. When it is fixed, it is **resolved**, and the caller confirms or reopens it.
-5. Once confirmed, or after a few days without an answer, it is **closed**.
+5. Once confirmed, or after 7 days without an answer, it is **closed**. [E04]
 
 ## Where you start {for=user}
 

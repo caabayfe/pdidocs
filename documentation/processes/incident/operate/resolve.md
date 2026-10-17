@@ -44,6 +44,13 @@ evidence:
     how: read the resolution code choices
     result: ten codes, Duplicate to Workaround provided
     hash: 438604df7c0701185679ccf5f78a95effda35ae621060096b2ab78a53ec5cac2
+  E09:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'classic incident form, INC0009004, Resolution Information'
+    how: 'read the section''s field labels'
+    result: 'Resolution code, Resolution notes'
 ---
 ## When to resolve
 
@@ -59,7 +66,7 @@ you're only waiting for confirmation, resolve it; don't leave it In Progress.
 3. Press **Resolve**. The incident is **Resolved**, and the caller is emailed. [E04]
 
 *Classic form:* press **Resolve**, then fill the same two fields in **Resolution Information**
-and save. [E01] [E02]
+and save. [E01] [E02] [E09]
 
 ## Choosing the resolution code
 
@@ -81,7 +88,7 @@ The codes [E08]:
 ## What happens next
 
 The caller has time to confirm or reopen. Then the incident is closed, by the caller, a team
-lead, or automatically after a few days (see *Close, reopen or cancel an incident*). Child incidents are
+lead, or automatically after 7 days (see *Close, reopen or cancel an incident*). Child incidents are
 resolved with their parent.
 
 ## Tips

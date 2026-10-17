@@ -28,6 +28,12 @@ evidence:
     how: read the workspace action Reopen
     result: a Reopen dialog with Additional comments (Customer visible), mandatory
     hash: 3c46c8deed0175d33530dfff49fef052332b717e39b2831082f89ba0b3c150ed
+  E06:
+    record: sys_properties/d5c62446c0a8011800cdf450892cec2d
+    field: value
+    how: 'read glide.ui.autoclose.time'
+    result: '7 days'
+    hash: 7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451
 ---
 ## Closing
 
@@ -42,7 +48,7 @@ reopened.
 - **Team lead**: you can close any resolved incident, and you're the only ones who can choose
   *Closed* in the state list. [E01]
 - **Resolvers**: you can't close another person's incident. Resolve it and let the caller confirm.
-- **Automatically**: a resolved incident nobody touches is closed after a set number of days. [E03]
+- **Automatically**: a resolved incident nobody touches is closed after **7 days**. [E03] [E06]
 
 When it is closed, the caller gets an email and may receive a short survey.
 

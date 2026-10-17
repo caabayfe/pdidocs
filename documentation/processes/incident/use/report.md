@@ -62,6 +62,27 @@ evidence:
     how: read the Get support menu item
     result: opens a Get support window; its cards come from tables the mirror doesn't hold
     hash: 4ade72acc06b81e460411173a603af7f6e08b0c4bb6a797108e8439bb58c199d
+  E13:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'Employee Center › search'
+    how: 'searched Employee Center for Create Incident'
+    result: 'the search finds Create Incident; the Technology services topic page does not list it'
+  E14:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'Employee Center › Get support'
+    how: 'opened the Get support window'
+    result: 'cards Request password reset, and Contact us +1-200-120-2020 (Available 9am to 5pm PST)'
+  E15:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'Employee Center › chat button › Show me everything'
+    how: 'opened the chat window and listed its topics'
+    result: 'Now Support (Virtual Agent) offers one topic, Live Agent Support'
 ---
 ## Before you start
 
@@ -72,13 +93,16 @@ evidence:
 
 ## In Employee Center (recommended)
 
-1. In the menu, open **Help center**, then **Technology services**. [E01] [E02]
-2. Choose **Create Incident**. [E03]
+1. In the search box at the top of Employee Center, search for **Create Incident**, and open it.
+   [E13] (It belongs to the topic *Technology services* under **Help center** [E01] [E02], but
+   the topic page doesn't list it; search finds it.)
+2. The form **Create Incident** opens. [E03]
 3. Answer **Urgency**: how much this stops you working right now. [E04]
 4. Describe the issue in **Please describe your issue below**. Start with a short summary: the
    first 80 characters become the incident's title, for example *"Outlook crashes when I open
    attachments"*. [E05] [E03]
-5. Attach screenshots if you have them, and submit.
+5. Attach screenshots under **Add attachments** if you have them, and press **Submit**. (**Save
+   as Draft** keeps it for later.)
 
 You land on your new incident, with its number (it starts with **INC**), and you get an email
 *"Incident … was created"* with a link back to it. [E03] [E11]
@@ -87,8 +111,8 @@ You land on your new incident, with its number (it starts with **INC**), and you
 
 ### Pick the form that fits
 
-Under **Technology services** there are also forms with questions tailored to the case. They
-create an incident too.
+There are also forms with questions tailored to the case; search for them by name. They create
+an incident too.
 
 | Form | Use it when | It asks |
 |---|---|---|
@@ -96,11 +120,18 @@ create an incident too.
 | **Report Performance Problem** | an application is slow | which application, and whether everything or one task is slow [E07] |
 | **Password Reset** (under *Access issues*) | you are locked out of an application | whose password, which application, how to send the new one [E08] |
 
-### Get support {label=OPEN-QUESTION}
+### Get support {label=NEW}
 
-The menu also has **Get support**, which opens a window of support options. [E12] What it offers
-on this portal (a form, chat, a phone number) isn't recorded in the configuration; check it on
-screen before relying on it.
+The menu's **Get support** opens a window with two options [E12] [E14]:
+
+- **Request password reset**, when you are locked out;
+- **Contact us**: the service desk's phone, **+1-200-120-2020**, available 9am to 5pm PST.
+
+### Chat {label=NEW}
+
+The chat button at the bottom right opens **Now Support**, the virtual agent. On this portal it
+offers one topic, *Live Agent Support*: use it to reach a person. [E15] It doesn't report incidents
+for you; use *Create Incident* for that.
 
 ## By email
 
@@ -113,7 +144,7 @@ same incident instead of creating a new one. [E10]
 
 ## By phone or in person
 
-Call or visit the service desk. The agent logs the incident with you and gives you the number.
+Call the service desk on **+1-200-120-2020** (9am to 5pm PST) [E14], or visit it. The agent logs the incident with you and gives you the number.
 
 ## What happens next
 

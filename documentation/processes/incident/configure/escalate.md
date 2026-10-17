@@ -79,16 +79,20 @@ which looks like its activation date.
 
 Emergency change [E09], change request [E10], request [E11], child incident [E12], copy [E13].
 
+## Answered on 2026-10-17 {label=CORRECTED}
+
+- Creation mode is **promote** (`sn_major_inc_mgmt.com.snc.incident.mim.major_incident_creation`,
+  `sys_properties/3f2f9db80b2003005775aabcb4673a52`), so managers see *Promote to Major Incident*.
+- Copy and child incidents are enabled (`com.snc.incident.copy.enable`,
+  `com.snc.incident.create.child.enable`, both `true`).
+- On screen, the workspace offers neither *Propose* nor *Promote*; both are on the classic form's
+  menu only. Neither screen offers *Create problem* or *Create change request*: the actions behind
+  the workspace's menu items aren't on the instance (`sys_ui_action/2f43c471c0a8006400a07440e49924c2`,
+  `sys_declarative_action_assignment/20aec8ab233230101488dc1756bf6557`), so the items don't show.
+  See the operator guide's evidence.
+
 ## Open questions {label=OPEN-QUESTION}
 
-1. `sn_major_inc_mgmt.major_incident_creation` is redacted: which of *Promote* or *Create Major
-   Incident* do managers see?
-2. The major incident management group property is redacted: which team receives major
-   incidents?
-3. The workspace's **Create** menu offers *Create problem* (form action
-   `sys_ux_form_action/eb60cefac7213010d7e818b1c7c26035`), but the UI action behind it
-   (`sys_ui_action/2f43c471c0a8006400a07440e49924c2`) and the *Create change request* declarative
-   action (`20aec8ab233230101488dc1756bf6557`) are not in the mirror. Confirm both work on screen.
-5. *Propose* and *Promote* are set up for workspaces but are not items of the workspace header
-   layout. Confirm where they appear in the Service Operations Workspace.
-4. Are child incidents and copy enabled? Both depend on redacted properties.
+1. The major incident management group (`sn_major_inc_mgmt.major_incident_management_group`)
+   is still redacted: it names a group, which the mirror doesn't hold. Which team is it?
+2. Is it intended that operators can't raise a problem or a change from an incident?

@@ -1,8 +1,8 @@
 # pdi2 documentation
 
 User guide and technical reference of the **incident management** process on pdi2, written
-with snagentic's documentation capability (ADR-0035, spec 010) from the pdi2 mirror on
-2026-10-17. `instances/pdi2` is a link to `../pdi2/instances/pdi2` and is only read.
+with snagentic's documentation capability (ADR-0036, spec 010) from the pdi2 mirror on
+2026-10-17. `instances/pdi2` is this workspace's own mirror of pdi2 (see *The mirror* below).
 
 ## Look at it
 
@@ -37,27 +37,43 @@ team, with shared pages each reader sees in their own version.
 | Evidence | 215 items, each anchored to a mirror record; all fresh on 2026-10-17 |
 | Animations | Reporting, lifecycle, priority, assignment; narrated with Piper |
 
+## Answered on 2026-10-17
+
+From the mirror's property values (kept since snagentic 2.1) and checks on screen (signed in as
+admin, recorded as `seen` evidence on the pages):
+
+- **Auto close**: 7 days (`glide.ui.autoclose.time`).
+- **Get support** in Employee Center: *Request password reset*, and *Contact us* with the service
+  desk's phone, +1-200-120-2020, 9am to 5pm PST.
+- **Reporting**: *Create Incident* is found with the portal search; the *Technology services*
+  topic page doesn't list it.
+- **Chat**: Employee Center's chat (*Now Support*) offers one topic, *Live Agent Support*.
+- **Major incidents**: creation mode *promote*; *Propose* and *Promote* are on the classic form's
+  menu only, not in the workspace.
+- **Copy Incident and child incidents**: both enabled.
+- **Create problem / Create change request**: offered on neither screen.
+- **Labels**: the form shows *Resolution code / Resolution notes*, and *Channel* for the contact
+  type.
+
 ## Open questions for the process owner
 
-Marked OPEN-QUESTION on the pages. The mirror doesn't hold property values, users, groups,
-scheduled jobs or on-screen label translations (`sys_documentation`):
+Marked OPEN-QUESTION on the pages:
 
-1. **Auto close**: after how many days (`glide.ui.autoclose.time`)?
-2. **Get support**: what does Employee Center's *Get support* window offer? Its cards aren't
-   mirrored.
-3. **Major incidents**: *Promote* or *Create Major Incident*? Which team receives them? Where do
-   *Propose* and *Promote* appear in the workspace?
-4. **Create problem / Create change request** in the workspace: the actions behind them aren't
-   mirrored; confirm they work.
-5. **Child incidents and Copy Incident**: are they enabled?
-6. **Routing**: all assignment rules are inactive. Is routing meant to rely only on the CI's
+1. **Major incident team**: which group receives major incidents (the property names a group,
+   which the mirror doesn't hold)?
+2. **Raising a problem or a change** from an incident isn't offered on either screen. Intended?
+3. **Routing**: all assignment rules are inactive. Is routing meant to rely only on the CI's
    support group?
-7. **Closing**: resolvers can't close another caller's incident (only the caller or a team lead).
-8. **Labels**: the dictionary says *Close code / Close notes*; the instance's own policies say
-   *Resolution code / notes* (used in the guides). Confirm on screen.
-9. **Virtual Agent**: no incident topics are installed; the *Create Incident using VA* form
-   exists but nothing uses it. Is Virtual Agent meant to be an incident channel?
-10. **Possible defect**: *VIP scratchpad* reads the assignee's VIP flag, not the caller's.
-11. **Survey**: every closed incident sends *ITSM Demo Survey*. Keep it?
-12. **Not documented yet**: the configuration index lists 300+ active records on the incident
-    tables that no page cites; review them for anything people notice.
+4. **Closing**: resolvers can't close another caller's incident (only the caller or a team lead).
+5. **Possible defect**: *VIP scratchpad* reads the assignee's VIP flag, not the caller's.
+6. **Survey**: every closed incident sends *ITSM Demo Survey*. Keep it?
+7. **Auto close schedule**: the job that runs the auto close rule isn't mirrored; how often does
+   it run?
+8. **Not documented yet**: the configuration index lists the active records on the incident tables
+   that no page cites; review them for anything people notice.
+
+## The mirror
+
+Since 2026-10-17 this workspace has its own pdi2 mirror (`servicenow-remote/pdi2`, integrated
+into `main`), pulled with snagentic 2.1. Refresh it with `snagentic pull pdi2`, then
+`snagentic integrate pdi2`, then `snagentic docs check`.

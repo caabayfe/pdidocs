@@ -41,9 +41,9 @@ evidence:
     hash: 54d54951a42d85a974696cd991135cef209ada6af489c3a68d529148066f69de
   E08:
     record: sys_properties/d5c62446c0a8011800cdf450892cec2d
-    how: read glide.ui.autoclose.time
+    how: read glide.ui.autoclose.time and its value
     result: integer days, 0 disables; write role incident_manager; value redacted in the mirror
-    hash: 26febda22fec55dde41f78d16ec1bbac711448eb6b681ad4e2a612099d67e0da
+    hash: 725d4f6c5c070aeeeeb21e1c2c0e6fed5512550900291b3eabd95b2a5014acf9
   E09:
     record: sys_script/bf3f8917c0a8016400a867dc0794e8ad
     how: read mark_closed
@@ -80,11 +80,11 @@ Close [E01] [E02]; only `itil_admin` sees *Closed* in the state list [E03]; reop
 | Close | caller emailed | [E11] |
 | Email "please reopen" | resolved: reopened; closed: new incident | [E12] |
 
-## Auto close {label=OPEN-QUESTION}
+## Auto close {label=CORRECTED}
 
-The auto close rule [E07] reads `glide.ui.autoclose.time` [E08], whose value is redacted in the
-mirror, and runs from a scheduled job the mirror doesn't hold. Confirm the number of days and the
-job's schedule, then replace "a set number of days" in the guide with the value.
+The auto close rule [E07] closes resolved incidents not updated for `glide.ui.autoclose.time`
+days [E08]: **7** on pdi2. The mirror keeps typed property values since snagentic 2.1 (ADR-0034).
+The scheduled job that runs the rule isn't mirrored, so how often it runs is still unknown.
 
 ## Finding {label=OPEN-QUESTION}
 

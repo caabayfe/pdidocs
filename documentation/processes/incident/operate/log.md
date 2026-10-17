@@ -44,6 +44,13 @@ evidence:
     how: read the incident's contact type and category choices
     result: contact types Chat, Email, Phone, Self-service, Virtual Agent, Walk-in (Monitoring inactive)
     hash: 438604df7c0701185679ccf5f78a95effda35ae621060096b2ab78a53ec5cac2
+  E09:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'classic incident form, INC0010023'
+    how: 'read the field labels'
+    result: 'contact type is labelled Channel'
 ---
 ## Where you work
 
@@ -62,8 +69,8 @@ for the queue); **Create New** opens an empty form.
 1. Press **New** in the workspace's incident list (classic: **Incident › Create New**).
 2. In the **Incident** section [E07], **Caller**: search by name. Location fills in from the caller. [E03] If the caller is a VIP,
    a VIP icon appears and the field turns red: treat them accordingly. [E02]
-3. **Contact type**: how they reached you (*Phone*, *Email*, *Walk-in*, *Chat*, *Self-service*,
-   *Virtual Agent*). [E08]
+3. **Channel**: how they reached you (*Phone*, *Email*, *Walk-in*, *Chat*, *Self-service*,
+   *Virtual Agent*). [E08] [E09]
 4. **Category** and **Subcategory**: what it's about. The subcategory list follows the category:
 
    | Category | Subcategories |

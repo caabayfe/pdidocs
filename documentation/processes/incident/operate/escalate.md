@@ -27,6 +27,45 @@ evidence:
     how: read Promote to Major Incident
     result: form menu; major_incident_manager only; set up for workspaces
     hash: 14eec9407c051830a0511c05d1da1232c8329e97289303b17016aa70b4429086
+  E06:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'Service Operations Workspace, INC0010023, header'
+    how: 'opened the drop-down next to Create incident task'
+    result: 'Create outage, Create request, Create child incident; no Create problem or Create change request'
+  E07:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'Service Operations Workspace, INC0010023, header ⋯'
+    how: 'opened the overflow menu'
+    result: 'Compose Email, Copy Incident, Report Knowledge Gap, Copy URL, Delete, Create new communication; no Propose or Promote'
+  E08:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'classic incident form, INC0010023, context menu'
+    how: 'opened the form context menu'
+    result: 'Copy Incident, Create Incident Task, Create Outage, Create Request, Create Child Incident, Promote to Major Incident, Propose Major Incident; no Create Problem or Create Change Request'
+  E09:
+    record: sys_properties/3f2f9db80b2003005775aabcb4673a52
+    field: value
+    how: 'read sn_major_inc_mgmt…major_incident_creation'
+    result: 'promote'
+    hash: 363256bd153813bc7b3e4e1cb8a7e65b4a9c269ed27b1823925bd408833d6883
+  E10:
+    record: sys_properties/8c2863d6531232000600e26b88dc3411
+    field: value
+    how: 'read com.snc.incident.copy.enable'
+    result: 'true'
+    hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
+  E11:
+    record: sys_properties/9eed5e77674f3200060071bfa2415ab8
+    field: value
+    how: 'read com.snc.incident.create.child.enable'
+    result: 'true'
+    hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
 ---
 ## When it's bigger than one incident: major incidents
 
@@ -35,8 +74,8 @@ gets a dedicated manager, a response team and regular communication.
 
 ### Agents and resolvers: propose it
 
-1. Open the incident and choose **Propose Major Incident**. [E01] On the classic form it is in the
-   form's menu; in the workspace, look in the header's overflow menu.
+1. Open the incident **on the classic form** and choose **Propose Major Incident** in the form's
+   menu. [E01] [E08] The workspace doesn't offer it. [E07]
 2. Say why: who is affected, what doesn't work, since when.
 3. The incident becomes a **major incident candidate**. Its team is emailed, and major incident
    managers see it in their list of candidates.
@@ -48,8 +87,8 @@ to be sure: the major incident manager decides.
 
 From **Incident › Major Incidents › Candidates**, open the candidate and choose: [E02]
 
-- **Promote to Major Incident** (or **Create Major Incident**, depending on how your instance is
-  set up) to start the major incident response; [E05]
+- **Promote to Major Incident** (classic form) to start the major incident response; [E05]
+  [E09]
 - **Reject Major Incident Candidate** when it's an ordinary incident.
 
 Once accepted, use **View Workbench** to run the response: timeline, communications and the
@@ -61,22 +100,25 @@ Link every other incident about the same outage to the major incident as a **chi
 set **Parent incident** in *Related Records*. Children get the parent's updates and are resolved
 with it.
 
-## Create related work from an incident
+## Create related work from an incident {label=CORRECTED}
 
-In the workspace, use the **Create** menu in the incident's header: **Create outage**, **Create
-problem**, **Create request**, **Create incident task**, **Create change request**, **Create child
-incident** and **Create knowledge**. [E04] **Copy Incident** is in the overflow menu.
+In the workspace, press **Create incident task**, or open the drop-down beside it for **Create
+outage**, **Create request** and **Create child incident**. [E04] [E06] **Copy Incident** is in the
+overflow menu (⋯). [E07] Copying and child incidents are switched on. [E10] [E11]
 
 | Action | Use it when |
 |---|---|
-| **Create change request** | the fix needs a change to a system |
-| **Create problem** | the cause needs investigating beyond this incident |
 | **Create request** | the caller needs something new, not a repair |
 | **Create child incident** / **Create incident task** | part of the work must be tracked separately [E03] |
-| **Copy Incident** | another caller has the same issue (if enabled) |
+| **Create outage** | a service is down and the outage should be recorded |
+| **Copy Incident** | another caller has the same issue |
 
-*Classic form:* the same actions are in the form's menu (**Create Change Request**, **Create
-Emergency Change**, **Create Request**, **Create Child Incident**, **Copy Incident**).
+*Classic form:* the same actions are in the form's menu. [E08]
+
+### Raising a problem or a change {label=OPEN-QUESTION}
+
+There is no **Create problem** or **Create change request** on either screen. [E06] [E08] To
+raise one, create it from the Problem or Change application and link it in *Related Records*.
 
 The new record is linked to the incident, so the caller's incident shows what it waits for.
 

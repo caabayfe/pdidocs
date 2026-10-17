@@ -48,6 +48,12 @@ evidence:
     how: read Incident Survey
     result: subject "Feedback makes us better", link "Take the survey"
     hash: 7d52fea0b1e316032f733376b228611ab414ed82d414aea4dc616903426f4550
+  E10:
+    record: sys_properties/d5c62446c0a8011800cdf450892cec2d
+    field: value
+    how: 'read glide.ui.autoclose.time'
+    result: '7 days'
+    hash: 7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451
 ---
 ## When it is resolved
 
@@ -56,7 +62,7 @@ You get an email *"… was resolved"* saying what was done. [E01] Try it: does i
 ### It works
 
 Open the incident in Employee Center (**My Requests**) and press **Close**. [E02] If you do
-nothing, the incident closes by itself after a few days. [E01]
+nothing, the incident closes by itself after **7 days**. [E01] [E10]
 
 ### It doesn't work
 

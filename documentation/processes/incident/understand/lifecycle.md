@@ -33,6 +33,12 @@ evidence:
     how: read the On Hold policy
     result: On Hold requires an On hold reason
     hash: b8f1c64dc520d3681d801aafa742de23113ce6d8a0158d2ec3c12f7e85321a48
+  E07:
+    record: sys_properties/d5c62446c0a8011800cdf450892cec2d
+    field: value
+    how: 'read glide.ui.autoclose.time'
+    result: '7 days'
+    hash: 7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451
 ---
 ## The states
 
@@ -55,7 +61,7 @@ Everyone sees the same state names, in the workspace, on the form and in Employe
 - When the service desk asks you something, the incident is **On Hold**. Your reply puts it back
   to **In Progress**. [E03]
 - When it is **Resolved**, you get an email. Press **Close** if it works or **Reopen** if it
-  doesn't. If you do nothing, it closes by itself after a few days. [E04]
+  doesn't. If you do nothing, it closes by itself after 7 days. [E04] [E07]
 
 ## What moves it on {for=operator}
 
@@ -66,5 +72,5 @@ Everyone sees the same state names, in the workspace, on the form and in Employe
 | On Hold - Awaiting Caller | In Progress | the caller replies; it moves back by itself [E03] |
 | In Progress | Resolved | **Resolve**, with a resolution code and notes |
 | Resolved | In Progress | **Reopen**, by the caller or by you |
-| Resolved | Closed | **Close** by the caller or a team lead, or automatically after a set time [E04] |
+| Resolved | Closed | **Close** by the caller or a team lead, or automatically after 7 days [E04] [E07] |
 | any open state | Canceled | set **State** to *Canceled*, where your role allows it |
