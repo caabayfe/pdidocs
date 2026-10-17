@@ -96,6 +96,29 @@ Open questions:
 5. **Reject without the role**: the list reject and the workbench REST reject check only itil or
    workbench access on the server; only the UI requires a major incident manager.
 
+## Problem management (2026-10-17)
+
+`processes/problem/`: 3 shared pages, 1 end-user page, 6 operator pages (raise, link,
+investigate, workaround, fix, close) and 6 configure pages. Incident's *Escalate* page links to it.
+
+Answered on screen: the Service Operations Workspace has no problem (or change) lists, so problems
+are worked on the classic form; the short description is labelled *Problem statement*; the form's
+related lists are Affected CIs, Problem Tasks, Change Requests, Outages and Attached Knowledge;
+the form menu creates outages, normal, standard and emergency changes, and known error articles.
+
+Open questions:
+
+1. **No Incidents list on the problem form**, although the configuration lists it first; its *Add*
+   button depends on `com.snc.incident.link_to_task.problem`, whose value the mirror doesn't hold.
+   Without it, coordinators can't see a problem's incidents.
+2. **Only one way to raise a problem** (Problem › Create New): interactions, the major incident
+   flow and the workspace's incident action are all off. Intended?
+3. **Known errors for employees**: which knowledge base receives known error articles, and can
+   employees read it?
+4. **Duplicates**: which records move to the original (property value not mirrored).
+5. **Legacy rules that can't fire**: *SNC - ITIL - Update Related Incidents* and *Problem Create
+   Knowledge* are active but test a state value that no longer exists.
+
 ## The mirror
 
 Since 2026-10-17 this workspace has its own pdi2 mirror (`servicenow-remote/pdi2`, integrated

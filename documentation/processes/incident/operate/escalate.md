@@ -96,12 +96,11 @@ overflow menu (⋯). [E07] Copying and child incidents are switched on. [E10] [E
 
 *Classic form:* the same actions are in the form's menu. [E08]
 
-### Raising a problem or a change {label=OPEN-QUESTION}
+### Raising a problem or a change {label=CHANGED}
 
-There is no **Create problem** or **Create change request** on either screen. [E06] [E08] To
-raise one, create it from the Problem or Change application and link it in *Related Records*.
-
-The new record is linked to the incident, so the caller's incident shows what it waits for.
+There is no **Create problem** or **Create change request** on either screen. [E06] [E08] Create
+the problem from **Problem › Create New** and set it in the incident's **Related Records › Problem**
+(see [Raise a problem](see:problem/raise) and [Link incidents to a problem](see:problem/link)).
 
 ## Tips
 
