@@ -52,12 +52,20 @@ evidence:
     how: read the Resolve action on the ticket page
     result: shown to the caller while the incident is open; marks it resolved
     hash: bc9550d44d6d617c490ed400a303255b1e6b591fc1426e639d06bb2b13e8ce33
+  E11:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'Employee Center › My Requests'
+    how: 'opened the page'
+    result: 'tabs Submitted requests and Drafts; View Open requests; columns Request, State, Updated'
 ---
 ## Find your incidents
 
 In Employee Center, choose **My Requests** at the top of the page. [E01] Your incidents are listed
-with their title, number, priority and state, under **Open requests** and **Closed requests**.
-You see the incidents you reported and the ones someone opened for you. [E02] [E03]
+under **Submitted requests** with their title, number, priority and state; switch **View** from
+*Open requests* to see closed ones. [E11] You see the incidents you reported and the ones someone
+opened for you. [E02] [E03]
 
 Choose one to open its page. It shows where it is (the state), the urgency, what it is about, and
 who is working on it. [E04]

@@ -139,6 +139,26 @@ Open questions:
 4. **Test template visible**: the ATF template *Replace printer toner* shows to requesters.
 5. **CAB meetings**: none exists, so the meeting pages haven't been seen.
 
+## Request management (2026-10-17)
+
+`processes/request/`: 4 shared pages, 3 end-user pages (order, follow, approve), 3 operator pages
+(fulfil, order on behalf, manage) and 3 configure pages.
+
+Answered on screen: the item page (Order Now, no cart, Save as Draft; the Standard Laptop shows
+**9 days** delivery, not the 2 days its record suggests); *Request Standing Desk* opens *Desk Set
+Up*; *My Requests* has *Submitted requests* and *Drafts* (the incident guide is corrected); the
+approval group over 1000 is *Catalog Request Approvers > $1000*; fulfilment groups are
+Procurement and Field Services; nobody can change *Requested for* at checkout.
+
+Open questions:
+
+1. **Requested for**: `glide.sc.req_for.roles` is empty with default *deny*, changed 2025-08-20.
+   Intended? How does *Create request* from an incident set who it's for?
+2. **No cancel in Employee Center**: users must ask the service desk.
+3. **Fulfilment gaps**: items tied to inactive execution plans, a demo price-approval flow on eight
+   service items, legacy workflows not in the mirror, and nine items with no fulfilment.
+4. **Duplicate emails**: two *Request Rejected* notifications on the same change.
+
 ## The mirror
 
 Since 2026-10-17 this workspace has its own pdi2 mirror (`servicenow-remote/pdi2`, integrated
