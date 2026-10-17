@@ -50,6 +50,8 @@ workspace form has the same section. [E05]
 
 ## The workbench
 
+{{animation:mimrun}}
+
 Press **View Workbench** on the major incident. [E01] It brings the response together: the
 **Summary**, **Communication**, a **Conference** bridge, **Participants**, **Child Incidents**,
 **Affected CIs** and **Impacted Services/CIs**, **Create Outage**, the **Email Log**, **Activity**

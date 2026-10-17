@@ -36,6 +36,8 @@ evidence:
 ---
 ## In the workspace
 
+{{animation:chgappr}}
+
 Open **Approvals › My approvals**. [E01] The list has no state filter, so earlier approvals show
 too: sort or filter by state. Open one, read the change, and press **Approve** or **Reject**. [E02]
 [E03]

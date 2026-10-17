@@ -63,6 +63,8 @@ evidence:
 ---
 ## Start it
 
+{{animation:chgraise}}
+
 Open **Change › Create New**. [E01] The page **Create a change request** shows a card per kind:
 choose **Normal**, **Emergency**, a **standard change** or a **template**, then **Continue**. [E02]
 For routine work, look for a standard change first (see [Use a standard change](see:standard)).

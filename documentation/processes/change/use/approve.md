@@ -51,6 +51,8 @@ as a member of the change advisory board.
 
 ## Approve in Employee Center
 
+{{animation:chguappr}}
+
 1. Open **My Tasks** at the top of Employee Center. [E07] [E01]
 2. The change shows as **Approve Request**, with its number and summary. [E02] You can open it
    to read the plan. [E06]

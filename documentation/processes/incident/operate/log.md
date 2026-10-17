@@ -66,6 +66,8 @@ for the queue); **Create New** opens an empty form.
 
 ## Log an incident while you talk to the caller
 
+{{animation:inclog}}
+
 1. Press **New** in the workspace's incident list (classic: **Incident › Create New**).
 2. In the **Incident** section [E07], **Caller**: search by name. Location fills in from the caller. [E03] If the caller is a VIP,
    a VIP icon appears and the field turns red: treat them accordingly. [E02]

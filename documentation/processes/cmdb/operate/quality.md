@@ -32,6 +32,8 @@ evidence:
 ---
 ## Health {label=OPEN-QUESTION}
 
+{{animation:cmdbqual}}
+
 The CMDB Workspace shows a **CMDB Health** card, but on pdi2 *"CMDB Health Dashboard jobs haven't
 been run"*: the score jobs are switched off. [E01] [E02] A CI is stale after 60 days without an
 update. [E03] Turn the jobs on to get scores.

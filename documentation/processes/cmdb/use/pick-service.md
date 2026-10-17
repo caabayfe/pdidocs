@@ -20,6 +20,8 @@ evidence:
 ---
 ## When you're asked
 
+{{animation:cmdbpick}}
+
 Some forms ask which application or service you mean, so your report reaches the team that runs
 it:
 

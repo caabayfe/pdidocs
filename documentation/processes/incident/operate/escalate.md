@@ -69,6 +69,8 @@ evidence:
 ---
 ## When it's bigger than one incident: major incidents {label=CHANGED}
 
+{{animation:incesc}}
+
 A **major incident** is one failure that hits many people or a critical service. It gets a
 dedicated manager, a response team and regular communication; the full guide is
 [Major incident management](see:major-incident).

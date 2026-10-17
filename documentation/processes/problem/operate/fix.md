@@ -44,6 +44,8 @@ evidence:
 ---
 ## Plan the fix
 
+{{animation:prbfix}}
+
 When the cause is known, press **Fix** and fill in the **Cause notes** and **Fix notes**. [E01] If
 the fix changes a system, raise the change from the form menu: **Create Normal Change**, **Create
 Standard Change** or **Create Emergency Change**. [E02] Then choose **Communicate Fix** to put the

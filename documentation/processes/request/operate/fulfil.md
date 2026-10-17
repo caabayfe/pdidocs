@@ -49,6 +49,8 @@ evidence:
 ---
 ## Find your work
 
+{{animation:reqfulfil}}
+
 In the Service Operations Workspace, open **Catalog tasks › Assigned to you**, or **Assigned to
 your groups** to pick up your team's. [E01] [E02] Most hardware goes first to **Procurement**
 (*"Please fulfill this order"*), then to **Field Services** (*"Please deploy item to the user"*).

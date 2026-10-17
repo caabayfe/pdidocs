@@ -47,6 +47,8 @@ evidence:
 
 ## Raise it
 
+{{animation:prbraise}}
+
 1. Open **Problem › Create New**. [E01] An incident can't create one: neither the workspace nor
    the classic incident form offers *Create problem*. [E06]
 2. Fill the form: **Problem statement** (one line), **Description**, **Category**, the

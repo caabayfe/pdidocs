@@ -27,6 +27,8 @@ evidence:
 ---
 ## From an incident or a call
 
+{{animation:reqbehalf}}
+
 When a caller actually needs something new, raise a request from their **incident** or
 **interaction** in the workspace with **Create request**. [E01] [E02] The request links back to
 where it came from. [E04]

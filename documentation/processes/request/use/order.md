@@ -65,6 +65,8 @@ home page. Some common items have a quick link, such as **Request Standing Desk*
 
 ## Order it
 
+{{animation:reqorder}}
+
 The item's page shows its price, the **Delivery Time** and its questions. For the *Standard
 Laptop*, for example: optional software to add, and anything else you need. [E01]
 

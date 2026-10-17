@@ -38,6 +38,8 @@ evidence:
 ---
 ## On a ticket
 
+{{animation:cmdbci}}
+
 Set the **Configuration item** to the thing that fails (a server, an application), and the
 **Service** and **Service offering** to what people can't use. [E01] [E02] [E04] Changing the
 service clears the offering. [E05] Retired or non-operational CIs aren't offered on incidents and

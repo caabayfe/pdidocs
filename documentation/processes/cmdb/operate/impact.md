@@ -36,6 +36,8 @@ evidence:
 ---
 ## The dependency view
 
+{{animation:cmdbimpact}}
+
 In the workspace, the field actions **CI dependency view** and **Service dependency view** beside
 those fields show what the CI depends on and what depends on it. [E01] [E02]
 

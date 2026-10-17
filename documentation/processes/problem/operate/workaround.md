@@ -50,6 +50,8 @@ evidence:
 ---
 ## Share the workaround
 
+{{animation:prbwork}}
+
 Write the **Workaround** in *Analysis Information*, save, then choose **Communicate Workaround**
 (Related Links or the form menu). [E01] Each linked incident still open gets the work note
 *"Workaround shared from PRB…"*. [E02] It is internal: tell callers yourself where it applies.

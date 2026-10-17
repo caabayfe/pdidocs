@@ -59,6 +59,8 @@ you're only waiting for confirmation, resolve it; don't leave it In Progress.
 
 ## Resolve it
 
+{{animation:incres}}
+
 1. Open the incident in the workspace and press **Resolve** in its header. [E05]
 2. In the **Resolve** dialog, fill in: [E06]
    - **Resolution code**: what kind of fix it was;

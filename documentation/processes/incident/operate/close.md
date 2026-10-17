@@ -37,6 +37,8 @@ evidence:
 ---
 ## Closing
 
+{{animation:incclose}}
+
 In the workspace, **Close** and **Reopen** are buttons in the incident's header, shown when they
 apply. [E04]
 

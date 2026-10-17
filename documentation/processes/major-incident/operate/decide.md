@@ -50,6 +50,8 @@ evidence:
 ---
 ## Review the candidates
 
+{{animation:mimdecide}}
+
 Open **Major Incidents › Candidates** and the candidate. Read the work notes: who is affected, what
 fails, since when. Check for other reports of the same failure.
 

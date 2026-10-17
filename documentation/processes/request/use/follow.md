@@ -49,6 +49,8 @@ evidence:
 ---
 ## Find it
 
+{{animation:requfollow}}
+
 Open **My Requests**: **Submitted requests** lists your requests with their state; switch **View**
 to see closed ones. [E01] [E02] **Drafts** holds what you saved for later. [E01]
 

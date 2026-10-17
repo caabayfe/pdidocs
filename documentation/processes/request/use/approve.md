@@ -43,6 +43,8 @@ department head's. You get an email *"… needs your approval"*. [E05]
 
 ## Approve in Employee Center
 
+{{animation:requappr}}
+
 1. Open **My Tasks**.
 2. The order shows as **Approve Request**: the item, who it's for, its price and quantity. [E01]
    [E02]

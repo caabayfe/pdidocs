@@ -33,6 +33,8 @@ evidence:
 ---
 ## Link from a list
 
+{{animation:mimlink}}
+
 1. Open a list of the reports, for example **Incident › Open**, and select them.
 2. Choose **Link to Major Incident** in the list's actions. [E01]
 3. In **Choose a Major Incident**, pick the major incident and press **OK**.

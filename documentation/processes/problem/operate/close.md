@@ -49,6 +49,8 @@ evidence:
 ---
 ## Accept the risk
 
+{{animation:prbclose}}
+
 When fixing isn't worth it, press **Accept Risk**: give the cause, the reason, and any workaround
 people should keep using. [E01] The problem closes at once. [E02] Incidents waiting for it are
 **not** resolved: they get a work note and stay with their teams, who should resolve them with the

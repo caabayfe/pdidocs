@@ -32,6 +32,8 @@ evidence:
 ---
 ## Your CIs
 
+{{animation:cmdbmaint}}
+
 Open the **CMDB Workspace** [E01]: **My work** lists the tasks waiting for you, and **Intelligent
 search** finds a CI by name. [E02] Keep these right on each CI you own: the **Support group**, the
 **Change Group**, **Owned by**, and its statuses (see [Who owns what](see:ownership)).

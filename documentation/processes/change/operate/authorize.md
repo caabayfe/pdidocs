@@ -43,6 +43,8 @@ evidence:
 ---
 ## Request it
 
+{{animation:chgauth}}
+
 When the plan is complete, press **Request Approval**. [E01] A normal change goes to **Assess**:
 its technical approvers are asked. [E03] When they approve, press **Request Approval** again if it
 shows: it goes to **Authorize** for the manager or the CAB. [E02] [E04] An emergency change goes

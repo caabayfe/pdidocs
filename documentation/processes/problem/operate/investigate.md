@@ -47,6 +47,8 @@ evidence:
 ---
 ## Assess
 
+{{animation:prbinv}}
+
 A new problem with an assignee is already in **Assess**; otherwise press **Assess**. [E01] Check
 it is a real problem: does it recur, how many incidents, what impact? Then press **Confirm** to
 start the root cause analysis. [E02] If it isn't one, see

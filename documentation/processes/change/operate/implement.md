@@ -46,6 +46,8 @@ evidence:
 ---
 ## Schedule
 
+{{animation:chgimpl}}
+
 When approved, the change is **Scheduled** for its planned window. Check the window against
 **Change › Change Schedules** and the **Conflicts** tab, which is refreshed when the dates or the
 CI change. [E07] [E08] Use **Schedule** if the change is waiting to be scheduled. [E01]

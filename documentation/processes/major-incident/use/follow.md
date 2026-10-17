@@ -49,6 +49,8 @@ evidence:
 ---
 ## When many people have the same problem
 
+{{animation:mimfollow}}
+
 Report it as usual, even if colleagues already have (see [Report an incident](see:incident/report)).
 When the service desk sees one failure behind many reports, it runs a **major incident** and
 links the reports to it. Nothing changes on your side: you keep your own incident number.

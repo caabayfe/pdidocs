@@ -40,6 +40,8 @@ evidence:
 ---
 ## Link from the incident
 
+{{animation:prblink}}
+
 Open each incident and set **Problem** in its **Related Records** section, on the classic form or
 in the workspace. [E01] [E02] The problem form doesn't list its incidents on pdi2, so link from the
 incident side. [E03]

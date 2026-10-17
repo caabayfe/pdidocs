@@ -57,6 +57,8 @@ evidence:
 ---
 ## When it is resolved
 
+{{animation:incconf}}
+
 You get an email *"… was resolved"* saying what was done. [E01] Try it: does it work again?
 
 ### It works

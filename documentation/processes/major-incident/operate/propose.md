@@ -42,6 +42,8 @@ sure; the major incident manager decides.
 
 ## Propose it
 
+{{animation:mimprop}}
+
 1. Open the incident **on the classic form**. The Service Operations Workspace doesn't offer
    *Propose*. [E03]
 2. Open the form's menu (☰ next to the title) and choose **Propose Major Incident**. [E01]

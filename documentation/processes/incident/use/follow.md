@@ -62,6 +62,8 @@ evidence:
 ---
 ## Find your incidents
 
+{{animation:incfollow}}
+
 In Employee Center, choose **My Requests** at the top of the page. [E01] Your incidents are listed
 under **Submitted requests** with their title, number, priority and state; switch **View** from
 *Open requests* to see closed ones. [E11] You see the incidents you reported and the ones someone

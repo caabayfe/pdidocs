@@ -61,6 +61,8 @@ Definitions**). [E08] pdi2 has **none** for incidents [E09], so start each commu
 
 ## Send a communication
 
+{{animation:mimcomm}}
+
 In the workspace, choose **Create new communication** in the incident's ⋯ menu. It is offered to
 communication managers and major incident managers, not to every agent. [E01] [E02]
 

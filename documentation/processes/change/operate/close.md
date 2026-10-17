@@ -60,6 +60,8 @@ evidence:
 ---
 ## Review and close
 
+{{animation:chgclose}}
+
 When the work is done, press **Review** and check the result. [E01] Then **Close** it with the
 **Close code** (*Successful*, *Successful with issues* or *Unsuccessful*) and **Close notes**.
 [E02] [E03] [E04] A change with open tasks can't be closed. [E05]

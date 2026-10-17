@@ -61,6 +61,8 @@ Standard changes are routine work done the same way every time, already approved
 
 ## Use one
 
+{{animation:chgstd}}
+
 Choose it, complete the required fields (description, the plans, the assignment group, the
 justification and the risk analysis) [E03], and submit. It is approved at once [E04] and goes to
 *Scheduled*: carry on with [Schedule and implement](see:implement).

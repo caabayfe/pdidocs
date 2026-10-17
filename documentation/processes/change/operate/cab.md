@@ -61,6 +61,8 @@ Members get an invitation with a calendar attachment; answering it records wheth
 
 ## In the meeting
 
+{{animation:chgcab}}
+
 Open **Change › CAB Workbench** [E01]: the calendar, then the meeting. [E02] **My CAB Meetings**
 lists the ones you are on. [E09] For each change on the
 agenda the board can **Approve** or **Reject**, or move on with **Next**, **Pause** or **Demote**.

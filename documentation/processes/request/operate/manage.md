@@ -35,6 +35,8 @@ evidence:
 ---
 ## Find it
 
+{{animation:reqmanage}}
+
 **Requests › Open requests** and **Open items** in the workspace. [E01] [E02]
 
 ## Cancel

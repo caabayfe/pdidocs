@@ -28,6 +28,8 @@ evidence:
 ---
 ## Your incident waits for a fix
 
+{{animation:prbaffected}}
+
 Sometimes your incident can't be fixed on its own: the cause is bigger, and the service desk opens
 a **problem** to remove it. Your incident then shows **On Hold**, waiting for the problem. [E01]
 You don't need to do anything, and you keep your incident number.

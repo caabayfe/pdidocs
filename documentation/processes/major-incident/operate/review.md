@@ -61,6 +61,8 @@ evidence:
 ---
 ## Resolve it
 
+{{animation:mimreview}}
+
 Resolve the major incident as any incident (see [Resolve an incident](see:incident/resolve)),
 with a resolution code and notes written for everyone affected. Every linked incident that is
 still open is resolved with it, with the same code and your notes. [E01] A major incident can't be
