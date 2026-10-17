@@ -1,7 +1,7 @@
 # pdi2 documentation
 
 User guide and technical reference of the **incident management** process on pdi2, written
-with snagentic's documentation capability (ADR-0034, spec 010) from the pdi2 mirror on
+with snagentic's documentation capability (ADR-0035, spec 010) from the pdi2 mirror on
 2026-10-17. `instances/pdi2` is a link to `../pdi2/instances/pdi2` and is only read.
 
 ## Look at it
