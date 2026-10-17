@@ -1,0 +1,57 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:requires name="scripts/lib/jquery_includes.js" />
+	<g:inline template="glide_weba_header.xml" />
+	<g:requires name="scripts/angular_includes_1.5.11.js" includes="true" />
+	<g:requires name="scripts/js_includes_ngCommon.js" includes="true" />
+	
+	<g:requires name="scripts/js_includes_ng_form_elements.js" />
+	<g:requires name="scripts/js_includes_filter_widget.js"/>
+	<g:requires name="scripts/app.ml_ui/module.js" includes="true" />
+	<g:requires name="scripts/app.solution_test/module.js" includes="true" />
+	<g:requires name="scripts/app.ml_ui/factory.RestServices.js" includes="true" />
+	<g:requires name="scripts/app.solution_test/directive.snSinglePredictOp.js" includes="true" />
+	<g:requires name="scripts/app.solution_test/directive.snBatchPredictOp.js" includes="true" />
+	<g:requires name="scripts/app.solution_test/directive.snPredictInput.js" includes="true" />
+	<g:requires name="scripts/app.solution_test/directive.snSolutiontest.js" includes="true" />
+	<g:requires name="scripts/app.solution_test/factory.TestPageRestServices.js" includes="true" />
+	<link rel="stylesheet" href="styles/retina_icons/retina_icons.css"/>
+	<link rel="stylesheet" href="styles/ml_ui.css"/>
+	<link rel="stylesheet" href="styles/filter.css"/>
+	<g2:evaluate var="jvar_error_message" object="true" jelly="true">
+			var message = '';
+        	
+			if (!(gs.hasRole('ml_admin'))) {
+				message = 'insufficent_privileges';
+			} else if (jelly.jvar_isMSIE == 'true') {
+				if (jelly.jvar_MSIE_vn ${AMP}lt; 11 ) {
+					message = 'unsupported_browser';
+				}
+			} else if (current.getValue('active') == 'false'){
+				message = 'solution_not_active';
+			}
+			gs.info("message",message);
+			message;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_test_page_config" jelly="true">
+		var config = {};
+		config.solution_name = current.getValue('solution_name');
+		config.solution_id = current.getUniqueValue();
+		config.solution_capability = current.getValue('capability');
+		//config.table = current.getValue('table');
+		//config.table_name = current.getDisplayValue('table');
+		//config.table_to_compare = current.getValue('table_to_compare');
+		JSON.stringify(config);
+	</g2:evaluate>
+	<j2:choose>
+			<j2:when test= "$[jvar_error_message != '']">
+				<g:inline template="ml_solution_test_page_error.xml" />
+			</j2:when>
+			<j2:otherwise>
+				<div id="sn.solutionTest" sn-ng-formatter="sn.solutionTest" style= "height:100%; width:100%; padding:0px;">
+					<g:inline template="solution_test_translations.xml" /> 
+					<sn-solutiontest config="$[jvar_test_page_config]"></sn-solutiontest>
+				</div>
+		</j2:otherwise>
+	</j2:choose>	
+</j:jelly>

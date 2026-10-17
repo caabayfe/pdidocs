@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g2:doctype name="html" />
+	<g:inline template="dir_checker.xml" />
+	<g:evaluate var="jvar_prop_jsincludes">
+		gs.getProperty("glide.ui.js_includes", "true");
+	</g:evaluate>
+	<!-- Third Party JS -->
+	<g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+	<g:requires name="scripts/angular_includes_1.5.11.js" includes="true" />
+	<g:requires name="scripts/angular_1.5.11/angular-animate.js" includes="true" />
+	<g:requires name="scripts/heisenberg/bootstrap/tooltip.js" includes="true" />
+	<g:requires name="scripts/heisenberg/bootstrap/popover.js" includes="true" />
+	<g:requires name="scripts/angular_1.5.11/ui-bootstrap-tpls-2.5.0.min.js" includes="true" />
+	<!-- SNC JS -->
+	<g:requires name="scripts/sn/common/js_includes_common.js" includes="true" />
+	<g:requires name="scripts/sn/common/util/js_includes_util.js" includes="true" />
+	<g:requires name="scripts/sn/common/glide/js_includes_glide.js" includes="true" />
+	<j:if test="${jvar_prop_jsincludes == 'false'}">
+		<g:requires name="script/app_com.jsdbx" />
+		<g:requires name="script/app_com.modelUtil.jsdbx" />
+	</j:if>
+	<j:if test="${jvar_prop_jsincludes == 'true'}">
+		<g:requires name="script/app_com.jsdbx" includes="true" />
+		<g:requires name="script/app_com.modelUtil.jsdbx" includes="true" />
+	</j:if>
+	<g:requires name="scripts/heisenberg/heisenberg_all.js" includes="true" />
+	<g:requires name="scripts/js_includes_ng_form_elements.js" includes="true" />
+	<!-- CSS -->
+	<j2:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]"/>
+	<g2:requires name="styles/sn/concourse/css_includes_concourse.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=$[jvar_theme]" />
+	<g2:evaluate var="jvar_polaris_theme">
+		var canUsePolaris = false;
+		if (typeof sn_ui != 'undefined') {
+		    canUsePolaris = sn_ui.PolarisUI.canUsePolarisCSS();
+		}
+		var theme = '';
+		if (canUsePolaris)
+		    theme = "Polaris";
+		theme;
+	</g2:evaluate>
+	<j2:if test="$[jvar_polaris_theme == 'Polaris']">
+		<g2:requires name="styles/polarisberg/css_includes_polarisberg.css" includes="true" params="theme=$[jvar_polaris_theme]" />
+	</j2:if>
+	<link href="58ea9c83d7110300532c24837e6103dc.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	<link href="b7125dec77cf0010cfb82191a91061d7.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	<j:if test="${GlideAccessibility.isEnabled()}">
+		<link href="8c6b50c3d7110300532c24837e610352.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	</j:if>
+	<j:if test="${jvar_text_direction == 'rtl'}">
+		<g:requires name="styles/heisenberg/heisenberg_rtl.css" includes="true" />
+		<link href="ae1473acb7e70010cfb8c556ee11a9d8.cssdbx?v=${gs.getProperty('glide.builddate')}" rel="stylesheet" type="text/css" />
+	</j:if>
+	
+	<g2:evaluate var="jvar_connect_installed_and_enabled">
+		GlideCollaborationCompatibility.isChatEnabled() $[AND] GlideCollaborationCompatibility.isFrameSetEnabled();
+	</g2:evaluate>
+	<g2:evaluate var="jvar_group_id" expression="RP.getParameterValue('sysparm_group_id')"/>
+	<g2:evaluate var="jvar_full_webrtc" expression="RP.getParameterValue('sysparm_full_webrtc')"/>
+	<g2:evaluate var="jvar_communication_types" object="true">
+		var choices = new OnCallCommon().getChoiceList("on_call_communication_type", "type");
+		choices = JSON.stringify(choices);
+		choices;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_use_slack_dm">
+		var slackEnabledForDM = new OnCallCommon().shouldUseSlackForDM();
+		slackEnabledForDM;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_use_msteams_dm">
+		var teamsEnabledForDM = new OnCallCommon().shouldUseTeamsForDM();
+		teamsEnabledForDM;
+	</g2:evaluate>
+	<div ng-app="sn.on_call.live_esc">
+		<g:inline template="oc_live_esc_translations.xml" />
+		<script>
+			angular.module('sn.on_call.live_esc.extra', []);
+			var textDirection = "${jvar_text_direction}";
+		</script>
+		<j:set var="jvar_isNotifyInstalled" value="${pm.isActive('com.snc.notify')}" />
+		<j:if test="${jvar_isNotifyInstalled}">
+			<j2:if test="$[jvar_full_webrtc != 'true']">
+				<g2:inline template="notify_ng_webrtc_inline_proxy" app_name="sn.on_call.live_esc.extra" />
+			</j2:if>
+			<j2:if test="$[jvar_full_webrtc == 'true']">
+				<g2:inline template="notify_ng_webrtc_inline" app_name="sn.on_call.live_esc.extra" number_ppty="com.snc.on_call_rotation.notify_webrtc_number" />
+			</j2:if>
+		</j:if>
+		<div id="rosters-modal" ng-controller="ModalInstanceCtrl as modalInstanceCtrl">
+			<div class="modal-header">
+				<h2 class="modal-title h4" aria-live="polite">
+					<span class="oc-modal-title-truncate" uib-tooltip="{{modalTitle}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{modalTitle}}</span>
+				</h2>
+				<div class="modal-header-right">
+					<button data-dismiss="GlideModal" class="btn btn-icon close icon-cross" ng-click="destroyModal()" ng-keydown="focusLastElement($event)">
+						<span class="sr-only">${gs.getMessage('Close')}</span>
+					</button>
+				</div>
+			</div>
+			<div id="rosters-modal-body" class="oc-rosters-modal-body">
+				<div class="oc-modal-body-container row">
+					<div class="col-sm-6 oc-heading-left oc-shift-esc-wrapper">
+					<div class="oc-modal-header-row">
+						<div class="sn-navhub">
+							<div class="sn-navhub-content" id="oc-shifts-tab-container">
+								<h3 id="shift_esc_path_tab" class="oc-escalation-path-title" >${gs.getMessage("Escalation Path")}</h3>
+							</div>
+						</div>
+					</div>
+					<div id="oc-esc-timeline" class="shift-escalation-wrapper">
+						<div ng-if="!loadingEscalationPlan">
+							<g:inline template="sn_oc_live_esc_timeline.xml" />
+						</div>
+						<div class="oc-esc-path-loading" ng-if="loadingEscalationPlan">
+							<i class="icon-loading"></i>
+						</div>
+					</div>
+				</div>
+				<g:inline template="profile_contact_attempt_section.xml" />
+			</div>
+			<span tabindex="0" class="sr-only" id="end_of_dialog" ng-keyup="focusFirstElement($event)">${gs.getMessage("End Of Dialog")}</span>
+			</div>
+		</div>
+	</div>
+</j:jelly>

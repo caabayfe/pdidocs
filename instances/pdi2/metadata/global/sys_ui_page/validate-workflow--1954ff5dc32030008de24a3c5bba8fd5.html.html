@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:evaluate object="true" jelly="true"> 
+  var gr = new GlideRecord("wf_workflow_version");
+  gr.get((jelly.sysparm_sys_id || '') + '');
+  if (gr.isValidRecord()) {
+    var vRootItem = new WorkflowValidateUtil().validateWorkflow(gr);
+    RP.getParameters().put("validationResult", vRootItem);
+    var workflowName = gr.name +'';
+    var title = gs.getMessage('Workflow Validation Report for Workflow') + ' "' + workflowName + '"';
+  }
+</g:evaluate>
+<p/>
+<div id="wf_validation_title" class="text_caption">${title}</div>
+<div id="wf_validation_summary_message" ><h4>${vRootItem.msg}</h4></div>
+<p/>
+<g:list_default table="v_wf_validation_report" view=""/> 
+<g:evaluate jelly="true">
+    ListProperties.setHasTopNav(true);
+    ListProperties.setHasTitle(true);
+    ListProperties.setHasTitleContextMenu(false);
+    ListProperties.setHasListMechanic(false);
+    ListProperties.setHasTopVCR(true);
+    ListProperties.setHasHeader(true);
+    ListProperties.setHasHeaderContextMenu(false);
+    ListProperties.setShowLinks(true);
+    ListProperties.setHasFilter(true);
+    ListProperties.setHasBreadcrumbs(true);
+    ListProperties.setHasPopup(true);
+    ListProperties.setShowEmpty(true);
+    ListProperties.setHasBottomNav(false);
+    ListProperties.setHasBottomVCR(false);
+    ListProperties.setHasActions(false);
+    ListProperties.setCssName("embedded");
+    ListProperties.setHasRowContextMenu(true);
+    ListProperties.setHiddenQuery("workflow_version=" + (jelly.sysparm_sys_id || ''));
+    ListProperties.setOrderColumn('level');
+</g:evaluate>
+<g:inline template="list2_default.xml" />
+<p/>
+<g:dialog_button_ok />
+</j:jelly>

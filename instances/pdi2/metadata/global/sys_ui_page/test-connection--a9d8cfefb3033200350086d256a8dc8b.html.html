@@ -1,0 +1,137 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">	
+	<g:evaluate>		
+		var connection_data = RP.getWindowProperties().get('connection_data');
+		var connectionData  = JSON.parse(connection_data);
+		var use_mid = connectionData.use_mid;
+		var midName = gs.getUser().getPreference('test_credential.midserver_name');
+		var timestamp = new Date().getTime();
+	</g:evaluate>
+
+	<style>
+		.container-td {
+			padding-top: 5px;
+		}
+
+		.top-buffer {
+			padding-top: 3px;
+		}
+
+		.bottom-buffer {
+			padding-bottom: 5px;
+		}
+
+		#ok-cancel-btns {
+			padding-left: 15px;
+			padding-right: 15px;
+		}
+		
+		#test_progress {
+			display: none;
+		}
+		
+		#test_successful {
+			display: none;
+		}
+		
+		#test_failed {
+			display: none;
+		}
+		
+		.connectionSuccess {
+			font-size:200%;
+			vertical-align:sub;
+			color:#71e279;
+		}
+
+		.connectionFail {
+			font-size:200%;
+			vertical-align:sub;
+			color:#f95050;
+		}
+
+		.centerAlignContent {
+			text-align: center;
+		}
+
+		#okButton {
+			min-width: 5em;
+		}
+
+	</style>
+
+	
+	<input type="hidden" id="connection_data" value="${connection_data}" />
+	<input type="hidden" id="use_mid" value="${use_mid}" />
+	<input type="hidden" id="timestamp" value="${timestamp}" />
+	
+	<table width="100%">
+		<tr>
+			<td align="center" valign="middle" class="container-td">
+
+				<!-- Test form div -->
+				<div id="test_form" class="container-fluid form-horizontal">
+				
+					<div class="row bottom-buffer">
+						<div class="col-sm-4 control-label">MID Server:</div>
+						<div class="col-sm-8">
+							<g:ui_reference name="ecc_agent" table="ecc_agent" displayValue="${midName}"/>
+						</div>
+					</div>
+					
+					<div class="row bottom-buffer">
+						<div id="ok-cancel-btns" class="col-sm-offset-4 pull-left">
+							<g:dialog_buttons_ok_cancel class="form-control"/>
+						</div>
+					</div>
+				</div>
+				<!-- End test form div -->
+
+				<!-- Test progress div -->
+				<div id="test_progress" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-loading"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="poll_text">${gs.getMessage('Running connection test ...')}</span>
+					</div>
+				</div>
+				<!-- End test progress div -->
+
+				<!-- Test successful div -->
+				<div id="test_successful" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-check-circle connectionSuccess"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="complete_text">${gs.getMessage('Connection validated')}</span>
+					</div>
+					<div class="row bottom-buffer">
+						<div>
+							<button id="okButton" onclick="handleCancel();" class="btn btn-primary">${gs.getMessage('Ok')}</button>
+						</div>
+					</div>
+				</div>
+				<!-- End test successful div -->
+
+				<!-- Test failed div -->
+				<div id="test_failed" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-cross-circle connectionFail"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="err_text">${gs.getMessage('Error')}</span>
+					</div>
+
+					<div class="row bottom-buffer">
+						<div>
+							<button id="okButton" onclick="handleCancel();" class="btn btn-default">${gs.getMessage('Ok')}</button>
+						</div>
+					</div>
+				</div>
+				<!-- End test failed div -->
+
+			</td>
+		</tr>
+	</table>
+	
+</j:jelly>

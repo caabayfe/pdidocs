@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide"
+	xmlns:j2="null" xmlns:g2="null">
+		<style>
+			#log-content tr.collapisble a.collapse-icon:before {
+				content:"\f110";
+				font-family: "retina_icons", "now-icons";
+				cursor: pointer;
+				right: 20px;
+				line-height: 1;
+			}
+			.rtl #log-content tr.collapisble a.collapse-icon:before {
+				content:"\f110";
+				font-family: "retina_icons", "now-icons";
+				cursor: pointer;
+				right: 20px;
+				line-height: 1;
+			}
+			#log-content tr.collapisble.collapsed a.collapse-icon:before {
+				content: "\f1c0";
+			}
+			.rtl #log-content tr.collapisble.collapsed a.collapse-icon:before {
+				content:"\f20a";
+			}
+			
+			[role=button] {
+				cursor:pointer
+			}
+			#log-content {
+				height: 400px;
+				overflow-y: auto;
+			}
+			#log-content .collapsing {
+				transition: height 0.6s;
+			}
+			li.dropdown-list {
+				padding: 5px;
+			}
+			#debug-controls {
+				padding-bottom: 10px;
+			}
+			@media print {
+				body * {
+					visibility: hidden;
+				}
+				#log-content {
+					max-height: none;
+                    height: auto;
+					overflow-y: auto;
+				}
+				.modal, .modal * {
+					visibility: visible;
+				}
+				.modal {
+					position: absolute;
+					left: 0;
+					top: 0;
+					overflow: visible!important;
+				}
+				#log-content tr.collapisble.collapsed a.collapse-icon:before {
+					content:"\f10d";
+				}
+				.collapse:not(.hidden) {
+					display: table-row !important;
+					height: auto !important;
+				}
+			}
+		</style>
+		<div class="row" id="debug-controls">
+			<div class="col-xs-7">
+				<input type="text" class="form-control"
+					onchange="variableDebugger.searchForScriptOrVariable()"
+					placeholder="${gs.getMessage('Search for a script name or field name')}" name="search_logs"
+					id="search_logs" onkeyup="variableDebugger.onKeyUpForSearch()"
+					onkeydown="variableDebugger.onKeyDownForSearch()" />
+			</div>
+			<div class="col-xs-5 hidden-print" style="padding-left: 50px;">
+                <div class="pull-right">
+    				<span>
+    					<label for="collapse" style="padding: 10px;"><a id="collapse" href='javascript:void(0)' onclick="variableDebugger.collapseAll()">${gs.getMessage('Collapse All')}</a></label>
+    			
+    				<label for="expandAll" style="padding: 10px;"><a id="expandAll" href='javascript:void(0)' onclick="variableDebugger.expandAll()">${gs.getMessage('Expand All')}</a></label>
+    				</span>
+    				<span class="dropdown hidden-print">
+    						<button class="btn btn-icon icon-filter dropdown-toggle" 
+    								type="button" data-toggle="dropdown" title="${gs.getMessage('Filter')}" aria-label="${gs.getMessage('Filter')}">
+    							<span></span>
+    						</button>
+    						<ul class="dropdown-menu dropdown-menu-right" role="menu">
+    							<li class="dropdown-list">
+    								<span class="input-group-checkbox" onclick=" event.stopPropagation();"><input checked="true" class="checkbox" id="chk_client_script" onchange="variableDebugger.filterLogsByCategory(event)" type="checkbox" value="clinet_script"/><label class="checkbox-label" for="chk_client_script">${gs.getMessage('Client Script')}</label></span>
+    							</li>
+    							<li class="dropdown-list">
+    								<span class="input-group-checkbox" onclick=" event.stopPropagation();"><input checked="true" class="checkbox" id="chk_ui_policy" onchange="variableDebugger.filterLogsByCategory()" type="checkbox" value="clinet_script"/><label class="checkbox-label" for="chk_ui_policy">${gs.getMessage('UI Policy')}</label></span>
+    							</li>
+    							<li class="dropdown-list">
+    								<span class="input-group-checkbox" onclick=" event.stopPropagation();"><input checked="true" class="checkbox" id="chk_data_lookup" onchange="variableDebugger.filterLogsByCategory()" type="checkbox" value="clinet_script"/><label class="checkbox-label" for="chk_data_lookup">${gs.getMessage('Data Lookup')}</label></span>
+    							</li>
+    						</ul>
+    				</span>
+    				<span class="dropdown">
+    						<button class="btn btn-icon icon-ellipsis dropdown-toggle" 
+    								type="button" data-toggle="dropdown" title="${gs.getMessage('Actions')}" aria-label="${gs.getMessage('Actions')}">
+    							<span></span>
+    						</button>
+    						<ul class="dropdown-menu dropdown-menu-right" role="menu">
+    							<li data-dismiss="GlideModal">
+    								<a href="#" onclick="variableDebugger.clearLogs()">${gs.getMessage('Clear Logs')}</a>
+    							</li>
+    							<li>
+    								<a href="#" onclick="variableDebugger.exportDebugDetailsToCSV()">${gs.getMessage('Export to CSV')}</a>
+    							</li>
+    							<li>
+    								<a href="#" onclick="variableDebugger.print()">${gs.getMessage('Print Logs')}</a>
+    							</li>
+    							<!--li>
+    								<a href="#" target='_blank'>${gs.getMessage('Help')}</a>
+    							</li-->
+    						</ul>
+    				</span>
+                </div>
+			</div>
+		</div>
+		<div id="log-content" >
+			<table class='variable_cs_log table table-bordered'>
+				<thead>
+					<tr>
+						<th>${gs.getMessage('Order')}</th>
+						<th>${gs.getMessage('Script Name / Field Name')}</th>
+						<th>${gs.getMessage('Action Details')}</th>
+					</tr>
+				</thead>
+			</table>
+		</div>
+</j:jelly>

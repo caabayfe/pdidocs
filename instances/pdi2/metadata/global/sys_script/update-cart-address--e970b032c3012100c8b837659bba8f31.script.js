@@ -1,0 +1,1 @@
+new GlideappCart().processLocationChange(current);

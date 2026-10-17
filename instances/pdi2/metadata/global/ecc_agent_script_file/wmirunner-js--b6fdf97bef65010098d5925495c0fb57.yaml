@@ -1,0 +1,158 @@
+_meta:
+  hash: 7ab1686cd97adbf4b51e830d26b5e7f9a725fa19d5e2bbc3b9544386af18958e
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: aleck.lin
+  sys_created_on: 2013-05-31 23:06:46
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: b6fdf97bef65010098d5925495c0fb57
+  sys_mod_count: '1'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_b6fdf97bef65010098d5925495c0fb57
+  sys_updated_by: aleck.lin
+  sys_updated_on: 2013-06-01 00:07:38
+active: 'true'
+checksum: ''
+description: A wrapper to include WMIScanner
+directory: 'false'
+name: WMIRunner.js
+parent: 38ed7937efa5010098d5925495c0fb0d
+script: |-
+  //
+  // WMIRunner - main class for running WMI stuff.  This is used as a wrapper
+  // to include WMIScanner before any scripts are run. That way we have a API
+  // for WMI related things
+  //
+  // Bow Ruggeri
+  //
+
+  var WMISCANNER = "scripts\\WMI\\WMIScanner.js";
+
+  var gScanner;
+  var gCurrentFile;
+  var gCurrentMachine;
+  var gDebug;
+
+  var args = getOpts();
+  includeJS(WMISCANNER);
+
+  try {
+  	if (getScanner().wmiOpen()) {
+      
+  		// Include the files
+  		for(var i = 0; i < args.length; i++)
+  		    includeJS(args[i]);
+  	
+  		getScanner().wmiClose();
+  	}
+  } catch (e) {
+  	getScanner().addError(e.message);
+  }
+
+  WScript.Echo(getScanner().getXMLPayload().xml)
+
+
+  // ********************* Function definitions **********************************
+  //
+  // The arguements could potentially look like the following
+  // "-debug 10.10.10.10 WMI_FetchData.js"
+  // 
+  // Returns the js file(s) that need to be processed.  
+  //
+  function getOpts() {
+  	var items = new Array();
+  	var pastOpts = false;
+  	var machineNext = false;
+  	
+  	for(var i = 0; i < WScript.Arguments.length; i++) {
+  		var arg = WScript.Arguments.Item(i);
+  		
+  		if (!pastOpts && arg.substring(0, 1) != '-') {
+  			pastOpts = true;
+  			machineNext = true;
+  		}
+  		
+  		// if we are still processing opts, lets pass them
+  		// along to our processOpt function
+  		if (!pastOpts) {
+  			processOpt(arg);
+  		} else {
+  			// we are done with opts, if we don't have a machine
+  			// set, then we'll assume its the first argument. And
+  			// the rest are files to include
+  			if (machineNext) {
+  				gCurrentMachine = arg;
+  				machineNext = false;
+  			} else {
+  				items.push(arg);
+  			}
+  		}
+  	}
+  	
+  	return items;
+  }
+
+  // This evaluates the JS file that's passed in. A typical example of the script would be
+  //    scanner = getScanner();
+  //    if (scanner) {
+  //        scanner.addFetch('Win32_Process.Caption');
+  //        scanner.fetch();
+  //    }
+      
+  function includeJS(file) {
+  	gCurrentFile = file;
+  	var data = getContents(file);
+  	
+  	try {
+  		eval(data);
+  	} catch(e) {
+  		if (file != WMISCANNER)
+  			getScanner().addError("Error evaling " + file + ": " + e.description);
+  	}
+  }
+
+  function getContents(file) {
+  	var data = "";
+
+  	try {
+  		var forReading = 1;
+  		var objFSO = new ActiveXObject("Scripting.FileSystemObject");
+  		var f = objFSO.GetFile(file);
+  		var objTempFile = f.OpenAsTextStream(forReading, 0);
+
+  		while( !objTempFile.AtEndOfStream )
+  			data += objTempFile.ReadLine() + "\n";
+  			
+  	} catch(e) {
+  		getScanner().addError(gCurrentFile + ": Unable to get contents");
+  	}
+
+  	return data;
+  }
+
+  //
+  // return the scanner object -- create if one doesn't exist
+  //
+  function getScanner() {
+  	if (!gScanner)
+  		gScanner = new WMIScanner(gCurrentMachine);
+
+  	gScanner.setDebugging(gDebug);
+  	
+  	return gScanner;
+  }
+
+  function processOpt(opt) {
+  	if (opt == "-debug")
+  		gDebug = true;
+  }
+script_attachment: ''
+source: ''
+sys_name: WMIRunner.js
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

@@ -1,0 +1,1 @@
+!GlideMobileExtensions.runningTablet()

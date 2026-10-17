@@ -1,0 +1,186 @@
+- document: sys_hub_step_instance
+  document_key: da3c08c17321201056dff358caf6a7c5
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-01-04 20:22:17
+  sys_id: 223c08c17321201056dff358caf6a7d6
+  sys_mod_count: '3'
+  sys_tags: ''
+  sys_updated_by: maint
+  sys_updated_on: 2021-02-08 16:09:40
+  value: |-
+    (function execute(inputs, outputs) {
+      // Required to script should be the sys_app record id
+      var appSysId = inputs.appSysId;
+
+      //navigate indexed sources and collect sourceTables to index
+      function getSourceTablesToIndex(appSysId) {
+        var tablesToIndex = [];
+
+        var indexedSourceTable = new GlideRecord("ais_datasource");
+        indexedSourceTable.addQuery("sys_scope", appSysId);
+        indexedSourceTable.query();
+
+        while (indexedSourceTable.next()) {
+          var sourceTable = indexedSourceTable.source;
+          tablesToIndex.push(sourceTable);
+        }
+
+        return tablesToIndex;
+      }
+
+      function getSearchProfileName(appSysId) {
+        var searchProfileGr = new GlideRecord("ais_search_profile");
+        searchProfileGr.addQuery("sys_scope", appSysId);
+        searchProfileGr.query();
+
+        if (searchProfileGr.next()) {
+          return searchProfileGr.name;
+        }
+
+        return null;
+      }
+
+      function publishAISDictionaries(appSysId) {
+        var Synchronizer = new sn_ais.Synchronizer();
+
+        var dictionaryGr = new GlideRecord("ais_dictionary");
+        dictionaryGr.addQuery("sys_scope", appSysId);
+        dictionaryGr.query();
+
+        while (dictionaryGr.next()) {
+          var name = dictionaryGr.name;
+          var result = Synchronizer.publishDictionary(name);
+
+          if (result) {
+            gs.info(
+              gs.getMessage("Dictionary with the name {0} is published", name)
+            );
+          } else {
+            gs.error(
+              gs.getMessage(
+                "Failed to publish dictionary with the name {0}, check the log for more details",
+                name
+              )
+            );
+          }
+        }
+      }
+
+      function publishAISProfile(appSysId) {
+        var Synchronizer = new sn_ais.Synchronizer();
+
+        var profileGr = new GlideRecord("ais_search_profile");
+        profileGr.addQuery("sys_scope", appSysId);
+        profileGr.query();
+
+        while (profileGr.next()) {
+          var name = profileGr.name;
+          var result = Synchronizer.publishProfile(name);
+
+          if (result) {
+            gs.info(
+              gs.getMessage("Search profile with the name {0} is published", name)
+            );
+          } else {
+            gs.error(
+              gs.getMessage(
+                "Failed to publish search profile {0}, check the log for more details",
+                name
+              )
+            );
+          }
+        }
+      }
+
+      function indexSourceTables(tablesToIndex) {
+        var IndexEvent = new sn_ais.IndexEvent();
+        for (var i = 0; i < tablesToIndex.length; i++) {
+          try {
+            IndexEvent.indexTable(tablesToIndex[i]);
+          } catch (err) {
+            gs.error(gs.getMessage("Couldn't index table: {0}", tablesToIndex[i]));
+          }
+        }
+      }
+
+      // SCRIPT EXECUTION
+      var hasError = false;
+      var aiSearchEnabled = new sn_ais.StatusApi().isAisEnabled();
+      
+      if (!aiSearchEnabled) {
+        gs.error(gs.getMessage("AI Search is not enabled on this instance."));
+        hasError = true;
+      }
+
+      var searchProfileName = getSearchProfileName(appSysId);
+
+      // validate that there is a search profile for this app
+      if (gs.nil(searchProfileName)) {
+        gs.error(gs.getMessage("There is no search profile for this application"));
+        hasError = true;
+      }
+
+      var tablesToIndex = getSourceTablesToIndex(appSysId);
+
+      if (!hasError) {
+        // The order here is important and must remain as follows
+        publishAISDictionaries(appSysId);
+        publishAISProfile(appSysId);
+        indexSourceTables(tablesToIndex);
+      }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: da3c08c17321201056dff358caf6a7c5
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-01-04 20:22:34
+  sys_id: 264c48c17321201056dff358caf6a78b
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-01-04 20:22:34
+  value: ''
+  variable: 2c226939b3101300176b051a16a8dc83
+- document: sys_hub_step_instance
+  document_key: da3c08c17321201056dff358caf6a7c5
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-01-04 20:22:34
+  sys_id: 624c48c17321201056dff358caf6a78b
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-01-04 20:22:34
+  value: ''
+  variable: 74315b04b3201300176b051a16a8dc2b
+- document: sys_hub_step_instance
+  document_key: da3c08c17321201056dff358caf6a7c5
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-01-04 20:22:34
+  sys_id: ae4c48c17321201056dff358caf6a78a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-01-04 20:22:34
+  value: ''
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: da3c08c17321201056dff358caf6a7c5
+  order: '350'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-01-04 20:22:34
+  sys_id: ea4c48c17321201056dff358caf6a78a
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-01-04 20:22:34
+  value: ''
+  variable: cbd1070373531010791f94596bf6a776

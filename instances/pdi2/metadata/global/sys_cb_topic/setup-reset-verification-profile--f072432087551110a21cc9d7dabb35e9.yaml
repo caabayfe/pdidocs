@@ -1,0 +1,184 @@
+_meta:
+  hash: 7ca64db8041b14873cc78f77dfd4828e236c6cfcde625ee58c9bdc179e25179b
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_topic
+  sys_created_by: rachel.wu@snc
+  sys_created_on: 2022-08-10 22:39:14
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: f072432087551110a21cc9d7dabb35e9
+  sys_mod_count: '77'
+  sys_package: becd3e7f8c5d03100a22deb6dd2b4ec7
+  sys_scope: global
+  sys_update_name: sys_cb_topic_f072432087551110a21cc9d7dabb35e9
+  sys_updated_by: admin
+  sys_updated_on: 2022-10-24 17:16:17
+applicability: |-
+  (function execute() {
+    
+      if(gs.nil(vaContext.providerAppId)){
+          return false;
+      }
+       var providerApp = JSON.parse(sn_cs.VASystemObject.getProviderAppById(vaContext.providerAppId));
+       if(gs.nil(providerApp)){
+           return false;
+       }
+   
+       var SMS_CHANNEL = '5ae1b3e3771700105d7b3882a91061bd';
+       var providerSysId = providerApp.providerId;
+       var csProviderGR = new GlideRecord("sys_cs_provider");
+       csProviderGR.addQuery("sys_id", providerSysId);
+       csProviderGR.addEncodedQuery("link_account_enabled=true^account_link_type!=basic");
+       csProviderGR.query();
+
+       var result = false;
+       if(csProviderGR.next()){
+           if(!csProviderGR.getValue("channel").equals(SMS_CHANNEL)){
+              return false;
+           }
+
+           result = true;     
+       }
+    
+       var session = gs.getSession();
+       var loggedIn = session.isLoggedIn();
+       result = result && (!loggedIn);
+       return result;
+     
+  })()
+applicability_mode: script
+autopilot_topic: 'false'
+category: ''
+channels: SMS
+connect_queue: ''
+context_profiles: ''
+description: Provide information and link for user to setup or reset verification profile
+dialog_acts_enabled: 'false'
+expose_on_palette: 'false'
+flexible_conversation_switching: 'true'
+foundational: 'false'
+graph: |-
+  {
+    "graph_api_version": "1.0.41",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "7d356091fd3346a1a8917cc873b18803": {
+            "id": "7d356091fd3346a1a8917cc873b18803",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "value": "(function execute() {\n    /* Return a quoted string.  For example:\n\n       if (vaInputs.first_name == 'Bill') {\n           return gs.getMessageLang(\"hi there {0}\", vaContext.getRequesterLang(), [vaInputs.first_name]);\n       } else {\n           return gs.getMessageLang(\"how are you {0}\", vaContext.getRequesterLang(), [vaInputs.last_name]);\n       }\n    */\n    vaVars.global_keyword_topic_finished = false;\n    return '';\n})()\n",
+              "mode": "script"
+            }
+          },
+          "7b08bc2f17d347bc8197ce477c29b7c6": {
+            "id": "7b08bc2f17d347bc8197ce477c29b7c6",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "value": "(function execute() {\n    /* Return a quoted string.  For example:\n\n       if (vaInputs.first_name == 'Bill') {\n           return gs.getMessageLang(\"hi there {0}\", vaContext.getRequesterLang(), [vaInputs.first_name]);\n       } else {\n           return gs.getMessageLang(\"how are you {0}\", vaContext.getRequesterLang(), [vaInputs.last_name]);\n       }\n    */\n    vaVars.global_keyword_topic_finished = true;\n    return '';\n\n})()\n",
+              "mode": "script"
+            }
+          },
+          "9078709c69a045218b1f0358dd154b05": {
+            "id": "9078709c69a045218b1f0358dd154b05",
+            "stepType": "TextOutput",
+            "name": "setup message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    \n    return gs.getMessageLang(\"You can setup or reset your account verification setting using the below link.\", vaContext.getRequesterLang());\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "669a994b5ed646589cff8598bd53dd71": {
+            "id": "669a994b5ed646589cff8598bd53dd71",
+            "stepType": "TextOutput",
+            "name": "setup_link",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n  \n    var hostURL = gs.getProperty('glide.servlet.uri');\n    var link = hostURL+\"now/nav/ui/classic/params/target/%24pwd_enrollment_form_container.do\"\n    return link;\n  \n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "6bdd38c89d7940e4a4cbc5f5e3514508",
+            "edgeType": "Edge",
+            "source": "7d356091fd3346a1a8917cc873b18803",
+            "target": "9078709c69a045218b1f0358dd154b05",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "de703b5a54de4964b8f24b66fc21bf42",
+            "edgeType": "Edge",
+            "source": "9078709c69a045218b1f0358dd154b05",
+            "target": "669a994b5ed646589cff8598bd53dd71",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "3118ab5ac3b64e6381e306546decdf2b",
+            "edgeType": "Edge",
+            "source": "669a994b5ed646589cff8598bd53dd71",
+            "target": "7b08bc2f17d347bc8197ce477c29b7c6",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      }
+    }
+  }
+key_phrases: Setup/Reset Verification Profile,reset
+library: 'false'
+live_agent: 'false'
+model_type: ''
+modify_confirmation_enabled: 'false'
+name: Setup/Reset Verification Profile
+nlu_intent: ''
+nlu_intent_label: ''
+nlu_model: ''
+nlu_model_label: ''
+nlu_provider: ''
+palette_label: ''
+roles: public
+root_topic_id: ''
+secure_custom_input_control: 'false'
+source_topic_id: ''
+sys_name: Setup/Reset Verification Profile
+sys_policy: ''
+title: ''
+triggerable_by_notification: 'false'
+type: STANDARD

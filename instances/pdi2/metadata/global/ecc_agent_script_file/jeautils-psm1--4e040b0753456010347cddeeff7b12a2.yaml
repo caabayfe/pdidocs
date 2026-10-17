@@ -1,0 +1,110 @@
+_meta:
+  hash: dc63485a1e59bd1e23be74ecd2a59fefd34696e30c34d66173bd5c6178abe78a
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: cong.thieu
+  sys_created_on: 2020-12-17 18:23:12
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 4e040b0753456010347cddeeff7b12a2
+  sys_mod_count: '8'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_4e040b0753456010347cddeeff7b12a2
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-10-21 18:57:00
+active: 'true'
+checksum: ''
+description: 'Utilities for Just Enough Administration (JEA) Discovery '
+directory: 'false'
+name: JEAUtils.psm1
+parent: 0e991bcf53456010347cddeeff7b1287
+script: |-
+  <#
+      This function creates an ordered dictionary from a given hashtable. It also filters out the elements that are not a string, bool or int data type.
+  #>
+  function hashToSortedDict {
+      param( [HashTable] $hash )
+
+      $dict = [ordered]@{}
+      if ($hash) {
+          $keys = $hash.keys | sort;
+          foreach ($key in $keys ) { 
+              if ($hash[$key] -is [String] -or $hash[$key] -is [int] -or $hash[$key] -is [bool] -or $hash[$key] -is [Byte[]]) {
+                  $dict.add($key, $hash[$key])
+              }
+         }
+      }
+      return $dict
+  }
+
+  <#
+      This function checks if the signing certificate is already available in a global variable; If not, it will be retrieved from the machine certificate store.
+  #>
+  function retrieveSigningCert  {
+      if (-not $global:SNC_jea_disco_cert) {
+          $mycert = Get-ChildItem Cert:\LocalMachine\My\ | Where {$_.Issuer -eq 'CN=jea-disco@servicenow.com'  -and $_.Subject -eq 'CN=jea-disco@servicenow.com'}
+          if ($mycert -is [Array]) {
+              SNCLog-DebugInfo "Only ONE jea-disco certificate is allowed in the local machine cert store. Please fix the issue and retry"
+          } elseif (-not $mycert) {
+              SNCLog-DebugInfo "No jea-disco certificate found in the local machine cert store."
+          } else {
+              $global:SNC_jea_disco_cert = $mycert
+              SNCLog-DebugInfo "SNC_jea_disco_cert is now available!"
+          }
+      }
+  }
+
+  <#
+      This function checks if JEA discovery is enabled and the code signing certificate is available.
+  #>
+  function isJEACodeSigning  {
+      return ($global:isJea -and $global:SNC_jea_disco_cert)
+  }
+
+  <#
+      This function signs a script or any string content together with a hashtable parameter using jea-disco certificate and 
+       returns the signature as Base64 string. If the certificate is not available yet, it tries to load it from the local machine cert store.
+  #>
+  function signContent {
+      param( [String] $content, [HashTable] $params )
+
+      if  ($global:SNC_jea_disco_cert -and $global:SNC_jea_disco_cert.PrivateKey) {
+          $sortedParams = hashToSortedDict $params
+          $paramsAsStr = convertTo-Json $sortedParams -Compress
+          $raw_input_data = [System.Text.Encoding]::UTF8.GetBytes($content + $paramsAsStr)
+          $sign_data = $global:SNC_jea_disco_cert.PrivateKey.SignData($raw_input_data, $SNC_HASH_ALGORITHM)
+          return [System.Convert]::ToBase64String($sign_data)
+      } else {
+          SNCLog-DebugInfo "jea-disco certificate or private key not found"
+      }
+      return ""
+  }
+
+  <#
+      This function signs and sends a script to execute on the target via JEAExecute-Script function
+  #>
+  function invokeJEAExecuteScript {
+      [CmdletBinding()]
+      Param([System.Management.Automation.Runspaces.PSSession] $remotePs, 
+                     [String][Parameter(Mandatory = $true)] $script,
+                     [HashTable][Parameter(Mandatory = $false)] $params)
+      
+      $signature = signContent $script $params
+      $output = Invoke-Command -Session $remotePs -ScriptBlock { JEAExecute-Script $using:script $using:signature $using:params }
+      return $output
+  }
+
+  # Code Signing Algorithm
+  $SNC_HASH_ALGORITHM = "SHA512"
+
+  # Load signing certificate
+  retrieveSigningCert
+script_attachment: ''
+source: ''
+sys_name: JEAUtils.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

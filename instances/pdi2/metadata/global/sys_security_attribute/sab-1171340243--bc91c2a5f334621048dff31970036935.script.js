@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_compliance_m2m_policy_policy_statement');

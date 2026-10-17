@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="jvar_display_col" jelly="true" expression="gs.getDisplayColumn((jelly.sysparm_collection || '') + '')"/>
+  <g:evaluate var="jvar_display_col2" jelly="true" expression="gs.getDisplayColumn((jelly.sysparm_collection_related_file || '') + '')"/>
+  <g:evaluate var="jvar_display_array" jelly="true" expression="gs.sqlItemsByID((jelly.sysparm_collection || '') + '', (jelly.jvar_display_col || '') + '', (jelly.sysparm_collectionID || '') + '', 1)" object="true"/>
+  <g:set_if var="jvar_ref_table" test="${empty(jvar_ref_table)}" true="${sysparm_m2m_ref}" />
+  <g:set_if var="jvar_form_type" test="${empty(sysparm_form_type)}" true="m2m" false="${sysparm_form_type}" />
+  <j:set var="jvar_related_full" value="${sysparm_collection_related_file}"/>
+  <j:set var="jvar_list_entries" value="${sysparm_list_entries}"/>
+  <g:evaluate var="jvar_display_name" expression="jelly.jvar_display_array.get(0).get(0)" jelly="true" copyToPhase2="true"/>
+  <g2:setjs var="__ref_table" value="${jvar_ref_table}"/>
+  <g2:evaluate var="jvar_maintain_order" jelly="true">
+     var hasAttribute = false;
+	 var td = GlideTableDescriptor.get(__ref_table);
+	 if (td) {
+         var ed = td.getED();
+	     if (ed)
+	         hasAttribute = ed.getBooleanAttribute('m2mMaintainOrder');
+	 }
+
+	 if (jelly.sysparm_maintain_order == 'true')
+	  	hasAttribute = true;
+
+	 hasAttribute;
+  </g2:evaluate>
+
+  <g:requires name="scripts/SlushBucketContext.js"/>
+  <g:requires name="scripts/SlushBucketViewRules.js"/>
+  <g:requires name="scripts/SlushBucketScopeUtil.js"/>
+
+  <g:inline template="set_m2m_jvars.xml"/>
+  <FORM name="editPage" onsubmit="javascript:saveAllSelected([ gel('${jvar_m2m_select_0}'), gel('${jvar_m2m_select_1}') ], [ gel('${jvar_m2m_lcodes_0}'), gel('${jvar_m2m_lcodes_1}') ], ',', '\\', '--None--');"
+    action="slushbucket.do" method="post">
+    <input type="HIDDEN" name="${jvar_m2m_lcodes_1}" id="${jvar_m2m_lcodes_1}" />
+    <input type="HIDDEN" name="${jvar_m2m_lcodes_0}" id="${jvar_m2m_lcodes_0}"/>
+    <input type="HIDDEN" name="sysparm_referring_url" value="${sysparm_referring_url}" />
+    <input type="HIDDEN" name="sys_action" value="none" />
+    <input type="HIDDEN" name="sysparm_form" value="${jvar_form_type}" />
+	<input type="HIDDEN" name="sys_target" id="sys_target" value="${jvar_ref_table}" />
+	<input type="HIDDEN" name="sysparm_collection" value="${sysparm_collection}" />
+	<input type="HIDDEN" name="sysparm_collectionID" value="${sysparm_collectionID}" />
+	<input type="HIDDEN" name="sysparm_collection_key" value="${sysparm_collection_key}" />
+	<input type="HIDDEN" name="sysparm_collection_related_file" value="${sysparm_collection_related_file}" />
+	<input type="HIDDEN" name="sysparm_collection_related_field" value="${sysparm_collection_related_field}" />
+	<input type="HIDDEN" name="sysparm_collection_label" value="${sysparm_collection_label}" />
+	<j:if test="${!empty(sysparm_changeset)}">
+	<input type="HIDDEN" name="sysparm_changeset" value="${sysparm_changeset}" />
+	</j:if>
+	<j:if test="${!empty(sysparm_domain)}">
+		<input type="HIDDEN" name="sysparm_domain" value="${sysparm_domain}" />
+	</j:if>
+	<j:if test="${!empty(sysparm_domain_scope)}">
+		<input type="HIDDEN" name="sysparm_domain_scope" value="${sysparm_domain_scope}" />
+	</j:if>
+	<j:if test="${!empty(sysparm_transaction_scope)}">
+		<input type="HIDDEN" id="sysparm_transaction_scope" name="sysparm_transaction_scope" value="${sysparm_transaction_scope}"/>
+	</j:if>	
+	<g:inline template="slushtitle.xml"/>
+	<g:set_if var="jvar_header_class" test="${RP.isPortal()}"
+			true="" false="section_header_content_no_scroll touch_scroll"/>
+	<div class="${jvar_header_class}" data-position-below-header="true">
+	   	<g:inline template="sys_m2m_body.xml"/>
+	   	<div id="page_timing_div" class="timingDiv" />
+   	</div>
+  </FORM>
+ 	
+</j:jelly>

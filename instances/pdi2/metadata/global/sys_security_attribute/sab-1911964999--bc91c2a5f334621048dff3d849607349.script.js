@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_sym_dlp_detected_sensitive_information_type');

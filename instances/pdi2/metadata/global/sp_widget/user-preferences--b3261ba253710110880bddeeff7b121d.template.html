@@ -1,0 +1,152 @@
+<div class="default-focus-outline">
+  <div ng-if="!data.userExists" class="panel panel-default">
+      <div class="panel-body wrapper-lg text-center">
+        <p>${Requested user not found}</p>
+      </div>
+  </div>
+  <div ng-if="data.userExists">
+    <div class="row" ng-if="data.preferencesEnabled.preferencesPanelEnabled">
+      <div class="col-sm-12 col-xs-12">
+        <div class="panel panel-default b">
+          <div class="panel-heading">
+            <h2 class="panel-title">
+              <i class="fa fa-cog m-r-sm" aria-hidden="true"></i>${User preferences}
+            </h2>
+          </div>
+          <div class="body padder-xs">
+            <div class="list-group">
+              <div class="list-group-item">
+                <label>${Accessibility enabled} </label>
+                <div class="input-switch">
+                  <input type="checkbox"
+                         ng-change="setUserPreferenceValue(data.userPreferences.accessibility)"
+                         ng-model="data.userPreferences.accessibility.value"
+                         name="accessibility-enabled" id="accessibility-enabled" aria-label="${Accessibility enabled}" role="switch" ng-attr-aria-checked="{{ data.userPreferences.accessibility.value }}"/>
+                  <label class="switch" for="accessibility-enabled" ng-click="toggle($event, data.userPreferences.accessibility)" role="presentation" aria-hidden="true">
+                    <span class="sr-only">${Accessibility enabled}</span>
+                  </label>
+                  <div class="toggle-text-wrapper">
+                    {{ data.userPreferences.accessibility.value ? data.onTextMessage : data.offTextMessage }}
+                  </div>  
+                </div>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.voiceInputEnabled">
+                <label for="voice-input-enabled">${Enable voice input for ServiceNow Otto} </label>
+                <div class="input-switch">
+                  <input type="checkbox"
+                         ng-change="setUserPreferenceValue(data.userPreferences.voiceInput)"
+                         ng-model="data.userPreferences.voiceInput.value"
+                         name="voice-input-enabled" id="voice-input-enabled" aria-label="${Enable voice input for ServiceNow Otto}" role="switch" ng-attr-aria-checked="{{ data.userPreferences.voiceInput.value ? 'true' : 'false' }}"/>
+                  <label class="switch" for="voice-input-enabled" aria-hidden="true">
+                    <span class="sr-only">${Enable voice input for ServiceNow Otto}</span>
+                  </label>
+                  <div class="toggle-text-wrapper">
+                    {{ data.userPreferences.voiceInput.value ? data.onTextMessage : data.offTextMessage }}
+                  </div>
+                </div>
+              </div>
+              <div class="list-group-item" ng-if="data.showAnalytics && data.userAnalyticsDetails.consent_toggle_available">
+                <label>${Enable Analytics} </label>
+                <div class="input-switch">
+                  <input type="checkbox"
+                         ng-change="updateUserTracking(data.userAnalyticsDetails.tracking_enabled)"
+                         ng-model="data.userAnalyticsDetails.tracking_enabled"
+                         name="analytics-enabled" id="analytics-enabled" aria-label="${Enable Analytics}" role="switch" ng-attr-aria-checked="{{ data.userAnalyticsDetails.tracking_enabled }}"/>
+                  <label class="switch" for="analytics-enabled" ng-click="toggle($event, data.userPreferences.analytics)" role="presentation" aria-hidden="true">
+                    <span class="sr-only">${Enable Analytics}</span>
+                  </label>
+                  <div class="toggle-text-wrapper">
+                    {{ data.userAnalyticsDetails.tracking_enabled ? data.onTextMessage : data.offTextMessage }}
+                  </div>
+                </div>
+                <label ng-if="data.analyticsPreferenceUpgraded">
+                  <span>{{getAnalyticsUpgradeMessage()}}</span>
+                </label>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.timezoneEnabled">
+                <label for="time_zone_picker_select">${Time zone}</label>
+                <select id="time_zone_picker_select" class="form-control "
+                        name="time_zone_picker_select" ng-model="data.listProperties.timezone.current"
+                        ng-change="setPreferenceValue('timezone', data.listProperties.timezone.current.value)"
+                        ng-options="item as item.label for item in data.listProperties.timezone.list track by item.value"></select>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.languageEnabled">
+                <label for="language_picker_select">${Language}</label>
+                <select id="language_picker_select" class="form-control"
+                        name="language_picker_select" ng-model="data.listProperties.language.current.value"
+                        ng-change="setPreferenceValue('language', data.listProperties.language.current.value)">
+                        <option ng-repeat="item in data.listProperties.language.list track by item.value"
+                          value="{{item.value}}"
+                          ng-selected="item.value === data.listProperties.language.current.value"
+                          ng-attr-lang="{{getLangCode(item.value)}}">
+                          {{item.label}}
+                        </option>
+                </select>
+              </div>
+              <div class="list-group-item" ng-if="data.themeVariantMappings && data.themeVariantMappings.length > 0">
+                <sp-widget widget="data.variantSelector"></sp-widget>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.encryptionEnabled">
+                <label for="encryption_picker_select">${Encryption}</label>
+                <span class="fa fa-lock"></span>
+                <select id="encryption_picker_select" class="form-control"
+                        name="encryption_picker_select" ng-model="data.listProperties.encryption.current"
+                        ng-change="setPreferenceValue('encryption', data.listProperties.encryption.current.value)"
+                        ng-options="item as item.label for item in data.listProperties.encryption.list "></select>
+              </div>
+              <div class="list-group-item" ng-if="data.hasChannelValues">
+                <label for="communication_picker_select">${Preferred Communication Channels}</label>
+                <select id="communication_picker_select"
+                        name="communication_picker_select"
+                        ng-model="selectedValues"
+                        ng-change="onChangeChannel(selectedValues)"
+                        ng-options="channel.value as channel.display for channel in data.channelList"
+                        multiple="multiple"></select>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.mfaEnabled">
+                <button class="btn btn-link" ng-click="triggerMFAConfigurationModal()" role="link">${Configure Multi-Factor Authentication}</button>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.softPinEnrollmentEnabled">
+                <button class="btn btn-link" ng-click="triggerEnrollSoftPinModal()" aria-haspopup="dialog">${Enroll Soft PIN}</button>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.certAuthEnabled">
+                <button class="btn btn-link" ng-click="triggerCertificateConfigurationModal()" aria-haspopup="dialog">${Register your client certificate}</button>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.certAuthEnabled">
+                <button class="btn btn-link" ng-click="triggerManageCertificatesModal()" aria-haspopup="dialog">${Manage your client certificates}</button>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.trustedDeviceEnabled">
+                <button class="btn btn-link" ng-click="triggerRegisterTrustedDevice()" aria-haspopup="dialog">${Register Trusted Device}</button>
+              </div>
+              <div class="list-group-item" ng-if="data.showPrivacyPolicyLink && privacyPolicyLink">
+                <a class="btn btn-link" ng-href="{{privacyPolicyLink}}" aria-label="${Privacy Policy opens in a new tab}" target="_blank">${Privacy Policy} <i class="fa fa-external-link flip-icon-rtl"></i></a>
+              </div>
+             <div class="list-group-item" ng-if="data.preferencesEnabled.identityCenterEnabled">
+                <button class="btn btn-link" ng-click="openIdentityCenter()" role="link">${View Identity Center}</button>
+              </div>
+              <div class="list-group-item" ng-if="data.preferencesEnabled.isEligibleForContinuousAuthentication">
+                <button class="btn btn-link" ng-click="commenceContinuousAuthentication(data.continuousAuthCorrelationId)" role="link">${Create High-Assurance Session}</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer clearfix" ng-if="data.userPreferencesChanged">
+            <a id="refresh-to-see-changes" href="javascript:void(0)"
+               ng-click="reloadPage()" class="pull-right btn btn-primary"><i class="fa fa-refresh m-r-sm" aria-hidden="true"></i>${Refresh to see changes}</a>
+          </div>
+        </div>
+      </div>
+      <script type="text/ng-template" id="certAuthModalTemplate">
+        <div>
+          <div class="modal-header">
+            <h1 class="h4 modal-title" id="certAuthModal" style="display: inline-block">${PIV/CAC Certificate Found}</h1>
+            <i class="fa fa-close pull-right text-base" tabindex="0" ng-click="dismissCertAuthConfigurationModal()" aria-label="${Close dialog}" role="button"></i>
+          </div>
+          <div class="modal-body">
+          	<iframe id="cert-auth-config-window" src="/cert_confirm_page.do" width="100%" height="240px" frameBorder="0"></iframe>
+          </div>
+          
+        </div>
+      </script>
+    </div>
+  </div>
+</div>

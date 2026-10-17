@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<!-- ACTUAL PAGE STARTS HERE -->
+
+<g:macro_invoke macro="$pwd_reset_stylesheet"/>
+<g:requires name="scripts/lib/jquery_includes.js" includes="true"/>
+<g:macro_invoke macro="$pwd_error_message" error_message="" />
+<g:include_script src="$pwd_util.jsdbx"/>
+
+<nav class="navbar navbar-default" role="navigation">
+	<div class="container-fluid">
+		<div class="navbar-header">
+			<button class="btn btn-default icon-chevron-left navbar-btn" onclick="goBack();" aria-label="${gs.getMessage('Back')}" title="${gs.getMessage('Back')}"></button>   
+		</div>  
+	</div>
+</nav>
+
+<g:macro_invoke macro="$pwd_process_flow" stage="1" />
+
+<h1 class="sr-only">${gs.getMessage('ServiceNow Password Reset Service Desk, step 1 out of 3')}</h1>
+
+<center>
+  <div class="pwd-reset-box">
+    <form>
+      <h2 class="pwd-title">${gs.getMessage('Password Reset Assistance')}</h2>
+      <h3 class="pwd-subtitle">${gs.getMessage('Select a user, then select a process, and click the "Verify Identity" button.')}</h3>
+
+      <div id="user_id_form_group" class="form-group is-required">
+        <label for="sys_display.ref_sys_user" class="control-label col-sm-3">
+          <span class="required-marker sn-tooltip-basic" 
+title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+          ${gs.getMessage('Select user')}
+        </label>
+        <span class="col-sm-9">
+          <j:set var="jvar_user_id" value=""/> 
+          <j:set var="jvar_user_name" value=""/> 
+
+          <g:evaluate var="jvar_user_has_next" jelly="true">
+          	var renUser = new GlideRecord("sys_user");
+            renUser.addQuery("sys_id", jelly.sysparm_user);
+            renUser.query();
+            renUser.next();
+          </g:evaluate>
+
+          <j:if test="${jvar_user_has_next}">
+            <j:set var="jvar_user_id" value="$[renUser.sys_id]"/>
+            <j:set var="jvar_user_name" value="$[renUser.name]"/>
+          </j:if>
+
+          <g:macro_invoke macro="ui_reference" id="ref_sys_user" name="ref_sys_user" table="sys_user" show_popup="true" value="${jvar_user_id}" displayvalue="${jvar_user_name}" onchange="populateProcessSelect(); updateMandatoryMarker(this, 'user_id_form_group')"/>
+        </span>
+        <span class="col-sm-3"/><span id="error_msg_id" class="help-block col-sm-9"/>
+      </div>
+
+      <div id="process_select_form_group" class="form-group is-required">
+        <label for="processSelectId" class="control-label col-sm-3">
+          <span class="required-marker sn-tooltip-basic" 
+title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+          ${gs.getMessage("Select process")}
+        </label>
+        <span class="col-sm-9">
+          <select id="processSelectId" class="form-control pwd-form-control select2" required="true" aria-required="true" name="processSelectId" onchange="enableVerifyButton(); updateMandatoryMarker(this, 'process_select_form_group');">
+            <option value="0">${gs.getMessage('-- Select a process --')}</option>
+          </select>
+        </span>
+        <span class="col-sm-3"/><span id="error_msg_select" class="help-block col-sm-9"/>
+      </div>
+
+      <input type="hidden" name="sysparm_action" id="sysparm_action" value="password_reset_form" />
+      <button name="sysverb_pwd_reset" id="sysverb_pwd_reset" class="btn btn-primary btn-pwd-submit" onclick="return verifyIdentity();" aria-label="${gs.getMessage('Verify Identity')}" disabled="disbaled">${gs.getMessage('Verify Identity')}</button>
+    </form>
+
+    <!--  
+      Adding a new CSRF token here. This page does not check whether there's a violation or not because this page 
+      is the starting point.
+    -->
+
+    <g:evaluate var="jvar_csrf_token" jelly="true">
+      new SNC.PwdSecurityManager().generateSecureToken();
+    </g:evaluate>
+
+    <form id="pwd_master_form" name="pwd_master_form" method="post">
+      <input type="hidden" id="sysparm_error" name="sysparm_error" value=""/>
+      <input type="hidden" id="pwd_csrf_token" name="pwd_csrf_token" value="${jvar_csrf_token}"/>
+    </form>
+  </div>
+</center>
+</j:jelly>

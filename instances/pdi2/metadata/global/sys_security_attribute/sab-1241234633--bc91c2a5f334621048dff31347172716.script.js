@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('service_organization_customer_criteria');

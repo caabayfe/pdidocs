@@ -1,0 +1,71 @@
+<div class="flyout-container" id="ec-flyout-container" role="dialog">
+  <div class="modal-content" ng-keydown="c.handleAccessibilityInFlyout($event)" tabindex="-1">
+    <div class="modal-header">
+      <h2 class="modal-title" id="filter-flyout-title">${All filters}</h2>
+      <button id="ec-flyout-close-btn" class="close" data-dismiss="modal" aria-label="${Close}"> <i
+          class="fa fa-times"></i> </button>
+    </div>
+    <div class="modal-body">
+      <div class="filter-container">
+        <div ng-repeat="fc in c.filtersData">
+          <h3 class="title-style"> {{fc.category}} <span
+              ng-show="fc.selectedFilters.length > 0">({{fc.selectedFilters.length}})</span> </h3>
+          <ul class="category-content-wrapper list-group">
+            <!-- multi select -->
+            <li ng-repeat="filter in fc.filters" class="filter-content-wrapper col-md-6"
+              ng-if="fc.filterType != 'reference'">
+              <div class="filter-style" ng-if="fc.multiSelect">
+                <input class="filter-checkbox" ng-change="c.onFilterValueChange(fc, filter, true)"
+                  ng-model="filter.selected" type="checkbox" name="{{filter.value}}"
+                  id="ft-{{fc.categoryId + '-' +filter.value}}" aria-label="{{c.getFilterAriaLabel(filter)}}" />
+                <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{filter.label}}" for="ft-{{fc.categoryId + '-' +filter.value}}">{{filter.label}}</label>
+              </div>
+
+              <!-- single select -->
+              <div class="filter-style" ng-if="!fc.multiSelect">
+                <input class="filter-checkbox" ng-change="c.onFilterValueChange(fc, filter, true)"
+                  ng-model="fc.selected" type="radio" value="{{filter.value}}" name="ft-{{fc.category}}"
+                  id="ft-{{fc.categoryId + '-' +filter.value}}" aria-label="{{c.getFilterAriaLabel(filter)}}" />
+                <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{filter.label}}" for="ft-{{fc.categoryId + '-' +filter.value}}">{{filter.label}}</label>
+              </div>
+            </li>
+            <!-- reference -->
+            <div ng-if="fc.filterType == 'reference'">
+              <div class="typeahead-filter">
+                <req-dynamic-record-picker id="{{fc.categoryId}}" field="fc.selection" table="fc.referenceTable"
+                  default-query="fc.referenceCondition" display-field="fc.searchField" value-field="'sys_id'"
+                  search-fields="fc.searchField" page-size="10" multiple="true"
+                  on-change="c.onFilterValueChangeReference(fc, filter, true)" placeholder="${Search}" />
+              </div>
+              <ul class="category-content-wrapper list-group">
+                <li ng-repeat="filter in fc.filters" ng-show="filter.selected" class="filter-content-wrapper col-md-6">
+                  <div class="filter-style">
+                    <input class="filter-checkbox" type="checkbox" id="ft-{{fc.categoryId + '-' +filter.value}}"
+                      name="{{fc.categoryId}}" ng-model="filter.selected"
+                      ng-click="c.onFilterValueChangeReference(fc, filter, true, 'remove', $event)">
+                    <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{filter.label}}" for="ft-{{fc.categoryId + '-' +filter.value}}">{{filter.label}}</label>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </ul>
+          <hr class="divider" ng-if="!$last" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer filter-footer-container pd-all-xl">
+      <div class="display-flex space-between">
+        <div class="display-flex">
+          <button class="btn btn-link clear-filter-button" onclick="clearAllFiltersMobile()"
+            ng-disabled="!c.enableClearBtn" aria-label="${Clear}">${clear}</button>
+        </div>
+        <div class="display-flex modal-footer-style">
+          <button id="ec-flyout-cancel-btn" class="btn btn-default" data-dismiss="modal"
+            aria-label="${Cancel}">${Cancel}</button>
+          <button id="ec-flyout-apply-btn" class="btn btn-primary" data-dismiss="modal" ng-disabled="!c.enableApplyBtn"
+            onclick="applyFilterMobile()" aria-label="${Apply}">${Apply}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

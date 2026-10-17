@@ -1,0 +1,147 @@
+<div>
+  <div class="panel panel-default" ng-if="::!data.request && (!options.isServiceWorkspace || !data.currentRecord)">
+    <div class="wrapper-md b-b">
+      <h4>${Request not found}</h4>
+    </div>
+  </div>
+</div>
+ <div ng-if="data.request.pendingRPCount > 0" class="alert alert-info" role="status">
+        {{::data.msg.pendingRPMsg}}
+ </div>
+<div class="panel panel-default" ng-if="::data.request || (options.isServiceWorkspace && data.currentRecord)">
+  <div ng-Class="getSVGClass()" ng-if="::data.is_new_order">
+    <svg alt="" class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+      <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"></circle>
+      <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"></path>
+    </svg>
+    <div class="text-center text-success request-success-message">
+      ${Thank you}!<br>
+      ${Your request has been submitted}.
+    </div>
+  </div>
+  <div ng-Class="getOrderInfoClass()">
+  	<div class="text-left inline" role="list" ng-if="::data.request">
+  		<div class="text-muted" role="listitem">
+  			${Submitted} : {{::data.request.submitted_on}}
+  		</div>
+  		<div class="text-muted" role="listitem" ng-if="(options.display_request_number === 'true') && ((options.isServiceWorkspace && !data.isMEE) || data.request.universal_request == '')">
+  			${Request Number} : <b>{{::data.request.number}}</b>
+		</div>
+		<div class="text-muted" role="listitem" ng-if="data.request.universal_request">
+			${Universal Request Number} : <b>{{::data.request.universal_request}}</b>
+		</div>
+		<div class="text-muted" role="listitem" ng-if="data.request.opened_by !== data.request.requested_for">
+			${Requested for} : {{::data.request.requested_for}}
+		</div>
+		<div class="text-muted" role="listitem" ng-if="::options.display_delivery_date == 'true'">
+			${Estimated Delivery} : {{::data.request.show_estimated_delivery ? data.request.esimated_delivery : '--'}}
+		</div>
+    </div>
+    <div class="text-left inline" role="list" ng-if="::!data.request && (options.isServiceWorkspace && data.currentRecord)">
+      <div class="text-muted" role="listitem">
+        {{::data.tableName}} ${record} : <b>{{::data.currentRecord.number}} </b>
+      </div>
+    </div>
+  </div>
+  <div class="container-fluid" ng-if="::options.isServiceWorkspace || isNative">
+    <div class="row">
+      <div class="wrapper-md column col-md-12 text-center" ng-if="::!(options.isServiceWorkspace && data.hide_actions)">
+        <button name="close" aria-label="{{::closeButtonLabel}}" class="btn" ng-class="isNative ? 'btn-secondary sc-order-status-button' : 'btn-default'" role="button" ng-click="closeTab()">{{::closeButtonLabel}}</button>
+        <button name="viewDetails" ng-click="viewDetails()" aria-label="${View Details}" ng-class="{'sc-order-status-button': c.isNative}" class="btn sc-btn btn-primary m-l-xs" sn-focus="true" role="button" ng-if="!isNative">${View Details}</button>
+      </div>
+    </div>
+	</div>
+  <div style="overflow-x:auto;">
+    <table class="table table-striped status-table" ng-if="::data.request.requestItems.length && displayRequestItemTable()" aria-label='${Request summary}' aria-describedby='id-request-summary-caption'>
+    	<caption id='id-request-summary-caption'><span class="sr-only">${Request summary}</span></caption>
+      <thead>
+        <tr>
+          <th id="id-header-number" scope="col" class="wrapper-md col-md-2" ng-if="::options.display_number === 'true'">${Request Item}</th>
+          <th id="id-header-name" scope="col" class="wrapper-md col-md-2" ng-if="::options.display_name === 'true'">${Item}</th>
+          <th id="id-header-requested-for" scope="col" class="wrapper-md col-md-2" ng-if="::data.request.show_requested_for">${Requested For}</th>
+          <th id="id-header-delivery-date" scope="col" class="wrapper-md col-md-2" ng-if="::options.display_delivery_date === 'true'">${Delivery Date}</th>
+          <th id="id-header-stage" scope="col" class="wrapper-md col-md-3" ng-if="::options.display_stage === 'true'">${Stage}</th>
+          <th id="id-header-price" scope="col" class="wrapper-md col-md-2" ng-if="::(options.display_price === 'true' && data.showSubTotalPrices)">${Price} (${each})</th>
+          <th id="id-header-quantity" scope="col" class="wrapper-md col-md-1" ng-if="::options.display_quantity === 'true'">${Quantity}</th>
+          <th id="id-header-total-price" scope="col" class="wrapper-md col-md-2" ng-if="::(options.display_total_price === 'true' && data.showSubTotalPrices)">${Total}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="requestItem in ::data.request.requestItems">
+          <td headers="id-header-number" class="wrapper-md" ng-if="::options.display_number === 'true'">
+            <a title="{{::requestItem.number}}" href="?id=ticket&table=sc_req_item&sys_id={{requestItem.sys_id}}&view=sp"
+              ng-if="::requestItem.number">{{::requestItem.number}}</a>
+          </td>
+          <td header="id-header-name" class="wrapper-md" ng-if="::options.display_name === 'true'">
+            <a title="{{::requestItem.name}}" href="?id=ticket&table=sc_req_item&sys_id={{requestItem.sys_id}}&view=sp"
+              ng-if="::requestItem.name">{{::requestItem.name}}</a>
+          </td>
+          <td header="id-header-requested-for" class="wrapper-md text-overflow-ellipsis" ng-if="::data.request.show_requested_for">
+            <a title="{{::requestItem.requested_for}}" href="?id=user_profile&sys_id={{requestItem.requested_for_id}}&view=sp"
+              ng-if="::requestItem.requested_for">{{::requestItem.requested_for}}</a>
+          </td>
+          <td header="id-header-delivery-date" class="wrapper-md" ng-if="::options.display_delivery_date === 'true'">
+            <span ng-if="::(requestItem.delivery_date && requestItem.show_delivery_time)">{{requestItem.delivery_date}}</span>
+            <span class="sr-only" ng-if="::(requestItem.delivery_date && !requestItem.show_delivery_time)">${blank}</span>
+            <span ng-if="::(requestItem.delivery_date && !requestItem.show_delivery_time)" aria-hidden=true>--</span>
+          </td>
+          <td header="id-header-stage" class="wrapper-md" ng-if="::options.display_stage === 'true'">
+            <sp-widget widget="::requestItem.stageWidget"></sp-widget>
+          </td>
+          <td header="id-header-price" class="wrapper-md" ng-if="::(options.display_price === 'true' && data.showSubTotalPrices)">
+            <div ng-if="::requestItem.showPrice"> &nbsp;&nbsp;&nbsp;{{::requestItem.price_dv}}</div>
+            <div ng-if="::requestItem.showRecurringPrice"><span>{{::requestItem.showPrice ? '+' : '' }} <span class="sr-only">${Recurring price}</span>{{::requestItem.recurring_price_dv}}</span></div>
+            <span class="sr-only" ng-if="::(!requestItem.showPrice && !requestItem.showRecurringPrice)">${blank}</span>
+            <div ng-if="::(!requestItem.showPrice && !requestItem.showRecurringPrice)" aria-hidden=true>
+              	---
+            </div>
+          </td>
+          <td header="id-header-quantity" class="wrapper-md" ng-if="::options.display_quantity === 'true'">{{::requestItem.show_quantity ? requestItem.quantity : '--'}}</td>
+          <td header="id-header-total-price" class="wrapper-md" ng-if="::(options.display_total_price === 'true' && data.showSubTotalPrices)">
+            <div ng-if="::requestItem.showPrice">&nbsp;&nbsp;&nbsp;{{::requestItem.total_price_dv}}</div>
+            <div ng-if="::requestItem.showRecurringPrice"><span>{{::requestItem.showPrice ? '+' : '' }} <span class="sr-only">${Recurring price}</span>{{::requestItem.total_reccuring_price_dv}}</span></div>
+            <span class="sr-only" ng-if="::(!requestItem.showPrice && !requestItem.showRecurringPrice)">${blank}</span>
+            <div ng-if="::(!requestItem.showPrice && !requestItem.showRecurringPrice)" aria-hidden=true>
+              ---
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="wrapper-md b-t" ng-if="::(options.display_total_price === 'true' && data.showSubTotalPrices) && !options.isServiceWorkspace && !isNative">
+    <div class="text-muted text-right">
+      <div class="h4 text-bold">${Total}: {{::data.totalPrice}}</div>
+      <div class="h5 text-bold" ng-repeat="rec in ::data.request.recurringPrice"> + {{rec.val}} {{rec.val_dv}}</div>
+    </div>
+  </div>
+</div>
+<uib-accordion>
+  <uib-accordion-group class="accordion-header b" is-open="actions.isOpen" ng-if="::(data.sys_properties.canClone && options.can_clone == 'true' && data.request && !options.isServiceWorkspace && !isNative)" template-url="orderStatusAccordionTemplate.html">
+    <uib-accordion-heading>
+      <div class="row panel-title h4">
+        	<span tabindex="0" role="button" class="fa accordion-icon" ng-class="actions.isOpen ? 'fa-chevron-up' : 'fa-chevron-down'" aria-expanded="{{actions.isOpen}}" aria-label="${Additional Actions}" >
+        </span>
+        ${Additional Actions}
+      </div>
+    </uib-accordion-heading>
+    <div class="row">
+      <div class="panel-body">
+          <div class="form-group">
+            <label class="field-label" for="sp_formfield_{{::field.name}}">
+              ${Also request for}
+              <i class="fa fa-info-circle" title="${To place the same request for additional users}" tabindex="0" data-toggle="tooltip" data-placement="right"></i>
+            </label>
+            <span>
+              <sp-reference-element  sn-select-width="100%"
+                                    field="field" glide-form="field.g_form"
+                                    sn-options="{multiple: true, placeholder: '${Please select additional users}'}" ></sp-reference-element>
+            </span>
+          </div>
+          <button class="btn btn-primary pull-right" ng-click="reOrder()">${Submit}</button>
+      </div>
+      <sp-widget widget="c.progressModal" ng-if="c.progressModal"></sp-widget>
+    </div>
+  </uib-accordion-group>
+</uib-accordion>

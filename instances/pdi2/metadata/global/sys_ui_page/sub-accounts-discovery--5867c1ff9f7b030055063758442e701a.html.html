@@ -1,0 +1,127 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate>
+		var discoveryStatus = RP.getWindowProperties().get('sysparm_discovery_status_sysid') + '';
+		var inputEccQueueSysId = RP.getWindowProperties().get('sysparm_input_ecc_sysid') + '';
+		var agent = RP.getWindowProperties().get('sysparm_agent') + '';
+		var cloudProvider = RP.getWindowProperties().get('sysparm_cloud_provider') + '';
+	</g:evaluate>
+
+	<style>
+		.container-td {
+			padding-top: 5px;
+		}
+
+		.bottom-buffer {
+			padding-bottom: 5px;
+		}
+
+		#pattern_successful {
+			display: none;
+		}
+
+		#pattern_failed {
+			display: none;
+		}
+
+		.patternSuccess {
+			font-size:200%;
+			vertical-align:sub;
+			color:#71e279;
+		}
+
+		.patternFail {
+			font-size:200%;
+			vertical-align:sub;
+			color:#f95050;
+		}
+
+		.centerAlignContent {
+			text-align: center;
+		}
+
+		#cancelButton {
+			min-width: 5em;
+		}
+
+		#okButton {
+			min-width: 5em;
+		}
+		#AWS {
+			display: none;
+		}
+
+		#Azure {
+			display: none;
+		}
+
+		#Google {
+			display: none;
+		}
+	</style>
+
+	<input type="hidden" id="discovery_status_sysid_text" value="${discoveryStatus}" />
+	<input type="hidden" id="input_ecc_queue_sysid_text" value="${inputEccQueueSysId}" />
+	<input type="hidden" id="agent_text" value="${agent}" />
+	<input type="hidden" id="cloud_provider_text" value="${cloudProvider}" />
+	<table width="100%">
+		<tr>
+			<td align="center" valign="middle" class="container-td">
+
+				<!-- Test progress div -->
+				<div id="pattern_in_progress" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-loading"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="poll_text">${gs.getMessage('Running sub accounts pattern')}</span>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<button id="cancelButton" onclick="handleCancel();" class="btn btn-primary">${gs.getMessage('Cancel')}</button>
+					</div>
+				</div>
+				<!-- End test progress div -->
+
+				<!-- Pattern successful div -->
+				<div id="pattern_successful" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-check-circle patternSuccess"/>
+					</div>
+					<div class="centerAlignContent bottom-buffer">
+						<span id="complete_text">${gs.getMessage('Sub accounts populated successfully')}</span>
+					</div>
+					<div class="row bottom-buffer">
+						<div>
+							<button id="okButton" onclick="handleOk();" class="btn btn-primary">${gs.getMessage('Ok')}</button>
+						</div>
+					</div>
+				</div>
+				<!-- End test successful div -->
+
+				<!-- Pattern failed div -->
+				<div id="pattern_failed" class="container-fluid form-horizontal">
+					<div class="centerAlignContent bottom-buffer">
+						<span class="icon icon-cross-circle patternFail"/>
+					</div>
+					<div id ="AWS" class="centerAlignContent bottom-buffer">
+						<span id="err_text_aws">${gs.getMessage('Failed running pattern', 'Amazon AWS Organizations')}</span>
+					</div>
+					<div id="Azure" class="centerAlignContent bottom-buffer">
+						<span id="err_text_azure">${gs.getMessage('Failed running pattern for refreshing Azure subscriptions.Please check Pattern Log for more information')}</span>
+					</div>
+					<div id="Google" class="centerAlignContent bottom-buffer">
+						<span id="err_text_gcp">${gs.getMessage('Failed running pattern for refreshing Google projects.Please check Pattern Log for more information')}</span>
+					</div>
+
+					<div class="row bottom-buffer">
+						<div>
+							<button id="okButton" onclick="closeWindow();" class="btn btn-primary">${gs.getMessage('Ok')}</button>
+						</div>
+					</div>
+				</div>
+				<!-- End test failed div -->
+
+			</td>
+		</tr>
+	</table>
+</j:jelly>

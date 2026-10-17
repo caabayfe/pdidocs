@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g2:evaluate var="jvar_affected_message" jelly="true">
+        var recordCount = jelly.sysparm_record_count - 0;
+
+        var message = "";
+        switch (jelly.sysparm_source_table) {
+            case "task_sla":
+                if (recordCount == 1)
+                    message = gs.getMessage("You are about to repair {0} Task SLA record.", jelly.sysparm_record_count);
+                else
+                    message = gs.getMessage("You are about to repair {0} Task SLA records.", jelly.sysparm_record_count);
+                break;
+            default:
+                if (recordCount == 1)
+                    message = gs.getMessage("You are about to repair the Task SLAs for {0} record.", jelly.sysparm_record_count);
+                else
+                    message = gs.getMessage("You are about to repair the Task SLAs for {0} records.", jelly.sysparm_record_count);
+        }
+
+        message;
+    </g2:evaluate>
+
+    <div style="line-height: 23px;">
+        <div>$[jvar_affected_message]</div>
+        <div>${gs.getMessage('Do you want to continue?')}</div>
+        <div style="padding: 5px 0px 0px 0px; font-size: smaller;">
+            <a href="http://docs.servicenow.com/?context=CSHelp:SLA" target="_blank">${gs.getMessage('View repair documentation')}</a>
+        </div>
+        <div class="modal-footer flex" style="text-align: right;">
+            <button id="btn-repair-cancel" onclick="return cancel();" data-dismiss="modal" class="btn btn-default">${gs.getMessage("Cancel")}</button>
+            <button id="btn-repair-ok" onclick="return ok();" data-dismiss="modal" class="btn btn-danger">${gs.getMessage("OK")}</button>
+        </div>
+    </div>
+
+    <script>
+        if (window.addEventListener) {
+            window.addEventListener("keyup", function(e) {
+                if (e.keyCode == 27)
+                    cancel();
+            }, false);
+        }
+    </script>
+</j:jelly>

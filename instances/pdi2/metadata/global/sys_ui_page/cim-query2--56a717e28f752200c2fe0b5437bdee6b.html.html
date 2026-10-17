@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		div.cqContainer {
+		margin: 0 auto;
+		width: 100%;
+		}
+
+		tr:nth-child(even) {
+		background-color:#ccc
+		}
+		
+		div.cqContainer h1 {
+			background-color: orchid;
+			font-size: 12pt;
+			color: white;
+			padding: 2px 5px 2px 5px;
+			margin: 5px;
+		}
+
+		div.cqField {
+		float: left;
+		}
+
+		div.cqValue {
+		margin-right: 20px;
+		}
+
+		div.cqLabel {
+		font-weight: bold;
+		}
+
+		div.cqClear {
+		clear: both;
+		}
+
+		div.queryButton {
+		margin: 0 0 0 210px;
+		}
+		input#cqPort {
+		width: 40px;
+		}
+
+		input#cqNamespace {
+		width: 180px;
+		}
+
+		p#cqResultStatus {
+		margin: 2px 0px 2px 5px;
+		font-size: 8pt;
+		}
+
+		div.cqAreaField {
+		margin-top: 5px;
+		word-wrap:break-word;
+		}
+
+		div.cqAreaField textarea {
+		width: 100%;
+		height: 50px;
+		margin: 0;
+		padding: 0;
+		font-family:monospace;
+		}
+
+		table.cqResponseInstanceProperties {
+			width: 100%;
+			border-top: 1px solid black;
+			table-layout:fixed;
+		}
+
+		table.cqResponseInstancePropertiesMaximized {
+		width: 400px;
+		border: 1px solid black;
+		display: block;
+		}
+
+		table.cqResponseInstanceProperties th {
+		text-align: left;
+		vertical-align: top;
+		width:25%
+		}
+
+		.cq2ResponseInstanceProperties {
+		}
+
+		.cq2ResponseInstance {
+			border:1px solid black;
+			background-color:lavender
+		}
+		
+		.cqResponseWrapper {
+			word-wrap:break-word;
+			margin-bottom:10px;
+			padding: 3px 5px;
+		}
+
+		.cq2Query {
+			color:black;
+			background-color:lightcyan
+		}
+
+		.allCollapsed .cq2Query {
+			color:lightcyan;
+			background-color:slategray
+		}
+		
+		.cq2Query {
+			word-wrap:normal;
+			word-break:break-all;
+		}
+		
+		.cq2Result {
+			color:black;
+			background-color:lavenderblush
+		}
+		
+		.allCollapsed .cq2Result {
+			color:lavenderblush;
+			background-color:slategray
+		}
+		
+		.cq2ObjectName {
+			color:black;
+		}
+		
+		.collapsed .cq2ObjectName {
+			color:lavender;
+			background-color:slategray
+		}
+		
+		.allCollapsed, .collapsed {
+			border: 1px solid black;
+			background-color:slategray
+		}
+
+		.collapsed div, .collapsed table {
+			display: none;
+		}
+
+		.allCollapsed .cq2ResponseInstanceProperties {
+			display: none
+		}
+		
+		.wide {
+			-webkit-transition: width 1s;
+			width: 80%
+		}
+		
+		.narrow {
+			-webkit-transition: width 1s;
+			width: 20%
+		}
+		
+		.even {
+			-webkit-transition: width 1s;
+			width: 50%
+		}
+		
+		.selected {
+			text-decoration:underline;
+			color:blue;
+		}
+		.notSelected {
+			color:black;
+		}
+
+	</style>
+
+	<div class="cqContainer" id="cqContainer">
+		<h1>New CIM Query Tool
+			<a id="help" style="color:blue;float:right">Help</a>
+		</h1>
+		<div id="helpDiv" class="hidden" style="position:fixed;top:30px;bottom:30px;left:30px;right:30px;background-color:#f5f5f5;border:1px solid">
+			<div id="closeHelp" style="width:15px;height:15px;border-radius:50%;margin:10px;background-color:red;float:right" />
+<pre style="border:0">
+1. Double click on a heading to put that query in the query box
+2. Double click on an identifier to set it as the current object
+3. Click the 'Response' or 'History' headers to change table sizes
+4. Click on the&#x202f;<span style="background-color:lightcyan">light cyan</span>&#x202f;labels to hide all result objects
+5. Click on a the&#x202f;<span style="background-color:lavenderblush">blush</span>&#x202f;labels to collapse all result objects
+6. Click on the&#x202f;<span style="background-color:lavender">lavender</span>&#x202f;labels to collapse a single object
+7. The query language is similar to the old CIM query (but less strict):
+  a. A class name by itself will execute CIM's EnumerateInstances command for that CreationClassName
+  b. A class followed by qualifiers in braces will execute GetInstance with those qualifiers
+  c. Anything followed by a dot will will get associators of the object(s) returned by the first part of the query
+  d. Associations can be nested
+  e. A query that begins with a dot will use the current object
+  f. If there's no _ in the class it's assumed to be a CIM method
+  g. Filters are incuded in double braces
+  h. GetProperty is _not_ supported.  You can only query for all properties of an object.
+8. Some useful predefined queries are available
+9. Examples:
+  a. CIM_ManagedElement                   EnumerateInstances with CreationClassName CIM_ManagedElement
+  b. CIM_ManagedElement{Name=Clar+01000}  GetInstance with Name "Clar+01000"
+  c. CIM_ManagedElement.CIM_Dependency    Enumerate managed elements.  Get all associations of class CIM_Dependency for each
+  d. EnumerateInstances{ClassName=CIM_ManagedElement}.Associators{AssocClass=CIM_Dependency}
+                                          Wordier version of (c)
+  e. .CIM_SystemDevice                    Get all CIM_SystemDevice associations of the current object
+  f. CIM_RegisteredProfile{{RegisteredName='Array'}}
+                                          Get all registered profiles but filter out profiles which don't have
+                                          a RegisteredName of 'Array'
+10. Errors will appear below any objects that were returned
+11. Debug output will appear below errors.  (Don't get both JSON and XML at the same time.  A bug will cause the
+    JSON to be displayed as "[object Object]".)
+12. You can get both JSON and XML output by enabling the "CIM Query" debug option.  Output will be included
+    in the 'Answer' box.
+13. When CIM Query debugging is enabled you can edit the JSON of the request before it's made.  Be careful -
+    your changes will be overwritten if you put the cursor in either the Current Object or Query edit controls.
+			</pre>
+		</div>
+
+		<form>
+			<div style="margin: 0 0 0 10px;">
+
+				<div style="width:50%;float:left">
+					<div style="width:70%;float:left">
+						<div style="float:left">
+							<div class="cqField">
+								<div class="cqLabel">IP Address</div>
+								<div class="cqValue"><input type="text" id="cqIp"/></div>
+							</div><!-- cqField -->
+
+							<div class="cqField">
+								<div class="cqLabel">Namespace</div>
+								<div class="cqValue">
+									<input type="text" list="standardNamespaces" id="cqNamespace"
+										   onmouseover="focus();oldcqNamespace = value;"
+										   onmousedown="value='';"
+										   onmouseup="value=oldcqNamespace"/>
+									<datalist id="standardNamespaces">
+										<option value="interop">interop</option>
+										<option>root/interop</option>
+										<option>pg_interop</option>
+										<option>root/pg_interop</option>
+										<option value="root/tpd">3Par</option>
+										<option value="root/brocade1">Brocade</option>
+										<option value="cimv2">Cisco</option>
+										<option value="root/emc">EMC</option>
+										<option value="root/ibm">IBM</option>
+										<option value="root/ontap">NetApp</option>
+										<option value="purestorage">Pure Storage</option>
+									</datalist>
+								</div>
+							</div><!-- cqField -->
+
+							<div class="cqField">
+								<div class="cqLabel">MID Server</div>
+								<div class="cqValue">
+									<select id="mids">
+									</select>
+								</div>
+							</div><!-- cqField -->
+						</div>
+						<div style="display:inline-block">
+							<div class="cqField">
+								<div class="cqLabel">Chunk Size</div>
+								<div class="cqValue"><input type="text" id="cqChunkSize" style="width:60px"/></div>
+							</div>
+							<div class="cqField">
+								<div class="cqLabel">Limit</div>
+								<div class="cqValue"><input type="text" id="cqLimit" style="width:60px"/></div>
+							</div>
+						</div>
+					</div>
+
+					<div style="display:inline-block"> Debug Options <pre style="margin:0;border:0;padding:0"></pre>
+						<label><input type="checkbox" id="xmlRequest" style="margin:5px" />XML Request</label>
+						<label><input type="checkbox" id="xmlResponse" style="margin:5px" />XML Response</label>
+						<div />
+						<label><input type="checkbox" id="jsonResponse" style="margin:5px"/>JSON Response</label>
+						<label><input type="checkbox" id="cimQuery" style="margin:5px" />CIM Query</label>
+					</div>
+					
+					<div class="cqField" style="width:100%">
+						<div class="cqLabel">Current Object</div>
+						<div class="cqValue"><input type="text" id="cqCurrent" style="width:100%"/></div>
+					</div><!-- cqField -->
+
+				</div>
+
+				<div id="cqPredfined" style="float:left;width:50%"/>
+
+			</div>
+
+			<div class="cqClear"></div>
+
+			<div class="cqAreaField">
+				<div class="cqLabel">Query</div>
+				<div class="cqArea"><textarea id="cqQuery" style="font-family:monospace"></textarea></div>
+			</div><!-- cqArea -->
+
+			<div id="cimQueryDebug" class="hidden">
+				<div class="cqAreaField">
+					<div class="cqLabel">JSON Query</div>
+					<div class="cqArea"><textarea id="cqJsonQuery" style="height:200px;font-family:monospace"></textarea></div>
+				</div>
+
+				<div class="cqAreaField">
+					<div class="cqLabel">Answer</div>
+					<div class="cqArea"><textarea id="cqAnswer" style="font-family:monospace"></textarea></div>
+				</div>
+			</div>
+
+			<div class="queryButton"><button id="cqQueryButton">Query</button></div>
+
+			<div class="cqAreaField wide" id="cqResponseContainer" style="display:inline-block;float:left">
+				<div class="cqLabel">Response</div>
+				<div class="cqAreaField" id="cqResponse"  />
+			</div>
+
+			<div class="cqAreaField narrow" id="cqHistoryContainer" style="display:inline-block;float:left">
+				<div class="cqLabel">History</div>
+				<div class="cqAreaField" id="cqHistory">
+				</div>
+			</div>
+
+		</form>
+	</div><!-- cqContainer -->
+
+</j:jelly>

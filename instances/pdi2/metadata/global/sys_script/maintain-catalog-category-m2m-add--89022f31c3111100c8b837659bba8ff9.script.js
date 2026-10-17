@@ -1,0 +1,1 @@
+SNC.CatalogItemCategory.handleAdd(current);

@@ -1,0 +1,73 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <!-- <g:requires name="styles/retina_icons/retina_icons.css" includes="true"/> -->
+    <g:requires name="styles/sc_cat.css" includes="true"/>
+    <g:requires name="styles/knowledge.ng/articles.css" includes="true"/>
+
+    <g:evaluate var="jvar_results_header_text" jelly="true">
+        var text = jelly.jvar_cxs_response.request.meta.results_header_text;
+        if (!text)
+            text = "";
+        text;
+    </g:evaluate>
+
+    <j:if test="${!empty(jvar_result_header_macro)}">
+        <g:call function="${jvar_result_header_macro}" results_header_text="${jvar_results_header_text}" />
+    </j:if>
+
+    <g:evaluate jelly="true">
+		var isA11yEnabled = GlideAccessibility.isEnabled();
+        var cxsResults = jelly.jvar_cxs_response.results;
+		var searchTerm = GlideStringUtil.escapeHTML(jelly.jvar_cxs_response.request.query.freetext);
+		var statusMsg = "";
+		var windowStart = jelly.jvar_cxs_response.request.meta.window.start;
+		var ariaMsg = "";
+		if (JSUtil.nil(cxsResults)) {
+			cxsResults = [];
+			statusMsg = gs.getMessage("No matching results found for");
+			ariaMsg = gs.getMessage("No matching results found for {0}", searchTerm);
+		}else {
+			if(isA11yEnabled) 
+				ariaMsg = gs.getMessage("Showing search results from {0} to {1} for {2}", [windowStart + 1 + "", windowStart + cxsResults.length + "", searchTerm]);
+		}
+		
+        var cxsDocType = jelly.jvar_cxs_response.request.meta.is_doctype;
+
+    </g:evaluate>
+    <g:evaluate var="jvar_display_data" jelly="true">
+        var table = jelly.jvar_cxs_response.request.meta.source_table;
+        var display =  "display: " + gs.getPreference(table + ".cxs_search_results.display", "block");
+        display;
+    </g:evaluate>
+
+    <table id="cxs_results_data" style="${jvar_display_data}; border: 1px; width: 100%; margin: 0px; padding: 0px;">
+        <j:forEach items="${cxsResults}" var="jvar_cxs_result" indexVar="jvar_cxs_index">
+			<g:evaluate jelly="true">
+				// we are doing this for backward compatibility as csm team has their own macros which are relying on these values.
+				var cxsActionLabel = '';
+				var cxsActionValue = '';
+				var thisHelpedActionDetails = (jelly.jvar_cxs_result.searchResultActions &amp;&amp; jelly.jvar_cxs_result.searchResultActions.this_helped) ? JSON.parse(jelly.jvar_cxs_result.searchResultActions.this_helped) : null;
+				if (thisHelpedActionDetails != null) {
+					cxsActionLabel = thisHelpedActionDetails.actionLabel;
+					cxsActionValue = thisHelpedActionDetails.actionValue;
+				}
+			</g:evaluate>	
+            <tr>
+                <td>
+                    <g:call function="${jvar_result_macro}" cxs_result="${jvar_cxs_result}" cxs_index="${jvar_cxs_index}" cxs_action_label="${cxsActionLabel}" cxs_action_value="${cxsActionValue}" cxs_doctype="${cxsDocType}"/>
+                </td>
+            </tr>
+        </j:forEach>
+		<j:if test = "${cxsResults.length == 0 || isA11yEnabled}">
+            <tr>
+                <td>
+                	<div id = "aria_msg" data-aria-msg = "${ariaMsg}">
+						<j:if test = "${cxsResults.length == 0}">
+							${statusMsg}${SP}<span style="font-weight: bold">${searchTerm}</span>
+						</j:if>	
+					</div>
+                </td>
+            </tr>
+		</j:if>
+    </table>
+    <div style="margin-bottom: 10px;" />
+</j:jelly>

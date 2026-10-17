@@ -1,0 +1,1 @@
+answer = SNC.UsageAnalyticsScriptUtils.getCountOfFulfillers();

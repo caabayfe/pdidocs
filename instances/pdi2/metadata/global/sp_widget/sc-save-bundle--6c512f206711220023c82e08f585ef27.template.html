@@ -1,0 +1,116 @@
+<form>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h2 id="bundle-modal-title" class="panel-title">
+        ${Create New Bundle}
+      </h2>
+    </div>
+    <div class="panel-body" aria-live="assertive">
+      <p>${Here, you can save the current contents of your cart as a bundle, which can be restored at any time.}</p>
+      <p>${To create a new bundle, provide a name for your bundle, select the items you would like to include in the bundle, and press save.}</p>
+      <div class='form-group'>
+        <label for="bundlename">
+        <span class="fa fa-asterisk mandatory ng-scope" ng-class="{'mandatory-filled': c.enableSave()}" style="vertical-align:super"></span>
+        	<strong id="bundle-label">${Bundle Name}</strong>
+        </label>
+        <input id="bundlename" placeholder="${New Bundle Name}" type='text' class='form-control' ng-class="{'has-error': c.data.error}" autofocus="true" ng-blur="c.clearFocusListCache(); c.validate()" ng-model='c.data.newCartName' maxlength="40" aria-required="true" aria-labelledby="bundle-label">
+        <div ng-if="c.data.error" class="wrapper-xs r m-t-xs bg-danger" role="alert">
+          <span>{{c.data.error}}</span>
+      	</div>
+      </div>
+
+      <table id="cart_save_bundle" class="table table-hover table-condensed" aria-describedby="id-bundle-caption">
+        <caption class="id-bundle-caption" class="sr-only">${Items in Bundle}</caption>
+        <thead>
+          <tr>
+            <th id="id-include-item" scope="col">${Include Item}</th>
+            <th id="id-product" scope="col">${Product}</th>
+            <th id="id-price"scope="col" class="hidden-xs">${Price}</th>
+            <th id="id-quantity" scope="col" class="hidden-xs">${Quantity}</th>
+            <th id="id-subtotal" scope="col" class="hidden-xs">${Subtotal}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="item in c.data.cartItems track by item.sys_id | orderBy: 'order'">
+            <td headers="id-include-item">
+              <input type="checkbox" ng-model="item.selected" aria-label="${Include} {{item.name}} ${in bundle}">
+            </td>
+            <td headers="id-product">
+              <div class="row">
+                <div class="col-sm-2 hidden-sm hidden-xs">
+                  <img ng-if="item.picture" ng-src="{{item.picture}}" alt="" class="img-responsive"/>
+                </div>
+                <div class="col-sm-10 catalog-text-wrap">
+                  <h3 class="nomargin item_name">{{item.name}}</h3>
+                  <p class="hidden-sm hidden-xs">{{item.short_description}}</p>
+                </div>
+              </div>
+              <div class="visible-xs">
+                <span ng-if ="item.show_price">
+                  ${Price:} <strong>{{item.display_price}}</strong>
+              	</span>
+              	<span ng-if ="item.show_recurring_price">
+                	<span class="sr-only">${Recurring price} {{item.display_recurring_price}} {{item.recurring_frequency_display}}</span>
+              		<span aria-hidden="true">+ {{item.display_recurring_price}} {{item.recurring_frequency_display}}</span>
+              	</span>
+              </div>
+              <div class="visible-xs">
+                <span ng-if ="item.show_quantity">
+                  ${Quantity:} {{item.quantity}}
+              	</span>
+                <span ng-if ="!item.show_quantity">
+                  <span class="sr-only">${Quantity not applicable}</span>
+                  <span aria-hidden="true">${Quantity:} --</span>
+                </span>
+              </div>
+              <div class="visible-xs"> 
+                <span ng-if ="item.show_price">
+                	${Subtotal Price:} <strong>{{item.subtotal_price}}</strong>
+              	</span>
+              	<span ng-if ="item.show_recurring_price">
+                	<span class="sr-only">${Recurring subtotal price} {{item.recurring_subtotal_price}} {{item.recurring_frequency_display}}</span>
+              		<span aria-hidden="true">+ {{item.recurring_subtotal_price}} {{item.recurring_frequency_display}}</span>
+              	</span>
+              </div>
+            </td>
+            <td headers="id-price" class="hidden-xs">
+              <span ng-if ="item.show_price">
+                <strong>{{item.display_price}}</strong>
+              </span>
+              <div ng-if ="item.show_recurring_price">
+                <span class="sr-only">${Recurring price} {{item.display_recurring_price}} {{item.recurring_frequency_display}}</span>
+              	<span aria-hidden="true">+ {{item.display_recurring_price}} {{item.recurring_frequency_display}}</span>
+              </div>
+            </td>
+            <td headers="id-quantity" class="hidden-xs">
+              <span ng-if ="item.show_quantity">
+                <span>{{item.quantity}}</span>
+              </span>
+              <span ng-if ="!item.show_quantity">
+                <span class="sr-only">${Quantity not applicable}</span>
+                <span aria-hidden="true">--</span>
+              </span>
+            </td>
+            <td headers="id-subtotal" class="hidden-xs">
+              <span ng-if ="item.show_price">
+                <strong>{{item.subtotal_price}}</strong>
+              </span>
+              <div ng-if ="item.show_recurring_price">
+                <span class="sr-only">${Recurring subtotal price} {{item.recurring_subtotal_price}} {{item.recurring_frequency_display}}</span>
+              	<span aria-hidden="true">+ {{item.recurring_subtotal_price}} {{item.recurring_frequency_display}}</span>
+              </div>
+             </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-footer">
+      <button type='submit'
+              class='btn btn-primary pull-right'
+              ng-click='c.saveCart()'
+              ng-disabled='!c.enableSave()'
+              >${Save}</button>
+      <i class="clearfix"></i>
+    </div>
+  </div>
+</form>

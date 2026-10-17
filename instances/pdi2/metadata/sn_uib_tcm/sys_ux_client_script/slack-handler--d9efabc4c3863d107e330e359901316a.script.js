@@ -1,0 +1,88 @@
+/**
+ * @param {params} params
+ * @param {api} params.api
+ * @param {any} params.event
+ * @param {any} params.imports
+ * @param {ApiHelpers} params.helpers
+ */
+function handler({
+    api,
+    event,
+    helpers,
+    imports
+}) {
+    const commMgmtUXFBaseUtil = imports["sn_uib_tcm.CommunicationManagementUXFClientBaseUtil"]();
+    const eventName = event.name;
+    const channelResult = api.data.get_comm_task_channel_details.output.data;
+    const slackNotificationData = channelResult['slack-message'];
+    const slackChannelData = channelResult['slack'];
+
+    const setSlackNotificationIntitialValue = () => {
+        if (!slackNotificationData || !slackNotificationData.available)
+            return;
+        let slackRecipients = commMgmtUXFBaseUtil.getChannelRecipients(slackNotificationData['recipients']);
+        let slackNotificationConfig = { ...api.state.slackNotificationConfig
+        };
+        slackNotificationConfig.isValid = true;
+        slackNotificationConfig.users = slackRecipients;
+        api.setState('slackNotificationConfig', slackNotificationConfig);
+    };
+
+    const setSlackChannelIntitialValue = () => {
+        if (!slackChannelData || !slackChannelData.available)
+            return;
+        let slackRecipients = [];
+        let slackRecipient = {
+            'id': slackChannelData['channel_id'],
+            'label': slackChannelData['channel_display_value'],
+            'sublabel': slackChannelData['channel_display_value'],
+        };
+        slackRecipients.push(slackRecipient);
+        let slackChannelConfig = { ...api.state.slackChannelConfig
+        };
+        slackChannelConfig.isValid = true;
+        slackChannelConfig.users = slackRecipients;
+        api.setState('slackChannelConfig', slackChannelConfig);
+    };
+
+    const updateSlackNotificationUsers = () => {
+        let slackNotificationConfig = api.state.slackNotificationConfig;
+        slackNotificationConfig.users = event.payload.value;
+        api.setState('slackNotificationConfig', slackNotificationConfig);
+    };
+
+    const updateSlackNotificationMessage = () => {
+        let slackNotificationConfig = api.state.slackNotificationConfig;
+        slackNotificationConfig.message = event.payload.value;
+        api.setState('slackNotificationConfig', slackNotificationConfig);
+    };
+
+    const updateSlackChannelMessage = () => {
+        let slackChannelConfig = api.state.slackChannelConfig;
+        slackChannelConfig.message = event.payload.value;
+        api.setState('slackChannelConfig', slackChannelConfig);
+    };
+
+    switch (eventName) {
+        case "DATA_FETCH_SUCCEEDED":
+            if (event.elementId == "get_comm_task_channel_details") {
+                setSlackNotificationIntitialValue();
+                setSlackChannelIntitialValue();
+            } else if (event.elementId == "slack_search_recipients")
+                api.setState("slackSearchResult", commMgmtUXFBaseUtil.populateSearchResult(api.data.slack_search_recipients.output));
+            break;
+        case "NOW_TYPEAHEAD_MULTI#SELECTED_ITEMS_SET":
+            updateSlackNotificationUsers();
+            break;
+        case "NOW_TEXTAREA#VALUE_SET":
+        case "NOW_TEXTAREA#INPUT":
+            if (event.elementId == "slack_notification_textarea")
+                updateSlackNotificationMessage();
+            else if (event.elementId == "slack_textarea")
+                updateSlackChannelMessage();
+            break;
+        case "NOW_TEXTAREA#INVALID_SET":
+            api.setState("fieldsFilled",false);
+            break;
+    };
+}

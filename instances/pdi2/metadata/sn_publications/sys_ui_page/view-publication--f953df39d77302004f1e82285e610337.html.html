@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.publication-nav {
+		    min-height: 46px;
+			padding-top: 8px;
+			background-color: #e6e8ea;
+			border-bottom: #bdc0c4 1px solid;
+			display: block;
+			padding-left: 10px;
+			position: fixed;
+			left: 0;
+			right: 0;
+			top: 0;
+		}
+		
+		.snc-article-attachments {
+			top: 50px;
+			position: absolute;
+			right: 20px;		
+		}
+	</style>
+	<g:evaluate var="jvar_content">
+		var publication = new GlideRecord("sn_publications_publication");
+		var content = "";
+		if(publication.get("${sysparm_id}")) {	
+		    var pubId = publication.getUniqueValue();
+			var attachmentGr = new GlideRecord('sys_attachment');
+			attachmentGr.addQuery('table_name', 'sn_publications_publication');
+			attachmentGr.addQuery('table_sys_id', pubId);
+			attachmentGr.query();
+			new PublicationsApi().trackCustomerViewArticle(gs.getUserID(), pubId);
+		}
+		content = publication.getValue('content_type') == 'wiki' ? publication.getDisplayValue('wiki') :  publication.getDisplayValue('text');
+	</g:evaluate>
+	<nav class="navbar navbar-default publication-nav" role="navigation"><div class="container-fluid"><div class="navbar-header"><button class="btn btn-default icon-chevron-left navbar-btn snc-article-toolbar-btn" id="backButton" onclick="window.history.back()"></button> <span style="padding-left:10px;font-size:18px;display: inline-block;vertical-align: middle;">$[publication.short_description]</span>
+</div></div><div class="snc-kb-navbar-right"></div></nav>
+
+<div class="snc-article-attachments" id="publication_attachments">
+	<j:if test="${attachmentGr.getRowCount() > 0}">
+		<span class="snc-article-footer-metadata-title" ><a href="#" onclick="launchDownloadPopup()"><span title="" class="icon-paperclip snc-article-footer-metadata-attachments-paperclip" data-original-title="${attachmentGr.getValue('file_name')}">Attachments (${attachmentGr.getRowCount()})</span></a></span>
+	</j:if>
+</div>
+	
+	
+	<div style="margin-left:50px;margin-right:40px;margin-top:80px;">
+		<div id="article" style="min-height:100px;margin-top:30px;color: #485563 !important;">
+			<g2:no_escape>$[NS:content]</g2:no_escape>
+		</div>
+	</div>
+	
+	<script>
+		function launchDownloadPopup() {
+			var gdw = new GlideModal('sn_publications_show_publication_attachments');
+			gdw.setTitle("${gs.getMessage('Select Attachments to Download')}");
+			gdw.setSize(400, 300);
+			gdw.setPreference('sysparm_sys_id', '${publication.getUniqueValue()}');
+			//Open the dialog window
+			gdw.render();
+		}
+	</script>
+		
+</j:jelly>

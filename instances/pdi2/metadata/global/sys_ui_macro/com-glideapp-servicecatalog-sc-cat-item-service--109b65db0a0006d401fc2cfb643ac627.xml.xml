@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:evaluate>
+		var service = new GlideRecord('sc_cat_item_service');
+		service.get(sc_cat_item.sys_id);
+		
+		var cmdb_ci_service = new GlideRecord('cmdb_ci_service');
+		var service_id = service.cmdb_ci_service + '';
+		if (service_id)
+		    cmdb_ci_service.get(service_id);
+		else 
+		    cmdb_ci_service.newRecord();
+		
+	</g:evaluate>
+<div class="catalog_detail">
+				
+	<p>
+		<div class="catalog_status"><g:call function="servicecatalog_status.xml" service="${cmdb_ci_service}" /></div>
+		<div class="catalog_detail_h1">${gs.getMessage('Service Scope')}</div>
+		<table cellpadding="0" cellspacing="0" width="100%" class="catalog_specs">
+			<tr>
+				<td width="50%">
+					<g:call function="servicecatalog_scope.xml" service="${cmdb_ci_service.sys_id}" table="service_in_scope"/>	
+				</td>
+				<td width="50%">
+					<g:call function="servicecatalog_scope.xml" service="${cmdb_ci_service.sys_id}" table="service_out_scope"/>						
+				</td>
+			</tr>
+		</table>
+		<g:call function="servicecatalog_service_pricing.xml" service="${cmdb_ci_service}"/>
+		<div class="catalog_detail_h1">${gs.getMessage('Service Offerings')}</div>
+		<g:call function="servicecatalog_delivery.xml"/>
+	</p>
+	
+</div>
+
+<script>
+		_frameChanged();
+</script>
+
+</j:jelly>

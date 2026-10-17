@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <g:include_script src="$pwd_enroll_softpin_ui.jsdbx" />
+	<script type="text/javascript">
+        // When the page gets loaded, register the event hanlder for on-submit event for the form.
+        addSubmitEvent (
+            function() { 
+                return softpin_on_submit('${jvar_form_id}');
+            },
+			'${jvar_form_id}'
+        );
+	</script>
+    <g:evaluate var="jvar_spmgr" jelly="true" object="true" >
+        new SNC.PwdSoftPINManager();
+    </g:evaluate>
+
+    <!--  
+    Figure out whether this is for update or insert.
+    -->	
+    <g:evaluate var="jvar_mode" jelly="true">
+        var wasPreviouslyEnrolled = false;
+        var userId = gs.getSession().getUser().getID();
+		wasPreviouslyEnrolled = jelly.jvar_spmgr.isUserEnrolled(userId, jelly.jvar_verification_id);
+        
+        if(wasPreviouslyEnrolled){
+            'update';
+        }
+        else{
+            'create';
+        }
+    </g:evaluate>
+	
+    <!--  
+    Get softpin question.
+    -->
+    <g:evaluate var="jvar_question" jelly="true">
+        var question = jelly.jvar_spmgr.getQuestion(jelly.jvar_verification_id);
+        gs.getMessage(question);
+    </g:evaluate>
+
+    <g:evaluate var="jvar_pin_length" jelly="true" >
+        var pinLength = jelly.jvar_spmgr.getPINLength(jelly.jvar_verification_id);
+        pinLength = parseInt(pinLength);
+        pinLength
+    </g:evaluate>
+
+    <g:evaluate var="jvar_pin_repetition_threshold" jelly="true" >
+        var repetitionThreshold = jelly.jvar_spmgr.getPINRepetitionThreshold(jelly.jvar_verification_id);
+        if (!repetitionThreshold)
+            repetitionThreshold = gs.getProperty('password_reset.softpin.repetition_threshold', 2);
+        repetitionThreshold;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_pin_sequence_threshold" jelly="true" >
+        var sequenceThreshold = jelly.jvar_spmgr.getPINSequenceThreshold(jelly.jvar_verification_id);
+        if (!sequenceThreshold)
+            sequenceThreshold = gs.getProperty('password_reset.softpin.sequence_threshold', 2);
+        sequenceThreshold;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_pin_history_limit" jelly="true" >
+	var historyLimit = jelly.jvar_spmgr.getSoftPINHistoryLimit();
+	historyLimit;
+    </g:evaluate>
+
+    <g:evaluate jelly="true">
+	var pinRules = [];
+	var pinLengthRule = gs.getMessage("Length must be {0} digits.", jelly.jvar_pin_length);
+	var repetitionThresholdRule = gs.getMessage("PIN repetition threshold is {0}.", jelly.jvar_pin_repetition_threshold);
+	var sequenceThresholdRule = gs.getMessage("PIN sequence threshold is {0}.", jelly.jvar_pin_sequence_threshold);
+	var pinHistoryRule = jelly.jvar_pin_history_limit === '1' ? gs.getMessage("You can't use your previous Soft PIN.") : gs.getMessage("You can't reuse your previous {0} Soft PINs.", jelly.jvar_pin_history_limit);
+	pinRules.push(pinLengthRule, repetitionThresholdRule, sequenceThresholdRule, pinHistoryRule);
+    </g:evaluate>
+
+     <j:if test="${jvar_mode=='update'}">
+        <g:evaluate var="jvar_masked_pin" jelly="true" >
+			'******'
+        </g:evaluate>
+        <g:evaluate var="jvar_filled_marker" jelly="true" >
+			'is-filled'
+        </g:evaluate>
+    </j:if>
+	
+	<div class="form-group is-required ${jvar_filled_marker}" id="softpin_div">
+		<label for="softpin_input" class="control-label col-sm-3">
+			<span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+			${jvar_question}
+		</label>
+		<span class="col-sm-9">
+			<input id="softpin_input" placeholder="" name="softpin_input" class="form-control pwd-form-control" value="${jvar_masked_pin}" maxlength="${jvar_pin_length}" autocomplete="off"
+					type="text" aria-required="true"
+					oninput="updateMandatoryMarker(this, 'softpin_div')"
+					onchange="softPINChanged(this)"
+					onfocus="clearSoftPINValue(this)"
+					onblur="restoreSoftPINValue(this)"/>
+			<div class="softpin-rules-container">
+				<label>${gs.getMessage("Here are the rules for Soft PIN:")}</label>
+				<ul class="softpin-rules-list">
+					<j:forEach items="${pinRules}" var="jvar_rule">
+						<li>${jvar_rule}</li>
+					</j:forEach>
+				</ul>
+			</div>
+		</span>
+	</div>
+	
+    <input hidden="true" id="pin_length_for_soft_pin" name="pin_length_for_soft_pin" value="${jvar_pin_length}" />
+    <input hidden="true" id="pin_changed" name="pin_changed" value="false" />
+    <input type="hidden" name="mandatory" value="${jvar_mandatory}" />
+    <input hidden="true" id="repetition_threshold_for_soft_pin" name="repetition_threshold_for_soft_pin" value="${jvar_pin_repetition_threshold}" />
+    <input hidden="true" id="sequence_threshold_for_soft_pin" name="sequence_threshold_for_soft_pin" value="${jvar_pin_sequence_threshold}" />
+    <input hidden="true" id="mode" name="mode" value="${jvar_mode}" />
+    <input hidden="true" id="verification_id" name="verification_id" value="${jvar_verification_id}" />
+    <input type="hidden" name="tab_index" value="${jvar_tab_index}" />
+	
+</j:jelly>

@@ -1,0 +1,211 @@
+<style>
+  .perf-modal {
+    font-family: "Lato", sans-serif;
+  }
+  .test-instructions, .note {
+    color: #333;
+  }
+
+  .test-instructions h4, .note strong {
+    font-weight: bold;
+  }
+
+  .test-instructions ol {
+    margin: 0 0 16px 20px;
+    padding: 0;
+  }
+
+  .test-instructions li, .note br {
+    margin-bottom: 8px;
+  }
+
+  .note {
+    font-size: 14px;
+  }
+
+  .input-switch input[type=checkbox] ~ .switch {
+    margin-left: 5px;
+    border-radius: 2.7rem;
+  }
+
+  .input-switch input[type=checkbox] ~ .switch:before {
+    border-radius: 2.5rem;
+  }
+
+  .input-switch input[type=checkbox]:checked ~ .switch {
+    background-color: rgb(var(--now-button--primary--background-color));
+  }
+
+  .perf-options, .widget-metrics-header p {
+    padding: 0 1em;
+  }
+
+  .modal-body {
+    overflow-y: auto;
+    max-height: calc(90vh - 124px);
+  }
+
+  th {
+    font-weight: 600;
+  }
+
+  .modal-header .close {
+    margin-top: -2.5rem;
+  }
+
+  .loading-msg {
+    margin-top: 10px;
+    height: 100%;
+  }
+
+  .top-controls {
+    display: flex;
+    gap: 10px;
+    min-height: 36px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .enable-stats, .user-picker, .get-data {
+    display: flex;
+  }
+
+  .enable-stats {
+    width: 35%;
+  }
+
+  .user-picker {
+    flex-direction: column;
+    width: 55%;
+  }
+
+  .get-data {
+    align-content: start;
+    width: 10%;
+  }
+
+  .widget-metrics, .widget-metrics-header {
+    display: flex;
+    justify-content: space-between;   
+  }
+
+  .user-error-msg {
+    padding: 10px 0px 0px 9px;
+  }
+
+  .widget-metrics-header {    
+    flex-direction: column;
+    align-content: center;
+  }
+</style>
+<div class="perf-modal" role="dialog" aria-labelledby="perfModalTitle" aria-modal="true">
+  <div class="modal-header">
+    <h2 class="modal-title h4" id="perfModalTitle">${Performance details}</h2>
+    <button ng-click="c.closeModal()" class="close" aria-label="${Close modal}">&#xd7;</button>
+  </div>
+  <div class="modal-body">
+    <div class="top-controls">
+      <div ng-if="c.isLoading" class="loading-msg" role="status">
+        <i class="fa fa-spinner fa-spin" aria-hidden="true"></i>
+        <span> ${Getting performance metrics...}</span>
+      </div>
+      <div ng-if="data.statsApi && !c.isLoading" class="enable-stats">
+        <div>${Enable Performance Stats}:</div>
+        <div ng-if="data.statsApi && !c.isLoading" class="input-switch">
+          <input type="checkbox" ng-model="data.statsEnabled"
+                 ng-change="c.updatePerfStats()"
+                 ng-attr-aria-checked="{{ data.statsEnabled }}" name="stats-enabled" id="stats-enabled" aria-label="${Performance stats enabled}" role="switch" />
+          <label class="switch" for="stats-enabled" role="presentation" aria-hidden="true">
+            <span class="sr-only">${Performance stats enabled}</span>
+          </label>
+        </div>         
+      </div>
+      <div class="user-picker">
+        <sn-reference-picker ng-if="data.statsEnabled" field="c.currentUser" ref-table="sys_user" display-column="name" sn-on-change="c.getUserData()"
+                             sn-options="{placeholder:'${Search for user}'}" sn-page-size="20" additional-display-columns="user_name"                            
+                             ed="{searchField:'name;sys_id;user_name',for_impersonation:true, reference:'sys_user', qualifier:'active=true^locked_out=false^ORlocked_outISEMPTY^web_service_access_only=false^ORweb_service_access_onlyISEMPTY'}" default-value="c.selectedUser">
+        </sn-reference-picker>
+      </div>
+      <div class="get-data">
+        <button type="button" class="btn btn-default" ng-click="c.reloadPerfData()" data-toggle="tooltip" data-placement="bottom" title="${Reload metrics}" aria-label="${Reload metrics}">
+          <i class="fa fa-refresh" aria-hidden="true"></i>
+        </button>          
+      </div>
+    </div>
+    <div ng-if="data.statsEnabled && c.error" class="top-controls">
+      <div class="enable-stats"></div> 
+      <div class="user-picker">
+        <div class="error user-error-msg">${No Stats were found. Please follow the instructions below.}</div>
+      </div>      
+      <div class="get-data"></div>  
+    </div>
+    <div ng-show="!c.isLoading" class="widget-metrics">
+      <div class="widget-metrics-header panel-title">
+        <h3 class="h3">${Widget Metrics}</h3>
+        <div class="note">
+          ${Time is shown in milliseconds} (ms).
+        </div>
+      </div>
+    </div>
+    <div id="excel">
+      <div class="perf-table">
+        <table ng-show="!c.isLoading" class="table table-striped" id="excelTable">
+          <thead>
+            <tr>
+              <th scope="col">${Widget Name}</th>
+              <th scope="col">${Instance}</th>
+              <th scope="col" ng-if="data.statsEnabled">${Server Time}</th> 
+              <th scope="col" ng-if="!data.statsEnabled">${Refresh Time}</th>
+              <th scope="col">${Category}</th>
+              <th scope="col">${EX-PI-Displayed}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="w in c.widgets track by $index">
+              <td scope="row">
+                <a ng-if="c.data.isAdmin" 
+                   ng-href="{{c.instanceUrl}}/sp_config?id=widget_editor&sys_id={{w.sys_id}}" 
+                   target="_blank">{{w.name}}
+                </a>
+                <span ng-if="!c.data.isAdmin">{{w.name}}</span>
+              </td>
+              <td scope="row">
+                <a ng-if="c.data.isAdmin && w.rectangle !== 'undefined'" 
+                   ng-href="{{c.instanceUrl}}/sp_instance.do?sys_id={{w.rectangle}}" 
+                   target="_blank">{{w.instance_title || data.msg.instance}}
+                </a>
+                <span ng-if="w.rectangle === 'undefined'">${N/A}</span>
+              </td>
+              <td scope="row" ng-if="data.statsEnabled" aria-label="{{w.first_load_time_ms ? w.first_load_time_ms : data.msg.noServerTime}}"> 
+                <a ng-if="w.first_load_time_sys_id" ng-href="{{c.instanceUrl}}/sn_ex_emp_fd_portal_performance_stats.do?sys_id={{w.first_load_time_sys_id}}" 
+                   target="_blank">{{w.first_load_time_ms}}
+                </a>
+              </td>
+              <td scope="row" ng-if="!data.statsEnabled">
+                {{w.load_time_ms}}
+              </td>
+              <td scope="row">{{w.category}}</td>
+              <td scope="row">{{w.isVisible ? data.msg.yes : data.msg.no}}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div ng-if="data.statsApi" class="test-instructions">
+          <h4>${To perform a test}:</h4>
+          <ol>
+            <li>${Enable Performance Stats}</li>
+            <li>${Impersonate a user and then load the homepage}</li>
+            <li>${End impersonation and return back to this modal to view the stats for the user you just impersonated}</li>
+          </ol>
+          <p class="note"><strong>${NOTE}:</strong> ${Only widgets that have tracking will appear}. ${For more details, please review the documentation}</p>       
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-default" style="float: left;" ng-click="c.copyMetrics()" ng-if="!c.isLoading">
+    <i class="fa fa-file-excel-o" aria-hidden="true"></i> ${Export to} Excel
+  </button>
+  <button class="btn btn-primary" style="float: right;" ng-click="c.closeModal()">${Close}</button>
+</div>

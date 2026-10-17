@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:evaluate var="jvar_table_exists" jelly="true">
+  var grTable = new GlideRecordSecure(jelly.jvar_table);
+  grTable.isValid();
+</g:evaluate>
+
+<j:if test="${jvar_table_exists}">
+
+  <g:evaluate var="jvar_field_list" jelly="true">
+    var blacklistedFields = new GlideTableDescriptor("sys_import_set_row").getActiveFieldNames();
+    var allFields = new GlideSysList(jelly.jvar_table).getListRecords();
+    var fields = ["sys_import_row", "template_import_log.message"];
+    for (var i = 0; i != allFields.size(); i++) {
+      if (!blacklistedFields.contains(allFields.get(i)))
+        fields.push(allFields.get(i));
+    }
+    GlideStringUtil.join(fields);
+  </g:evaluate>
+
+  <g:list_custom table="${jvar_table}" view="" elements="${jvar_field_list}"/>
+
+	<!-- Set up ListProperties for the list -->
+	<g:evaluate>
+		ListProperties.setHasTopNav(true);
+		ListProperties.setHasTitle(true);
+		ListProperties.setHasTitleContextMenu(false);
+		ListProperties.setHasFilter(true);
+		ListProperties.setHasBreadcrumbs(true);
+		ListProperties.setHasSearch(true);
+		ListProperties.setHasTopVCR(true);
+		ListProperties.setHasHeader(true);
+		ListProperties.setHasHeaderContextMenu(false);
+		ListProperties.setHasListMechanic(true);
+		ListProperties.setHasRowContextMenu(true);
+		ListProperties.setShowLinks(true);
+		ListProperties.setHasPopup(true);
+		ListProperties.setShowEmpty(true);
+		ListProperties.setHasBottomNav(true);
+		ListProperties.setHasActions(false);
+		ListProperties.setHasBottomVCR(true);
+		ListProperties.setCanChangeView(false);
+		ListProperties.setCanGroup(true);
+	</g:evaluate>
+
+	<j2:set var="sysparm_query" value="${jvar_list_query}" />
+	<!-- register for list printing -->
+	<j:set var="jvar_handle_list_printing" value="true" />
+
+	<!-- and build the list output -->
+	<g:inline template="list2_default.xml" />
+
+</j:if>
+
+</j:jelly>

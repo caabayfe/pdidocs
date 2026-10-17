@@ -1,0 +1,156 @@
+- document: sys_hub_step_instance
+  document_key: 6cbd71589f349210e9f6328dda0a1c8e
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: 20bd71589f349210e9f6328dda0a1c99
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-18 11:13:35
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 6cbd71589f349210e9f6328dda0a1c85
+  order: '105'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: 28bd71589f349210e9f6328dda0a1c8d
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-18 11:13:35
+  value: notify_wf_activity
+  variable: 72b2bcca0b18030085c083eb37673a0b
+- document: sys_hub_action_type_definition
+  document_key: d92da45c9f309210e9f6328dda0a1c2c
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:36
+  sys_id: 38bd71589f349210e9f6328dda0a1caa
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-18 11:13:36
+  value: '0'
+  variable: 7cbd71589f349210e9f6328dda0a1ca1
+- document: sys_hub_step_instance
+  document_key: 6cbd71589f349210e9f6328dda0a1c85
+  order: '115'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: 64bd71589f349210e9f6328dda0a1c8d
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-18 11:13:35
+  value: state=complete^ORstate=failed
+  variable: 7de2fcca0b18030085c083eb37673aed
+- document: sys_hub_step_instance
+  document_key: e0bd71589f349210e9f6328dda0a1c62
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: 68bd71589f349210e9f6328dda0a1c81
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-18 11:13:35
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: e0bd71589f349210e9f6328dda0a1c62
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: a0bd71589f349210e9f6328dda0a1c82
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-29 09:20:11
+  value: |-
+    (function execute(inputs, outputs) {
+        // Getting inputs
+        var notifyCallGR = inputs.notify_call;
+
+        // Executing Hang up action
+        var hangUpAction = NotifyFlowActionFactory.createAction(NotifyFlowConstants.ACTIONS.HANG_UP);
+        hangUpAction.setNotifyCall(notifyCallGR);
+        hangUpAction.execute();
+        var notifyActivityGR = hangUpAction.getNotifyActivityGR();
+
+        // Setting outputs
+        outputs.notify_workflow_activity = notifyActivityGR;
+        outputs.callback_wait_timeout = new NotifyFlowUtil().getActionCallbackWaitTime();
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 6cbd71589f349210e9f6328dda0a1c85
+  order: '300'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: a0bd71589f349210e9f6328dda0a1c8d
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-29 09:21:00
+  value: ''
+  variable: 1fac6063876100102fa5a1bb36cb0bac
+- document: sys_hub_step_instance
+  document_key: 6cbd71589f349210e9f6328dda0a1c8e
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: e0bd71589f349210e9f6328dda0a1c99
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-29 09:23:13
+  value: |-
+    (function execute(inputs, outputs) {
+        var notifyFlowErrorHandler = new NotifyFlowErrorHandler();
+
+        // Check if the state of the notify workflow activity is 'failed'.
+        // If the state is 'failed', throw an error with a message indicating the failure of the 'Hang Up' activity.
+        var notifyActivityGR = inputs.notify_workflow_activity;
+        if (notifyFlowErrorHandler.isActionExecutionFailed(
+            notifyActivityGR.getValue(NotifyFlowConstants.COLUMNS.STATE)
+        )) notifyFlowErrorHandler.throwActionExecutionFailed(NotifyFlowConstants.ACTIONS.HANG_UP);
+
+        // If no errors are thrown, the 'Hang Up' activity has been processed successfully. 
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 6cbd71589f349210e9f6328dda0a1c85
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:35
+  sys_id: ecbd71589f349210e9f6328dda0a1c8c
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-18 11:13:35
+  value: '1'
+  variable: bc93428187120010663ca1bb36cb0b83
+- document: sys_hub_action_type_definition
+  document_key: d92da45c9f309210e9f6328dda0a1c2c
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-18 11:13:36
+  sys_id: f8bd71589f349210e9f6328dda0a1caa
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-03-09 13:25:24
+  value: '{"version":"1.0","complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"mapped\":\"{}\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"mapped\":\"{}\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"serializationFormat":"JSON"}'
+  variable: a8bd71589f349210e9f6328dda0a1c9c

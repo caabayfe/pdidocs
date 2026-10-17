@@ -1,0 +1,2 @@
+current.parent = '';
+current.update();

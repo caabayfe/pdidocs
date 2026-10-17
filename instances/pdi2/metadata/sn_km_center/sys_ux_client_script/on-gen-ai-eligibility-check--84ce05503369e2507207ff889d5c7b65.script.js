@@ -1,0 +1,35 @@
+/**
+ * @param {params} params
+ * @param {api} params.api
+ * @param {any} params.event
+ * @param {any} params.imports
+ * @param {ApiHelpers} params.helpers
+ */
+function handler({
+    api,
+    event,
+    helpers,
+    imports
+}) {
+    if (api.state.isGenAiSuggested)
+        return;
+
+    if (event.name === 'DATA_FETCH_SUCCEEDED') {
+        var answer = api.data.check_gen_ai_eligibility_1.output;
+        if (answer.eligible) {
+            helpers.modal.open('modal_gen_ai');
+            var filters = [];
+            for (var f in answer.availableTaskFilters) {
+                filters.push({
+                    id: f,
+                    label: answer.availableTaskFilters[f].label
+                });
+            }
+            api.setState('availableTaskFilters', filters);
+            api.setState('isGenAiSuggested', true);
+        }
+        if (answer.timeout) {
+            api.setState('genAiTimeout', answer.timeout);
+        }
+    }
+}

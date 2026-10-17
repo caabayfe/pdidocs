@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:if test="${jvar_printed_some == false}">
+		<tbody data-sn-macro-sys-id="${jvar_macro_sys_id}">
+        <g:evaluate var="jvar_item" expression="gs.flushMessages();" />
+        <tr>
+            <td colspan="2">
+                 <g:evaluate var="jvar_search_target" jelly="true">
+                      var jvar_search_target;
+                      if (jelly.sysparm_parent == null || jelly.sysparm_parent == "")
+                          jvar_search_target = gs.getMessage('Service Catalog');
+                      else
+                          jvar_search_target = GlideappCategory.get(jelly.sysparm_parent).getTitle();
+                      jvar_search_target;
+                 </g:evaluate>
+                 <g:evaluate var="jvar_search_all_link" jelly="true">
+                    jvar_search_all_link = GlideappCatalogURLGenerator.getSearchURL(jelly.sysparm_search, gs.getSessionToken(), null, null, jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+                    jvar_search_all_link;
+                 </g:evaluate>
+                 <ul role="navigation" class="breadcrumb sc_breadcrumb" aria-label="${gs.getMessage('Catalog item categories')}">
+                    <g:com.glideapp.servicecatalog_breadcrumb main="true" invoke="false" view="${sysparm_view}" catalogview="${sysparm_catalog_view}" nc="${sysparm_no_checkout}" st="true" search="true" term="${sysparm_safe_search}" ignore="true" pid="${sysparm_parent}" lc="" cms="${SNC.CatalogCMS.isRenderBlock(RP)}" />
+                 </ul>
+                <g:evaluate var="jvar_link_item_url" jelly="true">
+                    var size = jelly.jvar_breadcrumb_items.size();
+                    size = (JSUtil.nil(size)) ? 0 : size;
+                    size = (size > 3) ? size - 3 : size - 2;
+                    size = Math.max(0, size);
+                    var jvar_link_item_url = jelly.jvar_breadcrumb_items.get(size).getUrl();
+                    jvar_link_item_url;
+                </g:evaluate>
+                <g:evaluate var="jvar_link_item_label" jelly="true">
+                    var size = jelly.jvar_breadcrumb_items.size();
+                    size = (JSUtil.nil(size)) ? 0 : size;
+                    size = (size > 3) ? size - 3 : size - 2;
+                    size = Math.max(0, size);
+                    var jvar_link_item_label = jelly.jvar_breadcrumb_items.get(size).getLabel();
+                    jvar_link_item_label;
+                </g:evaluate>
+                <j:set var="jvar_messages" value="${new Array()}" />
+                <g:evaluate var="jvar_message" jelly="true">
+                    var catalogTitle = SNC.Catalog.get(jelly.sysparm_catalog).getTitle();
+                    if (JSUtil.nil(catalogTitle))
+                        catalogTitle = gs.getMessage('All Catalogs');
+                    var message1 = '<b>' + GlideStringUtil.escapeHTML(jelly.sysparm_search) + '</b>';
+                    var message2 = '<a href="' + jvar_link_item_url + '" class="message_link">' + catalogTitle + '</a>';
+                    jelly.jvar_messages.push(message1);
+                    var jvar_message;
+                    if (jvar_link_item_label) {
+                        jelly.jvar_messages.push(message2);
+                        jvar_message = gs.getMessageS("Your search for {0} in {1} did not match any items.");
+						jvar_message = jvar_message.replace(/\{0\}/,jelly.jvar_messages[0]);
+						jvar_message = jvar_message.replace(/\{1\}/, jelly.jvar_messages[1]);
+                    } else {
+                        jvar_message = gs.getMessageS("Your search for {0} did not match any items.");
+						jvar_message = jvar_message.replace(/\{0\}/, jelly.jvar_messages[0]);
+					}
+                    jvar_message;
+                </g:evaluate>
+                <div class="sc_search_msg" role="alert" aria-live="assertive">
+                    <g:no_escape>
+                        ${NS:jvar_message}
+                    </g:no_escape>
+					<g:inline template="catalog_did_you_mean.xml"/>
+                </div>
+                <j:if test="${sysparm_parent != null and sysparm_parent != '' and sysparm_parent != 'undefined'}">
+                    <j:set var="jvar_messages" value="${new Array()}" />
+                    <g:evaluate var="jvar_message" jelly="true">
+                        var message1 = '<a href="' + jvar_search_all_link + '" class="message_link">';
+                        var message2 = '</a>';
+                        jelly.jvar_messages.push(message1);
+                        jelly.jvar_messages.push(message2);
+                        var jvar_message = gs.getMessageS("Try searching {0} all categories{1}.");
+						jvar_message = jvar_message.replace(/\{0\}/,jelly.jvar_messages[0]);
+						jvar_message = jvar_message.replace(/\{1\}/, jelly.jvar_messages[1]);
+                        jvar_message;
+                    </g:evaluate>
+                    <div class="sc_search_msg" role="alert" aria-live="assertive">
+                        <g:no_escape>
+                            ${NS:jvar_message}
+                        </g:no_escape>
+						<g:inline template="catalog_did_you_mean.xml"/>
+                    </div>
+                </j:if>
+            </td>
+        </tr>
+		</tbody>
+    </j:if>
+</j:jelly>

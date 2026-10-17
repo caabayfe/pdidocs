@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide"
+	xmlns:j2="null" xmlns:g2="null">
+ <j2:if test="$[current.canRead()]">
+	 <style>
+		 <!-- PRB1312522: This is to account for a bug in how the record being approved is in-lined into the approval form -->
+		 span.icon.icon-info {
+			margin-left: 0em !important;
+		}
+	 </style>
+	<g2:evaluate var="jvar_exists" jelly="true">
+		var exists = false;
+		var tname = null;
+		var macro = null;
+		if(!$[ref].source_table.nil())
+			tname = 'approval_summarizer_' + $[ref].source_table;
+		else if ($[ref].sysapproval != null )
+			tname = 'approval_summarizer_' + $[ref].sysapproval.sys_class_name;
+
+		macro = (tname != null) ? GlideDBMacro.get(tname) : macro;
+		exists = (macro != null)? macro.exists() : exists;
+		exists;
+	</g2:evaluate>
+	<j2:switch on="$[jvar_exists]">
+		<j2:case value="true">
+			<g2:macro_invoke macro="$[tname]" />
+		</j2:case>
+		<j2:default>
+			<g2:macro_invoke macro="approval_summarizer_default" />
+		</j2:default>
+	</j2:switch>
+  </j2:if>
+</j:jelly>

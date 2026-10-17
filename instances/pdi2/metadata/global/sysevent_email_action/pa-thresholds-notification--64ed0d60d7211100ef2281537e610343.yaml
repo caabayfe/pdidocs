@@ -1,0 +1,152 @@
+_meta:
+  hash: 21330cd899bcae3fe4facbeb61ccab0792eba1f8c10292ea986864f190885e89
+  hash_version: 1
+  scope: global
+  sys_class_name: sysevent_email_action
+  sys_created_by: admin
+  sys_created_on: 2013-12-06 14:41:28
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 64ed0d60d7211100ef2281537e610343
+  sys_mod_count: '65'
+  sys_package: afd032b38c5103100a22deb6dd2b4e4c
+  sys_scope: global
+  sys_update_name: sysevent_email_action_64ed0d60d7211100ef2281537e610343
+  sys_updated_by: admin
+  sys_updated_on: 2025-11-04 05:01:08
+action_insert: 'false'
+action_update: 'false'
+active: 'true'
+advanced_condition: ''
+affected_field_on_event: ''
+category: b69d02137f232200ee2e108c3ffa9151
+collection: ''
+condition: ''
+content_type: multipart/mixed
+default_digest: 'false'
+default_interval: ''
+description: ''
+digest_from: ''
+digest_html: ''
+digest_reply_to: ''
+digest_separator_html: ''
+digest_separator_text: ''
+digest_subject: ''
+digest_template: ''
+digest_text: ''
+digest_type: single
+digestable: 'false'
+enable_dynamic_translation: 'false'
+event_name: pa.job.threshold.notification
+event_parm_1: 'false'
+event_parm_2: 'true'
+exclude_delegates: 'false'
+force_delivery: 'false'
+from: ''
+generation_type: event
+importance: ''
+include_attachments: 'false'
+item: event.parm1
+item_table: ''
+mandatory: 'false'
+message: |-
+  <mail_script>
+  	var json = new JSON();
+  	var summary = json.decode(event.parm1);
+  	var date = summary.date;
+  	var UUIDs = summary.UUIDs;
+  	var ds_thresholds = summary.dataSnapshot_threshold_reached;
+  	var escape = GlideStringUtil.escapeHTML;
+      if (typeof UUIDs != 'undefined') {
+      for (var i=0;i<UUIDs.length;i++){
+          var uuidString = UUIDs[i].uuidString;
+          var reachedThresholdChecks = UUIDs[i].reachedThresholdChecks;
+          var indicatorName = UUIDs[i].indicatorName;
+          var breakdownName = UUIDs[i].breakdownName;
+          var elementName = UUIDs[i].elementName;
+          var breakdownL2Name = UUIDs[i].breakdownL2Name;
+          var elementL2Name = UUIDs[i].elementL2Name;
+          var uuid = UUIDs[i].uuid;
+          var aggregate = (typeof UUIDs[i].aggregateName != 'undefined') ? (UUIDs[i].aggregateName + ' '): '';
+
+          for (var j = 0; j < reachedThresholdChecks.length; j++) {
+              var reachedThresholdCheck = reachedThresholdChecks[j];
+              var domainName = reachedThresholdCheck.domain_name;
+          	var scoreDate = reachedThresholdCheck.date;
+          	var condition = reachedThresholdCheck.condition;
+          	var thresholdLevel = reachedThresholdCheck.thresholdLevel;
+          	var notificationMessageStart = 'The score for the ';
+          	var link = '<a href="https://' + gs.getProperty('instance_name') + '.service-now.com/$pa_detailed.do?jvar_uuid=' + escape(uuid) +'">';
+          	var notificationLinkText = aggregate + indicatorName;
+  	        if (typeof breakdownName != 'undefined'){
+  	        	notificationLinkText += ' for ' + breakdownName + ' ' + elementName;
+  	        }
+  	        if (typeof breakdownL2Name != 'undefined'){
+  	        	notificationLinkText +=  ', ' + breakdownL2Name + ' ' + elementL2Name;
+  	        }
+  	        if (typeof domainName != 'undefined'){
+  	        	notificationLinkText +=  ' - ['  + domainName + ']';
+  	        }
+  	        var notificationMessageEnd = '</a>';
+  	        var notificationMessage;
+  	        if (typeof thresholdLevel == 'undefined') {
+  	        	notificationMessage = ' had an ' + condition + ' of ' + escape(reachedThresholdCheck.matchingScore) + ' on ' + scoreDate + '.';
+  	        } else {
+  		        var relativePosition = escape(reachedThresholdCheck.position);
+  		        notificationMessage = ' was ' + escape(reachedThresholdCheck.matchingScore) + ' on ' + scoreDate + ', which is ' + relativePosition + ' the threshold of ' + thresholdLevel + '.';
+  	        }
+  	        template.print('<div>' + escape(notificationMessageStart) + link + escape(notificationLinkText) + notificationMessageEnd + escape(notificationMessage) + '</div>');
+          }
+          template.print('<br>');
+      }
+          }
+  if (typeof ds_thresholds != 'undefined') {
+      for (var i = 0; i < ds_thresholds.length; i++) {
+          var reachedThresholdCheck = ds_thresholds[i];
+          var scoreDate = reachedThresholdCheck.score_date;
+          var indicatorDisplayValue = reachedThresholdCheck.indicator_display_value;
+          var indicatorName = reachedThresholdCheck.indicator_name;
+          var relativePosition = reachedThresholdCheck.position;
+          var processedFilterJson = reachedThresholdCheck.processed_filter;
+          var thresholdLevel = reachedThresholdCheck.thresholdLevel;
+          var sourceId = reachedThresholdCheck.source_id;
+          var condition = reachedThresholdCheck.condition;
+          var notificationMessageStart = 'The score for the ';
+          var calendarInfoJson = reachedThresholdCheck.calendar_info_json;
+          var link = '<a href="' + gs.getProperty('glide.servlet.uri') + 'now/platform-analytics-workspace/ac_kpi_details/' + escape(sourceId) + '/params/calendarInfo/'+ escape(calendarInfoJson) + '/breakdowns/'+ escape(processedFilterJson) + '/list-view/panel/threshold">';
+          var notificationLinkText = indicatorDisplayValue;
+          var notificationMessageEnd = '</a>';
+          var notificationMessage;
+          if (typeof thresholdLevel == 'undefined') {
+              notificationMessage = ' had an ' + condition + ' of ' + reachedThresholdCheck.score + ' on ' + scoreDate + '.';
+          } else {
+              notificationMessage = ' was ' + reachedThresholdCheck.score + ' on ' + scoreDate + ', which is ' + relativePosition + ' the threshold of ' + thresholdLevel + '.';
+          }
+          template.print('<div>' + notificationMessageStart + link + notificationLinkText + notificationMessageEnd + notificationMessage + '</div>');
+          template.print('<br>');
+      }
+  }
+  </mail_script>
+message_html: ''
+message_list: 4a40c70253020200601fa3fc9ec5878f
+message_text: ''
+name: PA Thresholds Notification
+omit_watermark: 'false'
+order: '100'
+push_message_only: 'false'
+recipient_fields: ''
+recipient_groups: ''
+recipient_users: ''
+reply_to: ''
+send_self: 'false'
+sms_alternate: ''
+style: ''
+subject: Thresholds Summary notification
+subscribable: 'false'
+sys_name: PA Thresholds Notification
+sys_overrides: ''
+sys_policy: ''
+sys_version: ''
+template: 7ed0481f3b0b2200c869c2c703efc487
+type: email
+weight: '0'

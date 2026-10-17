@@ -1,0 +1,1 @@
+current.type = 'Microsoft-IIS';

@@ -1,0 +1,1 @@
+new KBFanoutManager().fanout(current);

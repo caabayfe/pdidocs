@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate var="jvar_redirect_url" jelly="true">
+		var requestorContext = jelly.sysparm_oauth_requestor_context;
+		var requestor = jelly.sysparm_oauth_requestor;
+		var downstreamProfileId = jelly.sysparm_oauth_provider_profile;
+		var personal = jelly.sysparm_oauth_personal;
+		var useMid = jelly.sysparm_use_mid;
+		var midServer = jelly.sysparm_mid_server;
+		var redirectUrl = '';
+
+		function equalsIgnoreCase(left, right) {
+			return String(left || '').toLowerCase() == String(right || '').toLowerCase();
+		}
+
+		function encode(value) {
+			return encodeURIComponent(String(value));
+		}
+
+		function addParam(url, name, value) {
+			if (value == null || String(value) == '')
+				return url;
+			var separator = url.indexOf('?') == -1 ? '?' : '&amp;';
+			return url + separator + name + '=' + encode(value);
+		}
+
+		function isDirectlyNonInteractive(grantType) {
+			return equalsIgnoreCase(grantType, 'client_credentials')
+				|| equalsIgnoreCase(grantType, 'urn:ietf:params:oauth:grant-type:jwt-bearer')
+				|| equalsIgnoreCase(grantType, 'urn:ietf:params:oauth:grant-type:saml2-bearer');
+		}
+
+		function isNonInteractiveEntity(profile) {
+			if (!profile)
+				return false;
+
+			var grantType = profile.getValue('grant_type');
+			if (!grantType)
+				return false;
+
+			if (isDirectlyNonInteractive(grantType))
+				return true;
+
+			if (equalsIgnoreCase(grantType, 'urn:ietf:params:oauth:grant-type:token-exchange'))
+				return isTokenExchangeNonInteractive(profile);
+
+			return false;
+		}
+
+		function isTokenExchangeNonInteractive(profile) {
+			var tokenSource = profile.getValue('token_source');
+			if (!tokenSource || equalsIgnoreCase(tokenSource, 'jwt_provider'))
+				return true;
+
+			if (equalsIgnoreCase(tokenSource, 'oauth_profile')) {
+				var upstreamProfileId = profile.getValue('token_source_profile');
+				if (!upstreamProfileId)
+					return false;
+
+				var upstream = new GlideRecord('oauth_entity_profile');
+				if (!upstream.get(upstreamProfileId))
+					return false;
+
+				if (equalsIgnoreCase(upstream.getValue('grant_type'), 'urn:ietf:params:oauth:grant-type:token-exchange'))
+					return false;
+
+				return isNonInteractiveEntity(upstream);
+			}
+
+			return false;
+		}
+
+		function buildClientCredentialsURL(profileId) {
+			var url = '/oauth_noninteractive_input.do';
+			url = addParam(url, 'sysparm_oauth_requestor_context', requestorContext);
+			url = addParam(url, 'sysparm_oauth_requestor', requestor);
+			url = addParam(url, 'sysparm_oauth_provider_profile', profileId);
+			url = addParam(url, 'sysparm_oauth_personal', personal);
+			url = addParam(url, 'sysparm_use_mid', useMid);
+			url = addParam(url, 'sysparm_mid_server', midServer);
+			return url;
+		}
+
+		function buildAuthCodeURL(upstreamProfileId, downstreamProfileId) {
+			var url = '/oauth_initiator.do';
+			url = addParam(url, 'oauth_requestor_context', requestorContext);
+			url = addParam(url, 'oauth_requestor', requestor);
+			url = addParam(url, 'oauth_provider_profile', upstreamProfileId);
+			url = addParam(url, 'response_type', 'code');
+			url = addParam(url, 'personal', personal);
+			url = addParam(url, 'use_mid', useMid);
+			url = addParam(url, 'mid_server', midServer);
+			url = addParam(url, 'sysparm_token_exchange_profile_id', downstreamProfileId);
+			return url;
+		}
+
+		function buildPasswordURL(upstreamProfileId, downstreamProfileId) {
+			var url = '/oauth_password_input.do';
+			url = addParam(url, 'sysparm_oauth_requestor_context', requestorContext);
+			url = addParam(url, 'sysparm_oauth_requestor', requestor);
+			url = addParam(url, 'sysparm_oauth_provider_profile', upstreamProfileId);
+			url = addParam(url, 'sysparm_oauth_personal', personal);
+			url = addParam(url, 'sysparm_use_mid', useMid);
+			url = addParam(url, 'sysparm_mid_server', midServer);
+			url = addParam(url, 'sysparm_token_exchange_profile_id', downstreamProfileId);
+			return url;
+		}
+
+		if (!gs.getSession().isLoggedIn()) {
+			redirectUrl = '/login.do';
+		} else if (downstreamProfileId) {
+			var downstreamProfile = new GlideRecord('oauth_entity_profile');
+			if (downstreamProfile.get(downstreamProfileId)
+					&amp;&amp; equalsIgnoreCase(downstreamProfile.getValue('grant_type'), 'urn:ietf:params:oauth:grant-type:token-exchange')) {
+				if (isNonInteractiveEntity(downstreamProfile)) {
+					redirectUrl = buildClientCredentialsURL(downstreamProfileId);
+				} else {
+					var upstreamProfileId = downstreamProfile.getValue('token_source_profile');
+					if (upstreamProfileId) {
+						var upstreamProfile = new GlideRecord('oauth_entity_profile');
+						if (upstreamProfile.get(upstreamProfileId)) {
+							var upstreamGrantType = upstreamProfile.getValue('grant_type');
+							if (equalsIgnoreCase(upstreamGrantType, 'authorization_code'))
+								redirectUrl = buildAuthCodeURL(upstreamProfileId, downstreamProfileId);
+							else if (equalsIgnoreCase(upstreamGrantType, 'password'))
+								redirectUrl = buildPasswordURL(upstreamProfileId, downstreamProfileId);
+						}
+					}
+				}
+			}
+		}
+
+		redirectUrl;
+	</g:evaluate>
+
+	<j:if test="${jvar_redirect_url != ''}">
+		<input type="hidden" id="redirect_url" value="${jvar_redirect_url}" />
+		<script>
+			window.location.replace(document.getElementById('redirect_url').value);
+		</script>
+	</j:if>
+	<j:if test="${jvar_redirect_url == ''}">
+		<div class="notification notification-error">${gs.getMessage('Unable to route the token exchange flow.')}</div>
+	</j:if>
+</j:jelly>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:ui_form>
+<g:evaluate var="jvar_elevated_roles" expression="gs.getSession().getAvailableElevatedRoles()" />
+<input type="hidden" name="elevated_roles" id="elevated_roles" value="" />
+<input type="hidden" name="gsft_main_url" id="gsft_main_url" value="" />
+<table style="padding:4px;">
+	  <tr>
+    	<td colspan="2">
+    	
+				<div class="system_message outputmsg_info">
+					<table cellspacing="0" cellpadding="0" border="0" class="background_transparent">
+						<tr>
+							<td class="message_image" style="width:25px; vertical-align:top;"><img src="images/outputmsg_info.gifx" style="margin-left:6px;" alt="${gs.getMessage('Informational Message')}" width="16" height="16"/></td>		
+							<td>
+<span id="new_elevated_role" style="display=inline">${gs.getMessage("The following are session-specific privileges, session timeout or logout will remove all elevated privileges.")}</span>
+<span id="expired_elevated_role" style="display:none">${gs.getMessage("The following elevated privileges have expired.  Please re-enable them if needed:")}  <span id="expired_role" style="font-weight:bold"></span></span>
+							</td>		
+						</tr>		
+					</table>
+				</div>
+    	</td>
+  	  </tr>
+
+  	<tr>
+    	<td colspan="2" id="role_td">
+
+	    <j:set var="jvar_elevated_roles_array" value="${jvar_elevated_roles.split(',')}" />
+	    <j:forEach var="jvar_current_item" items="${jvar_elevated_roles_array}">
+
+	          
+		      <table>
+		        <tr>
+		          <td colspan="2" style="vertical-align:top;"> 
+	          	  <j2:if test="$[gs.getSession().hasRole('${jvar_current_item}') == true]">
+		                <input class="role_input" 
+		                       type="checkbox" 
+		                       name="elevated_role"
+                                       id="${JS:jvar_current_item}" 
+		                       checked="checked" 
+		                       value="${JS:jvar_current_item}"></input><br/>
+	              </j2:if>
+	              <j2:if test="$[gs.getSession().hasRole('${jvar_current_item}') != true]">
+		                <input class="role_input" 
+		                       type="checkbox" 
+		                       name="elevated_role" 
+                                       id="${JS:jvar_current_item}"
+		                       value="${JS:jvar_current_item}"></input><br/>
+	              </j2:if>
+	              </td>
+		          <td>
+		          
+	              <g:evaluate var="jvar_rgr" jelly="true">
+	                var rgr = new GlideRecord('sys_user_role');
+			rgr.addQuery('name', (jelly.jvar_current_item || '') + '');
+	                rgr.query();
+	                rgr.next();
+	                rgr;
+	              </g:evaluate>
+	              <p style="margin-top:0px">
+	              		
+                      <label for="${JS:jvar_current_item}">
+                        <b>${JS:jvar_current_item}</b><br/>
+                        <span style="font-size:smaller;">${rgr.description}</span>
+                      </label>
+	              </p>
+		          </td>
+		          
+		        </tr>
+		      </table>
+	
+	     </j:forEach> 
+
+    	</td>
+  	  </tr>
+	  <tr id ="poll_img" style="display:none" border="1">
+	    <td colspan="2"  align="center" width="300px">
+	      <img src="./images/ajax-loader.gifx" />
+	      <p id="poll_text" style="font-weight:bold;">
+	        ${gs.getMessage('Please Wait')}
+	      </p>
+	    </td>
+	  </tr>
+	  <tr>
+	    <td colspan="2"><br /></td>
+	  </tr>
+	  <tr id="dialog_buttons">
+	    <td align="left">
+	      <a target="_blank" class="breadcrumb" href="/api/now/v1/context_doc_url/High_Security_Settings_Elevated_Privilege">${gs.getMessage("More info")}</a>
+	    </td>
+	    <td align="right">
+	      <g:dialog_buttons_ok_cancel ok="return elRoleOk()" ok_id="ok_button" cancel_type="button" />
+	    </td>
+	  </tr>
+</table>
+</g:ui_form>
+</j:jelly>

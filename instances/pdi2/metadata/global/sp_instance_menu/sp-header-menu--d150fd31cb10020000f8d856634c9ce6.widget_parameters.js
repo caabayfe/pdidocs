@@ -1,0 +1,1 @@
+{"enable_cart": { "displayValue": "true","value": true},"enable_wishlist": {"displayValue": "true","value": true},"auto_update_cart": {"displayValue": "true","value": true},"auto_update_wishlist": {"displayValue": "true","value": true}}

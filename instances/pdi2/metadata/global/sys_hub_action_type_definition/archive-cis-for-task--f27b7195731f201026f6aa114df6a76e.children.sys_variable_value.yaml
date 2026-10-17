@@ -1,0 +1,158 @@
+- document: sys_hub_action_type_definition
+  document_key: f27b7195731f201026f6aa114df6a76e
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-04-02 23:24:15
+  sys_id: 06c18edd7313601026f6aa114df6a779
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-04-02 23:24:15
+  value: '0'
+  variable: f1910edd7313601026f6aa114df6a763
+- document: sys_hub_step_instance
+  document_key: 9311c6dd7313601026f6aa114df6a7f6
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-04-02 23:21:22
+  sys_id: 27110add7313601026f6aa114df6a741
+  sys_mod_count: '45'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-03-30 18:43:00
+  value: |-
+    (function execute(inputs, outputs) {
+      
+    	outputs.error = false;
+      	outputs.error_message = '';
+        outputs.notes = '';
+        var ciCount = 0;
+        var nonRetiredCis = 0;
+        var ARCHIVE_JOB_SYS_ID = 'bd976a209f231000dada207c7f4bcc59';
+      
+        try {
+    		var helper = new global.CMDBDataManagerHelper();
+          
+          var grArchiveJob = new GlideRecord('sys_trigger');
+          if(!grArchiveJob.get(ARCHIVE_JOB_SYS_ID)) {
+          	throw new Error('Archival of CIs will fail since Archive job  is not found or is not configured correctly. Please contact your administrator about it.');
+          }
+
+        	var task_gr = inputs.task;
+          
+        	var taskSysId = task_gr.getUniqueValue();
+       
+        	ciCount = helper.getCiCount(taskSysId);
+          
+            var batchSize = helper.getArchiveBatchSize();
+           
+        	var lastSysId = '';
+        	var hasMore = true;
+        	
+      		while (hasMore) {
+                var ciResult = helper.getCiSysIds(lastSysId, batchSize, taskSysId);
+                var ciData = ciResult.ciMap;
+                lastSysId = ciResult.lastSysId;
+                hasMore = ciResult.hasMore;            
+    			var totalCiCount = helper.fetchCiCount(ciData); 
+                var ciSysIds = helper.getRetiredCis(ciData);
+                nonRetiredCis += (totalCiCount - ciSysIds.length);
+                
+                var chunkIds = helper.archiveCis(ciSysIds, task_gr.policy_id.archive_for_days);
+              	if(chunkIds == undefined || chunkIds.toArray().length == 0)
+                  throw new Error("Failed to create archive chunk. No CIs will be archived under this task");
+                var arrChunkIds = chunkIds.toArray();
+              	for(var i = 0; i < arrChunkIds.length; i++) {
+              		helper.createTaskToArchiveChunk(taskSysId, arrChunkIds[i]);
+                }
+        	}  
+        } catch(e) {
+        	outputs.error = true;
+            outputs.error_message = e;
+        } finally {
+        	outputs.notes = "Summary - Total CI Count:" + ciCount + " Non-Retired CI Count:" + nonRetiredCis;
+        }
+      		
+      
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 9311c6dd7313601026f6aa114df6a7f6
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-04-02 23:23:25
+  sys_id: 39910edd7313601026f6aa114df6a760
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-04-02 23:23:25
+  value: ''
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 9311c6dd7313601026f6aa114df6a7f6
+  order: '350'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-04-02 23:23:25
+  sys_id: 75910edd7313601026f6aa114df6a760
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-04-02 23:23:25
+  value: ''
+  variable: cbd1070373531010791f94596bf6a776
+- document: sys_hub_action_type_definition
+  document_key: f27b7195731f201026f6aa114df6a76e
+  order: '4'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-06-11 00:21:55
+  sys_id: 97a4e52373ac301026f6aa114df6a736
+  sys_mod_count: '9'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-02-27 00:05:23
+  value: '{"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON","version":"1.0"}'
+  variable: 9fa4a52373ac301026f6aa114df6a7d6
+- document: sys_hub_step_instance
+  document_key: 9311c6dd7313601026f6aa114df6a7f6
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-04-02 23:23:25
+  sys_id: bd910edd7313601026f6aa114df6a760
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-04-02 23:23:25
+  value: ''
+  variable: 2c226939b3101300176b051a16a8dc83
+- document: sys_hub_action_type_definition
+  document_key: f27b7195731f201026f6aa114df6a76e
+  order: '5'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-06-11 00:21:55
+  sys_id: d3a4e52373ac301026f6aa114df6a736
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-06-11 00:21:55
+  value: '0'
+  variable: 5fa4e52373ac301026f6aa114df6a703
+- document: sys_hub_step_instance
+  document_key: 9311c6dd7313601026f6aa114df6a7f6
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2021-04-02 23:23:25
+  sys_id: f9910edd7313601026f6aa114df6a760
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2021-04-02 23:23:25
+  value: ''
+  variable: 74315b04b3201300176b051a16a8dc2b

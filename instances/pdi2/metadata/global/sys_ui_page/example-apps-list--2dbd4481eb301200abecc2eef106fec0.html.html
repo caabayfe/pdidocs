@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+   <j:if test="${gs.hasRole('rest_api_explorer')}">
+      <g:inline template="rest_api_explorer_client_compatibility.xml" />
+      <j2:if test="$[jvar_compatibility != 'block']">
+         <g:evaluate var="jvar_prefix" jelly="true">
+            gs.getProperty('glide.rest.client_app_prefix', 'example-restclient-');
+         </g:evaluate>
+         <g:evaluate var="jvar_repoUrl" jelly="true">
+            gs.getProperty('glide.rest.client_app_repo_url', 'https://api.github.com/orgs/ServiceNow/repos');
+         </g:evaluate>
+		 <g:requires name="scripts/restapi/lib/js_includes_explorer.js" includes="true" />
+         <input type="HIDDEN" name="prefix" id="prefix" value="${jvar_prefix}"/>
+         <input type="HIDDEN" name="repo_url" id="repo_url" value="${jvar_repoUrl}"/>
+         <div data-doctype="true" ng-app="sn_sampleApps">
+            <div>
+               <div ng-controller="mainCtrl" ng-init="getGitRepos()">
+                  <div id="top_of_page" tabindex="-1" aria-describedby="description">
+                     <nav class="navbar navbar-default" role="navigation">
+                        <div class="container-fluid">
+                           <div class="navbar-header">
+                              <h1 style="display: inline-block;" class="form-header navbar-title">
+                                 <span>${gs.getMessage('Example REST API Client Applications')}</span>
+                              </h1>
+                           </div>
+                        </div>
+                     </nav>
+                  </div>
+                  <table style="width: 100%;">
+                     <tbody>
+                        <tr data-annotation-type="Section Details" class="annotation-row" style="display: table-row;">
+                           <td colspan="99" data-annotation-type="Section Details" class="annotation">
+                              <div class="annotation-wrapper" style="direction:ltr; padding: 10px;">
+                                 <p tabindex="-1" id="description">${gs.getMessage('These are example REST API client applications built for teaching, demoing, and reference purposes. Play with them, fork them, or even reuse some of the code in your projects. Click on an application to see their full source on GitHub as well as additional documentation.')}</p>
+                              </div>
+                           </td>
+                        </tr>
+                     </tbody>
+                  </table>
+                  <div>
+                     <div class="panel panel-default">
+                        <div class="panel-body">
+                           <div class="container-fluid" ng-show="error">
+                              <div class="row">
+                                 <div tabindex="0" class="col-sm-12 notification notification-warning">
+                                    <h4>${gs.getMessage('Unable to retrieve example client applications')}</h4>
+                                    <h4><span><a href="${jvar_repoUrl}" target="_blank">
+                                       <b>${gs.getMessage('Git Hub Repositories')}</b>
+                                       </a></span>
+                                    </h4>
+                                 </div>
+                              </div>
+                           </div>
+                           <div class="container-fluid" ng-repeat="app in repos" ng-show="!error">
+                              <div class="row">
+                                 <div class="col-sm-12">
+                                    <h4>
+										<span>
+											<a href="{{app.html_url}}" target="_blank"
+											aria-label="{{app.name}} {{app.description}}  View project on Git Hub.">
+												<b>
+													{{app.name}}
+												</b>
+											</a>
+										</span>
+									</h4>
+                                 </div>
+                              </div>
+                              <div class="row">
+                                 <div class="col-sm-12">
+                                    {{app.description}}
+                                 </div>
+                              </div>
+                              <hr>
+                              </hr>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </j2:if>
+   </j:if>
+</j:jelly>

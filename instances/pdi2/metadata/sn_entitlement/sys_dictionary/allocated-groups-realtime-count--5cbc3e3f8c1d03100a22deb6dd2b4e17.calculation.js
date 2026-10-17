@@ -1,0 +1,1 @@
+new sn_entitlement.SubscriptionUsageUtils().calculateRealTimeGroupAllocation(current)

@@ -1,0 +1,39 @@
+_meta:
+  hash: 47339ecb2a7ba798c58e74131a9f78aa05983d729c0c09df2cc33f14a4437450
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2008-02-07 02:40:17
+  sys_id: f1c36f110ab301bf00ad336a478241eb
+  sys_mod_count: '9'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_f1c36f110ab301bf00ad336a478241eb
+  sys_updated_by: greg.grisco
+  sys_updated_on: 2016-02-25 17:20:50
+active: 'true'
+name: pkg_munger
+probe: 2c93a59c0a0a0a8b00d5f029ccaf5573
+sys_name: pkg_munger
+sys_policy: ''
+value: |-
+  #! /bin/bash
+  cmd_test=$(whereis -b rpm | grep ': /')
+  cmd_test2=$(which rpm)
+  result=''
+  if [[ -n "$cmd_test" && -n "$cmd_test2" ]]
+  then
+     result=$(rpm -q -a --qf 'Package: %{NAME}\nStatus: install ok installed\nMaintainer: %{VENDOR}\nVersion: %{VERSION}\nRelease: %{RELEASE}\n')
+     if [ -n "$result" ]
+     then
+       echo "$result"
+     fi
+  fi   
+
+  # It's possible to not get anything back from rpm. If that's the case, try dpkg 
+  if [[ -z "$result" && -e /var/lib/dpkg/status ]]
+  then
+     cat /var/lib/dpkg/status | egrep '^Status:|^Package:|^Maintainer:|^Version:'
+  fi
+value_script: ''

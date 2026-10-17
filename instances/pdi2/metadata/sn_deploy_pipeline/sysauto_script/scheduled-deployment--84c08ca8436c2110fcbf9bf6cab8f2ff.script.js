@@ -1,0 +1,2 @@
+
+ScheduledDeploymentService.triggerScheduledDeploymentsInstall();

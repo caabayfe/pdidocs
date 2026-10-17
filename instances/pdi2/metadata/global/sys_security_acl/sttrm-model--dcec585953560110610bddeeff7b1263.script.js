@@ -1,0 +1,1 @@
+new STTRMModel(current).evaluateReadSecurity();

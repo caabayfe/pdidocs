@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate var="jvar_has_roles" expression="gs.installationSetting('DisplayFilter', '${ref}')"/>
+
+	<j2:set var="sys_nav_count" value="${gs.getUser().getPreference('rowcount')}"/>
+	<label for="perrows" style="display:none">Rows per Page</label>
+	<select class="listbar_select" name='perrows' onchange="changeRowCount(this);" id='perrows'>
+		<g2:tokenize var="jvar_c_list" delim=",">
+			${gs.getProperty('glide.ui.per_page', '10,20,50,100')}
+		</g2:tokenize>
+		<j2:set var="jvar_foundCount" value="false" />
+		<j:set var="jvar_per_page" value="${gs.getMessage('per page')}" />
+		<j2:forEach var="jvar_citem" items="$[jvar_c_list]">
+			<j2:if test="$[sys_nav_count != jvar_citem]">
+				<option value="$[jvar_citem]"> $[jvar_citem] ${jvar_per_page}</option>
+			</j2:if>
+			<j2:if test="$[sys_nav_count == jvar_citem]">
+				<option selected="true" value="$[jvar_citem]"> $[jvar_citem] ${jvar_per_page}</option>
+				<j2:set var="jvar_foundCount" value="true" />
+			</j2:if>
+		</j2:forEach>
+		<j2:if test="$[jvar_foundCount == false]">
+			<option selected="true" value="$[sys_nav_count]"> $[sys_nav_count] </option>
+		</j2:if>
+	</select>
+</j:jelly>

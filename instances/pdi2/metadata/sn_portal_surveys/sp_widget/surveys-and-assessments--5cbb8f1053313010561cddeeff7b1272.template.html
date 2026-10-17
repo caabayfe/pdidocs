@@ -1,0 +1,85 @@
+<!-- redirect to old widget if eval method is not survey -->
+<sp-widget widget="c.data.embeddedWidget" ng-if="!!c.data.embeddedWidget"></sp-widget>
+<div ng-if="!c.data.embeddedWidget">
+  <!-- Spacing from top; -->
+  <script language="javascript" ng-if="data.redirectTarget" ng-init="c.redirect(data.redirectTarget)"></script>
+  <div class="sps-panel-spacer hidden-xs" />
+  <!-- Show error messages -->
+  <div class="row" ng-if="!!c.errorMessage">
+    <div class="col-md-10 col-md-offset-1 col-sm-12">
+      <div role="alert" class="alert"  ng-if="!!c.errorMessage" ng-class="data.recordNotFound ? 'alert-info' : 'alert-danger'">{{::c.errorMessage}}</div>
+    </div>
+  </div>
+  <div ng-if="!data.redirectTarget && !c.invalidSurvey">
+    <div class="survey-modal-body">
+      <div ng-if="data.assessment.readonly_form" class="alert alert-info">
+        {{data.readOnlyViewMsg}}
+      </div>
+      <div ng-if="data.kioskSubmitMsg" class="hidden-xs">
+    		<div role="alert" class="alert alert-success"  ng-bind-html="c.trustHTML(data.kioskSubmitMsg)"></div>
+    	</div>
+      <!-- Survey Intro page -->
+      <div class="survey-intro-block m-b-xl" ng-show="c.showIntro" ng-class="{'panel panel-default' : isMobile}">
+        <div id="lang_picker" ng-if="data.show_language_picker == true && data.assessment.one_click_survey == false" class="asmt-lang-picker m-r padder-t">
+                        <label for="spLanguagePicker" class="m-r-xs">${Language}: </label>
+                        <select ng-model="data.pickedLanguage" name="spLanguagePicker" id="spLanguagePicker" ng-change="c.setLanguage()" class="sn-select-basic">
+                          <option ng-repeat="lang in data.assessment.languages" value={{::lang.value}}>{{::lang.label}}</option>
+                        </select>
+        </div>
+        <div class="wrapper-md text-center intro-text">
+          <div class="wrapper-sm">
+            <div class="outer-circle">
+              <span ng-if="(data.assessment.evaluation_method == 'survey')" class="survey-icon glyphicon icon-form btn-primary no-btn-style"></span>
+              <span class="survey-icon glyphicon icon-article-document btn-primary no-btn-style" ng-if="(data.assessment.evaluation_method == 'assessment' || data.assessment.evaluation_method == 'risk_assessment')"></span>
+            </div>
+          </div>
+          <div class="wrapper-sm">
+            <div class="title-label h3 break-word">{{::data.assessment.title}}</div>
+            <div ng-if="data.assessment.trigger_id" style="font-size:15px;">
+                        {{::data.assessment.evaluation_method_display}} ${is in reference to} 
+              <span ng-if="::!c.isNative">
+              	<a href="?id=ticket&table={{::data.assessment.trigger_table}}&sys_id={{::data.assessment.trigger_id}}">{{::data.assessment.trigger_display}}</a>
+              </span>
+               <span ng-if="::c.isNative">
+              	{{::data.assessment.trigger_display}}
+              </span>  
+			</div>
+			<div ng-if="data.assessment.trigger_desc" style="font-size:15px;">
+						{{::data.assessment.trigger_desc}}
+			</div>
+            <div class="introduction-container" ng-if="data.assessment.introduction">
+              <div ng-bind-html="c.trustHTML(data.assessment.introduction)"></div>
+            </div>
+          </div>
+          <div class="row" ng-if="::!c.isNative">
+            <div class="col-xs-12 col-sm-6 col-sm-offset-3">
+              <div class="wrapper-lg">
+                <button class="btn btn-primary btn-block btn-lg" ng-click="c.startSurvey()" id="get-started">${Get Started}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <sp-assessment-model form-model="c.data.assessment" is-mobile="isMobile" ng-show="c.showSurveyForm || (!isMobile && data.assessment.is_kiosk_survey)"></sp-assessment-model>
+      <div class="wrapper-md survey-intro-block m-b-xl" ng-class="{'panel panel-default' : isMobile}" ng-if="data.successMessage && data.successMessage.length && (!data.assessment.is_kiosk_survey || isMobile)">
+        <div class="text-center intro-text">
+          <div class="wrapper-sm">
+            <div class="outer-circle">
+              <span ng-if="(data.assessment.evaluation_method == 'survey' || data.assessment.evaluation_method == 'assessment' || data.assessment.evaluation_method == 'risk_assessment')" class="survey-icon glyphicon icon-form btn-primary no-btn-style"></span>
+            </div>
+          </div>
+        </div>
+        <div class="wrapper-sm text-center end-note">
+          <h4 role="alert" class="description-text" ng-bind-html="c.trustHTML(data.successMessage)"></h4>
+          <div class="row" ng-if="data.show_close">
+            <div class="col-xs-12 col-sm-6 col-sm-offset-3">
+              <div class="wrapper-lg">
+                <button class="btn btn-default" ng-click="c.closeSurvey()">{{data.assessment.parameterizedMsgsMap.close_btn_msg}}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

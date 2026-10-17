@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<!-- Duplicated in $pwd_reset (UI page); Polaris only needs this bit -->
+	<j:if test="${!empty(jvar_process) &amp;&amp; jvar_show_custom_header}">
+		<g:evaluate var="jvar_custom_header_name" jelly="true">
+			var customHeaderMacroName;
+			var p = new SNC.PwdProcess(jelly.jvar_process);
+			if (p.exists())
+				customHeaderMacroName = p.getHeaderMacroName();
+			customHeaderMacroName;
+		</g:evaluate>
+		<j:if test="${!empty(jvar_custom_header_name)}">
+			<g:macro_invoke macro="${jvar_custom_header_name}" stage="${jvar_stage}" />
+		</j:if>
+    </j:if>
+	
+	<!-- Show the default OOTB header here -->
+	<g:evaluate var="jvar_active_class" object="true" jelly="true">
+		var activeClass = new Packages.java.util.ArrayList();
+		var stage = jelly.jvar_stage;
+		stage == 1 ? activeClass.add("active") : activeClass.add("disabled");
+		stage == 2 ? activeClass.add("active") : activeClass.add("disabled");
+		stage == 3 ? activeClass.add("active") : activeClass.add("disabled");
+		activeClass;
+	</g:evaluate>
+	
+	<g:evaluate var="jvar_completed_class" object="true" jelly="true">
+		var completedClass = new Packages.java.util.ArrayList();
+		var stage = jelly.jvar_stage;
+		stage > 1 ? completedClass.add("completed") : completedClass.add("");
+		stage > 2 ? completedClass.add("completed") : completedClass.add("");
+		stage > 3 ? completedClass.add("completed") : completedClass.add("");
+		completedClass;
+	</g:evaluate>
+	
+	<g:evaluate var="jvar_aria_text" object="true" jelly="true">
+		var ariaText = new Packages.java.util.ArrayList();
+		var stage = jelly.jvar_stage;
+
+		if (stage == 1) {
+			ariaText.add(gs.getMessage('Identification step'));
+			ariaText.add(gs.getMessage('Verification pending'));
+			ariaText.add(gs.getMessage('Reset pending'));
+		} else if (stage == 2) {
+			ariaText.add(gs.getMessage('Identification completed'));
+			ariaText.add(gs.getMessage('Verification step'));
+			ariaText.add(gs.getMessage('Reset pending'));
+		} else {
+			ariaText.add(gs.getMessage('Identification completed'));
+			ariaText.add(gs.getMessage('Verification completed'));
+			ariaText.add(gs.getMessage('Reset step'));
+		}
+		ariaText;
+	</g:evaluate>
+	
+	<div class="navbar navbar-default" style="padding:0px">
+		<ol class="process-breadcrumb" style="margin-bottom: 0px">
+			<li class="${jvar_active_class[0]} ${jvar_completed_class[0]}">
+				<a class="disabled">${gs.getMessage("Identify")}</a>
+				<span class="sr-only">${jvar_aria_text[0]}</span>
+			</li>
+			<li class="${jvar_active_class[1]} ${jvar_completed_class[1]}">
+				<a class="disabled">${gs.getMessage("Verify")}</a>
+				<span class="sr-only">${jvar_aria_text[1]}</span>
+			</li>
+			<li class="${jvar_active_class[2]} ${jvar_completed_class[2]}">
+				<a class="disabled">${gs.getMessage("Reset")}</a>
+				<span class="sr-only">${jvar_aria_text[2]}</span>
+			</li>
+		</ol>
+	</div>
+</j:jelly>

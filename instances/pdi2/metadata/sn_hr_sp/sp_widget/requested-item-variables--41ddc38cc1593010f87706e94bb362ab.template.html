@@ -1,0 +1,51 @@
+<div class="panel-default">
+      <div class="panel-heading">
+        <div class="row ritm-header-row">
+          <div ng-click="c.data.isExpanded = !c.data.isExpanded" id="ritm-catalog-item-label" class="ritm-header-col ritm-col-left {{c.data.variables.length ? 'ritm-header-label' : 'ritm-header-default'}} col-sm-6 col-xs-12" data-toggle="collapse" data-target="#panel_{{c.data.ritmId}}">
+            <i ng-if="!c.data.isExpanded && c.data.variables.length" class="fa fa-chevron-right pull-down"></i>
+            <i ng-if="c.data.isExpanded && c.data.variables.length" class="fa fa-chevron-down pull-down"></i>
+            {{c.data.short_description}}
+          </div>
+          <div class="ritm-header-col col-sm-2 col-xs-4">
+            <span class="visible-xs-block mobile-header">{{c.data.CONST.i18n.PRICE}}</span>
+            <span>{{c.data.price}}</span>
+          </div>
+          <div class="ritm-header-col col-sm-2 col-xs-4">
+            <span class="visible-xs-block mobile-header">{{c.data.CONST.i18n.QUANTITY}}</span>
+            <span>{{c.data.quantity}}</span>
+          </div>
+          <div class="ritm-header-col col-sm-2 col-xs-4">
+            <span class="visible-xs-block mobile-header">{{c.data.CONST.i18n.TOTAL}}</span>
+            <span>{{c.data.total}}</span>
+          </div>
+        </div>
+      </div>
+      <div ng-if="c.data.variables.length" id="panel_{{c.data.ritmId}}" class="{{c.data.variables.length?(c.data.isExpanded?'collapse in':'collapse'):''}}">
+        <div class="panel-body">
+          <div ng-repeat="variable in c.data.variables" class="col-sm-4 col-xs-4">
+              <div ng-if="::c.data.variables[$index].state != 'not_available'" >
+                <label class="m-t-xs m-b-none text-muted"><b>{{::c.data.variables[$index].label}}</b></label>
+                <div ng-if="!c.data.variables[$index].multi_row">
+                  <div ng-switch="c.data.variables[$index].type">
+                    <!-- 27 is type URL, 33 is type Attachment -->
+                    <a ng-switch-when="27" class="pre-wrap" title="{{::c.data.variables[$index].label}}" href="{{::c.data.variables[$index].display_value}}" target="_blank">{{::c.data.variables[$index].display_value}}</a>
+                    <span ng-switch-when="33" class="file-attachment">
+                      <a ng-if="::c.data.variables[$index].state != 'not_available'" class="pre-wrap" title="{{::c.data.variables[$index].label}}" href="javascript:void(0);" ng-click="scanAttachment(c.data.variables[$index])" aria-label="${Download {{c.data.variables[$index].display_value}}}">{{::c.data.variables[$index].display_value}}</a>
+                      <span ng-if="::c.data.variables[$index].state == 'not_available'" class="error">
+                          <a class="pre-wrap" title="{{::c.data.variables[$index].label}}" href="javascript:void(0);" ng-click="scanAttachment(c.data.variables[$index])" aria-label="${File {{c.data.variables[$index].display_value}} failed security scan}">{{::c.data.variables[$index].display_value}}</a>
+                          (${File failed security scan})
+                      </span>
+                    </span>
+                    <span ng-switch-default class="pre-wrap">{{::c.data.variables[$index].display_value}}</span>
+                  </div>
+                </div>
+                <div ng-if="c.data.variables[$index].multi_row">
+                  <a href="javascript:void(0)" class="hidden-xs" uib-popover-template="'sp_multirow_vs_summarizer.html'" popover-title="{{c.data.variables[$index].label}}" popover-placement="auto top" popover-append-to-body="true" popover-trigger="outsideClick">${Click to view}</a>
+                  <a href="javascript:void(0)" class="visible-xs" ng-click="c.openMrvsModal(c.data.variables[$index])">${Click to view}</a>
+                </div>
+              </div>
+              <br/>
+          </div>
+        </div>
+      </div>
+    </div>

@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_hr_workday_compensation_change_request_todos');

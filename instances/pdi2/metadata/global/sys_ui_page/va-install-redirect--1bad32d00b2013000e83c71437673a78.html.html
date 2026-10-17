@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true"/>
+
+	<j:set var = "jvar_channel" value = "${sysparm_channel}" />
+	<j:set var = "jvar_code" value = "${sysparm_proxy_err_code}" />
+	<j:set var = "jvar_id" value = "${sysparm_external_id}" />
+	<j:set var = "jvar_provider_app_name" value = "${sysparm_provider_app_name}" />
+	<j:set var = "jvar_success" value = "${sysparm_success}" />
+
+	<j2:if test="$[gs.getProperty('glide.va.teams.install.accept.url_query_parameter', 'false') == 'false']">
+		<j2:set var = "jvar_url" value = "javascript:void(0)" />
+	</j2:if>
+	
+	<g:evaluate jelly="true">
+		var appPackageLocation = gs.getProperty('glide.va.teams_app_package_location', 'https://hi.service-now.com/kb_view.do?sysparm_article=KB0690098');
+		var appStoreLocation = gs.getProperty('glide.va.teams_app_store_location', 'lob');
+		var channel = '${jvar_channel}';
+		var iconURL = "";
+		var name = '${jvar_provider_app_name}';
+		var successMsg = "";
+		var failureMsg = "";
+
+		if (channel == 'teams') {
+			iconURL = "/images/msTeams_logo.png";
+			name = 'the Microsoft Teams ' + name;
+		}
+		if (channel == 'slack') {
+		    // TODO : has to be changed to get the actual slack app icon
+		    iconURL = iconURL || "/images/slack_logo.png"
+			name = "the Slack team " + name; 
+		}
+		if (channel == 'workplace') {
+			iconURL =  "/images/workplace_logo.png";
+			name = "the Workplace community " + name;
+			successMsg = "Don't forget to click \"Save\" on the Settings for Now Virtual Agent screen.";
+			failureMsg = 'Please click in the button below, then click "Uninstall" on Settings for Now Virtual Agent screen and click in "Add to Workplace" in the same screen.';
+		}
+		if (channel == 'google') {
+			iconURL = "/googleChat_logo.png";
+		}
+		var updateMessage = {
+			'source' : 'server',
+			'update' : true
+		};
+		gs.publish('/cs/adapter_install_update/', updateMessage);
+	</g:evaluate>
+
+	<g:evaluate var="jvar_show_new_ui" jelly="true">
+		var show_new_ui = gs.getProperty('sn_oe_sfs.show_new_channels_admin_screen') || false;
+		show_new_ui;
+	</g:evaluate>
+	
+	<j:if test="${jvar_show_new_ui}">
+		<j:if test="${jvar_success == 'true'}">
+			<j:if test="${!empty(jvar_provider_app_name)}">
+				<script>
+					var url = `/now/conversation/settings/channel-install-confirmation/${channel}/success/params/botName/${jvar_provider_app_name}`;
+					window.location = url;
+				</script>
+			</j:if>	
+		</j:if>	
+		<j:if test="${jvar_success == 'false'}">
+				<script>
+					var url = `/now/conversation/settings/channel-install-confirmation/${channel}/error/params/botName/${jvar_code}`;
+					window.location = url;
+				</script>
+		</j:if>	
+	</j:if>	
+
+	<center id="result">
+		<j2:choose>
+			<j2:when test="$[sysparm_success == 'true']">
+				<div id="icon" style="margin-top:10em; margin-bottom: 60px;">
+					<img src="images/logo-now-va-new.png" width="50" height="50"/>
+					<i class="icon-arrow-left color-darkset" style="position: relative; bottom:10px; left:5px; margin-left:10px;" />
+					<i class="icon-arrow-right color-darkset" style="position: relative; top:10px; right:5px; margin-right:10px;"/>
+					<img src="${iconURL}" width="50" height="50"/>
+				</div>
+				
+				<div id="state" style="margin-bottom: 10px;">
+					<i class="icon-check-circle color-green" style="font-size:20px;margin-right:10px;"/>
+					<span style="font-size:20px;">${gs.getMessage("You have successfully installed the Now Virtual Agent integration for")} ${name}.</span>
+				</div>
+				<j:if test="${appStoreLocation=='lob' &amp;&amp; channel=='teams'}">
+					<div>${gs.getMessage("Log in to Microsoft Teams and under Apps, search for Now Virtual Agent. In the Now Virtual Agent description, click Add.")}</div>
+					<div id="button" style="margin-top:40px; margin-bottom:-20px;">
+					<a onClick="window.open('https://teams.cloud.microsoft')" class="btn btn-default" style="width:200px">${gs.getMessage('Go to MS Teams')}</a>
+				</div>
+				</j:if>
+				<div id="message" style="margin-bottom: 40px;">
+					<p>${gs.getMessage(successMsg)}</p>
+				</div>
+				<j:choose>
+					<div id="button">
+						<j:when test="${channel == 'workplace'}">
+							<a href="https://workplace.facebook.com/work/install_done_redirect/" class="btn btn-default" style="width:200px">${gs.getMessage('Done')}</a>
+						</j:when>
+						<j:otherwise>
+							<a href="$bot-install-ui.do" class="btn btn-default" style="width:200px">${gs.getMessage('Manage Apps')}</a>
+						</j:otherwise>
+
+					</div>
+						
+				</j:choose>
+				
+			</j2:when>
+		
+			<j2:otherwise>
+				<div id="icon" style="margin-top:10em; margin-bottom: 60px;">
+					<img src="images/logo-now-va-new.png" width="50" height="50"/>
+				</div>
+				
+				<div id="state" style="margin-bottom: 10px;">
+					<i class="icon-alert color-red fa-fw" style="font-size:20px;margin-right:10px;"/>
+					<span style="font-size:20px;">${gs.getMessage("The installation has failed.")}</span>
+				</div>
+				<div id="message" style="margin-bottom: 40px;">
+					<p>${gs.getMessage(failureMsg)}</p>
+				</div>
+				<div id="button" style="margin-bottom: 20px;">
+					<j:if test="${!empty(sysparm_channel)}">
+						<g:evaluate var="jvar_url">
+							function getErrorMessage(code) {
+								switch(code) {
+									case '1':
+										return "Installer denied authorization.";
+									case '2':
+										return "App info provided for proxy is wrong";
+									case '3':
+										return "Requested external oauth endpoint failed";
+									case '4':
+										return "External oauth endpoint did not response right payload";
+									case '5':
+										return "Post mapping to datacenter failed";
+									case '6':
+										return "Proxy can not connect to this instance";
+									case '7':
+										return "Instance error";
+								}
+							}
+							var code = '${jvar_code}';
+							if (code)
+								gs.error('virtual agent install error : ' + getErrorMessage(code));
+							
+							var channel = '${jvar_channel}';
+							<!-- Google handles this in a script include -->
+							if (channel != 'google') {
+								new global.ChannelProxyInstallURLGetter(channel, gs.getProperty('glide.cs.proxy_app_key', 'va')).getURL();
+							}
+						</g:evaluate>
+					</j:if>
+
+					<j:choose>
+						<div id="button">
+							<j:when test="${channel == 'workplace'}">
+								<a href="javascript:window.open('','_self').close();window.open('${jvar_url}', '_blank');" class="btn btn-default" style="width:200px">${gs.getMessage('Go to Settings page')}</a>
+							</j:when>
+							<j:otherwise>
+                                <a href="javascript:window.open('','_self').close();window.open('${jvar_url}', '_blank');" class="btn btn-default" style="width:200px">${gs.getMessage('Try to Install Again')}</a>
+							</j:otherwise>
+
+						</div>
+					</j:choose>
+				</div>
+
+				<j:choose>
+					<j:when test="${channel != 'workplace'}">
+						<div>
+                          <a href="/now/conversation/settings/va-channel-integrations/${channel}">${gs.getMessage('Or Go Back to Manage Apps')}</a>
+                          </div>
+					</j:when>
+				</j:choose>
+			</j2:otherwise>
+		</j2:choose>
+
+	</center>
+	
+	
+</j:jelly>

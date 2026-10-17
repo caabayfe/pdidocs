@@ -1,0 +1,133 @@
+_meta:
+  hash: fe97a08e5ead012b0471b0cb2c3b132dc296020d9cf0bacefa1a205bd532eda3
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: evan.qu
+  sys_created_on: 2017-04-23 08:13:24
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: d1efb6695312320023bdae4a16dc3484
+  sys_mod_count: '8'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_d1efb6695312320023bdae4a16dc3484
+  sys_updated_by: now.discovery.content
+  sys_updated_on: 2023-09-06 12:25:56
+active: 'true'
+checksum: ''
+description: ''
+directory: 'false'
+name: solaris_lsof_command.sh
+parent: ec515c705352320023bdae4a16dc3488
+script: |-
+  #!/bin/sh
+  # Copyright © ServiceNow, Inc. 2017. All rights reserved.
+
+  BASE_DIR=$1
+  ZONENAME=$2
+  ZONECMD=/usr/bin/zonename
+  LSOF="lsof"
+
+  if command -v lsof
+  then
+      LSOF=`command -v lsof`
+  elif which lsof 
+  then
+      LSOF=`which lsof`
+  fi
+
+  # Check for existence of zonename command
+  if [ ! -z "$ZONENAME" ]; then
+          ZONEPARAM="-z${ZONENAME}"
+  elif [ -f $ZONECMD ]; then
+      # exists: limit lsof to display processes for this zone
+          ZONEPARAM="-z`$ZONECMD`"
+  else
+      # doesn't exist: leave it blank 
+          ZONEPARAM=""
+  fi
+
+  cp "${BASE_DIR}/connection_samples/all_connections.log" "${BASE_DIR}/connection_samples/all_connections_tmp.log"
+  if command -v lsof > /dev/null 2>&1; then
+  sudo $LSOF -iTCP -n -P $ZONEPARAM | grep -v "::" | grep LISTEN | awk -F' ' '{print "on " $2 " " $10}' | sed 's/:/ /g' | sort | uniq > "${BASE_DIR}/connection_samples/connection_sample.log"
+  sudo $LSOF -iTCP -n -P $ZONEPARAM | grep -v "::" | grep ESTABLISH | sed 's/->/ /g' | awk -F' ' '{print "to " $2 " " $11 " " $10}' | sed 's/:/ /g' | sort | uniq >> "${BASE_DIR}/connection_samples/connection_sample.log"
+  else
+  # Get the list of process IDs with socket information
+  pids=`sudo pgrep $ZONEPARAM | sort -n`
+
+  # Loop through each PID and process the output
+  for pid in $pids; do
+      pfiles_output=`sudo pfiles $pid 2>/dev/null | awk '/S_IFSOCK/ {
+          tcp = 0;
+          while(getline) {
+              if($0~/SOCK_STREAM/) {
+                  tcp = 1;
+              } else if ($0~/SOCK_*/ && $0!~/SOCK_STREAM/) {
+                  break;
+              }
+              if (($0~/sockname: AF_INET/ || $0~/sockname: AF_INET6/) && tcp == 1) {
+                  split($0, a, " ");
+                  local_ip = a[3];
+                  local_port = a[5];
+                  listening_connection = "on " pid " " local_ip " " local_port "\n";
+                  getline;
+                  if ($0~/peername: AF_INET/ || $0~/peername: AF_INET6/) {
+                      split($0, b, " ");
+                      ip = b[3];
+                      port = b[5];
+                      established_connection = "to " pid " " ip " " port " " local_ip " " local_port "\n";
+                      printf established_connection;
+                  } else {
+                      if(local_ip!~/::/) {
+                          printf listening_connection;
+                      }
+                  }
+                  tcp = 0;
+                  break;
+              } else if ($0~/sockname: AF_*/ && ($0!~/sockname: AF_INET/ || $0!~/sockname: AF_INET6/)) {
+                  break;
+              }
+          }
+      }' pid="$pid"`
+
+      if [ -n "$pfiles_output" ]; then
+          echo "$pfiles_output" >> "${BASE_DIR}/connection_samples/connection_sample.log" 
+      fi
+  done
+
+  for pid in $pids; do
+      pfiles_output_chr=`sudo pfiles $pid 2>/dev/null | awk '/S_IFCHR/ {
+          while(getline) {
+              if($0~/sockname: AF_INET/ || $0~/sockname: AF_INET6/) {
+                  sock=$0;
+                  getline;
+                  if($0~/tcp/) {
+                      split(sock, a, " ");
+                      local_ip = a[3];
+                      local_port = a[5];
+                      listening_connection = "on " pid " " local_ip " " local_port "\n";
+                  } else {
+                      break;
+                  }
+                  if(local_ip!~/::/ && local_port != 0) {
+                          printf listening_connection;
+                          break;  
+                      }  
+              }
+          }
+      }' pid="$pid"`
+
+      if [ -n "$pfiles_output_chr" ]; then
+          echo "$pfiles_output_chr" >> "${BASE_DIR}/connection_samples/connection_sample.log" 
+      fi    
+  done
+  fi
+  cat "${BASE_DIR}/connection_samples/connection_sample.log" "${BASE_DIR}/connection_samples/all_connections_tmp.log" | sort > "${BASE_DIR}/connection_samples/all_connections.log"
+script_attachment: ''
+source: ''
+sys_name: solaris_lsof_command.sh
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

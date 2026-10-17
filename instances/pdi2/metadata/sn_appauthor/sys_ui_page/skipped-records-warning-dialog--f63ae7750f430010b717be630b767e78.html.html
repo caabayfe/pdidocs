@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<style type="text/css">
+		.warning-label {
+			margin-top: 10px;
+			margin-bottom: 10px;
+			margin-right: 10px;
+		}
+		
+		.message {
+			margin: 10px 0px 0px;
+		}
+		
+		#skipped_records_warning_container div {
+			white-space: normal;
+			padding: 4px; 
+			margin-left:10px;
+			margin-bottom:5px;
+		}
+    
+		.icon-warning-circle {
+			color: #DFD139;
+			margin-right: 10px;
+			font-size: 22px;
+		}
+		
+		.warning-text {
+			font-size: 18px;
+			color: #6B611F;
+		}
+
+		footer.modal-footer {
+			padding: 20px 0px 0px !important;
+		}
+
+	</style>
+	
+	<g2:evaluate jelly="true">
+		var modalHeaderPublish = gs.getMessage("Publish");
+		var modalHeaderPublishToMyAppRepo = gs.getMessage("Publish to My Application Repository");
+		var appName = "$[sysparm_app_name]";
+		var viewDetailsLink = "$[sysparm_view_details_link]";
+		var numberOfConflictsForPublish = "$[sysparm_number_of_conflicts_for_publish]";
+		var warningMessage = gs.getMessage("{0} of your files have been claimed by another application. Click View Details to review the files.", numberOfConflictsForPublish);
+		var missingFilesMessage = gs.getMessage("If you publish anyway, your store app will be missing those files.");
+		var appId = "$[sysparm_sys_id]";
+		var canPublishToAppRepo = sn_app_api.AppStoreAPI.canPublishToAppRepo(appId);
+		gs.debug("appId: {0}, canPublishToAppRepo: {2}", appId, canPublishToAppRepo);
+
+		var errorMsg = "";
+		var configChecker = new ConfigChecker();
+		var vendorInfo = configChecker.checkForChanges()||{};
+		var gr = new GlideRecord("sys_app");
+		if (gs.nil(appId)) {
+			errorMsg = gs.getMessage('Missing required application id');
+			gs.error(errorMsg);
+		} else if (!gr.get(appId)) {
+			errorMsg = gs.getMessage('Application not found: {0}', [appId]);
+			gs.error(errorMsg);
+		} else if (!gr.canWrite() $[AND] !canPublishToAppRepo) {
+			errorMsg = gs.getMessage('Cannot edit application, upload function not allowed');
+			gs.error(errorMsg);
+		} else if (gs.nil(vendorInfo.key)) {
+			errorMsg = gs.getMessage('Application repository cannot validate your vendor information, upload function is disabled for this instance');
+			errorMsg += ": " + configChecker.getErrorMessage();
+			gs.error(errorMsg);
+		} else if (!vendorInfo.allow_internal_upload) {
+			errorMsg = gs.getMessage('Internal upload is disabled for this instance. Please contact your administrator.');
+			gs.error(errorMsg);
+		}
+
+		var hasError = !gs.nil(errorMsg);
+		
+	</g2:evaluate>
+	<j2:set var="jvar_hasError" value="$[hasError]"/>
+	<j2:set var="jvar_modalHeaderPublish" value="$[modalHeaderPublish]"/>
+	<j2:set var="jvar_modalHeaderPublishToMyAppRepo" value="$[modalHeaderPublishToMyAppRepo]"/>
+
+	<j2:if test='$[!hasError]'>
+		<div id="skipped_records_warning_container">
+			<span class="warning-label">
+				<span class="icon-warning-circle"/>
+				<span class="warning-text">${gs.getMessage("Warning")}</span>
+			</span>
+			<p class="message">$[warningMessage]</p>
+			<p class="message">$[missingFilesMessage]</p>
+
+			<footer class="modal-footer">
+				<button class="btn btn-default" onclick="onContinue()" type="button">${gs.getMessage("Publish Anyway")}</button>
+				<button class="btn btn-primary" onclick="onViewDetails('$[viewDetailsLink]')" type="button">
+					${gs.getMessage("View Details")}
+				</button>
+			</footer>
+		</div>
+	</j2:if>
+
+	<j2:if test='$[hasError]'>
+		<div style="color:red">$[errorMsg]</div>
+	</j2:if>
+	
+</j:jelly>

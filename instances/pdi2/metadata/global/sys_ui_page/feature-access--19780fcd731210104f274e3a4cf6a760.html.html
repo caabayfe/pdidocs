@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:ui_form>
+	<div class="container">
+		<h4 class="title">${gs.getMessage("Feature Access List")}</h4>
+		<g:ui_checkbox name="enableFiltering"/>${gs.getMessage('Enable feature access filtering?')}
+
+		<!-- Bulk Action Bar (appears when checkboxes are selected) -->
+		<div id="bulkActionBar" class="fa-bulk-bar" style="display:none;">
+			<span id="selectedCount" class="fa-bulk-count">0 selected</span>
+			<div class="fa-bulk-controls">
+				<div class="fa-bulk-picker">
+					<g:macro_invoke macro="lightweight_glide_list2"
+						name="bulkRoles" control_name="bulkRoleSelector"
+						label="${gs.getMessage('Roles for bulk operation')}"
+						reference="sys_user_role" can_write="true" list_data=""
+						input_class_name="form-control input-group" input_button_name="input-group-btn"/>
+				</div>
+				<button type="button" class="btn btn-primary fa-bulk-btn" onclick="bulkAddRole()">${gs.getMessage('Apply to Selected')}</button>
+				<button type="button" class="btn btn-default fa-bulk-btn" onclick="bulkRemoveRole()">${gs.getMessage('Remove from Selected')}</button>
+				<button type="button" class="btn btn-danger fa-bulk-btn" onclick="bulkClearRoles()">${gs.getMessage('Clear All on Selected')}</button>
+			</div>
+		</div>
+
+		<div class='row'>
+			<div class='column'>
+			  <div class='featuresColumn'>
+				  <h3>${gs.getMessage('Features')}</h3>
+			  </div>
+			</div>
+			<div class='column'>
+			  <div class='rolesColumn'>
+				  <h3>${gs.getMessage('Roles')}</h3>
+			  </div>
+			</div>
+		</div>
+		<g:evaluate>
+			var grActions = new GlideRecord('sys_hub_ui_element');
+			grActions.addQuery('designer_type','action');
+			grActions.orderBy('label');
+			grActions.query();
+		</g:evaluate>
+		<g:evaluate>
+			var grFlows = new GlideRecord('sys_hub_ui_element');
+			grFlows.addQuery('designer_type','flow');
+			grFlows.orderBy('label');
+			grFlows.query();
+		</g:evaluate>
+		<g:evaluate>
+			var grSubflows = new GlideRecord('sys_hub_ui_element');
+			grSubflows.addQuery('designer_type','subflow');
+			grSubflows.orderBy('label');
+			grSubflows.query();
+		</g:evaluate>
+		<g:evaluate>
+			var grFlowTemplates = new GlideRecord('sys_hub_ui_element');
+			grFlowTemplates.addQuery('designer_type','flowtemplate');
+			grFlowTemplates.orderBy('label');
+			grFlowTemplates.query();
+		</g:evaluate>
+		<h4 class="designerTypeLabel">${gs.getMessage('Action Authoring Features')}</h4>
+		<j:while test='${grActions.next()}'>
+			<g:evaluate object="true" jelly="true">
+				var grResourceList = new GlideRecord('sys_hub_resource_filter_rule');
+				var name = "(Feature Access Page) " + "${grActions.name}";
+				grResourceList.get('name', name);
+				grResourceList;
+			</g:evaluate>
+			<div class='row'>
+				<div class='column'>
+				  <div class='featuresColumn'>
+					  <input type="checkbox" class="checkbox feature-cb action-cb" data-name="${grActions.name}" onchange="updateBulkBar()" aria-label="${grActions.label}"/>
+					  <div id="${grActions.name}" name="${grActions.name}">${grActions.label}</div>
+				  </div>
+				</div>
+				<div class='column'>
+				  <div class='rolesColumn'>
+					  <g:macro_invoke macro="lightweight_glide_list2"
+					  	start_locked="true" name="userRoles" control_name="myListCollector_${grActions.name}"
+					  	label="${grActions.label}"
+					  	reference="sys_user_role" can_write="true" list_data="${grResourceList.role}"
+					  	input_class_name="form-control input-group" input_button_name="input-group-btn"/>
+				  </div>
+				</div>
+			</div>
+		</j:while>
+		<h4 class="designerTypeLabel">${gs.getMessage('Flow Authoring Features')}</h4>
+		<j:while test='${grFlows.next()}'>
+			<g:evaluate object="true" jelly="true">
+				var grResourceList = new GlideRecord('sys_hub_resource_filter_rule');
+				var name = "(Feature Access Page) " + "${grFlows.name}";
+				grResourceList.get('name', name);
+				grResourceList;
+			</g:evaluate>
+			<div class='row'>
+				<div class='column'>
+				  <div class='featuresColumn'>
+					  <input type="checkbox" class="checkbox feature-cb flow-cb" data-name="${grFlows.name}" onchange="updateBulkBar()" aria-label="${grFlows.label}"/>
+					  <div id="${grFlows.name}" name="${grFlows.name}">${grFlows.label}</div>
+				  </div>
+				</div>
+				<div class='column'>
+				  <div class='rolesColumn'>
+					  <g:macro_invoke macro="lightweight_glide_list2"
+					  	name="userRoles" control_name="myListCollector_${grFlows.name}"
+					  	label="${grFlows.label}"
+					  	reference="sys_user_role" can_write="true"
+					  	list_data="${grResourceList.role}"/>
+				  </div>
+				</div>
+			</div>
+		</j:while>
+		<h4 class="designerTypeLabel">${gs.getMessage('Subflow Authoring Features')}</h4>
+		<j:while test='${grSubflows.next()}'>
+			<g:evaluate object="true" jelly="true">
+				var grResourceList = new GlideRecord('sys_hub_resource_filter_rule');
+				var name = "(Feature Access Page) " + "${grSubflows.name}";
+				grResourceList.get('name', name);
+				grResourceList;
+			</g:evaluate>
+			<div class='row'>
+				<div class='column'>
+				  <div class='featuresColumn'>
+					  <input type="checkbox" class="checkbox feature-cb subflow-cb" data-name="${grSubflows.name}" onchange="updateBulkBar()" aria-label="${grSubflows.label}"/>
+					  <div id="${grSubflows.name}" name="${grSubflows.name}">${grSubflows.label}</div>
+				  </div>
+				</div>
+				<div class='column'>
+				  <div class='rolesColumn'>
+					  <g:macro_invoke macro="lightweight_glide_list2"
+					  	id="${grSubflows.name}"  name="userRoles" control_name="myListCollector_${grSubflows.name}"
+					  	label="${grSubflows.label}"
+					  	reference="sys_user_role" can_write="true" list_data="${grResourceList.role}"/>
+				  </div>
+				</div>
+			</div>
+		</j:while>
+		<h4 class="designerTypeLabel">${gs.getMessage('Flow Template Authoring Features')}</h4>
+		<j:while test='${grFlowTemplates.next()}'>
+			<g:evaluate object="true" jelly="true">
+				var grResourceList = new GlideRecord('sys_hub_resource_filter_rule');
+				var name = "(Feature Access Page) " + "${grFlowTemplates.name}";
+				grResourceList.get('name', name);
+				grResourceList;
+			</g:evaluate>
+			<div class='row'>
+				<div class='column'>
+				  <div class='featuresColumn'>
+					  <input type="checkbox" class="checkbox feature-cb template-cb" data-name="${grFlowTemplates.name}" onchange="updateBulkBar()" aria-label="${grFlowTemplates.label}"/>
+					  <div id="${grFlowTemplates.name}" name="${grFlowTemplates.name}">${grFlowTemplates.label}</div>
+				  </div>
+				</div>
+				<div class='column'>
+				  <div class='rolesColumn'>
+					  <g:macro_invoke macro="lightweight_glide_list2"
+					  	id="${grFlowTemplates.name}"  name="userRoles" control_name="myListCollector_${grFlowTemplates.name}"
+					  	label="${grFlowTemplates.label}"
+					  	reference="sys_user_role" can_write="true" list_data="${grResourceList.role}"/>
+				  </div>
+				</div>
+			</div>
+		</j:while>
+	<g:dialog_buttons_ok_cancel ok="submitForm()" ok_type="button" />
+	
+	</div>
+	</g:ui_form>
+	
+	<style>
+		td.featureListRoleGroup, tr.featureListRoleGroup {
+			display: flex;
+			align-items: center;
+		}
+		
+		.featureListRoleOpenList {
+			width: 10%;
+		}
+		
+		.lockClass {
+			margin-top: 5px;
+		}
+		
+		.input-group-btn {
+			display:inline-block;
+		}
+		
+		.input-group {
+			display:table-cell;
+		}
+		
+		.form-control {
+			width: 99%;
+		}
+		
+		.designerTypeLabel {
+			margin-top: 15px;
+			margin-bottom: 10px;
+			margin-left: -15px;
+		}
+		.row {
+			display: flex;
+			flex-direction: row;
+			flex-wrap: wrap;
+			width: 100%;
+			margin-bottom:5px;
+		}
+
+		.column {
+		  display: flex;
+		  flex-direction: column;
+		  flex-basis: 100%;
+		  flex: 1;
+		}
+
+		.blue-column {
+		  background-color: blue;
+		  height: 100px;
+		}
+
+		.green-column {
+		  background-color: green;
+		  height: 100px;
+		}
+		.featureListContainer {
+			width: 300px;
+			margin-bottom: 15px;
+		}
+		.checkButtons {
+			margin-bottom: 15px;
+		}
+		.title {
+			margin-bottom: 15px;
+		}
+		#ruleName {
+			margin-bottom: 15px;
+		}
+		
+		#ruleName input{
+			display: block;
+		}
+		
+		.featureLabel label {
+			line-height: 2;
+			margin-left:5px;
+		}
+		.featureLabel input {
+			margin: 0;
+		}
+
+		/* Bulk Action Bar */
+		.fa-bulk-bar {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 8px;
+			padding: 10px 15px;
+			margin-top: 15px;
+			margin-bottom: 16px;
+			background-color: #e8f4fd;
+			border: 1px solid #b3d7ff;
+			border-radius: 4px;
+		}
+		.fa-bulk-count {
+			font-weight: 600;
+			white-space: nowrap;
+			margin-right: 8px;
+		}
+		.fa-bulk-controls {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 6px;
+		}
+		.fa-bulk-picker {
+			min-width: 250px;
+			display: inline-block;
+		}
+		.fa-bulk-picker .input-group-btn {
+			display: inline-block;
+		}
+		.fa-bulk-picker .input-group {
+			display: table-cell;
+		}
+		.fa-bulk-picker .form-control {
+			width: 99%;
+		}
+		.fa-bulk-btn {
+			white-space: nowrap;
+		}
+		.featuresColumn {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+	</style>
+</j:jelly>

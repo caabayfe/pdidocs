@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <!-- ACTUAL PAGE STARTS HERE -->
+
+    <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+    <g:include_script src="pwd_mobile.jsdbx" />
+
+    <g:evaluate var="jvar_request_id" jelly="true">
+        var requestId = gs.getSession().getProperty('sysparm_request_id');
+        if (!requestId)
+        requestId = jelly.sysparm_request_id;
+
+        // Clean the session in this error page when the request fails
+        gs.getSession().clearProperty('sysparm_request_id');
+        gs.getSession().clearProperty('sysparm_sys_user_id');
+        gs.getSession().clearProperty('pwd_redirect_url');
+
+        requestId;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_process_id" jelly="true">
+        var processId;
+        if (jelly.sysparm_process_id) {
+        processId = jelly.sysparm_process_id;
+        } else {
+        processId = new SNC.PwdTrackingManager().getProcessIdByRequestId(jelly.jvar_request_id);
+        }
+        processId;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_show_header_footer" jelly="true">
+        // Always show the header and footer macro, unless there's a session param
+        // which specifies not to show it
+        var showHeaderFooter = gs.getSession().getProperty('show_custom_header_footer');
+        gs.getSession().clearProperty('show_custom_header_footer');
+        showHeaderFooter;
+    </g:evaluate>
+    <main>
+        <j:choose>
+            <g:macro_invoke macro="$pwd_reset_stylesheet" />
+            <!-- Polarisberg (external/stylized auth) -->
+            <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+                <!-- Box override via margin because the frame has padding baked in -->
+                <div id="pwdErrorContainer" class="login-wrapper" style="margin: -5px;">
+                    <g:inline template="polarisberg_login_wrapper_svg.xml" />
+
+                    <div class="login-container">
+                        <div class="login-logo">
+                            <g:inline template="polarisberg_login_logo.xml" />
+                        </div>
+                        <!-- Process custom header -->
+                        <j:if test="${jvar_show_header_footer}">
+                            <!-- Pulled from from $pwd_process_flow (UI macro); we don't need the whole thing -->
+                            <j:if test="${!empty(sysparm_process_id)}">
+                                <g:evaluate var="jvar_custom_header_name" jelly="true">
+                                    var customHeaderMacroName;
+                                    var p = new SNC.PwdProcess(jelly.sysparm_process_id);
+                                    if (p.exists())
+                                    customHeaderMacroName = p.getHeaderMacroName();
+                                    customHeaderMacroName;
+                                </g:evaluate>
+                                <j:if test="${!empty(jvar_custom_header_name)}">
+                                    <div class="login-card login-card-custom-header">
+                                        <g:macro_invoke macro="${jvar_custom_header_name}" stage="1" />
+                                    </div>
+                                </j:if>
+                            </j:if>
+                        </j:if>
+                        <div class="login-card ${jvar_hide_illustrations}">
+                            <div class="login-form">
+                                <ol class="login-forgot-password-steps" role="list">
+                                    <li>
+                                        <span class="step-circle" aria-hidden="true">1</span>
+                                        <span class="step-label">Identify</span>
+                                    </li>
+                                    <li class="stepper-separator" aria-hidden="true"></li>
+                                    <li>
+                                        <span class="step-circle" aria-hidden="true">2</span>
+                                        <span class="step-label">Verify</span>
+                                    </li>
+                                    <li class="stepper-separator" aria-hidden="true"></li>
+                                    <li class="current" aria-current="step">
+                                        <span class="step-circle" aria-hidden="true">3</span>
+                                        <span class="step-label">Reset</span>
+                                    </li>
+                                </ol>
+
+                                <h1>${gs.getMessage("Password Reset Error")}</h1>
+
+                                <g:evaluate var="jvar_error" jelly="true">
+                                    var ret = gs.getSession().getProperty('sysparm_error');
+                                    if (!ret)
+                                    ret = jelly.sysparm_error;
+                                    gs.getSession().clearProperty('sysparm_error');
+                                    gs.nil(ret) ? "" : ret;
+                                </g:evaluate>
+
+                                <j:if test="${empty(jvar_error)}">
+                                    <h2>${gs.getMessage('General error.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                </j:if>
+
+                                <j:if test="${!empty(jvar_error)}">
+                                    <j:choose>
+                                        <j:when test="${jvar_error == 'TIMEOUT'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('The passsword reset process timed out. Try again later.')}</h2>
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'block'}">
+                                            <h2>${gs.getMessage('We could not reset your password for one of the following reasons:')}</h2>
+                                            <ul>
+                                                <li>${gs.getMessage('You have exceeded the limit on password reset attempts.')}</li>
+                                                <li>${gs.getMessage('You changed your password recently.')}</li>
+                                                <li>${gs.getMessage('You unlocked your account recently.')}</li>
+                                            </ul>
+                                            ${gs.getMessage('Try again later. For immediate assistance, call the service desk.')}
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'invalid user'}">
+                                            <h2>${gs.getMessage('This user cannot use the configured Password Reset process. Possible reasons:')}</h2>
+                                            <ul>
+                                                <li>${gs.getMessage('User does not exist or is not enrolled.')}</li>
+                                                <li>${gs.getMessage('User is not part of the configured password reset process.')}</li>
+                                                <li>${gs.getMessage('User is blocked (exceeded the limit on reset attempts or reset password recently).')}</li>
+                                                <li>${gs.getMessage('User account is locked.')}</li>
+                                            </ul>
+                                            ${gs.getMessage('Try again later. For immediate assistance, call the service desk.')}
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'locked'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('Your account is locked. You cannot reset your password at this time.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'process_does_not_exist'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('This page does not exist.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'process_not_public'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('The process is not publicly available.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'process_not_active'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('The process is not active.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'midserver_not_running'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('We could not reset your password because we cannot connect to the Active Directory server. Try again later.')}</h2>
+                                        </j:when>
+
+                                        <j:when test="${jvar_error == 'ldap_user'}">
+                                            <g:evaluate var="jvar_ldap_user_restricted_message" jelly="true">
+                                                var ldapError = GlidePropertiesDB.get("glide.password_reset.ldap_user.restricted.message","You cannot reset your AD password through Service-Now password reset application. Please contact your administrator for instructions on how to change your AD password.");
+                                                gs.getMessage(ldapError);
+                                            </g:evaluate>
+                                            <h2 class="pwd-subtitle">${jvar_ldap_user_restricted_message}</h2>
+                                        </j:when>
+                                        <j:when test="${jvar_error == 'unauthorized_access'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('The password reset link is expired, please try again.')}</h2>
+                                        </j:when>
+                                        <j:when test="${jvar_error == 'not_found'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('Session is expired, please try again.')}</h2>
+                                        </j:when>
+                                        <j:when test="${jvar_error == 'Flow stopped executing'}">
+                                            <h2 class="pwd-subtitle">${gs.getMessage('General error.')} ${gs.getMessage('Try again later. For immediate assistance, call the service desk.')}</h2>
+                                        </j:when>
+                                        <j:otherwise>
+                                            <h2 class="pwd-subtitle">${jvar_error}</h2>
+                                        </j:otherwise>
+                                    </j:choose>
+                                </j:if>
+
+                                <div class="pwd-additional-info">
+                                    <g:evaluate var="jvar_display_add_on" jelly="true">
+                                        var processId = new SNC.PwdTrackingManager().getProcessIdByRequestId(jelly.jvar_request_id);
+                                        var ret="";
+                                        var gr=new GlideRecord("pwd_process");
+                                        if (gr.get(processId)) {
+                                        ret=gr.getDisplayValue("user_experience_failure");
+                                        }
+                                        ret;
+                                    </g:evaluate>
+
+                                    <j:if test="${!empty(jvar_display_add_on)}">
+                                        <g:macro_invoke macro="${jvar_display_add_on}" />
+                                    </j:if>
+                                </div>
+
+                                <j:if test="${jvar_error == 'locked'}">
+                                    <g:macro_invoke macro="$pwd_done_button" />
+                                </j:if>
+
+                            </div>
+                            <div class="login-card-footer text-left">
+                                <a class="btn btn-link" id="redirect_url_msg" tabindex="0" href="/login.do">
+                                    ${gs.getMessage('Log in with user name and password')}
+                                </a>
+                            </div>
+                            <j:if test="${gs.getProperty('glide.ui.branding.works_with.is_visible', 'false') == 'true'}">
+                                <g:macro_invoke macro="ShowSNBrandTaglineOnLoginPage" />
+                            </j:if>
+                        </div>
+                        <!-- Process custom footer -->
+                        <j:if test="${jvar_show_header_footer}">
+                            <g:macro_invoke macro="$pwd_process_footer" stage="1" process="${sysparm_process_id}" use_polaris="true" />
+                        </j:if>
+                    </div>
+                </div>
+            </j:when>
+            <!-- Heisenberg -->
+            <j:otherwise>
+                <g:macro_invoke macro="$pwd_process_flow" stage="${jvar_stage}" process="${jvar_process_id}" show_custom_header="${jvar_show_header_footer}" />
+
+                <center role="alert" tabindex="0" id="pwdErrorContainer" class="default-focus-outline">
+                    <div class="pwd-notification-box pwd-page-box" style="text-align:center">
+                        <i class="icon-error pwd-icon pwd-icon-error" />
+                        <h1 class="pwd-title">${gs.getMessage("Password Reset Error")}</h1>
+                        <g:evaluate var="jvar_error" jelly="true">
+                            var ret = gs.getSession().getProperty('sysparm_error');
+                            if (!ret)
+                            ret = jelly.sysparm_error;
+                            gs.getSession().clearProperty('sysparm_error');
+                            gs.nil(ret) ? "" : ret;
+                        </g:evaluate>
+
+                        <j:if test="${empty(jvar_error)}">
+                            ${gs.getMessage('General error.')} ${gs.getMessage('Contact the service desk for assistance.')}
+                        </j:if>
+
+                        <j:if test="${!empty(jvar_error)}">
+                            <j:choose>
+                                <j:when test="${jvar_error == 'TIMEOUT'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('The passsword reset process timed out. Try again later.')}</h2>
+                                </j:when>
+
+                                <j:when test="${jvar_error == 'block'}">
+                                    <div class="pwd-content">
+                                        <b>${gs.getMessage('We could not reset your password for one of the following reasons:')}</b>
+                                        <ul>
+                                            <li>${gs.getMessage('You have exceeded the limit on password reset attempts.')}</li>
+                                            <li>${gs.getMessage('You changed your password recently.')}</li>
+                                            <li>${gs.getMessage('You unlocked your account recently.')}</li>
+                                        </ul>
+                                        ${gs.getMessage('Try again later. For immediate assistance, call the service desk.')}
+                                    </div>
+                                </j:when>
+
+                                <j:when test="${jvar_error == 'invalid user'}">
+                                    <div class="pwd-content">
+                                        <b>${gs.getMessage('This user cannot use the configured Password Reset process. Possible reasons:')}</b>
+                                        <ul>
+                                            <li>${gs.getMessage('User does not exist or is not enrolled.')}</li>
+                                            <li>${gs.getMessage('User is not part of the configured password reset process.')}</li>
+                                            <li>${gs.getMessage('User is blocked (exceeded the limit on reset attempts or reset password recently).')}</li>
+                                            <li>${gs.getMessage('User account is locked.')}</li>
+                                        </ul>
+                                        ${gs.getMessage('Try again later. For immediate assistance, call the service desk.')}
+                                    </div>
+                                </j:when>
+
+
+                                <j:when test="${jvar_error == 'locked'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('Your account is locked. You cannot reset your password at this time.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                </j:when>
+
+                                <j:when test="${jvar_error == 'process_does_not_exist'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('This page does not exist.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                </j:when>
+
+                                <j:when test="${jvar_error == 'process_not_public'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('The process is not publicly available.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                </j:when>
+
+                                <j:when test="${jvar_error == 'process_not_active'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('The process is not active.')} ${gs.getMessage('Contact the service desk for assistance.')}</h2>
+                                </j:when>
+
+                                <j:when test="${jvar_error == 'midserver_not_running'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('We could not reset your password because we cannot connect to the Active Directory server. Try again later.')}</h2>
+                                </j:when>
+
+                                <j:when test="${jvar_error == 'ldap_user'}">
+                                    <g:evaluate var="jvar_ldap_user_restricted_message" jelly="true">
+                                        var ldapError = GlidePropertiesDB.get("glide.password_reset.ldap_user.restricted.message","You cannot reset your AD password through Service-Now password reset application. Please contact your administrator for instructions on how to change your AD password.");
+                                        gs.getMessage(ldapError);
+                                    </g:evaluate>
+                                    <h2 class="pwd-subtitle">${jvar_ldap_user_restricted_message}</h2>
+                                </j:when>
+                                <j:when test="${jvar_error == 'unauthorized_access'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('The password reset link is expired, please try again.')}</h2>
+                                </j:when>
+                                <j:when test="${jvar_error == 'not_found'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('Session is expired, please try again.')}</h2>
+                                </j:when>
+                                <j:when test="${jvar_error == 'Flow stopped executing'}">
+                                    <h2 class="pwd-subtitle">${gs.getMessage('General error.')} ${gs.getMessage('Try again later or contact the password reset admin for assistance.')}</h2>
+                                </j:when>
+                                <j:otherwise>
+                                    <h2 class="pwd-subtitle">${jvar_error}</h2>
+                                </j:otherwise>
+                            </j:choose>
+                        </j:if>
+
+                        <div class="pwd-additional-info">
+                            <g:evaluate var="jvar_display_add_on" jelly="true">
+                                var processId = new SNC.PwdTrackingManager().getProcessIdByRequestId(jelly.jvar_request_id);
+                                var ret="";
+                                var gr=new GlideRecord("pwd_process");
+                                if (gr.get(processId)) {
+                                ret=gr.getDisplayValue("user_experience_failure");
+                                }
+                                ret;
+                            </g:evaluate>
+
+                            <j:if test="${!empty(jvar_display_add_on)}">
+                                <g:macro_invoke macro="${jvar_display_add_on}" />
+                            </j:if>
+                        </div>
+
+                        <j:if test="${jvar_error == 'locked'}">
+                            <span class="col-sm-12">
+                                <g:macro_invoke macro="$pwd_done_button" />
+                            </span>
+                        </j:if>
+                    </div>
+                </center>
+                <j:if test="${jvar_show_header_footer}">
+                    <g:macro_invoke macro="$pwd_process_footer" stage="{jvar_stage}" process="${jvar_process_id}" />
+                </j:if>
+            </j:otherwise>
+        </j:choose>
+    </main>
+</j:jelly>

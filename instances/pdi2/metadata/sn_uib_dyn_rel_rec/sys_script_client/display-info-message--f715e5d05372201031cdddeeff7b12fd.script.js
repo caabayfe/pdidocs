@@ -1,0 +1,10 @@
+function onLoad() {
+	var message = '';
+	if (typeof GwtMessage === 'function') {
+		message = new GwtMessage()
+			.getMessage("Add a scripted definition to define which records are retrieved based on the context. At runtime, the script evaluates the current record's context, along with any selected conditions, and dynamically displays the related records.<br/><br/>The related record context and related record definitions are evaluated as follows: for the current record, use the Primary and Secondary reference fields to define the context conditions. If these conditions evaluate to true, dynamically display the corresponding set of filtered related records.<br/><br/>For example, if the status of the current task = Open and the status of the company associated with the task = Active, then show the active contracts for the company. The task status and company status are derived from the Primary and Secondary reference fields and contracts are shown because the Contracts table is selected in the Queries from field.");            
+	} else {
+		message = getMessage("Add a scripted definition to define which records are retrieved based on the context. At runtime, the script evaluates the current record's context, along with any selected conditions, and dynamically displays the related records.<br/><br/>The related record context and related record definitions are evaluated as follows: for the current record, use the Primary and Secondary reference fields to define the context conditions. If these conditions evaluate to true, dynamically display the corresponding set of filtered related records.<br/><br/>For example, if the status of the current task = Open and the status of the company associated with the task = Active, then show the active contracts for the company. The task status and company status are derived from the Primary and Secondary reference fields and contracts are shown because the Contracts table is selected in the Queries from field."); 
+	}
+	g_form.addInfoMessage(message);
+}

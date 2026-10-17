@@ -1,0 +1,11 @@
+/**
+ * @param {params} params
+ * @param {api} params.api
+ * @param {TransformApiHelpers} params.helpers
+ */
+function evaluateProperty({
+    api,
+    helpers
+}) {
+    return api.state.skillConfigData.override_config?.successModalProps?.headerText || helpers.translateSync("Successfully activated");
+}

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null">
+<!--
+
+	If this page is displayed on page cancelation, there is a variable
+	jvar_transaction that has the following methods:
+	
+		getURL() - get the URL for the transaction
+		getReason() - get the reason for page cancelation, localized to the user's language
+		getMessage() - get the system-generated message for page cancelation, localized to the user's language
+		getQuotaId() - get the sys_id of the quota rule
+		getQuotaName() - get the name of the quota rule
+		getRunTime() - get the total run time for the page up to this point
+		getType() - get the type of transaction, such as form, list, report, other
+		getUser() - gets the sys_id of the user
+		getHomepage() - returns the sys_id of the homepage (homepages only)
+		getHomepageWidget() - returns the name of the homepage widget (homepages only)
+		getMeta() - returns a xml string of meta data for GlideAjax to interpret when it sees this page
+-->
+	<style>
+		.cancel_message {
+			margin: 6px;	
+		}
+		
+		.cancel_option {
+			border: 1px solid #eeeeee;
+			padding: 2px;
+			margin-left: 6px;
+			margin-bottom: 6px;	
+		}
+		
+		.cancel_option_inner {
+			background-color: #eeeeee;	
+			padding: 2px 2px 2px 8px;
+		}
+	</style>
+	<j:choose>
+		<j:when test="${gs.getProperty('glide.ui.export_on_tx_cancel.enable') == 'true'}">
+		<!--
+			Minimal styles required. These are not adjusted for polaris yet
+			1. Basic theme
+			2. doctype overrides which provide consistent look for tables etc.
+			3. control output messages container
+		-->
+			<g:requires name="styles/theme.css" />
+			<g:requires name="styles/theme_doctype.css" />
+			<g:requires name="styles/doctype/theme_main.css" />
+			<g:requires name="scripts/js_includes.js" includes="true"/>
+		</j:when>
+		<j:otherwise>
+			<g:requires name="styles/theme.css" />
+		</j:otherwise>
+	</j:choose>
+	<g:inline template="output_messages2.xml" />
+	<g:ui_form>
+		<table class="wide" cellpadding="0" cellspacing="0" border="0">
+			<tr class="header">
+				<td>
+					<table border="0" cellspacing="0" cellpadding="2">
+						<tr class="header">
+							<td>
+								<input type="HIDDEN" id="sysverb_back" />
+								<a role="link" onclick="history.back()" aria-label="${gs.getMessage('Go back to previous page')}" tabindex="0">
+									<img name="not_important" 
+									 value="sysverb_back" 
+									 id="sysverb_back" 
+									 src="images/green_back.gifx" 
+									 title="${gs.getMessage('Back')}"
+									 alt="${gs.getMessage('Back')}" 
+									 aria-hidden="true"
+									 style="cursor:pointer; margin-left: 4px; margin-right: -2px;"/>
+								</a>
+ 
+							</td>
+							<td width="100%">
+								<div id="form_header" class="caption" style="margin-top: 2px;">${gs.getMessage('Transaction Canceled')}</div>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<!-- 
+						This is used for report partial pages when a report is canceled 
+						and we want just a subset of the canceled page to display					
+					-->
+					<g2:partial_page name="theReport">
+						<div class="cancel_message">
+							<h3>${jvar_transaction.getMessage()}</h3>
+							<p>
+								${gs.getMessage('Time')}: ${jvar_transaction.getRunTime()} ${gs.getMessage('ms')}<br/>
+								${gs.getMessage('Reason')}: ${jvar_transaction.getReason()}
+								<j2:if test="$[jvar_transaction.getQuotaId() != null]">
+									<j2:if test="$[gs.hasRole('admin') || GlideSessionDebug.isDebugging('quota')]">
+										<br/>${gs.getMessage('Quota')}:$[SP]
+										<j:if test="${gs.hasRole('admin')}">
+											<a href="/sysrule_quota.do?sys_id=$[jvar_transaction.getQuotaId()]" class="linked">$[jvar_transaction.getQuotaName()]</a>
+										</j:if>
+										<j:if test="${!gs.hasRole('admin')}">
+											$[jvar_transaction.getQuotaName()]
+										</j:if>
+									</j2:if>
+								</j2:if>
+							</p>
+						</div>
+					</g2:partial_page>
+					
+					<div class="cancel_option">
+						<div class="cancel_option_inner">
+							<a class="linked" aria-hidden="true" onclick="history.back()">
+								<img align="left" src="images/nav_backward.gifx"/>
+							</a>
+							<a class="linked" tabindex="0" aria-label="${gs.getMessage('Go back to previous page')}" role="link" onclick="history.back()">
+								${gs.getMessage('Go Back')}
+							</a>
+						</div>
+					</div>
+					<div class="cancel_option">
+						<div class="cancel_option_inner">
+							<a class="linked" aria-hidden="true" onclick="location.reload()">
+								<img align="left" src="images/refresh_small.gifx"/>
+							</a>
+							<a class="linked" tabindex="0" role="link" aria-label="${gs.getMessage('Reload current page')}" onkeyup="var code = event.which || event.keyCode;if (code == 32) {location.reload();}" onclick="location.reload()">
+								${gs.getMessage('Reload')}
+							</a>
+						</div>
+					</div>
+					<j:if test="${jvar_transaction.getType() == 'report'}">
+						<div class="cancel_option">
+							<div class="cancel_option_inner">
+								<g2:evaluate var="jvar_safe_url" jelly="true">
+									var baseURL = jelly.jvar_transaction.getURL();
+									var url = new GlideURL(baseURL);
+									url.set('sysparm_filter_only', 'true');
+									url.toString();
+								</g2:evaluate>
+								<a class="linked" tabindex="-1" href="$[jvar_safe_url]">
+									<img align="left" aria-hidden="true" src="images/filter.gifx"/>
+								</a>
+								<a class="linked" role="link" href="$[jvar_safe_url]">
+									${gs.getMessage('Load Report With Filter Only')}
+								</a>
+							</div>
+						</div>
+					</j:if>
+					<j:if test="${jvar_transaction.getType() == 'list'}">
+						<div class="cancel_option">
+							<div class="cancel_option_inner">
+								<g2:evaluate var="jvar_safe_url" jelly="true">
+									var baseURL = jelly.jvar_transaction.getURL();
+									var url = new GlideURL(baseURL);
+									url.set('sysparm_filter_only', 'true');
+									url.toString();
+								</g2:evaluate>
+								<a class="linked" tabindex="-1" href="$[jvar_safe_url]">
+									<img align="left" aria-hidden="true" src="images/filter.gifx"/>
+								</a>
+								<a class="linked" role="link" href="$[jvar_safe_url]">
+									${gs.getMessage('Load List With Filter Only')}
+								</a>
+							</div>
+						</div>
+						<j:if test="${gs.getProperty('glide.ui.export_on_tx_cancel.enable') == 'true'}">
+							<div class="cancel_option">
+								<div class="cancel_option_inner">
+									<g2:evaluate var="jvar_onclick" jelly="true">
+										var baseURL = jelly.jvar_transaction.getURL();
+										var url = new GlideURL(baseURL);
+										var pageName = url.getPageName() + '';
+										// strip the "_list" suffix
+										var tableName = pageName.endsWith('_list') ? pageName.substring(0, pageName.length - 5) : pageName;
+										var query = url.get('sysparm_query');
+										var view = url.get('sysparm_view');
+										var script = "new GwtExportOnCancelDialog('" + tableName + "','" + query + "','" + view + "', false).execute()";
+										script;
+									</g2:evaluate>
+									<a class="linked" tabindex="-1" onclick="$[jvar_onclick]">
+										<img align="left" aria-hidden="true" src="images/import.gifx"/>
+									</a>
+									<a class="linked" role="link" onclick="$[jvar_onclick]">
+										${gs.getMessage('Export')}
+									</a>
+								</div>
+							</div>
+						</j:if>
+					</j:if>
+				</td>
+			</tr>
+		</table>
+	</g:ui_form>
+	<g2:no_escape>
+		$[jvar_transaction.getMeta()]
+	</g2:no_escape>
+</j:jelly>

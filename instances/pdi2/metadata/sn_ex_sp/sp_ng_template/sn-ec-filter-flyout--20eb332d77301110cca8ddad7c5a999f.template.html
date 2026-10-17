@@ -1,0 +1,47 @@
+<div class="flyout-container" id="ec-flyout-container" role="dialog">
+  <div class="modal-content" title="${All filters}" ng-keydown="c.handleAccessibilityInFlyout($event)" tabindex="-1">
+    <div class="modal-header">
+      <h2 class="modal-title" id="filter-flyout-title">${All filters}</h2> 
+      <button id="ec-flyout-close-btn" class="close" data-dismiss="modal" aria-label="${Close}"> <i class="fa fa-times"></i> </button>
+    </div>
+    <div class="modal-body">
+        <div class="filter-container">
+          <div ng-repeat="fc in c.filtersData">
+            <h3 class="title-style"> {{fc.title}} <span ng-show="fc.selectedFilters.length > 0">({{fc.selectedFilters.length}})</span> </h3>
+            <ul class="category-content-wrapper"> 
+                <li ng-repeat="filter in fc.filters" class="filter-content-wrapper"
+                     ng-class="{'col-md-6': filter.subFilters == undefined || filter.subFilters.length == 0, 'col-md-12': filter.subFilters && filter.subFilters.length > 0}">
+                  <div class="filter-style">
+                    <button role="checkbox" aria-checked="mixed" aria-label="{{c.getFilterAriaLabel(filter)}}" class="intermediate-select-style" ng-show="c.areSomeSubfilterSelected(filter)" ng-click="c.onFilterValueChange(fc, filter, undefined, true)">
+                      <i class="fa fa-minus-square"></i>
+                    </button>
+                    <input class="filter-checkbox" ng-change="c.onFilterValueChange(fc, filter, undefined, true)" ng-model="filter.selected" type="checkbox" name="{{filter.filterId}}"
+                           id="ft-{{fc.categoryId + '-' +filter.filterId}}" ng-show="!c.areSomeSubfilterSelected(filter)" aria-label="{{c.getFilterAriaLabel(filter)}}"/>
+                    <label for="ft-{{fc.categoryId + '-' +filter.filterId}}" ng-class="{'filter-group-label-style' : filter.isGroup}">{{filter.filterName}}</label>
+                  </div>
+                  <ul class="subfilter-wrapper" role="group" aria-label="{{filter.filterName}}">
+                    <li role="listitem" class="col-md-6 subfilter-style" ng-repeat="subfilter in filter.subFilters">
+                      <input type="checkbox" id="ft-{{fc.categoryId + '-' +filter.filterId + '-' + subfilter.filterId}}" name="{{subfilter.filterName}}" ng-model="subfilter.selected" 
+                             aria-label="{{subfilter.filterName}}" ng-change="c.onFilterValueChange(fc, filter, subfilter, true)">
+                      <label for="ft-{{fc.categoryId + '-' +filter.filterId + '-' + subfilter.filterId}}">{{subfilter.filterName}}</label>
+                    </li>
+                  </ul>
+            </li>
+          </ul>
+          <hr class="divider" ng-if="!$last"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer filter-footer-container pd-all-xl">
+      <div class="display-flex space-between">
+        <div class="display-flex">
+          <button class="btn btn-link clear-filter-button" onclick="clearAllFiltersMobile()" ng-disabled="!c.enableClearBtn" aria-label="${Clear}">${clear}</button>
+        </div>
+        <div class="display-flex modal-footer-style">
+          <button id="ec-flyout-cancel-btn" class="btn btn-default" data-dismiss="modal" aria-label="${Cancel}">${Cancel}</button>
+          <button id="ec-flyout-apply-btn" class="btn btn-primary" data-dismiss="modal" ng-disabled="!c.enableApplyBtn" onclick="applyFilterMobile()" aria-label="${Apply}">${Apply}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

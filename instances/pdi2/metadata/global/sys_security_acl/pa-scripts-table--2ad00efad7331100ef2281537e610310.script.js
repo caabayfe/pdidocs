@@ -1,0 +1,1 @@
+!SNC.PAScript.isScriptReferencedByIndicatorsOrBrakdowns(current.sys_id)

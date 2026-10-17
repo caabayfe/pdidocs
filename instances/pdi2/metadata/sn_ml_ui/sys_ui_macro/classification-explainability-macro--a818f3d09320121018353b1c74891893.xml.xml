@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g2:evaluate var="jvar_data">
+        var val = current.getValue('sys_id');
+        var ml_model_artifact = new GlideRecord('ml_model_artifact');
+        ml_model_artifact.addQuery('solution', val);
+        ml_model_artifact.addQuery('model_id', 'ShapValuesOutput');
+        ml_model_artifact.query();
+        var model_artifact_sys_id = "nothing"
+        if(ml_model_artifact.next()){
+            model_artifact_sys_id = ml_model_artifact.getValue('sys_id');
+        } else {
+            model_artifact_sys_id = "no model artifact found"
+        }
+        var solutionSysID = model_artifact_sys_id;
+        var attachment = new sn_ml_ui.GlideSysAttachment();
+        var errMsg = "";
+        try {
+            var agr = attachment.getAttachments('ml_model_artifact', solutionSysID);
+        } catch (error) {
+            errMsg = gs.getMessage("Solution {0}: Error fetching ShapValuesOutput attachment, failed with error {1}.", [solutionSysID, error]);
+            gs.error(errMsg);
+            throw new Error(errMsg);
+        }
+        try {
+            if (agr.next()) {
+                stats = JSON.parse(attachment.getContent(agr));
+                gs.debug(gs.getMessage('Solution {0}: ShapValuesOutput as read from file : {0}', [solutionSysID, JSON.stringify(stats)]));
+            }
+        } catch (error) {
+            errMsg = gs.getMessage("Solution {0}: Incorrect format of the JSON in the artifact. Error: {1}.", [solutionSysID, error]);
+            gs.error(errMsg);
+            throw new Error(errMsg);
+        }
+        stats = JSON.stringify(stats);
+        stats;
+   </g2:evaluate>
+    <link rel="stylesheet" href="styles/model_explainability.css"/>
+    <script src="scripts/classification-ml-src/ModelExplainabilityGraph.js" type="text/javascript"></script>
+    <script src="scripts/classification-ml-src/ModelExplainabilityChartUtils.js" type="text/javascript"></script>
+    <script defer="true">
+            var data = {};
+    var colors = {
+        'positive': '#00be98', // green
+        'negative': '#e81766'  // red
+    }
+    var stats = JSON.parse("$[jvar_data]");
+    data.stats = stats;
+    data.global = getGraphData(stats.global_values, colors);
+    for (var key in stats.label_values) {
+        data[key.toLowerCase()] = getGraphData(stats.label_values[key], colors);
+    }
+    var labels = Object.keys(data.stats.label_values).sort();
+    labels.unshift('Global');
+
+    console.log("LABEL");
+    console.log(labels);
+
+    console.log(data);
+    document.addEventListener("DOMContentLoaded", function () {
+        var selectElement = document.getElementById("label_select");
+        var selectOption = document.getElementById("ml_solution.u_choice_1");
+        console.log("Complete document HTML:", document.documentElement.outerHTML);
+        console.log("selectOption is: " + selectOption.outerHTML)
+        var labelElement = document.querySelector('label[for="ml_solution.u_choice_1"] .label-text');
+        console.log("Label Element is: " + labelElement);
+        var outputFieldElement = document.getElementById('ml_solution.output_field');
+        var outputFieldValue = outputFieldElement.value;
+        var capitalizedValue = outputFieldValue.charAt(0).toUpperCase() + outputFieldValue.slice(1);
+
+        console.log("Output Field Value:", outputFieldValue);
+
+        if (labelElement) {
+            labelElement.textContent = capitalizedValue;
+        }
+
+        selectOption.onchange = function () {
+            onselectchange(selectOption)
+        }
+
+        console.log(selectElement);
+
+        labels.forEach(function (label, index) {
+            var option = document.createElement("option");
+			option.value = label.toLowerCase(); // Set value for the option
+            option.textContent = label; // Set text content for the option
+            selectOption.appendChild(option);
+        });
+
+        var classes = "col-xs-12 col-md-1_5 col-lg-1 control-label";
+        var labelEl = document.getElementById("s2id_autogen1-label");
+        labelEl.classes = classes;
+
+        graph("", data["global"].categories, data["global"].series, "container1");
+    });
+
+    function onselectchange(e) {
+        console.log("Evalue" + e.value);
+        var label = e.value;
+		var title = label[0].toUpperCase() + label.slice(1) + " Explainability";
+		var _key = label.toLowerCase();
+        graph(title, data[_key].categories, data[_key].series);
+    }
+    </script>
+    <div class="parent-container">
+        <div id="container1">
+        </div>
+    </div>
+</j:jelly>

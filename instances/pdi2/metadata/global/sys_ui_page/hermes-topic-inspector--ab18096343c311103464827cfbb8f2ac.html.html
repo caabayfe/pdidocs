@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <script>
+        addLoadEvent(function() {
+            getServicesList();
+        });
+    </script>
+
+    <!-- This header updates the top navigation header and makes sure the page is shown correctly in the history navigator -->
+    <h1 data-form-title="Hermes Topic Inspector" style="margin: 2px auto;font-size: 17px;"></h1>
+    <!-- The first two styles are to force info & error messages to show above modals -->
+    <style>
+        .outputmsg_container {
+            z-index: 100000;
+            position: relative;
+        }
+
+        .close {
+            z-index: 100000;
+            position: relative;
+        }
+
+        .page-title {
+            margin: 15px 30px;
+            min-height: 125px;
+            overflow: visible;
+        }
+
+        .select-topic-label {
+            margin-left: 24px;
+            margin-right: 12px;
+        }
+
+        .select-service-label {
+            font-weight: bold;
+        }
+
+        .radio-external-label {
+            margin-left: 8px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .radio-internal-label {
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .cluser-location-label {
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .spaced-divider {
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        .external-topic-radio-container {
+            margin-left: 134px;
+        }
+
+        .-polaris .external-topic-radio-container {
+            margin-left: 147px;
+        }
+
+        .topic-table-row {
+            overflow-wrap: anywhere;
+        }
+
+        .highlighted-topic-table-row {
+            background-color: rgb(230, 230, 230) !important;
+        }
+
+        .partition-table-row {
+            background-color: rgb(250, 250, 250);
+        }
+
+        .topic-list-table {
+            table-layout: fixed;
+        }
+
+        .topic-list-table tr:not(.partition-table-row):hover {
+            background-color: rgb(235, 245, 245);
+        }
+
+        .topic-list-table tr:not(.partition-table-row) {
+            background-color: white;
+        }
+
+        .general-margin {
+            margin-top: 10px;
+            margin-bottom: 16px;
+        }
+
+        .hidden-spaced-divider {
+            margin-top: 8px;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        .table-container {
+            margin-top: 24px;
+            display: none;
+        }
+
+        .table-caption {
+            margin-bottom: 8px;
+        }
+
+        .date-time-selector {
+            margin-top: 12px;
+            margin-bottom: 24px;
+        }
+
+		.msg-body-filter {
+			margin-top: 12px;
+            margin-bottom: 24px;
+		}
+
+        .partition-selector {
+            margin-top: 12px;
+            margin-bottom: 24px;
+        }
+
+        .datacenter-selector {
+            margin-top: 12px;
+            margin-bottom: 24px;
+        }
+
+        .inspect-topic-button {
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .message-table {
+            table-layout: fixed;
+        }
+
+        table.message-table td {
+            word-wrap: break-word;
+        }
+
+        td.label label {
+            min-width: 100px;
+            font-size: 14px;
+        }
+
+        #serviceSelection {
+            padding: 2px;
+        }
+
+        .scroll {
+            overflow: scroll;
+            height: 550px;
+        }
+
+        .pagination-right {
+            float: right;
+            margin-right: 0px;
+        }
+
+        .filter-criteria {
+            display: none;
+        }
+    </style>
+    <div class="page-title" id="page-title">
+        <h4 aria-level="2" tabindex="-1">
+            <center>${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Hermes Topic Inspector')}</center>
+        </h4>
+        <hr class="spaced-divider" />
+        <div class="row general-margin">
+            <div class="col-sm-4 col-md-3">
+                <g:ui_choice_input_field id="serviceSelection" name="serviceSelection" label="${sn_i18n.Message.getMessage('HERMES_TOPIC_INSPECTOR_CODE', 'Select Service: ')}">
+                    <option value="-1">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", '-- None --')}</option>
+                </g:ui_choice_input_field>
+            </div>
+            <j:if test="${gs.hasRole('maint')}">
+                <div class="col-sm-6 col-md-5">
+                    <label class="select-topic-label">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Select Topic Type: ')}</label>
+                    <g:ui_radio id="externalRadio" name="topicTypeRadio" value="snc" checked_value="snc" />
+                    <label class="radio-external-label" for="externalRadio">
+                        ${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'External')}
+                    </label>
+                    <g:ui_radio id="internalRadio" name="topicTypeRadio" value="sni" />
+                    <label class="radio-internal-label" for="internalRadio">
+                        ${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Internal')}
+                    </label>
+                </div>
+            </j:if>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 col-md-10 general-margin">
+                <g:dialog_button id="listTopicsButton" onClick="return listTopics(gel('serviceSelection').value);" type="button">
+                    ${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'List Topics')}
+                </g:dialog_button>
+            </div>
+        </div>
+        <hr class="hidden-spaced-divider" id="hiddenSpaceDivider0">
+        </hr>
+        <div class="row">
+            <center>
+                <div class="loading" id="topicLoadingIcon" height="2px" width="4px">
+                    <div class="loading-indicator  icon-loading" />
+                </div>
+            </center>
+        </div>
+        <div class="row table-container" id="topicSelectorTableContainer">
+            <div class="row">
+                <div class="col-sm">
+                    <label class="cluser-location-label">
+                        <!-- "&#160;" is the numeric entity reference of "&nbsp;" and is used here to create a blank space -->
+                        ${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Primary Cluster:&#160;&#160;')}
+                    </label>
+                    <!-- We set the value of nearLocationLabel in the client script -->
+                    <label id="nearLocationLabel" />
+                </div>
+                <div class="col-sm">
+                    <label class="cluser-location-label">
+                        <!-- "&#160;" is the numeric entity reference of "&nbsp;" and is used here to create a blank space -->
+                        ${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Secondary Cluster:&#160;&#160;')}
+                    </label>
+                    <!-- We set the value of farLocationLabel in the client script -->
+                    <label id="farLocationLabel" />
+                </div>
+                <div class="col-sm">
+                    <label class="cluser-location-label">
+                        <!-- "&#160;" is the numeric entity reference of "&nbsp;" and is used here to create a blank space -->
+                        ${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Number of Topics:&#160;&#160;')}
+                    </label>
+                    <!-- We set the value of farLocationLabel in the client script -->
+                    <label id="numTopicsLabel" />
+                </div>
+            </div>
+            <table class="table topic-list-table table-bordered border-dark" id="topicSelectorTable">
+                <caption class="table-caption">
+                    <b>${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Select a Topic')}</b>
+                </caption>
+                <thead>
+                    <tr>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Topic')}</th>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Beginning Offset')}</th>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'End Offset')}</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <table id="filterCriteria" class="filter-criteria">
+            <tbody>
+                <tr>
+                    <td>
+                        <div id="partitionSelectionContainer" class="partition-selector">
+                            <g:ui_choice_input_field id="partitionSelection" name="partitionSelection" label="${sn_i18n.Message.getMessage('HERMES_TOPIC_INSPECTOR_CODE', 'Read from Partition: ')}">
+                                <option value="-1">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'All')}</option>
+                            </g:ui_choice_input_field>
+                        </div>
+                    </td>
+                    <td>
+                        <div id="datacenterSelectionContainer" class="datacenter-selector">
+                            <g:ui_choice_input_field id="datacenterSelection" name="datacenterSelection" label="${sn_i18n.Message.getMessage('HERMES_TOPIC_INSPECTOR_CODE', 'Select Datacenter')}">
+                                <option value="all">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'All')}</option>
+                            </g:ui_choice_input_field>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="col-sm-12 col-md-12 date-time-selector" id="dateSelectorContainer">
+                            <label>${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Message start date (UTC): ')}</label>
+                            <g:ui_date_time name="dateTimeField" label="${sn_i18n.Message.getMessage('HERMES_TOPIC_INSPECTOR_CODE', 'Date: ')}" readonly="false" value="${(new GlideDateTime()).getValue()}" type="date" />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="col-sm-12 col-md-12 date-time-selector" id="endDateSelectorContainer">
+                            <label>${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Message end date (UTC): ')}</label>
+                            <g:ui_date_time name="endDateTimeField" label="${sn_i18n.Message.getMessage('HERMES_TOPIC_INSPECTOR_CODE', 'Date: ')}" readonly="false" value="${(new GlideDateTime()).getValue()}" type="date" />
+                        </div>
+                    </td>
+                    <td>
+                        <j:if test="${gs.getProperty('glide.hermes.topic.inspector.payload.format','string') == 'string'}">
+                            <div class="col-sm-12 col-md-12 msg-body-filter">
+                                <label>${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Message body filter:')}</label>
+                                <input size="100" class="form-control" type="text" id="messageBodyFilter" name="messageBodyFilter" />
+                            </div>
+                        </j:if>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="col-sm-12 col-md-12 inspect-topic-button" id="inspectTopicButtonContainer">
+                            <!-- gel('numberOfMessagesSelection').value,-->
+                            <g:dialog_button id="inspectTopicButton" onClick="return inspectTopic(gel('dateTimeField').value,gel('endDateTimeField').value, gel('partitionSelection').value, gel('datacenterSelection').value, gel('serviceSelection').value, 'button');" type="button">
+                                <b>${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Inspect Topic')}</b>
+                            </g:dialog_button>
+							<input hidden="true" id="groupId" name="groupId" />
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <hr class="hidden-spaced-divider" id="hiddenSpaceDivider1">
+        </hr>
+        <div class="row">
+            <center>
+                <div class="loading" id="messagesLoadingIcon" height="2px" width="4px">
+                    <div class="loading-indicator  icon-loading" />
+                </div>
+            </center>
+        </div>
+        <div class="row table-container scroll" id="messageTableContainer">
+            <table class="table table-bordered border-dark message-table" id="messageTable">
+                <caption class="table-caption" id="messageTableCaption" />
+                <span class="pagination-right">
+                    <a class="icon-arrow-right" href="javascript:inspectTopic(gel('dateTimeField').value, gel('endDateTimeField').value, gel('partitionSelection').value, gel('datacenterSelection').value, gel('serviceSelection').value, 'link');">
+                        <span class="arrow-icon-padding" style="margin:8px">
+                            ${gs.getMessage("Load next available messages")}
+                        </span>
+                    </a>
+                </span>
+                <thead>
+                    <tr>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Offset')}</th>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Partition')}</th>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Timestamp')}</th>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Headers')}</th>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Key')}</th>
+                        <th scope="col">${sn_i18n.Message.getMessage("HERMES_TOPIC_INSPECTOR_CODE", 'Payload')}</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</j:jelly>

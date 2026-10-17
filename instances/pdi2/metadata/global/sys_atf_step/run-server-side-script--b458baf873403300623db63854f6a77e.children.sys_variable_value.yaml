@@ -1,0 +1,50 @@
+- document: sys_atf_step
+  document_key: b458baf873403300623db63854f6a77e
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:08:20
+  sys_id: 2868baf873403300623db63854f6a7bb
+  sys_mod_count: '4'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-01-31 09:30:47
+  value: |-
+    // Retrieve all the active solutions and pass on to the next test step
+    (function(outputs, steps, stepResult, assertEqual) {
+    	var count = 0;
+    	var sysids = "";
+    	var solutions = new GlideRecord("ml_solution");
+    	var sol_def_id; 
+    	var solution_definition;
+    	solutions.addQuery("active","true");
+    	solutions.addEncodedQuery("capability=similarity_trainer^");
+    	solutions.query();
+    	gs.info(solutions.getRowCount() + " active solutions found.");
+    	while (solutions.next() ) {
+    		sol_def_id = solutions.ml_capability_definition;
+    		solution_definition = new GlideRecord("ml_capability_definition_base");
+    		solution_definition.get(sol_def_id);
+    		if (solution_definition.active) {
+    			count++;
+    			sysids += solutions.getUniqueValue() + ",";
+    			gs.info(solutions.solution_name + '    Ver -  ' + solutions.version);
+    		}
+    	}
+    	outputs.record_id = sysids.slice(0,-1);
+    	stepResult.setOutputMessage(count + " active similarity solution definition found.");
+    })(outputs, steps, stepResult, assertEqual);
+  variable: 989d9e235324220002c6435723dc3484
+- document: sys_atf_step
+  document_key: b458baf873403300623db63854f6a77e
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:08:20
+  sys_id: 6468baf873403300623db63854f6a7bb
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-03-05 12:08:20
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777

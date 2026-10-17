@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="true"
+	xmlns:j="jelly:core"
+	xmlns:g="glide"
+	xmlns:j2="null"
+	xmlns:g2="null">
+	<g:requires name="scripts/classes/GlideListWidget.js"/>
+	<g:requires name="scripts/associate_ci_outage.js"/>
+	<g:evaluate var="jvar_query_string" jelly="true">
+		var parentTable=jelly.jvar_sysparm_parent_class;
+		var queryString= "super_class.nameINSTANCEOF" + parentTable +"^ORname=" + parentTable;
+		queryString;
+	</g:evaluate>
+	<g:evaluate var="jvar_sysparm_table_label" jelly="true">
+		var tableInfoGR = new GlideRecord("sys_db_object");
+		tableInfoGR.addQuery("name", jelly.jvar_sysparm_table);
+		tableInfoGR.query();
+		tableInfoGR.next();
+		var label = tableInfoGR.label;
+		label;
+	</g:evaluate>
+	<g:evaluate var="jvar_sysparm_table_id" jelly="true">
+		var tableInfoGR = new GlideRecord("sys_db_object");
+		tableInfoGR.addQuery("name", jelly.jvar_sysparm_table);
+		tableInfoGR.query();
+		tableInfoGR.next();
+		var sys_id = tableInfoGR.sys_id;
+		sys_id;
+	</g:evaluate>
+	<g:evaluate var="jvar_show_config_class" jelly="true" copyToPhase2="true">
+		var displayConfigClass;
+		var count = 0;
+		var childsGR = new GlideRecord("sys_db_object");
+		childsGR.addEncodedQuery(jelly.jvar_query_string);
+		childsGR.query();
+		count = childsGR.getRowCount();
+		if (count>1)
+			displayConfigClass=true;
+		else
+			displayConfigClass=false;
+		displayConfigClass;
+	</g:evaluate>
+	<style>
+		div.navbar-spacing {
+			background-color:RGB(var(--now-color_surface--neutral-3,232,234,237));
+			padding: 5px;
+		}
+	</style>
+	<div class="navbar-spacing">
+		<table class="list_nav list_nav_top list_nav_top_border" style="display: table;"
+			cellpadding="0" cellspacing="0">
+			<tbody>
+				<tr class="list_nav list_nav_top">
+					<j:if test="${jvar_show_config_class}">
+						<td class="list_nav_top list_actions_left" style="padding-right: 5px; padding-left: 5px;">
+								<div class="nav navbar-left">
+									<div class="navbar-title ">
+										${gs.getMessage("Configuration Class")}
+									</div>
+								</div>
+						</td>
+						<td width="30%" nowrap="true"
+							class="list_nav_top_left list_nav_top text-align-left">
+							<g:ui_reference table="sys_db_object" query="${jvar_query_string}"
+								name="child_table_field" value="${jvar_sysparm_table_id}"
+								displayvalue="${jvar_sysparm_table_label}" completer="AJAXReferenceCompleter"
+								columns="label" order_by="label" onchange="showSelectedClass();"
+								id="child_table_field" field="label" show_popup="false"/>
+						</td>
+					</j:if>
+					<td>
+						<div class="nav navbar-right text-align-right">
+							<j:if test="${jvar_is_app_service == 'true' &amp;&amp; jvar_has_filter == 'true'}">
+								<button id="show_related_offerings" value="show_related_offerings" type="button"
+									onclick="getEncodedQueryForFilter();" class="btn btn-default">
+									${gs.getMessage('Show related offerings')}
+								</button>
+								<span style="padding-right: 5px;"></span>
+							</j:if>
+							<button id="add_selected" value="add_selected" type="button"
+								onclick="addSelectedToTask();" class="btn btn-default">
+								${gs.getMessage('Add Selected')}
+							</button>
+							<span style="padding-right: 5px;"></span>
+							<button id="add_all" value="add_all" onclick="addAllToTask();"
+								type="button" class="btn btn-default">
+								${gs.getMessage('Add All')}
+							</button>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</j:jelly>

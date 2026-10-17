@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide"
+xmlns:j2="null" xmlns:g2="null">
+
+<g:ui_form>
+  <!-- Get values from dialog preferences passed in -->
+  <j:set var="jvar_extension_contact" value="${RP.getWindowProperties().get('extension_contact')}" /> 
+  <j:set var="jvar_extension_date" value="${RP.getWindowProperties().get('contract_end_date')}" />
+  <j:set var="jvar_extension_end_date" value="${RP.getWindowProperties().get('renew_end_date')}" />
+  <j:set var="jvar_extension_option" value="${RP.getWindowProperties().get('extension_option')}" />  
+  <j:set var="jvar_cost_type" value="${RP.getWindowProperties().get('cost_type')}" />  
+  <j:set var="jvar_cost_adjustment" value="${RP.getWindowProperties().get('cost_adjustment')}" />
+  <j:set var="jvar_cost_percentage" value="${RP.getWindowProperties().get('cost_percentage')}" />
+  <j:set var="jvar_short_text" value="${RP.getWindowProperties().get('short_text')}" />
+  <j:set var="jvar_sys_id" value="${RP.getWindowProperties().get('sys_id')}" />
+  <j:set var="jvar_approver" value="${RP.getWindowProperties().get('approver')}" />
+
+   <!-- Set up form fields and labels -->
+   <table width="100%">
+     <tr id="description_row" valign="top">
+        <th colspan="2">
+           ${jvar_short_text}
+        </th>
+     </tr>
+
+	 <tr style="height: 5px;"><td></td></tr>
+     <tr>
+       <g:evaluate var="jvar_request" jelly = "true">
+           var userId = jelly.jvar_extension_contact;
+	       var extUser = new GlideRecord("sys_user");
+			   extUser.addQuery("sys_id", userId);
+               extUser.query();
+               extUser.next();
+               extUser;
+       </g:evaluate>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label>
+			 ${gs.getMessage("Extension Contact")}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <j:if test="${jvar_extension_contact !=''}">
+             <g:ui_reference name="extension_contact" table="sys_user" value="$[extUser.sys_id]" displayValue="$[extUser.name]" />
+           </j:if>
+           <j:if test="${jvar_extension_contact ==''}">
+             <g:ui_reference name="extension_contact" table="sys_user" />
+           </j:if>
+	     </div>
+       </div>		   
+	   </td>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label>
+			 ${gs.getMessage("Cost Adjustment Type")}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <select class="form-control" name="cost_type" id="cost_type" value="${jvar_cost_type}">
+                <j:if test="${jvar_cost_type == ''}">
+                <option selected="true" value=""> ${gs.getMessage("--None--")} </option> 
+                </j:if>
+                <j:if test="${jvar_cost_type != ''}">
+                <option value=""> ${gs.getMessage("--None--")} </option> 
+                </j:if>
+                <j:if test="${jvar_cost_type == 'fixed'}">
+                <option selected="true" value="fixed"> ${gs.getMessage("Fixed")} </option> 
+                </j:if>
+                <j:if test="${jvar_cost_type != 'fixed'}">
+                <option value="fixed"> ${gs.getMessage("Fixed")} </option> 
+                </j:if>
+                <j:if test="${jvar_cost_type == 'manual'}">
+                <option selected="true" value="manual"> ${gs.getMessage("Manual")} </option> 
+                </j:if>
+                <j:if test="${jvar_cost_type != 'manual'}">
+                <option value="manual"> ${gs.getMessage("Manual")} </option> 
+                </j:if>
+                <j:if test="${jvar_cost_type == 'cpi'}">
+                <option selected="true" value="cpi"> ${gs.getMessage("CPI")} </option> 
+                </j:if>
+                <j:if test="${jvar_cost_type != 'cpi'}">
+                <option value="cpi"> ${gs.getMessage("CPI")} </option> 
+                </j:if>
+           </select>
+
+	     </div>
+       </div>		   
+	   </td>		  
+	 </tr>
+	 <tr style="height: 5px;"><td></td></tr>  
+	 <tr>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label>
+			 ${gs.getMessage("Extension Option")}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+          <select class="form-control" name="extension_option" id="extension_option" value="${jvar_extension_option}" onchange="calcEndDate();checkEndDate();">
+                <j:if test="${jvar_extension_option == ''}">
+                <option selected="true" value=""> ${gs.getMessage("--None--")} </option> 
+                </j:if>
+                <j:if test="${jvar_extension_option != ''}">
+                <option value=""> ${gs.getMessage("--None--")} </option> 
+                </j:if>
+                <j:if test="${jvar_extension_option == '1 year'}">
+                <option selected="true" value="1"> ${gs.getMessage("1 year")} </option> 
+                </j:if>
+                <j:if test="${jvar_extension_option != '1 year'}">
+                <option value="1"> ${gs.getMessage("1 year")} </option> 
+                </j:if>
+                <j:if test="${jvar_extension_option == '2 years'}">
+                <option selected="true" value="2"> ${gs.getMessage("2 years")} </option> 
+                </j:if>
+                <j:if test="${jvar_extension_option != '2 years'}">
+                <option value="2"> ${gs.getMessage("2 years")} </option> 
+                </j:if>
+                <j:if test="${jvar_extension_option == '3 years'}">
+                <option selected="true" value="3"> ${gs.getMessage("3 years")} </option> 
+                </j:if>
+                <j:if test="${jvar_extension_option != '3 years'}">
+                <option value="3"> ${gs.getMessage("3 years")} </option> 
+                </j:if>
+           </select>
+	     </div>
+       </div>		   
+	   </td>	   
+	   <td width="50%">
+		   
+      <g:evaluate var="jvar_request" jelly = "true">
+      	   var userId = jelly.jvar_approver;
+	       var approval = new GlideRecord("sys_user");
+               approval.addQuery("sys_id", userId);
+               approval.query();
+               approval.next();
+               approval;
+       </g:evaluate>
+<div class="form-group is-required form-horizontal">
+	<div class="col-md-5 text-right">
+		<g:form_label>
+			${gs.getMessage("Approver")}
+		</g:form_label>
+	</div>
+	<div class="col-md-7">
+           <j:if test="${jvar_approver !=''}">
+                <g:ui_reference mandatory="true" name="approver" table="sys_user" value="$[approval.sys_id]"  displayValue="$[approval.name]" />
+           </j:if>
+
+           <j:if test="${jvar_approver ==''}">
+                <g:ui_reference mandatory="true" name="approver" table="sys_user" />
+           </j:if>
+	</div>
+</div>		   
+	   </td>
+	 </tr>
+	 <tr style="height: 5px;"><td></td></tr>
+	 <tr>
+	   <td width="50%"></td>
+	   <td width="50%">
+	    <input type="hidden" name="start_date" id="start_date" value="${jvar_extension_date}" />
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label>
+			 ${gs.getMessage("Cost Adjustment")}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <input type="text" id="cost_adjust" name="cost_adjust" class="form-control decimal" value="${RP.getWindowProperties().get('cost_adjustment')}" onclick="select();" onchange="this.value=formatNumber(this.value);onChange('ast_contract.cost_adjustment');costAdjustPercent();"/>
+	     </div>
+       </div>		   
+	   </td>		  
+	 </tr>
+	 
+	 <tr style="height: 5px;"><td></td></tr>
+	 <tr>
+	   <td width="50%">
+	
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label>
+			 ${gs.getMessage("Extension End Date")}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <g:ui_date class="form-control" name="end_date" id="end_date" value="${jvar_extension_end_date}" />
+	     </div>
+       </div>		   
+		   
+		 </td>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label>
+			 ${gs.getMessage("Cost Adjustment %")}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <input type="text" id="cost_percent" name="cost_percent" class="form-control decimal" value="${jvar_cost_percentage}" onclick="select();"
+ onchange="this.value=formatNumber(this.value);onChange('ast_contract. cost_adjustment_percentage');costPercentAdjust();"/>
+
+	     </div>
+       </div>		   
+	   </td>		  
+	 </tr>
+     <tr style="height: 5px;"><td></td></tr>		   
+     <tr>
+       <td colspan="2">
+         <div id="endErrorMessage"></div>
+       </td>
+     </tr>	   
+	   
+	 <tr style="height: 5px;"><td></td></tr>	
+     <tr id="dialog_buttons">
+        <td colspan="2" align="right">
+			<div class="modal-footer">
+           <input type="hidden" name="hold_or_submit" id="hold_or_submit" value=""/>
+           <input type="hidden" name="current_sys_id" value="${RP.getWindowProperties().get('sys_id')}"/>
+
+	<g:dialog_button 
+		id="cancel"
+		title="${gs.getMessage('Cancel')}"
+		type="${jvar_cancel_type}"
+		style_class="btn btn-default"
+		onclick="return cancelExtension();"
+                style="min-width: 5em;">${gs.getMessage('Cancel')}</g:dialog_button>
+	<g:dialog_button 
+		id="hold_for_review"
+		title="${gs.getMessage('Save changes but not submitting for extension')}"
+		type="${jvar_cancel_type}"
+		style_class="btn btn-default"
+		onclick="return holdReview();"
+                style="min-width: 5em;">${gs.getMessage('Save But Do Not Submit')}</g:dialog_button>
+	<g:dialog_button 
+		id="submit_for_review"
+		title="${gs.getMessage('Will submit this request for review')}"
+		type="${jvar_cancel_type}"
+		style_class="btn btn-primary" 
+		onclick="return submitExtension();"
+                style="min-width: 5em;">${gs.getMessage('Submit For Review')}</g:dialog_button>
+			</div>
+       </td>
+     </tr>
+  </table>
+</g:ui_form>
+</j:jelly>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<tr>
+		<td colspan="2">
+			<table cellspacing="2" class="wide" style="padding-top: 10px; padding-bottom: 10px;">
+				<tbody>
+					<tr id="element.${jvar_textarea_id}">
+						<td colspan="2" width="100%" style="padding:0px" title="" class="label_left">
+							<table cellspacing="0" class="wide" style="table-layout: fixed;">
+								<tbody>
+									<tr>
+										<td style="" id="label.${jvar_textarea_id}" title="${jvar_textarea_label_title}" choice="0" type="string" class="label_left">
+											<span id="status.${jvar_textarea_id}" title="${jvar_textarea_label_title}" mandatory="true" class="mandatory label_description" oclass="mandatory_populated">$[SP]</span>
+											<label for="${jvar_textarea_id}">${HTML:jvar_textarea_label}</label>
+											<input title="" style="visibility:hidden;width:0px;" id="make_spacing_ok" />
+										</td>
+										<td style="" valign="top" nowrap="true" align="right" class=" label_right">
+											<script language="javascript">
+												addLoadEvent(
+													function() { 
+														if (window['textareaSizer_initialize'])
+															textareaSizer_initialize('${JS,HTML:jvar_textarea_id}', false, "5");
+													}
+												);
+											</script>
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2" width="100%" style="padding:2px 0px 0px;">
+											<textarea title="${jvar_textarea_title}" onkeyup="${jvar_textarea_onkeyup}" onchange="${jvar_textarea_onchange}" name="${jvar_textarea_id}" style="${jvar_textarea_style}" id="${jvar_textarea_id}" rows="8" wrap="soft" />
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</td>
+	</tr>
+	<div align="right" class="modal-footer">
+		<g:dialog_buttons_ok_cancel ok="${jvar_ok}" ok_title="${jvar_ok_title}" cancel_title="${jvar_cancel_title}" ok_id="${jvar_ok_id}" ok_type="${jvar_ok_type}" ok_style_class="${jvar_ok_style_class}" cancel="${jvar_cancel}" />
+	</div>
+	<script>
+		function enableButton() {
+			var notes = "";
+			var textArea = $("${JS,HTML:jvar_textarea_id}");
+			if (textArea)
+				notes = textArea.value.trim();
+				var statusSpan = $("status.${JS,HTML:jvar_textarea_id}");
+			if (notes $[AND] statusSpan) {
+				statusSpan.removeClassName("mandatory");
+				statusSpan.addClassName("changed");
+			}
+			if (!notes $[AND] statusSpan) {
+				statusSpan.removeClassName("mandatory_populated");
+				statusSpan.removeClassName("changed");
+				statusSpan.addClassName("mandatory");
+			}
+			var button = $("${JS,HTML:jvar_ok_id}");
+			if (notes $[AND] button) {
+				button.removeClassName("disabled");
+				button.onclick = ${JS,HTML:jvar_ok_action};
+			}
+			if (!notes $[AND] button) {
+				button.addClassName("disabled");
+				button.onclick = "";
+			}
+		};
+	</script>
+</j:jelly>

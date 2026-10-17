@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<html>
+		<head>
+			<style type="text/css">
+				#migration_table {
+					width: 100%;
+				}
+				#migration_table td {
+					border: 1px solid #999;
+					padding: 0.5rem;
+					vertical-align: top;
+				}
+				#message {
+					padding-bottom: 0.5rem;		
+				}
+			</style>
+		</head>
+		<g:evaluate>
+			var helper = new AisMigrationStatusPageHelper();
+			var displayValues = helper.getDisplayValuesForStatusPage();
+			var hasRole = gs.hasRole('ais_admin');
+			var showDisclaimer = false;
+		</g:evaluate>
+		<j:if test="${hasRole}">
+			<j:if test="${displayValues.length > 0}">
+				<table id="migration_table">
+					<tr style='text-align: center;'>
+						<td><b>${gs.getMessage("Zing search application")}</b></td>
+						<td><b>${gs.getMessage("AI Search application configuration")}</b></td>
+						<td><b>${gs.getMessage("Search sources needing migration")}</b></td>
+						<td><b>${gs.getMessage("Status")}</b></td>
+					</tr>
+					<j:forEach items="${displayValues}" indexVar='jvar_i'>
+						<g:evaluate>
+							var idx = parseInt('${jvar_i}');
+							var zingName = displayValues[idx].zing;
+							var aisName = displayValues[idx].ais;
+							var unmigrated = displayValues[idx].unmigrated_sources.replaceAll(',',', ');
+							var status = displayValues[idx].status;
+
+							if(!showDisclaimer)
+								showDisclaimer = status.includes('Not Active');
+
+						</g:evaluate>
+						<tr style='text-align: center;'>
+							<td>${gs.getMessage(zingName)}</td>
+							<td>${gs.getMessage(aisName)}</td>
+							<td>${gs.getMessage(unmigrated)}</td>
+							<td>${gs.getMessage(status)}</td>
+						</tr>
+					</j:forEach>
+					<j:if test="${showDisclaimer}">
+						<div id="message">
+							${gs.getMessage("*One or more search application configuration was found which is not mapped to any workspace")}
+						</div>
+					</j:if>
+				</table>
+			</j:if>
+		</j:if>
+	</html>
+</j:jelly>

@@ -1,0 +1,722 @@
+[
+    {
+        "definition": {
+            "id": "ec081a2a87ff701027ff97d73cbb3523",
+            "type": "TRANSFORM"
+        },
+        "elementId": "ace_fetch_content_blocks",
+        "elementLabel": "ACE Fetch Content Blocks",
+        "eventMappings": [],
+        "inputValues": {
+            "application_id": {
+                "binding": {
+                    "address": [
+                        "ace_application_id"
+                    ],
+                    "category": "app"
+                },
+                "type": "CONTEXT_BINDING"
+            },
+            "page_params": {
+                "binding": {
+                    "address": [
+                        "pageParams"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "page_route": {
+                "type": "JSON_LITERAL",
+                "value": "a85c802b53d12110a40fddeeff7b12bf"
+            }
+        },
+        "preset": null,
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "9664d48053461010cbc2ddeeff7b128e",
+            "type": "COMPOSITE"
+        },
+        "elementId": "request_resource",
+        "elementLabel": "Request Resource",
+        "eventMappings": [
+            {
+                "eventMappingId": "clgxcqhpsaabblkddbhhubaajpqdn",
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "sysId": "071711bf77122110638cfe21fe5a99c2"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clgxcqhpsaabbllddbhhuuaalbbiaus",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "recordId": {
+                "binding": {
+                    "address": [
+                        "requestId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": "user,user.locked_out,user.active,target_table,target_record,target_field,analyze_by,role,resource_type,group,group.active,target_ui_page,target_rest_endpoint,target_rest_endpoint_method,target_client_callable_script_include.name,operations,short_description,target_client_callable_script_include,last_run"
+            },
+            "returnTableMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "sn_access_analyzer_request"
+            }
+        },
+        "preset": null,
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "ea812a8177822110eba8fe21fe5a9990",
+            "type": "TRANSFORM"
+        },
+        "elementId": "save_request_and_debug_logs",
+        "elementLabel": "Save request and debug logs",
+        "eventMappings": [
+            {
+                "eventMappingId": "clgpawgbcaaccgmddbhhtgghteeimnj",
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": {
+                            "apiName": "sn_uxf.MACROPONENT_STATE_UPDATE_REQUESTED",
+                            "payload": {
+                                "script": {
+                                    "apiVersion": "1.0.0",
+                                    "controllerElementId": null,
+                                    "inlineScript": "/**\n * @param {params} params\n * @param {api} params.api\n * @param {any} params.event\n */\nfunction evaluateEvent({\n    api,\n    event\n}) {\n    return {\n        propName: \"refreshRequested\",\n        value: Date.now()\n    };\n}",
+                                    "scriptSysId": null,
+                                    "target": null
+                                },
+                                "type": "CLIENT_TRANSFORM_SCRIPT"
+                            },
+                            "sysId": "32408b42ff7a10109046e490703bf176"
+                        },
+                        "operation": null,
+                        "targetId": "clgpawgbcaaccgnddbhhtrbbccsnmggn",
+                        "type": "EVENT"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": null,
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": {
+                            "dataBrokerId": "9664d48053461010cbc2ddeeff7b128e",
+                            "operationName": "REFRESH",
+                            "parentResourceId": "request_resource",
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            }
+                        },
+                        "targetId": "clhgggbbgwaaaacchaaddbhhtzjggthhnaff",
+                        "type": "DATABROKER_OP"
+                    },
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "6a30e16b77c36110346bd95bbd5a9972"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clidjelceeaabbciddbhhxeoaamptgx",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "debugLogAPIResponse": null,
+            "request": null,
+            "requestId": null
+        },
+        "preset": null,
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "84b4614577c22110eba8fe21fe5a9943",
+            "type": "TRANSFORM"
+        },
+        "elementId": "debug_logs",
+        "elementLabel": "Debug logs",
+        "eventMappings": [
+            {
+                "eventMappingId": "clgpbcczaaoaaccgffddbhhtpahbbyccjjg",
+                "sourceEventApiName": "sn_uxf.DATA_OP_SUCCEEDED",
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "sysId": "89fac0b477526110346bd95bbd5a996a"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clgpbcczaaoaaccgggddbhhtsiizkpqjjp",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "requestPayload": null
+        },
+        "preset": null,
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "b997a84053021010cbc2ddeeff7b1228",
+            "type": "COMPOSITE"
+        },
+        "dependencies": {},
+        "elementId": "last_run_results",
+        "elementLabel": "Last run results",
+        "eventMappings": [
+            {
+                "eventMappingId": "cllwjjlddxoaacckxddbhhrwccreqaape",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "2a30e16b77c36110346bd95bbd5a9972"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "cllwjjlddxoaacckyddbhhrffeekfqeepl",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "encodedQuery": {
+                "binding": {
+                    "address": [
+                        "lastRunResultsEncQuery"
+                    ]
+                },
+                "type": "STATE_BINDING"
+            },
+            "limit": {
+                "type": "JSON_LITERAL",
+                "value": "100"
+            },
+            "offset": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "orderBy": {
+                "type": "JSON_LITERAL"
+            },
+            "queryCategory": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": "script_execution,record_available"
+            },
+            "sortType": {
+                "type": "JSON_LITERAL",
+                "value": "desc"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "sn_access_analyzer_access_result"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "b997a84053021010cbc2ddeeff7b1228",
+            "type": "COMPOSITE"
+        },
+        "dependencies": {},
+        "elementId": "time_limited_roles",
+        "elementLabel": "Time limited roles",
+        "eventMappings": [
+            {
+                "eventMappingId": "clofflunyddaaccggcddbhhqffddnceedvjj",
+                "isConfiguration": false,
+                "offRowStorageId": null,
+                "sourceEventApiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                "sourceEventCorrelationId": null,
+                "sourceEventDefinition": {
+                    "apiName": "sn_uxf.DATA_FETCH_SUCCEEDED",
+                    "id": null,
+                    "type": "UXEVENT"
+                },
+                "sourceEventSysId": null,
+                "targets": [
+                    {
+                        "broker": null,
+                        "clientScript": {
+                            "payload": {
+                                "type": "JSON_LITERAL",
+                                "value": {}
+                            },
+                            "sysId": "d29b9b92938a3110353489fb3489181f"
+                        },
+                        "conditional": null,
+                        "declarativeAction": null,
+                        "event": null,
+                        "operation": null,
+                        "targetId": "clofflunyddaaccggdddbhhqolzruaaiicc",
+                        "type": "CLIENT_SCRIPT"
+                    }
+                ]
+            }
+        ],
+        "inputValues": {
+            "encodedQuery": {
+                "transform": {
+                    "operands": {
+                        "container": [
+                            {
+                                "type": "JSON_LITERAL",
+                                "value": "user.sys_id="
+                            },
+                            {
+                                "binding": {
+                                    "address": [
+                                        "request_resource",
+                                        "result",
+                                        "user",
+                                        "value"
+                                    ]
+                                },
+                                "type": "DATA_OUTPUT_BINDING"
+                            }
+                        ],
+                        "type": "LIST_CONTAINER"
+                    },
+                    "operator": "CONCAT"
+                },
+                "type": "CLIENT_TRANSFORM"
+            },
+            "limit": {
+                "type": "JSON_LITERAL",
+                "value": "1"
+            },
+            "offset": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "orderBy": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "queryCategory": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "sortType": {
+                "type": "JSON_LITERAL",
+                "value": "asc"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "sys_user_has_role_time_limited"
+            }
+        },
+        "readEvaluationMode": "EXPLICIT"
+    },
+    {
+        "definition": {
+            "id": "b997a84053021010cbc2ddeeff7b1228",
+            "type": "COMPOSITE"
+        },
+        "dependencies": {},
+        "elementId": "acl_operations_records",
+        "elementLabel": "ACL operations",
+        "eventMappings": [],
+        "inputValues": {
+            "encodedQuery": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "limit": {
+                "type": "JSON_LITERAL",
+                "value": "1000"
+            },
+            "offset": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "orderBy": {
+                "type": "JSON_LITERAL"
+            },
+            "queryCategory": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "returnFieldMetadata": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "returnFields": {
+                "type": "JSON_LITERAL",
+                "value": "name"
+            },
+            "sortType": {
+                "type": "JSON_LITERAL",
+                "value": "asc"
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "sys_security_operation"
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "5865e308432021105571609dc7b8f23b",
+            "type": "CONTROLLER"
+        },
+        "dependencies": {},
+        "elementId": "list_controller_1",
+        "elementLabel": "List Controller 1",
+        "eventMappings": [],
+        "inputValues": {
+            "actionConfigId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "allRecordsSelected": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "cardFieldMapping": {
+                "type": "JSON_LITERAL",
+                "value": {
+                    "bodyText": "short_description",
+                    "heading": "number",
+                    "metadata": "priority",
+                    "supplementaryFields": "assigned_to,sys_class_name",
+                    "tagline": "state"
+                }
+            },
+            "childrenRowLimit": {
+                "type": "JSON_LITERAL",
+                "value": 10
+            },
+            "columnFilteringPopoverDisplay": {
+                "type": "JSON_LITERAL",
+                "value": "allowBoth"
+            },
+            "columnLimit": {
+                "type": "JSON_LITERAL",
+                "value": 0
+            },
+            "columnPreferenceKey": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "columns": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "currentPage": {
+                "type": "JSON_LITERAL",
+                "value": 0
+            },
+            "displayedLayout": {
+                "type": "JSON_LITERAL",
+                "value": "list"
+            },
+            "enableBadgeCount": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableCardClickOpen": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "enableCellFiltering": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableColumnFiltering": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableColumnGrouping": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableColumnSorting": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableDeclarativeActions": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableDotWalk": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableInfiniteScroll": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "enableLiveList": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "enableOnlySingleSelection": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "enableQuickEdit": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableQuickFormNavigation": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enableReferenceLinks": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "enforceViewRulesForQuickForm": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "exceptedRecords": {
+                "type": "JSON_LITERAL",
+                "value": []
+            },
+            "fetchHighlightedValues": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "filter": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "fixedFilter": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "groupBy": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "highlightedValueConfigId": {
+                "binding": {
+                    "address": [
+                        "highlightedValueConfigId"
+                    ],
+                    "category": "app"
+                },
+                "type": "CONTEXT_BINDING"
+            },
+            "includeLegacyListLayout": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "isParentNewRecord": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "isParentReadOnly": {
+                "type": "JSON_LITERAL",
+                "value": false
+            },
+            "layouts": {
+                "type": "JSON_LITERAL",
+                "value": "list"
+            },
+            "listControllerId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "listId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "listMenuConfigurationId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "listTitle": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "listType": {
+                "type": "JSON_LITERAL",
+                "value": "default"
+            },
+            "liveUpdates": {
+                "type": "JSON_LITERAL",
+                "value": "off"
+            },
+            "nestBy": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "nowUxfPersistedState": {
+                "type": "JSON_LITERAL",
+                "value": {}
+            },
+            "onlyEnableSelectionWhenRequiredByActions": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "pageSysId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "parentRecordSysId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "parentTable": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "recordCountLimit": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "relatedListName": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "rowLimit": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "selectedRecords": {
+                "type": "JSON_LITERAL",
+                "value": []
+            },
+            "showListCreation": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "showListOpenedByLinkSection": {
+                "type": "JSON_LITERAL",
+                "value": true
+            },
+            "table": {
+                "type": "JSON_LITERAL",
+                "value": "task"
+            },
+            "tinyId": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            },
+            "transformScriptArgs": {
+                "type": "JSON_LITERAL",
+                "value": {}
+            },
+            "transformScriptSysId": {
+                "type": "JSON_LITERAL",
+                "value": null
+            },
+            "view": {
+                "type": "JSON_LITERAL",
+                "value": ""
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    },
+    {
+        "definition": {
+            "id": "aa9785d24fcc3210a0d25524b2ce0b65",
+            "type": "TRANSFORM"
+        },
+        "elementId": "get_header_data",
+        "elementLabel": "Get header data",
+        "eventMappings": [],
+        "inputValues": {
+            "requestId": {
+                "binding": {
+                    "address": [
+                        "requestId"
+                    ],
+                    "category": "props"
+                },
+                "type": "CONTEXT_BINDING"
+            },
+            "resultSysId": {
+                "type": "JSON_LITERAL",
+                "value": null
+            }
+        },
+        "readEvaluationMode": "EAGER"
+    }
+]

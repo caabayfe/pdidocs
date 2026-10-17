@@ -1,0 +1,1 @@
+current.breakdown && current.element ? current.breakdown.getDisplayValue() + ': ' + (current.element == 'unmatched' ? current.breakdown.dimension.empty_value : current.element.getDisplayValue()) : current.indicator.getDisplayValue()

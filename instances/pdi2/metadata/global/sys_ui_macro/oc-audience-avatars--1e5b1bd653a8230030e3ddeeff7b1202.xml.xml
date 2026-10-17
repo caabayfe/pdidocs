@@ -1,0 +1,121 @@
+<div class="oc-user-profile-container">
+	<div id="oc-user-profile" role="tabpanel" aria-labelledby="oc-profile-tab" class="oc-user-profile" ng-if="audienceDetail.user || audienceDetail.name">
+		<div class="oc-avatar">
+			<div class="oc-widget-profile-avatar">
+				<div class="sn-widget-profile-avatar">
+					<div class="sn-avatar_lg sn-avatar_v2">
+						<div class="sn-avatar-container" aria-label="{{audienceDetail.user.name.display_value}}">
+							<span class="sn-avatar-initials">{{audienceDetail.user.initials}}</span>
+							<span class="sn-avatar-image" ng-style="getBackgroundStyle(audienceDetail.user)">
+								<div ng-if="selectedProfile == profileMap.group" class="icon-user-group profile-avatar-icon"></div>
+								<div ng-if="selectedProfile == profileMap.device" class="icon-mobile profile-avatar-icon"></div>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div ng-if="selectedProfile == profileMap.user">
+				<div class="oc-user-name oc-user-name-ellipsis" uib-tooltip="{{audienceDetail.user.name.display_value}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" aria-label="{{groupOnCallCtrl.form.userNameLabel}} {{audienceDetail.user.name.display_value}}">{{audienceDetail.user.name.display_value}}</div>
+				<div class="oc-user-details" ng-if="audienceDetail.isManager">{{form.manager}}</div>
+				<div class="oc-user-details" ng-if="!audienceDetail.isManager &amp;&amp; audienceDetail.user.title" aria-label="{{groupOnCallCtrl.form.userTitleLabel}} {{audienceDetail.user.title}}">{{audienceDetail.user.title}}</div>
+			</div>
+			<div ng-if="selectedProfile == profileMap.group">
+				<div class="oc-user-name oc-user-name-ellipsis" uib-tooltip="{{audienceDetail.name.display_value}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" aria-label="{{groupOnCallCtrl.form.userNameLabel}} {{audienceDetail.name.display_value}}">{{audienceDetail.name.display_value}}</div>
+				<div class="oc-profile-description" ng-if="audienceDetail.description.display_value">{{audienceDetail.description.display_value}}</div>
+			</div>
+			<div ng-if="selectedProfile == profileMap.device">
+				<div class="oc-device-name" aria-label="{{groupOnCallCtrl.form.userNameLabel}} {{audienceDetail.name.display_value}}">{{audienceDetail.name.display_value}}</div>
+			</div>
+		</div>
+		<div class="oc-avatar-info-container">
+			
+			<!-- Render details if user's avatar is selected-->
+			<ul class="avatar-info" ng-if="audienceDetail &amp;&amp; (selectedProfile == profileMap.user)">
+				<li class="icon icon-phone defaultCursor">
+					<span class="sr-only">${gs.getMessage('Phone ')}</span>
+					<span class="avatar-info-item avatar-info-item-max-width oc-truncate" uib-tooltip="{{audienceDetail.user.contact_number || form.notAvailable}}" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">
+						<a ng-if="audienceDetail.user.contact_number" aria-label="{{form.contactNumberLabel}} {{audienceDetail.user.contact_number}}" href="tel:{{audienceDetail.user.contact_number}}">{{audienceDetail.user.contact_number}}</a>
+						<span ng-if="!audienceDetail.user.contact_number" aria-label="{{form.contactNumberLabel}} {{form.notAvailable}}">{{form.notAvailable}}</span>
+					</span>
+				</li>
+				<li class="icon icon-slack defaultCursor" ng-if="isSlackActive">
+					<span class="sr-only">${gs.getMessage('Slack ')}</span>
+					<span class="avatar-info-item avatar-info-item-max-width oc-truncate" uib-tooltip="{{audienceDetail.user.email || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">
+						<a ng-if="audienceDetail.user.email" aria-label="{{form.slackLabel}} {{audienceDetail.user.email}}" href="#" ng-click="openSlackApp(audienceDetail.user.sys_id)">{{audienceDetail.user.email}}</a>
+						<span ng-if="!audienceDetail.user.email" aria-label="{{form.slackLabel}} {{form.notAvailable}}">{{form.notAvailable}}</span>
+					</span>
+				</li>
+				<div class="icon icon-teams defaultCursor oc-teams-icon" ng-if="isTeamsActive &amp;&amp; audienceDetail.user.teams_chat_link">
+					<img class="oc-teams-img" alt="${gs.getMessage('Microsoft Teams')}" src="sn_ms_teams_logo.png" width="40" height="40"/>
+					<span class="sr-only">${gs.getMessage('Teams ')}</span>
+					<span class="avatar-info-item avatar-info-item-max-width oc-truncate oc-teams-info" uib-tooltip="{{audienceDetail.user.email || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" ng-class="isTeamsActive ? 'oc-teams-info' : ''">
+						<a ng-if="audienceDetail.user.email" aria-label="{{form.teamsLabel}} {{audienceDetail.user.email}}" href="{{audienceDetail.user.teams_chat_link}}" target="_blank">{{audienceDetail.user.email}}</a>
+						<span ng-if="!audienceDetail.user.email" aria-label="{{form.teamsLabel}} {{form.notAvailable}}">{{form.notAvailable}}</span>
+					</span>
+				</div>
+				<li class="icon icon-mail defaultCursor">
+					<span class="sr-only">${gs.getMessage('Email ')}</span>
+					<span class="avatar-info-item avatar-info-item-max-width oc-truncate" uib-tooltip="{{audienceDetail.user.email || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">
+						<a ng-if="audienceDetail.user.email" href="mailto:{{audienceDetail.user.email}}">{{audienceDetail.user.email}}</a>
+						<span ng-if="!audienceDetail.user.email" aria-label="{{form.emailLabel}} {{form.notAvailable}}">{{form.notAvailable}}</span>
+					</span>
+				</li>
+				<li class="icon icon-tree defaultCursor">
+					<span class="sr-only">${gs.getMessage('Group ')}</span>
+					<span class="avatar-info-item avatar-info-item-max-width oc-truncate" uib-tooltip="{{groupDetails.name.display_value || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" aria-label="{{form.groupLabel}} {{groupDetails.name.display_value || form.notAvailable}}">{{groupDetails.name.display_value || form.notAvailable}}</span>
+				</li>
+				<li ng-if="isChatEnabled()" class="oc-message-container">
+					<button tabindex="0" id="direct-message-popover-trigger" ng-click="openDirectMessageConversation()" class="btn btn-primary oc-btn-message icon-collaboration"
+							aria-label="{{form.sendDirectMsg}}">
+						{{form.sendDirectMsg}}
+					</button>
+				</li>
+				<li ng-if="isNotifyCallAvailable(audienceDetail.user.contact_number)" class="oc-message-container call">
+					<button tabindex="0" ng-click="callPerson($event, audienceDetail.user.contact_number, audienceDetail.user.sys_id)"
+							class="btn btn-default oc-btn-message icon-phone oc-notify-call-button"
+							ng-class="{disabled: !isNotifyCallEnabled(audienceDetail.user.contact_number)}"
+							aria-label="${gs.getMessage('Start a call')}">
+						${gs.getMessage('Start a call')}
+					</button>
+				</li>
+			</ul>
+			
+			<!-- Render details if groups's avatar selected-->
+			<ul class="avatar-info" ng-if="selectedProfile == profileMap.group">
+				<li class="defaultCursor" ng-if="audienceDetail.manager">
+					<div class="oc-mgr-avatar-detail">
+						<div class="user-presence user-presence-modal">
+							<sn-avatar show-presence="true" class="" enable-context-menu="false" enable-tooltip="false" primary="audienceDetail.manager" />
+						</div>
+						<div class="oc-profile-manager">
+							<div class="oc-manager-name">{{audienceDetail.manager.name}}</div>
+							<div class="oc-manager-role">${gs.getMessage("Group Manager")}</div>
+						</div>
+					</div>
+				</li>
+				<li class="icon icon-user-group defaultCursor">
+					<span class="avatar-info-item avatar-info-item-max-width oc-truncate" show-tooltip-on-text-overflow="" uib-tooltip="{{audienceDetail.groupMembersCount || form.notAvailable}}" tooltip-placement="bottom" tooltip-enable="false">{{getMembersCount(audienceDetail.groupMembersCount)}}</span>
+				</li>
+				<li class="notification notification-info oc-profile-esc-msg" role="alert" aria-live="polite">
+					<span class="avatar-info-item avatar-info-item-max-width">{{getEscalationMsg(audienceDetail.name.display_value)}}</span>
+					<div class="oc-clickable">
+						<a ng-if="audienceDetail.isClickable" ng-click="onClick(audienceDetail.escalation_id)">{{audienceDetail.link_text}}</a>
+					</div>
+				</li>
+			</ul>
+			
+			<!-- Render details if devices's avatar selected-->
+			<ul class="avatar-info" ng-if="selectedProfile == profileMap.device">
+				<li>
+					<span class="oc-truncate oc-device-details" show-tooltip-on-text-overflow="" uib-tooltip="{{audienceDetail.type.display_value || form.notAvailable}}" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">{{audienceDetail.type.display_value || form.notAvailable}}</span>
+				</li>
+				<li ng-if="audienceDetail.type.value == 'Email'">
+					<span class="oc-truncate oc-device-details" show-tooltip-on-text-overflow="" uib-tooltip="{{audienceDetail.email_address.display_value || form.notAvailable}}" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">{{audienceDetail.email_address.display_value || form.notAvailable}}</span>
+				</li>
+				<li ng-if="audienceDetail.type.value == 'SMS' || audienceDetail.type.value == 'Voice'">
+					<span class="oc-truncate oc-device-details" show-tooltip-on-text-overflow="" uib-tooltip="{{audienceDetail.phone_number.display_value || form.notAvailable}}" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">{{audienceDetail.phone_number.display_value || form.notAvailable}}</span>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>

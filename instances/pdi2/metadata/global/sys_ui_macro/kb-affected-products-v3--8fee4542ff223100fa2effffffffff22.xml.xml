@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<!-- list of products to which this article pertains -->
+	
+		<j:set var="jvar_kb_show_products" value="${gs.getProperty('glide.knowman.affected_products.display','true')}"/>
+		<j:if test="${jvar_kb_show_products}">
+		<g2:evaluate var="cis" jelly="true" expression="
+			var cis = new GlideRecord('m2m_kb_ci');
+            if (typeof jelly.sys_kb_id != 'undefined')
+              cis.addQuery('kb_knowledge', jelly.sys_kb_id);
+            else if (jelly.sysparm_article){
+				if(kbViewModel.knowledgeRecord)
+					cis.addQuery('kb_knowledge', kbViewModel.knowledgeRecord.getUniqueValue());
+				else
+					cis.addQuery('kb_knowledge.number', jelly.sysparm_article);
+			}
+			cis.orderBy('cmdb_ci.name');
+			cis.query();
+			"/>
+		<j2:if test="$[cis.hasNext()]">
+
+			<div id="kb_affected_products" class="snc-article-affected-products">
+				<span class="snc-article-footer-metadata-title">${gs.getMessage("Affected products")}$[SP]</span>
+				<span id="affected-products-content" class="affected-products-content">
+					<j2:while test="$[cis.next()]">
+						<j2:if test="$[cis.cmdb_ci.canReadRef() &amp;&amp; !readOnlyPage]">
+							<a href="$[HTML:cis.cmdb_ci.sys_class_name].do?sys_id=$[cis.cmdb_ci]">$[HTML:cis.cmdb_ci.name]</a><j2:if test = "$[cis.hasNext()]">,$[SP]</j2:if>
+						</j2:if>
+						<j2:if test="$[!cis.cmdb_ci.canReadRef() || readOnlyPage]">
+							$[HTML:cis.cmdb_ci.name]<j2:if test = "$[cis.hasNext()]">,$[SP]</j2:if>
+						</j2:if>
+					</j2:while>
+				</span>
+			</div>
+		</j2:if>
+		</j:if>
+</j:jelly>

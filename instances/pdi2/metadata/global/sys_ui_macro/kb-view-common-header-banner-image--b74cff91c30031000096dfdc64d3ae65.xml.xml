@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		var number = knowledgeRecord.number;
+		var state  = '';
+		if(versioningInfo.isEnabled){
+			if(knowledgeRecord.workflow_state!='published')
+				state = " ("+knowledgeRecord.getDisplayValue('workflow_state')+")";
+		}
+	</g:evaluate>
+	
+    <j:if test="${bannerImage.length != 0}">
+		<div>
+			<img id="articleBanner" class="snc-article-header-banner" src="${bannerImage}" />
+			<input id="articleTitleEditable" aria-label="${i18n('Article title')}" class="snc-article-header-toolbar-title" type="text"
+				value="$[JS:gs.nil(kb_desc) ? kbViewInfo.wikiLinkText :kb_desc]"
+				placeholder="${i18n('Add title')}"
+				style="display:none" autofocus="true"/>
+				<div id="articleTitleReadonly" class="snc-article-header-toolbar-title" style="display:none">$[HTML:gs.nil(kb_desc) ? kbViewInfo.wikiLinkText :kb_desc]</div>
+				<div id="articleNumberReadonly" class="snc-article-header-toolbar-number" style="display:none">
+					$[HTML:number]
+
+					<j:if test="${versioningInfo.versionDisplay!=''}">
+						$[SP]-$[SP]
+						<j:if test="${versioningInfo.showHistory}"> <a id="versionNumber" aria-expanded="false" aria-controls="versions-list" role="button" href="javascript:void(0)" aria-label="${versioningInfo.versionDisplay + state}" aria-description="${i18n('Opens version history')}" title="$[HTML:versioningInfo.versionDisplay + ' ' + state]" data-toggle="collapse" data-target="#versions-list">$[HTML:versioningInfo.versionDisplay + ' ' + state]</a> </j:if>
+						<j:if test="${!versioningInfo.showHistory}">$[HTML:versioningInfo.versionDisplay + ' ' + state]</j:if>
+					</j:if>
+					<j:if test="${state!='' &amp;&amp; versioningInfo.versionDisplay==''}">$[HTML:state]</j:if>
+				</div>
+		</div>
+    </j:if>
+    <j:if test="${bannerImage.length == 0}">
+        <div class="snc-article-header-title">
+            <input id="articleTitleEditable" type="text" aria-label="${i18n('Article title')}"
+				value="$[JS:gs.nil(kb_desc) ? kbViewInfo.wikiLinkText :kb_desc]"
+				class="snc-article-header-title-editable"
+				placeholder="${i18n('Add title')}" style="display:none" autofocus="true"/>
+				<h1 id="articleTitleReadonly" class="snc-article-header-title-readonly" style="display:none">$[HTML:gs.nil(kb_desc) ? kbViewInfo.wikiLinkText :kb_desc]</h1>
+				<div id="articleNumberReadonly" class="snc-article-header-number-readonly" style="display:none">
+					$[HTML:number]
+
+					<j:if test="${versioningInfo.versionDisplay!=''}">
+						$[SP]-$[SP]
+						<j:if test="${versioningInfo.showHistory}"> <a id="versionNumber" aria-expanded="false" aria-controls="versions-list" role="button" href="javascript:void(0)" aria-label="${versioningInfo.versionDisplay + state}" aria-description="${i18n('Opens version history')}" title="$[HTML:versioningInfo.versionDisplay + ' ' + state]" data-toggle="collapse" data-target="#versions-list" >$[HTML:versioningInfo.versionDisplay + ' ' + state]</a> </j:if>
+						<j:if test="${!versioningInfo.showHistory}">$[HTML:versioningInfo.versionDisplay + ' ' + state]</j:if>
+					</j:if>
+					<j:if test="${state!='' &amp;&amp; versioningInfo.versionDisplay==''}">$[HTML:state]</j:if>
+				</div>
+		</div>
+    </j:if>
+	<j:if test="${knowledgeRecord.sys_class_name != 'kb_knowledge_block'}">
+	    <j:if test="${versioningInfo.isEnabled &amp;&amp; versioningInfo.showHistory}">
+			<g:inline template="kb_view_version_history"/>
+		</j:if>
+		<g:inline template="kb_view_title_ratings"/>
+	</j:if>
+</j:jelly>

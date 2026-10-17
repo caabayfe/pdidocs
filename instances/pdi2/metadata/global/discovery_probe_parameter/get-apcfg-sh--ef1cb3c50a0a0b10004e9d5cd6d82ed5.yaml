@@ -1,0 +1,95 @@
+_meta:
+  hash: 2f4496489fdd05efd99daac9a8320ba57f8277fa377e2943011c6882dc75ac4b
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2007-12-18 21:15:55
+  sys_id: ef1cb3c50a0a0b10004e9d5cd6d82ed5
+  sys_mod_count: '49'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_ef1cb3c50a0a0b10004e9d5cd6d82ed5
+  sys_updated_by: marjan.marzban
+  sys_updated_on: 2014-11-26 17:33:54
+active: 'true'
+name: get-apcfg.sh
+probe: ef1c9c3d0a0a0b1000d1016807e46dae
+sys_name: get-apcfg.sh
+sys_policy: ''
+value: |-
+  #!/bin/sh
+  #
+  HTTPD=$1
+  DIR=$2
+  CFG=$3
+
+
+  # Remove the first char from the input parameters, which is '-'. 
+  # This character is used to identify which input parameter is empty
+  HTTPD=`echo $HTTPD | sed 's/^.//'`
+  DIR=`echo $DIR | sed 's/^.//'`
+  CFG=`echo $CFG | sed 's/^.//'`
+
+
+  # If the path contains white space it is wrapped in double quotes
+  # In this case we need to remove these double quotes.
+  DIR=`echo $DIR | sed -e 's/^\"*//' -e 's/\"*$//'`
+  CFG=`echo $CFG | sed -e 's/^\"*//' -e 's/\"*$//'`
+
+
+  if [ "$HTTPD" != "apache2ctl" ] &&[ "$HTTPD" = "" -o ! -x $HTTPD ]; then
+  	echo "$HTTPD is not  executable" 1>&2
+  	exit 1
+  fi
+
+  IFS="
+  "
+  # Find the configuation file path for apache server
+  for i in `$HTTPD -V`; do
+  	NAME=`echo $i | cut -d" " -f3|cut -d"=" -f1`
+  	VALUE=`echo $i | cut -d" " -f3|cut -d"=" -f2| sed -e 's/^\"*//' -e 's/\"*$//'`
+          # Strip down to the right of the "=", then strip away leading and trailing quotes.
+  	
+  	if [ "$NAME" = "HTTPD_ROOT" ]; then
+  		DEFAULT_ROOT=$VALUE
+  	fi
+  	
+  	if [ "$NAME" = "SERVER_CONFIG_FILE" ]; then
+  		DEFAULT_CFG=$VALUE
+  	fi
+  done
+
+  if [ "$DIR" = "" ]; then
+  	DIR=$DEFAULT_ROOT
+  fi
+
+  if [ "$CFG" = "" ]; then
+  	CFG=$DEFAULT_CFG
+  fi
+
+  if [ "`echo $CFG | cut -c1`" = "/" ]; then
+  	CFG_LOCATION=$CFG
+  else
+  	CFG_LOCATION=$DIR/$CFG
+  fi
+
+  if [ ! -f $CFG_LOCATION ]; then
+  	echo "Cannot locate config file: $CFG_LOCATION"  1>&2
+  	exit 1
+  fi
+
+  KeyWords='ServerName|Listen|Port'
+  grep -v '^\s*#' $CFG_LOCATION | egrep $KeyWords
+  #Translation: Search for comment lines, now allowing for leading whitespace.
+
+  echo "--- LOAD BALANCER MODULES INFO ---"
+  MODJK=""
+  MODPROXY=""
+  MODJK=`$HTTPD -M 2>/dev/null | grep 'jk_module'`
+  MODPROXY=`$HTTPD -M 2>/dev/null | grep 'proxy_module'`
+
+  echo "MODJK  " $MODJK
+  echo "MODPROXY  " $MODPROXY
+  echo "CFG_LOCATION  "$CFG_LOCATION
+value_script: ''

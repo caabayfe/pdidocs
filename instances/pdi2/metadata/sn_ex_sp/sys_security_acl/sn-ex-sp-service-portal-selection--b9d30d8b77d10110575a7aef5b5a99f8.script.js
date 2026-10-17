@@ -1,0 +1,1 @@
+answer = ((gs.hasRole("taxonomy_admin") || new global.TaxonomyUtil().isTaxonomyManager()) || (gs.getProperty("taxonomy.knowledge.translation.tokyo") && new global.TopicPermissionUtil().isAnyTopicManager())) && new TopicTemplateUtilSNC().templateFieldExists()

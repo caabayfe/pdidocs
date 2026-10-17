@@ -1,0 +1,103 @@
+_meta:
+  hash: 6175a38052ca951b42c4db44ced5da9d4ac56b9c6bd40c39512a76734b268a71
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_app_module
+  sys_created_by: glide.maint
+  sys_created_on: 2008-05-21 22:19:10
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 0d907bcf0a0a0b6100706132ce6e928e
+  sys_mod_count: '17'
+  sys_package: ebd072b38c5103100a22deb6dd2b4e9d
+  sys_scope: global
+  sys_update_name: sys_app_module_0d907bcf0a0a0b6100706132ce6e928e
+  sys_updated_by: glide.bow
+  sys_updated_on: 2010-06-15 18:55:10
+active: 'false'
+application: c7fd1762c0a80166015926d15731965d
+assessment: ''
+device_type: ''
+filter: ''
+hint: ''
+homepage: ''
+image: images/icons/import.gif
+karuna_route: ''
+link_type: SCRIPT
+map_page: ''
+mobile_title: ''
+mobile_view_name: ''
+name: sys_certificate
+order: '600'
+override_menu_roles: 'false'
+query: |-
+  var sa = new SecurelyAccess("properties/cacerts");
+  var keyStoreFile = sa.getFile();
+  if (keyStoreFile != null && keyStoreFile.exists()) {
+    // load the keystore and extract the certificates
+    var keyStore = Packages.java.security.KeyStore.getInstance("JKS");
+    var fileInputStream = sa.getFileInputStream();
+    keyStore.load(fileInputStream, new Packages.java.lang.String("changeit").toCharArray());
+
+    var loadedCount = 0;
+
+    var aliases = keyStore.aliases();
+    while(aliases.hasMoreElements()) {
+      var alias = aliases.nextElement();
+
+      var cert = keyStore.getCertificate(alias);
+
+      var notAfter = cert.getNotAfter();
+      var expires = new GlideDateTime(notAfter);
+
+      var notBefore = cert.getNotBefore();
+      var valid_from = new GlideDateTime(notBefore);
+
+      var issuer = cert.getIssuerDN().getName();
+      var subject = cert.getSubjectDN().getName();
+
+      var gr = new GlideRecord("sys_certificate");
+      gr.addQuery("format", "der");
+      gr.addQuery("name", alias);
+      gr.addQuery("issuer", issuer);
+      gr.addQuery("subject", subject);
+      gr.addQuery("expires", expires);
+      gr.addQuery("valid_from", valid_from);
+      gr.query();
+      if (!gr.next()) {
+        gr.initialize();
+        gr.format = "der";
+        gr.name = alias;
+        gr.issuer = issuer;
+        gr.subject = subject;
+        gr.expires.setValue(expires);
+        gr.valid_from.setValue(valid_from);
+        gr.insert();
+
+        var attachment = new GlideSysAttachment();
+        var certBytes = cert.getEncoded();
+        attachment.write(gr, "certificate.cer", "application/octet-stream", certBytes);
+
+        loadedCount++;
+      }
+    }
+
+    if (loadedCount == 0)
+      gs.log("No certificates loaded");
+    else
+      gs.log(loadedCount + " certificates loaded");
+  }
+report: ''
+require_confirmation: 'false'
+roles: admin
+route: ''
+screen: ''
+sys_name: Load Certificates from file
+sys_overrides: ''
+sys_policy: ''
+timeline_page: ''
+title: Load Certificates from file
+uncancelable: 'false'
+ux_list: ''
+view_name: ''
+window_name: ''

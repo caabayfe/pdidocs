@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null">
+<!--
+Parameters:
+  From any sys_app record:
+  sysparm_sys_id - SysID of the app record
+-->
+<g2:evaluate jelly="true">
+
+var appId = jelly.sysparm_sys_id; //Load the app record to populate some fields.
+var gr = new GlideRecord("sys_app");
+gr.get(appId);
+var appName = SNC.GlideHTMLSanitizer.sanitize(gr.getDisplayValue());
+var appVersion = gr.version || '';
+var appDescription = SNC.GlideHTMLSanitizer.sanitize(gr.short_description);
+
+</g2:evaluate>
+
+<g:ui_form>
+	<style type="text/css">
+		#publish_to_update_set_dialog_container input {
+			width: 100%;
+			margin-bottom: 10px;
+		}
+		#publish_to_update_set_dialog_container label {
+			text-align: right;
+		}
+	</style>
+	<div id="publish_to_update_set_dialog_container">
+		<div class="modal-body">
+			${gs.getMessage('Publishing an application lets you transfer it to another ServiceNow instance')}
+		</div>
+
+		<div class="form-group">
+			<label class="control-label col-sm-3" for="app_name">
+				${gs.getMessage('Application name')}</label>
+			<span class="col-sm-9 form-field">
+				<input class="form-control" id="app_name" type="text" value="$[appName]" readonly="readonly"/>
+			</span>
+		</div>
+
+		<div class="form-group">
+			<label class="control-label col-sm-3" for="app_version">
+				${gs.getMessage('Version')}</label>
+			<span class="col-sm-9 form-field">
+				<input id="app_version" type="text" value="$[appVersion]"/>
+			</span>
+		</div>
+
+		<div class="form-group">
+			<label class="control-label col-sm-3" for="update_set_description">
+				${gs.getMessage('Description')}</label>
+			<span class="col-sm-9 form-field">
+				<textarea class="form-control" type="text" id="update_set_description" name="update_set_description">
+					$[appDescription]</textarea>
+			</span>
+		</div>
+
+		<div class="form-group">
+			<div class="col-sm-3" style="margin-top: 9px">
+			</div>
+			<div class="col-sm-9" style="margin-top: 9px">
+				<!-- <label for="includeCB" class="checkbox-label" style="float:right" >
+						${gs.getMessage('Include demo data:')}</label> -->
+				<span class="input-group-checkbox">
+					<input id="includeCB" class="checkbox" type="checkbox" checked="checked"
+						style="margin-left: -3px" name="includeCB"/>
+					<label for="includeCB" class="checkbox-label" style="margin-left: 0px">
+						${gs.getMessage('Include demo data')}</label>
+				</span>
+			</div>
+			<!--
+			<div class="col-xs-9 col-sm-9 col-md-8 col-lg-8 form-field input_controls"
+					style="margin-left: -3px; margin-top: 9px">
+				<span class="input-group-checkbox">
+					<input class="checkbox" type="checkbox" name="includeCB" id="includeCB" checked="checked"/>
+					<label for="includeCB" dir="ltr" class="checkbox-label">${gs.getMessage('Include demo data')}</label>
+				</span>
+			</div>-->
+		</div>
+	</div>
+
+	<footer class="modal-footer">
+		<button id="cancel_button" class="btn btn-default" onclick="onCancel()" type="button">
+			${gs.getMessage('Cancel')}</button>
+		<button id="ok_button" class="btn btn-primary" onclick="onSubmit()" type="button">
+			${gs.getMessage('Publish')}</button>
+	</footer>
+</g:ui_form>
+</j:jelly>

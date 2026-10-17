@@ -1,0 +1,55 @@
+_meta:
+  hash: 711294019eb1849064db9860100959dbb1efc10d5a1be422dae60cd97f50e1ee
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: swapnesh.patel
+  sys_created_on: 2014-08-29 06:50:31
+  sys_id: 6f29250edf3221001e02a3cf6bf26335
+  sys_mod_count: '40'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_6f29250edf3221001e02a3cf6bf26335
+  sys_updated_by: swapnesh.patel
+  sys_updated_on: 2014-09-24 23:09:20
+active: 'true'
+name: oracleversion.ps1
+probe: 3c48298adf3221001e02a3cf6bf2639a
+sys_name: oracleversion.ps1
+sys_policy: ''
+value: |-
+  $exePath = '${commandVal}';
+  $res = $exePath.IndexOf('${');
+
+  #Make sure it's substituted correctly.
+  Try{
+  	if($exePath  -and ($res -ne 0)){
+
+  		$oracleHome = $exePath -replace "\\bin\\oracle.exe","";
+  		$oracleHome = $oracleHome -replace "/bin/oracle.exe","";
+
+  		Write-Host "snc_ora_home=$oracleHome";
+
+  		$sqlplusExePath = $exePath -replace "oracle.exe","sqlplus.exe";
+  		$finalCommand = '"' + $sqlplusExePath + '" -V';
+  		[string]$result1 = launchProcess -computer $computer -cred $cred -command $finalCommand;
+  		if($result1 -ne $null -and $result1 -ne ""){
+  			$matchFound = $result1 -match ".*:\sRelease\s([0-9\.]*)\s[\w]*";
+  			if($matchFound) {
+  				$VERSION = 'snc_ora_version=' + $matches[1];
+  				Write-Host $VERSION;
+  			} else {
+  				throw "Could not determine oracle instance version from result:$result1.";
+  			}
+  		} else {
+  			throw "Could not determine Oracle instance version.";
+  		}
+  	} else {
+  		throw "Oracle exe path is invalid.";
+  	}
+  }
+  Catch{
+  	Write-Error $_.Exception.Message;
+  	Exit 4;
+  }
+value_script: ''

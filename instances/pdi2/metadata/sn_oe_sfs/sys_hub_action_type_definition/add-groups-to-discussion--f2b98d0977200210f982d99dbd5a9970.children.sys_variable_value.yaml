@@ -1,0 +1,150 @@
+- document: sys_hub_action_type_definition
+  document_key: f2b98d0977200210f982d99dbd5a9970
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-02-22 08:57:53
+  sys_id: 035a4d8977200210f982d99dbd5a994e
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-02-22 08:57:53
+  value: '0'
+  variable: 035a4d8977200210f982d99dbd5a9947
+- document: sys_hub_step_instance
+  document_key: 3a5a4d8977200210f982d99dbd5a991c
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-02-22 08:57:53
+  sys_id: b65a4d8977200210f982d99dbd5a993e
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-02-22 08:57:53
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: f2b98d0977200210f982d99dbd5a9970
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-02-22 08:57:53
+  sys_id: c35a4d8977200210f982d99dbd5a994e
+  sys_mod_count: '7'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-02-20 18:45:59
+  value: '{"version":"1.0","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"794bc342-9c9d-444b-a3f2-dd4b6a5a0173\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON"}'
+  variable: 8f5a4d8977200210f982d99dbd5a9942
+- document: sys_hub_step_instance
+  document_key: 3a5a4d8977200210f982d99dbd5a991c
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-02-22 08:57:53
+  sys_id: fe5a4d8977200210f982d99dbd5a993e
+  sys_mod_count: '34'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-02-20 18:45:58
+  value: |-
+    (function execute(inputs, outputs) {
+    	
+    	var documentId = inputs.documentid;
+    	var documentTable = inputs.documenttable;
+    	var collabChatSysId = inputs.collabchatsysid;
+      	var token = inputs.token;	
+    	var groupMap = inputs.groupmap;	
+
+    	var getMembersOfGroup = function(groupId) {
+    		var members = [];
+    		var gr = new GlideRecord('sys_user_grmember');		
+    		gr.addQuery('group',groupId);
+    		gr.addQuery('user.active',true);
+    		gr.query();
+    		while(gr.next()) {
+    			members.push(gr.getValue('user'));			
+    		}
+    		return members;		
+    	};
+
+    	var checkForMemberAccess = function(userId, documentId, documentTable, isCheckRequired) {
+    		if (!isCheckRequired) {
+    			return true;
+    		}
+    		try {
+    			return sn_collab.CollabChatScriptObject.hasPermission(userId, documentTable, documentId);																		
+    		} catch(ex) {				
+    			gs.error("Error checking for member access:  " + ex);
+    		}
+    	};	
+    	
+    	var addMembersToDiscussion = function(groupSysId, isCheckRequired) {	
+    			var resolvedGroupMembers = [];
+    			var membersWithAccess = [];			
+    			var groupMemberResolverPresent = false;		
+    			var customSystemMessagePresent = false;		
+    			var extensions = new GlideScriptedExtensionPoint().getExtensions("sn_oe_sfs.SidebarGroupMemberResolver");        
+    			
+    			try {
+    				for (var j=0; j<extensions.length; j++) {				
+    				if (extensions[j].applies(groupSysId, documentId, documentTable)) {
+    					groupMemberResolverPresent = true;
+    					resolvedGroupMembers = extensions[j].getResolvedMembers(groupSysId, documentId, documentTable);
+    					var customSystemMessage = extensions[j].getSystemMessage(groupSysId, documentId, documentTable);
+    					if (customSystemMessage != undefined && customSystemMessage != null && customSystemMessage != "") {						
+    						customSystemMessagePresent = true;							
+    					}
+    					break;
+    				}
+    			}
+    		} catch(ex) {
+    			gs.error("Exception while fetching extension point: " + ex);
+    			groupMemberResolverPresent = false;
+    		} 
+    			
+    		if (!groupMemberResolverPresent) {
+    			resolvedGroupMembers = getMembersOfGroup(groupSysId);
+    		}	
+    		
+    		resolvedGroupMembers.forEach(function(userId) {
+    			if (checkForMemberAccess(userId, documentId, documentTable, isCheckRequired)) {			
+    				membersWithAccess.push(userId.toString());
+    			}
+    		});
+    						
+    		var gr = new GlideRecord("sys_user_group");
+    		gr.get(groupSysId);	
+    		var groupName = gr.getValue('name');
+    		var systemMessage = "";
+
+    		if (membersWithAccess.length > 0) {
+    			sn_collab.CollabChatScriptObject.addMembersToChat(collabChatSysId, membersWithAccess, [], token, [groupSysId], true);												
+    			if (groupMemberResolverPresent) {				
+    				systemMessage = customSystemMessagePresent? customSystemMessage : gs.getMessage("Priority members of {0} joined the discussion.", groupName);									
+    			} else {
+    				systemMessage = gs.getMessage("{0} joined the discussion.", groupName);					
+    			}
+    		} else {
+    			if (resolvedGroupMembers.length > 0) {
+    				systemMessage = gs.getMessage("No members of {0} joined the discussion because they don’t have access to the record.", groupName);
+    			} else {
+    				systemMessage = customSystemMessagePresent? customSystemMessage : gs.getMessage("Group {0} contains no members.", groupName);
+    			}
+    		}
+    		sn_collab.CollabChatScriptObject.sendSystemMessage(collabChatSysId, systemMessage);
+    	};
+
+    	var groupMapObj = JSON.parse(groupMap);
+        for (var groupId in groupMapObj) {
+            if (documentTable && documentId) {
+                addMembersToDiscussion(groupId, groupMapObj[groupId]);
+            } else {
+    			// for standalone discussions don't check record access
+                addMembersToDiscussion(groupId, false);
+            }
+    	}
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b

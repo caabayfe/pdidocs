@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script>
+		(function () {
+		angular.module("${JS_STRING:jvar_app_name}").factory("notifyCallServiceProxy", function ($window, $rootScope) {
+			'use strict';
+
+			var NOOP_SERVICE = {
+				isAvailable: function () {
+					return false;
+				},
+				isOnline: function () {
+					return false;
+				},
+				call: function () {
+					throw 'Cannot call, no notifyCallService available in parent window!!!!';
+				},
+				registerCloseHandler: function () {
+					// Noop
+				}
+			};
+
+			function parent() {
+				var win = $window;
+				while (win !== win.parent) {
+					if (win.parent.SNC $[AND] win.parent.SNC.g_notifyCallService)
+						return win.parent.SNC.g_notifyCallService;
+					win = win.parent;
+				}
+				return NOOP_SERVICE;
+			}
+
+			if (!$window.SNC)
+				$window.SNC = {};
+			$window.SNC.g_notifyCallServiceProxy_update = function () {
+				$rootScope.$digest();
+			};
+
+			return {
+				isAvailable: function (number) {
+					return parent().isAvailable(number);
+				},
+				isOnline: function (number) {
+					return parent().isOnline(number);
+				},
+				call: function (evt, number, userId) {
+					parent().call(evt, number, userId);
+				},
+				registerCloseHandler: function (f) {
+					return parent().registerCloseHandler(f);
+				}
+			};
+		});
+		}());
+	</script>
+	
+</j:jelly>

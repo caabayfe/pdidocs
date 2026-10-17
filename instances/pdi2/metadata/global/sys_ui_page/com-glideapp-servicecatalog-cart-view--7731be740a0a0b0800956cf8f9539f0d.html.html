@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+        <g:requires name="scripts/js_includes_catalog.js" includes="true"/>
+		<g:evaluate var="jvar_theme">
+			var theme = gs.getPreference('glide.css.theme.ui16');
+			if (null == theme){
+				var company = gs.getUser().getCompanyRecord();
+				if (null != company)
+					theme = company.getValue("theme");
+			}
+			theme;
+		</g:evaluate>
+        <g:requires name="styles/js_includes_catalog.css" includes="true" params="theme=${jvar_theme}"/>
+        <g:requires name="styles/sc_cat_only.css" includes="false" params="theme=${jvar_theme}"/>
+        <j:set var="jvar_two_step" value="false" />
+        <g:inline template="sc_sanitize.xml"/>
+	    <g:inline template="glide_weba_header.xml" />
+        <g:servicecatalog_cart_template />	
+        <g:catalog_notify_cart_empty />
+        <g:evaluate jelly="true">
+                var continueShoppingAction = GlideappCatalogURLGenerator.getContinueShoppingAction(jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+        </g:evaluate>
+        <div class="catalog_button_container" role="navigation" aria-label="${gs.getMessage('Cart Contents')}">
+            <g:sc_button img="" classes="request_catalog_button" id="continue_shopping" onclick="${continueShoppingAction}" label="Continue Shopping" title="Continue Shopping"/>
+			<j2:if test="$[jvar_got_one]">
+				<g:sc_button img="" isPrimary="true" classes="request_catalog_button sc_float_right" id="checkout" onclick="checkout(this, forms['sc_cart.do']); return false;" label="Checkout" title="Checkout"/>
+			</j2:if>
+		</div>
+	<g:inline template="catalog_web_analytics.xml" />
+</j:jelly>

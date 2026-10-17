@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_privacy_case_data_breach_assessment');

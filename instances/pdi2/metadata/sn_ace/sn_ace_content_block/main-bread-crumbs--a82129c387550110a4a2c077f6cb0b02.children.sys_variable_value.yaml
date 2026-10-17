@@ -1,0 +1,47 @@
+- document: sn_ace_content_block
+  document_key: a82129c387550110a4a2c077f6cb0b02
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-02-01 06:45:56
+  sys_id: 772ac1d387dd0110a4a2c077f6cb0b2b
+  sys_mod_count: '9'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-02-01 10:25:31
+  value: |-
+    (function populateBreadCrumbs(pageId, pageParams) {
+        // Add your code here
+        
+        var gr = new GlideRecord(pageParams.table);
+        var res = [];
+        if (gr.get(pageParams.sysId)) {
+            res.push({
+                'label': gr.getValue('name')
+            });
+            var cbGr = new GlideRecord(pageParams.table);
+            var cbId = gr.getValue('parent') || '';
+            var tableId = gr.getValue('document_id');
+            var tableName = gr.getValue('document_table');
+            while (cbId) {
+                cbGr.get(cbId);
+                res.push({
+                    'label': cbGr.getValue('name'),
+                    'href': '/now/ace-app-builder/ace-record-page/' + pageParams.aceAppConfigId + '/sn_ace_content_block/' + cbId
+                });
+                cbId = cbGr.getValue('parent');
+            }
+            if (res.length > 1) {
+                tableName = cbGr.getValue('document_table') || '';
+                tableId = cbGr.getValue('document_id') || '';
+            }
+            var mainGr = new GlideRecord(tableName);
+            mainGr.get(tableId);
+            res.push({
+                'label': mainGr.getValue('name'),
+                'href': '/now/ace-app-builder/ace-record-page/' + pageParams.aceAppConfigId + '/' + tableName + '/' + tableId
+            });
+        }
+        return res.reverse();
+    }(pageId, pageParams));
+  variable: 1c06e44987410110a4a2c077f6cb0b80

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+  <script>
+  function checkSubmit() {
+      tableName = gel('sysparm_tablelabel').value.trim();
+      if (tableName == '') {
+          alert("${JS:gs.getMessage('Table name cannot be empty or contain only spaces')}");
+          return false;
+      }
+ 
+      return confirm("${JS:gs.getMessage('Create table called: ')}" + tableName + "?");
+  }
+  </script>
+  
+  <select style="display:none;" id="task_tables" name="task_tables">
+    <g:evaluate var="jvar_item" expression="
+     var gr= new GlideRecord('sys_db_object');
+     var qc = gr.addQuery('super_class.name', 'task');
+     qc.addOrCondition('name', 'task');
+     gr.orderBy('name');
+     gr.query();
+     "/>
+    <j:while test="${gr.next()}">
+        <j:set var="jvar_name" value="${gr.name}"/>
+        <g:evaluate var="jvar_temp" jelly="true">
+            var s = jelly.jvar_name;
+            s.substring(0, 3);
+        </g:evaluate>
+        <j:if test="${jvar_temp != 'sys'}">
+            <option value="${gr.name}">${GlideTableDescriptor.get(gr.name).getLabel()}</option>
+        </j:if>
+    </j:while>
+  </select>
+
+	<form action="table_columns.do" method="POST" id="tablecreator" onsubmit="return checkSubmit();">
+      <input type="hidden" name="sys_action" value="create_table"/>
+      <div id="table_creater">
+        <table border="0" class="wide">
+          <tr>
+            <td>
+              <g:ui_header>${gs.getMessage('Create Table')}</g:ui_header>
+          	</td>
+          </tr>
+          <tr>
+            <td>
+              <span style="color:#666666;">${gs.getMessage('create_new_table_name')}</span>
+          	</td>
+          </tr>
+          <tr>
+              <td colspan="2">
+                  <g:ui_input_field size="30" id="sysparm_tablelabel" name="sysparm_tablelabel" for="sysparm_tablelabel" label="${gs.getMessage('Table Name')}" type="text" mandatory="true" onkeyup="labelKeyUp(this);" value="" />
+              </td>
+          </tr>
+          <tr>
+              <td>
+                  <input type="hidden" maxlength="30" name="sysparm_tablename" id="sysparm_tablename" value=""/>
+              </td>
+          </tr>
+          <tr>
+            <td>
+              <span style="color:#666666;">${gs.getMessage('create_new_table_extend_base_table')}</span>
+            </td>
+          </tr>
+          <tr>
+              <td>
+            	  <g:ui_choice_input_field id="sysparm_extends" name="sysparm_extends" for="sysparm_extends" label="${gs.getMessage('Extends base table')}" mandatory="true" onchange="showHidePrefixField()">
+            	    <option value="none">${gs.getMessage('-- None --')}</option>
+                      <g:call function="table_options_custom.xml" parent_table="${jvar_parent_table}"/>
+            	  </g:ui_choice_input_field>
+            	</td>
+          </tr>
+          <tr class="number_prefix" style="display:none;">
+            <td>
+              <span style="color:#666666;">${gs.getMessage('create_new_table_number_prefix')}</span>
+            </td>
+          </tr>
+          <tr class="number_prefix" style="display:none;">
+            <td colspan="2">
+              <g:ui_input_field size="30" id="sysparm_number_prefix" name="sysparm_number_prefix" for="sysparm_number_prefix" label="${gs.getMessage('Number Prefix')}" type="text" />
+            </td>
+          </tr>
+          <tr>
+              <td>
+                <g:ui_header>${gs.getMessage('Create Module in Application')}</g:ui_header>
+            	</td>
+          </tr>
+          <tr>
+            <td>
+              <span style="color:#666666;">
+                ${gs.getMessage('create_new_application_and_module')}
+                <ul>
+                  <li>${gs.getMessage('create_new_table_module_description')}</li>
+                  <li>${gs.getMessage('create_new_table_application_description')}</li>
+                </ul>
+              </span>
+            </td>
+          </tr>
+          
+          <tr>
+              <td>
+                  <label for="sysparm_new_application">${gs.getMessage('Create new application')}:</label>
+                  <input type="checkbox" checked="true" name="sysparm_new_application" id="sysparm_new_application"/>
+                  <label for="sysparm_app_name">${gs.getMessage('Named')}:</label>
+                  <input type="text" name="sysparm_app_name" id="sysparm_app_name" />
+              </td>
+          </tr>
+          <tr>
+              <td>
+                  <label for="sysparm_new_module">${gs.getMessage('Create new module')}:</label>
+                  <input type="checkbox" checked="true" name="sysparm_new_module" id="sysparm_new_module"/>
+                  <label for="sysparm_application">${gs.getMessage('In application')}:</label>
+                  <g:application_selector />
+              </td>
+          </tr>
+          <tr>
+              <td>
+                  <input type="submit" name="create" value="${gs.getMessage('Create')}" class="button" style="margin-top: 3px;"/>
+              </td>
+          </tr>
+        </table>
+      </div>
+  </form>
+</j:jelly>

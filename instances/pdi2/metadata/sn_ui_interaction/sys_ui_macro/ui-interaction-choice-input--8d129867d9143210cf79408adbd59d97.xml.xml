@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="ref" value="input_map.${jvar_input.name}"/>
+	<g:set_if var="jvar_element_display" test="${jvar_shown}" true="display: block;" false="display: none;"/>
+
+	<j:set var="jvar_mandatory_class" value=""/>
+	<j:if test="${jvar_input.required}">
+		<j:set var="jvar_mandatory_class" value="is-required"/>
+		<j:if test="${jvar_value != ''}">
+			<j:set var="jvar_mandatory_class" value="is-prefilled"/>
+		</j:if>
+	</j:if>
+
+	<g:set_if var="jvar_label_class" test="${jvar_input.required}" true="mandatory" false=""/>
+	<g:set_if var="jvar_required_marker" test="${jvar_input.required}" true="required-marker" false=""/>
+
+	<div id="element.${ref}" class="form-group ${jvar_mandatory_class}" style="${jvar_element_display}">
+		<div id="label.${ref}">
+			<label onclick="return labelClicked(this);" for="${ref}" dir="ltr" class="col-xs-12 col-md-3 col-lg-3 control-label">
+				<span id="status.${ref}" role="note" data-dynamic-title="${jvar_input.description}" mandatory="${jvar_input.required}" oclass="${jvar_label_class}" class="${jvar_label_class} ${jvar_required_marker}"/>
+				<span title="${jvar_input.description}" class="label-text" data-html="false">${jvar_input.label}</span>
+			</label>
+		</div>
+		<div class="col-xs-10 col-md-7 col-lg-7 form-field input_controls">
+			<select aria-required="${jvar_input.required}" aria-labelledby="label.${ref}" ng-non-bindable="true" id="${ref}" name="${jvar_input.name}" data-required="${jvar_input.required}" data-type="choice" onchange="onInputMapChange('${ref}');" class="form-control">
+				<j:forEach items="${jvar_input.typeMetadata.choices}" var="jvar_choice">
+					<g:evaluate jelly="true" var="jvar_translated_label" expression="(new global.InteractionTranslationUtils).getMessage(jelly.jvar_scope, jelly.jvar_choice.label);" />
+					<j:if test="${jvar_value == jvar_choice.value}">
+						<option value="${jvar_choice.value}" selected="SELECTED">${jvar_translated_label}</option>
+					</j:if>
+					<j:if test="${jvar_value != jvar_choice.value}">
+						<option value="${jvar_choice.value}">${jvar_translated_label}</option>
+					</j:if>
+				</j:forEach>
+			</select>
+			</div>
+		<div class="col-xs-2 col-md-1 col-lg-1 form-field-addons">
+			<g:macro_invoke macro="configure_ui_interaction_dynamic_value"/>
+		</div>
+	</div>
+</j:jelly>

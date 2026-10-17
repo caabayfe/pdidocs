@@ -1,0 +1,21 @@
+_meta:
+  hash: 68adf01b4cf12789ab425fda83052bce91664d9f6df10e2f6439bf49810ef0a7
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: josh.gerbasi
+  sys_created_on: 2015-12-18 23:26:29
+  sys_id: b782e823c3901200d8d4bea192d3aeba
+  sys_mod_count: '1'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_b782e823c3901200d8d4bea192d3aeba
+  sys_updated_by: now.discovery.content
+  sys_updated_on: 2023-08-06 15:02:37
+active: 'true'
+name: lsof.sh
+probe: 56d52b5fc3101200d8d4bea192d3ae55
+sys_name: lsof.sh
+sys_policy: ''
+value: "#!/bin/sh\n\n# Check if lsof is available\nif command -v lsof > /dev/null 2>&1; then\n    # If lsof is available, run the command\n    lsof_output=`sudo lsof -iTCP -n -P -F pcnfT -z$1`\n\n    # Check if lsof_output is empty, if not, print the output and exit\n    if [ -n \"$lsof_output\" ]; then\n        echo \"lsof output\"\n        echo \"$lsof_output\"\n        exit 0\n    fi\nfi\n\n# If lsof is not present print pfiles output\necho \"pfiles output\"\n\n# Get the list of process IDs with socket information\npids=`sudo pgrep -z$1 | sort -n`\n\n# Loop through each PID and process the output for S_IFSOCK\nfor pid in $pids; do\n    pfiles_output=`sudo pfiles $pid 2>/dev/null | awk '/S_IFSOCK/ {\n        sock=\"f\"$1;\n\t\ti=0;\n\t\ttcp=0;\n\t\twhile(getline) {\n\t\t\t\tarray[i] = $0;\n\t\t\t\ti = i +1;\n\t\t\t\tif(array[i]~/SOCK_STREAM/)\n\t\t\t\ttcp=1;\n\t\t}\n\t\tfor(j=0;(j<=i && tcp=1);j++){\n\t\t\tif(array[j]~/sockname: AF_INET/ || array[j]~/sockname: AF_INET6/) {\n\t\t\t\tprintf substr(sock, 1, length(sock)-1)\"\\n\";\n\t\t\t\tprintf \"n\"array[j];\n\t\t\t\tif (array[j+1]~/peername: AF_INET/ || array[j+1]~/peername: AF_INET6/) {\n\t\t\t\t\tprintf \"->\"array[j+1]\"\\n\";\n\t\t\t\t\tprint \"TST=NOT_LISTEN\";\n\t\t\t\t} else {\n\t\t\t\t\tprintf \"\\n\";\n\t\t\t\t\tprint \"TST=LISTEN\";\n\t\t\t\t}\n\t\t\t}\t\n\t\t}\n\t} NR==1'`\n    pid_line=\"p${pid}\"\n    command_line=`echo \"$pfiles_output\" | sed -n 's/^[0-9]\\{1,\\}: *\\([^ ]\\{1,\\}\\).*$/c \\1/p'`\n    fd_line=`echo \"$pfiles_output\" | sed '1d'`\n\n    # Skip the loop iteration if fd_line is empty\n    if [ -z \"$fd_line\" ]; then\n        continue\n    fi\n    \n    formatted_output=\"$pid_line\\n$command_line\\n$fd_line\"\n    \n    # Print the formatted output if it's not empty\n    if [ -n \"$formatted_output\" ]; then\n        echo \"$formatted_output\"\n    fi\ndone\n\n# Loop through each PID and process the output for S_IFCHR\nfor pid in $pids; do\n    pfiles_output=`sudo pfiles $pid 2>/dev/null | awk '/S_IFCHR/ {\n        sock=\"f\"$1;\n        while(getline) {\n            if($0~/sockname: AF_INET/ || $0~/sockname: AF_INET6/) {\n                socket_info=$0;\n                getline;\n                if($0~/tcp/) {\n                    print substr(sock, 1, length(sock)-1);\n                    split(sock, a, \" \");\n                    printf \"n \" socket_info;\n                    print \"\\nTST=LISTEN\";\n                    break;\n                } \n                break;\n            }\n        }\n    } NR==1'`\n    pid_line=\"p${pid}\"\n    command_line=`echo \"$pfiles_output\" | sed -n 's/^[0-9]\\{1,\\}: *\\([^ ]\\{1,\\}\\).*$/c \\1/p'`\n    fd_line=`echo \"$pfiles_output\" | sed '1d'`\n\n    # Skip the loop iteration if fd_line is empty\n    if [ -z \"$fd_line\" ]; then\n        continue\n    fi\n    \n    formatted_output=\"$pid_line\\n$command_line\\n$fd_line\"\n    \n    # Print the formatted output if it's not empty\n    if [ -n \"$formatted_output\" ]; then\n        echo \"$formatted_output\"\n    fi\ndone\n        "
+value_script: ''

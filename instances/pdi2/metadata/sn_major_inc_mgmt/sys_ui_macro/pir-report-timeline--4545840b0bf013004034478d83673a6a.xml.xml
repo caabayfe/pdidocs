@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.timeline {
+			font-family: SourceSansPro;
+			color: #343D47;
+			font-size: 13px;
+		}
+		.timeline .timeline-block {
+			height: 24px;
+			display: inline-block;
+		}
+		.timeline .timeline-table{
+			padding-top: 20px;
+		}
+		.timeline .timeline-table td {
+			padding: 6px;
+		}
+	</style>
+	<g:evaluate jelly="true" object="true">
+		function formatNumber(number) {
+			if (number > 9)
+				return number;
+			return "0" + number;
+		}
+		function getGlideDurationInText(duration){
+			var milliseconds = new GlideDateTime(duration.getValue()).getNumericValue();
+			var totalSeconds = milliseconds / 1000;
+			totalSeconds = Math.abs(totalSeconds);
+			var days = formatNumber(Math.floor(totalSeconds / 60 / 60 / 24));
+			var hours = formatNumber(Math.floor(totalSeconds / 60 / 60) % 24);
+			var minutes= formatNumber(Math.floor(totalSeconds / 60) % 60);
+			var seconds = formatNumber(totalSeconds % 60);
+			if (days == "00")
+				return hours + ":" + minutes + ":" + seconds;
+			else
+				return days + ":" + hours + ":" + minutes + ":" + seconds;
+		}
+
+		var startGDT = new GlideDateTime(jelly.jvar_start);
+		var identifyGDT = new GlideDateTime(jelly.jvar_identify);
+		var responseGDT = new GlideDateTime(jelly.jvar_response);
+		var resolutionGDT = new GlideDateTime(jelly.jvar_resolution);
+		var closeGDT;
+		if(jelly.jvar_close)
+			closeGDT = new GlideDateTime(jelly.jvar_close);
+		var identifyDuration = GlideDateTime.subtract(startGDT, identifyGDT);
+		var responseDuration = GlideDateTime.subtract(identifyGDT, responseGDT);
+		var resolutionDuration = GlideDateTime.subtract(responseGDT, resolutionGDT);
+		var closeDuration;
+		if(jelly.jvar_close)
+			 closeDuration = GlideDateTime.subtract(resolutionGDT, closeGDT);
+
+		var identifyDurationInText = getGlideDurationInText(identifyDuration);
+		var responseDurationInText = getGlideDurationInText(responseDuration);
+		var resolutionDurationInText = getGlideDurationInText(resolutionDuration);
+		var closeDurationInText;
+		if(jelly.jvar_close)
+			 closeDurationInText = getGlideDurationInText(closeDuration);
+
+		var identifyTime = new GlideDateTime(identifyDuration.getValue()).getNumericValue();
+		var responseTime = new GlideDateTime(responseDuration.getValue()).getNumericValue();
+		var resolutionTime = new GlideDateTime(resolutionDuration.getValue()).getNumericValue();
+		var closeTime;
+		var total;
+		if(jelly.jvar_close){
+			closeTime = new GlideDateTime(closeDuration.getValue()).getNumericValue();
+			total = identifyTime + responseTime + resolutionTime + closeTime;
+		} else
+			total = identifyTime + responseTime + resolutionTime;
+
+		var identifyPercentage = Math.floor(((identifyTime * 100)/total)*100)/100;
+		var responsePercentage = Math.floor(((responseTime * 100)/total)*100)/100;
+		var resolutionPercentage = Math.floor(((resolutionTime * 100)/total)*100)/100;
+		var closePercentage;
+		if(jelly.jvar_close)
+			closePercentage = Math.floor(((closeTime * 100)/total)*100)/100;
+	</g:evaluate>
+	<div class="timeline">
+		<div>
+			<div class="timeline-block" style="width: ${identifyPercentage}%;background-color: #FBC640;"></div>
+			<div class="timeline-block" style="width: ${responsePercentage}%;background-color: #F88A3E"></div>
+			<div class="timeline-block" style="width: ${resolutionPercentage}%;background-color: #F5504A"></div>
+			<j:if test="${!empty(jvar_close)}">
+				<div class="timeline-block" style="width: ${closePercentage}%;background-color: #70E07A"></div>
+			</j:if>
+		</div>
+		<div class="timeline-table">
+			<table>
+				<tr>
+					<td>
+
+					</td>
+					<td>
+						<span class="header-text"><b>${gs.getMessage('Timing Type')}</b></span>
+					</td>
+					<td>
+						<span class="header-text"><b>${gs.getMessage('Duration')}</b></span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div style="background-color: #FBC640;height:24px;width:5px;"></div>
+					</td>
+					<td>
+						${gs.getMessage('Time to Identify')}
+					</td>
+					<td>
+						${identifyDurationInText}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div style="background-color: #F88A3E;height:24px;width:5px;"></div>
+					</td>
+					<td>
+						${gs.getMessage('Time to Respond')}
+					</td>
+					<td>
+						${responseDurationInText}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div style="background-color: #F5504A;height:24px;width:5px;"></div>
+					</td>
+					<td>
+						${gs.getMessage('Time to Resolve')}
+					</td>
+					<td>
+						${resolutionDurationInText}
+					</td>
+				</tr>
+				<j:if test="${!empty(jvar_close)}">
+					<tr>
+						<td>
+							<div style="background-color: #70E07A;height:24px;width:5px;"></div>
+						</td>
+						<td>
+							${gs.getMessage('Time to Close')}
+						</td>
+						<td>
+							${closeDurationInText}
+						</td>
+					</tr>
+				</j:if>
+			</table>
+		</div>
+	</div>
+</j:jelly>

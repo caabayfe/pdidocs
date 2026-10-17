@@ -1,0 +1,203 @@
+_meta:
+  hash: b0c4a67ed22b548be65e5566f9fc7d500b99287a63383362233e656d2858b8f5
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: benjamin.phan
+  sys_created_on: 2019-10-30 21:54:20
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 5552bfb173700010d4c1b7385ef6a7e3
+  sys_mod_count: '15'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_5552bfb173700010d4c1b7385ef6a7e3
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-23 15:51:24
+active: 'true'
+checksum: ''
+description: Module that contains functions for enforcing folder permissions
+directory: 'false'
+name: SecureTempFolder.psm1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  <#
+   # 1. Obtain discoveryUser through service lookup if user not provided
+   # 2. Normalize discoveryUser
+   # 3. Append discoveryUser to parentFolder path
+   # 4. Create folder at full path if it does not exist
+   # 5. Lock down folder if $secureFolder is $true
+   #>
+  function createAndSecureFolderForUser {
+      param([string]$folder, [string]$discoveryUser, [string]$serviceName, [boolean]$secureFolder)
+
+      if ($secureFolder) {
+          # 1. Obtain discoveryUser through service lookup if user not provided
+          # 2. Normalize discoveryUser
+          $discoveryUser = getNormalizedUser -discoveryUser $discoveryUser -serviceName $serviceName
+
+          # 3. Append normalized discoveryUser to parentFolder path
+          $folder = Join-Path -Path $folder -ChildPath $discoveryUser
+      }
+      # 4. Create folder at full path if it does not exist
+      # 5. Lock down folder if $secureFolder is $true
+      if (createFolder -folder $folder -secureFolder $secureFolder) {
+          return $folder
+      }
+  }
+
+  function getNormalizedUser {
+      param([string]$discoveryUser, [string]$serviceName)
+      if (-not $discoveryUser) {
+          # Obtain discoveryUser through service lookup if user not provided
+          $discoveryUser = getServiceAccountUser -serviceName $serviceName
+          if (-not $discoveryUser) {
+              SNCLog-DebugInfo "Could not obtain MID service user from service with the name $serviceName"
+              return
+          }
+      }
+
+      # Normalize discoveryUser
+      $discoveryUser = normalizeDiscoveryUser -discoveryUser $discoveryUser
+
+      return $discoveryUser
+  }
+
+  function getServiceAccountUser {
+      param([string] $serviceName)
+
+      SNCLog-DebugInfo "Looking for service name $serviceName"
+
+      $service = Get-CimInstance -ClassName Win32_Service -Filter "Name='$serviceName'"
+      if (!$service) {
+          SNCLog-DebugInfo "Cannot find service with name $serviceName. Aborting."
+          return $null
+      }
+
+      $logOnAsUser = $service.StartName;
+
+      SNCLog-DebugInfo "Log on as user detected as $logOnAsUser"
+      return $logOnAsUser
+  }
+
+  function createFolder {
+      param([string]$folder, [boolean]$secureFolder)
+
+      # Use impersonation for UNC path access in PS7
+      # PS5: WMI cmdlets already impersonate the thread, so no need to impersonate again
+      # PS7: CIM sessions do NOT impersonate the thread, so we must explicitly impersonate
+      $isUncPath = $folder.StartsWith("\\");
+      $context = $null;
+
+      try {
+          if ($isUncPath -and $cred -and $PSVersionTable.PSVersion.Major -ge 6) {
+              SNCLog-DebugInfo "Starting impersonation for UNC path access (PS7): $folder";
+              $context = startImpersonation -cred $cred;
+          }
+
+          if (Test-Path -Path $folder -PathType Container) {
+              SNCLog-DebugInfo "$folder already exists, will not create folder";
+              # no need to lock down folder if it already exists
+              # can assume that it is already locked down, or doesn't need locking down
+              return $true;
+          }
+
+          SNCLog-DebugInfo "Creating folder $folder";
+          try {
+              $null = New-Item -Path $folder -ItemType 'directory' -Force -ErrorAction Stop;
+          } catch {
+              SNCLog-DebugInfo "Could not create folder using 'New-Item -Path $folder -ItemType 'directory' -Force -ErrorAction Stop'";
+              return $false;
+          }
+
+          if ($secureFolder) {
+              SNCLog-DebugInfo "Enforcing permissions on $folder";
+              # lock down folder
+              return enforcePerms -folder $folder;
+          }
+          return $true;
+      } finally {
+          if ($context) {
+              SNCLog-DebugInfo "Ending impersonation";
+              endImpersonation -context $context;
+          }
+      }
+  }
+
+
+  <##
+   # PowerShell module that contains functions to enforce stricter file permissions on the
+   # temp folder on target Windows servers used by the WMIProvider.
+   #
+   # For the "temp" folder and its sub-folders, the access control entries (or ACEs) are restricted
+   # to a whitelist of these groups:
+   #   - SYSTEM
+   #   - Builtin/Administrators (local Administrators)
+   #   - if applicable, the specific Discovery user
+   #>
+  function enforcePerms {
+      param([string]$folder)
+      
+      # ensure that on error, the script continues
+      $ErrorActionPreference = "Continue"
+
+      if (-not (Test-Path $folder -PathType Container)) {
+          SNCLog-DebugInfo "Cannot locate folder: $folder"
+          return
+      }
+
+      # define the white list, dynamically.  using an ArrayList is better for memory
+      $whiteList = [System.Collections.ArrayList]@()
+      $whiteList.Add("NT AUTHORITY\SYSTEM") > $null
+      $whiteList.Add("BUILTIN\Administrators") > $null
+      $whiteList.Add("CREATOR OWNER") > $null
+      $GROUP_WHITELIST = $whiteList.ToArray()
+
+      SNCLog-DebugInfo "Creating new ACL object"
+      $acl = New-Object System.Security.AccessControl.DirectorySecurity
+
+      SNCLog-DebugInfo "Disabling inheritance on new ACL"
+      $acl.SetAccessRuleProtection($true, $false)
+
+      foreach ($user in $GROUP_WHITELIST) {
+          SNCLog-DebugInfo "Adding full control access rule for user $user"
+          $perm = $user, 'FullControl', 'ContainerInherit, ObjectInherit', 'None', 'Allow'
+          $rule = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList $perm
+          $acl.AddAccessRule($rule)
+      }
+
+      SNCLog-DebugInfo "Applying new ACL to folder $folder"
+      $acl | Set-ACL $folder
+      return $true
+  }
+
+  function normalizeDiscoveryUser {
+      param([string] $discoveryUser = $(throw 'The discoveryUser parameter is required.'))
+      SNCLog-DebugInfo "Discovery user is $discoveryUser"
+      $userAtDomainRegex = [regex] '(\S+)@(\S+)'
+      if ($discoveryUser.startsWith(".\")) {
+          $hostname = hostname
+          # replace the "." with the hostname
+          $discoveryUser = $discoveryUser.replace(".\", "$hostname\")
+          SNCLog-DebugInfo "Swapping hostname of localhost. Discovery user is now $discoveryUser"
+      } else {
+          $match = $userAtDomainRegex.Match($discoveryUser)
+          if ($match.Success) {
+              $domain = $match.Groups[2].Value
+              $user = $match.Groups[1].Value
+              $discoveryUser = "$domain\$user"
+              SNCLog-DebugInfo "Normalizing user@domain username. Discovery user is now $discoveryUser"
+          }
+      }
+      $discoveryUser = $discoveryUser -replace '\\', '_'
+      SNCLog-DebugInfo "Replaced '\' with '_'. Discovery user is now $discoveryUser"
+
+      return $discoveryUser
+  }
+script_attachment: ''
+source: ''
+sys_name: SecureTempFolder.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

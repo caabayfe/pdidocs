@@ -1,0 +1,135 @@
+- document: sys_hub_action_type_definition
+  document_key: a8fa68b1ff4e62107ee9ffffffffff5e
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-10 20:36:58
+  sys_id: 05fb2cf1ff4e62107ee9ffffffffff33
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-10 20:36:58
+  value: '0'
+  variable: 05fb2cf1ff4e62107ee9ffffffffff28
+- document: sys_hub_step_instance
+  document_key: f4fbe8f1ff4e62107ee9ffffffffffff
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-10 20:36:58
+  sys_id: 38fb2cf1ff4e62107ee9ffffffffff20
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-13 02:24:01
+  value: |-
+    (function execute(inputs, outputs) {
+    // ... code ...
+    // Constants for Workflow VERSION IDs
+    const WORKFLOW_INSTANT_PUBLISH_BASE = "e7de79b7c3401300e7c7d44d81d3aece";
+    const WORKFLOW_PUBLISH_WITH_APPROVAL_BASE = "33987078c3d01300e7c7d44d81d3ae2f";
+    const WORKFLOW_INSTANT_PUBLISH = "f6d5c49a93201300ac40f5be867ffb3f";
+    const WORKFLOW_PUBLISH_WITH_APPROVAL = "5be6c89a93201300ac40f5be867ffba1";
+    //Constants for Legacy Workflow IDs
+    const INSTANT_PUBLISH = "a9587563d76302004f1e82285e6103ae"
+    const APPROVAL_PUBLISH = "51a2f923d76302004f1e82285e610355" 
+
+    function checkWorkflowExist(workflowId) {
+      var workflowGR = new GlideRecord("wf_workflow");
+      workflowGR.addQuery("sys_id", workflowId);
+      workflowGR.query();
+      if (workflowGR.next()) {
+        return true;
+      }
+      return false;
+    }
+
+    function checkWorkfFlowVersionCustomization() {
+
+      if (!(checkWorkflowExist(INSTANT_PUBLISH) && checkWorkflowExist(APPROVAL_PUBLISH))) { //zboot case where workflow will not present
+        gs.info("Action: Publication Flow: Legacy Workflows not found - ZBOOT Case");
+        return false
+      }
+    var customization = false;
+      const approvalWorkflowSysId = [
+        WORKFLOW_PUBLISH_WITH_APPROVAL,
+        WORKFLOW_PUBLISH_WITH_APPROVAL_BASE
+        ];
+      const instantWorkflowSysId = [
+        WORKFLOW_INSTANT_PUBLISH,
+        WORKFLOW_INSTANT_PUBLISH_BASE
+      ];
+
+      //Check if anyone of approvalWorkflowSysId is customized
+        var grWorkflow = new GlideRecord("wf_workflow_version");
+        grWorkflow.addEncodedQuery("active=true^published=true");
+        grWorkflow.addQuery("sys_id", "IN", approvalWorkflowSysId);
+        grWorkflow.query();
+        if (!grWorkflow.next()) {
+          gs.info("Fix Script: Publication Flow Migration - Customization: True [WORKFLOW_PUBLISH_WITH_APPROVAL]");
+          customization = true;
+        }
+    	if (customization){
+    		gs.info("Fix Script: Publication Flow Migration - Customization: Return True ");
+    		return customization
+    	}
+    	
+       //Check if anyone of instantWorkflowSysId is customized
+    	var grWorkflow1 = new GlideRecord("wf_workflow_version");
+        grWorkflow1.addEncodedQuery("active=true^published=true");
+        grWorkflow1.addQuery("sys_id", "IN", instantWorkflowSysId);
+        grWorkflow1.query();
+        if (!grWorkflow1.next()) {
+          gs.info("Fix Script: Publication Flow Migration - Customization: True [WORKFLOW_INSTANT_PUBLISH]");
+          customization = true;
+        }
+
+      
+      return customization;
+    }
+
+
+
+
+    outputs.customization = checkWorkfFlowVersionCustomization()
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: a8fa68b1ff4e62107ee9ffffffffff5e
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-10 20:45:40
+  sys_id: 98fd24b5ff4e62107ee9ffffffffff2f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-10 20:45:40
+  value: '0'
+  variable: 97dd60b5ff4e62107ee9ffffffffffdf
+- document: sys_hub_action_type_definition
+  document_key: a8fa68b1ff4e62107ee9ffffffffff5e
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-10 20:36:58
+  sys_id: c5fb2cf1ff4e62107ee9ffffffffff33
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-10 20:36:58
+  value: '{"version":"1.0","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON"}'
+  variable: b0fb2cf1ff4e62107ee9ffffffffff23
+- document: sys_hub_step_instance
+  document_key: f4fbe8f1ff4e62107ee9ffffffffffff
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-06-10 20:36:58
+  sys_id: fcfb2cf1ff4e62107ee9ffffffffff1f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-06-10 20:36:58
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4

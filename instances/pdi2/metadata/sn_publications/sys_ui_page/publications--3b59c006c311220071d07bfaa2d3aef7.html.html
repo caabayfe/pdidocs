@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_portal" jelly="true">
+		var userID = gs.getUserID();
+		var portal = 'sp';
+		
+		if(GlidePluginManager().isActive('com.snc.cs_base')) {
+			var csmGr = new GlideRecord('csm_consumer');
+			csmGr.addQuery('user',userID);
+			csmGr.query();
+			if(csmGr.getRowCount()>0){
+				if(GlidePluginManager().isActive('com.glide.service-portal.consumer-portal'))
+					portal = 'csp';
+			}else{
+				var cusGr = new GlideRecord('customer_contact');
+				if(cusGr.get(userID)){
+					if(GlidePluginManager().isActive('com.glide.service-portal.customer-portal'))
+					portal = 'csm';
+				}
+			}
+		}
+		portal;
+	</g2:evaluate>
+	${gs.getMessage("Redirecting to your publication")}...
+</j:jelly>

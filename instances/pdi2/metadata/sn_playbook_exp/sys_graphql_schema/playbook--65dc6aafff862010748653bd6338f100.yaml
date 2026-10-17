@@ -1,0 +1,116 @@
+_meta:
+  hash: 1391812b69e80adf33468f999399c79b7ac2b53d99a33c07431938fd2c0ef1e5
+  hash_version: 1
+  scope: sn_playbook_exp
+  sys_class_name: sys_graphql_schema
+  sys_created_by: admin
+  sys_created_on: 2021-02-06 23:12:22
+  sys_id: 65dc6aafff862010748653bd6338f100
+  sys_mod_count: '36'
+  sys_package: 8c524e101b6e0010affd0e55cc4bcbed
+  sys_scope: 8c524e101b6e0010affd0e55cc4bcbed
+  sys_update_name: sys_graphql_schema_65dc6aafff862010748653bd6338f100
+  sys_updated_by: admin
+  sys_updated_on: 2026-08-07 23:32:23
+active: 'true'
+application_namespace: snPlaybookExp
+contextual_acl_max_depth: '3'
+enforce_acl: cdc63289a3123110f1f52780f31e61c1
+name: Playbook
+namespace: playbook
+paths: AgenticPlaybookError:errorType,AgenticPlaybookError:message,DisplayableString:displayValue,DisplayableString:value,UpdateAgenticPlaybookActivityExecutionPayload:success,InitiateAgentConversationPayload:success,InitiateAgentConversationPayload:conversationId,Mutation:initiateAgentConversation,Mutation:launchPlaybook,Mutation:triggerPlaybook,Mutation:updateAgenticPlaybookActivityExecution,PlaybookContext:can_read,PlaybookContext:cancellation_reason,PlaybookContext:parent_record,PlaybookContext:parent_table,PlaybookContext:playbook_id,PlaybookContext:scoped_name,PlaybookContext:state,PlaybookContext:sys_id,PlaybookContext:title,Query:getPlaybooksForParentRecord,State:displayValue,State:value,TriggerPlaybookError:errorType,TriggerPlaybookError:input,TriggerPlaybookError:message,TriggerPlaybookError:parent_record,TriggerPlaybookError:parent_table,TriggerPlaybookError:process_definition_id
+requires_acl_authorization: 'true'
+requires_authentication: 'false'
+requires_snc_internal_role: 'false'
+schema: |-
+  # Add "deny unless" path based ACL if you only want to expose the API to logged in users
+
+  schema {
+  	mutation: Mutation
+  	query: Query
+  }
+
+  type Query {
+  	getPlaybooksForParentRecord(parentTable: String!, parentRecord: ID!):[PlaybookContext]
+  }
+
+  type Mutation {
+  	triggerPlaybook(scopedName: String!, parentTable: String!, parentRecord: ID!, onlyIfNoProcessRunning: Boolean): TriggerPlaybookResult!
+  	launchPlaybook(processDefinitionId: String!, parentRecord: ID, input: String): TriggerPlaybookResult!
+  	updateAgenticPlaybookActivityExecution(
+  		activityContextId: String,
+  		status: String!
+  	): UpdateAgenticPlaybookActivityExecutionResult!
+
+  	initiateAgentConversation(activityContextId: String!): InitiateAgentConversationResult!
+
+  }
+
+  union TriggerPlaybookResult = PlaybookContext | TriggerPlaybookError
+  union UpdateAgenticPlaybookActivityExecutionResult = UpdateAgenticPlaybookActivityExecutionPayload | AgenticPlaybookError
+  union InitiateAgentConversationResult = InitiateAgentConversationPayload | AgenticPlaybookError
+
+  enum TriggerPlaybookErrorType {
+  	PARENT_TABLE_NOT_VALID
+  	PARENT_RECORD_NOT_FOUND
+  	PROCESS_DEFINITION_ID_NOT_VALID
+  	TRIGGER_PLAYBOOK_FAILED
+  	INSUFFICIENT_PERMISSIONS
+  	LAUNCH_PLAYBOOK_FAILED
+  }
+
+  type TriggerPlaybookError {
+  	errorType: TriggerPlaybookErrorType!
+  	message: String!
+  	parent_table: String
+  	parent_record: String
+  	process_definition_id: String
+  	input: String
+  }
+
+  type UpdateAgenticPlaybookActivityExecutionPayload {
+  	success: Boolean!
+  }
+
+  type InitiateAgentConversationPayload {
+  	success: Boolean!
+  	conversationId: String
+  }
+
+
+  type PlaybookContext {
+  	sys_id: ID
+  	title: String
+  	state: State
+  	scoped_name: String
+  	parent_table: String
+  	parent_record: String
+  	playbook_id: String
+  	cancellation_reason: String
+  	can_read: Boolean
+  }
+
+  type State {
+  	displayValue: String!
+  	value: String!
+  }
+
+  type DisplayableString {
+  	displayValue: String!
+  	value: String!
+  }
+
+  type AgenticPlaybookError {
+  	errorType: ErrorType!
+  	message: String!
+  }
+
+  enum ErrorType {
+  	QUERY_FAILED
+  	MUTATION_FAILED
+  	MISSING_ARGUMENT
+  	FEATURE_INACTIVE
+  }
+sys_name: Playbook
+sys_policy: read
+type_names: TriggerPlaybookResult,UpdateAgenticPlaybookActivityExecutionResult,InitiateAgentConversationResult

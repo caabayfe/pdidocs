@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<link href="b2d1f69b3b943200b4fa66e603efc4a1.cssdbx?" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="/polarisberg_theme_variables.do?exclude_dark=true" id="polarisberg_theme_variables"/>
+
+  <g:list_default table="${sysparm_table}" view="${sysparm_view}" />
+	<g:evaluate jelly="true">
+		ListProperties.setHasTopNav(true);
+		ListProperties.setHasTopButtons(false);
+		ListProperties.setHasTitle(false);
+		ListProperties.setHasTitleContextMenu(false);
+		ListProperties.setToggleHeader(false);
+		ListProperties.setHasFilter(true);
+		ListProperties.setHasBreadcrumbs(true);
+		ListProperties.setHasSearch(true);
+		ListProperties.setHasTopVCR(false);
+		ListProperties.setHasBottomVCR(true);
+		ListProperties.setHasHeader(true);
+		ListProperties.setHasHeaderContextMenu(false);
+		ListProperties.setHasListMechanic(true);
+		ListProperties.setHasRowContextMenu(true);
+		ListProperties.setShowLinks(true);
+		ListProperties.setHasPopup(false);
+		ListProperties.setShowEmpty(true);
+		ListProperties.setHasBottomNav(true);
+		ListProperties.setHasActions(true);
+		ListProperties.setHasBottomVCR(true);
+		ListProperties.setCanChangeView(false);
+		ListProperties.setCanGroup(false);
+		ListProperties.setUserQuery("${sysparm_query}");
+		ListProperties.setListEditType('disabled');
+	</g:evaluate>
+	
+	<g:evaluate jelly="true">
+		if (gs.hasRole("delegated_developer") &amp;&amp; !gs.hasRole('admin') &amp;&amp; !gs.hasRole('flow_designer')) {
+
+            var autoHubPermSetId = "d3ef33c067200300c4098c7942415a50";
+            var userDDRoles = getMyDelegDevRoles();
+            var apps = getMyDelegDevApps(userDDRoles, autoHubPermSetId);
+            var hiddenQuery = "";
+            if (apps.length &gt; 0 &amp;&amp; isColumnValidForTable("${sysparm_table}", "sys_scope"))
+                    hiddenQuery = "sys_scopeIN" + apps;
+
+            if ('sys_hub_action_type_definition'.equals("${sysparm_table}")) {
+                if (hiddenQuery != "")
+                    hiddenQuery += "^";
+
+                hiddenQuery += "system_level=false";
+            }
+            if ('sys_flow_context'.equals("${sysparm_table}")) {
+                if (hiddenQuery != "")
+                    hiddenQuery += "^";
+                hiddenQuery += "calling_source!=DATA_STREAM_VPP^ORcalling_sourceISEMPTY";
+            }
+            ListProperties.setHiddenQuery(hiddenQuery);
+        }
+        else {
+		 if ('sys_hub_action_type_definition'.equals("${sysparm_table}"))
+			ListProperties.setHiddenQuery("system_level=false");
+		 if ('sys_flow_context'.equals("${sysparm_table}"))
+			ListProperties.setHiddenQuery("calling_source!=DATA_STREAM_VPP^ORcalling_sourceISEMPTY");
+		}
+
+		function isColumnValidForTable(table, column) {
+			if (!table || !column)
+				return false;
+
+			return GlideTableDescriptor.fieldExists(table, column);
+		}
+		
+		function getMyDelegDevRoles() {
+			var roles = [];
+			var roleQuery = new GlideRecord("sys_user_has_role");
+			roleQuery.addQuery("role.name", "STARTSWITH", "sn_dd_");
+			roleQuery.addQuery("user", gs.getUserID());
+			roleQuery.query();
+			while (roleQuery.next()) {
+				roles.push(roleQuery.getValue("role"));
+			}
+			return roles;
+		}
+
+		function getMyDelegDevApps(roles, permSetId) {
+			var ddApps = [];
+			var allMetaPermSetId = "043a115e679112006cc2956c33415a36";
+			var permAssignments = new GlideRecord("sys_scope_permission_set_role_assignment");
+			permAssignments.addQuery("role", roles);
+			permAssignments.addQuery("permission_set", permSetId)
+				.addOrCondition("permission_set", allMetaPermSetId);
+			permAssignments.query();
+			while (permAssignments.next()) {
+				ddApps.push(permAssignments.getValue("scope"));
+			}
+			return ddApps;
+		}
+	</g:evaluate>
+  <j:set var="jvar_handle_list_printing" value="true"/>
+  <g:inline template="list2_default.xml"/>
+  <j2:set var="jvar_hide_response_time" value="true" />
+  <g:inline template="db_context_menu_script.xml" />
+</j:jelly>

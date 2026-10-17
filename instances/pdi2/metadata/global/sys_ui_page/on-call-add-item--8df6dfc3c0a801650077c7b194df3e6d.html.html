@@ -1,0 +1,215 @@
+<g:ui_form>
+   <j:set var="jvar_group" value="${sysparm_group}" />
+
+   <input type="hidden" id="group" name="group" value="${jvar_group}" />
+   <input type="hidden" id="member" name="member" value="" />
+   <input type="hidden" id="coverage_on" name="coverage_on" value="" />
+   <input type="hidden" id="roster" name="roster" value="${sysparm_roster}" />
+   <input type="hidden" id="goto_url" name="goto_url" value="${sysparm_goto_url}" />
+   <input type="hidden" id="start_date_time" name="start_date_time" value="${sysparm_start}" />
+   <input type="hidden" id="end_date_time" name="end_date_time" value="${sysparm_end}" />
+   <input type="hidden" id="target_field" name="target_field" value="${sysparm_target_field}" />
+
+   <g:evaluate var="jvar_type" jelly="true">
+	var answer = jelly.sysparm_type;
+	if (!answer)
+	   answer = "coverage"
+	answer;
+   </g:evaluate>
+   <g:evaluate var="jvar_coverage_display" jelly="true">
+	var answer = "none"
+	if (jelly.jvar_type == "coverage")
+	   answer = "block";
+	answer;
+   </g:evaluate>
+   <g:evaluate var="jvar_roster_display" jelly="true">
+	var answer = "none"
+	if (jelly.jvar_type == "roster")
+	   answer = "block";
+	answer;
+   </g:evaluate>
+   <g:evaluate var="jvar_time_off_display" jelly="true">
+	var answer = "none"
+	if (jelly.jvar_type == "time_off")
+	   answer = "block";
+	answer;
+   </g:evaluate>
+
+   <div>
+   <table style="width:100%;">
+	<tr>
+	   <td nowrap="true">${gs.getMessage('When')}:
+		${sysparm_start} ${gs.getMessage('to')} ${sysparm_end}
+		<br/>
+	   </td>
+	</tr>
+	<tr id="select_row" class="io_label">
+	   <td nowrap="true" colspan="2">
+		<g:ui_radio id="type_coverage" name="type" value="coverage" checked_value="${jvar_type}"
+		   onchange="onAddTypeSelect('div_coverage');"
+		   text="${gs.getMessage('Provide on-call coverage for another roster member')}" />
+	   </td>
+	</tr>
+
+	<tr>
+	   <td nowrap="true">
+		<div id="div_coverage" style="display:${jvar_coverage_display}">
+		   <g:ui_spacer pixels="20" />
+		   ${gs.getMessage('Member:')}<g:ui_spacer />
+		   <select id="select_coverage">
+			<g:evaluate jelly="true">
+			   var gr = new GlideRecord("sys_user");
+			   gr.addQuery("JOINsys_user.sys_id=sys_user_grmember.user!group=" + jelly.jvar_group);
+			   gr.orderBy("name");
+			   gr.query();
+			</g:evaluate>
+
+			<j:while test="${gr.next()}">
+			   <option value="${gr.sys_id}">${gr.name}</option>
+		    </j:while>
+		   </select>
+		   <g:ui_spacer pixels="20" />
+		   ${gs.getMessage('Covering on:')}
+		   <g:ui_spacer />
+		   <select id="select_coverage_on">
+			<g:evaluate jelly="true">
+			   // get timeslots for rotas belonging to group
+			   // test those timeslots against user's provided slot of sysparm_start/sysparm_end
+			   // and list the rosters for those rotas
+			   // plus 'All' (if there's more than one)
+			   var grr = new GlideRecord("cmn_rota_roster");
+			   grr.addQuery('rota.group', jelly.jvar_group);
+			   grr.addQuery('rota.active', true);
+			   grr.orderBy("name");
+			   grr.query();
+			</g:evaluate>
+			<j:set var="jvar_count" value="0" />
+			<j:set var="jvar_all" value="" />
+			<j:while test="${grr.next()}">
+			   <g:evaluate var="jvar_include" jelly="true">
+				var rotaSched = new GlideSchedule(grr.rota.schedule + '');
+				// NB. sysparm_start and sysparm_end are in the timezone of the user setting/looking at the calendar
+				// NOT the rota schedule timezone
+				var startGdt = new GlideDateTime();
+				startGdt.setDisplayValue(jelly.sysparm_start);
+				startGdt.addSeconds(1); // avoid overlapping a previous time-span
+				var endGdt = new GlideDateTime();
+				endGdt.setDisplayValue(jelly.sysparm_end);
+				endGdt.subtract(1000);  // or the next one
+				var overlapping = (rotaSched.isInSchedule(startGdt) || rotaSched.isInSchedule(endGdt));
+				overlapping;
+			   </g:evaluate>
+			   <j:if test="${jvar_include}">
+				<option value="${grr.sys_id}">${grr.name} (${grr.rota.name})</option>
+				<j:set var="jvar_count" value="${jvar_count+1}" />
+				<j:set var="jvar_all" value="${jvar_all}${grr.sys_id}," />
+			   </j:if>
+		    </j:while>
+			<j:if test="${jvar_count &gt; 1}">
+			   <option value="(all)${jvar_all}">${gs.getMessage('All')}</option>
+			</j:if>
+			<j:if test="${jvar_count == 0}">
+			   <g:evaluate jelly="true">
+				// look directly for matching schedules of a rota if there are no rosters
+				grr = new GlideRecord("cmn_rota");
+				grr.addQuery("group", jelly.jvar_group);
+				grr.orderBy("name");
+				grr.query();
+			   </g:evaluate>
+			   <j:set var="jvar_rcount" value="0" />
+			   <j:set var="jvar_rall" value="" />
+			   <j:while test="${grr.next()}">
+				<g:evaluate var="jvar_rinclude" jelly="true">
+				   var rotaSched = new GlideSchedule(grr.schedule + '');
+				   // NB. sysparm_start and sysparm_end are in the timezone of the user setting/looking at the calendar
+				   // NOT the rota schedule timezone
+				   var startGdt = new GlideDateTime();
+				   startGdt.setDisplayValue(jelly.sysparm_start);
+				   startGdt.addSeconds(1); // avoid overlapping a previous time-span
+				   var endGdt = new GlideDateTime();
+				   endGdt.setDisplayValue(jelly.sysparm_end);
+				   endGdt.subtract(1000);  // or the next one
+				   var overlapping = (rotaSched.isInSchedule(startGdt) || rotaSched.isInSchedule(endGdt));
+				   overlapping;
+				</g:evaluate>
+				<j:if test="${jvar_rinclude}">
+				   <option value="R:${grr.sys_id}">${grr.name}</option>
+				   <j:set var="jvar_rcount" value="${jvar_rcount+1}" />
+				   <j:set var="jvar_rall" value="${jvar_rall}${grr.sys_id}," />
+				</j:if>
+			 </j:while>
+			   <j:if test="${jvar_rcount &gt; 1}">
+				<option value="(all)${jvar_rall}">${gs.getMessage('All')}</option>
+			   </j:if>
+			   <j:if test="${jvar_rcount == 0}">
+				<option value="(unavailable)">${gs.getMessage('No schedules cover that time-slot')}</option>
+			   </j:if>
+			</j:if>
+		   </select>
+	     </div>
+	   </td>
+	</tr>
+
+	<tr class="io_label">
+	   <td>
+		<g:ui_radio id="type_roster" name="type" value="roster" checked_value="${jvar_type}"
+		   onchange="onAddTypeSelect('div_roster');"
+		   text="${gs.getMessage('Specify extra times when a Shift is active')}" />
+	   </td>
+	</tr>
+
+	<tr>
+	   <td>
+		<div id="div_roster" style="display:${jvar_roster_display}">
+		   <g:ui_spacer pixels="20" />
+		   Shift:<g:ui_spacer />
+		   <select id="select_roster">
+			<g:evaluate jelly="true">
+			   var rotaGR = new GlideRecord("cmn_rota");
+			   rotaGR.addQuery("group", jelly.jvar_group);
+			   rotaGR.orderBy("name");
+			   rotaGR.query();
+			</g:evaluate>
+
+			<j:while test="${rotaGR.next()}">
+			   <g:ui_select_option value="${rotaGR.sys_id}" text="${rotaGR.name}" selected_value="${sysparm_roster}" />
+		    </j:while>
+		   </select>
+		</div>
+	   </td>
+	</tr>
+
+	<tr class="io_label">
+	   <td>
+		<g:ui_radio id="type_time_off" name="type" value="time_off" checked_value="${jvar_type}"
+		   onchange="onAddTypeSelect('div_time_off');"
+		   text="${gs.getMessage('Schedule time off for a group member')}" />
+	   </td>
+	</tr>
+
+	<tr>
+	   <td>
+		<div id="div_time_off" style="display:${jvar_time_off_display}">
+		   <g:evaluate>
+			gr.setLocation(-1);
+		   </g:evaluate>
+
+		   <g:ui_spacer pixels="20" />
+		   Member:<g:ui_spacer />
+		   <select id="select_time_off">
+			<j:while test="${gr.next()}">
+			   <option value="${gr.sys_id}">${gr.name}</option>
+		    </j:while>
+		   </select>
+		</div>
+	   </td>
+	</tr>
+
+	<tr id="dialog_buttons">
+	   <td colspan="2" align="right" style="padding-top: 5px;">
+		<g:dialog_form_buttons_ok_cancel>${gs.getMessage('uppercase_add')}</g:dialog_form_buttons_ok_cancel>
+	   </td>
+	</tr>
+   </table>
+   </div>
+</g:ui_form>

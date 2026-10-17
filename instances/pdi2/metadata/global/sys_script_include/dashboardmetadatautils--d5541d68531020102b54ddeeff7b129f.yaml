@@ -1,0 +1,76 @@
+_meta:
+  hash: 1c8cf3c67f6de21116c90e0afb7f5dbd570a2d18a45583449fed6b6c8af76de7
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: admin
+  sys_created_on: 2020-11-02 09:06:06
+  sys_id: d5541d68531020102b54ddeeff7b129f
+  sys_mod_count: '12'
+  sys_package: e4d776fb8c1903100a22deb6dd2b4e50
+  sys_scope: global
+  sys_update_name: sys_script_include_d5541d68531020102b54ddeeff7b129f
+  sys_updated_by: admin
+  sys_updated_on: 2020-11-04 15:31:11
+access: package_private
+active: 'false'
+api_name: global.DashboardMetadataUtils
+caller_access: ''
+client_callable: 'false'
+description: |-
+  Gets dashboard structure metadata. Based on passed dashboard sys id, returns info about all the associated tabs  and their content.
+
+  Output example:
+  { 
+    "sysId": "0b35c80ceb10220078e44d3df106fe61",
+    "noOfTabs": 1,
+    "tabs": [
+      {
+        "noOfWidgets": 1,
+        "widgets": [
+          {
+            "portalSectionSysId": "ccc40e32ebf3120078e44d3df106fed4",
+            "renderer": "com.glide.ui.portal.RenderReport",
+            "sys_id": "c03d6d5aeba312009add4d3df106fe26",
+            "title": "CMDB Health Dashboard Scheduled Jobs",
+            "layout": {
+              "posx": "0",
+              "posy": "0",
+              "height": "11",
+              "width": "12"
+            },
+            "supported": true
+          }
+        ],
+        "sysId": "58b44672ebf3120078e44d3df106fe97"
+      }
+    ]
+  }
+
+  Structure details
+  Each dashboard tab has associated two references for its content: sys_portal_page (portal page) and sys_grid_canvas (canvas page). 
+  If the system property that enables the Responsive Dashboards is ON - we always show the content associated with the sys_grid_canvas record in the dashboard tab. If it is OFF, then dashboard tab displays the content associated with the portal page.
+  OOTB not all the dashboards are created as Responsive Dashboards -> those dashboard tabs are missing the sys_grid_canvas reference. Most of the non-responsive dashboards are migrated during upgrade with a fix script, but the ones that are part of uninstalled plugins get skipped. After the upgrade, non-responsive dashboards that get installed later, are migrated on the fly when the user opens them using the custom Dashboards UI. Because of this logic, we need in to take into account in our current script that OOTB we will have dashboards that are missing the canvas reference if they were not yet opened.
+
+  Basic key widget preferences, as renderer, type and title are always stored in the sys_portal_preferences table. It doesn't matter if we are talking about widgets belonging to a homepage, a non-responsive  or responsive dashboard.
+  in the case of widgets that belong to a responsive layout, we get additional information about widget layout as: posx, posy, width and height from the sys_grid_canvas_pane record.
+
+  TODO: in order to benefit from widget layout properties for our conversion, we would need to make sure that OOTB dashboards are Responsive. No dashboard tab should be missing the sys_grid_canvas reference.
+  The teams that own the OOTB dashboards can use the 'Unload Dashboard' functionality to generate all the required files they need to update their plugins with.
+
+
+  Widget Renders List
+  PAR: com.snc.pa.ui.RenderPerformanceAnalytics,  com.glideapp.home.RenderHomepagePublishers, com.glide.ui.portal.RenderReport
+  Service Catalog: com.glideapp.servicecatalog.RenderCategory, com.glideapp.servicecatalog.RenderCatalog
+  Javascript: com.glide.ui.portal.RenderJavascript
+  Others: com.glide.ui.portal.RenderGadget, com.glide.ui.portal.RenderDashboard, com.glide.cms.RenderBlock
+
+
+  Future concers for upgrading customers regarding widget types:
+  Edge case: If a user creates a *new* PA widget from the dashboard, the widget type stored in the sys_portal_preferences is set generically to 'pa_widget'. If the customer has  Workbench widgets that were created from the dashboard, we can't identify them. In case of reporting widgets when they are created from dashboard, the type is not set at all.
+  TODO: check that we don't have OOTB use cases like the ones mentioned above.
+mobile_callable: 'false'
+name: DashboardMetadataUtils
+sandbox_callable: 'false'
+sys_name: DashboardMetadataUtils
+sys_policy: ''

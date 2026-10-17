@@ -1,0 +1,43 @@
+<g:ui_form>
+<g:evaluate var="jvar_gr" object="true" jelly="true">
+  // find existing versions
+  var table = "sys_ws_version";
+  var service_definition = "${RP.getWindowProperties().get('service_definition')}";
+  var gr = new GlideRecordSecure(table);
+  gr.addQuery('web_service_definition',service_definition);
+  gr.orderByDesc('version');
+  gr.query();
+  gr;
+</g:evaluate>
+  <input type="HIDDEN" name="table" id="table" value="${table}"/>
+  <input type="HIDDEN" name="service_definition" id="service_definition" value="${service_definition}"/>
+  <input type="HIDDEN" name="fields" id="fields" value="${versions}"/>
+
+	<div id="dialog_copy_operation_container">
+	<div class="row">
+		<div class="col-sm-12">
+      	<span class="input-group-checkbox">
+	  	<input id="ni.default_version" style="display:none;" name="ni.default_version" value="false" class="checkbox" type="checkbox"/>
+	  	<input id="default_version" value="true" type="hidden" name="default_version"/>
+		   <label for="ni.default_version" class="checkbox-label">${gs.getMessage('Make this version the default')}</label>
+			</span>
+    	</div>
+    </div>
+	  <br />
+	<div class="row">
+		<label class="control-label col-sm-6">${gs.getMessage('Copy existing resources from version:')}</label>
+		<span class="col-sm-4">
+			   <select id="selected_version" name="selected_version" class="form-control" aria-required="true">
+		   	<option value="none">-- None --</option> 
+		   	<j:while test="${jvar_gr.next()}">
+			   	<option value="${jvar_gr.getValue('sys_id')}">${jvar_gr.getValue('version_id')}</option>
+		   	</j:while>   
+	       	</select>
+		</span>
+	</div>
+  <footer class="modal-footer flex row">
+             <button data-dismiss="modal" class="btn btn-default" id="cancel_button">Cancel</button>
+             <button data-dismiss="modal" class="btn btn-primary" id="ok_button" onclick="validateAndSubmit()">OK</button>
+   </footer>
+</div>
+</g:ui_form>

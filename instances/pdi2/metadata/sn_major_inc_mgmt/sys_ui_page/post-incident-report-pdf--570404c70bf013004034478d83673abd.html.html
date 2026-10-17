@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		body{
+			font-family: SourceSansPro;
+			padding: 0px !important;
+		}
+		.header {
+			border-bottom: 2px solid #dddedf;
+			padding-left: 13px;
+			padding-right: 13px;
+			padding-top: 17px;
+			padding-bottom: 17px;
+			font-size: 18px;
+			font-family: SourceSansPro;
+		}
+		.title-section {
+			border-bottom: 1px solid #bdc0c4;
+			padding: 20px;
+			font-size: 15px;
+		}
+		.content {
+			padding: 20px;
+			border-bottom: 1px solid #bdc0c4;
+		}
+		.description-panel {
+			padding: 12px 20px 12px 20px;
+			color: #343D47;
+			border-bottom: 1px solid #E6E8EA;
+			background: rgba(230, 232, 234, 0.5);
+		}
+		.description-panel h1 {
+			font-family: SourceSansPro;
+			font-size: 24px;
+			margin: 0;
+		}
+		.description-panel .columns {
+			font-size: 13px;
+			margin-top: 10px;
+		}
+		.description-panel .left {
+			float: left;
+			max-width: 80%;
+		}
+		.description-panel .right {
+			float: right;
+			max-width: 20%;
+		}
+		.description-panel .duration {
+			color: #485563;
+			font-size: 24px;
+		}
+		.description-panel .duration-indicator {
+			font-size: 12px;
+			margin-top: -6px;
+			color: #81878e;
+			margin-left: 1px;
+		}
+		.dot {
+			height: 5px;
+			width: 5px;
+			background-color: #000000;
+			border-radius: 50%;
+			display: inline-block;
+			margin-bottom: 2px;
+			margin-left: 5px;
+			margin-right: 5px;
+		}
+		.related-list {
+			padding-top: 20px;
+		}
+		.related-list:first-child {
+			padding-top: 0px;
+		}
+		.related-records-wrapper {
+			margin-top: 20px;
+		}
+		.resolution-notes, .related-records-wrapper {
+			border: 1px solid #BDC0C4;
+			border-radius: 3px;
+			box-shadow: 0 1px 1px 0 rgba(0,0,0,0.2);
+		}
+		.resolution-notes .header, .related-records-wrapper .header{
+			font-size: 18px;
+			border-bottom: 1px solid #E6E8EA;
+		}
+		.resolution-notes .content, .related-records-wrapper .content{
+			padding: 13px;
+		}
+		.resolution-notes .content pre, .related-records-wrapper .content pre{
+			background-color: transparent;
+			border: 0;
+			padding: 0;
+			font-size: 13px;
+			white-space: pre-wrap;
+			font-family: inherit;
+		}
+		strong {
+			font-family: SourceSansProBold;
+		}
+		html.rtl .description-panel .left {
+			float: right;
+		}
+		html.rtl .description-panel .right {
+			float: left;
+		}
+		#page_timing_div {
+			display: none;
+		}
+		body.-polaris .header-text {
+			color: RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28)));
+		}
+		body.-polaris .timeline .timeline-table td {
+			color: RGB(var(--now-color_text--secondary, var(--now-color--neutral-15, 44, 53, 55)));
+		}
+		body.-polaris .cards {
+			color: RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28))) !important;
+		}
+		body.-polaris .description-panel {
+			color: RGB(var(--now-color_text--tertiary, var(--now-color--neutral-12, 66, 80, 81)));
+			background: RGB(var(--now-color_background--secondary, var(--now-color--neutral-1, 246, 247, 247)));
+		}
+		body.-polaris .description-panel .duration {
+			color: RGB(var(--now-color_text--tertiary, var(--now-color--neutral-12, 66, 80, 81)));
+		}
+		body.-polaris .dot {
+			background-color: RGB(var(--now-color_background--primary-actionable, var(--now-color--neutral-18, 22, 27, 28)));
+		}
+		body.-polaris .timeline {
+			color: RGB(var(--now-color_text--secondary, var(--now-color--neutral-15, 44, 53, 55)));
+		}
+		@media print {
+			img {
+				display: inline;
+				visibility: visible;
+			}
+		}
+	</style>
+	<g:evaluate var="jvar_sysparm_sys_id" expression="RP.getParameterValue('sysparm_sys_id')" jelly="true"/>
+	<g:evaluate var="jvar_incidentgr" jelly="true" object="true">
+		var incidentGr = new GlideRecord('incident');
+		incidentGr.get(RP.getParameterValue('sysparm_sys_id'));
+		incidentGr;
+	</g:evaluate>
+	<g:evaluate jelly="true" object="true">
+		var impactedServicesGr = new GlideAggregate('task_cmdb_ci_service');
+		impactedServicesGr.addAggregate('COUNT');
+		impactedServicesGr.addQuery('task', jelly.jvar_sysparm_sys_id);
+		impactedServicesGr.query();
+		var impactedServicesCount = 0;
+		if (impactedServicesGr.next())
+			impactedServicesCount = impactedServicesGr.getAggregate('COUNT');
+
+		var cmdbCIOutageGr = new GlideAggregate('task_outage');
+		cmdbCIOutageGr.addAggregate('COUNT');
+		cmdbCIOutageGr.addQuery('task', jelly.jvar_sysparm_sys_id);
+		cmdbCIOutageGr.query();
+		var outageCount = 0;
+		if (cmdbCIOutageGr.next())
+			outageCount = cmdbCIOutageGr.getAggregate('COUNT');
+
+		var affectedLocationGr = new GlideAggregate('task_location');
+		affectedLocationGr.addAggregate('COUNT');
+		affectedLocationGr.addQuery('task', jelly.jvar_sysparm_sys_id);
+		affectedLocationGr.query();
+		var affectedLocationCount = 0;
+		if (affectedLocationGr.next())
+			affectedLocationCount = affectedLocationGr.getAggregate('COUNT');
+		
+		var timelineStartGDT = new GlideDateTime(jelly.jvar_incidentgr.sys_created_on);
+		if (GlidePluginManager.isActive('com.glideapp.itom.snac')) {
+			var alertSysIds = new MajorIncidentEvtMgmtUtils().getRelatedAlerts(jelly.jvar_sysparm_sys_id);
+			if (alertSysIds) {
+				var alertGr = new GlideRecord('em_alert');
+				alertGr.addQuery('sys_id', 'IN', alertSysIds);
+				alertGr.addQuery('sys_created_on', '&lt;', timelineStartGDT);
+				alertGr.orderBy('sys_created_on');
+				alertGr.setLimit(1);
+				alertGr.query();
+				if (alertGr.next() &amp;&amp; alertGr.canRead())
+					timelineStartGDT.setValue(alertGr.getValue('sys_created_on'))
+			}
+		}
+		var identify = jelly.jvar_incidentgr.proposed_on;
+		if (!identify)
+			identify = jelly.jvar_incidentgr.promoted_on;
+	</g:evaluate>
+	<g:evaluate var="jvar_duration" jelly="true" object="true">
+		function formatNumber(number) {
+			if (number > 9)
+				return number;
+			return "0" + number;
+		}
+		var lessThanOneDay = false;
+		var sysCreatedOnGDT = new GlideDateTime(jelly.jvar_incidentgr.sys_created_on);
+		var resolvedAtGDT = new GlideDateTime(jelly.jvar_incidentgr.resolved_at);
+		if (!resolvedAtGDT.isValid()) {
+			resolvedAtGDT = new GlideDateTime(jelly.jvar_incidentgr.closed_at);
+		}
+		var duration = GlideDateTime.subtract(sysCreatedOnGDT, resolvedAtGDT);
+		var milliseconds = new GlideDateTime(duration.getValue()).getNumericValue();
+		var totalSeconds = milliseconds / 1000;
+		totalSeconds = Math.abs(totalSeconds);
+		var days = formatNumber(Math.floor(totalSeconds / 60 / 60 / 24));
+		var hours = formatNumber(Math.floor(totalSeconds / 60 / 60) % 24);
+		var minutes= formatNumber(Math.floor(totalSeconds / 60) % 60);
+		var seconds = formatNumber(totalSeconds % 60);
+		if (days == "00") {
+			lessThanOneDay = true;
+			hours + ":" + minutes + ":" + seconds;
+		}
+		else
+			days + ":" + hours + ":" + minutes + ":" + seconds;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_canExportPIR" jelly="true" object="true">
+		var canExportPIR = new global.MIMWorkbenchUtil().canExportPIR(jelly.jvar_incidentgr);
+		canExportPIR;
+	</g:evaluate>
+	
+	<j:if test="${incidentGr.isValid() == false}">
+		<div class="notification notification-danger" style="margin: 10px;">
+			<div class="outputmsg_text">
+				${gs.getMessage('Invalid Incident SysId')}
+			</div>
+		</div>
+	</j:if>
+
+	<j:if test="${incidentGr.isValid() == true &amp;&amp; canExportPIR == false}">
+		<div class="notification notification-danger" style="margin: 10px;">
+			<div class="outputmsg_text">
+				${gs.getMessage('Security constraints prevent viewing this page')}
+			</div>
+		</div>
+	</j:if>
+
+	<j:if test="${incidentGr.isValid() == true &amp;&amp; canExportPIR == true}">
+	<div class="header">
+		<b>${gs.getMessage('Post Incident Report: {0}',[incidentGr.getDisplayValue('number')])}</b>
+	</div>
+	<div class="description-panel">
+		<div class="left">
+			<div><h1><b>
+				<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_text_field" text="${incidentGr.getDisplayValue('short_description')}" />
+			</b></h1></div>
+			<div>
+				${incidentGr.getElement('sys_created_on').getLabel()}: <g:macro_invoke macro="sn_major_inc_mgmt_pir_report_text_field" text="${incidentGr.getDisplayValue('sys_created_on')}" /> <span class="dot"></span>
+				${incidentGr.getElement('assigned_to').getLabel()}: <g:macro_invoke macro="sn_major_inc_mgmt_pir_report_text_field" text="${incidentGr.getDisplayValue('assigned_to')}" /><span class="dot"></span>
+				${incidentGr.getElement('priority').getLabel()}: <g:macro_invoke macro="sn_major_inc_mgmt_pir_report_text_field" text="${incidentGr.getDisplayValue('priority')}" /><span class="dot"></span>
+				${incidentGr.getElement('category').getLabel()}: <g:macro_invoke macro="sn_major_inc_mgmt_pir_report_text_field" text="${incidentGr.getDisplayValue('category')}" />
+			</div>
+		</div>
+		<div class="right">
+			<div>
+				${gs.getMessage('Duration')}
+			</div>
+			<div class="duration">
+				${jvar_duration}
+			</div>
+			<div class="duration-indicator">
+				<j:if test="${lessThanOneDay}">
+					${gs.getMessage('(HH:MM:SS)')}
+				</j:if>
+				<j:if test="${!lessThanOneDay}">
+					${gs.getMessage('(DD:HH:MM:SS)')}
+				</j:if>
+			</div>
+		</div>
+		<div style="clear: both;"></div>
+	</div>
+
+	<g:macro_invoke macro="sn_major_inc_mgmt_pir_cards" counts="${impactedServicesCount},${outageCount},${affectedLocationCount}" titles="${gs.getMessage('Impacted Services')},${gs.getMessage('Outages')},${gs.getMessage('Affected Locations')}"/>
+
+	<g:evaluate var="jvar_showTimeline" jelly="true" object="true">
+		var showTimeline = jelly.jvar_incidentgr.getValue('promoted_on') !== '';
+		showTimeline;
+	</g:evaluate>
+	<j:if test="${jvar_showTimeline == 'true'}">
+		<div class="title-section">
+			<b>${gs.getMessage('Incident Response Timeline')}</b>
+		</div>
+		<div class="content">
+			<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_timeline" start="${timelineStartGDT}" identify="${identify}" response="${incidentGr.getValue('promoted_on')}" resolution="${incidentGr.getValue('resolved_at')}" close="${incidentGr.getValue('closed_at')}" />
+		</div>
+	</j:if>
+	<div class="title-section">
+		<b>${incidentGr.getElement('overview').getLabel()}</b>
+	</div>
+	<div class="content">
+		<g:macro_invoke macro="pir_report_html_field" html="${incidentGr.getDisplayValue('overview')}" />
+	</div>
+
+	<div class="title-section">
+		<b>${incidentGr.getElement('lessons_learned').getLabel()}</b>
+	</div>
+	<div class="content">
+		<g:macro_invoke macro="pir_report_html_field" html="${incidentGr.getDisplayValue('lessons_learned')}" />
+	</div>
+
+	<div class="title-section">
+		<b>${gs.getMessage('Details')}</b>
+	</div>
+	<div class="content">
+		<div class="related-list">
+			<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_related_list_table" table="task_cmdb_ci_service" title="${gs.getMessage('Impacted Services')}" query="task=${jvar_sysparm_sys_id}" columns="cmdb_ci_service,cmdb_ci_service.owned_by" />
+		</div>
+		<div class="related-list">
+			<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_related_list_table" table="cmdb_ci_outage" title="${gs.getMessage('Outages')}" query="JOINcmdb_ci_outage.sys_id=task_outage.outage!task=${jvar_sysparm_sys_id}" columns="cmdb_ci,type,begin,end" />
+		</div>
+		<div class="related-list">
+			<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_related_list_table" table="task_location" title="${gs.getMessage('Affected Locations')}" query="task=${jvar_sysparm_sys_id}" columns="location.name,location.city,location.country" />
+		</div>
+	</div>
+	<div class="title-section">
+		<b>${gs.getMessage('Resolution')}</b>
+	</div>
+	<div class="content">
+		<div class="resolution-notes">
+			<div class="header">
+				<span class="table-title"><b>${incidentGr.getElement('close_notes').getLabel()}</b></span>
+			</div>
+			<div class="content">
+				<pre>
+					<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_text_field" text="${incidentGr.getDisplayValue('close_notes')}" />
+				</pre>
+			</div>
+		</div>
+		<div class="related-records-wrapper">
+			<div class="header">
+				<span class="table-title"><b>${gs.getMessage('Related Records')}</b></span>
+			</div>
+			<div class="content">
+				<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_related_records"/>
+			</div>
+		</div>
+		<div class="related-list">
+			<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_related_list_table" table="problem" title="${gs.getMessage('Related Problems')}" query="parent=${jvar_sysparm_sys_id}" columns="number,short_description,assigned_to" />
+		</div>
+		<div class="related-list">
+			<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_related_list_table" table="change_request" title="${gs.getMessage('Related Change Requests')}" query="parent=${jvar_sysparm_sys_id}" columns="number,short_description,assigned_to" />
+		</div>
+		<j:if test="${GlidePluginManager.isActive('com.sn_cim') == true}">
+			<div class="related-list">
+				<g:macro_invoke macro="sn_major_inc_mgmt_pir_report_related_list_table" table="sn_cim_inbound_m2m" title="${gs.getMessage('Related Improvement Records')}" query="source_id=${jvar_sysparm_sys_id}" columns="cim_register,cim_register.short_description,cim_register.cim_estimate,cim_register.assigned_to" />
+			</div>
+		</j:if>
+	</div>
+
+	<div class="title-section">
+		<b>${incidentGr.getElement('timeline').getLabel()}</b>
+	</div>
+	<div class="content timeline">
+		<g:macro_invoke macro="pir_report_html_field" html="${incidentGr.getDisplayValue('timeline')}" />
+	</div>
+	</j:if>
+	<input type="hidden" id="whtp_ready_state" value="complete" />
+</j:jelly>

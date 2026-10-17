@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${!__ref__.getED().getBooleanAttribute('no_labels', false)}">
+	    <g:evaluate>
+	        var label_list = GlideLabelUtil.getRecentDisplayLabelsForUser(9);
+	        var more_labels_available = (label_list.size() == 9);
+	        if (more_labels_available)
+	            label_list.remove(8);
+	    </g:evaluate>
+		<optgroup label=" ${gs.getMessage('Assign Tag')}:">
+		    <j:set var="jvar_new_name" value="${gs.getMessage('New Tag')}"/>
+		    <option client="true"
+					href="newLabelPromptListAction('${jvar_ref}', '$[jvar_list_id]');"
+					disabled='true'
+					gsft_base_label="${jvar_new_name}"
+					gsft_row="true"
+					label="${jvar_new_name}"
+					aria-label="${gs.getMessage('Assign Tag')} ${jvar_new_name}"
+					gsft_is_action="true">
+				${SP}${SP}${SP}${jvar_new_name}
+	    	</option>
+
+			<j:forEach var="jvar_label" items="${label_list}">
+				<g:evaluate var="jvar_label_display" jelly="true" expression="GlideStringUtil.escapeHTML(jelly.jvar_label);"/>
+
+				<g:evaluate var="jvar_label_translated">
+                  gs.getMessage("${jvar_label_display}")
+                </g:evaluate>
+
+				<option
+					 class="list_action_option ${jvar_list_css}"
+					 gsft_check_condition="false"
+					 gsft_base_label="${jvar_label_translated}"
+					 gsft_is_action="true"
+					 client="true"
+					 aria-label="${gs.getMessage('Assign Tag')} ${NOESC:jvar_label_translated}"
+					 href="assignLabelToCheckedSysIds('${JS:jvar_label}', '${jvar_ref}', '$[jvar_list_id]')">
+					${SP}${SP}${SP}${NOESC:jvar_label_translated}
+				</option>
+			</j:forEach>
+		</optgroup>
+	    <j:set var="jvar_more_name" value="${gs.getMessage('More...')}"/>
+	    <j:if test="${more_labels_available}">
+	    <option client="true" href="assignLabelActionViaLookupModal('${jvar_ref}', '$[jvar_list_id]');" disabled='true' gsft_base_label="${jvar_more_name}" gsft_row="true" gsft_is_action="true" aria-label="${gs.getMessage('Assign Tag')} ${jvar_more_name}">${SP}${SP}${SP}${jvar_more_name}
+	    </option>
+	    </j:if>
+
+	    <j:if test="${label_list.size() > 0}">
+	        <optgroup label="${gs.getMessage('Remove Tag')}:">
+				<j:forEach var="jvar_label" items="${label_list}">
+					<g:evaluate var="jvar_label_display" jelly="true" expression="GlideStringUtil.escapeHTML(jelly.jvar_label);"/>
+
+					<g:evaluate var="jvar_label_translated">
+                     gs.getMessage("${jvar_label_display}")
+                    </g:evaluate>
+
+					<option
+					 class="list_action_option ${jvar_list_css}"
+					 gsft_check_condition="false"
+					 gsft_base_label="${jvar_label_translated}"
+					 gsft_is_action="true"
+					 client="true"
+					 aria-label="${gs.getMessage('Remove Tag')} ${NOESC:jvar_label_translated}"
+					 href="removeLabelFromCheckedSysIds('${JS:jvar_label}', '$[jvar_list_id]')">${SP}${SP}${SP}${NOESC:jvar_label_translated}</option>
+				</j:forEach>
+			</optgroup>
+	    <j:if test="${more_labels_available}">
+	    <option client="true" href="removeLabelActionViaLookupModal('${jvar_ref}', '$[jvar_list_id]');" disabled='true' gsft_base_label="${jvar_more_name}" gsft_row="true" gsft_is_action="true" aria-label="${gs.getMessage('Remove Tag')} ${jvar_more_name}">${SP}${SP}${SP}${jvar_more_name}
+	    </option>
+	    </j:if>
+
+	    </j:if>
+	    </j:if>
+</j:jelly>

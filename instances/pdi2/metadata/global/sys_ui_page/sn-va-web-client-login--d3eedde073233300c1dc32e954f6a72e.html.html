@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var = "jvar_redirect_uri" jelly="true" expression="gs.action.getGlideURI().toString().split('sysparm_redirect_uri=')[1]" />
+	<j:if test="${gs.isLoggedIn() != true}">
+		<g:evaluate>
+			var session = gs.getSession();
+			session.putProperty("login_redirect_url","/sn_va_web_client_login.do");
+			session.putProperty("redirect_url", decodeURIComponent("${jvar_redirect_uri}"));
+			session.putProperty('is_direct_redirect','true');
+		</g:evaluate>
+		<script>
+			window.location.href = "/navpage.do";
+		</script>
+	</j:if>
+	<j:if test="${gs.isLoggedIn() == true}">
+		<g:evaluate jelly="true" var="jvar_url">
+			var url = gs.getSession().getProperty('redirect_url');
+			if (!url) {
+				url = decodeURIComponent("${jvar_redirect_uri}");
+			}
+			url;
+		</g:evaluate>
+		<g:evaluate jelly="true" var="jvar_is_valid_url">
+			var session = gs.getSession();
+			session.clearProperty("login_redirect_url");
+			session.clearProperty("redirect_url");
+			session.clearProperty('is_direct_redirect');
+			var is_valid_url = false;
+			var redirectUrl = "${jvar_url}".replace(/&amp;(amp;)+/gi,'&amp;');
+			var allowed_hosts = gs.getProperty("com.glide.cs.web_client_login_redirect_urls");
+			var urlHostRegexp = new RegExp('^(([^:/?#]+):)(\/\/([^/?#]*))');
+
+			if (allowed_hosts) {
+				var allowedUrls = allowed_hosts.split(",");
+				for (var i = 0; i != allowedUrls.length; i++) {
+					var allowedUrl = allowedUrls[i].trim();
+
+					if (allowedUrl === redirectUrl) {
+						is_valid_url = true;
+					} else {
+						var redirectHost = urlHostRegexp.exec(redirectUrl);
+						if (redirectHost != null &amp;&amp; redirectHost[0] === allowedUrl) {
+							is_valid_url = true;
+						}
+					}
+				}
+			}
+			is_valid_url;
+		</g:evaluate>
+		<j:if test="${jvar_is_valid_url}">
+			<script>
+				var encodedRedirectUrl = "${NS,JS_STRING:jvar_url}";
+				var fixedURL = encodedRedirectUrl.replace(/&amp;(amp;)?/gi, '${AND}'.charAt(0));
+				window.top.location.href = fixedURL;
+			</script>
+		</j:if>
+		<j:if test="${!jvar_is_valid_url}">
+			<g:evaluate jelly="true">
+				var msg = gs.getMessage("The provided url {0} is not part the whitelisted urls, Please update the com.glide.cs.web_client_login_redirect_urls property with this url", "${jvar_url}");
+				gs.addErrorMessage(GlideStringUtil.escapeHTML(msg));
+			</g:evaluate>
+		</j:if>
+	</j:if>
+</j:jelly>

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<tbody data-sn-macro-sys-id="${jvar_macro_sys_id}" class="sc_request_approval_summarizer">
+    <tr>
+        <td class="label_left summary_text" width="100%">
+            ${gs.getMessage('Summary of Request being approved')}:
+            <g:label_spacing />
+        </td>
+    </tr>
+    <g:evaluate var="jvar_total"
+        expression="        
+        var sc_request = ${ref}.sysapproval;
+
+        var sc_req_labels = new GlideRecord('sc_req_item');
+        sc_req_labels.initialize();
+    
+        var sc_req_item = new GlideRecord('sc_req_item');
+        sc_req_item.addQuery('request', sc_request.sys_id);
+        sc_req_item.query();
+
+        var jvar_total = sc_request.price;
+        jvar_total;
+        " />
+    <tr>
+        <td width="100%">
+            <table class="table" width="100%">
+                <tr>
+                    <td class="label_left" width="150px">
+                        <g:label_spacing />
+                        ${sc_request.opened_by.sys_meta.label}:
+                    </td>
+                    <td>
+                        ${sc_request.opened_by.getDisplayValue()}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_left" width="150px">
+                        <g:label_spacing />
+                        ${sc_request.requested_for.sys_meta.label}:
+                    </td>
+                    <td>
+                        ${sc_request.requested_for.getDisplayValue()}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_left" width="150px">
+                        <g:label_spacing />
+                        ${gs.getMessage('Total')}:
+                    </td>
+                    <td>
+                        <g:currency_format double="${jvar_total}" />
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <j:set var="jvar_line_num" value="0" />
+    <tr>
+        <td width="100%">
+            <script>
+                function lineItemVeto(sc_req_item, state) {
+                    var form = addForm();
+                    form.action = 'service_catalog.do';
+                    form.name = 'service_catalog.do';
+                    form.id = 'service_catalog.do';
+                    form.method = "POST";
+                    var nameOfStack = $('sysparm_nameofstack');
+                    if (nameOfStack != null) {
+                        nameOfStack = nameOfStack.value;
+                        if (nameOfStack != '')
+                            addInput(form, "HIDDEN", "sysparm_nameofstack", nameOfStack);
+                    }
+                    addInput(form, "HIDDEN", "sysparm_action", "veto");
+                    addInput(form, "HIDDEN", "sysparm_id", sc_req_item);
+                    addInput(form, "HIDDEN", "sysparm_state", state);
+                    form.submit();
+                }
+            </script>
+            <table class="table" width="100%">
+                <thead>
+                    <tr>
+                        <th>
+                            ${gs.getMessage('Status')}
+                        </th>
+                        <th>
+                            ${sc_req_labels.number.sys_meta.label}
+                        </th>
+                        <th>
+                            ${sc_req_labels.description.sys_meta.label}
+                        </th>
+                        <th>
+                            ${sc_req_labels.price.sys_meta.label}
+                        </th>
+                        <th>
+                            ${sc_req_labels.quantity.sys_meta.label}
+                        </th>
+                        <th>
+                            ${gs.getMessage('Total')}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <j:while test="${sc_req_item.next()}">
+                        <j:set var="jvar_item_price" value="${sc_req_item.price * sc_req_item.quantity}" />
+                        <j:set var="jvar_overall_total" value="${jvar_overall_total + jvar_item_price}" />
+                        <j:set var="jvar_line_color" value="odd" />
+                        <j:set var="jvar_line_num" value="${jvar_line_num + 1}" />
+                        <j:if test="${jvar_line_num % 2 == 0}">
+                            <j:set var="jvar_line_color" value="even" />
+                        </j:if>
+                        <g:evaluate var="ni"
+                            expression="
+                            var smart_description = sc_req_item.cat_item.short_description;
+                            if (smart_description == null || smart_description == '' || smart_description == 'undefined')
+                               smart_description = sc_req_item.cat_item.name; 
+                            " />
+                        <g:evaluate var="jvar_isAuthorized" expression="
+                            var vetoUtil = new global.CatalogTransactionLineItemVeto();
+                            vetoUtil._isUserAuthorised(${ref}.sysapproval);
+                            " />
+
+                        <tr class="${jvar_line_color}">
+                            <j:choose>
+                                <j:when test="${sc_req_item.approval == 'rejected'}">
+                                    <td>
+                                        <img class="nopadding" src="images/workflow_rejected.gifx" alt="${gs.getMessage('Rejected')}" />
+                                    </td>
+                                </j:when>
+                                <j:when test="${sc_req_item.approval == 'requested'}">
+                                    <td>
+                                        <img class="nopadding" src="images/workflow_requested.gifx" alt="${gs.getMessage('Requested')}" />
+                                    </td>
+                                </j:when>
+                                <j:when test="${sc_req_item.approval == 'approved'}">
+                                    <td>
+                                        <img class="nopadding" src="images/workflow_approved.gifx" alt="${gs.getMessage('Approved')}" />
+                                    </td>
+                                </j:when>
+                                <j:when test="${sc_req_item.approval == 'not requested'}">
+                                    <td>
+                                        <img class="nopadding" src="images/workflow_pending.gifx" alt="${gs.getMessage('Pending')}"/>
+                                        <j:if test="${jvar_isAuthorized}">
+                                            <div style="display: inline-block; padding-left: 10px; padding-right: 10px;">
+                                                <a tabindex="0" role="button" onclick="lineItemVeto('${sc_req_item.sys_id}', 'reject')" class="web line_item_veto_control">${gs.getMessage('Deny')}</a>
+                                            </div>
+                                            <div style="display: inline-block; padding-right: 10px;">
+                                                <a tabindex="0" role="button" onclick="lineItemVeto('${sc_req_item.sys_id}', 'accept')" class="web line_item_veto_control">${gs.getMessage('Accept')}</a>
+                                            </div>
+                                        </j:if>
+                                    </td>
+                                </j:when>
+                            </j:choose>
+                            <td valign="top">
+                                <g2:evaluate var="jvar_pop_target" expression="$[ref].getRecordClassName()" />
+                                <a tabindex="0" role="button" class="linked" target="gsft_main" href="sc_req_item.do?sys_id=${sc_req_item.sys_id}"
+                                    onmouseover="popListDiv(event, 'sc_req_item', '${sc_req_item.sys_id}','${JS:sysparm_view}')" onmouseout="lockPopup(event)">
+                                    <img src="images/icons/hover_icon.gifx" class="clsshort" alt="${gs.getMessage('uppercase_view')}" />
+                                </a>
+                                <a tabindex="0" role="button" class="linked" target="gsft_main" href="sc_req_item.do?sys_id=${sc_req_item.sys_id}">
+                                    ${sc_req_item.number}
+                                </a>
+                            </td>
+                            <td valign="top" width="50%">
+                                <g:call function="variable_summary_approval.xml" question_name="${sc_req_item.sys_id}" question_help_tag="${smart_description}"
+                                    sc_req_item="${sc_req_item.sys_id}" help_class="${jvar_line_color}" />
+                            </td>
+                            <td valign="top">
+                                <g:currency_format value="${sc_req_item.price.getDisplayValue()}" />
+                            </td>
+                            <td valign="top"> ${sc_req_item.quantity}</td>
+                            <td valign="top">
+                                <g:currency_format double="${jvar_item_price}" />
+                            </td>
+                        </tr>
+                    </j:while>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+	</tbody>
+</j:jelly>

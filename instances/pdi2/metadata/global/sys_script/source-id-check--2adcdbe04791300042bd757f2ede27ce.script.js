@@ -1,0 +1,1 @@
+current.setAbortAction(true);

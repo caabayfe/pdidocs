@@ -1,0 +1,4 @@
+var QB_SUGGESTED_REL_COMPUTATION_JOB = "CMDB Query Builder Suggested Rels Computation SysTrigger";
+var QB_SUGGESTED_REL_COMPUTATION_SCRIPT = "SNC.QueryBuilderSuggestedRelationships.computeQueryBuilderSuggestedRels();";
+
+SNC.QueryBuilderSuggestedRelationships.createSuggestedRelsSysTrigger(QB_SUGGESTED_REL_COMPUTATION_JOB, QB_SUGGESTED_REL_COMPUTATION_SCRIPT);

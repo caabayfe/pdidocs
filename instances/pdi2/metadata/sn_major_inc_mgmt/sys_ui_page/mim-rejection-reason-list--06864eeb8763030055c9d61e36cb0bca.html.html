@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+		<g2:set_if var="jvar_selected_incidents" test="$[RP.getParameterValue('selected_incidents') == '']"
+            true="$[RP.getWindowProperties().selected_incidents]"
+            false="$[RP.getParameterValue('selected_incidents')]"/>
+		<g:macro
+		dialog_id="mim_rejection_reason_list"
+		label_style="width: 18%; position: relative;"
+		field_style="width: 82%; position: relative; float: left;"
+		textarea_id="mim_rejection_reason_text"
+		textarea_label="${gs.getMessage('Work notes')}"
+		textarea_label_title="${gs.getMessage('A reason is required to reject this major incident candidate')}"
+		textarea_name="mim_rejection_reason_text"
+		textarea_onkeyup="enableButton()"
+		textarea_style="height:auto; width: 100%; resize: vertical;"
+		ok_action="postRejectConfirm"
+		ok=""
+		cancel="CustomEvent.fireAll('mi.rejectMIC.cancel');"
+		ok_id="mim_rejection_reason_ok_btn"
+		cancel_id="cancel_button"
+		ok_type="button"
+		cancel_type="button"
+		ok_text="${gs.getMessage('OK')}"
+		cancel_text="${gs.getMessage('Cancel')}"
+		ok_style_class="btn btn-primary disabled"
+		cancel_style_class="btn btn-default" />
+		<div style="" id="element.${jvar_textarea_id}" class="form-group form-horizontal is-required">
+			<label id="label-${jvar_textarea_id}" for="${jvar_textarea_id}" class="control-label" style="${jvar_label_style}">
+				<span id="status-${jvar_textarea_id}" mandatory="true" class="required-marker"></span>
+				<span data-toggle="tooltip" title="${jvar_textarea_label_title}" class="label-text">${JS,HTML:jvar_textarea_label}</span>
+			</label>
+			<div class="form-field input_controls" style="${jvar_field_style}">
+				<textarea required="true" data-toggle="tooltip" onkeyup="${jvar_textarea_onkeyup}" spellcheck="true" name="${jvar_textarea_id}" style="${jvar_textarea_style}" id="${jvar_textarea_id}" wrap="soft" class="form-control" />
+				<input name="sys_original.${jvar_textarea_id}" id="sys_original.${jvar_textarea_id}" type="hidden" value="" />
+			</div>
+		</div>
+		<div id="dialog_buttons" style="clear: both; padding-top: 20px;">
+			<g:dialog_buttons_ok_cancel ok="${jvar_ok}" ok_title="${jvar_ok_title}" cancel_title="${jvar_cancel_title}" cancel="${jvar_cancel}" ok_id="${jvar_ok_id}" ok_type="${jvar_ok_type}" ok_style_class="${jvar_ok_style_class}" />
+			<input type="hidden" value="$[jvar_selected_incidents]" name="selected_incidents" id="selected_incidents" />
+		</div>
+	<style>
+		.rtl #label-${JS,HTML:jvar_textarea_id} {
+			float: right;
+			text-align: right;
+		}
+
+		.rtl #status-${JS,HTML:jvar_textarea_id}:before {
+			padding-right: 0px;
+		}
+
+		.rtl #dialog_buttons {
+			float: left;
+		}
+
+		.ltr #label-${JS,HTML:jvar_textarea_id} {
+			float: left;
+			text-align: left;
+		}
+
+		.ltr #status-${JS,HTML:jvar_textarea_id}:before {
+			padding-left: 0px;
+		}
+
+		.ltr #dialog_buttons {
+			float: right;
+		}
+
+		#page_timing_div {
+			display: none;
+		}
+		#mim_rejection_reason_text {
+			resize: none !important;
+		}
+	</style>
+	<script>
+		addLoadEvent(
+			function() {
+				if (window['textareaResize'])
+					textareaResize('${JS,HTML:jvar_textarea_id}');
+				if ($j) {
+					var tooltipProperty = {animation: false, container: 'body'};
+					$j('#${JS,HTML:jvar_dialog_id}').find('[title]').tooltip(tooltipProperty).hideFix();
+					$j('#dialog_buttons').find('button').tooltip(tooltipProperty).hideFix();
+				}
+			}
+		);
+
+		function enableButton() {
+			var notes = "";
+			var textArea = $("${JS,HTML:jvar_textarea_id}");
+			if (textArea)
+				notes = textArea.value.trim();
+				var parentDiv = $("element.${JS,HTML:jvar_textarea_id}");
+			if (notes $[AND] parentDiv) {
+				parentDiv.removeClassName("is-required");
+				parentDiv.addClassName("is-filled");
+			}
+			if (!notes $[AND] parentDiv) {
+				parentDiv.removeClassName("is-prefilled");
+				parentDiv.removeClassName("is-filled");
+				parentDiv.addClassName("is-required");
+			}
+			var button = $("${JS,HTML:jvar_ok_id}");
+			if (notes $[AND] button) {
+				button.removeClassName("disabled");
+				button.writeAttribute('aria-disabled', false);
+				button.onclick = ${JS,HTML:jvar_ok_action};
+			}
+			if (!notes $[AND] button) {
+				button.addClassName("disabled");
+				button.writeAttribute('aria-disabled', true);
+				button.onclick = "";
+			}
+		};
+	</script>
+</j:jelly>

@@ -1,0 +1,3 @@
+function saveCredStore() {
+	SNCredStoreFormUtil.save();
+}

@@ -1,0 +1,100 @@
+<div ng-if="!isLoading" class="my-items-container panel panel-default b panel-wrapper">
+  <div class="panel-heading b-b">
+    <h2 id="{{data.instanceId}}-widget-title" class="panel-title">{{::data.title}}</h2>
+  </div>
+  <div class="activity-check" ng-if="c.checkForData()">
+    <p class="no-items">${You don't have any items yet.}</p>
+  </div>
+  <div class="my-items-body panel-body" aria-labelledby="{{data.instanceId}}-widget-title" role="region">
+    <div class="primary-activity-container" ng-if="c.primaryActivity && c.primaryActivity.totalItemCount > 0">
+      <div ng-init="activity = c.primaryActivity" ng-include="'activity-template'"></div>
+      <div class="list-view" ng-if="c.listViewData.length > 0">
+        <p class="list-count-summary" ng-if="c.data.listCountSummary">{{c.data.listCountSummary}}</p>
+        <div class="carousel-card-container" ng-if="(c.data.card_behaviour=='single')">
+          <div class="scrolling-panel">
+            <div class="slide-control-container left-control" ng-if="c.indicatorDots > 0 && c.activeIndicatorIndex != 0">
+              <div class="slide-control"
+                   ng-click="c.swipeLeft(1, $event)" tabindex="-1" aria-hidden="true">
+              </div>
+              <button  class="btn btn-default activity-control-circle left-button"
+                      aria-label="${Click to swipe the cards to left}" ng-click="c.swipeLeft(1, $event)">
+                <i class="glyphicon glyphicon-menu-left flip-icon-rtl"></i> 
+              </button>
+            </div>
+
+            <div ng-include="'card-template'"></div>
+
+            <div class="slide-control-container right-control" ng-if="c.indicatorDots > 0 && c.activeIndicatorIndex != c.indicatorDots-1">
+              <div class="slide-control"
+                   ng-click="c.swipeRight(1, $event)" tabindex="-1" aria-hidden="true">
+              </div>
+              <button class="btn btn-default activity-control-circle"
+                      aria-label="${Click to swipe the cards to right}" ng-click="c.swipeRight(1, $event)">
+                <i class="glyphicon glyphicon-menu-right flip-icon-rtl"></i> 
+              </button>
+            </div>
+            <div class="fader left-fade" ng-if="c.indicatorDots > 0" ng-show="c.activeIndicatorIndex != 0">
+            </div>
+            <div class="fader right-fade" ng-if="c.indicatorDots > 0"
+                 ng-show="c.activeIndicatorIndex != c.indicatorDots-1"></div>
+          </div>
+          <div class="scrolling-panel-footer">
+            <div ng-class="c.getIndicatorClass()" ng-if="c.indicatorDots > 0">
+              <span ng-repeat="x in [].constructor(c.indicatorDots) track by $index" class="activity-carousel-indicator circle" role="button" tabindex="0"
+                    ng-attr-aria-label="{{'Go to page ' + ($index + 1)}}" id="{{$index + 1}}" ng-click="c.indicatorNavigation($index, $event)"
+                    ng-class="c.getDotClass($index)" ng-attr-aria-current="{{$index === c.activeIndicatorIndex ? 'page' : undefined}}"></span>
+            </div>
+            <div class="view-all-container">
+              <a class="view-all" ng-href="{{c.primaryActivity.itemUrl}}"
+                 target="{{c.primaryActivity.target}}">${View all}
+                <i aria-hidden="true" class="right-arrow fa fa-chevron-right flip-icon-rtl"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-card-container" ng-if="(c.data.card_behaviour=='wrap')">
+          <div ng-include="'card-template'"></div>
+          <div class="view-all-container view-all-grid-container">
+            <a class="view-all" ng-href="{{c.primaryActivity.itemUrl}}"
+               target="{{c.primaryActivity.target}}">${View all}
+              <i aria-hidden="true" class="right-arrow fa fa-chevron-right flip-icon-rtl"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="summary-view-container">
+      <div ng-repeat="activity in c.activitySummaries track by $index">
+        <div ng-include="'activity-template'"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div ng-if="isLoading" class="skeleton-loading flex-column my-items-container panel-default">
+  <div class="panel-heading b-b">
+    <h3 class="panel-title">{{::data.title}}</h3>
+  </div>
+  <div class="my-items-body panel-body">
+    <span class="skeleton-loader primary-activity-heading-loader"></span>
+    <span class="skeleton-loader primary-activity-count-loader"></span>
+    <div class="cards-grid-container">
+      <div class="cards-grid-container" ng-repeat="item in [1,2,3]">
+        <div class="card-loader flex-column">
+          <span class="skeleton-loader item-badge-loader"></span>
+          <span class="skeleton-loader item-title-loader"></span>
+          <span class="skeleton-loader item-description-loader"></span>
+          <span class="skeleton-loader item-field-loader"></span>
+        </div>
+      </div>
+    </div>
+    <span class="skeleton-loader view-all-loader"></span>
+    <div class="summary-view-container">
+      <div class="flex-column" ng-repeat="item in [1,2,3,4]">
+        <span class="skeleton-loader secondary-activity-loader"></span>
+      </div>
+    </div>
+  </div>
+</div>

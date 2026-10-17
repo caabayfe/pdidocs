@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <style>
+        .-polaris .form-field .input-group-checkbox,
+        .-polaris .form-field .input-group-radio {
+            margin-block-start: var(--now-global-space--md, 10px);
+        }
+    </style>
+    <script src="scripts/template_import/GwtUploadExcelDlg.js"></script>
+    <g:requires name="scripts/template_import/GwtUploadExcelDlg.js"/>
+    <g:requires name="scripts/heisenberg/heisenberg_all.js" />
+    <g:evaluate var="jvar_import_table_label" jelly="true">
+        var td = GlideTableDescriptor.get(jelly.sysparm_target);
+        td.getLabel();
+    </g:evaluate>
+    <g:evaluate var="jvar_import_allowed" jelly="true">
+        var allowed = 'none';
+        var targetGR = new GlideRecordSecure(jelly.sysparm_target);
+        if(!GlideSecurityManager.tableLevelACLAllow(targetGR, 'write'))
+            allowed = 'none';
+        else if(GlideUtil.isExpressInstance() &amp;&amp; !gs.hasRole("maint") &amp;&amp; jelly.sysparm_target == "sys_properties") {
+            allowed = 'none';
+        } else if(targetGR.getTableScopeName() == gs.getCurrentApplicationName())
+            allowed = 'all';
+        else {
+            var gr = new GlideRecord("sys_db_object");
+            gr.addQuery("name",jelly.sysparm_target);
+            gr.query();
+            gr.next();
+
+            if(gr.update_access &amp;&amp; gr.create_access)
+                allowed = 'all';
+            else if(gr.update_access)
+                allowed = 'update';
+            else if(gr.create_access)
+                allowed = 'insert';
+        }
+        allowed;
+    </g:evaluate>
+    <j:set var="jvar_title" value="${gs.getMessage('Import external data into')} ${jvar_import_table_label}" />
+    <g:inline template="page_header.xml" />
+    <g:evaluate var="jvar_instanceType" jelly="true">
+        var instanceType = "";
+        if(GlideUtil.isExpressInstance())
+            instanceType = "${gs.getProperty('help.base.servicenow')}t_importdataintotables";
+        else
+            instanceType = "http://docs.servicenow.com/?context=Easy_Import";
+        instanceType;
+    </g:evaluate>
+    <j:set var="jvar_showExcelFormat" value="${gs.getProperty('glide.legacy.excel.export')}"/>
+    <j:choose>
+        <j:when test="${jvar_import_allowed == 'none'}">
+            <g:evaluate jelly="true">
+                gs.addInfoMessage(jelly.jvar_import_table_label +" table does not allow create and write access from other applications.");
+            </g:evaluate>
+        </j:when>
+        <j:otherwise>
+            <g:evaluate jelly="true">
+                var infoLink = "&lt;a href="+jelly.jvar_instanceType+" alt='Check Easy Import on ServiceNow Wiki' target='_blank'&gt;" + gs.getMessage("More Info") + "&lt;/a&gt;"; gs.addInfoMessage(gs.getMessage("Import Description") +" "+ infoLink);
+            </g:evaluate>
+        </j:otherwise>
+    </j:choose>
+    <div class="section-content">
+        <g:inline template="output_messages2.xml" />
+        <form name="import_template_upload" id="import_template_upload" method="post" enctype="multipart/form-data" onkeypress="return enterSubmitsForm(event,'false')">
+            <input type="hidden" id="sysparm_referring_url" name="sysparm_referring_url" value="${sysparm_referring_url}" />
+            <input type="hidden" id="sysparm_target" name="sysparm_target" value="${sysparm_target}" />
+            <input type="hidden" id="sysparm_process_stage" name="sysparm_process_stage" value="upload" />
+            <input type="hidden" id="sysparm_rows" name="sysparm_rows" value="${sysparm_rows}" />
+            <input type="hidden" id="sysparm_query" name="sysparm_query" value="${sysparm_query}" />
+            <input type="hidden" id="sysparm_view" name="sysparm_view" value="${sysparm_view}" />
+            <input type="hidden" id="import_allowed" name="import_allowed" value="${jvar_import_allowed}" />
+            <input type="hidden" id="sysparm_parent_tracker_id" name="sysparm_parent_tracker_id" value="" />
+            <input type="hidden" id="sysparm_template_type" name="sysparm_template_type" value="insert" />
+            <div class="form-horizontal" style="padding-top:15px;">
+                <div class="form-group">
+                    <div class="col-md-6 control-label" data-type="label">
+                        <label for="field1">${gs.getMessage("Do you want to insert or update data ?")}
+                        </label>
+                    </div>
+                    <div class="col-md-6 form-field">
+                        <fieldset id="sysparm_template_type_field_set">
+                            <div class="form-group clearfix">
+                                <div class="col-sm-12">
+                                    <span class="input-group-radio">
+                                        <input id="sysparm_template_type_insert" aria-label="${gs.getMessage('Insert Data')}" checked="checked" value="insert" class="radio" type="radio" name="sysparm_template_type" onclick="setTemplateType('insert')">
+                                        <label for="sysparm_template_type_insert" class="radio-label">${gs.getMessage("Insert")}</label>
+                                        </input>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <span class="input-group-radio">
+                                        <input id="sysparm_template_type_update" aria-label="${gs.getMessage('Update Data')}" class="radio" value="update" type="radio" name="sysparm_template_type" onclick="setTemplateType('update')">
+                                        <label for="sysparm_template_type_update" class="radio-label">${gs.getMessage("Update")}</label>
+                                        </input>
+                                    </span>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div data-type="label" class="col-md-6 control-label">
+                        <label>
+                            ${gs.getMessage("Do you want to create an Excel template to enter data ?")}
+                        </label>
+                    </div>
+                    <div class="col-md-6 form-field">
+                        <span class="input-group-checkbox">
+                            <input id="need_template" aria-label="${gs.getMessage('Create an Excel template to enter data')}" class="checkbox" type="checkbox" name="checkbox1" checked="checked" onchange="toggleSteps()"></input>
+                            <label for="need_template" class="checkbox-label"></label>
+                        </span>
+                    </div>
+                </div>
+                <div id="step1" style="padding-top:30px;">
+                  <div class="form-group" >
+                    <div class="col-md-6 control-label">
+                      <div tabindex="0" role="heading" aria-level="2">
+                        <b>${gs.getMessage("Step")} $[SP]
+                          <span id="step1_ins_idx">${gs.getMessage("1")}</span>:
+                          $[SP] ${gs.getMessage("Create an Excel template file to enter data")}
+                        </b>
+                      </div>
+                    </div>
+                </div>
+                    <j:if test="${jvar_showExcelFormat == 'true'}">
+                        <div class="form-group">
+                            <div class="col-md-6 control-label" data-type="label" >
+                                ${gs.getMessage("Excel template format")}
+                            </div>
+                            <div class="col-md-1">
+                                <select class="form-control" id="excel_type"  name="excel_type" style="margin-left:5px;">
+                                    <option value="xls" selected="true">XLS</option>
+                                    <option value="xlsx">XLSX</option>
+                                </select>
+                            </div>
+                        </div>
+                    </j:if>
+                    <div class="form-group" >
+                        <div data-type="label"  class="col-md-6 control-label" >
+                            <label title="${gs.getMessage('Do you want to create a template that contains all fields from the current table or only the fields visible in the list?')}">
+                                ${gs.getMessage("Include all fields in the template?")}
+                            </label>
+                        </div>
+                        <div class="col-md-6 form-field input_controls">
+                            <span class="input-group-checkbox">
+                                <input id="all_fields" aria-label="${gs.getMessage('Include all fields from the current table in template')}" class="checkbox" type="checkbox" name="checkbox2" checked="checked"></input>
+                                <label for="all_fields" class="checkbox-label"></label>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-field form-group">
+                        <div class="col-md-offset-6 col-md-4">
+                            <button type="button" id="download_template_btn" onclick="downloadTemplate(); return false;" style="margin-left:5px;" class="btn btn-default">${gs.getMessage("Create Excel template")}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" style="padding-top:30px;">
+                    <div class="col-md-6 control-label">
+                      <div tabindex="0" role="heading" aria-level="2">
+                        <b>${gs.getMessage("Step")} $[SP]
+                          <span id="step2_ins_idx">${gs.getMessage("2")}</span>:
+                          $[SP] ${gs.getMessage("Upload the template file")}
+                        </b>
+                      </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-6 control-label">
+                            <span>${gs.getMessage("Excel template file")}</span>
+                    </div>
+                    <div class="col-md-6 form-field">
+                        <input id="attachFile" aria-label="${gs.getMessage('Attach excel template file')}" name="attachFile" mandatory="true" type="file" aria-required="true" style="margin-top:5px;"/>
+                    </div>
+                </div>
+                <div class="form-group" style="padding-top:25px;">
+                    <div class="col-md-offset-6 col-md-6 form-field">
+                        <button id="import_button" onclick="return upload();" class="btn btn-primary" type="submit">${gs.getMessage("Upload")}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <iframe id="import_template_upload_frame" name="import_template_upload_frame" style="display: none; height: 0px;" />
+    </div>
+</j:jelly>

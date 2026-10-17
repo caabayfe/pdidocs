@@ -1,0 +1,158 @@
+- document: sys_hub_action_type_definition
+  document_key: d422b2b2ffc23110fc7a6b6d253bf1a7
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:24:29
+  sys_id: 10527ab2ffc23110fc7a6b6d253bf184
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-04-29 10:23:31
+  value: '{"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON","version":"1.0"}'
+  variable: 50527ab2ffc23110fc7a6b6d253bf16b
+- document: sys_hub_step_instance
+  document_key: 9a14be36ffc23110fc7a6b6d253bf16d
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:32:16
+  sys_id: 2614be36ffc23110fc7a6b6d253bf17e
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-04-29 10:23:31
+  value: |-
+    function insertFlowDataVarsValues(dataDefinitionId, flowDataRecordId) {
+        var sysFlowDataVarGR = new GlideRecord("sys_flow_data_var");
+        var tableValue = "var__m_sys_flow_data_var_" + dataDefinitionId;
+        sysFlowDataVarGR.addQuery("name", tableValue);
+        sysFlowDataVarGR.query();
+        while (sysFlowDataVarGR.next()) {
+            var variableSysId = sysFlowDataVarGR.getUniqueValue();
+            var gr = new GlideRecord('sys_variable_value');
+            gr.initialize();
+            gr.order = 0;
+            gr.variable = variableSysId;
+            gr.document = 'sys_flow_data';
+            gr.document_key = flowDataRecordId;
+            var newSysId = gr.insert();
+            if (!newSysId) {
+                gs.error('insertFlowDataVarsValues: failed to insert placeholder for variable ' + variableSysId);
+            }
+        }
+    }
+
+    (function execute(inputs, outputs) {
+        const grFlowData = inputs.flowData;
+        const oldTypeVals = inputs.oldActivityContext ? inputs.oldActivityContext.getElement('type_vals') : null;
+        const associatedTable = oldTypeVals != null ? inputs.oldActivityContext.associated_table : null;
+        const experienceStatusTable = oldTypeVals != null ? oldTypeVals.getVariableValue('experience_status_table') : null;
+        const oldFlowDataId = (associatedTable == 'sys_flow_data' && inputs.oldActivityContext.associated_record)
+                              ? inputs.oldActivityContext.associated_record : experienceStatusTable == 'sys_flow_data'
+                              ? oldTypeVals.getVariableValue('experience_status_record') : null;
+        // exit early, if there's no new flow data record provided
+        if (!(grFlowData && grFlowData.isValidRecord())) {
+            return; // No valid new flow data record
+        }
+        // exit early, if there's no previous Flow Data record but create empty placeholder values for current flow data record
+        if (!oldFlowDataId) {
+            insertFlowDataVarsValues(inputs.dataDefinitionId, grFlowData.getUniqueValue());
+            return;
+        }
+
+        const grOldFlowData = new GlideRecord('sys_flow_data');
+        // exit early, if previous Flow Data record isn't there
+        if (!grOldFlowData.get(oldFlowDataId)) return;
+
+        const geOldVars = grOldFlowData.getElement('vars');
+        const varNames = geOldVars.hasVariables() ? geOldVars.getVariableNames() : [];
+        // exit early, if there are no values to copy
+        if (!varNames.length) return;
+        // go over vars by name to update the values
+        for (var i = 0; i < varNames.length; i++) {
+            grFlowData.getElement('vars.' + varNames[i]).setValue(geOldVars.getVariableValue(varNames[i]));
+        }
+
+        grFlowData.update();
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: 6d737236ffc23110fc7a6b6d253bf145
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:29:29
+  sys_id: 35737236ffc23110fc7a6b6d253bf14e
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-26 20:29:29
+  value: sys_pd_activity_context
+  variable: f9cc66043b23220057a4a2e334efc42f
+- document: sys_hub_action_type_definition
+  document_key: d422b2b2ffc23110fc7a6b6d253bf1a7
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:24:29
+  sys_id: 58527ab2ffc23110fc7a6b6d253bf183
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-26 20:24:29
+  value: '0'
+  variable: 18527ab2ffc23110fc7a6b6d253bf16f
+- document: sys_hub_step_instance
+  document_key: 9a14be36ffc23110fc7a6b6d253bf16d
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:32:16
+  sys_id: 6214be36ffc23110fc7a6b6d253bf17e
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-26 20:32:16
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_step_instance
+  document_key: 6d737236ffc23110fc7a6b6d253bf145
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:29:29
+  sys_id: 71737236ffc23110fc7a6b6d253bf14e
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-26 20:29:29
+  value: '1'
+  variable: b019356673110010d70877186bf6a780
+- document: sys_hub_step_instance
+  document_key: 6d737236ffc23110fc7a6b6d253bf145
+  order: '300'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:29:29
+  sys_id: bd737236ffc23110fc7a6b6d253bf14d
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-26 20:29:29
+  value: sys_created_on
+  variable: a6da115587003300663ca1bb36cb0bc0
+- document: sys_hub_step_instance
+  document_key: 6d737236ffc23110fc7a6b6d253bf145
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2023-10-26 20:29:29
+  sys_id: f9737236ffc23110fc7a6b6d253bf14d
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-10-26 20:29:29
+  value: sort_desc
+  variable: c62b915587003300663ca1bb36cb0bd2

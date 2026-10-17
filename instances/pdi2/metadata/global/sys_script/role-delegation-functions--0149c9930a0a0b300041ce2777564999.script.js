@@ -1,0 +1,106 @@
+/**
+ Service-now.com
+
+ Description: Functions called by role delegation Record Producers and Workflows
+**/ 
+
+function getDelegatableRoles(group) {
+   answer = "";
+
+   if (gs.hasRole("admin")) {  // admin can grant any grantable role in any group
+      var role = new GlideRecord("sys_user_role");
+      role.addQuery("grantable", true);
+      role.addQuery("can_delegate", true);
+      role.query();
+      var i = 0;
+      while (role.next()) {
+         if (i > 0)
+            answer += ",";
+         answer += role.sys_id;
+         i++;
+      }
+   } else {  // non-admin role delegator can delegate roles they have
+      var roles = new GlideRecord("sys_user_has_role");
+      roles.addQuery("user", gs.getUserID());
+      roles.addQuery("role.can_delegate", true);
+      roles.addQuery("role.grantable", true);
+      roles.query();
+      var i = 0;
+      while (roles.next()) {
+         if (i > 0)
+            answer += ",";
+         answer += roles.role;
+         i++;
+      }
+   }
+   return answer;
+}
+
+function getMyRoleDelegationGroups() {
+  // admin can delegate to all groups
+  if (gs.hasRole("admin"))
+    return "";
+
+  // find groups where user has the role_delegator role in that group
+  var hasRoles = new GlideRecord("sys_user_has_role");
+  hasRoles.addQuery("user", gs.getUserID());
+  hasRoles.addQuery("role.name", "role_delegator");
+  hasRoles.query();
+  var al = new Packages.java.util.ArrayList();
+  while (hasRoles.next()) {
+    if (!al.contains(hasRoles.sys_id))
+      al.add(hasRoles.granted_by.sys_id);
+  }
+
+  var answer = "sys_idIN";
+  for (var i = 0; i < al.size(); i++) {
+    if (i > 0)
+      answer += ",";
+    answer += al.get(i);
+  }
+  return answer;
+}
+
+function getRoleDelegatorOptions() {
+  if (current.variables.role_delegator_group == "")
+    return '';
+
+  var userIDs = [];
+  var userGR = new GlideRecord('sys_user_grmember');
+  userGR.addQuery("group", current.variables.role_delegator_group);
+  userGR.query();
+  while (userGR.next())
+    userIDs.push(userGR.user.toString());
+  
+  return 'sys_idIN' + userIDs.join(',');
+}
+
+function getRoleDelegatorGroupOptions() {
+  if (current.variables.role_delegator_user == "")
+    return '';
+
+  var groupIDs = [];
+  var userGR = new GlideRecord('sys_user_grmember');
+  userGR.addQuery("user", current.variables.role_delegator_user);
+  userGR.query();
+  while (userGR.next())
+    groupIDs.push(userGR.group.toString());
+  
+  return 'sys_idIN' + groupIDs.join(',');
+}
+
+function getUsersForRoleDelegation() {
+  if (current.variables.delegate_roles_group == "")
+    return '';
+
+  var userIDs = [];
+  var userGR = new GlideRecord('sys_user_grmember');
+  userGR.addQuery("group", current.variables.delegate_roles_group);
+  if (!gs.hasRole("admin"))
+    userGR.addQuery("user", "!=", gs.getUserID());
+  userGR.query();
+  while (userGR.next())
+    userIDs.push(userGR.user.toString());
+  
+  return 'sys_idIN' + userIDs.join(',');
+}

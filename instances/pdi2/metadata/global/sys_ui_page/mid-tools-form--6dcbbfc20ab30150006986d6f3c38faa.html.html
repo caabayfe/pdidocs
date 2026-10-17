@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+   <!-- query for all the active MID servers -->
+   <g2:evaluate>
+      var mids = new GlideRecord('ecc_agent');
+      mids.addQuery('status', 'Up');
+      mids.orderBy('name');
+      mids.query(); 
+   </g2:evaluate>
+
+   <!-- query for all the active MID scripts -->
+   <g2:evaluate>
+      var scrs = new GlideRecord('ecc_agent_script');
+      scrs.addActiveQuery();
+      scrs.orderBy('order');
+      scrs.query(); 
+   </g2:evaluate>
+
+   <FORM action="mid_tools.do" method="post" style="margin:5px;">
+      <P style="font-size:1.25em"><B>Run MID server script:</B></P>
+      <P style="line-height:50%;margin-bottom:0;">
+
+         <!-- choose from amongst the active, non-localhost MID servers -->
+         <B>MID server:</B>
+         <SELECT name="mid_server" style="width:250px;overflow:auto;margin-left:8px;">
+            <j2:while test="$[mids.next()]">
+               <OPTION>$[mids.getValue("name")]</OPTION>
+            </j2:while>
+         </SELECT>
+         <BR />
+         <B>Script:</B>
+      </P>
+
+      <!-- get the ad hoc script -->
+      <TEXTAREA style="width:100%;margin-top:5px;" rows="25" name="mid_script" />
+      <BUTTON type="submit" name="run" value="Run script" class="btn btn-default">Run Script</BUTTON>
+
+      <!-- get the active scripts in the ecc_agent_script table -->
+      <TABLE style="font-size:1.1em;margin-top:20px;width:100%;margin-left:0;border-collapse:collapse;" cellpadding="3" cellspacing="0">
+         <j2:while test="$[scrs.next()]">
+            <TR style="width:100%;border-top:solid 4px #F0F0F0;border-bottom:solid 4px #F0F0F0;">
+               <TD style="white-space:nowrap;border:solid 2px #F0F0F0;">
+                  [<BUTTON style="background-color:white;border:none;color:blue;text-decoration:underline;cursor:pointer;font-weight:normal;margin:0;padding:0;" 
+                          type="submit" name="edit_script" value="$[scrs.getValue('sys_id')]">View / Edit</BUTTON>] 
+                  [<BUTTON style="background-color:white;border:none;color:blue;text-decoration:underline;cursor:pointer;font-weight:normal;margin:0;padding:0;" 
+                          type="submit" name="run_script" value="$[scrs.getValue('sys_id')]">Run</BUTTON>]
+               </TD>
+               <TD style="white-space:nowrap;padding-left:5px;padding-right:5px;border:solid 2px #F0F0F0;">
+                  $[scrs.getValue('name')]
+               </TD>
+               <TD style="width:100%;border:solid 2px #F0F0F0;">
+                  $[scrs.getValue('description')]
+               </TD>
+            </TR>
+         </j2:while>
+      </TABLE>
+   </FORM>
+</j:jelly>

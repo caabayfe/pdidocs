@@ -1,0 +1,98 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+  <style>
+    .muted { color:#6c757d; font-style: italic; }
+    #ok-cancel-btns { padding-left: 15px; padding-right: 15px; }
+
+    .scrollbox {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #f8f9fa;
+    }
+    .item-row { padding: 4px 0; border-bottom: 1px dashed #e1e5ea; }
+    .item-row:last-child { border-bottom: none; }
+  </style>
+
+  <g:evaluate object="true">
+    var aliasId = RP.getWindowProperties().get('sysparm_topic_alias_sys_id');
+
+    var cutoff = gs.minutesAgoStart(1440);
+
+    var ga = new GlideAggregate('sys_kafka_producer_statistics');
+    ga.addQuery('producer.sc_topic_alias', aliasId);
+    ga.addQuery('agg_period', '>=', cutoff);
+    ga.groupBy('producer');
+    ga.addAggregate('COUNT', 'num_samples');
+    ga.query();
+
+    var cons = new GlideRecord('sys_kafka_subscription');
+    cons.addQuery('sc_topic_alias', aliasId);
+    cons.query();
+  </g:evaluate>
+
+  <table width="100%">
+    <tr><td><br/></td></tr>
+
+    <tr>
+      <td>
+        ${gs.getMessage('Disconnecting this topic alias may affect active consumers and producers. Below is a list of current consumers and producers: ')}
+        <br/><br/>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <strong>${gs.getMessage('Producers (active in the last 24 hours)')}:</strong>
+        <j:choose>
+          <j:when test="${ga.hasNext()}">
+            <div class="scrollbox">
+              <j:while test="${ga.next()}">
+                <div class="item-row">${ga.getDisplayValue('producer')}</div>
+              </j:while>
+            </div>
+          </j:when>
+          <j:otherwise>
+            <p class="muted">${gs.getMessage('No active producers in the last 24 hours found for this Topic Alias.')}</p>
+          </j:otherwise>
+        </j:choose>
+        <br/>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <strong>${gs.getMessage('Consumers: ')}</strong>
+        <j:choose>
+          <j:when test="${cons.hasNext()}">
+            <div class="scrollbox">
+              <j:while test="${cons.next()}">
+                <div class="item-row">${cons.getDisplayValue('number')}</div>
+              </j:while>
+            </div>
+          </j:when>
+          <j:otherwise>
+            <p class="muted">${gs.getMessage('No active consumers found for this topic alias. ')}</p>
+          </j:otherwise>
+        </j:choose>
+
+        <input type="hidden" id="sysparm_topic_alias_sys_id" name="sysparm_topic_alias_sys_id" value="${sysparm_topic_alias_sys_id}" />
+        <input type="hidden" id="sysparm_underlying_topic_table" name="sysparm_underlying_topic_table" value="${sysparm_underlying_topic_table}" />
+        <br/><br/>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        ${gs.getMessage('Select OK to disconnect the topic from the topic alias, or Cancel to keep the current configuration.')}
+        <br/><br/>
+        <div id="ok-cancel-btns" class="col-sm-offset-4 pull-left">
+          <g:dialog_buttons_ok_cancel class="form-control" />
+        </div>
+      </td>
+    </tr>
+  </table>
+
+</j:jelly>

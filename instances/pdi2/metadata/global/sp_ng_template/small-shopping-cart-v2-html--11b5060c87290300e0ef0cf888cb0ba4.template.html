@@ -1,0 +1,59 @@
+<div class="panel" id="small-cart">
+  <div class="panel-body" ng-if="c.data.cartItems.length > 0">
+    <ul class="media-list" role="menu">
+      <li class="media" ng-repeat="item in c.data.cartItems | orderBy: 'created_on' track by item.sys_id" role="presentation">
+         <div class="sc-cart-body">
+          <a ng-href="{{::item.item_url}}" ng-class="::{'a-disabled': !item.can_order}" class="sn-flexbox" aria-label="{{::item.name}}" ng-keydown="c.onKeyDown($event)" role="menuitem">
+        	<div class="sc-cart-item-img">
+            		<img ng-show="item.picture" ng-src="{{::item.picture}}" alt="" class="img-responsive item-image"/>
+        	</div>
+        	<div>
+          		<div class="catalog-text-wrap">{{::item.name}}</div>
+          		<p class="sc-cart-text catalog-text-wrap">{{::item.short_description}}</p>
+          		<p class="quantity-price">
+            			<span class="quantity" ng-if="c.showQuantity(item)">{{item.quantity}}{{c.showPrice(item) || c.showRecurringPrice(item) ? ' x ' : ' '}}</span>
+            			<span class="price" ng-if="c.showPrice(item)">{{::item.price_display}}</span>
+            			<span class="recurring" ng-show="c.showRecurringPrice(item)">{{c.showPrice(item) ? '+ ' : ' '}}{{item.recurring_price_display + ' ' + item.recurring_frequency}}</span>
+          		</p>
+        	</div>
+        </a>
+        <div class="media-right" aria-hidden="true">
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-clear" ng-click="c.removeItem($event, item)" data-toggle="tooltip" data-placement="top" data-container="body" title="${Remove Item} {{::item.name}}" ng-keydown="c.onKeyDown($event)">
+              <i class="fa fa-times-circle btn-remove" aria-hidden="true"></i>
+            </button>
+          </div>
+         </div>
+        </div>
+      </li>
+    </ul>
+	<div ng-if="c.data.cart.cart_items.show_subtotal_price === 'true'" class="panel-footer align-right">
+		<label class="subtotal">${Total price}: {{c.data.cart.cart_items.subtotal_price}}</label>
+		<label ng-repeat="(key, value) in c.data.cart.recurring_subtotals" class="subtotal">+ {{value}} {{key}}</label>
+	</div>
+  </div>
+  <div class="panel-body" ng-show="c.data.cartItems.length == 0">
+    <div class="empty-state-content small-cart">
+      <span class="fa fa-shopping-cart small-cart"></span>
+      <div class="h4">${Your shopping cart is empty}</div>
+      <p>${Once you have added items to your shopping cart, you can check out from here.}</p>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <div class="btn-group btn-group-justified" role="group">
+      <div class="btn-group" role="group">
+        <button  ng-click="c.redirectToCart()" class="btn sc-btn btn-default" title="${View Cart}" data-toggle="tooltip" data-placement="top" ng-keydown="c.onKeyDown($event)">${View Cart}</button>
+      </div>
+      <div class="btn-group" role="group" ng-if="c.data.cartItems.length > 0">
+        <button ng-disabled="c.checkoutInProgress"
+                ng-click="c.triggerCheckout()"
+                class="btn sc-btn btn-primary"
+                 ng-keydown="c.onKeyDown($event)">
+          <span ng-show="!c.checkoutInProgress && c.data.sys_properties.twostep">${Proceed to Checkout}</span>
+          <span ng-show="!c.checkoutInProgress && !c.data.sys_properties.twostep">${Checkout}</span>
+          <span ng-show="c.checkoutInProgress">${Ordering...}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div style="text-align:left;">
+		<br/>
+		<j:set var="jvar_objList" value="${sysparm_delobj_list}"/>
+		<j:set var="jvar_is_domain_used" value="${sysparm_is_domain_used}" />
+		<j:choose>
+			<j:when test="${empty(jvar_objList)}">
+				<j2:choose>
+					<j2:when test="${sysparm_is_domain_used == 'true'}">
+						<div style="margin-top: 0px; color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+							${gs.getMessage('Warning!')}
+						</div>
+						<div>${gs.getMessage('One or more data/process records fall under this domain. Do you still want to delete?')}</div>
+					</j2:when>
+					<j2:when test="$[!gs.nil('${sysparm_msg_override}')]">
+						<div>$[HTML:gs.getMessage("${JS:sysparm_msg_override}")]</div><br/>
+					</j2:when>
+					<j2:otherwise>
+						<div style="color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+							${gs.getMessage('Warning!')}
+						</div>
+						<div>
+							<br/>$[HTML:gs.getMessage("${JS:sysparm_body_message}")]
+						</div><br/>
+						<div>
+							$[HTML:gs.getMessage("Are you sure you want to delete {0}?", "${JS:sysparm_record_name}")]<br/>
+							<label>
+								<input type="checkbox" id="agree_checkbox" style="margin: 0 4px 4px 0"></input>
+								${gs.getMessage('Yes, I agree to delete these records')}
+							</label>
+						</div>
+					</j2:otherwise>
+				</j2:choose>
+			</j:when>
+			<j:otherwise>
+				<div style="margin-top: 0px; color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+					${gs.getMessage('Warning!')}
+				</div>
+				<j2:choose>
+					<j2:when test="$[!gs.nil('${sysparm_cascade_msg_override}')]">
+						<div style="margin: 5px 5px 0px;">
+							$[HTML:gs.getMessage("${JS:sysparm_cascade_msg_override}")]<br/>
+						</div>
+					</j2:when>
+					<j2:otherwise>
+						<div style="margin: 5px 5px 0px;">
+							${gs.getMessage('Deleting this record will result in the automatic deletion of its child topics, subtrees and the following related records:')}<br/>
+						</div><br/>
+					</j2:otherwise>
+				</j2:choose>
+				<!-- display related objects table -->
+				<g:macro_invoke macro="show_cascade_del_objs_table" obj_list="${jvar_objList}" />
+				<div style="margin: 5px 5px 0px;">
+					${gs.getMessage('Note that the related records may trigger their own cascade deletions.')}<br/>
+					${gs.getMessage('Proceed?')}
+				</div>
+			</j:otherwise>
+		</j:choose>
+		<br/>
+		<div align="right" class="modal-footer">
+			<g:dialog_buttons_ok_cancel ok="return ok()" ok_style_class="btn btn-destructive" ok_text="${gs.getMessage('Delete')}" cancel="return cancel()" ok_type="button" cancel_type="button"/>
+		</div>
+	</div>
+	<script>
+		var ok_button = document.getElementById("ok_button");
+		var checkbox = document.getElementById("agree_checkbox");
+		if(checkbox) {
+			ok_button.disabled = true;
+			checkbox.focus();
+			checkbox.addEventListener("change", function() {
+				if (this.checked) {
+					ok_button.disabled = false;
+				} else {
+					ok_button.disabled = true;
+				}
+			});
+		}
+	</script>
+</j:jelly>

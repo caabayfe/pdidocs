@@ -1,0 +1,973 @@
+_meta:
+  hash: 9353001b720de452377252d34a4cb154de1203a604849b3980b15e27f879fbe9
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: aleck.lin
+  sys_created_on: 2013-05-31 23:07:10
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 3d1e3dbbef65010098d5925495c0fb83
+  sys_mod_count: '10'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_3d1e3dbbef65010098d5925495c0fb83
+  sys_updated_by: josh.gerbasi
+  sys_updated_on: 2015-02-19 22:30:16
+active: 'true'
+checksum: ''
+description: SNC WMI API -- Script used by discovery (via cscript) to gather WMI information
+directory: 'false'
+name: WMIScanner.js
+parent: 38ed7937efa5010098d5925495c0fb0d
+script: |-
+  //
+  // WMIScanner - SNC WMI API -- Script used by discovery (via cscript) to gather WMI information
+  //
+
+  /**
+   * The piece of prototype.js that makes the initialize method work.
+   */
+  var Class = {
+      create: function() {
+          return function() { this.initialize.apply(this, arguments); }
+      }
+  }
+
+  /**
+   * Scans WMI specified tables and fields and returns their values. 
+   */
+  WMIScanner = Class.create();
+
+  WMIScanner.prototype = {
+      defaultRoot: 'root\\cimv2',
+      wbemFlagReturnImmediately: 0x10,
+      wbemFlagForwardOnly: 0x20,
+      PktPrivacy: 6,
+    
+      initialize: function(remoteHost) {
+          this.windowsMachine = remoteHost;
+          this.debugging = false;
+          this.debugCount = 0;
+          this.currentPath = '';
+          this.currentConnection = '';
+          this.registry = '';
+          this.fetchEntries = {};
+          this._initPayload();
+      },
+      
+      addError: function(msg) {
+          this.appendElement(this.getXMLRoot(), 'error', msg);
+      },
+      
+      addWarning: function(msg) {
+          this.appendElement(this.getXMLRoot(), 'warning', msg);
+      },
+      
+      convertWMIDateToStr: function(dtmDate) {
+          if (dtmDate == null)  {
+              return 'null date';
+          }
+      
+          var strDateTime;
+          if (dtmDate.substr(4, 1) == 0)  {
+              strDateTime = dtmDate.substr(5, 1) + '/';
+          } else  {
+              strDateTime = dtmDate.substr(4, 2) + '/';
+          }
+          
+          if (dtmDate.substr(6, 1) == 0)
+              strDateTime = strDateTime + dtmDate.substr(7, 1) + '/';
+          else
+              strDateTime = strDateTime + dtmDate.substr(6, 2) + '/';
+          
+          strDateTime = strDateTime + dtmDate.substr(0, 4)  + ' ' +
+                                      dtmDate.substr(8, 2)  + ':' +
+                                      dtmDate.substr(10, 2) + ':' +
+                                      dtmDate.substr(12, 2);
+          return strDateTime;
+      },
+      
+      /**
+       * Add the given path to the fetch entries.  The paths may take one of two forms, either:
+       *     HKEY_<registry key path>
+       * or
+       *     [<namespace>\]<class>.property
+       * The first form fetches a registry key value; the second a WMI class property.
+       */
+      addFetch: function(path) {
+          var parser = /^(HKCR|HKCU|HKLM|HKU|HKEY_CLASSES_ROOT|HKEY_CURRENT_USER|HKEY_LOCAL_MACHINE|HKEY_USERS)[\\\/].*$/;
+          var parts = parser.exec(path);
+          if (parts)
+              this.addRegistryFetch(path);
+          else
+              this.addWMIFetch(path);
+      },
+      
+      addRegistryFetch: function(path) {
+          if (!this.fetchEntries['Registry'])
+              this.fetchEntries['Registry'] = new Object();
+          
+          this.fetchEntries['Registry'][path] = 1;
+      },
+      
+      /**
+       * Adds WMI fetch entries with a path of the following form: 
+       *     [<namespace>\]<class>.property
+       * If the optional namespace is missing, the default (root\cimv2) is used.  All namespaces MUST begin with "root\".
+       * 
+       * path: the path to be fetched, in the form specified above.
+       */
+      addWMIFetch: function(path) {
+          var namespace = this.defaultRoot;
+          var tableName = '';
+          var fieldName = '';
+          var parser = /^(?:(root\\(?:.*))\\)?([^\\]*)[\.\\\/](.*)$/;
+          var parts = parser.exec(path);
+          if (!parts)
+              return;
+          if (parts[1])
+              namespace = parts[1];
+          tableName = parts[2];
+          fieldName = parts[3];
+          
+          if (!this.fetchEntries[namespace])
+              this.fetchEntries[namespace] = {};
+          var ns = this.fetchEntries[namespace];
+          
+          if (!ns[tableName])
+              ns[tableName] = {};
+          
+          ns[tableName][fieldName] = 1;
+      },
+      
+      /**
+       * Fetches all the entries previously added with addFetch();
+       */
+      fetch: function() {
+          for(var namespace in this.fetchEntries) {
+              if (namespace == 'Registry')
+                  this.fetchRegistry(namespace);
+              else
+                  this.fetchWMI(namespace);
+          }
+      },
+      
+      fetchRegistry: function(namespace) {
+          var node = this.getXMLPayload().createElement(namespace);
+
+          for(var regPath in this.fetchEntries[namespace]){
+              this.registryFetch(regPath, node);
+          }
+          
+          this.getXMLRoot().appendChild(node);
+      }, 
+      
+       // This function is called when using the fingerprint 
+      // toolkit framework in order to run any WQL query
+      wmiQuery: function(namespace, query) {
+          this._debug('Query from namespace: ' + namespace);
+          var items = new Array()
+          var connection = this.wmiConnect(namespace);
+          if (connection) {
+              var colItems = this._execQuery(connection, query);
+              var enumItems = new Enumerator(colItems);
+              var resultsNode = this.getXMLPayload().createElement("results");
+              this.getXMLRoot().appendChild(resultsNode);
+              for (; !enumItems.atEnd(); enumItems.moveNext()) {
+                  var resultNode = this.getXMLPayload().createElement("result");
+                  resultsNode.appendChild(resultNode);
+                  var o = enumItems.item();
+                  var properties = this.getPropertiesArray(o.Properties_);
+                  for (var i = 0; i < properties.length; i++) {
+                  	if (properties[i] == "null")
+                  		continue;
+                  
+                      var propertyMap = properties[i].split("=");		
+                      var key = propertyMap[0];
+                      var value = propertyMap[1];
+                      var keyNode = this.getXMLPayload().createElement(key);
+                      keyNode.appendChild(this.getXMLPayload().createTextNode(value));
+                      resultNode.appendChild(keyNode);
+                  }
+              }
+          } else {
+              this._debug('Unable to fetch from given query: ' + query);
+          }
+      },
+      
+      fetchWMI: function(namespace) {
+          for (var tableName in this.fetchEntries[namespace]) {
+              var table = this.fetchEntries[namespace][tableName];
+              var items = this.fetchTable(tableName, namespace);
+          
+              for(var i = 0; i < items.length; i++) {
+                  var item = items[i];
+                  
+                  var node = this.getXMLPayload().createElement(tableName);
+                  this.getXMLRoot().appendChild(node);
+                  for(var fieldName in table)
+                      this.appendElement(node, fieldName, item[fieldName]);
+              }
+          }
+      }, 
+
+      getPropertiesArray: function(properties) {
+          this._debug('getPropertiesArray()');
+          try {
+              var props = [];
+              var enumValues = new Enumerator(properties);
+              for (; !enumValues.atEnd(); enumValues.moveNext()) {
+                  var prop = enumValues.item();
+                  var thisProp = this.getValueText(prop);
+                  if (thisProp) {
+                      this._debug('Enumerated property: ' + thisProp);
+                      props.push(thisProp);
+                  }
+              }
+              return props;
+          }
+          catch (err) {
+              this._debug('Was not a collection of properties: ' + err.message);
+              return null;
+          }
+      },    
+      
+      fetchTable: function(table, root) {
+          if (!root)
+              root = this.defaultRoot;
+          
+          this._debug('Fetching table: ' + root + '\\' + table);
+          
+          var items = new Array()
+          
+          var connection = this.wmiConnect(root);
+          if (connection) {
+              var colItems = this._execQuery(connection, 'SELECT * FROM ' + table);
+              var enumItems = new Enumerator(colItems);
+              for (; !enumItems.atEnd(); enumItems.moveNext()) {
+                  var o = enumItems.item();
+                  items.push(o);
+              }
+          } else {
+              this._debug('Unable to fetch table: ' + table);
+          }
+          
+          return items;
+      },
+      
+      fetchItem: function (table, root) {
+          var items = this.fetchTable(table, root);
+          if (items.length == 0)
+              items.push(new Object());
+          
+          return items[0];
+      },
+      
+      fetchRow: function(table, field, value, retv) {
+          value = new String(value);
+          var arItems = value.split('\\');
+          if (arItems.length > 1)
+              value = arItems.join('\\\\');
+          
+          var connection = this.wmiConnect(this.defaultRoot);
+          if (connection) {
+              var eQuery = 'SELECT ' + retv + ' FROM ' + table + ' WHERE ' + field + ' = "' + value + '"';
+              var colItems = this._execQuery(connection, eQuery);
+              var enumItems = new Enumerator(colItems);
+              for (; !enumItems.atEnd(); enumItems.moveNext()) {
+                  var o = enumItems.item();       
+                  if (o[retv] != null)
+                      return o[retv];
+              }
+          }
+      },
+      
+      getXMLPayload: function() {
+          return this.xmlPayload;
+      },
+      
+      getXMLRoot: function() {
+          return this.xmlRoot;
+      },
+      
+      getRegistry: function() {
+          if (!this.registry) {
+              this.registry = new Registry(this.windowsMachine); 
+              this.registry.setWMIScanPointer(this);
+              this.registry.setDebugging(this.debugging);
+          }
+      
+          return this.registry;
+      },
+      
+      openRegistry: function() {
+          var r = this.getRegistry();
+          return r.open();
+      },
+      
+      registryFetch: function(path, node) {
+          return this.getRegistry().fetch(path, node);
+      },
+      
+      registryGetValue: function(path) {
+          return this.getRegistry().getValue(path);
+      },
+      
+      registryGetStringValue: function(key, name) {
+          return this.getRegistry().getStringValue(key, name);
+      },
+      
+      registryGetEnumValue: function(key) {
+          return this.getRegistry().enumKey(key);
+      },
+      
+      registryGetBinaryValue: function(key, name) {
+          return this.getRegistry().getBinaryValue(key, name);
+      },
+      
+      run: function(cmd) {
+          var objShell = new ActiveXObject('WScript.Shell');
+          var sCommand = 'cmd /c ' + cmd;
+          
+          this._debug('About to run: ' + sCommand);
+          var objShellJob = objShell.exec(sCommand);
+          
+          return objShellJob.stdOut.ReadAll();
+      },
+
+      setDebugging: function(d) {
+          this.debugging = d;
+      },
+      
+      winExec: function(cmd) {
+          var winExecCmd = 'lib\\WinExec.exe \\\\' + this.windowsMachine;
+          
+          if (this.debugging)
+              winExecCmd += ' -v';
+              
+          return this.run(winExecCmd + ' "' + cmd + '"');
+      },
+          
+      winExecApplication: function (cmd) {
+          var winExecCmd = "lib\\WinExec.exe \\\\" + this.windowsMachine;
+
+          if (this.debugging)
+              winExecCmd += ' -v';
+
+          return this.run(winExecCmd + ' -c ' + cmd);
+      },
+      
+      wmiConnect: function(path) {
+          var sLoc = new ActiveXObject('WbemScripting.SWbemLocator');
+          sLoc.Security_.AuthenticationLevel = this.PktPrivacy;
+          var sConnection;
+          
+          // if we are already connected, no reason to reconnect
+          if (this.currentConnection && this.currentPath == path)
+              return this.currentConnection;
+          
+          try {
+              sConnection = sLoc.ConnectServer(this.windowsMachine, path, '', '');
+          } catch (e) {
+              this.addWarning("Unable to connect to path: " + path + ". Error: " + e.message);
+          }
+          
+          this.currentConnection = sConnection;
+          this.currentPath = path;
+          
+          return sConnection;
+      },
+      
+      wmiOpen: function() {
+          if (this._wmiRunning())
+              return true;
+          
+          this._debug('WMI not running');
+          this.wmiClose();
+          
+          return false;
+      },
+      
+      wmiClose: function() {
+          // nothing
+      },
+      
+      appendToRoot: function (name, value) {
+          var root = this.getXMLRoot();
+          var i = root.getElementsByTagName(name);
+          
+          if (i.length) {
+              var child = i.item(0);
+              child.firstChild.nodeValue = value;
+          } else {
+              this.appendElement(root, name, value);
+          }
+      },
+      
+      /*
+       * Appends the given value to the given parent XML node, using the given name for the child node created.  The given value
+       * may be of any type returned by the WMI API, which is a broad range of JScript natives, VB object types, and arbitrary
+       * ActiveX/COM types.
+       * 
+       * If the code in this method (and it's dependent methods) seems unusually defensive, that's because it really is -- and it 
+       * seems to actually be necessary.  The need is provoked by Microsoft's deviation from JavaScript standards.  Two specific 
+       * examples of this: (1) not all JScript objects have a toString() method, and (2) executing "if (object.method)" to test for 
+       * the existence of a method will not necessarily behave as expected -- some classes will throw an exception with this code, 
+       * even when the referenced method exists. I'm sure that's not the end of Microsoft's "improvements", but those two issues are 
+       * the primary reason for the unreasonable-looking defensiveness of this code.
+       */
+      appendElement: function (parent, name, value) {
+          this._debug('Appending element: ' + name);
+          
+          // no matter what value we have (even null), we're going to make the child element...
+          var child = this.getXMLPayload().createElement(name);
+          
+          // get the text equivalent of whatever value we've been given, protecting against any Microsoft insanity...
+          var valueText = null;
+          try {
+              valueText = this.getValueText(value);
+          }
+          catch (err) {
+              this._debug('Problem getting text equivalent: ' + err.message);
+          }
+          
+          // and if we got any non-null value, we're going to append the child's text
+          // in all cases, we append the child to the parent...
+          if (valueText)
+              child.appendChild(this.getXMLPayload().createTextNode(valueText));
+          parent.appendChild(child);   
+          this._debug('Appended: ' + name + '; ' + valueText);
+          return child;
+      },
+      
+      /*
+       * Gets the text equivalent of the given value, no matter what type the given value is.  Returns null if the given value is 
+       * null or is of some unknown type.
+       */
+      getValueText: function(value) {
+          this._debug('getValueText()');
+          if (value == null)
+              return null;
+          
+          // what type of value do we have?
+          var valueType = typeof value;
+          this._debug('valueType: ' + valueType);
+          switch (valueType) {
+              
+              case 'boolean':
+                  return value ? '1' : '0';
+                  break;
+                  
+              case 'object':
+              case 'unknown':
+                  var text = this.getObjectText(value);
+                  var result = this.getRegistry().stripNonValidXMLCharacters(text);
+                  return result;
+                  break;
+                  
+              default:
+                  var result = this.getRegistry().stripNonValidXMLCharacters('' + value);
+                  return result;
+                  break;
+          }
+      },
+      
+      /*
+       * Gets the text equivalent of the given Object value, which can be any of a JavaScript Array, a VBArray, a Collection, or
+       * an object with a Properties_ instance.
+       */
+      getObjectText: function(value) {
+          this._debug('getObjectText()');
+          
+          // if we've got a VBArray, handle it...
+          var result = this.getVBArrayText(value);
+          if (result)
+              return result;
+          
+          // if we've got a Collection, handle it...
+          result = this.getCollectionText(value);
+          if (result)
+              return result;
+              
+          // if we've got a JavaScript Array, handle it...
+          if (value instanceof Array)
+              return value.join(',');
+         
+          // if we've got a properties element, handle it (safely)...
+          // this is here specifically to support MS_ClusterResource.PrivateProperties...
+          try {
+              var props = value.Properties_;
+              if (props != null)
+                  return this.getValueText(props);
+              this._debug('Was not .Properties_');
+          }
+          catch (err) {
+              this._debug('Tried to get .Properties_, failed');
+          }
+          
+          // if we've got something that has name/value pairs, treat it like a property (safely)...
+          // this is here specifically to support MS_ClusterResource.PrivateProperties...
+          try {
+              // fish out any property values we might have...
+              var propName = value['Name'];
+              if (propName == null)
+                  propName = value['name'];
+              var propValue = value['Value'];
+              if (propValue == null)
+                  propValue = value['value'];
+              
+              // if we've got name/value properties, turn 'em into text...
+              if (propName != null && propValue != null) {
+                  var propNameText  = this.getValueText(propName);
+                  var propValueText = this.getValueText(propValue);
+                  
+                  // if we got name/value text, turn 'em into <name>=<value> string and return it...
+                  if (propNameText && propValueText)
+                      return propNameText + '=' + propValueText;
+              }
+              this._debug('Could not evaluate as a property');
+          }
+          catch (err) {
+              this._debug('Could not evaluate as property: ' + err.message);
+          }
+          
+          // if it's nothing else we know, let's see if we can turn it into a string...
+          try {
+              var toStr = '' + value;
+              if (toStr)
+                  return toStr;
+          }
+          catch (err) {
+              this._debug('Could not evaluate with toString()');
+          }
+          
+          // we don't know what we've got, so just bail out...
+          this._debug('Unknown value type');
+          return null;
+      },
+      
+      /*
+       * Get the text equivalent of a VBArray, safely (meaning that an element that is null or is an instance of some type we don't
+       * understand will not fail; it just won't be included in the result).  If the argument wasn't a VBArray, returns null.
+       */
+      getVBArrayText: function(vbarray) {
+          this._debug('getVBArrayText()');
+          try {
+              var jsArray = vbarray.toArray();
+              var safeArray = [];
+              for (var i = 0; i < jsArray.length; i++) {
+                  var elemText = this.getValueText(jsArray[i]);
+                  if (elemText)
+                      safeArray.push(elemText);
+              }
+              return safeArray.join(',');
+          }
+          catch (err) {
+              this._debug('Was not a VBArray: ' + err.message);
+              return null;
+          }
+      },
+      
+      /*
+       * Get the text equivalent of a VB Collection, safely (meaning that an element that is null or is an instance of some type we 
+       * don't understand will not fail; it just won't be included in the result).  If the given value wasn't a collection, 
+       * returns null.
+       */
+      getCollectionText: function(collection) {
+          this._debug('getCollectionText()');
+          try {
+              var props = [];
+              var enumValues = new Enumerator(collection);
+              for (; !enumValues.atEnd(); enumValues.moveNext()) {
+                  var prop = enumValues.item();
+                  var thisProp = this.getValueText(prop);
+                  if (thisProp) {
+                      this._debug('Enumerated property: ' + thisProp);
+                      props.push(thisProp);
+                  }
+              }
+              return props.join(',');
+          }
+          catch (err) {
+              this._debug('Was not a collection: ' + err.message);
+              return null;
+          }
+      },
+      
+      _execQuery: function(connection, query) {
+          this._debug('QUERY: ' + query);
+          return connection.ExecQuery(query);
+      },
+      
+      _wmiRunning: function() {
+          var name;
+          
+          this._debug('Testing WMI connection to ' + this.windowsMachine);
+          
+          try {
+              var objWMIService = GetObject('winmgmts:\\\\' + this.windowsMachine + '\\root\\CIMV2');
+              var colItems = objWMIService.ExecQuery('SELECT * FROM Win32_ComputerSystem', 'WQL',
+              this.wbemFlagReturnImmediately | this.wbemFlagForwardOnly);
+              
+              var enumItems = new Enumerator(colItems);
+              for (; !enumItems.atEnd(); enumItems.moveNext()) {
+                  var objItem = enumItems.item();
+                  
+                  name = objItem.Name
+              }
+              
+          } catch (e) {
+              this.addError("Connection failed to WMI service. Error: " + e.message);
+          }       
+          
+          return name && name.length > 0;
+      },
+      
+      _initPayload: function() {
+          this.xmlPayload = new ActiveXObject('Microsoft.XMLDOM');
+          this.xmlRoot = this.xmlPayload.createElement('wmi'); 
+          this.xmlPayload.appendChild(this.xmlRoot);
+      },
+      
+      _debug: function(msg) {
+          if (!this.debugging)
+              return;
+          
+          WScript.StdErr.Write(Date() + ' DEBUG: ' + msg + '\n');
+      },
+      
+      //
+      // end of WMI routines
+      //
+      type : 'WMIScanner'
+  }
+
+  /*
+   * Registry things
+   */
+  Registry = Class.create();
+
+  Registry.prototype = {
+      REG_UNKNOWN: 0, 
+      REG_SZ: 1, 
+      REG_EXPAND_SZ: 2, 
+      REG_BINARY: 3, 
+      REG_DWORD: 4, 
+      REG_MULTI_SZ: 7,
+      priKey: {
+          HKCR: 0x80000000, HKEY_CLASSES_ROOT:  0x80000000,
+          HKCU: 0x80000001, HKEY_CURRENT_USER:  0x80000001,
+          HKLM: 0x80000002, HKEY_LOCAL_MACHINE: 0x80000002,
+          HKU:  0x80000003, HKEY_USERS:         0x80000003
+      },
+      
+      initialize: function(windowsMachine) {
+          this.windowsMachine = windowsMachine;
+          this.registryProvider = '';
+          this.wsPointer;
+          this.invalidXMLDetection = "detectedInvalidXMLCharacter";
+      },
+      
+      open: function() {
+          if (!this.registryProvider) {
+              this._debug('Connecting to registry');
+              this.registryProvider = this._connect('root\\default');
+          }
+          
+          if (!this.registryProvider) {
+              this._debug('Connection to registry failed');
+              return false;
+          }
+          
+          return true;
+      },
+      
+      getType: function(key) {
+          this._debug('getType(), key=' + key);
+          var path = key.substring(0, key.lastIndexOf('\\'));
+          var name = key.substring(path.length+1);
+
+          var type = this.getTypeForKey(path, name);
+          return '' + type;
+      },
+      
+      getValue: function(key) {
+          this._debug('getValue(), key=' + key);
+          var path = key.substring(0, key.lastIndexOf('\\'));
+          var name = key.substring(path.length+1);
+          var type = this.getTypeForKey(path, name);
+          return this.getStringValueByType(type, path, name);
+      },
+      
+      getStringValueByType: function(type, path, name) {
+          if (type == this.REG_EXPAND_SZ) {
+              return this.getExpandedStringValue(path, name);
+          } else if (type == this.REG_BINARY) {
+              var v = this.getBinaryValue(path, name);
+              v = v.toArray();
+              v = v.toString();
+              return v;
+          } else if (type == this.REG_DWORD) {
+              return this.getDWORDValue(path, name);
+          } else if (type == this.REG_MULTI_SZ) {
+              return this.getMultiStringValue(path, name);
+          } else if (type == this.REG_SZ) {
+              return this.getStringValue(path, name);
+          }
+          
+          return null;
+      },
+      
+      getTypeForKey: function(path, key) {
+          var values = this.enumValues(path);
+          
+          for(value in values) {
+              if (value.toLowerCase() == key.toLowerCase())
+                  return values[value];
+          }
+          
+          return this.REG_UNKNOWN;
+      },
+      
+      enumKey: function(key) {
+          var ret = this._get('EnumKey', key);
+          if (typeof(ret.sNames) != 'undefined' && ret.sNames != null)
+              return ret.sNames.toArray();
+          
+          return new Array();
+      },
+      
+      enumValues: function(key) {
+          var values = new Object();
+          var ret = this._get('EnumValues', key);
+          
+          if (typeof(ret.sNames) != 'undefined' && ret.sNames != null) {
+              var types = ret.Types.toArray();
+              var items = ret.sNames.toArray();
+              for(var i = 0; i < items.length; i++) {
+                  var name = items[i];
+                  var type = types[i];
+                  values[name] = type;
+              }
+          }
+          
+          return values;
+      },
+      
+      fetch: function(path, node) {
+          var keys = new Array();
+
+          if (!this.open())
+              return;
+          
+          path = path.replace(/\//g, '\\');
+          keys.push(path);
+          keys = this._expandKeys(keys);
+          
+          for(var i = 0; i < keys.length;i++) {
+              var name = keys[i];
+              var value = this.getValue(name);
+              if (value != null)
+                  this._storeValues(name, value, node);
+          }
+      },
+      
+      getBinaryValue: function(key, name) {
+          var ret = this._get('GetBinaryValue', key, name);
+          return ret.uValue;
+      },
+      
+      getDWORDValue: function(key, name) {
+          var ret = this._get('GetDWORDValue', key, name);
+          return ret.uValue;
+      },
+      
+      getExpandedStringValue: function(key, name) {
+          var ret = this._get('GetExpandedStringValue', key, name);
+          return ret.sValue;
+      },
+      
+      getMultiStringValue: function(key, name) {
+          var ret = this._get('GetMultiStringValue', key, name);
+          return ret.sValue.toArray();
+      },
+      
+      getStringValue: function(key, name) {
+          var ret = this._get('GetStringValue', key, name);
+          return this.stripNonValidXMLCharacters(ret.sValue);
+      },
+
+      setWMIScanPointer: function(wsPointer) {
+          this.wsPointer = wsPointer;
+      },
+      
+      setDebugging: function(d) {
+          this.debugging = d;
+      },
+      
+      stripNonValidXMLCharacters: function(value) {
+          if (value == null || value == "")
+              return "";
+
+          var output = "";
+          for (var i = 0; i < value.length; i++) {
+              var current = value.charCodeAt(i);
+     
+              if (current == 0x9 || current == 0xA || current == 0xD || (current >= 0x20 && current <= 0xD7FF) || (current >= 0xE000 && current <= 0xFFFD) || (current >= 0x10000 && current <= 0x10FFFF))
+                  output += String.fromCharCode(current);
+              else { //Detected invalid xml characters
+                  return this.invalidXMLDetection;
+              }
+          }
+    
+          return output;    
+      },
+      
+      _connect: function(path) {
+          var sLoc = new ActiveXObject('WbemScripting.SWbemLocator');
+          var arch = new ActiveXObject('WbemScripting.SWbemNamedValueSet');
+          arch.Add('__ProviderArchitecture', 64);
+          var sConnection;
+          
+          try {
+              this._debug('Connection string ' + this.windowsMachine + '\\' + path);
+              sConnection = sLoc.ConnectServer(this.windowsMachine, path, '', '', null, null, null, arch);
+              sConnection = sConnection.Get('StdRegProv');
+          } catch (e) {
+              this._debug('Connection problem: ' + e.message);
+          }
+          
+          this._debug('Connected to registry');
+          
+          return sConnection;
+      },
+      
+      _expandKeys: function(keys) {
+          var expanded = false;
+          
+          for(var i = keys.length - 1; i >= 0; i--) {
+              var key = keys[i];
+              
+              if (key.indexOf('*') > -1) {
+                  expanded = true;
+                  
+                  var left = key.substring(0, key.indexOf('*'));
+                  var right = key.substring(key.indexOf('*')+1);
+                  keys.splice(i, 1);
+                  
+                  var keyList = this.enumKey(left);
+                  for(var k=0; k < keyList.length; k++) {
+                      var childKey = keyList[k];
+                      keys.push(left + childKey + right);
+                  }
+              }
+          }
+          
+          if (expanded)
+              keys = this._expandKeys(keys);
+          
+          return keys;
+      },
+      
+      _get: function(funcName, key, value) {
+          if (!this.open())
+          return {};
+          
+          this._debug(funcName + '()');
+          
+          var rPath = this._getRealPath(key);
+          var mfunc = this.registryProvider.Methods_.Item(funcName);
+          var funcParams = mfunc.InParameters.SpawnInstance_();
+          funcParams.hDefKey = rPath[0];
+          funcParams.sSubKeyName = rPath[1];
+          
+          this._debug('defKey: ' + rPath[0]);
+          this._debug('subKey: ' + rPath[1]);
+          
+          if (value && value.length > 0) {
+              funcParams.sValueName = value;
+              this._debug('valueName: ' + value);
+          }
+          
+          // protect against unknown keys with try / catch
+          try {
+              return this.registryProvider.ExecMethod_(funcName, funcParams);
+          } catch (e) {
+              this._debug('Get problem: ' + e.errorText);
+          }
+          
+          return {};
+      },
+      
+      _getRealPath: function(path) {
+          var rPath = [];
+          
+          rPath[0] = this.HKLM;
+          rPath[1] = path;
+          
+          var parser = /^(.*?)\\(.*)$/;
+          var parts = parser.exec(path);
+          if (!parts)
+              return rPath;
+              
+          var key = this.priKey[parts[1]];
+          if (!key)
+              return rPath;
+          
+          rPath[0] = key;
+          rPath[1] = parts[2];
+          
+          return rPath;
+      },
+      
+      _storeValues: function(name, value, node) {
+          var parts = name.split('\\');
+          var currentNode = node;
+          var found = false;
+          var key;    
+          var childNode;
+          var ENTRY = "entry";
+          var KEY = "key";
+          var VALUE = "value";
+          var PATH = "path";
+          var TYPE = "type";
+          for(var p = 0; p < parts.length; p++) {
+              found = false;
+              key = parts[p];
+              for(var i=0; i<currentNode.childNodes.length; i++) {
+                  childNode = currentNode.childNodes[i]; 
+                  if (childNode.nodeType != 1)
+                      continue;
+
+                  if (childNode.getAttribute(KEY) == key) {
+                      currentNode = childNode;
+                      found = true;
+                      break;
+                  }  
+              }
+              if (!found) { 
+                  currentNode = this.wsPointer.appendElement(currentNode, ENTRY, "");
+                  currentNode.setAttribute(KEY, key);
+              }
+          }
+          currentNode = this.wsPointer.appendElement(currentNode, VALUE, value);
+          currentNode.setAttribute(TYPE, this.getType(name));
+      },
+
+      _debug: function(msg) {
+          if (!this.debugging)
+              return;
+          
+          WScript.StdErr.Write(Date() + ' DEBUG: ' + msg + '\n');
+      },
+
+      type: 'Registry'
+  }
+script_attachment: ''
+source: ''
+sys_name: WMIScanner.js
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

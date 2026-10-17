@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${!sn_ui.PolarisUI.isEnabled()}">
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+	</j:if>
+	<g:requires name="scripts/glide-highcharts.js" includes="true" />
+	<g:requires name="pdb_HighchartsConfigBuilder.jsdbx" />
+	
+	<div id="jr_container" class="container-fluid sc-container-fluid">
+		<div class="row">
+			<div class="col-md-12">
+				<select id="timeSpanPickerCount">
+					<option value="60">${JS:sn_i18n.Message.getMessage("","1 hour")}</option>
+					<option value="120">${JS:sn_i18n.Message.getMessage("","2 hours")}</option>
+					<option selected="selected" value="1440">${JS:sn_i18n.Message.getMessage("","1 day")}</option>
+					<option value="10080">${JS:sn_i18n.Message.getMessage("","7 days")}</option>
+					<option value="43200">${JS:sn_i18n.Message.getMessage("","30 days")}</option>
+				</select>
+				
+				<div class="col-md-12" style="position: absolute;" id="jrobin_pattern_count_chart"></div>
+			</div>
+		</div>
+		
+	</div>
+	
+	<style>
+		#jr_container {
+			height: 500px;
+		}
+		#jrobin_pattern_count_chart {
+			height: 400px;
+		}
+	</style>
+	<script>
+		var countChart = null;
+		var REQUEST_URL = "/api/now/v1/performance_dashboards/graphs/";
+		window.addEventListener("load", function(evt) {
+			var graphId = null;
+			var tableName = g_form.getTableName();
+			var patternSysId = g_form.getUniqueValue();
+				
+			var ga = new GlideAjax('SlowPatternGraphManager');
+			ga.addParam('sysparm_name','getGraphSysId');
+			ga.addParam('sysparm_table', tableName);
+			ga.addParam('sysparm_pattern_id', patternSysId);
+			ga.addParam('sysparm_graph_type', 'count');
+			ga.addParam('sysparm_time_span', 1440);
+			ga.getXML(SlowPatternGraphUrlParse);
+
+			function SlowPatternGraphUrlParse(response) {
+				var sysId = response.responseXML.documentElement.getAttribute("answer");
+				graphId = sysId;
+		
+				if (!sysId) {
+					console.error("Graph could not be found.");
+					return;
+				}
+		
+				var graphUrl = new GlideURL('/api/now/v1/performance_dashboards/graphs/' + sysId);
+				graphUrl.addParam('timespan', 1440);
+				graphUrl.addParam('datasource_id', patternSysId);
+				makeRestRequest(graphUrl);
+			}
+		
+			$j('#timeSpanPickerCount').select2();
+			//set up time span picker for on change action
+			$j('#timeSpanPickerCount').change(function() {
+				var value = $j(this).val();
+				var newUrl = new GlideURL(REQUEST_URL + graphId);
+				newUrl.addParam('timespan', value);
+				newUrl.addParam('datasource_id', patternSysId);
+				makeRestRequest(newUrl);
+			});
+		
+			CustomEvent.on('tab.activated', function() {
+				if (countChart)
+					countChart.reflow();
+			});
+		});
+		
+		function makeRestRequest(graphUrl) {
+			$j.ajax({
+				url: graphUrl.getURL(),
+				success: function(json) {
+					makeChart(json);
+				},
+				error: function(xhr, status, error) {
+					console.log(error);
+				}
+			});
+		}
+		
+		function makeChart(response) {
+			var tzOffset = response.result.options.tz_offset;
+			var chartOptions = HighchartsBuilder.getChartConfig(response.result.graphOptions, tzOffset);
+			chartOptions["chart"].renderTo = 'jrobin_pattern_count_chart';
+			countChart = new Highcharts.Chart(chartOptions);
+		}
+	</script>
+</j:jelly>

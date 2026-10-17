@@ -1,0 +1,3 @@
+{
+  "hideRelatedLists": true
+}

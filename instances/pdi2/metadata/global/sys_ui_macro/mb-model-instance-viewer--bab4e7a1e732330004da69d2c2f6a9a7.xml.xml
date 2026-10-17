@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:inline template="reporting_includes.xml" />
+	<div id="mb_model_chart_viewer" class="form-group" style="width:70%; margin: 0 auto;">
+		<div id="mb_model_chart_viewer_parameters_left" class="vsplit col-sm-6" align="center"></div>
+		<div id="mb_model_chart_viewer_parameters_right" class="vsplit col-sm-6" align="center"></div>
+		<div class="text-center">
+			<button type="button" style="margin-bottom: 3em;" onClick = "setModelString()"> Set Model </button>
+		</div>
+	</div>
+	<div id="mb_model_chart" style="width:70%; margin: 0 auto;"></div>
+	<g2:evaluate>
+		if (current.model_string.toString() !== "") {
+			// Recreate model from model string
+			var modelString = current.model_string; 
+			var currentRecordID = current.sys_id;
+		}
+	</g2:evaluate>
+	<script>
+
+var model = JSON.parse("$[modelString]");
+
+var editableParams = {};
+
+// Keep track of original types for model values (e.g. "array", "number", "string")
+var parameterTypes = {};
+for (var key in model){
+    if (key === "quality" || key === "series" || key === "label" || key === "period" || key === "range" || key === "model")
+        continue; // these can be recovered from the current record
+    else {
+        var value = model[key]; 
+        editableParams[key] = value
+        
+        if (Array.isArray(value)) 
+            parameterTypes[key] = "array";
+        else if (!isNaN(Number(value))) 
+            parameterTypes[key] = "number";
+        else
+            parameterTypes[key] = "string";
+    }
+}
+resetGraph();
+
+// Cannot use less than or comparison here - even xml escaping does not work
+var inputKeys = Object.keys(editableParams);
+for (var i = 0; Math.max(-1, Math.floor(inputKeys.length / 2) - i - 1) != -1; i++) {
+    var key = inputKeys[i];
+    addInput(key, true);	
+}
+for (var i = Math.floor(inputKeys.length/2); Math.max(-1, inputKeys.length - i - 1) != -1; i++) {
+    var key = inputKeys[i];
+    addInput(key, false);	
+}
+
+setInputValues("$[modelString]");
+
+// Create input element for every parameter of this model class first half goes on left, second on right
+function addInput(key, leftSide) {
+	var inputElement = document.createElement("input");
+    inputElement.id = "mb_model_chart_viewer_parameters.input." + key;
+    inputElement.style = "; width:200px";
+    inputElement.autocomplete = "off";
+    inputElement.className = "form-control";
+    inputElement.spellcheck = false;	
+
+    var labelElement = document.createElement("Label");
+    labelElement.class = "control-label";
+    labelElement.innerHTML = key;
+    labelElement.id = "mb_model_chart_viewer_parameters.label." + key;
+
+    var labelDiv = document.createElement("DIV");
+    labelDiv.type = "string";
+    labelDiv.nowrap = "true";
+
+    labelDiv.append(labelElement);
+
+    var divider = document.createElement("DIV");
+    divider.className ="form-group";
+    divider.id = "mb_model_chart_viewer_parameters." + key;
+
+    divider.append(labelDiv);
+    divider.append(inputElement);
+
+    if(leftSide) {
+        $( "mb_model_chart_viewer_parameters_left" ).append(divider);
+    } else {
+        $( "mb_model_chart_viewer_parameters_right" ).append(divider);
+    }
+}
+
+// Processes values from model string. Truncates numbers for display on form
+function truncateValue(value) {
+    if(Array.isArray(value))
+        return truncateArray(value);
+
+    let num = Number(value); 
+    if (!isNaN(num)) 
+        return Math.floor(num * 1000) / 1000; 
+
+    let arr = value.split(',');
+    if (arr.length > 1)
+        return truncateArray(value);
+
+    return value;
+}
+
+// Truncates numbers in array, leaves other types alone
+function truncateArray(arr) {
+    return arr.map(function(element) {
+        let n = Number(element);
+        if (!isNaN(n))
+            return Math.floor(n * 1000) / 1000;
+        else 
+            return element;
+    });
+}
+
+// Sets the HTML input values from a model string
+function setInputValues(modelString) {
+    let modelJSON = JSON.parse(modelString);
+    inputKeys.forEach(function(key) {
+        $("mb_model_chart_viewer_parameters.input." + key).value = truncateValue(modelJSON[key]);
+    });
+}
+
+// Takes values from HTML input elements and puts updates the model to send to MBModelUtils
+function setModelString() {
+    inputKeys.forEach(function(key) {
+        let value = $("mb_model_chart_viewer_parameters.input." + key).value;
+
+        if (parameterTypes[key] === "array") {
+            // "[3,2]" or "3,2" -> [3,2]
+            // "PT24H, PT2H" -> ["PT24H, PT2H"]
+            arr = [...value.matchAll(/[-\w.]+/g)]
+			model[key] = arr.map(x => castToNumIfPossible(x[0])); // because match returns an array of arrays
+        } else if (parameterTypes[key] === "number") {
+            let num = Number(value);
+
+            // Check if just white space or invalid number
+            if (value.replace(/\s/g, '').length === 0 || isNaN(num)) {
+                g_form.addErrorMessage("Setting " + key + " to zero. Please enter valid number");
+				model[key] = 0;
+            } else
+				model[key] = num;
+		
+        } else
+			model[key] = value;
+    });
+		
+	delete model.quality;
+    
+    resetGraph();
+}	
+	
+// Casts string parameters from array into numbers if possible
+function castToNumIfPossible(value) {
+    let num = Number(value)
+    if (isNaN(num))
+        return value;
+
+    return num;
+}
+
+// Takes the model object and sends it to MBModelUtils
+function resetGraph() {			
+	let modelString = JSON.stringify(model);
+
+    // Use server-side code to get information
+    let utilsAjax = new GlideAjax("MBModelUtils");
+    utilsAjax.addParam("sysparm_name", "computeTransformString");
+	utilsAjax.addParam("model_string", modelString);
+    utilsAjax.addParam("current_id", "$[currentRecordID]");
+                                        
+    // Call ajaxTransformStringResponse with computed string
+    utilsAjax.getXML(ajaxTransformStringResponse);
+}
+
+/**
+ * Parses response from server. Sets model string of mb_model_instance and
+ * populates form with truncated values
+ */
+function ajaxTransformStringResponse(serverResponse) {		
+    let result = serverResponse.responseXML.getElementsByTagName("result");
+    let newModelString = result[0].getAttribute("newModelString");
+    let params = JSON.parse(result[0].getAttribute("params"));
+
+    g_form.setValue("model_string", newModelString);
+		
+	// Set value of HTML inputs -> if user fit and values are different
+    setInputValues(newModelString);
+
+    embedReportByParams($j("#mb_model_chart"), params);
+}
+		
+	</script>
+</j:jelly>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <script language="javascript">
+        addMacroEventListeners('sysparm_softpin');
+    </script>
+	
+	<g:evaluate var="jvar_verification_label" object="true" jelly="true">
+	var resetUtil = new global.PasswordResetUtil();
+	resetUtil.getVerificationLabel(jelly.sysparm_verification_id);
+	</g:evaluate>
+
+    <g:evaluate var="jvar_softpin_label" object="true" jelly="true">
+        new global.PwdCommonVerificationHandler().getSoftPINQuestion(jelly.sysparm_verification_id);
+    </g:evaluate>
+
+	<j:choose>
+		 <!-- Polarisberg -->
+		<j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+			<h1 class="pwd-title" id="softpin-title">${jvar_verification_label}</h1>
+			<div class="login-form-field is-required" id="softpin_form_group_${JS,HTML:sysparm_verification_id}">
+				<label class="control-label" id="softpin-label" aria-label="${jvar_softpin_label}">
+				${jvar_softpin_label}
+				<span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Soft PIN, Required')}"></span>
+				</label>
+				<input id="sysparm_softpin" maxlength="256" name="sysparm_softpin_name" class="form-control pwd-form-control" autocomplete="off" type="password" required="required"  aria-labelledby="softpin-title softpin-label" oninput="updateMandatoryMarker(this, 'softpin-label'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');"/>
+			</div>
+		</j:when>
+		<!-- Heisenberg -->
+		<j:otherwise>
+			<h2 class="pwd-title" id="softpin-title">${jvar_verification_label}</h2>
+			<div class="form-group is-required" id="softpin_form_group_${JS,HTML:sysparm_verification_id}">
+				<label class="control-label" id="softpin-label" aria-label="${jvar_softpin_label}">
+				<span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Soft PIN, Required')}"></span> 
+					${jvar_softpin_label}
+				</label> 
+				 <span class="col-sm-12">
+					<input id="sysparm_softpin" maxlength="256" name="sysparm_softpin_name" class="form-control pwd-form-control" autocomplete="off" type="password" required="required"  aria-labelledby="softpin-title softpin-label" oninput="updateMandatoryMarker(this, 'softpin-label'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');"/>
+			    </span>
+			</div>
+		</j:otherwise>
+	</j:choose>
+	
+</j:jelly>

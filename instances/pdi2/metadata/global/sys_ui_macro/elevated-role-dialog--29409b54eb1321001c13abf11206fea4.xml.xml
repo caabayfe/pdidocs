@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:ui_form>
+		<g:evaluate var="jvar_elevated_roles" expression="gs.getSession().getAvailableElevatedRoles()" />
+		<input type="hidden" name="elevated_roles" id="elevated_roles" value="" />
+                <input type="hidden" name="gsft_main_url" id="gsft_main_url" value="" />
+		<div class="col-sm-12 elevated-role-dialog">
+			<div class="bg-info">
+				<span id="new_elevated_role" style="display:inline">${gs.getMessage("The following are session-specific privileges, session timeout or logout will remove all elevated privileges.")}</span>
+				<span id="expired_elevated_role" style="display:none">${gs.getMessage("The following elevated privileges have expired.  Please re-enable them if needed:")}  <span id="expired_role" style="font-weight:bold"></span></span>
+			</div>
+
+			<j:set var="jvar_elevated_roles_array" value="${jvar_elevated_roles.split(',')}" />
+			<j:forEach var="jvar_current_item" items="${jvar_elevated_roles_array}">
+				<div class="elevated-role">
+					<span class="input-group-checkbox">
+						<j2:if test="$[gs.getSession().hasRole('${jvar_current_item}') == true]">
+							<input class="role_input checkbox"
+								type="checkbox"
+								name="elevated_role"
+								id="${JS:jvar_current_item}"
+								checked="checked"
+								value="${JS:jvar_current_item}"></input><br/>
+						</j2:if>
+						<j2:if test="$[gs.getSession().hasRole('${jvar_current_item}') != true]">
+							<input class="role_input checkbox"
+								type="checkbox"
+								name="elevated_role"
+								id="${JS:jvar_current_item}"
+								value="${JS:jvar_current_item}"></input><br/>
+						</j2:if>
+						<label for="${JS:jvar_current_item}" class="checkbox-label">${JS:jvar_current_item}</label>
+						<g:evaluate var="jvar_rgr" jelly="true">
+							var rgr = new GlideRecord('sys_user_role');
+							rgr.addQuery('name', (jelly.jvar_current_item || '') + '');
+							rgr.query();
+							rgr.next();
+							rgr;
+						</g:evaluate>
+						<p style="margin-top:0px">
+							<label for="${JS:jvar_current_item}">
+								<span style="font-size:smaller;">${rgr.description}</span>
+							</label>
+						</p>
+					</span>
+				</div>
+			</j:forEach>
+		</div>
+
+		<div id="dialog_buttons" class="modal-footer">
+			<div class="pull-left">
+				<a target="_blank" class="btn btn-link" href="/api/now/v1/context_doc_url/High_Security_Settings_Elevated_Privilege">${gs.getMessage("More info")}</a>
+			</div>
+			<div class="pull-right">
+				<g:dialog_buttons_ok_cancel ok="return elRoleOk()" ok_id="ok_button" cancel_type="button" />
+			</div>
+		</div>
+	</g:ui_form>
+</j:jelly>

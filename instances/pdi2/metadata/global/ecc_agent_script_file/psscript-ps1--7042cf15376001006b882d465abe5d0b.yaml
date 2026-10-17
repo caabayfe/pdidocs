@@ -1,0 +1,234 @@
+_meta:
+  hash: 987d8794c3ccef6d98a03f0d34073838a739e518770cc4d94312686be2c33c4a
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: jimmy.yuan
+  sys_created_on: 2013-04-04 16:38:42
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 7042cf15376001006b882d465abe5d0b
+  sys_mod_count: '127'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_7042cf15376001006b882d465abe5d0b
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-09-06 11:03:23
+active: 'true'
+checksum: ''
+description: Main wrapper script for all PowerShell scripts run by the MID Server
+directory: 'false'
+name: PSScript.ps1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  Param([string]$computer, [string]$script, [boolean]$useCred, [boolean]$isMid, [boolean]$isDiscovery, [boolean]$debug, [boolean]$logInfo, [string]$logLevel, [boolean]$skipTest, [boolean]$executeRemote, [int]$processTimeout, [boolean]$copyScriptToTarget)
+
+  $global:AutomaticVariables = Get-Variable
+
+  $executingScriptDirectory = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+  $midScriptDirectory = $executingScriptDirectory -replace "\\[\w]*$", ""
+  $global:logInfo=$logInfo
+  $global:logLevel=$logLevel
+
+  import-module "$executingScriptDirectory\Credentials"  -DisableNameChecking
+  import-module "$executingScriptDirectory\WMIFetch"
+  import-module "$executingScriptDirectory\WMIRunner"
+  import-module "$executingScriptDirectory\XMLUtil"
+  import-module "$executingScriptDirectory\LaunchProc"
+  import-module "$executingScriptDirectory\DiagnosticsUtil" -DisableNameChecking
+  import-module "$executingScriptDirectory\PSRemoteSession" -Global
+  import-module "$executingScriptDirectory\WinRMAPI\ExecuteRemote\ExecuteRemote"
+  import-module "$executingScriptDirectory\IH\Logging" -DisableNameChecking
+
+  if (Test-Path Env:SNCExecuteRemoteVars) {
+      try {
+          $remoteVarsVariable = Get-ChildItem -Path Env:SNCExecuteRemoteVars -ErrorAction Stop
+      } catch {
+          SNCLog-DebugInfo "Error getting remote variables: $_"
+      }
+  } else {
+      SNCLog-DebugInfo 'SNCExecuteRemoteVars not found in the environment variables'
+  }
+
+  # translate powershell_param_ environment variables to normal variables
+  if ($remoteVarsVariable) {
+      $paramNamesString = $remoteVarsVariable.Value
+      $paramNames = ($paramNamesString -split ",")
+      $paramNames = $paramNames | ForEach-Object {"Env:$_"}
+      $vars = Get-ChildItem -Path $paramNames
+
+      Foreach ($var in $vars) {
+          $name = $var.Name
+          $value = $var.Value
+          Set-Variable -Name $name -Value $value -Scope Global
+      }
+  }
+
+  # Copy the environment variables to the params
+  if (test-path env:\SNCUser) {
+      $Private:userProtected = $env:SNCUser
+      $Private:passwordProtected = $env:SNCPass
+      $env:SNCUser=''
+      $env:SNCPass=''
+      $global:encryptedVars=$env:SNCEncryptedVars
+  }
+
+  # Debugging information ...
+  SNCLog-PowershellVersion
+  SNCLog-EnvironmentVars
+  SNCLog-ParameterInfo @("Executing PSScript.ps1", $computer, $script, $useCred, $isMid, $isDiscovery)
+
+  # This part exposes any arguments that are in addition to the parameters to the current scope
+  for ($i = 0; $i -lt $args.count; $i += 2) {
+      $value = ''
+      if ($i + 1 -lt $args.count) {
+          $value = $args[$i + 1]
+      }
+      if ($value -eq $null) {
+          new-variable -name $args[$i] -value $null
+      } elseif ($value.getType().Name -eq "Boolean") {
+          if ($value) {
+              new-variable -name $args[$i] -value $true
+          } else {
+              new-variable -name $args[$i] -value $false
+          }
+      } else {
+          new-variable -name $args[$i] -value $value
+      }
+
+      remove-variable -name value
+  }
+
+  Write-SNCGeneralLogs
+  Write-SNCLog DEBUG "`$PSScriptRoot = $PSScriptRoot"
+
+  # This part attempts to access the target system, just to see if we have access - if using credentials, it tries to figure out
+  # the appropriate credential checking mechanism by looking for a $credType in the argument list - if it is not set, assume
+  # WMI
+  if($credType -eq $null) {
+    if(test-path env:\SNC_credType) {
+      $credType=$env:SNC_credType
+    }
+  }
+
+  $cred = $null
+  if ($credType -eq $null) {
+      SNCLog-DebugInfo "`t`$credType is undefined, defaulting to WMI"
+      $credType = "WMI"
+  }
+
+  $credTestFunc = "testCredential" + $credType
+  $noCredTestFunc = "testNoCredentialAccess" + $credType
+
+  #
+  # This part checks to see if the target host is the mid and if the usecred variable is set to true.  If both are correct the testCredentialGetCred is called in the 
+  # credentials.psm1 module.
+  #
+  if($isMid -and $useCred) {
+  	$credType = "GetCred"
+  	$credTestFunc = "testCredential" + $credType
+  } 
+  try {
+      if ($useCred) {
+          if ($skipTest) {
+              $cred = getCredential $Private:userProtected $Private:passwordProtected
+          }
+          else {
+              $cred = & $credTestFunc -computer $computer -user $Private:userProtected -password $Private:passwordProtected -debug $debug
+          }
+      } else {
+          & $noCredTestFunc -computer $computer -debug $debug
+      }
+  } catch [System.Exception] {
+  	Write-SNCLog ERROR (Format-SNCError $_)
+  	[Console]::Error.WriteLine($_.Exception.Message)
+  	Write-SNCLog TRACE "exit 2"
+  	exit 2;
+  }
+
+  # make $computer and $cred globally available
+  $global:computer = $computer
+  $global:cred = $cred
+
+  # This part actually sets up to run the real script
+  # Format the result in XML for the payload parser - if asked for
+  if (!$isDiscovery) {
+      write-host "<powershell>"
+      write-host "<output>"
+  }
+
+  # We will attempt to capture any available HRESULT
+  $hresult = $null
+  # Run the script file passed in and attempt to catch any exception in the script content 
+  # so the error will be reported on stderr
+  try {
+  	 $ErrorActionPreference = 'Stop'
+      # Copy ALL the SNC_* environment variables to PowerShell variables, don't burden users with knowing about environment variable magic
+      dir env: | ForEach-Object {
+          if ($_.name.StartsWith("SNC_")) {
+               # Force it so that we do not get the name clash. It won't overwrite any read-only variable (http://technet.microsoft.com/en-us/library/hh849913.aspx)
+               New-Variable -name $_.name.Replace("SNC_", "") -value $_.value -Force  
+          }
+      }
+
+  	# Show all the variables available (debugging info)
+  	SNCLog-Variables
+
+      if ((!$isMid -and $executeRemote) -or ($script -clike '*filebaseddiscovery*')) {
+          executeRemote -computer $computer -filePath $script -wmi $true -cred $cred -copyScriptToTarget:$copyScriptToTarget -launchProcessWaitTime $processTimeout
+      } else {
+          & $script
+      }
+  } catch [System.UnauthorizedAccessException] {
+      # If the credential passed the credential check for logging into the target system, but doesn't have rights to commit
+      # the changes (for example: The user can log into AD but cannot create new account), we want to try the next credential. 
+      Write-SNCLog ERROR (Format-SNCError $_)
+      if ($useCred) { 
+          Write-SNCLog TRACE "exit 1"
+          exit 1;
+      } else {
+          Write-SNCLog TRACE "exit 3"
+          exit 3; // MID Server service user
+      }
+  } catch [System.Exception] {
+      Write-SNCLog ERROR (Format-SNCError $_)
+      [Console]::Error.WriteLine($_.Exception.Message)
+      if ($_.Exception.ErrorCode) {           # Attempt to read HRESULT provided by an ExternalException
+          $hresult = $_.Exception.ErrorCode
+      } elseif ($_.Exception.HResult) {      # Attempt to read HRESULT provided by an Exception
+          $hresult = $_.Exception.HResult
+      }
+      if ($hresult) {
+          [Console]::Error.WriteLine("HRESULT: [" + $hresult + "]")
+      }
+      if ($debug) {
+          [Console]::Error.WriteLine("`r`n Stack Trace: " + $_.Exception.StackTrace)
+      }
+      if ($isMid) {
+           if($useCred) {
+           Write-SNCLog TRACE "exit 1"
+           exit 1
+          } else {
+           Write-SNCLog TRACE "exit 4"
+           exit 4
+          }
+      } else {
+          Write-SNCLog TRACE "exit 4"
+          exit 4
+      }
+  } finally {
+      if (!$isDiscovery) {
+          write-host "</output>"
+          if ($hresult) {
+              write-host "<hresult>$hresult</hresult>"
+          }
+          write-host "</powershell>"
+      }
+  }
+script_attachment: ''
+source: ''
+sys_name: PSScript.ps1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

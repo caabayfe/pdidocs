@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<g2:requires name="scripts/angular_includes_supported.js" includes="true"/>
+	<g2:requires name="scripts/heisenberg/heisenberg_all.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/util/js_includes_util.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/messaging/js_includes_messaging.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/controls/js_includes_controls.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/glide/js_includes_glide.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/i18n/js_includes_i18n.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/notification/js_includes_notification.js" includes="true"/>
+	<g2:requires name="scripts/sn/common/ui/js_includes_ui.js" includes="true"/>
+	<g2:requires name="scripts/js_includes_filter_widget.js" includes="true"/>
+	<g2:requires name="scripts/js_includes_ng_form_elements.js" includes="true" />
+	<g:if_polaris>
+		<g:then>
+			<g2:requires name="styles/polaris/filter.css" />
+		</g:then>
+		<g:else>
+			<g2:requires name="/styles/filter.css" />
+		</g:else>
+	</g:if_polaris>
+	<g2:requires name="/styles/thirdparty/datetimepicker.css" />
+
+	<style type="text/css">
+
+		#snfilterwidgettest{
+			margin-top: 150px;
+			padding: 0px 40px 15px;
+		}
+
+		#snfilterwidgettest:target:before {
+		  content:"";
+		  display:block;
+		  height:125px; /* fixed header height*/
+		  margin:-125px 0 0; /* negative fixed header height */
+		}
+
+		#snfilterwidgettest ul{
+			padding-left: 0;
+		}
+
+		#snfilterwidgettest .sticky-header{
+		    position: fixed;
+		    width: 100%;
+		    z-index:1000;
+		    background: #F7FAFC;
+		    padding: 20px 40px 15px;
+		    margin: 0;
+		    left: 0;
+		    top: 0;
+		}
+
+		.-polaris #snfilterwidgettest .sticky-header{
+			background: RGB(var(--now-color_background--primary, var(--now-color--neutral-0, 255, 255, 255)));
+		}
+
+		#snfilterwidgettest .header small{
+			padding: 0 0 0 10px;
+		}
+
+		#snfilterwidgettest .header ul{
+		    list-style: none;
+		    margin: 0;
+		    padding: 5px 0 0;
+	    }
+
+		#snfilterwidgettest .header ul li {
+		    display: inline-block;
+		    font-size: 18px;
+		}
+
+		#snfilterwidgettest .header ul li::after {
+		    content: "\2022";
+		    margin: 0 8px;
+		}
+
+		#snfilterwidgettest .content {
+			padding-bottom: 10px;
+			border-bottom: 1px solid #efefef;
+		}
+
+		.-polaris #snfilterwidgettest .content {
+			border-color: RGB(var(--now-color_border--primary, var(--now-color--neutral-7, 135, 147, 148)));
+		}
+
+		#snfilterwidgettest .content h2{
+			padding-bottom: 10px;
+		}
+
+		#snfilterwidgettest .filter-preferences-sidebar{
+			border-left: 1px solid #efefef;
+			padding-left: 20px;
+		}
+
+		.-polaris #snfilterwidgettest .filter-preferences-sidebar {
+			border-color: RGB(var(--now-color_border--primary, var(--now-color--neutral-7, 135, 147, 148)));
+		}
+
+		#snfilterwidgettest .ng-filter-widget{
+		        border: medium none;
+			    display: block;
+			    background: white;
+			    float: none;
+			    height: auto;
+			    overflow: auto;
+			    padding-bottom:350px;
+			    clear: both;
+		}
+
+		.-polaris #snfilterwidgettest .ng-filter-widget {
+			background: RGB(var(--now-color_background--primary, var(--now-color--neutral-0, 255, 255, 255)));
+		}
+
+		#snfilterwidgettest .realtime-query span{
+			background: #ddd;
+		    width: 100%;
+		    display: block;
+		    margin-top: 10px;
+		    padding: 0 20px;
+		    line-height: 36px;
+		    border-radius: 0;
+		    font-weight: bolder;
+		    font-size: 14px;
+		    border: medium none;
+		}
+
+		.-polaris #snfilterwidgettest .realtime-query span {
+			background: RGB(var(--now-color_background--tertiary, var(--now-color--neutral-2, 228, 230, 231)));
+		}
+
+		#snfilterwidgettest .realtime-query pre{
+			border-radius: 0 0 5px 5px;
+			order: medium none;
+		    font-size: 10px;
+		    line-height: 1.4;
+		}
+	</style>
+
+	<div id="snfilterwidgettest" class="col-md-12">
+		<div ng-controller='NgFilterTestPage'>
+			<div class="pane">
+				<div class="sticky-header">
+					<header class="header">
+						<h1>Condition Builder<small> NG Filter Widget</small></h1>
+						<ul bs-scrollspy-list="" data-offset="300">
+							<li bs-scrollspy="" data-target="#how-to-use"><a href="#how-to-use">Usage</a></li>
+							<li bs-scrollspy="" data-target="#live-example"><a href="#live-example">Live Example</a></li>
+							<li bs-scrollspy="" data-target="#dependencies"><a href="#dependencies">Dependencies</a></li>
+						</ul>
+					</header>
+				</div>
+				<p class="lead">Use the NG Filter Widget to build encoded queries in your Service Now Angular applications.</p>
+				<div id="how-to-use" class="content">
+						<h2>Usage</h2>
+						<p>The only required information to initialize the NG Filter Widget is the target table.</p>
+						<figure class="highlight">
+							<pre>
+								<code ng-non-bindable="" class="language-html" data-lang="html">
+									&lt;sn-filter-widget table='{{table}}'&gt;&lt;/sn-filter-widget&gt;
+								</code>
+							</pre>
+						</figure>
+						<h3>Options</h3>
+						<p>Configure the filter widget by passing an object into the filter widget using the filter-config attribute.</p>
+
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>type</th>
+										<th>default</th>
+										<th>description</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>encodedQuery</td>
+										<td>string</td>
+										<td><code>undefined</code></td>
+										<td>
+											A string which will be parsed, internally converted into a GlideQuery object, and displayed as the current filter comparisons.
+											Note: if an encodedQuery string is passed into the filter, an encodedQuery string will be emitted on "snfilter:update_query" event
+										</td>
+									</tr>
+									<tr>
+										<td>queryObj</td>
+										<td>GlideQuery</td>
+										<td><code>undefined</code></td>
+										<td>
+											A GlideQuery object which will be parsed and displayed as the current filter comparisons.
+											Note: if a glide query object is passed into the filter, an updated GlideQuery object will be emitted on "snfilter:update_query" event
+										</td>
+									</tr>
+									<tr>
+										<td>sets</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Allow multiple filter criteria to be created. Criteria are delimited by a <code>^NQ</code> in the query string, and will be treated as a global or condition.
+											If true, new criteria button will display.
+											If false only the first criteria will be decoded and rendered in the filter
+										</td>
+									</tr>
+									<tr>
+										<td>dotWalking</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Allows a filter comparison to traverse to a related table and filter on that table's fields
+										</td>
+									</tr>
+									<tr>
+										<td>saveFilter</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Show the save filter button, which allows saving of the encoded query string to the <code>sys_filter</code> table
+										</td>
+									</tr>
+									<tr>
+										<td>testFilter</td>
+										<td>boolean</td>
+										<td>false</td>
+										<td>
+											Show the test filter button, which shows the record count that matches the current conditions in the filter widget
+										</td>
+									</tr>
+									<tr>
+										<td>loadFilter</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Enable or disable load filter modal
+										</td>
+									</tr>
+									<tr>
+										<td>sortFilter</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Enable or disable sort filter modal
+										</td>
+									</tr>
+									<tr>
+										<td>runFilter</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Show the run filter button. On click this button will create an encoded query and emit the correct query type.
+											If false, the filter will build and emit queries automatically on every change
+										</td>
+									</tr>
+									<tr>
+										<td>clearFilter</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Show the clear all button. On click will clear the filter and reset it to an empty state.
+										</td>
+									</tr>
+									<tr>
+										<td>closeFilter</td>
+										<td>boolean</td>
+										<td>true</td>
+										<td>
+											Show the close filter button. On click will close the filter and remove filter widget from DOM.
+										</td>
+									</tr>
+									<tr>
+										<td>watchConfig</td>
+										<td>boolean</td>
+										<td>false</td>
+										<td>
+											Live updates on config object passed into filter.
+										</td>
+									</tr>
+								    <tr>
+										<td>relatedListQueryConditions</td>
+										<td>boolean</td>
+										<td>false</td>
+										<td>
+											Enable Related List Query Conditions.
+										</td>
+									</tr>
+									<tr>
+										<td>ouputType</td>
+										<td>string</td>
+										<td>"glide_query"</td>
+										<td>
+											What type of query filter widget emits when run. Options are "encoded_string" and "glide_query". Defaults to "glide_query"
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<h3>Events</h3>
+						<p>The following events that are used to interact with query</p>
+						<div class="table-responsive">
+							<table class="table table-bordered table-striped js-options-table">
+								<thead>
+									<tr>
+										<th>Event</th>
+										<th>Handler</th>
+										<th>Description</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>snfilter:initialize_query</td>
+										<td><code>$scope.$on</code></td>
+										<td>Include a query (either GlideQuery objects or encoded strings) as a parameter and the filter will initialize on the given query parameter</td>
+									</tr>
+									<tr>
+										<td>snfilter:update_query</td>
+										<td><code>$scope.$emit</code></td>
+										<td>Emits the updated query, formatted to match the type of query that was passed to it. If no query was initialized, an encoded query will be emitted</td>
+									</tr>
+									<tr>
+										<td>snfilter:update_table</td>
+										<td><code>$scope.$on</code></td>
+										<td>Update the filter table after initialization. Pass in an object with a table and tableLabel properties. </td>
+									</tr>
+									<tr>
+										<td>snfilter:update_order_by</td>
+										<td><code>$scope.$on</code></td>
+										<td>Update the filter sort by passing a sort Array </td>
+									</tr>
+									<tr>
+										<td>$scope.$emit('snfilter:filter_change');</td>
+										<td><code>$scope.$emit</code></td>
+										<td>Any time there has been an update to the filters internal structure, the 'snfilter:filter_change' event is fired</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+				</div>
+				<div id="live-example" class="content">
+					<h2>Live Example</h2>
+					<div class="row">
+						<div class="col-md-9">
+							<div class="panel panel-default">
+								<sn-filter-widget table='{{table}}' table-label='{{tableLabel}}' filter-config="filterConfig"></sn-filter-widget>
+							</div>
+							<figure class="realtime-query">
+								<span>{{filterConfig.encodedQuery}}</span>
+								<pre>{{filterConfig | json}}</pre>
+							</figure>
+						</div>
+						<div class="col-md-3 filter-preferences-sidebar">
+							<form>
+								<h3>Filter Preferences</h3>
+
+							  <div class="form-group">
+								  <div class="form-group">
+									<label>Table</label>
+									<select class="form-control"
+											ng-options="list.value as list.label for list in lists"
+											ng-model="table"
+											ng-change="setTable(table)">
+									</select>
+								  </div>
+								<label>Enable Sets?</label>
+								<div class="radio">
+								  <label id="filter-sets-radio-on">
+									<input type="radio" name="filtersets" ng-value="true" ng-model="filterConfig.sets" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="filter-sets-radio-off">
+									<input type="radio" name="filtersets" ng-value="false" ng-model="filterConfig.sets" />
+										No
+								  </label>
+								</div>
+							  </div>
+								<div class="form-group">
+								<label>Display Save Filter Button?</label>
+								<div class="radio">
+								  <label id="save-filter-radio-on">
+									<input type="radio" name="saveFilter" ng-value="true" ng-model="filterConfig.saveFilter" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="save-filter-radio-off">
+									<input type="radio" name="saveFilter" ng-value="false" ng-model="filterConfig.saveFilter" />
+										No
+								  </label>
+								</div>
+							  </div>
+								<div class="form-group">
+								<label>Display Load Filter Button?</label>
+								<div class="radio">
+								  <label id="load-filter-radio-on">
+									<input type="radio" name="loadFilter" ng-value="true" ng-model="filterConfig.loadFilter" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="load-filter-radio-off">
+									<input type="radio" name="loadFilter" ng-value="false" ng-model="filterConfig.loadFilter" />
+										No
+								  </label>
+								</div>
+							  </div>
+								<div class="form-group">
+								<label >Show Test Filter Button?</label>
+								<div class="radio">
+								  <label id="test-filter-radio-on">
+									<input type="radio" name="testFilter" ng-value="true" ng-model="filterConfig.testFilter" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="test-filter-radio-off">
+									<input type="radio" name="testFilter" ng-value="false" ng-model="filterConfig.testFilter" />
+										No
+								  </label>
+								</div>
+							  </div>
+								<div class="form-group">
+								<label >Show Clear All Filter Button?</label>
+								<div class="radio">
+								  <label id="clear-filter-radio-on">
+									<input type="radio" name="clearFilter" ng-value="true" ng-model="filterConfig.clearFilter" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="clear-filter-radio-off">
+									<input type="radio" name="clearFilter" ng-value="false" ng-model="filterConfig.clearFilter" />
+										No
+								  </label>
+								</div>
+							  </div>
+								<div class="form-group">
+								<label>Show Run Filter Button?</label>
+								<div class="radio">
+								  <label id="run-filter-radio-on">
+									<input type="radio" name="runFilter" ng-value="true" ng-model="filterConfig.runFilter" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="run-filter-radio-off">
+									<input type="radio" name="runFilter" ng-value="false" ng-model="filterConfig.runFilter" />
+										No
+								  </label>
+								</div>
+								</div>
+									<div class="form-group">
+								<label>Show Sort Filter Button?</label>
+								<div class="radio">
+								  <label id="sort-filter-radio-on">
+									<input type="radio" name="sortFilter" ng-value="true" ng-model="filterConfig.sortFilter" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="sort-filter-radio-off">
+									<input type="radio" name="sortFilter" ng-value="false" ng-model="filterConfig.sortFilter" />
+										No
+								  </label>
+								</div>
+							  </div>
+								<div class="form-group">
+								<label>Allow Dotwalking?</label>
+								<div class="radio">
+								  <label id="dot-walking-radio-on">
+									<input type="radio" name="filterdotwalking" ng-value="true" ng-model="filterConfig.dotWalking" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="dot-walking-radio-off">
+									<input type="radio" name="filterdotwalking" ng-value="false" ng-model="filterConfig.dotWalking" />
+										No
+								  </label>
+								</div>
+							  </div>
+							  <div class="form-group">
+								<label >Display Close Filter Button?</label>
+								<div class="radio">
+								  <label id="close-filter-radio-on">
+									<input type="radio" name="closeFilter" ng-value="true" ng-model="filterConfig.closeFilter" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="close-filter-radio-off">
+									<input type="radio" name="closeFilter" ng-value="false" ng-model="filterConfig.closeFilter" />
+										No
+								  </label>
+								</div>
+							  </div>
+							  <div class="form-group">
+								<label>Watch config Object?</label>
+								<div class="radio">
+								  <label id="watch-config-radio-on">
+									<input type="radio" name="watchConfig" ng-value="true" ng-model="filterConfig.watchConfig" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="watch-config-radio-off">
+									<input type="radio" name="watchConfig" ng-value="false" ng-model="filterConfig.watchConfig" />
+										No
+								  </label>
+								</div>
+							  </div>
+							  <div class="form-group">
+								<label>Enable Related List Query Conditions?</label>
+								<div class="radio">
+								  <label id="related-list-query-conditions-radio-on">
+									<input type="radio" name="relatedListQueryConditions" ng-value="true" ng-model="filterConfig.relatedListQueryConditions" />
+										Yes
+								  </label>
+								</div>
+								<div class="radio">
+								  <label id="related-list-query-conditions-radio-off">
+									<input type="radio" name="relatedListQueryConditions" ng-value="false" ng-model="filterConfig.relatedListQueryConditions" />
+										No
+								  </label>
+								</div>
+							  </div>
+							  <div class="form-group">
+								<label>Encoded Query</label>
+								<input type="text" class="form-control" name="encodedquery" ng-model="filterConfig.encodedQuery" />
+							  </div>
+							</form>
+						</div>
+					</div>
+				</div>
+				<div id="dependencies" class="content">
+					<h2>Dependencies</h2>
+					<p>The Condition builder's dependencies are the following plugins:</p>
+					<ol>
+						<li><code>com.glide.ui.ng</code></li>
+						<li><code>com.glide.ui.ng.amb</code></li>
+						<li><code>com.glide.ui.ng.form_elements</code></li>
+					</ol>
+
+					<p>In addition, the following files are required:</p>
+
+					<figure class="highlight">
+							<pre>
+								<code ng-non-bindable="" class="language-html" data-lang="html">
+&lt;g2:requires name=&quot;scripts/angular_includes_supported.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/heisenberg/heisenberg_all.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/sn/common/util/js_includes_util.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/sn/common/messaging/js_includes_messaging.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/sn/common/controls/js_includes_controls.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/sn/common/glide/js_includes_glide.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/sn/common/i18n/js_includes_i18n.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/sn/common/notification/js_includes_notification.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/sn/common/ui/js_includes_ui.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/js_includes_filter_widget.js&quot; includes=&quot;true&quot;/&gt;
+&lt;g2:requires name=&quot;scripts/js_includes_ng_form_elements.js&quot; includes=&quot;true&quot; /&gt;
+&lt;g2:requires name=&quot;/styles/filter.css&quot; /&gt;
+&lt;g2:requires name=&quot;/styles/thirdparty/datetimepicker.css&quot; /&gt;
+								</code>
+							</pre>
+						</figure>
+
+						<p>and the following angular modules</p>
+
+					<figure class="highlight">
+							<pre>
+								<code ng-non-bindable="" class="language-html" data-lang="html">
+'sn.common.util',
+'sn.common.table_data',
+'sn.common.notification',
+'sn.common.controls',
+'sn.common.glide',
+'sn.common.i18n',
+'sn.common.ui',
+'sn.ngform.elements',
+'sn.ngform.components',
+'ngSanitize',
+'sn.filter_widget.data',
+'sn.filter_widget.dot_walk',
+'sn.filter_widget.utilities'
+								</code>
+							</pre>
+						</figure>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+</j:jelly>

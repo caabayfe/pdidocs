@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${GlideMobileExtensions.getDeviceType() != 'doctype'}">
+		<g:requires name="scripts/lib/jquery_includes.js" />
+	</j:if>
+	<g:requires name="scripts/js_includes_assessment.js" includes="true" />
+	<!-- Used by dialog e.g. GlideModal -->
+	
+	<g:evaluate jelly="true" var="jvar_returnUrl">
+		var returnUrl = "";
+		if (typeof jelly.sysparm_return_url !== "undefined")
+			returnUrl = GlideStringUtil.escapeHTML(jelly.sysparm_return_url);
+		returnUrl;
+	</g:evaluate>
+
+	<j:set var="jvar_hideHeader" value="${sysparm_hide_header}" />
+	<j:set var="jvar_hideSubmit" value="${sysparm_hide_submit}" />
+	<j:set var="jvar_hideSave" value="${sysparm_hide_save}" />
+	<j:set var="jvar_hideCancel" value="${sysparm_hide_cancel}" />
+	<j:set var="jvar_hideSourceDetails" value="${sysparm_hide_source_details}" />
+
+	<j:set var="jvar_isComingFromSurveyCreator" value="${sysparm_isSurveyCreator}" />
+	<j:set var="jvar_isReaderView" value="${HTML:sysparm_reader_view}" />
+	<j:set var="jvar_hidepreview" value="no" />
+	<j:set var="jvar_instance" value="${sysparm_instance}"/>
+	<j:set var="jvar_triggerTable" value="${sysparm_trigger_table}"/>
+	<j:set var="jvar_triggerId" value="${sysparm_trigger_id}"/>
+	<g:evaluate jelly="true" var="jvar_button_row_style" copyToPhase2="true">
+		var buttonRowStyle = '';
+		if (jelly.sysparm_button_row_invisible == 'true'){
+			buttonRowStyle = 'display:none';
+		}
+		buttonRowStyle;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_media" copyToPhase2="true">
+		var media = '';
+		if (typeof jelly.sysparm_media !== 'undefined')
+			media = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_media);
+		media;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_assessable_type" copyToPhase2="true">
+		var metricTypeId = '';
+		if(typeof jelly.sysparm_assessable_type !== 'undefined'){
+			metricTypeId = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_assessable_type);
+			var metricTypeRegex = new RegExp("^\\w{32}$");
+			if(!metricTypeRegex.test(metricTypeId)){
+				metricTypeId = '';
+			}
+		}
+		metricTypeId;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jar_nothing_returned">
+		if (typeof jelly.sysparm_lang !== "undefined") {
+			var sysLangs = new GlideRecord("sys_language");
+			sysLangs.addActiveQuery();
+			sysLangs.addQuery("id", jelly.sysparm_lang);
+			sysLangs.query();
+			if (sysLangs.hasNext() || jelly.sysparm_lang == "en")
+				GlideSession.get().getUser().setPreference("user.language", jelly.sysparm_lang);
+			else {
+				gs.addErrorMessage(gs.getMessage("Language doesn't exist."));
+				GlideSession.get().getUser().setPreference("user.language", "en");
+		    }
+		}
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_hideClose">
+		var hideClose = jelly.sysparm_hide_close == 'true';
+		hideClose;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_assessment_type" copyToPhase2="true">
+		var metricGR = new GlideRecord("asmt_metric_type");
+		metricGR.addQuery('sys_id', jelly.jvar_assessable_type);
+		metricGR.query();
+		var evaluation_type = gs.getMessage('assessment');
+		if (metricGR.next())
+			evaluation_type = metricGR.evaluation_method.getChoiceValue().toLowerCase();
+		evaluation_type;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_assessment_type_value">
+		var metricGR = new GlideRecord("asmt_metric_type");
+		metricGR.addQuery('sys_id', jelly.jvar_assessable_type);
+		metricGR.query();
+		var assessment_type_value = gs.getMessage('assessment');
+		if (metricGR.next())
+			assessment_type_value = metricGR.evaluation_method.getValue().toLowerCase();
+		assessment_type_value;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_assessment_type_class">
+		var metricGR = new GlideRecord("asmt_metric_type");
+		metricGR.addQuery('sys_id', jelly.jvar_assessable_type);
+		metricGR.query();
+		var assessment_type_class = 'asmt_metric_type';
+		if (metricGR.next())
+			assessment_type_class = metricGR.sys_class_name.getValue().toLowerCase();
+		assessment_type_class;
+	</g:evaluate>
+	<g:evaluate var="jvar_settings_menu_show_language_picker">
+		pm.isActive('com.glide.i18n') ${AND} gs.getProperty('glide.ui.language_picker.enabled', 'true') == 'true' ${AND} gs.getProperty('show_lang_picker_for_publicsurveys') == 'true';
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_is_public_survey">
+		var isPublicSurvey = "false";
+		var metricGR = new GlideRecord("asmt_metric_type");
+		metricGR.addQuery('sys_id', jelly.jvar_assessable_type);
+		metricGR.query();
+		if (metricGR.next() ${AND} metricGR.allow_public ${AND} jelly.jvar_assessment_type_value == 'survey')
+			isPublicSurvey = "true";
+		isPublicSurvey;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_redirect_to_login">
+		var isUserLoggedIn = gs.isLoggedIn();
+		var redirectLogin = "false";
+		if(jelly.jvar_is_public_survey == 'false' ${AND} !isUserLoggedIn)
+			redirectLogin = "true";
+		redirectLogin;
+	</g:evaluate>
+	<j:if test="${jvar_redirect_to_login == 'true'}">
+		<script language="javascript">
+			var sysparm_this_url = "${sysparm_this_url}"; 
+			var url = 'assessment_redirect.do?sysparm_survey_url=' + encodeURIComponent(sysparm_this_url);
+			document.location.href = url;
+		</script>
+	</j:if>
+	<g:evaluate jelly="true" var="jvar_assessment_roles">
+		var roles = "";
+		var metricGR = new GlideRecord("asmt_metric_type");
+		metricGR.addQuery('sys_id', jelly.jvar_assessable_type);
+		metricGR.query();
+		if (metricGR.next())
+			roles = metricGR.roles;
+		roles;
+	</g:evaluate>
+	<g:evaluate jelly="true" var="jvar_assessable_sysid" copyToPhase2="true">
+		var asmtInstanceId = '';
+		if(typeof jelly.sysparm_assessable_sysid !== 'undefined'){
+			asmtInstanceId = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_assessable_sysid);
+			var asmtInstanceRegex = new RegExp("^\\w+$");
+			if(!asmtInstanceRegex.test(asmtInstanceId)){
+				asmtInstanceId = 'invalidsysid';
+			}
+		}
+		if (asmtInstanceId == '') {
+			var instance = new SNC.AssessmentCreation().createOrGetAssessmentWithTrigger(jelly.jvar_assessable_type, '', gs.getUserID(), jelly.jvar_triggerTable, jelly.jvar_triggerId);
+		} else if(asmtInstanceId =='invalidsysid'){
+			instance = 'invalidsysid';
+		}else{
+			var temp = new SNC.AssessmentCreation().checkAssessmentAllowed(jelly.jvar_assessable_type, asmtInstanceId, gs.getUserID());
+			if (jelly.sysparm_isSurveyCreator == 'yes' || (jelly.jvar_isReaderView == 'true' ${AND} (gs.hasRole('survey_admin,survey_reader,survey_creator') || (new AssessmentUtils()).hasAssessmentRoles(jelly.jvar_assessment_roles))) || (jelly.jvar_assessment_type_class == 'change_risk_asmt' ${AND} gs.hasRole('itil,sn_change_read')))
+				var instance = asmtInstanceId;
+			else if (temp != "" ${AND} temp != "wip")
+				var instance = temp;
+			else
+				var instance = asmtInstanceId;
+		}
+		if (instance.substring(0, 6) == 'notyet') {
+			var when = instance.substring(6);
+			instance = 'notyet';
+		}
+
+		// DEF0074222: we should honour HR ACLs when reviewing survey response
+		if (jelly.jvar_isReaderView == 'true') {
+			var grMetricType = new GlideRecord("asmt_metric_type");
+			if (grMetricType.get(jelly.jvar_assessable_type)) {
+				if (!grMetricType.canRead())
+					instance = 'not_granted_to_review_answer';
+			}
+		}
+
+		instance;
+	</g:evaluate>
+
+	<g:requires name="styles/assessment.css" />
+	<j:if test="${jvar_assessable_sysid == 'invalidsysid'}">
+		<g:evaluate>
+			var msg = gs.getMessage('The assessable record is invalid');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'completed'}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage('You have completed this {0}', jelly.jvar_assessment_type);
+			gs.addInfoMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'canceled'}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage('This {0} has been canceled', jelly.jvar_assessment_type);
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+	
+	<g:evaluate var="jvar_inst_due_date" jelly="true">
+		var inst_due_date = GlideStringUtil.escapeHTML(jelly.sysparm_inst_due_date);
+		inst_due_date;
+	</g:evaluate>
+
+	<g:evaluate jelly="true" var="jvar_assessment_has_metrics">
+		var hasMetrics = false;
+		var metricGR = new GlideRecord("asmt_metric");
+		metricGR.addQuery("metric_type", jelly.jvar_assessable_type);
+		metricGR.addActiveQuery();
+		metricGR.query();
+		if (metricGR.hasNext()) {
+			hasMetrics = true;
+		}
+		hasMetrics;
+	</g:evaluate>
+
+	<j:if test="${jvar_assessment_has_metrics == 'false'}">
+		<g:evaluate>
+			var msg = gs.getMessage('You are not authorized or the record is not valid.');
+			gs.addInfoMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'save'}">
+		<j:if test="${jvar_inst_due_date == ''}">
+			<g:evaluate>
+				var msg = gs.getMessage('Your responses have been saved');
+				gs.addInfoMessage(msg);
+			</g:evaluate>
+		</j:if>
+		<j:if test="${jvar_inst_due_date != ''}">
+			<g:evaluate jelly="true">
+				var msgArr = [];
+				msgArr.push(jelly.jvar_assessment_type);
+				msgArr.push(jelly.jvar_inst_due_date);
+				var msg = gs.getMessage('Your responses have been saved. You can complete this {0} before {1}', msgArr);
+				gs.addInfoMessage(msg);
+			</g:evaluate>
+		</j:if>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'cancel'}">
+		<j:set var="jvar_isUserLoggedIn" value="${isUserLoggedIn}" />
+		<j:if test="${jvar_inst_due_date == '' || !jvar_isUserLoggedIn}">
+			<g:evaluate>
+				var msg = gs.getMessage('Your responses have not been saved');
+				gs.addErrorMessage(msg);
+			</g:evaluate>
+		</j:if>
+		<j:if test="${jvar_inst_due_date != '' &amp;&amp; jvar_isUserLoggedIn}">
+			<g:evaluate jelly="true">
+				var msgArr = [];
+				msgArr.push(jelly.jvar_assessment_type);
+				msgArr.push(jelly.jvar_inst_due_date);
+				var msg = gs.getMessage('Your responses have not been saved. You can complete this {0} before {1}', msgArr);
+				gs.addErrorMessage(msg);
+			</g:evaluate>
+		</j:if>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'close'}">
+		<g:evaluate>
+			var msg = gs.getMessage('Preview has been closed');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'notyet'}">
+		<g:evaluate>
+			var msg = gs.getMessage('You have recently completed this Survey, it will be available in the future');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${(jvar_assessable_sysid == 'not_authorized')}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage('You are not authorized to take this {0}', jelly.jvar_assessment_type);
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${(jvar_assessable_sysid == 'not_granted_to_review_answer')}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage('You are not granted access to review this response');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'not_available'}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage('This {0} is not currently available, check back later', jelly.jvar_assessment_type);
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'invalidtype'}">
+		<g:evaluate>
+			var msg = gs.getMessage('There was an unexpected failure with this assessment, invalid type provided');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'inactive'}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage('This {0} is no longer active', jelly.jvar_assessment_type);
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'draft_state'}">
+		<g:evaluate jelly="true">
+			var msg = gs.getMessage('This {0} has not yet been published', jelly.jvar_assessment_type);
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'isscheduled'}">
+		<g:evaluate>
+			var msg = gs.getMessage('An incorrect assessment or survey was provided - on demand expected');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'notsurvey'}">
+		<g:evaluate>
+			var msg = gs.getMessage('An incorrect assessment was provided - survey expected');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'nousers'}">
+		<g:evaluate>
+			var msg = gs.getMessage('Unable to generate assessment, no user was provided');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid == 'nosources'}">
+		<g:evaluate>
+			var msg = gs.getMessage('Unable to generate assessment, no source was provided');
+			gs.addErrorMessage(msg);
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessment_type_class == 'change_risk_asmt'}">
+		<g:evaluate jelly="true">
+			if (new AssessmentUtils().isAsmtAIGenerated(jelly.jvar_assessable_sysid)){
+				var msg = gs.getMessage("Check answers generated by AI for accuracy");
+				gs.addSuggestionMessage(msg);
+			}
+		</g:evaluate>
+	</j:if>
+
+	<j:if test="${jvar_assessable_sysid.length() == 32}">
+		<g:evaluate var="jvar_preview">
+			var isPreview = false;
+			var gr = new GlideRecord("asmt_assessment_instance");
+			gr.get(instance);
+			if (gr.isValidRecord())
+			isPreview = gr.getValue("preview");
+		</g:evaluate>
+		<g:evaluate var="jvar_task_record_url">
+			var gr = new GlideRecordSecure("asmt_assessment_instance");
+			gr.get(instance);
+			var task_record = "";
+			var task_table = "";
+			var task_record_url = "";
+			try {
+				if (gr.trigger_table &amp;&amp; gr.trigger_id &amp;&amp; isUserLoggedIn) {
+				    var triggerGr = new GlideRecordSecure(gr.trigger_table);
+				    if (triggerGr.get(gr.trigger_id)) {
+                        task_record_url = gr.trigger_table + ".do?sys_id=" + gr.trigger_id;
+                        var task_number = gr.trigger_id.task_effective_number;
+                        task_table = task_number ? gs.getMessage("Task") : gr.getDisplayValue('trigger_id').split(': ')[0];
+                        task_record = task_number ? task_number.toString() : gr.getDisplayValue('trigger_id').split(': ')[1];
+                        if (!task_table || !task_record)
+                            task_record_url = "";
+					}
+				}
+			} catch (ex) {
+				task_record_url = "";
+			}
+			task_record_url;
+		</g:evaluate>
+		<g:evaluate var="jvar_instance_number">
+			var gr = new GlideRecord("asmt_assessment_instance");
+			gr.get(instance);
+			var instance_number = "";
+			instance_number = gr.number;
+			instance_number;
+		</g:evaluate>
+	</j:if>
+	<j:if test="${jvar_assessable_sysid.length() != 32}">
+		<g:evaluate var="jvar_preview">
+			var isPreview = false;
+		</g:evaluate>
+		<g:evaluate var="jvar_task_record_url">
+			var task_record_url = "";
+			var task_record = "";
+			var task_table="";
+		</g:evaluate>
+	</j:if>
+	<j:if test="${isPreview == true}">
+		<g:evaluate jelly="true" var="jvar_hidepreview">
+			if (jelly.sysparm_isSurveyCreator == 'yes') {
+			value = 'no';
+			} else {
+			var metricGR = new GlideRecord("asmt_metric_type");
+			metricGR.addQuery('sys_id', jelly.jvar_assessable_type);
+			metricGR.query();
+			if (metricGR.next())
+			metricGR.deleteRecord();
+			value = "yes";
+			}
+		</g:evaluate>
+
+		<j:if test="${jvar_isComingFromSurveyCreator != 'yes'}">
+			<g:evaluate>
+				var msg = gs.getMessage('This preview instance has not been saved.');
+				gs.addErrorMessage(msg);
+			</g:evaluate>
+		</j:if>
+	</j:if>
+
+	<j:if test="${jvar_assessment_has_metrics == 'true'}">
+	<g:ui_form>
+		<input type="hidden" id="type_sysID" name="type_sysID" value="${jvar_assessable_type}" />
+		<input type="hidden" id="instance_sysID" name="instance_sysID" value="${jvar_assessable_sysid}" />
+		<input type="hidden" id="selection_result" name="selection_result" value="" />
+		<input type="hidden" id="hiddenQuestions" name="hiddenQuestions" value="" />
+		<input type="hidden" id="attachmentQuestions" name="attachmentQuestions" value="" />
+		<input name="sys_target" id="sys_target" type="HIDDEN" value="asmt_assessment_instance" />
+		<input name="sys_uniqueValue" id="sys_uniqueValue" type="HIDDEN" value="${jvar_assessable_sysid}" />
+		<j:if test="${jvar_returnUrl != ''}">
+			<input name="sysparm_return_url" id="sysparm_return_url" type="HIDDEN" value="${jvar_returnUrl}" />
+		</j:if>
+		<j:if test="${jvar_hidepreview == 'no'}">
+			<g2:evaluate jelly="true" var="jvar_type" expression="var typeGR = '';
+				var instanceGR = new GlideRecord('asmt_assessment_instance');
+				instanceGR.addQuery('sys_id', jelly.jvar_assessable_sysid);
+				instanceGR.query();
+				if (instanceGR.next()) {
+					typeGR = new GlideRecord('asmt_metric_type');
+					typeGR.addQuery('sys_id', instanceGR.metric_type);
+					typeGR.query();
+				}" />
+			<j2:if test="$[typeof typeGR == 'object']">
+				<j2:if test="$[typeGR.next()]">
+					<j:if test="${jvar_hideHeader != 'true'}">
+						<nav class="navbar navbar-default">
+							<div class="container-fluid">
+								<div class="navbar-header">
+									<j:if test="${jvar_instance!= '' &amp;&amp; jvar_instance}">
+										<button title="Back" class="btn btn-default icon-chevron-left navbar-btn" onclick="return clickBack('$[JS:sysparm_view]','$[JS:sysparm_record_list]')" data-original-title="Back">
+											<span class="sr-only">Back</span>
+										</button>
+										<h1 class="form_header navbar-title navbar-title-twoline">
+											<div>
+												<div class="navbar-title-caption">$[typeGR.name]</div>
+												<div class="navbar-title-display-value">${jvar_instance_number}</div>
+											</div>
+										</h1>
+									</j:if>
+									<j:if test="${!jvar_instance}">
+										<h1 class="navbar-title">$[typeGR.name]</h1>
+									</j:if>
+								</div>
+								<div class="nav navbar-right">
+								<j:if test="${media !== 'print'}">
+									<j:if test="${isPreview != true}">
+										<j:if test="${ jvar_isReaderView != 'true'}">
+											<j:if test="${jvar_is_public_survey == 'true' &amp;&amp; jvar_settings_menu_show_language_picker}">
+												<g:asmt_languages_new_ui />
+											</j:if>
+											<j:if test="${jvar_hideSubmit != 'true'}">
+												<button class="btn btn-primary navbar-btn" type="submit" onClick="return submitAssessment();" id="submit" name="submit">${gs.getMessage('Submit')}</button>
+											</j:if>
+											<j:if test="${isUserLoggedIn}">
+												<j:if test="${jvar_hideSave != 'true'}">
+													<button class="btn btn-default navbar-btn" type="submit" onClick="return saveAssessment();" id="save" name="save">${gs.getMessage('Save')}</button>
+												</j:if>
+											</j:if>
+											<j:if test="${jvar_hideCancel != 'true'}">
+												<button class="btn btn-default navbar-btn" type="submit" onClick="return cancelAssessment();" id="cancel" name="cancel">${gs.getMessage('Cancel')}</button>
+											</j:if>
+											<div style="clear: both;"></div>
+										</j:if>
+									</j:if>
+								</j:if>
+									<j:if test="${jvar_instance!= '' &amp;&amp; jvar_instance &amp;&amp; sysparm_record_row != null}">
+										<j:set var="jvar_iterate_update" value="${gs.getProperty('glide.ui.update_on_iterate','true') === 'true'}"/> 
+										<j2:if test="$[sysparm_record_row != '1']"> 
+											<button query="$[sysparm_record_list]" onclick="iterateList1('$[JS:sysparm_view]','$[JS:sysparm_record_list]', '$[JS:sysparm_record_row]', 'sysverb_record_previous', ${jvar_iterate_update},'$[JS:sysparm_record_rows]')" aria-label="${gs.getMessage('Previous record')} ($[sysparm_record_row - 1] of $[sysparm_record_rows])" class="btn btn-icon icon-arrow-up" title="${gs.getMessage('Previous record')} ($[sysparm_record_row - 1] of $[sysparm_record_rows])"> 
+												<span class="sr-only"> ${gs.getMessage('Previous record')} ($[sysparm_record_row - 1] of $[sysparm_record_rows]) </span> 
+											</button> 
+										</j2:if> 
+										<j2:if test="$[sysparm_record_row == '1']"> 
+											<button aria-label="${gs.getMessage('Top of list displayed')}" class="btn btn-icon icon-arrow-up" disabled="true" title="${gs.getMessage('Top of list displayed')}"> 
+												<span class="sr-only"> ${gs.getMessage('Top of list displayed')} </span> 
+											</button> 
+										</j2:if> 
+										<j2:set var="jvar_t" value="$[sysparm_record_row.equals(sysparm_record_rows)]"/> 
+										<j2:if test="$[jvar_t == 'false']"> 
+											<button type="image" query="evaluation_method=survey^active=true^ORDERBYname" onclick="iterateList1('$[JS:sysparm_view]','$[JS:sysparm_record_list]', '$[JS:sysparm_record_row]', 'sysverb_record_next', ${jvar_iterate_update},'$[JS:sysparm_record_rows]')" aria-label="${gs.getMessage('Next record')} ($[sysparm_record_row + 1] of $[sysparm_record_rows])" class="btn btn-icon icon-arrow-down" title="${gs.getMessage('Next record')} ($[sysparm_record_row + 1] of $[sysparm_record_rows])">
+												<span class="sr-only">${gs.getMessage('Next record')} ($[sysparm_record_row + 1] of $[sysparm_record_rows])</span>
+											</button> 
+										</j2:if> 
+									</j:if>
+								</div>
+							</div>
+						</nav>
+					</j:if>
+					<j:if test="${jvar_task_record_url != ''}">
+						<input type="hidden" value="${jvar_task_record_url}" name="task_record_url" id="task_record_url"/>
+						<g2:evaluate jelly="true">
+							var msgArr = [];
+							msgArr.push(jelly.jvar_assessment_type);
+							msgArr.push(task_table);
+						</g2:evaluate>
+						<j2:if test="$[GlideMobileExtensions.getDeviceType() == 'doctype']">
+							<div class="notification notification-info">
+								$[gs.getMessage('This {0} is in regards to {1}: ', msgArr)]
+								<a onClick="openTaskOverlay(event)" class="related-task-link">${task_record}</a>
+								<button data-dismiss="alert" class="btn btn-icon close icon-cross">
+									<span class="sr-only">Close</span>
+								</button>
+							</div>
+						</j2:if>
+						<j2:if test="$[GlideMobileExtensions.getDeviceType() != 'doctype']">
+							<div id="output_messages_container" class="outputmsg_container">
+								<img class="outputmsg_close" src="images/x.gifx" onclick="closeTaskRecoreMsg()" alt="${gs.getMessage('Close Messages')}" />
+								<div class="outputmsg outputmsg_info">
+									<img class="outputmsg_image" src="images/outputmsg_info_24.gifx" alt="${gs.getMessage('Informational Message')}" title="${gs.getMessage('Informational Message')}" />
+									<div class="outputmsg_text">
+										$[gs.getMessage('This {0} is in regards to {1}: ', msgArr)]
+										<a onClick="openTaskOverlay(event)" class="related-task-link">${task_record}</a>
+									</div>
+								</div>
+							</div>
+						</j2:if>
+					</j:if>
+					<j2:if test="$[NS:typeGR.not_show_intro_note != true]">
+						<div class="introduction">
+							<!-- end_note may contain HTML formatting -->
+							<g2:no_escape>$[NS:typeGR.introduction]</g2:no_escape>
+						</div>
+					</j2:if>				 
+				</j2:if>
+			</j2:if>
+			<div class="assessment" data-form-title="$[HTML: gs.getMessage('Take {0}', '${jvar_assessment_type}')]">
+			
+				<table class="wrap">
+					<tbody>
+						<g2:com.snc.assessment_core_take assessment="${jvar_assessable_sysid}" read="${jvar_isReaderView}" />
+					</tbody>
+					<j:if test="${jvar_assessable_sysid.length() == 32}">
+						<g2:evaluate jelly="true">
+							var instanceGR = new GlideRecord('asmt_assessment_instance');
+							instanceGR.addQuery('sys_id', jelly.jvar_assessable_sysid);
+							instanceGR.query();
+							var signatureGR = null;
+							if (instanceGR.next()) {
+							if (!instanceGR.signature.nil()) {
+							signatureGR = new GlideRecord('asmt_signature');
+							signatureGR.get(instanceGR.signature);
+							}
+							}
+						</g2:evaluate>
+
+						<tfoot>
+							<tr>
+								<td>
+									<j2:if test="$[ signatureGR != null &amp;&amp; isUserLoggedIn]">
+										<input type="hidden" name="jvar_signature_type" id="jvar_signature_type" value="$[signatureGR.type]" />
+										<div class="signature">
+											<div class="assertion">
+												<j2:if test="$[ signatureGR.type == 'checkbox' ]">
+													<div id="checkbox">
+														<j:if test="${jvar_isReaderView == 'true'}">
+															<j2:if test="$[ instanceGR.signature_result == 'checked' &amp;&amp; instanceGR.state == 'complete' ]">
+																<span class="input-group-checkbox">
+																	<input type='checkbox' id='signature_result' name='signature_result' value='checked' checked='true' readonly='readonly' disabled="" class="checkbox" aria-labelledby='signature_label' />
+																	<label class="checkbox-label signature_result-label" for='signature_result'></label>
+																</span>
+															</j2:if>
+															<j2:if test="$[ instanceGR.signature_result != 'checked' || instanceGR.state != 'complete']">
+																<span class="input-group-checkbox">
+																	<input type='checkbox' id='signature_result' name='signature_result' value='' readonly='readonly' disabled="" class="checkbox" aria-labelledby='signature_label' />
+																	<label class="checkbox-label signature_result-label" for='signature_result'></label>
+																</span>
+															</j2:if>
+														</j:if>
+														<j:if test="${jvar_isReaderView != 'true'}">
+															<span class="input-group-checkbox">
+																<input type='checkbox' id='signature_result' name='signature_result' value='checked' class="checkbox"  aria-labelledby='signature_label' />
+																<label class="checkbox-label signature_result-label" for='signature_result'></label>
+															</span>
+														</j:if>
+														<div id="signature_label" style="display: inline-block; line-height: 0;">
+															<g2:no_escape>$[NS:signatureGR.assertion]</g2:no_escape>
+														</div>
+													</div>
+												</j2:if>
+
+												<j2:if test="$[ signatureGR.type == 'full_name' ]">
+													<div id="type_name">
+														<div style="padding-left: 4px">
+															<g2:no_escape>$[NS:signatureGR.assertion]</g2:no_escape>
+														</div>
+														<input type='text' id='signature_result' name='signature_result' size='35' readonly='true' />
+													</div>
+												</j2:if>
+
+												<j2:if test="$[ signatureGR.type == 'assertion_only' ]">
+													<div id="no_assertion">
+														<g2:no_escape>$[NS:signatureGR.assertion]</g2:no_escape>
+													</div>
+												</j2:if>
+											</div>
+
+											<div class="assessmentButtonRow" style="${jvar_button_row_style}">
+											<j:if test="${media !== 'print'}">
+												<j:if test="${isPreview != true}">
+													<j:if test="${jvar_isReaderView != 'true'}">
+														<j:if test="${jvar_hideSubmit != 'true'}">
+															<button class="btn btn-primary" type="submit" onClick="return submitAssessment();" id="submit_bottom" name="submit">${gs.getMessage('Submit')}</button>
+														</j:if>
+														<!-- Why does this not check: isUserLoggedIn -->
+														<j:if test="${jvar_hideSave != 'true'}">
+															<button class="btn btn-default" type="submit" onClick="return saveAssessment();" id="save_bottom" name="save">${gs.getMessage('Save')}</button>
+														</j:if>
+														<j:if test="${jvar_hideCancel != 'true'}">
+															<button class="btn btn-default" type="submit" onClick="return cancelAssessment();" id="cancel_bottom" name="cancel">${gs.getMessage('Cancel')}</button>
+														</j:if>
+													</j:if>
+												</j:if>
+											</j:if>
+												<j:if test="${isPreview == true}">
+													<j:if test="${hideClose != true}">
+														<button class="button listactions" type="submit" onClick="return closeAssessment();" id="close" name="close">${gs.getMessage('Close')}
+														</button>
+													</j:if>
+												</j:if>
+											</div>
+										</div>
+									</j2:if>
+
+									<j2:if test="$[ signatureGR == null ]">
+										<div class="assessmentButtonRow" style="${jvar_button_row_style}">
+										<j:if test="${media !== 'print'}">
+											<j:if test="${isPreview != true}">
+												<j:if test="${ jvar_isReaderView != 'true'}">
+													<j:if test="${jvar_hideSubmit != 'true'}">
+														<button class="btn btn-primary" type="submit" onClick="return submitAssessment();" id="submit_sign" name="submit">${gs.getMessage('Submit')}</button>
+													</j:if>
+													<j:if test="${isUserLoggedIn}">
+														<j:if test="${jvar_hideSave != 'true'}">
+															<button class="btn btn-default navbar-btn" type="submit" onClick="return saveAssessment();" id="save_sign" name="save">${gs.getMessage('Save')}</button>
+														</j:if>
+													</j:if>
+													<j:if test="${jvar_hideCancel != 'true'}">
+														<button class="btn btn-default" type="submit" onClick="return cancelAssessment();" id="cancel_sign" name="cancel">${gs.getMessage('Cancel')}</button>
+													</j:if>
+												</j:if>
+											</j:if>
+										</j:if>
+											<j:if test="${isPreview == true}">
+												<j:if test="${hideClose != true}">
+													<button class="button listactions" type="submit" onClick="return closeAssessment();" id="close_sign" name="close">${gs.getMessage('Close')}
+													</button>
+												</j:if>
+											</j:if>
+										</div>
+									</j2:if>
+								</td>
+							</tr>
+						</tfoot>
+					</j:if>
+				</table>
+			</div>
+		</j:if>
+
+
+		<j2:if test="${gs.getProperty('com.snc.assessment.signature_authentication')=='false'}">
+			<j2:set var='jvar_signature_authentication' value='false' />
+		</j2:if>
+		<j2:if test="${gs.getProperty('com.snc.assessment.signature_authentication')=='true'}">
+			<j2:set var='jvar_signature_authentication' value='true' />
+		</j2:if>
+
+
+		<div id='overlay'>
+			<div id="Authentication">
+				<input type="hidden" name="jvar_signature_authentication" id="jvar_signature_authentication" value="$[jvar_signature_authentication]" />
+				<input type="hidden" id="approve_edit" name="approve_edit" value="false" />
+				<input type="hidden" id="approved" name="approved" value="false" />
+				<input type="hidden" id="sysapproval_id" name="sysapproval_id" value="${sysparm_approval_id}" />
+				<table id="authenticate_table">
+					<tr style="vertical-align: top;">
+						<td colspan="2">
+							<table id="authentication_header" style="width:100%; font-weight:bold;">
+								<tbody>
+									<tr>
+										<td style="vertical-align: middle; width:100%;">
+											Signature Authentication
+										</td>
+										<td style="text-align: right;">
+											<span>
+												<img id="popup_close_image" height="12" onclick="cancelOverlay()" style="vertical-align: top; cursor: pointer;" width="12" src="images/x.gifx" class="" />
+											</span>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td>${gs.getMessage('User name:')}</td>
+						<td>
+							<input type="text" name="userName" id="userName" readonly='true' />
+						</td>
+					</tr>
+					<tr>
+						<td>${gs.getMessage('Password')}:</td>
+						<td>
+							<input type="password" name="user_password" id="user_password" />
+						</td>
+					</tr>
+					<tr id="invalid_login_img" style="display:none">
+						<td colspan="2">
+							<table>
+								<tr>
+									<td>
+										<img src="./images/error.gifx" />
+									</td>
+									<td width="100%">
+										<SPAN id="invalid_login_text" style="font-weight:bold;">
+											${gs.getMessage('Password invalid')}
+										</SPAN>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+					<tr id="dialog_buttons">
+						<td colspan="2" align="center">
+							<button type="submit" onClick="checkLogin();return false;" id="ok" name="ok">${gs.getMessage('Ok')}</button>$[SP]
+							<button type="submit" onClick="cancelOverlay();return false;" id="quit" name="quit">${gs.getMessage('Cancel')}</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<!-- overlay -->
+		</div>
+	</g:ui_form>
+	</j:if>
+
+	<!-- emit g_user support -->
+	<g2:client_script type="user" />
+</j:jelly>

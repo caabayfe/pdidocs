@@ -1,0 +1,193 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:inline template="reporting_includes.xml" />
+
+	<style>
+		#complex_input_container {
+			display: none;
+		}
+		#jr_container {
+			margin-top: 5px;
+		}
+	</style>
+	
+	<g2:evaluate jelly="true" var="jvar_chart_title">
+		(function() {
+			var td = GlideTableDescriptor.get('$[sysparm_table]');
+			if(!td.isValid())
+				return null;
+	
+			var metricEd = td.getMetricElementDescriptor('$[sysparm_metric]');
+			var title = td.getLabel() + ': ' + metricEd.getLabel();
+			return title;
+		})();
+	</g2:evaluate>
+	
+	<g2:evaluate>
+		// Query records
+		var records = new GlideRecord("$[sysparm_table]");
+		if ('$[sysparm_sys_id]')
+			records.get('$[sysparm_sys_id]');
+		else {
+			records.addEncodedQuery("$[sysparm_query]");
+			records.setLimit(21);
+			records.query();
+		}
+		
+		var totalCount = records.getRowCount();
+		 
+		var metricElement = "$[sysparm_metric]";
+		var metric = metricElement.slice(8);
+		 
+		var buildTransform;
+		// If transform value exists then this is a complex transform requiring an input value
+		if ('$[sysparm_transform_value]') {
+		 	var value = parseInt('$[sysparm_transform_value]');
+		 	if ('$[sysparm_transform]' === 'add') {
+				buildTransform = new sn_clotho.Transformer(records);
+		    	buildTransform.metric(metric).add(value).label("Add");
+		 	}
+		 	if ('$[sysparm_transform]' === 'mul') {
+				buildTransform = new sn_clotho.Transformer(records);
+		    	buildTransform.metric(metric).mul(value).label("Multiply");
+		 	}
+		 	if ('$[sysparm_transform]' === 'div') {
+				buildTransform = new sn_clotho.Transformer(records);
+		    	buildTransform.metric(metric).div(value).label("Divide");
+		 	}
+			if ('$[sysparm_transform]' === 'resample') {
+				buildTransform = new sn_clotho.Transformer(records);
+		    	buildTransform.metric(metric).resample(value).label("Resample");
+		 	}
+		} else if ('$[sysparm_transform]') {
+		// If transform value doesn't exist but transform does then this is a simple transform
+		 	if (!'$[sysparm_sys_id]') { // Only need to do one of these is there are multiple sys ids
+		 		if ('$[sysparm_transform]' === 'avg') {
+					buildTransform = new sn_clotho.Transformer(records);
+		    		buildTransform.metric(metric).avg().label("Average");
+		 		}
+		 		if ('$[sysparm_transform]' === 'median') {
+					buildTransform = new sn_clotho.Transformer(records);
+		    		buildTransform.metric(metric).median().label("Median");
+		 		}
+		 		if ('$[sysparm_transform]' === 'sum') {
+					buildTransform = new sn_clotho.Transformer(records);
+		    		buildTransform.metric(metric).sum().label("Sum");
+		 		}
+		 	}
+		} 
+		
+		// Build transform string
+		var transformString = JSON.stringify({
+			query_condition: records.getEncodedQuery(),
+			transforms: [{
+				input: {
+					transform: "Reference",
+					name: "chart-subjects"
+				},
+				transform: (buildTransform ? JSON.parse(buildTransform.toJson()) : undefined),
+				metric: metric
+			}],
+			group_by: "",
+			table: "$[sysparm_table]"
+		});
+		 
+	</g2:evaluate>
+	
+	<nav role="toolbar" class="navbar navbar-default">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<input type="HIDDEN" id="sysverb_back"/>
+				<button onclick="history.back();" class="btn btn-default icon-chevron-left navbar-btn h_flip_content" title="${gs.getMessage('Back')}"></button>
+			</div>
+		</div>
+	</nav>
+
+	<span id='$[jvar_guid]'>
+   	<div id="jr_container" class="container-fluid sc-container-fluid">
+		<g:ui_form>
+			<input type="hidden" id="metric" name="metric" value="${sysparm_metric}" />
+			<input type="hidden" id="table" name="table" value="${sysparm_table}" />
+			<input type="hidden" id="sysID" name="sysID" value="${sysparm_sys_id}" />
+			<input type="hidden" id="query" name="query" value="${sysparm_query}" />
+			<div id="clotho_form" class="form-horizontal">
+				<div class="form-group">
+					<label class="col-xs-12 col-md-2 control-label">
+						<span class="label-text">$[gs.getMessage("Time Span")]</span>
+					</label>
+			   
+					<div class="col-xs-12 col-md-9 form-field input_controls">
+						<select id="timeSpanPicker" class="form-control" name="timeSpanPicker">
+							<option id="P0DT1H" value="P0DT1H">1 hour</option>
+							<option id="P0DT4H" value="P0DT4H">$[gs.getMessage("4 hours")]</option>
+							<option id="P1D" value="P1D">$[gs.getMessage("1 day")]</option>
+							<option id="P7D" value="P7D">$[gs.getMessage("7 days")]</option>
+							<option id="P30D" value="P30D">$[gs.getMessage("30 days")]</option>
+						</select>
+					</div>
+				</div>
+		   
+				<div class="form-group">
+					<label class="col-xs-12 col-md-2 control-label">
+						<span class="label-text">$[gs.getMessage("Transform")]</span>
+					</label>
+			   
+					<div id="transformContainer" class="col-xs-12 col-md-9 form-field input_controls">
+						<!-- Any options added to this select that require a value input need to be added to the complex types array in handleTransformChange() in the js -->
+						<select id="transformPicker" class="form-control" name="transformPicker" >
+							<option id="none" value="">--$[gs.getMessage("None")]--</option>
+							<option id="avg" value="avg">$[gs.getMessage("Avg")]</option>
+							<option id="median" value="median">$[gs.getMessage("Median")]</option>
+							<option id="sum" value="sum">$[gs.getMessage("Sum")]</option>
+							<option id="add" value="add">$[gs.getMessage("Add")]</option>
+					   		<option id="mul" value="mul">$[gs.getMessage("Multiply")]</option>
+					   		<option id="div" value="div">$[gs.getMessage("Divide")]</option>
+					    	<option id="resample" value="resample">$[gs.getMessage("Resample")]</option>
+						</select>
+					</div>
+				</div>
+			
+				<div id="complex_input_container" class="form-group">
+					<label class="col-xs-12 col-md-2 control-label">
+						<span class="label-text">$[gs.getMessage("Value")]</span>
+					</label>
+			   
+					<div class="col-md-7">
+						<input type="number" id="complexInput" name="complexInput" class="form-control col-md-5" />
+					</div>
+			   
+				</div>
+				
+				<div class="form-group">
+					<div class="col-md-2">
+					</div>
+					<div class="col-xs-12 col-md-7 ">
+						<g:dialog_button onclick="return validateSubmit()" class="btn btn-primary">Submit</g:dialog_button>
+					</div>
+				</div>
+			</div>
+		</g:ui_form>
+		
+		<div class="row">
+			<div id="mb_viewer_chart" name="chartContainer"></div>
+		</div>
+		
+	</div>
+	</span>
+	<script type="text/javascript">
+        addLoadEvent(function() { 
+			// put notification on if limiting # of sys ids
+			if ('$[totalCount]' > 20) {
+				fireLimitNotification();
+			}
+		
+			makeChart();
+		
+			$j('#transformPicker').select2();
+			$j('#transformPicker').change(function() {
+				var value = $j(this).val();
+				handleTransformChange(value);
+			});
+	
+        });
+	</script>	
+</j:jelly>

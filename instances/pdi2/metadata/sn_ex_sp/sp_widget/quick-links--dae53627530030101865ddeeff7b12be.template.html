@@ -1,0 +1,159 @@
+<div class = "link-container panel panel-default b panel-wrapper" 
+     ng-if="(data.json_data && data.json_data.length > 0) || data.showEmptyState === 'true'">
+ <div ng-bind-html="c.getWidgetTitle()" class="panel-heading b-b"></div>
+ <div class="quick-link-empty-state" ng-if="data.showEmptyState === 'true' && (!data.json_data || data.json_data.length === 0)">
+  <p>${We don't have any quick links to show you yet.}</p>
+ </div>
+ <div ng-if="data.json_data && data.json_data.length > 0" aria-labelledby="{{data.instanceId}}-widget-title" role="region">
+  <!-- Thumbnail Cards Center Aligned --> 
+  <div class="all-card-container" 
+       ng-if="c.data.card_type == 'Thumbnail' && c.data.text_alignment == 'Center'">
+    <a ng-repeat="item in data.json_data" 
+       class="card-thumbnail-align-center {{c.data.card_size}}"
+       aria-labelledby="{{data.instanceId}}-item-{{$index}}"
+       id="{{data.instanceId}}-item-{{$index}}"
+       ng-href="{{item.url}}"
+       ng-click="clicked(item)"
+       ng-attr-target="{{item.target}}"
+       ng-class="getCustomColor('background')" 
+       ng-style="getStyle(item, 'background')"
+       ng-keydown="c.keyboardAction($event,item)"
+       ng-focus="handleCardFocus($event)"
+       ng-blur="handleCardBlur($event)"
+       tabindex="0">
+      <div class="icon-container" 
+           ng-class = "getEvaluatedIconContainer(item)">
+        <div class="icon-bg-color" 
+             ng-if="(c.data.icon_background_color === 'true' && c.data.show_icon === 'true' && c.data.card_size != 'card-small' && [item.icon.length] != 0)"
+             ng-class="getCustomColor('icon_overlay')" 
+             ng-style="getStyle(item,'icon_overlay')"/>
+        <div class = "icon"
+             ng-class="{'icon--with-overlay' : (c.data.icon_background_color === 'true')}"
+             ng-if="[item.icon.length] != 0 && c.data.show_icon === 'true' && c.data.card_size != 'card-small'" 
+             style="background-image: url({{item.icon}})"/>
+      </div>
+      <div class="content-container" 
+           ng-class = "getEvaluatedContentContainer(item)"
+           ng-style="getStyle(item,'text_overlay')">
+        <div class = "title--with-icon">
+          <span class="card-title text-ellipsis"
+              ec-multiline-ellipsis-tooltip
+              ec-ellipsis-tooltip-title="{{item.title}}"
+              ec-ellipsis-tooltip-data-toggle="tooltip"
+              ec-ellipsis-tooltip-data-container="body"
+              ng-class="getCustomColor('text')" 
+              ng-style="getStyle(item,'text')">{{item.title}}
+          </span>
+          <i class="fa fa-external-link external-link--icon"
+             ng-if="(item.target == '_blank')"
+             ng-class="getCustomColor('text')" 
+             ng-style="getStyle(item,'text')">
+          </i>
+        </div>
+      </div>
+      <span id="{{data.instanceId}}-ext-link-{{$index}}"
+          class="sr-only"
+          ng-if="(item.target == '_blank')">${, opens in a new window}
+      </span>
+    </a>
+  </div>
+  
+  <!-- Thumbnail Cards Default Aligned -->   
+  <div ng-class="{'all-card-container-left' : (c.data.card_size === 'card-medium'),'all-card-container' : (c.data.card_size === 'card-small')}" 
+       ng-if="c.data.card_type=='Thumbnail' && c.data.text_alignment=='Default'">
+    <a ng-repeat="item in data.json_data" 
+       class="card-thumbnail-align-left {{c.data.card_size}}"
+       aria-labelledby="{{data.instanceId}}-item-{{$index}}"
+       ng-href="{{item.url}}"
+       id="{{data.instanceId}}-item-{{$index}}"
+       ng-attr-target="{{item.target}}" 
+       ng-class="getCustomColor('background')" 
+       ng-style="getStyle(item, 'background')">
+      <div class="icon-container {{c.data.card_size}}" 
+           ng-if="c.data.show_icon === 'true' && [item.icon.length] != 0">
+        <div class="icon-bg-color" 
+             ng-class = "{'icon-bg-color--small': (c.data.card_size === 'card-small'),[getCustomColor('icon_overlay')] : true}"
+             ng-if="c.data.icon_background_color === 'true' && [item.icon.length] != 0"
+             ng-style="getStyle(item, 'icon_overlay')"/>
+        <div class="icon"
+             ng-if="[item.icon.length] != 0"
+             ng-class = "{'icon--with-overlay' : (c.data.icon_background_color === 'true'),
+                          'icon--small-with-overlay': (c.data.card_size === 'card-small' && c.data.icon_background_color === 'true'),
+                          'icon--small': (c.data.card_size === 'card-small' && c.data.icon_background_color === 'false')}"
+             style="background-image: url({{item.icon}})"/>
+      </div>
+      <div class="content-container">
+        <div class = "title--with-icon">
+          <span class='card-title text-left-align text-ellipsis'
+                ec-multiline-ellipsis-tooltip
+                ec-ellipsis-tooltip-title="{{item.title}}"
+                ec-ellipsis-tooltip-data-toggle="tooltip"
+                ec-ellipsis-tooltip-data-container="body"
+                ng-class = "{[getTextEllipsisClassForIE(item)] : true,[getCustomColor('text')] : true}"
+                ng-style="getStyle(item,'text')">{{item.title}}
+          </span>
+          <i class="fa fa-external-link external-link--icon"
+             ng-if="(item.target == '_blank')"
+             ng-class="getCustomColor('text')" 
+             ng-style="getStyle(item,'text')">
+          </i>
+        </div>
+        <span class='card-description text-left-align text-ellipsis'
+              id="{{data.instanceId}}-card-desc-{{$index}}"
+              ec-multiline-ellipsis-tooltip
+              ec-ellipsis-tooltip-title="{{item.shortDescription}}"
+              ec-ellipsis-tooltip-data-toggle="tooltip"
+              ec-ellipsis-tooltip-data-container="body"
+              ng-class = "{[getTextEllipsisClassForIE(item)] : true, [getCustomColor('text')] : true}"
+              ng-style="getStyle(item,'text')"
+              ng-if="c.data.show_description === 'true' && c.data.card_size != 'card-small'" >{{item.shortDescription}}
+        </span>
+      </div>
+      <span id="{{data.instanceId}}-ext-link-{{$index}}"
+            class="sr-only"
+            ng-if="(item.target == '_blank')">${, opens in a new window}
+      </span>
+    </a>
+  </div>
+  
+  <!-- Simple Cards (Center / Default) -->  
+  <div class="all-card-container" 
+       ng-if="c.data.card_type=='Simple'">
+    <a ng-repeat="item in data.json_data"
+       class="card-simple {{c.data.card_size}}"
+       aria-labelledby="{{data.instanceId}}-item-{{$index}}"
+       ng-href="{{item.url}}"
+       id="{{data.instanceId}}-item-{{$index}}"
+       ng-attr-target="{{item.target}}">
+      <div class="content-container" 
+           ng-class="{'content-left-align': c.data.text_alignment=='Default'}">
+        <div class = "title--with-icon">
+          <span class="card-title text-ellipsis"
+                ec-multiline-ellipsis-tooltip
+                ec-ellipsis-tooltip-title="{{item.title}}"
+                ec-ellipsis-tooltip-data-toggle="tooltip"
+                ec-ellipsis-tooltip-data-container="body"
+                ng-class="{'text-left-align': c.data.text_alignment=='Default'}">{{item.title}}
+          </span>
+          <i class="fa fa-external-link external-link--icon"
+             ng-if="(item.target == '_blank')">
+          </i>
+        </div>
+        <span class="card-description text-ellipsis"
+              ec-multiline-ellipsis-tooltip
+              ec-ellipsis-tooltip-title="{{item.shortDescription}}"
+              ec-ellipsis-tooltip-data-toggle="tooltip"
+              ec-ellipsis-tooltip-data-container="body"
+              id="{{data.instanceId}}-card-desc-{{$index}}"
+              ng-class="{'text-left-align': c.data.text_alignment=='Default'}" 
+              ng-if="c.data.show_description === 'true' && c.data.card_size =='card-medium'">{{item.shortDescription}}
+        </span>
+      </div>
+      <span id="{{data.instanceId}}-ext-link-{{$index}}"
+            class="sr-only"
+            ng-if="(item.target == '_blank')">${, opens in a new window}
+      </span>
+    </a>
+  </div>
+</div>
+</div>

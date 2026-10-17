@@ -1,0 +1,518 @@
+var ImportantActionUtils = Class.create();
+ImportantActionUtils.prototype = {
+	initialize: function () { },
+
+	/* *******************************************************************
+		Get metadata to render actions in dashboard
+	******************************************************************* */
+
+	getNextRefreshTimeLocal: function (dashboardSysId) {
+		var dashboard = new global.GlideQuery('sn_itam_recomm_dashboard')
+			.get(dashboardSysId, ['job'])
+			.orElse({ job: null });
+
+		if (gs.nil(dashboard.job)) { return ''; }
+
+		var nextRefreshTimeLocal;
+		new global.GlideQuery('sys_trigger')
+			.where('document_key', dashboard.job)
+			.selectOne('next_action$DISPLAY')
+			.ifPresent(function (trigger) {
+				nextRefreshTimeLocal = trigger.next_action$DISPLAY;
+			});
+		return nextRefreshTimeLocal;
+	},
+
+	getLastRefreshedTimeLocal: function (dashboardSysId, domain) {
+		var lastRefreshTimeLocal = '';
+		new global.GlideQuery('sn_itam_recomm_dashboard_result')
+			.where('dashboard', dashboardSysId)
+			.where('sys_domain', domain)
+			.selectOne('last_calculated_on$DISPLAY')
+			.ifPresent(function (jobResult) {
+				lastRefreshTimeLocal = jobResult.last_calculated_on$DISPLAY;
+			});
+		return lastRefreshTimeLocal;
+	},
+
+	attachRefreshInformationToResponse: function (response, dashboardSysId, domain, showQueryResultsInRealTime) {
+		response.last_refresh_message = '';
+		response.next_refresh_message = '';
+		response.is_refresh_running = null;
+
+		if (showQueryResultsInRealTime) {
+			response.last_refresh_message = gs.getMessage('Last refreshed: {0}', new GlideDateTime().getDisplayValue());
+			return;
+		}
+
+		var lastRefreshedTimeLocal = this.getLastRefreshedTimeLocal(dashboardSysId, domain);
+		if (!gs.nil(lastRefreshedTimeLocal)) {
+			response.last_refresh_message = gs.getMessage('Last refreshed: {0}', lastRefreshedTimeLocal);
+		}
+
+		if (this.isRefreshRunningOnDashboard(dashboardSysId, domain)) {
+			response.is_refresh_running = true;
+			response.next_refresh_message = gs.getMessage('Refresh in progress...');
+		} else {
+			response.is_refresh_running = false;
+
+			var nextRefreshTimeLocal = this.getNextRefreshTimeLocal(dashboardSysId);
+			response.next_refresh_message = gs.getMessage('Next scheduled refresh: {0}', nextRefreshTimeLocal);
+		}
+	},
+
+	getSetupQueryResult: function (impActionSetupGr, domain, showQueryResultsInRealTime) {
+		var queryResult = null;
+
+		if (showQueryResultsInRealTime) {
+			queryResult = this.evaluateQueryResultScriptInRecord(impActionSetupGr, domain);
+			if (!queryResult.active) { queryResult = null; }
+		} else {
+			new global.GlideQuery('sn_itam_recomm_setup_result')
+				.where('active', true)
+				.where('action_setup', impActionSetupGr.getUniqueValue())
+				.where('sys_domain', domain)
+				.selectOne('query_result')
+				.ifPresent(function (setupResult) {
+					queryResult = setupResult.query_result;
+				});
+		}
+
+		return queryResult;
+	},
+
+	getCardMetadata: function (impActionSetupGr, domain, showQueryResultsInRealTime) {
+		var queryResult = this.getSetupQueryResult(impActionSetupGr, domain, showQueryResultsInRealTime);
+		if (gs.nil(queryResult)) { return null; }
+
+		var cardMetadata = this.evaluateCardMetadataScriptInRecord(
+			impActionSetupGr,
+			queryResult,
+			domain,
+			showQueryResultsInRealTime
+		);
+
+		return cardMetadata;
+	},
+
+	isSetupAccessibleForUser: function (impActionSetupGr) {
+		var rolesStr = impActionSetupGr.getDisplayValue('roles');
+		if (gs.getUser().hasRole(rolesStr)) { return true; }
+		return false;
+	},
+
+	isRealTimeTrueOnWorkspaceForDashboard: function (dashboardSysId) {
+		var dashboard = new global.GlideQuery('sn_itam_recomm_dashboard')
+			.get(dashboardSysId, ['workspace.is_real_time'])
+			.get();
+		return dashboard.workspace.is_real_time;
+	},
+
+	isWorkspacePresentOnDashboard: function (dashboardSysId) {
+		var dashboard = new global.GlideQuery('sn_itam_recomm_dashboard')
+			.get(dashboardSysId, ['workspace'])
+			.get();
+		if (gs.nil(dashboard.workspace)) { return false; }
+		return true;
+	},
+
+	getSetupsGrOfDashboard: function (dashboardSysId) {
+		var impActionSetupGr = new GlideRecord('sn_itam_recomm_setup');
+		impActionSetupGr.addQuery('active', true);
+		impActionSetupGr.addQuery('dashboards', 'CONTAINS', dashboardSysId);
+		impActionSetupGr.orderBy('display_order');
+		impActionSetupGr.query();
+		return impActionSetupGr;
+	},
+
+	getDashboardWithId: function (dashboardId) {
+		var sysId = null;
+		new global.GlideQuery('sn_itam_recomm_dashboard')
+			.where('id', dashboardId)
+			.selectOne()
+			.ifPresent(function (dashboardRec) {
+				sysId = dashboardRec.sys_id;
+			});
+		return sysId;
+	},
+
+	getImportantActionCardsMetadata: function (dashboardId, domainID) {
+		var domain = domainID;
+		if (gs.nil(domain)) { domain = new global.AssetManagementBaseJob().getCurrentDomainSysId(); }
+
+		var response = { success: true, message: '' };
+
+		var dashboardSysId = this.getDashboardWithId(dashboardId);
+		if (gs.nil(dashboardSysId)) {
+			response.success = false;
+			response.message = gs.getMessage('Failed to map the dashboard for Important actions. Please contact your System administrator.');
+			return response;
+		}
+
+		if (!this.isWorkspacePresentOnDashboard(dashboardSysId)) {
+			response.success = false;
+			response.message = gs.getMessage('Failed to map the dashboard to a workspace. Please contact your System administrator.');
+			return response;
+		}
+
+		var showQueryResultsInRealTime = this.isRealTimeTrueOnWorkspaceForDashboard(dashboardSysId);
+
+		response.cards_metadata = [];
+		var cardMetadata = {};
+
+		var impActionSetupGr = this.getSetupsGrOfDashboard(dashboardSysId);
+		while (impActionSetupGr.next()) {
+			if (!this.isSetupAccessibleForUser(impActionSetupGr)) { continue; }
+
+			cardMetadata = this.getCardMetadata(impActionSetupGr, domain, showQueryResultsInRealTime);
+			if (!gs.nil(cardMetadata)) { response.cards_metadata.push(cardMetadata); }
+		}
+
+		this.attachRefreshInformationToResponse(response, dashboardSysId, domain, showQueryResultsInRealTime);
+
+		response.is_realtime_load = showQueryResultsInRealTime;
+
+		return response;
+	},
+
+	/* *******************************************************************
+		Refresh actions on a dashboard
+	******************************************************************* */
+
+	updateLastCalculatedOnJobResultRecord: function (dashboardId, domain) {
+		new global.GlideQuery('sn_itam_recomm_dashboard_result')
+			.where('dashboard', dashboardId)
+			.where('sys_domain', domain)
+			.updateMultiple({ last_calculated_on: new GlideDateTime() });
+	},
+
+	upsertJobResultRecord: function (dashboardId, domain, scheduleItem) {
+		var jobResultGr = new GlideRecord('sn_itam_recomm_dashboard_result');
+		jobResultGr.addQuery('dashboard', dashboardId);
+		jobResultGr.addQuery('sys_domain', domain);
+		jobResultGr.query();
+		jobResultGr.next();
+
+		if (!jobResultGr.isValidRecord()) {
+			jobResultGr.initialize();
+			jobResultGr.setValue('dashboard', dashboardId);
+			jobResultGr.setValue('sys_domain', domain);
+		}
+
+		jobResultGr.setValue('schedule_item', scheduleItem);
+		jobResultGr.update();
+	},
+
+	beginRefreshOnDashboard: function (dashboardSysId, domain) {
+		var jobSubmitted = false;
+
+		var script = 'new sn_itam_recomm.ImportantActionSetupsEvaluator('
+			+ '[\'' + dashboardSysId + '\'], ' // dashboardSysIds
+			+ '\'' + domain + '\', ' // runInDomain
+			+ 'true' // invokedFromRefresh
+			+ ').process();';
+
+		var name = 'ITAM - Important Actions Refresh ' + dashboardSysId;
+		var scheduleItemSysId = new global.AssetManagementBaseJob().runScriptByJob(
+			script, // script
+			new GlideDateTime(), // time
+			name, // name
+			domain, // domainSysId
+			'', // documentKey
+			true // returnTriggerID
+		);
+
+		// Update Schedule item on job result record
+		if (!gs.nil(scheduleItemSysId)) {
+			jobSubmitted = true;
+			this.upsertJobResultRecord(dashboardSysId, domain, scheduleItemSysId);
+		}
+
+		return jobSubmitted;
+	},
+
+	isRefreshRunningOnDashboard: function (dashboardSysId, domainID) {
+		var domain = domainID;
+		if (gs.nil(domain)) { domain = new global.AssetManagementBaseJob().getCurrentDomainSysId(); }
+
+		var isJobRunning = false;
+
+		new global.GlideQuery('sn_itam_recomm_dashboard_result')
+			.where('dashboard', dashboardSysId)
+			.where('sys_domain', domain)
+			.selectOne('schedule_item')
+			.ifPresent(function (jobResult) {
+				if (!gs.nil(jobResult.schedule_item)) {
+					isJobRunning = true;
+				}
+			});
+
+		return isJobRunning;
+	},
+
+	getRefreshStatusOnDashboard: function (dashboardID, domainID) {
+		var dashboardSysId = this.getDashboardWithId(dashboardID);
+		return this.isRefreshRunningOnDashboard(dashboardSysId, domainID);
+	},
+
+	refreshImpActionsDataForDashboard: function (dashboardID, domainID) {
+		var dashboardSysId = this.getDashboardWithId(dashboardID);
+		var showQueryResultsInRealTime = this.isRealTimeTrueOnWorkspaceForDashboard(dashboardSysId);
+		if (showQueryResultsInRealTime) {
+			return this.getImportantActionCardsMetadata(dashboardID, domainID);
+		}
+
+		var domain = domainID;
+		if (gs.nil(domain)) { domain = new global.AssetManagementBaseJob().getCurrentDomainSysId(); }
+
+		var response = {
+			success: true,
+			message: '',
+			is_refresh_running: null,
+			is_job_submitted: null,
+		};
+
+		if (!this.isRefreshRunningOnDashboard(dashboardSysId, domain)) {
+			var jobSubmitted = this.beginRefreshOnDashboard(dashboardSysId, domain);
+			response.is_job_submitted = jobSubmitted;
+			if (!jobSubmitted) {
+				response.success = false;
+				response.message = gs.getMessage('Failed to submit refresh request');
+			}
+		}
+
+		this.attachRefreshInformationToResponse(response, dashboardSysId, domain, showQueryResultsInRealTime);
+
+		return response;
+	},
+
+	/* *******************************************************************
+		Scheduled refresh utility
+	******************************************************************* */
+
+	getStopWatchTime: function (stopWatch) {
+		return ((new Date().getTime()) - stopWatch.getTime()) / 1000;
+	},
+
+	evaluateQueryResultScriptInRecord: function (record, domain) {
+		var domainVar = null;
+		if (domain === 'global') { domainVar = domain; }
+
+		var evaluator = new GlideScopedEvaluator();
+		evaluator.putVariable('domain', domainVar);
+		return (evaluator.evaluateScript(record, 'script_query_result', null));
+	},
+
+	evaluateCardMetadataScriptInRecord: function (record, queryResult, domain, showQueryResultsInRealTime) {
+		var domainVar = null;
+		if (domain === 'global' || !showQueryResultsInRealTime) { domainVar = domain; }
+
+		var evaluator = new GlideScopedEvaluator();
+		evaluator.putVariable('queryResult', queryResult);
+		evaluator.putVariable('domain', domainVar);
+		return (evaluator.evaluateScript(record, 'script_card_metadata', null));
+	},
+
+	getStopWatch: function () {
+		return new Date();
+	},
+
+	evaluateSetupAndSaveResult: function (setupGr, domain) {
+		var stopwatch = this.getStopWatch();
+		var queryResult = this.evaluateQueryResultScriptInRecord(setupGr, domain);
+		var duration = this.getStopWatchTime(stopwatch);
+
+		if (gs.nil(queryResult)) {
+			gs.error('Error: ' + setupGr.getValue('name'));
+			return;
+		}
+
+		var setupResultGr = new GlideRecord('sn_itam_recomm_setup_result');
+		setupResultGr.addQuery('action_setup', setupGr.getUniqueValue());
+		setupResultGr.addQuery('sys_domain', domain);
+		setupResultGr.query();
+
+		if (!setupResultGr.next()) {
+			setupResultGr.initialize();
+			setupResultGr.setValue('action_setup', setupGr.getUniqueValue());
+			setupResultGr.setValue('sys_domain', domain);
+		}
+
+		if (!gs.nil(String(queryResult.active))) {
+			setupResultGr.setValue('active', queryResult.active);
+			delete queryResult.active;
+		} else {
+			setupResultGr.setValue('active', false);
+		}
+
+		setupResultGr.setValue('query_result', JSON.stringify(queryResult));
+
+		setupResultGr.setValue('duration', duration);
+		setupResultGr.setValue('last_calculated_on', new GlideDateTime());
+		setupResultGr.update();
+	},
+
+	runEvaluatorOnDashboardsWithJob: function (jobID) {
+		var dashboardSysIds = [];
+
+		new global.GlideQuery('sn_itam_recomm_dashboard')
+			.where('job', jobID)
+			.select('sys_id')
+			.forEach(function (dashboard) {
+				dashboardSysIds.push(dashboard.sys_id);
+			});
+
+		var evaluator = new sn_itam_recomm.ImportantActionSetupsEvaluator(
+			dashboardSysIds,
+			null, /* runInSpecificDomain */
+			false, /* invokedFromRefresh */
+			jobID /* invokedFromJob */
+		);
+		evaluator.process();
+	},
+
+	checkAndDeleteResultsForRealTimeWorkspace: function () {
+		// Get workspaces for which Is real time is set to True
+		var realTimeWorkspaces = [];
+		new global.GlideQuery('sn_itam_recomm_workspace')
+			.where('is_real_time', true)
+			.select()
+			.forEach(function (workspace) {
+				realTimeWorkspaces.push(workspace.sys_id);
+			});
+
+		if (realTimeWorkspaces.length === 0) { return; }
+
+		var realTimeWorkspace;
+		var dashboardIds = [];
+		for (var i = 0; i < realTimeWorkspaces.length; i++) {
+			realTimeWorkspace = realTimeWorkspaces[i];
+
+			// Set flag on workspace record to limit updates
+			new global.GlideQuery('sn_itam_recomm_workspace')
+				.where('sys_id', realTimeWorkspace)
+				.update({ results_deletion_in_progress: true });
+
+			// Get all dashboards under the real time workspace
+			dashboardIds = [];
+			new global.GlideQuery('sn_itam_recomm_dashboard')
+				.where('workspace', realTimeWorkspace)
+				.select()
+				.forEach(function (dashboard) { // eslint-disable-line
+					dashboardIds.push(dashboard.sys_id);
+				});
+
+			// Delete all setup results and dashboard results tagged to the dashboards
+			new global.GlideQuery('sn_itam_recomm_setup_result')
+				.where('action_setup.dashboards', 'IN', dashboardIds)
+				.deleteMultiple();
+
+			new global.GlideQuery('sn_itam_recomm_dashboard_result')
+				.where('dashboard', 'IN', dashboardIds)
+				.deleteMultiple();
+
+			// Unset flag on workspace record to allow updates
+			new global.GlideQuery('sn_itam_recomm_workspace')
+				.where('sys_id', realTimeWorkspace)
+				.update({ results_deletion_in_progress: false });
+		}
+	},
+
+	/* *******************************************************************
+		Test Setups
+	******************************************************************* */
+	getKeys: function (responseObj, keyStack, keys) {
+		for (var key in responseObj) {
+			var currentKey = keyStack.length ? '.' + key : key;
+
+			var value = responseObj[key];
+			if (typeof value === 'object') {
+				if (!Array.isArray(value)) {
+					this.getKeys(value, keyStack + currentKey, keys);
+				} else {
+					keys.push(keyStack + currentKey);
+				}
+			} else {
+				keys.push(keyStack + currentKey);
+			}
+		}
+	},
+
+	testCardMetadataScript: function (setupGr, queryResult) {
+		var response = { errors: 0, warnings: 0 };
+
+		var actionCardGr = new GlideRecord('sn_itam_recomm_action_card');
+		actionCardGr.get(setupGr.action_card);
+
+		var expectedResponse = this.evaluateCardMetadataScriptInRecord(actionCardGr);
+		if (gs.nil(expectedResponse)) {
+			gs.addErrorMessage(gs.getMessage('ERROR: Encountered an error while executing Action card.Card metadata script'));
+			response.errors += 1;
+			return response;
+		}
+		var expectedResponseKeys = [];
+		this.getKeys(expectedResponse, '' /* keyStack */, expectedResponseKeys);
+
+		var setupResponse = this.evaluateCardMetadataScriptInRecord(setupGr, queryResult);
+		if (gs.nil(setupResponse)) {
+			gs.addErrorMessage(gs.getMessage('ERROR: Encountered an error while executing Card metadata script'));
+			response.errors += 1;
+			return response;
+		}
+		var setupResponseKeys = [];
+		this.getKeys(setupResponse, '' /* keyStack */, setupResponseKeys);
+
+		var missingKeys = [];
+		for (var i = 0; i < expectedResponseKeys.length; i++) {
+			if (setupResponseKeys.indexOf(expectedResponseKeys[i]) === -1) {
+				missingKeys.push(expectedResponseKeys[i]);
+			}
+		}
+
+		if (missingKeys.length !== 0) {
+			gs.addInfoMessage(
+				gs.getMessage('WARNING: Card metadata script response is missing the following keys: {0}', [String(missingKeys)])
+			);
+			response.warnings += 1;
+		}
+
+		return response;
+	},
+
+	testQueryResultScript: function (setupGr) {
+		var response = { queryResult: null, errors: 0, warnings: 0 };
+
+		var queryResult = this.evaluateQueryResultScriptInRecord(setupGr);
+		if (gs.nil(queryResult)) {
+			gs.addErrorMessage(gs.getMessage('ERROR: Encountered an error while executing Query result script'));
+			response.errors += 1;
+			return response;
+		}
+
+		response.queryResult = queryResult;
+		var responseKeys = Object.keys(queryResult);
+		if (responseKeys.indexOf('active') === -1) {
+			var msgParams = ['active'];
+			gs.addErrorMessage(gs.getMessage('ERROR: Query result script response is missing mandatory keys: {0}', msgParams));
+			response.errors += 1;
+		}
+
+		return response;
+	},
+
+	testSetupRecord: function (setupGr) {
+		var queryResultResp = this.testQueryResultScript(setupGr);
+		var errors = queryResultResp.errors;
+		var warnings = queryResultResp.warnings;
+
+		if (queryResultResp.queryResult) {
+			var cardMetadataScriptResp = this.testCardMetadataScript(setupGr, queryResultResp.queryResult);
+			errors += cardMetadataScriptResp.errors;
+			warnings += cardMetadataScriptResp.warnings;
+		}
+
+		return JSON.stringify({ errors: errors, warnings: warnings });
+	},
+
+	type: 'ImportantActionUtils',
+};

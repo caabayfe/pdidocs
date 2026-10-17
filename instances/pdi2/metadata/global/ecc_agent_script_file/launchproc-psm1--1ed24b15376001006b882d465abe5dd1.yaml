@@ -1,0 +1,532 @@
+_meta:
+  hash: bc229c5a36ed4e370d3dc382730fec7ee97c262262a2d1be5bd5d2332ccc1fa6
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: jimmy.yuan
+  sys_created_on: 2013-04-04 16:40:54
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 1ed24b15376001006b882d465abe5dd1
+  sys_mod_count: '168'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_1ed24b15376001006b882d465abe5dd1
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-12-02 18:31:00
+active: 'true'
+checksum: ''
+description: Launches a process and fetches the output of the process captured through stdout - uses an admin share so requires proper access
+directory: 'false'
+name: LaunchProc.psm1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  $executingScriptDirectory = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+
+  <######################
+  #  Launch a process against a target computer.  Write the output of that process to the admin temp share on that machine.
+  #  Access to the machine and the admin share is done using the $cred parameter if there is one.  To get information from
+  #  the admin temp share, an impersonation context is used for the user of the given credential if there is one.  The default 
+  #  time to wait is about 10 seconds before declaring failure.  That can be changed by the calling script in the
+  #  parameter $secondsToWait
+  ######################>
+  function launchProcess {
+     param(
+         [string]$computer,
+         [System.Management.Automation.PSCredential]$cred,
+         [string]$command,
+         [int]$secondsToWait = 10,
+         [switch]$UTF8,
+         [string]$remoteBaseDir,
+         [bool]$shouldKillProcess=$false,
+         [bool]$stdErrInStdOut=$false
+     )
+   
+     SNCLog-DebugInfo "Running launchProcess"
+   
+     #---- extended P/Invoke for PS5 & PS7 ---- # <--- new line
+     $signature = @"
+     [DllImport("advapi32.dll", SetLastError = true)] public static extern bool LogonUser(string lpszUsername, string lpszDomain, string lpszPassword, int dwLogonType, int dwLogonProvider, ref IntPtr phToken);
+     [DllImport("advapi32.dll", SetLastError = true)] public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
+     [DllImport("advapi32.dll", SetLastError = true)] public static extern bool RevertToSelf();
+  "@;  
+   
+     $LogOnUser = Add-Type -memberDefinition $signature -name "Win32LogOnUser" -namespace Win32Functions -passThru;  
+   
+     [IntPtr]$userToken = [Security.Principal.WindowsIdentity]::GetCurrent().Token;  
+   
+     $context = $null  
+     if ($cred) {
+         if ($LogOnUser::LogOnUser($cred.GetNetworkCredential().UserName, $cred.GetNetworkCredential().Domain, $cred.GetNetworkCredential().Password, 9, 0, [ref]$userToken)) {
+             if ($PSVersionTable.PSVersion.Major -lt 6) {  
+                  $Identity = New-Object Security.Principal.WindowsIdentity $userToken
+                  $context  = $Identity.Impersonate();
+              }
+              else {
+                  $LogOnUser::ImpersonateLoggedOnUser($userToken) | Out-Null   
+                  $context = $userToken;   
+              }
+         }
+         else {
+             # If Domain is empty, try a 2nd time with domain as "workgroup"
+             if ($cred.GetNetworkCredential().Domain -eq "") {
+                 # Attach localhost to the user
+                 $username = "localhost\" + $cred.GetNetworkCredential().UserName;
+                 # Rebuild the credentials with the same user, same password but with workgroup as the domain
+                 $credWithLocalhostDomain = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $cred.Password;
+                 # Calling a recursion with the localhost domain
+                 SNCLog-DebugInfo "Failed impersonation first time, trying again with localhost as Domain";
+                 launchProcess -computer $computer -cred $credWithLocalhostDomain -command $command -secondsToWait $secondsToWait -remoteBaseDir $remoteBaseDir -shouldKillProcess $shouldKillProcess -stdErrInStdOut $stdErrInStdOut;
+                 # Make sure to exit the method after the recursion ends
+                 return;
+             }
+             $err = "The impersonation of user $($cred.UserName) failed."
+             if (-not $stdErrInStdOut) {
+                 throw $err
+             }
+             SNCLog-DebugInfo "$err";
+             return;
+         }
+     }
+     $guid = [Guid]::NewGuid().ToString()
+   
+     if ($remoteBaseDir) {
+         $baseDir = $remoteBaseDir;
+     } else {
+         $baseDir = getConfigurableParm -variable "SNC_base_dir" -defaultvalue "admin$\temp"
+     }
+     # path that the MID server looks for the output file
+     $outputFile = "\\$computer\$baseDir\psscript_output_$($guid).txt"
+     # path that the process on the target writes output to
+     $localOutputFile = "\\127.0.0.1\$baseDir\psscript_output_$($guid).txt"
+     # path that the MID server looks for the error file
+     $errorFile = "\\$computer\$baseDir\psscript_err_$($guid).txt"
+     # path that the process on the target writes errors to
+     $localErrorFile = "\\127.0.0.1\$baseDir\psscript_err_$($guid).txt"
+   
+     $items = $command -split " ";
+     $mainCommand = $items[0];
+     # In case we need the StdErr in the the StdOut - for example: WMI operations for patterns
+     if (-not $stdErrInStdOut) {
+         $commandWithSuffix = "$command > `"$localOutputFile`" 2>`"$localErrorFile`"";
+     } else {
+         $commandWithSuffix = "$command > `"$localOutputFile`" 2>&1";
+     }
+   
+     # need to wrap everything after /c in double quotes so the following commands, including any piping
+     # should be treated as one command.  wrapping with double quotes is needed since if $command starts with a
+     # quote character, cmd will remove the starting char and the last quote character. (see cmd /?)
+     if ($UTF8) {
+         # changes code page to 65001 so that unicode characters are written to the output file properly
+         # need to wrap the files with quotes in case they have spaces in them
+         $fullCommand = "cmd /c `"chcp 65001 & $commandWithSuffix`"";
+     } else {
+         $fullCommand = "cmd /c `"$commandWithSuffix`"";
+     }
+
+     SNCLog-DebugInfo "`t`$fullCommand: $fullCommand"
+     $commandLength = $fullCommand.Length;
+     if ($fullCommand.Length -gt 8191) {
+         $errMsg = "launchProcess command has length $commandLength, which exceeds the command line max length of 8191.";
+         if (-not $stdErrInStdOut) {
+             throw $errMsg;
+         } else {
+             Write-Output $errMsg;
+         }
+     }
+
+     $cimSession =  Get-SharedCimSession -ComputerName $computer -Credential $cred;
+     if ($cimSession) {
+          SNCLog-DebugInfo "Using CIM session $cimSession to invoke CIM Method and create the process";
+          $processInfo = Invoke-CimMethod -CimSession $cimSession -ClassName win32_process -MethodName create -Arguments @{CommandLine=$fullCommand} -EA "Stop"
+     } elseif ($PSVersionTable.PSVersion.Major -lt 6) {
+          if ($cred) {
+              SNCLog-DebugInfo "PS5 mode: using invoke wmi method with cred to create the process";
+              $processInfo = Invoke-WmiMethod win32_process -Name create -Computer $computer -Credential $cred -ArgumentList $fullCommand -EA "Stop"
+          } else {
+              SNCLog-DebugInfo "PS5 mode: using invoke wmi method with NO cred to create the process";
+              $processInfo = Invoke-WmiMethod win32_process -Name create -Computer $computer -ArgumentList $fullCommand -EA "Stop"
+          }
+      } else {
+          SNCLog-DebugInfo "PS7 mode: using CIM Method with NO session to create the process";
+          $processInfo = Invoke-CimMethod -ClassName win32_process -MethodName create -Arguments @{CommandLine=$fullCommand} -EA "Stop"
+      }
+
+     if ($processInfo.ReturnValue -eq 0) {
+         $pid = $processInfo.processId
+         $proc = getProcess -computer $computer -cred $cred -filter "processId=$pid"
+   
+         $date = Get-Date
+         $enddate = $date.AddSeconds($secondsToWait);
+   
+         while ($proc -and ($date -lt $enddate)) {
+             Start-Sleep -Milliseconds 250
+             $proc = getProcess -computer $computer -cred $cred -filter "processId=$pid"
+             $date = Get-Date
+         }
+         if ($proc) {
+             $errMsg = "Command timeout after more than $secondsToWait seconds";
+             cleanup
+             if ($shouldKillProcess) {
+                 # try and kill the process; No need to wait for a response
+                 $null = launchProcess -computer $computer -cred $cred -command "taskkill /T /F /PID $pid";
+                 $errMsg += ", killing remote process $pid";
+             }
+             if (-not $stdErrInStdOut) {
+                 throw $errMsg;
+             } else {
+                 Write-Output $errMsg;
+                 return;
+             }
+         }
+         $isStdOut = $false;
+         if ([System.IO.File]::Exists($outputFile)) {
+             # Check the output file size.
+             # We often get a 0 bytes file if we have an error.
+             $outputFileSize = (Get-ChildItem $outputFile -ErrorAction SilentlyContinue).Length;
+             if ($outputFileSize -gt 0) {
+                 $isStdOut = $true;
+                 # Maximize console width so StreamGobbler can gobble
+                 # more than the 80 character default per line
+                 mode con lines=1 cols=$([int16]::MaxValue-1);
+                 if ($UTF8) {
+                     # grab the contents of the output file and return it as a UTF8 string
+                     Get-Content -Path $outputFile -Encoding UTF8 | Out-String -Width $([int16]::MaxValue);
+                 } else {
+                     # File output is done with the "type" shell command.
+                     # it was previously done with Get-Content which added a line-break for any line longer than 80 characters,
+                     # and "more" which had problems with output of unicode.
+                     type "$outputFile"
+                 }
+             }
+             removeFileGracefully -fileName $outputFile
+         }
+   
+         if ([System.IO.File]::Exists($errorFile)) {
+             $errorFileSize = (Get-ChildItem $errorFile -ErrorAction SilentlyContinue).Length;
+             if ($errorFileSize -gt 0) {
+                 $err = type $errorFile;
+   
+                 if ($err) {
+                     $errStr = "";
+                     if ($err -is [System.Object[]]) {
+                         ForEach ($item In $err) {
+                             $errStr += $item + "`n";
+                         }
+                     }
+                     else {
+                         $errStr = $err;
+                     }
+                     if ($errStr.IndexOf("'$mainCommand' is not recognized as an internal or external command") -eq 0) {
+                         $errstr = "Error: $mainCommand is required to complete this operation; Original message: $errStr";
+                     }
+                     else {
+                         $errstr = "Error: $errStr";
+                     }
+                     # We have both StdOut and StdErr
+                     if ($isStdOut) {
+                         <# Currently write-error cause the probe to fail even when there is an output tag in the payload.
+                             A simple example where we do have an StdErr and StdOut - the probe will fail even if we have enough data to continue (for example we failed capturing nice to have data).
+                             This should be improved in a future release when we can continue processing the probe data even if we have an error on the payload.
+                         #>
+                         #Write-Error $errStr;
+                     } else {
+                         removeFileGracefully -fileName $errorFile;
+                         if (-not $stdErrInStdOut) {
+                             throw (New-Object -TypeName System.IO.FileNotFoundException -ArgumentList $errstr);
+                         } else {
+                             Write-Output $errstr;
+                         }
+                     }
+                 }
+             }
+             # make sure we clean it
+             removeFileGracefully -fileName $errorFile;
+         }
+         # We got no StdOut and no StdErr
+         elseif (-not $isStdOut) {
+             $err = "The result file $outputFile can't be fetched because it doesn't exist"
+             if (-not $stdErrInStdOut) {
+                 throw $err
+             }
+             SNCLog-DebugInfo "$err"
+             cleanup
+             return;
+         }
+     } else {
+         $err = "Failed to launch process $command with error $processInfo"
+         if (-not $stdErrInStdOut) {
+             throw $err
+         }
+         SNCLog-DebugInfo "$err"
+         return;
+     }
+   
+     if ($context) {  
+         if ($PSVersionTable.PSVersion.Major -lt 6) {
+             $context.Undo();
+             $context.Dispose();
+         } else {
+             $LogOnUser::RevertToSelf() | Out-Null  
+         }
+     }
+   
+     cleanup
+     return;
+  }
+   
+
+  function getProcess {
+     param(
+         [string]$computer, 
+         [System.Management.Automation.PSCredential]$cred, 
+         [string]$filter
+     )
+
+      SNCLog-DebugInfo "Running getProcess"
+
+      if ($computer) {
+          $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred;
+          $proc = Get-CimInstance -CimSession $cimSession -ClassName Win32_process -Filter $filter
+      } else {
+          $proc = Get-CimInstance Win32_process -ComputerName $computer -Filter $filter
+      }
+
+      SNCLog-DebugInfo "`t`$proc: $proc"
+     
+      return $proc
+  }
+
+  function putFile {
+     param(
+         [string]$computer, 
+         [System.Management.Automation.PSCredential]$cred, 
+         [string]$srcPath, 
+         [string]$folderPath, 
+         [string]$fileName
+     ) 
+
+     SNCLog-DebugInfo "Put File"
+
+     if ($cred) {
+         net use $folderPath $cred
+         New-Item -ItemType Directory -Force -Path $folderPath
+         Copy-Item -Path $srcPath -Destination "$folderPath\$fileName" -Recurse -PassThru -Force
+         net use $folderPath /delete
+         return $folderPath
+     }
+     else {
+         net use $folderPath
+         New-Item -ItemType Directory -Force -Path $folderPath
+         Copy-Item -Path $srcPath -Destination "$folderPath\$fileName" -Recurse -PassThru -Force
+         net use $folderPath /delete
+         return $folderPath
+     }
+  }
+
+  function putFileRemotePS {
+     param(
+         [System.Management.Automation.Runspaces.PSSession]$ps, 
+         [string]$srcPath, 
+         [string]$folderPath, 
+         [string]$fileName
+     ) 
+
+     SNCLog-DebugInfo "Put File"
+     
+     if ($fileName) {
+         $srcPath = Join-Path -Path $srcPath -ChildPath $fileName
+     }
+
+     # Create the destination folder if it does not exist
+     if ($folderPath) {
+         $output = Invoke-Command -Session $ps -ScriptBlock { New-Item -ItemType Directory -Force -Path $args[0] } -ArgumentList $folderPath 2>&1  # Use a specific folder
+         if ($output -and $output.ToString() -ne $folderPath) {
+             throw "Error: Could not create the desired folder: $folderPath";
+         }
+         $remotePath = $folderPath;
+     }
+     else {
+         # If no folder was passed: use the user temp folder
+         $remotePath = Invoke-Command -Session $ps -ScriptBlock { Write-Output $env:TEMP; } -ErrorAction SilentlyContinue # Grab the user temp folder
+         
+         # if we got null/empty back - revert to old behavior and use c:\temp
+         if (-not $remotePath -or -not ($remotePath.Trim())) {
+             return putFileRemotePS -ps $ps -srcPath $srcPath -folderPath "c:\temp" -fileName $fileName;
+         }
+     }
+     
+     # If we cannot send the file - error and stop operation
+     try {
+         $sendFileOutput = Send-File -Path $srcPath -Destination $remotePath -Session $ps -ErrorAction "stop";
+     }
+     catch {
+         throw "Error: could not put file from $srcPath to $computer on $remotePath";
+     }
+     
+     return $remotePath
+  }
+
+  function Send-File {
+     <#
+     .SYNOPSIS
+         This function sends a file (or folder of files recursively) to a destination WinRm session. This function was originally
+         built by Lee Holmes (http://poshcode.org/2216) but has been modified to recursively send folders of files as well
+         as to support UNC paths.
+     .PARAMETER Path
+         The local or UNC folder path that you'd like to copy to the session. This also supports multiple paths in a comma-delimited format.
+         If this is a UNC path, it will be copied locally to accommodate copying. If it's a folder, it will recursively copy
+         all files and folders to the destination.
+     .PARAMETER Destination
+         The local path on the remote computer where you'd like to copy the folder or file. If the folder does not exist on the remote
+         computer it will be created.
+     .PARAMETER Session
+         The remote session. Create with New-PSSession.
+     .EXAMPLE
+         $session = New-PSSession -ComputerName MYSERVER
+         Send-File -Path C:\test.txt -Destination C:\ -Session $session
+         This example will copy the file C:\test.txt to be C:\test.txt on the computer MYSERVER
+     .INPUTS
+         None. This function does not accept pipeline input.
+     .OUTPUTS
+         System.IO.FileInfo
+     #>
+     [CmdletBinding()]
+     param (
+         [string[]]$Path,
+         [string]$Destination, 
+         [System.Management.Automation.Runspaces.PSSession]$Session
+     )
+     process {
+         foreach ($p in $Path) {
+             try {
+                 if ($p.StartsWith('\\')) {
+                     Write-Verbose -Message "[$($p)] is a UNC path. Copying locally first"
+                     Copy-Item -Path $p -Destination ([Environment]::GetEnvironmentVariable('TEMP', 'Machine'))
+                     $p = "$([Environment]::GetEnvironmentVariable('TEMP', 'Machine'))\$($p | Split-Path -Leaf)"
+                 }
+                 if (Test-Path -Path $p -PathType Container) {
+                     Write-Log -Source $MyInvocation.MyCommand -Message "[$($p)] is a folder. Sending all files"
+                     $files = Get-ChildItem -Path $p -File -Recurse
+                     $sendFileParamColl = @()
+                     foreach ($file in $files) {
+                         $sendParams = @{
+                             'Session' = $Session
+                             'Path' = $file.FullName
+                         }
+                         if ($file.DirectoryName -ne $p) { ## It's a subdirectory
+                             $subdirpath = $file.DirectoryName.Replace("$p\", '')
+                             $sendParams.Destination = "$Destination\$subDirPath"
+                         }
+                         else {
+                             $sendParams.Destination = $Destination
+                         }
+                         $sendFileParamColl += $sendParams
+                     }
+                     foreach ($paramBlock in $sendFileParamColl) {
+                         Send-File @paramBlock
+                     }
+                 }
+                 else {
+                     Write-Verbose -Message "Starting WinRM copy of [$($p)] to [$($Destination)]"
+                     # Get the source file, and then get its contents
+                     $sourceBytes = [System.IO.File]::ReadAllBytes($p);
+                     $streamChunks = @();
+                     
+                     # Now break it into chunks to stream.
+                     $streamSize = 1MB;
+                     for ($position = 0; $position -lt $sourceBytes.Length; $position += $streamSize) {
+                         $remaining = $sourceBytes.Length - $position
+                         $remaining = [Math]::Min($remaining, $streamSize)
+                         
+                         $nextChunk = New-Object byte[] $remaining
+                         [Array]::Copy($sourcebytes, $position, $nextChunk, 0, $remaining)
+                         $streamChunks +=, $nextChunk
+                     }
+                     $remoteScript = {
+                         if (-not (Test-Path -Path $using:Destination -PathType Container)) {
+                             $null = New-Item -Path $using:Destination -Type Directory -Force
+                         }
+                         $fileDest = "$using:Destination\$($using:p | Split-Path -Leaf)"
+                         ## Create a new array to hold the file content
+                         $destBytes = New-Object byte[] $using:length
+                         $position = 0
+                         
+                         ## Go through the input, and fill in the new array of file content
+                         foreach ($chunk in $input) {
+                             [GC]::Collect()
+                             [Array]::Copy($chunk, 0, $destBytes, $position, $chunk.Length)
+                             $position += $chunk.Length
+                         }
+                         
+                         [IO.File]::WriteAllBytes($fileDest, $destBytes)
+                         
+                         Get-Item $fileDest
+                         [GC]::Collect()
+                     }
+                     
+                     # Stream the chunks into the remote script.
+                     $Length = $sourceBytes.Length
+                     $streamChunks | Invoke-Command -Session $Session -ScriptBlock $remoteScript
+                     Write-Verbose -Message "WinRM copy of [$($p)] to [$($Destination)] complete"
+                 }
+             }
+             catch {
+                 Write-Error $_.Exception.Message
+             }
+         }
+     }
+  }
+
+  function cleanup {
+     if ([System.IO.File]::Exists($errorFile)) {
+         removeFileGracefully -fileName $errorFile;
+     }
+
+     if ([System.IO.File]::Exists($outputFile)) {
+         removeFileGracefully -fileName $outputFile;
+     }
+  }
+
+  function removeFileGracefully {
+     param([string]$fileName)
+
+     $triesNumber = 0
+     $maxTries = 2;
+     while ($triesNumber -le $maxTries) {
+         try {
+             Remove-Item $fileName -ErrorAction Stop
+             return
+         }
+         catch {
+             SNCLog-DebugInfo "Warning, deleting $fileName failed: $($_.Exception.Message))"
+             Start-Sleep -Seconds 3
+             $triesNumber = $triesNumber + 1
+             if ($triesNumber -le $maxTries) {
+                 SNCLog-DebugInfo "Retry to delete $fileName"
+             }
+             else {
+                 SNCLog-DebugInfo "Failed to delete $fileName"
+             }
+         }
+     }
+  }
+
+  function getConfigurableParm {
+     param(
+         [string]$variable, 
+         [string]$defaultValue
+     )
+     $value = [Environment]::GetEnvironmentVariable($variable)
+     if (-not $value) {
+         $value = $defaultValue;
+     }
+     return $value;
+  }
+script_attachment: ''
+source: ''
+sys_name: LaunchProc.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

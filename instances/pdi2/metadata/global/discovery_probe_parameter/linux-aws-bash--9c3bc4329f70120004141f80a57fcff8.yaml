@@ -1,0 +1,36 @@
+_meta:
+  hash: 85b732ce4be91209ebbc95c27b799ce8574354f79cdc80777520fc55ec98d9f0
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: will.swift
+  sys_created_on: 2016-01-10 10:20:04
+  sys_id: 9c3bc4329f70120004141f80a57fcff8
+  sys_mod_count: '2'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_9c3bc4329f70120004141f80a57fcff8
+  sys_updated_by: will.swift
+  sys_updated_on: 2016-01-10 11:50:46
+active: 'true'
+name: linux_aws.bash
+probe: 15bac0329f70120004141f80a57fcf36
+sys_name: linux_aws.bash
+sys_policy: ''
+value: |-
+  #!/bin/bash
+
+  METADATA_URL="http://169.254.169.254/latest/dynamic/instance-identity/document"
+
+  if hash wget 2>/dev/null; then
+      # Check once to see if target exists and give 1 second timeout
+      wget --spider -t 1 -T 1 ${METADATA_URL} 2>/dev/null
+      if [ $? -eq 0 ]; then
+          wget -qO- ${METADATA_URL}
+      fi
+  elif hash curl 2>/dev/null; then
+      curl --connect-timeout 1 $METADATA_URL 2> /dev/null
+  elif hash python 2>/dev/null; then
+      python -c "exec(\"import urllib\\nimport sys\\ntry:\\n\\tresponse = urllib.urlopen('${METADATA_URL}')\\n\\tid = response.read()\\n\\tprint id\\nexcept:\\n\\tsys.stdout.write('')\")"
+  fi
+value_script: ''

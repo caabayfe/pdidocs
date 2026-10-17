@@ -1,0 +1,77 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate>
+		function isValidMid(midServerName) {
+			var gr = new GlideRecord('ecc_agent');
+			gr.addQuery('name', midServerName + '');
+			gr.addQuery('validated', 'true');
+			gr.addQuery('status', 'Up');
+			gr.query();
+
+			return gr.hasNext();
+		};
+
+		var midName = '';
+		var midSysId = '';
+		var ipLabel = gs.getMessage('Target IP');
+		var midLabel = gs.getMessage('MID Server');
+		var ipaddr = gs.getUser().getPreference('quick_discovery.ip');
+		var lastMidServerUsed = gs.getUser().getPreference('quick_discovery.midserver_name');
+		var lastMidServerSysId = gs.getUser().getPreference('quick_discovery.midserver_sysId');
+
+		if (lastMidServerUsed &amp;&amp; isValidMid(lastMidServerUsed)) {
+			midName = lastMidServerUsed;
+			midSysId = lastMidServerSysId;
+		}
+	</g:evaluate>
+
+	<style>
+		#container-td {
+			padding-top: 5px;
+		}
+
+		.top-buffer {
+			padding-top: 3px;
+		}
+
+		.bottom-buffer {
+			padding-bottom: 5px;
+		}
+		#ok-cancel-btns {
+			padding-left: 15px;
+			padding-right: 15px;
+		}
+	</style>
+
+	<table width="100%">
+		<tr>
+			<td align="center" valign="middle" id="container-td">
+				<div class="container-fluid form-horizontal">
+					<div class="row">
+						<div class="col-sm-4 control-label">$[ipLabel]:</div>
+						<div class="col-sm-8">
+							<input type="text" id="srcip" class="form-control" value="$[ipaddr]" onChange="chooseMIDServer()"/>
+						</div>
+					</div>
+					<div class="row top-buffer bottom-buffer">
+						<div class="col-sm-4 control-label">$[midLabel]:</div>
+						<div class="col-sm-8">
+							<g:ui_reference name="ecc_agent" class="form-control" table="ecc_agent" query="status=Up^validated=true" value="$[midSysId]" displayValue="$[midName]"/>
+						</div>
+					</div>
+					<div class="row top-buffer">
+						<div id="ok-cancel-btns" class="col-sm-offset-4 pull-left">
+							<g:dialog_buttons_ok_cancel class="form-control"/>
+						</div>
+					</div>
+				</div>
+			</td>
+		</tr>
+	</table>
+
+	<script>
+	var e = $("srcip");
+	if (e)
+		e.focus();
+	</script>
+</j:jelly>

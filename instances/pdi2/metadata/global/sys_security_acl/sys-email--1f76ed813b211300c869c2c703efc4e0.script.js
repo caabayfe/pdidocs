@@ -1,0 +1,1 @@
+answer = SysEmailAccess.isMyEmailClientDraft(current);

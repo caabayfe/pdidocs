@@ -1,0 +1,40 @@
+<g:ui_form>
+    <j:set var="jvar_title" value="${gs.getMessage('Run Robust Transform')}" />
+    <g:evaluate var="jvar_iset_id" jelly="true">
+		 var importSetSysId;
+		 var source_table;
+		 if (!gs.nil(jelly.sysparm_map)) {
+		 	var robustTransformerRec = new GlideRecord('sys_robust_import_set_transformer');
+			robustTransformerRec.addActiveQuery();
+			robustTransformerRec.addQuery('sys_id', jelly.sysparm_map);
+			robustTransformerRec.query();
+			if (robustTransformerRec.next()) {
+				source_table = robustTransformerRec.getValue('source_table');
+				var importSetRec = new GlideRecord('sys_import_set');
+        		importSetRec.addQuery('table_name', source_table);
+        		importSetRec.addQuery('state', 'loaded');
+        		importSetRec.orderByDesc('number');
+        		importSetRec.query();
+				if(importSetRec.next())
+					importSetSysId = importSetRec.getValue('sys_id');
+			}
+		} else if (!gs.nil(jelly.sysparm_set != '')) {
+			importSetSysId = jelly.sysparm_set;
+			var importSetRec = new GlideRecord('sys_import_set');
+			importSetRec.get(importSetSysId);
+			source_table = importSetRec.getValue('table_name');
+		}
+		importSetSysId;
+	</g:evaluate>
+	<j:if test="${importSetSysId == undefined}">
+		<div class="import_error">
+			<p>${gs.getMessage('Error occurred while running transform');}</p> 
+		</div><br/>
+	</j:if>
+	<j:if test="${importSetSysId != undefined}">
+		<p>${gs.getMessage('Transform records from {0} using Robust Transformer', source_table);}</p>
+		<div>
+			<g:dialog_buttons_ok_cancel ok_text="${gs.getMessage('Transform')}" ok = "return true" cancel_type = "button" cancel="goBack();"/> <input type = "hidden" name = "iset_sys_id" value = "${jvar_iset_id}"/>
+		</div>
+	</j:if>
+</g:ui_form>

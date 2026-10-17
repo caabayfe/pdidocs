@@ -1,0 +1,116 @@
+<div id="cnat">
+
+    <!-- Loading modal -->
+    <div id="cnat-searching" class="cnat-modal" trap-tab-focus="true" ng-if="isInitLoading()">
+		<header class="modal-header cnat-loading-modal-header">
+			<h4>{{ ::messages['Searching for availability...'] }}</h4>
+		</header>
+		<div class="modal-body cnat-loading-modal-body">
+			<span class="loading-indicator icon-loading icon-lg" ng-show="isLoading" role="status" aria-live="polite">
+				<div class="sr-only">{{ ::messages['Loading'] }}</div>
+			</span>
+		</div>
+		<div class="modal-footer cnat-loading-modal-footer">
+			<button class="btn btn-default btn-cnat-cancel" type="button" ng-click="abort()">{{ ::messages['Cancel'] }}</button>
+		</div>
+	</div>
+
+	<!-- No results modal -->
+	<div id="cnat-empty" class="cnat-modal" trap-tab-focus="true" ng-if="isLoaded()" ng-show="isEmpty()">
+		<header class="modal-header cnat-empty-modal-header">
+			<h4>{{ title }}</h4>
+		</header>
+		<div class="modal-body cnat-empty-modal-body">
+			<div class="cnat-message-body">
+				<p ng-if="intro_message">{{intro_message}}</p>
+				<p ng-if="reason_message">{{reason_message}}</p>
+				<p>{{display_message}}</p>
+			</div>
+		</div>
+		<div class="modal-footer cnat-empty-modal-footer">
+			<button class="btn btn-default btn-cnat-cancel" type="button" ng-click="cancel()">{{ ::messages['Cancel'] }}</button>
+			<button ng-if="showSearch" class="btn btn-primary btn-cnat-search" type="button" ng-click="search()">{{ ::messages['Search'] }}</button>
+		</div>
+	</div>
+
+	<!-- Weekly modal -->
+	<div id="cnat-data" class="cnat-modal" trap-tab-focus="true" ng-if="isLoaded() || !isInitLoading()" ng-show="!isEmpty()">
+		<header class="modal-header cnat-modal-header">
+			<div class="cnat-header-left">
+				<sn-change-date-picker></sn-change-date-picker>
+				<div class="cnat-vcr">
+					<button ng-disabled="isLoading" class="button_nav_calendar btn btn-default" id="cnat_prev_icon" ng-click="navigateWeek(-1, $event)" aria-label="{{ ::messages['Previous week'] }}" uib-tooltip="{{ ::messages['Previous week'] }}" tooltip-append-to-body="true" tooltip-placement="bottom" tooltip-class="calendar_tooltip"><i class="icon-vcr-left"></i></button>
+					<button ng-disabled="isLoading" class="button_today_calendar btn btn-default" id="cnat_today_icon" ng-click="goThisWeek($event);" aria-label="{{ ::messages['Today'] }}" uib-tooltip="{{ ::messages['Today'] }}" tooltip-append-to-body="true" tooltip-placement="bottom" tooltip-class="calendar_tooltip">{{ ::messages['Today'] }}</button>
+					<button ng-disabled="isLoading" class="button_nav_calendar btn btn-default" id="cnat_next_icon" ng-click="navigateWeek(1, $event)" aria-label="{{ ::messages['Next week'] }}" uib-tooltip="{{ ::messages['Next week'] }}" tooltip-append-to-body="true" tooltip-placement="bottom" tooltip-class="calendar_tooltip"><i class="icon-vcr-right"></i></button>
+				</div>
+			</div>
+			<div class="cnat-header-center">
+				<h4 class="modal-title cnat-modal-title" aria-live="polite">{{ title }}</h4>
+			</div>
+			<div class="cnat-header-right">
+				<span class="loading-indicator icon-loading icon-lg" ng-show="isLoading" role="status" aria-live="polite">
+					<div class="sr-only">{{ ::messages['Loading'] }}</div>
+				</span>
+				<button ng-click="cancel()" class="btn-icon close icon-cross cnat-modal-close" tabindex="0">
+					<div class="sr-only">{{ ::messages['Close'] }}</div>
+				</button>
+			</div>
+		</header>
+		<div class="modal-body cnat-modal-body">
+			<div class="cnat-content-wrapper">
+				<div class="cnat-column-header cnat-content">
+					<div ng-repeat="c in cols" class="cnat-column cnat-col-{{ $index+1 }}">
+						<div class="cnat-day-dow">{{ ::c.day }} {{ ::c.dow }}</div>
+					</div>
+				</div>
+				<div class="cnat-crossover-wrapper" ng-if="hasCrossSlots()">
+					<div class="cnat-row">
+						<div ng-repeat="s in crossSlots" class="cnat-slot" ng-attr-style="{{ getStyles(s, $index) }}">
+							<div class="cnat-date"
+								ng-class="{ 'cnat-date-filler' : getSlotDisplayValue(s) === '', 'cnat-selected' : isSelected(s), 'cnat-start-of-week' : s.prev_week, 'cnat-end-of-week' : s.next_week }"
+								ng-attr-aria-pressed="{{ isSelected(s) }}"
+								ng-click="selectSlot(s, $event)"
+								ng-keyup="selectSlot(s, $event)"
+								ng-attr-aria-label="{{ getSlotAriaDisplayValue(s) }}">
+									<div>{{ ::s.start }}</div>
+									<div>{{ ::messages['to'] }}</div>
+									<div>{{ ::s.end }}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="cnat-slots-wrapper" ng-class="{ 'cnat-scrollbar' : hasScrollbar(false) }">
+					<div class="cnat-row">
+						<div ng-repeat="col in cols" class="cnat-no-slots" ng-attr-style="{{ getStyles(col, $index) }}">
+							<div class="cnat-empty-column" aria-hidden="true" ng-if="!hasSlots(col)">
+								<div>{{ ::messages['No Available Time'] }}</div>
+							</div>
+						</div>
+						<div ng-repeat="s in slots" class="cnat-slot" ng-attr-style="{{ getStyles(s, $index) }}">
+							<div class="cnat-date"
+								ng-class="{ 'cnat-date-filler' : getSlotDisplayValue(s) === '', 'cnat-selected' : isSelected(s) }"
+								ng-attr-aria-pressed="{{ isSelected(s) }}"
+								ng-click="selectSlot(s, $event)"
+								ng-keyup="selectSlot(s, $event)"
+								ng-attr-aria-label="{{ getSlotAriaDisplayValue(s) }}">
+									<div>{{ ::s.start }}</div>
+									<div>{{ ::messages['to'] }}</div>
+									<div>{{ ::s.end }}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="cnat-filler">
+				<div ng-repeat="col in cols" class="cnat-column-background cnat-col-{{ $index+1 }}" ng-class="{ 'cnat-today' : isToday(col), 'col-divider' : !$last }"/>
+			</div>
+		</div>
+		<div class="modal-footer cnat-modal-footer">
+			<div class="cnat-timezone">{{::messages['Time Zone']}}: {{ ::timezone }}</div>
+			<div class="cnat-buttons-footer">
+				<button class="btn btn-default" type="button" ng-click="cancel()">{{ ::messages['Cancel'] }}</button>
+				<button class="btn btn-primary" type="button" ng-click="submit($event)" ng-keypress="submit($event)" ng-disabled="disableSubmit()" ng-attr-tabindex="{{ disableSubmit() ? -1 : 0 }}">{{ ::messages['Select Available Time'] }}</button>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j:jelly xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null" trim="false">
+	
+    <g:include_script src="$pwd_util.jsdbx" />
+	
+    <!-- Includes the client script for enrollment form submit. -->
+    <g:include_script src="pwd_enrollment_submit_event.jsdbx" />
+	
+    <script type="text/javascript">
+		//When the page gets loaded, run the event handler for on-load event.
+        addAfterPageLoadedEvent(function() {
+           var errorMessages = getQueryVariable('error_messages');
+           displayErrorMessages(errorMessages);
+        });
+	</script>
+	
+    <g2:evaluate var="jvar_verification_ids" object="true">
+        var verificationList = new SNC.PwdVerificationManager().getVerificationIds();
+        var otherAppVerifications = new PasswordResetScopedUtil().getVerificationsFromOtherApplications();
+        var index = 0;
+        while (index != otherAppVerifications.size()){
+          var verification = otherAppVerifications.get(index);
+          if (!verificationList.contains(verification)){
+            verificationList.add(verification);
+          }
+          index++;
+        }
+        verificationList;
+    </g2:evaluate>
+	
+	<g2:evaluate var="jvar_use_notify" jelly="true">
+        var resetUtil = new global.PasswordResetUtil();
+        resetUtil.useNotifyInPasswordReset();
+	</g2:evaluate>
+	
+	<g2:evaluate var="jvar_domain_active" jelly="true">
+        GlidePluginManager.isRegistered('com.glide.domain.msp_extensions.installer');
+	</g2:evaluate>
+	
+    <!-- Test if verifications are found or not. -->
+    <g2:evaluate var="jvar_verification_not_exist" expression="$[empty(jvar_verification_ids) || (0 == jvar_verification_ids.size())]" />
+	
+    <j2:if test="$[!jvar_verification_not_exist]">
+		
+        <!-- ACTUAL PAGE STARTS HERE -->
+		<g:requires name="styles/retina_icons/retina_icons.css" includes="true"/>
+        <g:requires name="scripts/classes/glideModal.js" includes="true" />
+        <g:macro_invoke macro="$pwd_reset_stylesheet"/>
+        <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+        
+        <g:if_polaris>
+	        <g:then>
+	        	<g:inline template="polarisberg_output.xml"/>
+	        </g:then>
+	        <g:else>
+	            <g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+	            <g:requires name="scripts/heisenberg/heisenberg_all.js" includes="true" />
+	        </g:else>
+        </g:if_polaris>
+		
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button class="btn btn-default icon-chevron-left navbar-btn" onclick="goBack();" aria-label="${gs.getMessage('Back')}" title="${gs.getMessage('Back')}"/>
+                    <h1 style="display:inline-block;" class="navbar-title">${gs.getMessage('Password Reset Enrollment')}</h1>
+                </div>
+            </div>
+        </nav>
+		
+		<!-- Map verification IDs to true/false whether it is mandatory for any Process.
+			 This value will be passed into the UI macros where it can be used to determine whether 
+			 validation should be done or not on an empty form. 
+		-->
+		<g2:evaluate var="jvar_mandatory_map" jelly="true" object="true">
+			var processIds = new SNC.PwdProcessManager().getProcessIdsByUserId(gs.getUserID());
+			var map = {};
+			
+			var processVerificationGr = new GlideRecord('pwd_map_proc_to_verification');
+			processVerificationGr.addQuery('process', 'IN', processIds);
+			processVerificationGr.addQuery('verification', 'IN', jelly.jvar_verification_ids);
+			processVerificationGr.addQuery('mandatory', true);
+			processVerificationGr.query();
+			
+			while (processVerificationGr.next()) 
+				map[processVerificationGr.getValue('verification')] = 'true';
+			
+			map;
+		</g2:evaluate>
+		<!-- Map Verification Id with Verification type -->
+		<g2:evaluate>
+			var map_verificationId_to_type = {};
+		</g2:evaluate>
+		
+		<!-- Tabs for each verification type -->
+		<ul role="tablist" class="nav nav-tabs sn-tabs-basic">			
+			<j2:forEach begin="0" end="$[jvar_verification_ids.size() - 1]" indexVar="jvar_tab_index">
+				
+				<g2:evaluate var="jvar_verification_id" jelly="true">
+					jelly.jvar_verification_ids.get(jelly.jvar_tab_index)
+				</g2:evaluate>				
+				<g2:evaluate var="jvar_tab_label" jelly="true">
+					var pwdVerMgr = new SNC.PwdVerificationManager();
+					var verName = pwdVerMgr.getVerificationLabelByVerificationId(jelly.jvar_verification_id);
+					var domainDisplayName = pwdVerMgr.getDomainDisplayNameByVerificationId(jelly.jvar_verification_id);
+					name = verName;
+					if (jelly.jvar_domain_active == "true")
+					    name = domainDisplayName + ": " + verName;
+					name;
+				</g2:evaluate>
+				<g2:evaluate var="jvar_tab_class" jelly="true">
+					jelly.jvar_tab_index == 0? "active" : ""
+				</g2:evaluate>
+				<g2:evaluate var="jvar_tab_idx" jelly="true">
+					jelly.jvar_tab_index == 0 ? 0 : -1
+				</g2:evaluate>
+				<g2:evaluate var="jvar_tab_selected" jelly="true">
+					jelly.jvar_tab_index == 0
+				</g2:evaluate>
+				<g2:evaluate var="jvar_mandatory" jelly="true">
+					jelly.jvar_mandatory_map[jelly.jvar_verification_id];
+				</g2:evaluate>
+				<g2:evaluate var="jvar_mandatory_label" jelly="true">
+					jelly.jvar_mandatory ? gs.getMessage("Required") : "";
+				</g2:evaluate>
+				<g2:evaluate var="jvar_required_marker_class" jelly="true">
+                    var isEnrolled = new SNC.PwdEnrollmentManager().isUserEnrolledByVerificationId(gs.getUserID(), jelly.jvar_verification_id);
+					isEnrolled? 'is-filled' : '';
+				</g2:evaluate>
+				
+				<li role="presentation" class="$[jvar_tab_class]" title="$[jvar_tab_label]">
+					<j2:if test="$[jvar_mandatory]">
+						<div class="is-required $[jvar_required_marker_class]" style="display: inline !important">
+							<span class="required-marker sn-tooltip-basic" id="$[jvar_verification_id]-required-marker" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"/>
+						</div>
+					</j2:if>
+					<a id="tablabel$[jvar_tab_index]" aria-controls="tab$[jvar_tab_index]" tabindex="$[jvar_tab_idx]" role="tab" class="$[jvar_tab_class] default-focus-outline" data-toggle="tab" aria-selected="$[jvar_tab_selected]" href="#tab$[jvar_tab_index]" aria-label="${gs.getMessage('Password Reset Enrollment')} - $[jvar_tab_label] $[jvar_mandatory_label]" aria-describedby="caption_$[jvar_verification_id] steps_header_$[jvar_verification_id]">
+						$[jvar_tab_label]
+					</a>
+				</li>
+			</j2:forEach>
+		</ul>
+        
+		
+        <div class="pwd-enroll-box">			
+			<div class="tab-content">
+				<j2:forEach begin="0" end="$[jvar_verification_ids.size() - 1]" indexVar="jvar_macro_index">
+					
+					<g2:evaluate var="jvar_macro_tab_class" jelly="true">
+						"tab-pane pwd-enroll-section" + (jelly.jvar_macro_index == 0? " active" : "")
+					</g2:evaluate>
+					<g2:evaluate var="jvar_macro_tab_hidden" jelly="true">
+						jelly.jvar_macro_index != 0
+					</g2:evaluate>
+					
+					<div id="tab$[jvar_macro_index]" aria-hidden="$[jvar_macro_tab_hidden]" role="tabpanel" 
+						 class="$[jvar_macro_tab_class]" aria-labelledby="tablabel$[jvar_macro_index]">
+						
+						<g2:evaluate var="jvar_verification_id" object="true" jelly="true">
+							jelly.jvar_verification_ids.get(jelly.jvar_macro_index);
+						</g2:evaluate>
+						<g2:evaluate var="jvar_verification" object="true" jelly="true">
+							new SNC.PwdVerification(jelly.jvar_verification_id);
+						</g2:evaluate>
+						<g2:evaluate var="jvar_verification_type" object="true" jelly="true">
+							var typeId = new SNC.PwdVerificationManager().getVerificationTypeIdByVerificationId(jelly.jvar_verification_id);
+							map_verificationId_to_type[jelly.jvar_verification_id] = typeId;
+							new SNC.PwdVerificationType(typeId);
+						</g2:evaluate>
+						<g2:evaluate var="jvar_enrollment_processor" object="true" jelly="true">
+							jelly.jvar_verification_type.getEnrollmentProcessor();
+						</g2:evaluate>
+						<g2:evaluate var="jvar_enrollment_ui" object="true" jelly="true">
+							jelly.jvar_verification_type.getEnrollmentUI();
+						</g2:evaluate>
+						<g2:evaluate var="jvar_mandatory" jelly="true">
+							jelly.jvar_mandatory_map[jelly.jvar_verification_id];
+						</g2:evaluate>
+						<g2:evaluate var="jvar_verification_ui" object="true" jelly="true">
+							jelly.jvar_verification_type.getVerificationUI();
+						</g2:evaluate>
+						<g2:evaluate var="jvar_verification_processor" object="true" jelly="true">
+							jelly.jvar_verification_type.getVerificationProcessor();
+						</g2:evaluate>
+						<g2:evaluate var="jvar_verification_name" object="true" jelly="true">
+							jelly.jvar_verification.getLabel();
+						</g2:evaluate>
+						<g2:evaluate var="jvar_form_id" jelly="true">
+							"form_"+jelly.jvar_enrollment_ui+"_"+jelly.jvar_verification_id;
+						</g2:evaluate>
+						<g2:evaluate var="jvar_submit_event_id" jelly="true">
+							"submit_"+jelly.jvar_enrollment_ui+"_"+jelly.jvar_verification_id;
+						</g2:evaluate>
+
+						<h2 class="pwd-section-title" id="caption_$[jvar_verification_id]">${gs.getMessage("Steps to enroll")}</h2>
+
+						<form id="$[jvar_form_id]" name="$[jvar_form_id]" onsubmit="return false;">
+							<input id="__submit_$[jvar_form_id]" type="submit" style="display:none" />
+							<input type="hidden" name="__submit_event_id" value="$[jvar_submit_event_id]" />
+							<input type="hidden" name="__form_id" value="$[jvar_form_id]" />
+							
+							<!-- if form for optional enrollment is not filled, then dont submit it -->
+							<input type="hidden" name="can_submit" value="true" /> 
+							
+							<g2:macro_invoke macro="$[jvar_enrollment_ui]" verification_id="$[jvar_verification_id]" 
+											 submit_event_id="$[jvar_submit_event_id]" form_id="$[jvar_form_id]" 
+											 mandatory="$[jvar_mandatory]"
+											 tab_index="$[jvar_macro_index]"
+											 use_notify="$[jvar_use_notify]" />
+						</form>
+
+						<form id="hidden_form_$[jvar_macro_index]" name="hidden_form_$[jvar_macro_index]" onsubmit="return false;">
+							<input type="hidden" name="enrollment_ui" id="enrollment_ui_$[jvar_macro_index]" value="$[jvar_enrollment_ui]" />
+							<input type="hidden" name="enrollment_processor" id="enrollment_processor_$[jvar_macro_index]" value="$[jvar_enrollment_processor]" />
+							<input type="hidden" name="verification_ui" id="verification_ui_$[jvar_macro_index]" value="$[jvar_verification_ui]" />
+							<input type="hidden" name="verification_processor" id="verification_processor_$[jvar_macro_index]" value="$[jvar_verification_processor]" />
+							<input type="hidden" name="userId" id="userId" value="$[gs.userID()]" />
+							<input type="hidden" name="verificationId" id="verificationId_$[jvar_macro_index]" value="$[jvar_verification_id]" />
+							<input type="hidden" name="verificationName" id="verificationName_$[jvar_macro_index]" value="$[jvar_verification_name]" />
+							<input type="hidden" name="mandatory" value="$[jvar_mandatory]" /> 
+						</form>
+					</div>
+				</j2:forEach>			
+			</div>
+            <div class="pwd-bottom-btn-bar">
+                <button id="sysverb_qa_submit" class="btn btn-primary btn-pwd-submit" onclick="onSubmit();" aria-label="${gs.getMessage('Submit')}">${gs.getMessage('Submit')}</button>
+            </div>
+        </div>
+		<g2:evaluate>
+			map_verificationId_to_type = JSON.stringify(map_verificationId_to_type);
+		</g2:evaluate>
+    </j2:if>
+</j:jelly>

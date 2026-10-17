@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g2:evaluate var="jvar_is_hidden" jelly="true">
+		var isHidden = true;
+		var view  = jelly.sysparm_view || '';
+		if (view.indexOf('sys_popup') == 0 )
+			isHidden = true;
+		//Check this is not a new UI record
+		else if(current.isNewRecord()){
+			isHidden = true;
+		}
+		//Check Gen AI plugin is active
+		else if (GlidePluginManager.isActive('sn_km_gen_ai')) {
+			var answer = new global.GlobalKnowledgeUtil().isArticleModified(current.sys_id);
+			isHidden = (answer != 'false');
+		}
+		isHidden;
+</g2:evaluate>
+	<script>
+	 function showGenAIMessage()
+	 {
+		var div = document.getElementById('gen-ai-msg-box');
+		div.style.display = "block";
+	 }
+	 </script>
+
+		<style>
+			.kb-genai-msg-box-container {
+				padding: var(--now-global-space--md,10px) var(--now-global-space--lg,14px) 0 0;
+				font-size: var(--now-global-font-size--sm, 12px);
+				color: RGB(var(--now-alert--color, var(--now-messaging_label--primary--color, var(--now-color_text--primary, var(--now-color--neutral-18)))));
+				display:flex;
+			}
+			.icon-sn-sparkmoji-logo-outline{
+				color: RGB(var(--now-messaging_icon--primary-ai--color, var(--now-color--primary-brand-9)));
+			}
+			.kb-genai-msg-box-content{
+				display:inline-flex;
+				gap: var(--now-global-space--sm,6px);
+			}
+		</style>
+		<div class="col-xs-12" style="display:none" id="gen-ai-msg-box">
+			<div class="form-group">
+				<div class="col-xs-12 col-md-1_5 col-lg-2 control-label" aria-hidden="true"></div>
+				<div class="col-xs-10 col-md-9 col-lg-8 form-field">
+					<div class="kb-genai-msg-box-container" >
+						<div class="kb-genai-msg-box-content">
+							<span class="icon-sn-sparkmoji-logo-outline" aria-hidden="true"></span>
+							<span id="kb-genai-msg-box-text">${gs.getMessage("Draft created by AI.")}</span>
+							<span
+								class="icon-info"
+								tabindex="0"
+								aria-label="${gs.getMessage('AI drafted this article using details from your previous task. Be sure to review it and make edits before saving.')}"
+								title="${gs.getMessage('AI drafted this article using details from your previous task. Be sure to review it and make edits before saving')}"
+								data-original-title="${gs.getMessage('AI drafted this article using details from your previous task. Be sure to review it and make edits before saving.')}"/>
+						</div>
+					</div>
+					<div class="col-xs-2 col-md-1_5 col-lg-2 form-field-addons" aria-hidden="true"></div>
+				</div>
+			</div>
+		</div>
+	
+	<j2:if test='$[!jvar_is_hidden]'>
+	<script>
+		var div = document.getElementById('gen-ai-msg-box');
+		div.style.display = "block"
+	</script>
+	</j2:if>
+</j:jelly>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+		var updateSetGR = new GlideRecord("sys_update_set");
+		updateSetGR.get(GlideUpdateSet().get());
+		var canAdd = updateSetGR.getValue("application") == "global" &amp;&amp; updateSetGR.getValue("state") == "in progress";
+		var appSysIds = jelly.sysparm_sys_ids;
+		var table = jelly.sysparm_table;
+		var ans = new global.AppUnloader().validateAppsToAdd(appSysIds, table);
+		var appsToAdd = ans["appsToAdd"];
+		var appsNotToAdd = ans["appsNotToAdd"];
+		var updateSetLink = "sys_update_set.do?sys_id=" + updateSetGR.getUniqueValue();
+		var updateSetName = updateSetGR.getValue("name");
+	</g:evaluate>
+
+	<j:if test="${canAdd}">
+		<j:if test="${appsToAdd.length > 0}">
+			<g:evaluate jelly="true">
+				var appIndex = 0;
+				var tableIsSysApp = table == "sys_app";
+			</g:evaluate>
+			<j:if test="${tableIsSysApp}">
+				<h5>${gs.getMessage("Ensure all apps are published to the Application Repository before adding to an update set")}</h5>
+			</j:if>
+			<j2:whitespace>
+				<h5>${gs.getMessage("The following app installs will get added to")} <a href="${updateSetLink}" target="_blank">${updateSetName}</a></h5>
+			</j2:whitespace>
+			<ul id="appsToAdd">
+				<j:while test="${appIndex != appsToAdd.length}">
+					<li id="${appsToAdd[appIndex].sys_id}"><a href="${appsToAdd[appIndex].link}" target="_blank">${appsToAdd[appIndex]["name"]}</a></li>
+					<g:evaluate>appIndex++</g:evaluate>
+				</j:while>
+			</ul>
+		</j:if>
+		<j:if test="${appsNotToAdd.length > 0}">
+			<g:evaluate jelly="true">
+				var appIndex = 0;
+			</g:evaluate>
+			<h5>${gs.getMessage("The following app installs are not qualified to be added to the current update set")}</h5>
+			<ul id="appsNotToAdd">
+				<j:while test="${appIndex != appsNotToAdd.length}">
+					<li><a href="${appsNotToAdd[appIndex].link}" target="_blank">${appsNotToAdd[appIndex]["name"]}</a></li>
+					<g:evaluate>appIndex++</g:evaluate>
+				</j:while>
+			</ul>
+		</j:if>
+	</j:if>
+	<j:if test="${!canAdd}">
+		<h5>${gs.getMessage("The current update set is not in the global scope, app installs cannot be added")}</h5>
+	</j:if>
+
+	<footer class="modal-footer">
+		<j:if test="${canAdd &amp;&amp; appsToAdd.length > 0}">
+			<button id="cancel_button" onClick="gAddAppInstall.exit()"
+				data-dismiss="modal" class="btn btn-default">${gs.getMessage('Cancel')}</button>
+			<button id="ok_button" onClick="gAddAppInstall.addApp()"
+				data-dismiss="modal" class="btn btn-primary">${gs.getMessage('OK')}</button>
+		</j:if>
+		<j:if test="${!canAdd || appsToAdd.length == 0}">
+			<button id="cancel_button" onClick="gAddAppInstall.exit()"
+				data-dismiss="modal" class="btn btn-default">${gs.getMessage('Cancel')}</button>
+		</j:if>
+	</footer>
+</j:jelly>

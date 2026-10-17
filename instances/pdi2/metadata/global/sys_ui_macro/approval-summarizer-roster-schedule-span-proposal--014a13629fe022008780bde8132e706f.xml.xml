@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_contextual_cal_url"
+			expression="
+			var rosterSpanProposal = ${ref}.sysapproval;
+			var jvar_contextual_cal_url = new OCRosterSpanApprovalUtil().getContextualCalUrlPerSpanProposal(rosterSpanProposal);
+			jvar_contextual_cal_url;
+			" />
+	<g:evaluate var="jvar_header_msg"
+			expression="
+			var rosterSpanProposal = ${ref}.sysapproval;
+			var msgArr = [];
+			var approvalUtil = new OCRosterSpanApprovalUtil();
+			msgArr.push(approvalUtil.getUserNamePerSpanProposal(rosterSpanProposal));
+			msgArr.push(approvalUtil.getFromDateDisplayValuePerSpanProposal(rosterSpanProposal));
+			msgArr.push(approvalUtil.getToDateDisplayValuePerSpanProposal(rosterSpanProposal));
+			var jvar_header_msg = gs.getMessage('Reviewing time off request for {0}, from {1} to {2}.', msgArr);
+			jvar_header_msg;
+			" />
+
+	<g:evaluate var="jvar_proposed_cover_msg"
+			expression="
+			var rosterSpanProposal = ${ref}.sysapproval;
+			var jvar_proposed_cover_msg = '';
+			if(rosterSpanProposal.proposed_cover)
+				jvar_proposed_cover_msg = gs.getMessage('Proposed covering member by requester is {0}', rosterSpanProposal.proposed_cover.getRefRecord().getDisplayValue());
+			jvar_proposed_cover_msg;
+			" />
+	<g:evaluate var="jvar_proposal_sys_id" 
+			expression="
+			var rosterSpanProposal = ${ref}.sysapproval;
+			var jvar_proposal_sys_id = rosterSpanProposal.sys_id + '';
+			jvar_proposal_sys_id;
+			" />
+	<g:evaluate var="jvar_proposal_state"
+			expression="
+			var rosterSpanProposal = ${ref}.sysapproval;										
+			var jvar_proposal_state = rosterSpanProposal.state + '';
+			jvar_proposal_state;
+			" />
+	<g:evaluate var="jvar_is_coverage_provided"
+				expression="
+					var rosterSpanProposal = ${ref}.sysapproval;
+					var jvar_is_coverage_provided = false;
+					if(rosterSpanProposal.proposed_cover ${AND} jvar_proposal_state != '5')
+						jvar_is_coverage_provided = true;
+					jvar_is_coverage_provided;
+				" />
+	<g:evaluate var="jvar_proposal_notes"
+			expression="
+			var rosterSpanProposal = ${ref}.sysapproval;										
+			var jvar_proposal_notes = rosterSpanProposal.description + '';
+			jvar_proposal_notes;
+			" />
+	<g:evaluate var="jvar_is_coverage_accepted">
+		var rosterSpanProposal = ${ref}.sysapproval;
+		rosterSpanProposal.auto_swap_coverage;
+	</g:evaluate>
+	<g:evaluate var="jvar_is_approver">
+		var isApprover = ((${ref}.approver + '' == gs.getUserID()) || (gs.hasRole('approval_admin')));
+		isApprover
+	</g:evaluate>
+	<script>
+		function handleCoverageAction(proposalRecordSysId, isSwapAllowed) {
+		    var ga = new GlideAjax("AllowCoverageProposalSwap");
+		    ga.addParam('sysparm_name', "allowAutomaticSwapOfCoverage");
+		    ga.addParam('sysparm_sys_id', proposalRecordSysId);
+		    ga.addParam('sysparm_is_swap_allowed', isSwapAllowed);
+		
+		    ga.getXML(function(response) {
+		        var resultStatus = response.responseXML.getElementsByTagName("result")
+		        if (resultStatus[0].getAttribute("status") == "error")
+		            return;
+		        showHideCoverageAction(isSwapAllowed);
+		    });
+		}
+		function showHideCoverageAction (showAcceptProposalAction) {
+			var elProposedCoverage = document.getElementById("accept_coverage");
+			var elRejectCoverage = document.getElementById("reject_coverage");
+			var elProposedCoverageMsg = document.getElementById("accept_coverage_msg");
+			var elRejectCoverageMsg = document.getElementById("reject_coverage_msg");
+			if (showAcceptProposalAction) {
+				elRejectCoverage.classList.remove("hide_coverage_action");
+				elRejectCoverageMsg.classList.remove("hide_coverage_action");
+				elProposedCoverage.classList.add("hide_coverage_action");
+				elProposedCoverageMsg.classList.add("hide_coverage_action");
+			} else {
+				elProposedCoverage.classList.remove("hide_coverage_action");
+				elProposedCoverageMsg.classList.remove("hide_coverage_action");
+				elRejectCoverage.classList.add("hide_coverage_action");
+				elRejectCoverageMsg.classList.add("hide_coverage_action");
+			}
+		}
+	</script>
+	<style>
+		.hide_coverage_action {
+			display: none;
+		}
+		.coverage_annotation {
+			margin-bottom: 20px;
+			line-height: 30px;
+		}
+		.proposed-cover-info {
+		    margin-bottom: 7px !important;
+		}
+		.proposal-notes {
+			margin-bottom: -10px !important;
+		}
+	</style>
+	<div class="panel panel-default" style="margin-bottom: 5px;">
+		<div class="panel-heading">
+			<div style="width: calc(100% - 190px); float: left; padding-top:7px">
+				$[jvar_header_msg]
+				<j2:if test="$[!JSUtil.nil(jvar_proposed_cover_msg)]">$[jvar_proposed_cover_msg]</j2:if>
+			</div>
+			<j:if test="${jvar_is_coverage_provided &amp;&amp; jvar_is_approver}">
+				<j:set var="jvar_class_disable" value="" />
+				<j:if test="${jvar_proposal_state == '3'}">
+					<j:set var="jvar_class_disable" value="disabled"/>
+				</j:if>
+				<div id="accept_coverage" type="button" class="btn btn-primary pull-right coverage_action ${jvar_class_disable}" onclick="handleCoverageAction('${jvar_proposal_sys_id}', true)">${gs.getMessage('Accept proposed Coverage')}</div>
+				<div id="reject_coverage" type="button" class="btn btn-primary pull-right coverage_action hide_coverage_action" onclick="handleCoverageAction('${jvar_proposal_sys_id}', false)">${gs.getMessage('Reject proposed Coverage')}</div>
+			</j:if>
+			<div class="clearfix" />
+		</div>
+	</div>
+	<j:if test="${jvar_is_coverage_provided &amp;&amp; jvar_is_approver}">
+		<div class="alert alert-info proposed-cover-info">
+			<div id="accept_coverage_msg" style="padding-left: 5px;">
+					${gs.getMessage('Click on the Accept Proposed Coverage to automatically swap the span of time off member with the Provided Coverage member. Providing Coverage with another member can be done manually.')}
+			</div>
+			<div id="reject_coverage_msg" class="hide_coverage_action" style="padding-left: 15px;">
+					${gs.getMessage('Click on the Reject proposed Coverage to undo the Accept proposed Coverage action')}
+			</div>
+		</div>
+		<j:if test="${jvar_is_coverage_accepted}">
+			<script>
+				showHideCoverageAction(true);
+			</script>
+		</j:if>
+	</j:if>
+	<j:if test="${jvar_proposal_notes.length() > 0}">
+		<div class="proposal-notes">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					${gs.getMessage('Notes: ')} ${jvar_proposal_notes}
+				</div>
+			</div>
+		</div>
+	</j:if>
+	<iframe src="$[jvar_contextual_cal_url]&amp;sysparm_stack=no" frameborder="0" width="100%" height="1175px"></iframe>
+</j:jelly>

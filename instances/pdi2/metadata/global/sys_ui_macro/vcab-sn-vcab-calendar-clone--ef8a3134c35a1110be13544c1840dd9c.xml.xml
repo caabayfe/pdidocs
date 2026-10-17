@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j:jelly xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null" trim="false">
+	<g:evaluate>
+		var popoverTabIndex = "0";
+	</g:evaluate>
+	<div>
+		<!-- Translations -->
+		<g:inline template="cab_workbench_common_translation.xml" />
+		<now-message key="End of dialog" value="${gs.getMessage('End of dialog')}" />
+		<now-message key="Blackout Schedule" value="${gs.getMessage('Blackout Schedule')}" />
+		<now-message key="Maintenance Window" value="${gs.getMessage('Maintenance Window')}" />
+		<now-message key="Blackout Schedules" value="${gs.getMessage('Blackout Schedules')}" />
+		<now-message key="Maintenance Windows" value="${gs.getMessage('Maintenance Windows')}" />
+		<now-message key="Multiple Blackout Schedules" value="${gs.getMessage('Multiple Blackout Schedules')}" />
+		<now-message key="Multiple Maintenance Windows" value="${gs.getMessage('Multiple Maintenance Windows')}" />
+		<now-message key="Related Changes" value="${gs.getMessage('Related Changes')}" />
+		<now-message key="Blackout and Maint Schedules" value="${gs.getMessage('Blackout and Maint Schedules')}" />
+		<now-message key="Current change start and end dates" value="${gs.getMessage('Current change start and end dates')}" />
+		<now-message key="No change selected" value="${gs.getMessage('No change selected')}" />
+		<now-message key="Schedule Form" value="${gs.getMessage('Schedule Form')}" />
+		<now-message key="Set filters to choose how related Changes are discovered." value="${gs.getMessage('Set filters to choose how related Changes are discovered.')}" />
+		<now-message key="The ChangeCheckConflicts script include has been modifed and does not contain the required API. Cannot collect maintenance and blackout schedules. Please contact system administrator."
+			value="${gs.getMessage('The ChangeCheckConflicts script include has been modifed and does not contain the required API. Cannot collect maintenance and blackout schedules. Please contact system administrator.')}" />
+		<now-message key="This day has blackout window scheduled. Press F7 for popup with more details."
+			value="${gs.getMessage('This day has blackout window scheduled. Press F7 for popup with more details.')}" />
+		<now-message key="This day has maintenance window scheduled. Press F7 for popup with more details."
+			value="${gs.getMessage('This day has maintenance window scheduled. Press F7 for popup with more details.')}" />
+		<now-message key="This day has both blackout and maintenance windows scheduled. Press F7 for popup with more details."
+			value="${gs.getMessage('This day has both blackout and maintenance windows scheduled. Press F7 for popup with more details.')}" />
+		<now-message key="This day has no blackout or maintenance windows scheduled."
+			value="${gs.getMessage('This day has no blackout or maintenance windows scheduled.')}" />
+		<now-message key="Select next Maint/Blackout window" value="${gs.getMessage('Select next Maint/Blackout window')}" />
+		<now-message key="Select previous Maint/Blackout window" value="${gs.getMessage('Select previous Maint/Blackout window')}" />
+		<now-message key="Open Planned Start Date selector" value="${gs.getMessage('Open Planned Start Date selector')}" />
+		<now-message key="Open Planned End Date selector" value="${gs.getMessage('Open Planned End Date selector')}" />
+		<div class="cab_calendar_container sn-calendar" ng-class="viewMode" ng-if="ready">
+			<span class="loading-indicator icon-loading icon-lg" ng-if="isLoading"></span>
+			<button class="filter-btn btn btn-default btn-sm icon-configuration dhtmlx_header_button"
+				uib-popover-template="'cab_change_cal_filter.html'" popover-append-to-body='true' popover-placement='auto bottom'
+				popover-trigger="click outsideClick" popover-animation='false' popover-class='cab_change_calendar_filter_popover'
+				popover-is-open = "$parent.changeFilterOpen"
+				uib-tooltip="${gs.getMessage('Configure Options')}" tooltip-placement="auto bottom" tooltip-enable="!$parent.changeFilterOpen"
+				role = "button" id = "change_filter" aria-label = "${gs.getMessage('change filters')}" tabindex="-1"></button>
+			<div sn-dhtmlx-scheduler="" events="events" marked-spans="markedSpans" class="common-cal"
+				scheduler-config="config"
+				on-view-change="onViewChange($newView)"
+				on-folder-toggle="onFolderToggle($isOpen)"
+				on-before-drag="onBeforeDrag($event)"
+				on-before-event-changed="onBeforeEventChanged($event, $originalEvent)"
+				on-drag-end="onDragEnd($event)"
+				on-before-tooltip="onBeforeTooltip($event)"
+				fetch-events="fetchEvents($startDate, $endDate)"
+				on-after-view-change="onAfterViewChange()"
+				on-date-range-change="onDateRangeChange($startDate, $endDate)"
+				on-scheduler-resize = "onSchedulerResize($scheduler)"></div>
+			<div class="cab_calendar_footer">
+				<div class="legend_container">
+					<div class="legend" ng-if="viewMode == CalendarView.DAY || viewMode == CalendarView.WEEK"><span class="legend_icon"><span class="current_change_span_mark left_extends_beyond"></span></span> <span class="legend_lbl">${gs.getMessage('Current change start and end dates')}</span></div>
+					<div class="legend"><span class="cab_blackout_event legend_icon"></span> <span class="legend_lbl">${gs.getMessage('Blackout Schedule')}</span></div>
+					<div class="legend"><span class="cab_maint_event legend_icon"></span> <span class="legend_lbl">${gs.getMessage('Maintenance schedules')}</span></div>
+				</div>
+			</div>
+			<div id="empty-container"></div>
+		</div>
+
+		<!-- Filter popup templates -->
+		<script id="cab_change_cal_filter.html" type="text/ng-template">
+			<div class="cab_filter_popover cab_popover" tabindex = "{{tabindex || 0}}" id = "cab_change_filter_popover" sn-focus-container = "">
+				<div class="tabs row" ng-if="isConfigAvailable == 'true'" >
+					<div class="col-xs-6"><div class="icon" data-index='0' ng-click="filters.tabSelection = SETTINGS_TAB" aria-label="${gs.getMessage('Settings tab')}" uib-tooltip="${gs.getMessage('Settings')}" tooltip-append-to-body="true" tabindex="0"
+						ng-class="{active: filters.tabSelection == SETTINGS_TAB}" first-focussable-element="true"><span class="fa fa-calendar"></span></div></div>
+					<div class="col-xs-6"><div class="icon" data-index='1' ng-click="filters.tabSelection = CONFIG_TAB" aria-label="${gs.getMessage('Configuration tab')}" uib-tooltip="${gs.getMessage('Configuration')}" tooltip-append-to-body="true" tabindex="0"
+						ng-class="{active: filters.tabSelection == CONFIG_TAB}"><span class="fa fa-cog"></span></div></div>
+				</div>
+				<div class="settings_tab tab_content" ng-if="filters.tabSelection == SETTINGS_TAB || isConfigAvailable != 'true'">
+					<div class="tab_header">
+						<div class="title">${gs.getMessage('Settings')}</div>
+						<div ng-if="!settingsDescription" class="description_details">${gs.getMessage('Set filters to show what information you would like to see on the selected calendar view.')}</div>
+						<div ng-if="settingsDescription" class="description_details">{{settingsDescription}}</div>
+					</div>
+					<div class="section" ng-if="viewMode == CalendarView.DAY">
+						<div class="section_title" >${gs.getMessage('Day view')}</div>
+						<div class="section_content">
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_1">${gs.getMessage('Show all')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.dayView.all" ng-click="saveDayViewOptions()" id_for = "{{$id}}_1" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_2">${gs.getMessage('Show none')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.dayView.none" ng-click="saveDayViewOptions()" id_for="{{$id}}_2" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_3">${gs.getMessage('Date and Time')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.dayView.dateTime" ng-click="saveDayViewOptions()" id_for = "{{$id}}_3" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+						</div>
+						</div>
+					<div class="section" ng-if="viewMode == CalendarView.WEEK">
+						<div class="section_title" ng-if="viewMode == CalendarView.WEEK">${gs.getMessage('Week view')}</div>
+						<div class="section_content">
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_1">${gs.getMessage('Show all')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.weekView.all" ng-click="saveWeekViewOptions()" id_for = "{{$id}}_1" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_2">${gs.getMessage('Show none')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.weekView.none" ng-click="saveWeekViewOptions()" id_for="{{$id}}_2" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_3">${gs.getMessage('Date and Time')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.weekView.dateTime" ng-click="saveWeekViewOptions()" id_for = "{{$id}}_3" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+						</div>
+						</div>
+			
+					<div class="section" ng-if="viewMode == CalendarView.MONTH">
+						<div class="section_title">${gs.getMessage('Month view')}</div>
+						<div class="section_content">
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_1">${gs.getMessage('Show all')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.monthView.all" ng-click="saveMonthViewOptions()" id_for = "{{$id}}_1" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_2">${gs.getMessage('Show none')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.monthView.none" ng-click="saveMonthViewOptions()" id_for="{{$id}}_2" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_3">${gs.getMessage('Date and Time')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.monthView.dateTime" ng-click="saveMonthViewOptions()" id_for = "{{$id}}_3" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_4">${gs.getMessage('Instance Name')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.monthView.name" ng-click="saveMonthViewOptions()" id_for = "{{$id}}_4" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+						</div>
+					</div>
+				
+				</div>
+				<div class="config_tab tab_content" ng-if="filters.tabSelection == CONFIG_TAB &amp;&amp; isConfigAvailable == 'true'">
+					<div class="tab_header">
+						<div class="title">${gs.getMessage('Configuration')}</div>
+						<div class="description_details">{{configDescription}}</div>
+					</div>
+					<div class="section">
+						<div class="section_title">${gs.getMessage('Configure all views')}</div>
+						<div class="section_content">
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_8">${gs.getMessage('Show all')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.config.all" ng-click="saveConfigOptions()" id_for = "{{$id}}_8" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+							<div class="item row">
+								<div class="col-xs-6 lbl" id = "{{$id}}_9">${gs.getMessage('Show none')}</div>
+								<div class="col-xs-6 toggle">
+									<sn-cab-toggle value="filters.config.none" ng-click="saveConfigOptions()" id_for = "{{$id}}_9" tabindex = "-1" role = "presentation"></sn-cab-toggle>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<span class="sr-only" tabindex = "0" last-focussable-element="true"> ${gs.getMessage('End of popup panel')}</span>
+			</div>
+		</script>
+
+		<!-- Calendar popup templates -->
+		<script id="cab_multi_window_popover.html" type="text/ng-template">
+			<div role="dialog" aria-labelledby="cab_multi_window_popover_title" class="cab_window_label_popover cab_popover" ng-attr-id="{{getPopupId()}}" tabindex="0" sn-focus-container="" parent_event_id = "{{parentEventId}}">
+				<div class="popup-title" id="cab_multi_window_popover_title">{{schedulesTitle}} <span class="badge">{{eventData.events.length}}</span></div>
+				<div class="popup-body">
+					<div ng-repeat="e in eventData.events" class="item" role="group" tabindex="0" ng-attr-first-focussable-element="{{$first}}" ng-attr-last-focussable-element="{{$last}}">
+						<span class="title">{{e.schedule.title}}</span>
+						<p>
+							<span class="item-label">${gs.getMessage('Applies to:')}</span> <span ng-repeat="ci in e.schedule.related_cis"><span ng-if="!$first">,</span> {{ci.name}}</span>
+						</p>
+					</div>
+				</div>
+			</div>
+		</script>
+		
+		<script id="cab_readonly_change_event_popover.html" type="text/ng-template">
+			<div role="dialog" aria-label="${gs.getMessage('View current Change details')}" class="cab_popover" ng-attr-id="{{getPopupId()}}" tabindex="0" sn-focus-container="" parent_event_id = "{{parentEventId}}">
+				<span class="sr-only" tabindex="0" first-focussable-element="true" last-focussable-element="true">${gs.getMessage("popover start")}</span>
+				<div class="popup-title"><strong>${gs.getMessage('Selected Dates')}</strong></div>
+				<div class="popup-body">
+					<div class="form-group" ng-if="canShowDateTime()" role="group">
+						<span class="control-label">${gs.getMessage('Planned start date')}</span>
+						<div class="control-value">
+							<span>{{eventData.change.start_date | dateToFriendlyText}}</span>
+						</div>
+					</div>
+					<div class="form-group" ng-if="canShowDateTime()" role="group">
+						<span class="control-label">${gs.getMessage('Planned end date')}</span>
+						<div class="control-value">
+							<span>{{eventData.change.end_date | dateToFriendlyText}}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+		<script id="cab_window_event_popover.html" type="text/ng-template">
+			<div role="dialog" ng-attr-aria-label="{{eventData.schedule.title}}" class="cab_popover" ng-attr-id="{{getPopupId()}}" tabindex="0" sn-focus-container="" parent_event_id = "{{parentEventId}}">
+				<div class="popup-title">
+					<span class="pull-left" uib-tooltip="{{eventData.schedule.title}}" tooltip-placement="auto top">{{eventData.schedule.title}}</span>
+				</div>
+				<div class="popup-body">
+					<div class="form-group" role="group">
+						<span class="control-label">${gs.getMessage('Timezone')}</span>
+						<div class="control-value">
+							<span>{{eventData.schedule.time_zone}}</span>
+						</div>
+					</div>
+					<div class="form-group" role="group">
+						<span class="control-label">${gs.getMessage('Start date')}</span>
+						<div class="control-value">
+							<span>{{eventData.date_range.start | dateToFriendlyText}}</span>
+						</div>
+					</div>
+					<div class="form-group" role="group" >
+						<span class="control-label">${gs.getMessage('End date')}</span>
+						<div class="control-value">
+							<span>{{eventData.date_range.end | dateToFriendlyText}}</span>
+						</div>
+					</div>
+					<span class="sr-only" last-focussable-element="true">${gs.getMessage("popover end")}</span>
+				</div>
+			</div>
+		</script>
+		<script id="cab_multi_window_event_popover.html" type="text/ng-template">
+			<div role="dialog" aria-labelledby="cab_multi_window_event_popover_title" class="cab_window_label_popover cab_popover" ng-attr-id="{{getPopupId()}}" tabindex="0" sn-focus-container="" parent_event_id = "{{parentEventId}}">
+				<div class="popup-title" id="cab_multi_window_event_popover_title">{{schedulesTitle}} <span class="badge">{{eventData.events.length}}</span></div>
+				<div class="popup-body">
+					<div ng-repeat="e in eventData.events" class="item" role="group">
+						<div class="row">
+							<span class="title col-xs-10 multi_window_title">{{e.schedule.title}}</span>
+							<button class="col-xs-1 btn btn-default btn-sm info-icon icon-info" ng-click="openScheduleForm(e.schedule.sys_id)" aria-label="${gs.getMessage('Open schedule record')}"
+							uib-tooltip="${gs.getMessage('Open schedule record')}" tooltip-append-to-body="true" tooltip-placement="auto left" ng-attr-first-focussable-element="{{$first}}" ng-attr-last-focussable-element="{{$last}}">
+							</button>
+						</div>
+						<div>
+							{{e.date_range.start | dateRangeToFriendlyText:e.date_range.end}}
+						</div>
+						<div>
+							<span class="item-label">${gs.getMessage('Applies to:')}</span> <span ng-repeat="ci in e.schedule.related_cis"><span ng-if="!$first">,</span> {{ci.name}}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+	</div>
+</j:jelly>

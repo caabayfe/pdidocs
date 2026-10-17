@@ -1,0 +1,720 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_theme">
+		var theme = gs.getPreference('glide.css.theme.ui16');
+		if (null == theme){
+			var company = gs.getUser().getCompanyRecord();
+			if (null != company)
+				theme = company.getValue("theme");
+		}
+		theme;
+	</g:evaluate>
+    <g:inline template="sc_sanitize.xml"/>
+	<g:inline template="glide_weba_header.xml" />
+    <j2:if test="$[GlideI18NStyle.getDirection() == 'rtl']">
+        <style>
+            DIV.checkoutLeft,
+            TD.checkout_left table {
+                float: right !important;
+            }
+            TD.checkoutLeft,
+            TD.checkout_left, TH.checkout_left,
+            TD.checkout_stage, TH.checkout_stage,
+            TD.checkout_description, TH.checkout_description {
+                text-align: right !important;
+            }
+            DIV.checkoutRight {
+                float: left !important;
+            }
+            TD.checkoutTotalSum,
+            TD.checkoutTotalLabel,
+            DIV.checkoutRight,
+            TD.checkoutRight,
+            TD.checkout_total, TH.checkout_total,
+            TD.checkout_price, TH.checkout_price,
+            TD.checkout_quantity, TH.checkout_quantity {
+                text-align: left !important;
+            }
+
+			HTML[data-doctype=true].rtl .input-group-btn:last-child .btn {
+				border-radius: 0px !important;
+			}
+
+			HTML[data-doctype=true].rtl .input-group-btn:last-child .btn:last-child {
+				border-top-right-radius: 0px !important;
+				border-bottom-right-radius: 0px !important;
+				border-top-left-radius: 3px !important;
+				border-bottom-left-radius: 3px !important;
+			}
+
+			HTML[data-doctype=true].rtl .input-group-btn:last-child .btn {
+				margin-right: -1px;
+				margin-left: 0px;
+			    padding: 6px 10px !important;
+				margin-top: 0px !important;
+			}
+
+			HTML[data-doctype=true].rtl .lightweight-reference .form-control {
+				float: right;
+			}
+
+        </style>
+    </j2:if>
+    <g:requires name="scripts/js_includes_catalog.js" includes="true" />
+    <g:requires name="styles/js_includes_catalog.css" includes="true" params="theme=${jvar_theme}"/>
+    <g:requires name="styles/sc_cat_only.css" includes="false" params="theme=${jvar_theme}"/>
+    <g2:inline template="output_messages.xml" />
+    <g:evaluate var="jvar_order_status_hide_back" jelly="true" copyToPhase2="true">
+		GlidePropertiesDB.get('glide.sc.order_status.hide.back');
+    </g:evaluate>
+	<j2:if test="$[sysparm_headless != 'true']">
+        <div role="navigation" >
+            <table class="wide" cellspacing="0" cellpadding="0" width="100%" style="margin-bottom:5px" role="presentation">
+                <g2:sc_header useAddButton="false"
+    			  catalog="$[sysparm_catalog]"
+    			  view="$[sysparm_view]"
+    			  catalogView="$[sysparm_catalog_view]"
+    			  processingHint="$[sysparm_processing_hint]"
+    			  category="$[sysparm_parent]"
+    			  headerLabel="$[gs.getMessage('catalog_order_status')]" />
+            </table>
+        </div>
+    </j2:if>
+<div class="sc_checkout_page">
+    <j2:set var="jvar_never_show_price" value="$[gs.getProperty('glide.sc.price.display') == 'never']" />
+    <g2:evaluate jelly="true" var="jvar_request" expression="
+        sc_request = new GlideRecordSecure('sc_request');
+        var sys_id = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_sys_id);
+        if (sys_id == null || sys_id == 'undefined' || sys_id == '')
+            sys_id = '${sys_id}';
+        sc_request.get(sys_id);" />
+    
+    <g2:evaluate var="jvar_order_status" jelly="true">
+    	gs.getMessage('Order Status: {0}', sc_request.number);
+    </g2:evaluate>
+
+	<j:if test="${new GlideappScriptHelper().isUI16Enabled()}">
+		<script>
+			catalogHistory.setHistory('$[HTML: jvar_order_status]', catalogHistory.getPageUrl());
+		</script>
+	</j:if>
+    <div id="page_title"  data-form-title ="$[HTML: jvar_order_status]" />
+	
+    <g2:evaluate var="jvar_request_item" expression="sc_req_item = new GlideRecordSecure('sc_req_item'); sc_req_item.addQuery('request', sys_id); sc_req_item.query();" />
+    <g2:evaluate jelly="true">
+        var bookmark = GlideappCatalogURLGenerator.getCheckoutURL(sys_id, jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+        permalink = GlideappCatalogURLGenerator.escapeForNavTo(bookmark);
+    </g2:evaluate>
+    <j2:choose>
+    <j2:when test="$[jvar_request]">
+    <div class="order_summary">
+        <!-- Confirmation message where appropriate -->
+        <j2:if test="$[sysparm_new_request == 'true']">
+            <g:sc_message classes="outputmsg_image" img="images/outputmsg_success_24.gifx" type="success" title="${gs.getMessage('Thank you, your request has been submitted')}" />
+        </j2:if>
+        <div style="font-size: 5px">$[SP]</div>
+        <!-- Time stamp and Request Summary -->
+        <g2:evaluate var="jvar_open_time" expression="sc_request.getDisplayValue('opened_at')" />
+            <div style="font-weight:normal; margin:0px 0px 6px 0px; padding:0px;">
+                <span>${gs.getMessage('Order Placed')}:$[SP]</span>
+                <b>$[jvar_open_time]</b>
+                $[SP]$[SP]
+            </div>
+            <div style="font-weight:normal; margin:0px 0px 6px 0px; padding:0px;">
+                ${gs.getMessage('Request Number')}:$[SP]
+                <b>$[sc_request.number]</b>
+                $[SP]$[SP]
+                <g2:sc_bookmark requestId="${sysparm_sys_id}" targetFrame="_top" checkoutUrl="$[bookmark]"/> 
+            </div>	
+            <div style="font-weight:normal; margin:0px 0px 6px 0px; padding:0px;">
+		<j2:if test="$[(sc_request.universal_request.number != '')]">
+                    ${gs.getMessage('Universal Request Number')}:$[SP]
+                    <b>$[sc_request.universal_request.number]</b>
+                    $[SP]$[SP]
+		</j2:if>
+            </div>
+            <div style="font-weight:normal; margin:0px 0px 6px 0px; padding:0px;">
+                ${gs.getMessage('catalog_estimated_complete')}$[SP]
+                <strong>
+                    <span id="delivery_date" />
+                </strong>
+            </div>
+    </div>
+    <g:evaluate var="jvar_show_number" expression="gs.getProperty('glide.sc.checkout.request.number');" />
+    <j2:set var="jvar_show_price" value="false" />
+    <g:evaluate var="jvar_descrption_column" expression="
+        var prop = gs.getProperty('glide.sc.ess.description');
+        if (prop == null || prop == '')
+            prop = 'short_description';
+        prop;" />
+    <table class="request_table" style="border-collapse: collapse;">
+        <g2:evaluate var="jvar_line_num" expression="0" />
+        <j2:set var="jvar_overall_total" value="0" />
+        <j2:set var="jvar_at_least_one" value="false" />
+        <g2:evaluate var="no_important" expression="var longestDueDate = 0" />
+        <j2:set var="jvar_freq_list" value="$[SNC.CartBatcher.getRequestedFrequencyList(sys_id)]" />
+        <j2:forEach var="jvar_freq" items="$[jvar_freq_list]">
+            <g2:evaluate var="freq_name" jelly="true">
+                var freq_name = jelly.jvar_freq;
+                freq_name;
+            </g2:evaluate>
+            <j2:set var="jvar_show_recurring_price_block" value="false" />
+            <j2:set var="jvar_show_price_block" value="false" />
+            <j2:set var="jvar_item_list" value="$[SNC.CartBatcher.getRequestedFrequencyItems(sys_id, freq_name)]" />
+            <j2:set var="jvar_subtotal_block" value="$[0]" />
+            <j2:set var="jvar_recurring_subtotal_block" value="$[0]" />
+            <j2:set var="jvar_line_num" value="$[0]" />
+            <j2:forEach var="jvar_item" items="$[jvar_item_list]">
+                <g2:evaluate var="jvar_request_item" jelly="true">
+                    var sc_req_item = new GlideRecordSecure("sc_req_item");
+                    sc_req_item.addQuery("sys_id", jelly.jvar_item);
+                    sc_req_item.query();
+                    sc_req_item.next();
+                    sc_req_item;
+                </g2:evaluate>
+                <g2:evaluate var="jvar_cat_item">
+                    cart_item_price = sc_req_item.price;
+                    cart_item_recurring_price = sc_req_item.recurring_price;
+                    sc_cat_item = new GlideRecordSecure('sc_cat_item');
+                    sc_cat_item.addQuery('sys_id', '$[sc_req_item.cat_item]');
+                    sc_cat_item.query();
+                    sc_cat_item.next();
+                </g2:evaluate>
+                <j2:if test="$[jvar_line_num == 0]">
+                    <thead class="checkout_title">
+                        <j:if test="${jvar_show_number == 'true'}">
+                            <th class="checkout_left">${gs.getMessage('Number')}</th>
+                        </j:if>
+                        <j2:if test="$[freq_name == 'none']">
+                            <th class="checkout_left"> $[sc_request.description.sys_meta.label] </th>
+                        </j2:if>
+                        <j2:if test="$[freq_name != 'none']">
+							<g2:evaluate var="descriptionWithFreqTitle">
+								var descriptionWithFreqTitle = gs.getMessage("Includes {0} Charges", sc_req_item.recurring_frequency.getDisplayValue());
+								descriptionWithFreqTitle
+							</g2:evaluate>
+                            <th class="checkout_left"> $[sc_request.description.sys_meta.label] ($[descriptionWithFreqTitle])</th>
+                        </j2:if>
+                        <th class="checkout_left"> ${gs.getMessage('catalog_delivery_date')}</th>
+                        <th class="checkout_left"> ${gs.getMessage('catalog_stage')} </th>
+                        <j2:if test="$[!jvar_never_show_price]">
+                            <th class="checkout_price"> $[sc_request.price.sys_meta.label] ($[gs.getMessage('ea.')]) </th>
+                        </j2:if>
+                        <th class="checkout_quantity"> ${gs.getMessage('catalog_qty')} </th>
+                        <j2:if test="$[!jvar_never_show_price]">
+                            <th class="checkout_total"> ${gs.getMessage('catalog_total')} </th>
+                        </j2:if>
+                    </thead>
+                </j2:if>
+                <g2:inline template="com.glideapp.servicecatalog_show_price_function.xml" />
+                <j2:if test="$[show_price]">
+                    <j2:set var="jvar_show_price" value="true" />
+                    <j2:set var="jvar_show_price_block" value="true" />
+                </j2:if>
+                <j2:if test="$[show_recurring_price]">
+                    <j2:set var="jvar_show_recurring_price_block" value="true" />
+                </j2:if>
+                <j2:set var="jvar_at_least_one" value="true" />
+                <g2:evaluate var="jvar_due_date">
+                    var helper = new GlideappCalculationHelper();
+                    var smart_description = sc_req_item.cat_item.${SAFE:prop}.getDisplayValue();
+					          if (smart_description == null || smart_description == '' || smart_description == 'undefined')
+							              smart_description = sc_req_item.cat_item.name;
+
+                    var display_due_date = '--';
+        					  var estimatedCompletion = 0;
+        					  var reqItemDueDate = sc_req_item.due_date;
+
+					          if(reqItemDueDate != '' || reqItemDueDate != null)
+					          {
+            						var dueDate = new GlideDateTime(reqItemDueDate);
+            						var timeOffset = dueDate.getTZOffset();
+            						estimatedCompletion = dueDate.getNumericValue();
+                        estimatedCompletion = estimatedCompletion+timeOffset;
+            						if (estimatedCompletion > longestDueDate)
+            							longestDueDate = estimatedCompletion;
+            						display_due_date = helper.longToDate(estimatedCompletion);
+                    }
+					          estimatedCompletion;
+				        </g2:evaluate>
+                <j2:set var="jvar_item_price" value="$[sc_req_item.price * sc_req_item.quantity]" />
+                <j2:set var="jvar_item_recurring_price" value="$[sc_req_item.recurring_price * sc_req_item.quantity]" />
+
+                <!-- coerce to double to keep it working with currency_format tag -->
+                <j2:set var="jvar_item_price" value="$[jvar_item_price * 1]" />
+                <j2:set var="jvar_item_recurring_price" value="$[jvar_item_recurring_price * 1]" />
+                <g2:evaluate var="jvar_price">
+                    var price = 0;
+                    if($[show_price])
+                        price = $[jvar_item_price];
+                    price;
+                </g2:evaluate>
+                <g2:evaluate var="jvar_recurring_price">
+                    var recurring_price = 0;
+                    if($[show_recurring_price])
+                    recurring_price = $[jvar_item_recurring_price];
+                    recurring_price;
+                </g2:evaluate>
+
+                <j2:if test="$[new CatalogPriceInclusionChecker().includePrice(sc_req_item.sys_id + '')]">
+					<j2:set var="jvar_overall_total" value="$[jvar_overall_total + jvar_price]" />
+					<j2:set var="jvar_subtotal_block" value="$[jvar_subtotal_block + jvar_price]" />
+					<j2:set var="jvar_recurring_subtotal_block" value="$[jvar_recurring_subtotal_block + jvar_recurring_price]" />
+				</j2:if>
+                <j2:set var="jvar_line_num" value="$[jvar_line_num + 1]" />
+                <j2:set var="jvar_line_color" value="checkoutOdd" />
+                <j2:if test="$[jvar_line_num % 2 == 0]">
+                    <j2:set var="jvar_line_color" value="checkoutEven" />
+                </j2:if>
+                <g2:evaluate var="jvar_this_due" expression="display_due_date" />
+                <g2:evaluate var="jvar_link">
+                    var jvar_link = null;
+                    var item = sc_req_item.cat_item;
+                    if (item != null)
+                        if (item.ordered_item_link != null)
+                            jvar_link = item.ordered_item_link;
+                    jvar_link;
+                </g2:evaluate>
+				<g2:evaluate var="jvar_showOrderItemLink">
+					var jvar_showOrderItemLink = false;
+					if (jvar_link != null $[AMP]$[AMP] jvar_link.link_url != null $[AMP]$[AMP] jvar_link.link_text != null)
+						jvar_showOrderItemLink = true;
+                    jvar_showOrderItemLink;
+                </g2:evaluate>
+                <j2:if test="$[jvar_showOrderItemLink]">
+                    <g2:evaluate var="jvar_link_url">
+                        var jvar_link_url = jvar_link.link_url;
+                        if (new String(jvar_link_url).endsWith("="))
+                            jvar_link_url += sc_req_item.sys_id;
+                        else if (jvar_link_url.indexOf("?") > -1)
+                            jvar_link_url += "$[AMP]req_item=" + sc_req_item.sys_id;
+                        else
+                            jvar_link_url += "?req_item=" + sc_req_item.sys_id;
+                        jvar_link_url;
+                    </g2:evaluate>
+                    <g2:evaluate var="jvar_link_text">
+                        var jvar_link_text = jvar_link.link_text;
+                        jvar_link_text;
+                    </g2:evaluate>
+                    <g2:evaluate var="jvar_link_target">
+                        var jvar_link_target = "_blank";
+                        if (jvar_link.target != null) {
+                            if (jvar_link.target == "internal")
+                                jvar_link_target = "";
+                            else if (jvar_link.target != "_blank")
+                                jvar_link_target = jvar_link.target;
+                        }
+                        jvar_link_target;
+                    </g2:evaluate>
+                </j2:if>
+                <tr class="$[jvar_line_color]">
+                    <j:if test="${jvar_show_number == 'true'}">
+                        <td class="checkout_left">
+                            <a class="linked" href="sc_req_item.do?sys_id=$[sc_req_item.sys_id]$[AMP]sysparm_view=ess"> $[sc_req_item.number] </a>
+                        </td>
+                        <td class="checkout_left">
+                            <div style="font-weight: bold;">$[smart_description]</div>
+                            <j2:if test="$[jvar_showOrderItemLink]">
+                                <div>
+                                    <a target="$[jvar_link_target]" class="linked ordered_link" href="$[jvar_link_url]">
+                                        $[jvar_link_text]
+                                    </a>
+                                </div>
+                            </j2:if>
+                        </td>
+                    </j:if>
+                    <j:if test="${jvar_show_number != 'true'}">
+                        <td class="checkout_left">
+                            <div style="font-weight: bold;">
+                                <a class="linked" href="sc_req_item.do?sys_id=$[sc_req_item.sys_id]$[AMP]sysparm_view=ess">
+                                    $[smart_description]
+                                </a>
+                            </div>
+                            <j2:if test="$[jvar_showOrderItemLink]">
+                                <div>
+                                    <a target="$[jvar_link_target]" class="linked ordered_link" href="$[jvar_link_url]">
+                                        $[jvar_link_text]
+                                    </a>
+                                </div>
+                            </j2:if>
+                        </td>
+                    </j:if>
+                    <td class="checkout_left">$[jvar_this_due] </td>
+                    <td class="checkout_left">
+						<g2:evaluate var="sc_req_item" expression="var gr = new GlideRecord('sc_req_item'); gr.get(sc_req_item.sys_id); var sc_req_item = gr; sc_req_item.putCurrent();sc_req_item;" />
+                        <j:set var="ref" value="sc_req_item.stage" />
+                        <g:inline template="item_workflow.xml" />
+						<g2:evaluate>sc_req_item.popCurrent();</g2:evaluate>
+                    </td>
+                    <j2:if test="$[!jvar_never_show_price]">
+                        <td class="checkout_price">
+                            <j2:if test="$[show_price]">
+                                <div>
+                                    <g2:currency_format double="$[sc_req_item.price]" />
+                                </div>
+                            </j2:if>
+                            <j2:if test="$[!show_price]">
+                                <div>-</div>
+                            </j2:if>
+                            <j2:if test="$[show_recurring_price]">
+                                <j2:if test="$[!sc_req_item.recurring_frequency.nil()]">
+                                    <div class="checkout_recurring_price">
+                                        <j2:if test="$[show_price]">
+                                        	+
+										</j2:if>
+                                        <g2:currency_format double="$[sc_req_item.recurring_price]" />
+                                        $[sc_req_item.recurring_frequency.getDisplayValue()]
+                                    </div>
+                                </j2:if>
+                            </j2:if>
+                        </td>
+                    </j2:if>
+                    <td class="checkout_quantity">
+                        <j2:choose>
+                            <j2:when test="$[!sc_req_item.cat_item.no_quantity]">$[sc_req_item.quantity]</j2:when>
+                            <j2:otherwise> - </j2:otherwise>
+                        </j2:choose>
+                    </td>
+                    <j2:if test="$[!jvar_never_show_price]">
+                        <td class="checkout_total">
+                            <j2:if test="$[show_price]">
+                                <div>
+                                    <g2:currency_format double="$[jvar_price]" />
+                                </div>
+                            </j2:if>
+                            <j2:if test="$[!show_price]">
+                                <div>-</div>
+                            </j2:if>
+                            <j2:if test="$[show_recurring_price]">
+                                <j2:if test="$[!sc_req_item.recurring_frequency.nil()]">
+                                    <div class="checkout_recurring_price_total">
+										<j2:if test="$[show_price]">
+                                        	+
+										</j2:if>
+                                        <g2:currency_format double="$[jvar_recurring_price]" />
+                                        $[sc_req_item.recurring_frequency.getDisplayValue()]
+                                    </div>
+                                </j2:if>
+                            </j2:if>
+                        </td>
+                    </j2:if>
+                </tr>
+            </j2:forEach>
+            <j2:if test="$[!jvar_never_show_price]">
+                <thead class="checkout_title checkout_sub_title">
+                    <j:if test="${jvar_show_number == 'true'}">
+                        <th />
+                    </j:if>
+                    <th colspan="6" style="font-size: 0px;">$[AMP]nbsp;</th>
+                </thead>
+                <tr style="border-bottom: 0px;">
+                    <j:if test="${jvar_show_number == 'true'}">
+                        <td />
+                    </j:if>
+                    <td />
+                    <td />
+                    <td />
+                    <td />
+                    <td class="checkoutTotalLabel">
+                        <j2:if test="$[jvar_freq_list.length == 1]">
+                            ${gs.getMessage('Total')}
+                        </j2:if>
+                        <j2:if test="$[jvar_freq_list.length != 1]">
+                            ${gs.getMessage('Subtotal')}
+                        </j2:if>
+                    </td>
+                    <td class="checkoutTotalSum" style="border-bottom: 1px solid #E0E0E0;">
+                        <j2:if test="$[jvar_show_price_block]">
+                            <div>
+                                <g2:currency_format double="$[jvar_subtotal_block]" />
+                            </div>
+                        </j2:if>
+                        <j2:if test="$[!jvar_show_price_block]">
+                            <div>-</div>
+                        </j2:if>
+                        <j2:if test="$[jvar_show_recurring_price_block]">
+                            <j2:if test="$[freq_name != 'none']">
+                                <div class="checkout_recurring_price_subtotal">
+                                    <j2:if test="$[jvar_show_price_block]">
+                                        	+
+										</j2:if>
+                                    <g2:currency_format double="$[jvar_recurring_subtotal_block]" />
+                                    $[sc_req_item.recurring_frequency.getDisplayValue()]
+                                </div>
+                            </j2:if>
+                        </j2:if>
+                    </td>
+                </tr>
+            </j2:if>
+            <tr>
+                <j:if test="${jvar_show_number == 'true'}">
+                    <td />
+                </j:if>
+                <td colspan="4">
+                    $[AMP]nbsp;
+                    <br />
+                </td>
+                <j2:if test="$[!jvar_never_show_price]">
+                    <td colspan="2" />
+                </j2:if>
+            </tr>
+        </j2:forEach>
+
+        <!-- now add any template generated tasks -->
+        <j2:set var="jvar_display_tasks" value="$[gs.getProperty('glide.sc.checkout.task.display') == 'true']" />
+        <j2:if test="$[jvar_display_tasks]">
+            <g2:evaluate var="jvar_task" expression="
+                if (sys_id == '')
+                    sys_id = 'not_a_match';
+                task = new GlideRecord('task');
+                task.addQuery('sys_class_name', '!=', 'sc_req_item');
+                task.addQuery('sys_class_name', '!=', 'sysapproval_group');
+                task.addQuery('parent', sys_id);
+                task.query();" />
+            <j2:while test="$[task.next()]">
+                <tr>
+                    <j:if test="${jvar_show_number == 'true'}">
+                        <td class="checkout_left"> $[task.number] </td>
+                    </j:if>
+                    <td class="checkout_left"> $[task.short_description] </td>
+                    <td class="checkout_left"> $[gs.getMessage('N/A')] </td>
+                    <td class="checkout_left"> $[gs.getMessage('N/A')] </td>
+                    <td class="checkout_price"> -- </td>
+                    <td class="checkout_quantity"> 1 </td>
+                    <td class="checkout_total"> -- </td>
+                </tr>
+            </j2:while>
+        </j2:if>
+
+        <j2:if test="$[jvar_at_least_one]">
+            <j2:if test="$[!jvar_never_show_price and jvar_freq_list.length != 1]">
+                <thead class="checkout_title">
+                    <j:if test="${jvar_show_number == 'true'}">
+                        <th />
+                    </j:if>
+                    <th colspan="6" style="font-size: 0px;">$[AMP]nbsp;</th>
+                </thead>
+                <tr style="border-bottom: 0px;">
+                    <j:if test="${jvar_show_number == 'true'}">
+                        <td />
+                    </j:if>
+                    <td />
+                    <td />
+                    <td />
+                    <td />
+                    <td class="checkoutTotalLabel">${gs.getMessage('Total')}</td>
+                    <td class="checkoutTotalSum" style="border-bottom: 1px solid #E0E0E0;">
+                        <j2:if test="$[jvar_show_price]">
+                            <g2:currency_format double="$[jvar_overall_total]" />
+                        </j2:if>
+                        <j2:if test="$[!jvar_show_price]">
+                            -
+                        </j2:if>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 0px;">
+                    <j:if test="${jvar_show_number != 'true'}">
+                        <td colspan="6">
+                            $[AMP]nbsp;
+                            <br />
+                        </td>
+                    </j:if>
+                    <j:if test="${jvar_show_number == 'true'}">
+                        <td colspan="7">
+                            $[AMP]nbsp;
+                            <br />
+                        </td>
+                    </j:if>
+                </tr>
+            </j2:if>
+        </j2:if>
+    </table>
+    <g2:evaluate var="jvar_delivery_date" expression="
+        var answer = '--';
+        if (longestDueDate != 0) {
+            var helper = new GlideappCalculationHelper();
+            answer = helper.longToDate(longestDueDate);
+        }
+        answer;" />
+    <script type="text/javascript">
+        addLoadEvent(function(){
+        var dd = '$[jvar_delivery_date]';
+        var ot = '$[jvar_overall_total]';
+        var txt = document.getElementById("delivery_date");
+        txt.innerHTML = dd;
+        var txt = document.getElementById("overall_total");
+        if (txt)
+            txt.innerHTML = ot;
+        });
+    </script>
+    </j2:when>
+    <j2:otherwise>
+    	<div class="order_summary">
+        	<div class="notification notification-warning">${gs.getMessage('Order')}: ${gs.getMessage('Empty')}<button data-dismiss="alert" class="sc_warning_notification_close_btn sc_notification_close_btn btn btn-icon btn-close close icon-cross"><span class="sr-only">${gs.getMessage('Close')}</span></button></div>
+    	</div>
+    </j2:otherwise>
+    </j2:choose>
+
+    <g2:evaluate jelly="true">
+        var continueShoppingAction = "location='" + GlideappCatalogURLGenerator.getContinueShoppingUrl(jelly.sysparm_catalog, jelly.sysparm_catalog_view) + "'";
+        if (SNC.CatalogCMS.isCMSSite())
+            continueShoppingAction = "top." + continueShoppingAction;
+    </g2:evaluate>
+
+    <j2:if test="$[!GlideTransaction.get().isVirtual()]">
+        <table width="100%" cellspacing="0" border="0">
+            <tr>
+                <td colspan="3">$[SP]</td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="checkoutLeft">
+                        <g2:evaluate var="jvar_back_to_catalog_url" jelly="true">
+                            var jvar_back_to_catalog_url = GlideappCatalogURLGenerator.getHomeURL(jelly.sysparm_catalog, jelly.sysparm_catalog_view, "");
+                            jvar_back_to_catalog_url;
+                        </g2:evaluate>
+                        <g2:sc_button img="" classes="request_catalog_button" id="back_button" label="Back to Catalog" title="Back to Catalog" href="$[jvar_back_to_catalog_url]"/>
+                    </div>
+                    <div class="checkoutLeft" style="margin-left: 8px; margin-right: 8px;">
+                        <g2:sc_button img="" classes="request_catalog_button" id="continue_button" onclick="$[continueShoppingAction]" label="Continue Shopping" title="Continue Shopping"/>
+                    </div>
+                </td>
+                <td align="center">
+                    <j2:set var="jvar_show_cancel" value="$[gs.getProperty('glide.sc.checkout.cancel')]" />
+                    <j2:if test="$[jvar_show_cancel == 'true']">
+                        <g2:set_if var="jvar_condition" test="$[gs.getProperty('glide.sc.checkout.cancel.condition') == '']" true="true" false="$[gs.getProperty('glide.sc.checkout.cancel.condition')]" />
+                        <g2:evaluate>sc_request.putCurrent();</g2:evaluate>
+                        <g2:evaluate var="jvar_t" jelly="true" expression="jelly.jvar_condition" />
+                        <g2:evaluate>sc_request.popCurrent();</g2:evaluate>
+                        <j2:if test="$[jvar_t]">
+                            <div class="checkoutLeft">
+                                <g2:evaluate var="jvar_cancel_request_url" jelly="true">
+                                    var jvar_cancel_request_url = GlideappCatalogURLGenerator.getCancelRequestURL(jelly.sysparm_catalog, jelly.sysparm_catalog_view, sc_request.sys_id, gs.getSessionToken());
+                                    jvar_cancel_request_url;
+                                </g2:evaluate>
+                                <g2:sc_button img="" classes="request_catalog_button" id="cancel_button" label="Cancel Request" title="Cancel Request" href="$[jvar_cancel_request_url]"/>
+                            </div>
+                        </j2:if>
+                    </j2:if>
+                </td>
+                <td>
+                    <div class="checkoutRight">
+                        <g2:sc_button img="" classes="request_catalog_button" id="home_button" label="Home" title="Home" href="home.do"/>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </j2:if>
+<j2:if test="$[GlideTransaction.get().isVirtual()]">
+    <script>
+        fixPermaLink();
+        function fixPermaLink() {
+            var pl = '$[permalink]';
+            var t = top.window.location+'';
+            var ta = t.split('?');
+            var root = ta[0];
+            if (ta.length >1) {
+                root += '?';
+                ta = ta[1].split('$[AMP]');
+                for (var i=0; i != ta.length; i++) {
+                    var s = ta[i];
+                    var sa = s.split('=');
+                    if (sa[0] != 'uri')
+                        root += s;
+                }
+            }
+            var url = root + '${AMP}uri=' + pl;
+            var permaLinkEle = gel('permalink');
+            if (permaLinkEle)
+            	permaLinkEle.href = url;
+        }
+    </script>
+    <j2:set var="jvar_show_cancel" value="$[gs.getProperty('glide.sc.checkout.cancel')]" />
+    <j2:if test="$[jvar_show_cancel == 'true' &amp;&amp; jvar_request]">
+        <g2:set_if var="jvar_condition" test="$[gs.getProperty('glide.sc.checkout.cancel.condition') == '']" true="true" false="$[gs.getProperty('glide.sc.checkout.cancel.condition')]" />
+        <g2:evaluate>sc_request.putCurrent();</g2:evaluate>
+        <g2:evaluate var="jvar_t" jelly="true" expression="jelly.jvar_condition" />
+        <g2:evaluate>sc_request.popCurrent();</g2:evaluate>
+        <j2:if test="$[jvar_t]">
+            <table width="100%" cellspacing="0" border="0">
+                <tr>
+                    <td colspan="3">$[SP]</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%">$[SP]</td>
+                    <td align="center">
+                        <div class="checkoutLeft">
+                            <g2:evaluate var="jvar_cancel_request_url" jelly="true">
+                                var jvar_cancel_request_url = GlideappCatalogURLGenerator.getCancelRequestURL(jelly.sysparm_catalog, jelly.sysparm_catalog_view, sc_request.sys_id, gs.getSessionToken());
+                                jvar_cancel_request_url;
+                            </g2:evaluate>
+                            <g2:sc_button img="" classes="request_catalog_button" id="cancel_button_2" label="Cancel Request" title="Cancel Request" href="$[jvar_cancel_request_url]"/>
+                        </div>
+                    </td>
+                    <td style="width: 50%">$[SP]</td>
+                </tr>
+            </table>
+        </j2:if>
+    </j2:if>
+</j2:if>
+<br />
+<j2:if test="$[jvar_request]">
+    <table style="width: 100%; border: 0px; margin: 0px; padding: 0px;">
+        <tr>
+            <td class="checkoutCenterWrapper" align="center">
+            </td>
+        </tr>
+        <g2:evaluate var="jvar_not_important" expression="
+            var show_clone = gs.getProperty('glide.sc.allow.checkout.clone');
+            var roles = gs.getProperty('glide.sc.allow.clone.roles');
+            if (roles == null || roles == '') {
+            } else {
+                var hasRole = gs.hasRole(roles);
+                if (hasRole == false)
+                    show_clone = false;
+            }" />
+        <j2:if test="$[show_clone]">
+            <tr>
+                <td>
+                    <form method="POST" name="clone_form" id="clone_form" action="service_catalog.do">
+                        <input name="sysparm_action" type="HIDDEN" value="request_clone" />
+                        <input name="requestID" type="HIDDEN" value="$[sc_request.sys_id]" />
+                        <input name="sysparm_catalog" type="HIDDEN" value="$[sysparm_catalog]" />
+                        <input name="sysparm_catalog_view" type="HIDDEN" value="$[sysparm_catalog_view]" />
+                        <input name="sysparm_referring_url" type="HIDDEN" value="${sysparm_referring_url}" />
+                        <table width="100%" cellspacing="0">
+                            <thead class="checkout_title">
+                                <th class="checkout_left">${gs.getMessage('catalog_clone')}</th>
+                            </thead>
+                            <j:set var="jvar_row" value="0" />
+                            <j:set var="jvar_max_rows" value="10" />
+                            <j:set var="ref" value="sys_user" />
+                            <j:set var="jvar_question_reference" value="sys_user" />
+                            <g:evaluate var="not_important" expression="var jsrow=0;" />
+                            <j:while test="${jvar_row &lt; jvar_max_rows}">
+                                <j:set var="jvar_row" value="${jvar_row + 1}" />
+                                <g:evaluate var="jvar_question_name" expression="jsrow++; 'sys_user:ZZYYXXclone_row'+jsrow;" />
+                                <tr>
+                                    <td>
+										<g:inline template="lightweight_reference.xml" />
+                                    </td>
+                                </tr>
+                            </j:while>
+                            <tr>
+                                <td>
+                                    <div class="checkoutLeft">
+                                        <g2:sc_button img="" classes="request_catalog_button" id="order_button" onclick="document.getElementById('clone_form').submit();" label="Order Now" title="Order Now"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </td>
+            </tr>
+        </j2:if>
+    </table>
+</j2:if>
+<g:catalog_notify_cart_empty />
+</div>
+<g:inline template="catalog_web_analytics.xml" />
+</j:jelly>

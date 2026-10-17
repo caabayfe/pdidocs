@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${GlideMobileExtensions.getDeviceType() != 'doctype'}">
+		<g:requires name="scripts/lib/jquery_includes.js" inline="true" />
+	</j:if>
+	<g:requires name="styles/assessment.css" />
+    <g2:evaluate var="jvar_rows" object="true" jelly="true">
+ 		var title = gs.getMessage('My Assessments and Surveys');
+		var none = 'No assessments or surveys for you at the moment';
+		var useSysparmNone = false;
+		var sanitized_sysparm_none = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_none);
+		var sanitized_sysparm_title = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_title);
+		// Reject encoded-query operators (^NQ / ^OR) that can detach the mandatory owner (user) filter added below, which would disclose other users' assessment instances. ^ORDERBY is allowed.
+		var raw_sysparm_query = jelly.sysparm_query;
+		var sanitized_sysparm_query = "";
+		if (raw_sysparm_query $[AMP]$[AMP] !/\^(NQ|OR(?!DERBY))/i.test(raw_sysparm_query))
+			sanitized_sysparm_query = raw_sysparm_query;
+		var sanitized_sysparm_show = SNC.GlideHTMLSanitizer.sanitize(jelly.sysparm_show);
+        if (sanitized_sysparm_none $[AMP]$[AMP] sanitized_sysparm_none!="undefined") {
+            none = sanitized_sysparm_none;
+            useSysparmNone = true;
+        }
+       	if (sanitized_sysparm_title $[AMP]$[AMP] sanitized_sysparm_title!="undefined")
+            title = sanitized_sysparm_title;
+        // Query twice, once for items to take, once for items that they can yet modify
+        var i = 0;
+        var dividers = '';
+        var dataArr = new Array();
+        var background = "";
+        //if (gs.getProperty("glide.ui.doctype") + '' == 'true')
+        //    var background = "background: #FCFCFC;";
+        for (var loopCounter = 0; loopCounter != 2; ++loopCounter) {
+	       var grAssessmentInstance = new GlideRecordSecure("asmt_assessment_instance");
+	       grAssessmentInstance.initialize();
+	        grAssessmentInstance.addQuery("metric_type.active", true);
+		grAssessmentInstance.addQuery("due_date", '>=', new GlideDateTime().getLocalDate().getValue());
+	        grAssessmentInstance.addQuery("metric_type.publish_state", "published");
+	        grAssessmentInstance.addQuery("preview", false);
+	        grAssessmentInstance.addQuery("metric_type.evaluation_method", "!=", "attestation_v2");
+	        grAssessmentInstance.addQuery("metric_type.evaluation_method", "!=", "risk_assessment");
+	        if (loopCounter == 0)
+		        grAssessmentInstance.addEncodedQuery("stateINready,wip");
+	        else {
+		        grAssessmentInstance.addQuery("state", "complete");
+		        grAssessmentInstance.addQuery("metric_type.allow_retake", "true");
+	        }
+	        if (sanitized_sysparm_show != "all" || !gs.hasRole('assessment_admin'))
+	            grAssessmentInstance.addQuery("user", "javascript:gs.getUserID()");
+	        if (sanitized_sysparm_query)
+	            grAssessmentInstance.addEncodedQuery(sanitized_sysparm_query);
+	        grAssessmentInstance.orderByDesc('state');
+	        grAssessmentInstance.orderBy('due_date');
+	        grAssessmentInstance.orderBy('sys_created_on');
+	        grAssessmentInstance.query();
+	        if (grAssessmentInstance.getRowCount() == 0)
+	        	if (loopCounter == 0)
+	        		continue;
+			if (i == 0) {
+		        if (grAssessmentInstance.getRowCount() == 0)
+		            dividers = '<div style="padding: 0 15px;"><h2>' + (useSysparmNone ? GlideStringUtil.escapeHTML(none) : GlideStringUtil.escapeHTML(gs.getMessage('No assessments or surveys for you at the moment'))) + '</h2></div>';
+		        else {
+		            dividers = '<div class='container-fluid'><div role="list">';
+		        }
+	        }
+	        while (grAssessmentInstance.next()) {
+				var filterSurveyInstance = new global.AssessmentUtils().filterSurvey(grAssessmentInstance);
+				if (!filterSurveyInstance) {
+					if (i%4 === 0)
+						dividers += '<div class="row" style ="display: flex;align-items: stretch;flex-flow: wrap;">';
+					var record = {};
+					var mt = new GlideRecordSecure("asmt_metric_type");
+					mt.get(grAssessmentInstance.metric_type);
+					var user = new GlideRecordSecure("sys_user");
+					user.get(grAssessmentInstance.user);
+					record.inst_id = grAssessmentInstance.sys_id.toString();
+					record.mt_id = mt.sys_id.toString();
+					record.mt_name = GlideStringUtil.escapeHTML(mt.name.toString());
+					record.user_name = user.name.toString();
+					record.inst_user = grAssessmentInstance.user.toString();
+					record.inst_state_id = grAssessmentInstance.state.getValue().toString();
+					record.inst_state = grAssessmentInstance.state.getDisplayValueExt().toString();
+					record.inst_due_date = grAssessmentInstance.due_date.getDisplayValue();
+					record.inst_description = mt.description.toString();
+					record.mt_evaluation_method_display = mt.evaluation_method.getDisplayValueExt().toString();
+					record.mt_evaluation_method = mt.evaluation_method.toString();
+					record.inst_preview = grAssessmentInstance.preview.toString();
+					record.inst_trigger_table = "";
+					record.inst_trigger_id = "";
+					if (grAssessmentInstance.trigger_table &amp;&amp; grAssessmentInstance.trigger_id) {
+						var task_number;
+						var table;
+						if (grAssessmentInstance.trigger_id.primary_task || grAssessmentInstance.trigger_id.universal_request) {
+							task_number = grAssessmentInstance.trigger_id.task_effective_number;
+							table = gs.getMessage("Task");
+						}
+						else {
+							var tr = new GlideRecordSecure(grAssessmentInstance.trigger_table);
+							if (tr.get(grAssessmentInstance.trigger_id)) {
+								task_number = tr.getDisplayValue();
+								table =  grAssessmentInstance.getDisplayValue('trigger_id').split(': ')[0];
+							}
+						}
+						if (table &amp;&amp; task_number) {
+							record.inst_trigger_table = table;
+							record.inst_trigger_id = GlideStringUtil.escapeHTML(task_number.toString());
+						}
+					}
+					var due = new GlideDateTime(grAssessmentInstance.due_date);
+					var now = new GlideDateTime().getLocalDate();
+						
+					dividers += '<div class="col-sm-6 col-lg-3 col-xs-12 col-md-3 asmt-card-container" role="listitem"><div id="' + record.inst_id + '" style="width: 100%; padding: 5px 5px;height: 100%;"/></div>';
+					dataArr.push(record);
+					i++;
+					if (i%4 === 0)
+						dividers += '</div>';
+				}
+	        }
+        }
+		dataArr = new JSON().encode(dataArr);
+		dividers += '</div></div>';
+        if (gs.hasRole('assessment_admin')) {
+            dividers += '<p></p><table class="related_links_container" style="padding: 0 5px; ' + background + '">';
+            dividers += '<tbody>';
+            dividers += '<tr>';
+            dividers += '<td class="related_links">${JS,SAFE:gs.getMessage("Related Links")}</td>';
+            dividers += '</tr>';
+            dividers += '<tr>';
+            if (sanitized_sysparm_show != "all")
+                dividers += '<td><a id="showall" tabindex="0" onclick="showAll()" class="navigation_link action_context">${JS,SAFE:gs.getMessage("Show all")}</a></td>';
+            else
+                dividers += '<td><a id="showall" tabindex="0" onclick="showMine()" class="navigation_link action_context">${JS,SAFE:gs.getMessage("Show assigned to me")}</a></td>';
+            dividers += '</tr>';
+            dividers += '</tbody>';
+		dividers += '</table>';
+        }
+    </g2:evaluate>
+	<input type="hidden" id="rows" name="rows" value="$[dataArr]" />
+    <div style="text-align: center; width: 100%"><h1 data-form-title="$[title]" style="margin: 2px auto;font-size: 17px;">$[HTML:title]</h1></div>
+    <g2:no_escape>
+        $[dividers]
+    </g2:no_escape>
+</j:jelly>

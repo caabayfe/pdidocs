@@ -1,0 +1,21 @@
+gs.print('yes_no  = ' + current.variable_pool.yes_no);
+gs.print('multiple_choice  = ' + current.variable_pool.multiple_choice);
+gs.print('select  = ' + current.variable_pool.select);
+gs.print('checbox = ' + current.variable_pool.checkbox);
+gs.print('scale = ' + current.variable_pool.scale);
+gs.print('date_time = ' + current.variable_pool.date_time);
+gs.print('date = ' + current.variable_pool.date);
+gs.print('single_text = ' + current.variable_pool.single_text);
+gs.print('reference = ' + current.variable_pool.reference);
+gs.print('multi_text= ' + current.variable_pool.multi_text);
+
+gs.print('yes_no  = ' + current.variable_pool.yes_no.getDisplayValue());
+gs.print('multiple_choice  = ' + current.variable_pool.multiple_choice.getDisplayValue());
+gs.print('select  = ' + current.variable_pool.select.getDisplayValue());
+gs.print('checbox = ' + current.variable_pool.checkbox.getDisplayValue());
+gs.print('scale = ' + current.variable_pool.scale.getDisplayValue());
+gs.print('date_time = ' + current.variable_pool.date_time.getDisplayValue());
+gs.print('date = ' + current.variable_pool.date.getDisplayValue());
+gs.print('single_text = ' + current.variable_pool.single_text.getDisplayValue());
+gs.print('reference = ' + current.variable_pool.reference.getDisplayValue());
+gs.print('multi_text= ' + current.variable_pool.multi_text.getDisplayValue());

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate>
+		var sourceTable = RP.getParameterValue('sysparm_table');
+		var sourceSysId = RP.getParameterValue('sysparm_sysId');
+		var type = RP.getParameterValue('sysparm_type') ;
+		var param = decodeURIComponent(RP.getParameterValue('sysparm_param'));
+		if (param) param = JSON.parse(param);
+		if (!type) {
+			type = "record";
+			param = { table: sourceTable, sysId: sourceSysId }
+		}
+		var url = new global.EmailNotificationRedirection().getRedirectionURL(sourceTable, sourceSysId, type, param);
+	</g2:evaluate>
+	<style>
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+		body {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh; /* Ensure full viewport height */
+			flex-direction:column;
+			gap:16px;
+		}
+		.spin-loader {
+			width: calc(0.75rem + var(--now-icon--scale-size, 1) * 1.5rem / 2);
+			height: calc(0.75rem + var(--now-icon--scale-size, 1) * 1.5rem / 2);
+			fill: #7B61FF;
+			transform: translateY(-50%);
+		}
+		.-spin {
+			animation: 2s linear 0s infinite normal none running spin;
+		}	
+	</style>
+	<body>
+	<svg class="now-icon -spin -lg spin-loader" aria-hidden="true" viewBox="0 0 24 24">
+	<path d="M18.533 3.846a.481.481 0 0 0-.047-.731A10.95 10.95 0 0 0 12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11c0-2.156-.62-4.167-1.692-5.865a.48.48 0 0 0-.748-.073l-1.466 1.465a.522.522 0 0 0-.08.621 8 8 0 1 1-2.579-2.808c.206.139.484.12.66-.056l1.438-1.438z">
+	</path></svg>
+	<span style="font-family: Lato; font-size: 16px; font-weight: 400; line-height: 19.2px; text-align: center;color: #151920;">${gs.getMessage('Connecting to ServiceNow....')}</span>
+	</body>
+	<meta http-equiv="refresh" content="0; URL=$[url]" />
+	<script>
+	function _redirectPage(url) {
+		if (url)
+			window.location.href = url;
+		else
+			console.error("Invalid redirect url");
+	}
+	_redirectPage("$[url]");
+	</script>
+</j:jelly>

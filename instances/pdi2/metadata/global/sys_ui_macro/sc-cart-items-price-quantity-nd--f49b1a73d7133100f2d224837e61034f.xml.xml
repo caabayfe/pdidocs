@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:if test="${jvar_cart_items.size() == 0}">
+        <tr class="cart_items sc_cart_item_empty">
+            <td class="sc_cart_empty" colspan="3">${gs.getMessage('Empty')}</td>
+        </tr>
+    </j:if>
+    <j:if test="${jvar_cart_items.size() > 0}">
+        <j:forEach var="jvar_item" items="${jvar_cart_items}">
+            <j:if test="${jvar_sc_quantity == 'true' || jvar_sc_descriptions == 'true' || jvar_sc_price == 'true' || jvar_item.showRecurringPrice()}">
+                <tr class="cart_item sc_cart_item_placeholder">
+                    <td class="sc_item_quantity">
+                        <j:if test="${jvar_sc_quantity == 'true'}">
+                            ${jvar_item.getDisplayQuantity()}
+                        </j:if>
+                    </td>
+                    <td class="sc_item_name">
+                        <j:if test="${jvar_sc_descriptions == 'true'}">
+                            ${jvar_item.getDisplayName()}
+                        </j:if>
+                    </td>
+                    <j:if test="${jvar_item.showPrice()}">
+                    	<td class="sc_item_price cart_price_cell">
+                            ${jvar_item.getSubtotalWithCurrency()}
+                        </td>
+                    </j:if>
+                    <j:if test="${!jvar_item.showPrice() &amp;&amp; jvar_item.showRecurringPrice()}">
+                        <td class="sc_item_price cart_price_cell sc_cart_cell_smaller sc_item_recurring_price">
+                            + ${jvar_item.getRecurringSubtotalWithCurrency()} ${jvar_item.getRecurringFrequencyDisplay()}
+                        </td>
+                    </j:if>
+                </tr>
+                <j:if test="${jvar_item.showPrice() &amp;&amp; jvar_item.showRecurringPrice()}">
+                    <tr class="cart_item sc_cart_item_placeholder">
+                        <td colspan="3" class="sc_cart_cell_smaller sc_item_recurring_price cart_price_cell">
+                            + ${jvar_item.getRecurringSubtotalWithCurrency()} ${jvar_item.getRecurringFrequencyDisplay()}
+                        </td>
+                    </tr>
+                </j:if>
+            </j:if>
+        </j:forEach>
+    </j:if>
+</j:jelly>

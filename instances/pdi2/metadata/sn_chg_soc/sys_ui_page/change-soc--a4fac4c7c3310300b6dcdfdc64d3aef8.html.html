@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_user" object="true">
+		gs.getUser();
+	</g2:evaluate>
+	<g2:evaluate var="jvar_compatibility">
+		new ScopedGlideUICompatibility("sn_chg_soc").getCompatibility();
+	</g2:evaluate>
+	<j2:if test="$[jvar_compatibility == 'block']">
+		<g:inline template="sn_chg_soc_change_soc_compatibility.xml" />
+	</j2:if>
+	<g2:evaluate var="jvar_has_rights">
+		var gr = new GlideRecordSecure("chg_soc_definition");
+		var rights = false;
+		if (gr.get(RP.getParameterValue('sysparm_id')))
+			rights = gr.canRead();
+		rights;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_redirect" jelly="true" >
+		var redirect = GlideSecurityUtils.enforceRelativeURL(jelly.sysparm_redirect);
+		if (!redirect || redirect === '$none$' || typeof redirect === 'undefined' || redirect === 'undefined')
+			redirect = 'sn_chg_soc_landing.do';
+		redirect;
+	</g2:evaluate>
+	<g:inline template="sn_chg_soc_record_not_found.xml" />
+
+	<j2:if test="$[jvar_has_rights]">
+		<j2:if test="$[jvar_compatibility != 'block']">
+			<g:inline template="angular_template.xml" name="sn_aside.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_style.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_style_body.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_style_item.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_style_page.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_style_def.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_style_condition.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_context_menu.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_context_menu_buttons.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_context_menu_item_new.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_copy_change_schedule.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_landing_wizard_template.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_landing_wizard.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_landing_wizard_template_init_page.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_landing_wizard_template_condition_page.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_config.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_config_body.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_share.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_share_body.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_sharing_invitation_search.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_remove_permission_def.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_keyboard.xml" />
+			<g:inline template="angular_template.xml" name="sn_chg_soc_aside_keyboard_body.xml" />
+
+			<g:inline template="glide_weba_header.xml" />
+			<g:inline template="dir_checker.xml" />
+			<html lang="$[gs.getSession().getLanguage()]" ng-app="sn.chg_soc.change_soc" ng-cloak="true" class="${jvar_text_direction}">
+				<head>
+					<title>${gs.getMessage('Change Schedule')}</title>
+
+					<j:set var="jvar_cssCacheTheme" value="c=$[gs.getCssCacheVersionString()]" />
+
+					<!-- JS includes for New Change Schedule Wizard -->
+					<g:inline template="sn_chg_soc_change_soc_landing_wizard_js_includes.xml" />
+
+					<g:requires name="scripts/dhtmlx_gantt_v.4.1.13/src/dhtmlxgantt.js" />
+					<g:requires name="scripts/dhtmlx_gantt_v.4.1.13/ext/dhtmlxgantt_marker.js"  />
+					<g:requires name="scripts/sn_chg_soc/edited_dhtmlx_gantt_v.4.1.13/ext/dhtmlxgantt_keyboard_navigation.js"  />
+
+					<g:requires name="scripts/sn/common/clientScript/glideUser.js"  />
+
+					<g:requires name="scripts/sn.angularstrap/js_includes_angular_strap_aside.js" includes="true" />
+					<g:requires name="scripts/sn.angularstrap/js_includes_angularstrap_directives.js" includes="true" />
+
+					<g:requires name="script/sn_chg_soc.accessibility.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.notification.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.mousedown.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.duration.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.gantt.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.data.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.style.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.config.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.share.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.snCreateNewInvite.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.landing_accessibility.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.landing_wizard.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.context_menu.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.keyboard.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.popover.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.tooltip_overflow.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.change_soc_filter.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.filter_control.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.filter_widget.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.loading.jsdbx"  />
+					<g:requires name="script/sn_chg_soc.change_soc.jsdbx" />
+					<g:requires name="script/sn.itsm.change.overflow.jsdbx" />
+
+					<!-- Color picker JS -->
+					<g:requires name="script/sn_chg_soc_cp.snColorPicker.jsdbx"  />
+
+					<g:requires name="styles/dhtmlx_gantt_v.4.1.0/dhtmlxgantt.css" />
+
+					<!-- CSS includes for New Change Schedule Wizard -->
+					<g:inline template="sn_chg_soc_change_soc_landing_wizard_css_includes.xml" />
+
+					<g:requires name="styles/css_includes_ng_form_elements.css" includes="true" params="${jvar_cssCacheTheme}" />
+
+					<link rel="stylesheet" href="/styles/dist/common/sn_common.css"></link>
+
+					<!-- Filter Control -->
+					<link href="7887f32c57d0130035ae4786cc94f907.cssdbx?${jvar_cssCacheTheme}" rel="stylesheet" type="text/css" />
+
+					<g:requires name="styles/sn_avatar.css"  />
+					<g:requires name="styles/sn_stream.css" />
+
+					<link href="d834a479c31203009f93dfdc64d3aefc.cssdbx?${jvar_cssCacheTheme}" rel="stylesheet" type="text/css" />
+					<link href="7a8f92cb57401300532c3da73d94f94c.cssdbx?${jvar_cssCacheTheme}" rel="stylesheet" type="text/css" />
+
+					<!-- Color picker style -->
+					<link href="677460e55720130034d169202d94f948.cssdbx?${jvar_cssCacheTheme}" rel="stylesheet" type="text/css" />
+					<j:if test="${jvar_text_direction == 'rtl'}">
+						<link href="ea5dcf8e573a4300afc34786cc94f975.cssdbx?${jvar_cssCacheTheme}" rel="stylesheet" type="text/css" />
+					</j:if>
+
+					<!-- Change Schedules Landing - Accessibility -->
+					<j:if test="${new global.ChangeSoCUtil().isAccessibilityEnabled()}">
+						<link href="ff16d402734613008ef62d2b04f6a702.cssdbx?${jvar_cssCacheTheme}" rel="stylesheet" type="text/css" />
+					</j:if>
+				</head>
+				<body ng-controller="ChangeSoCCtrl as changeSoCCtrl" ng-init="changeSoCCtrl.initPage()" class="soc-change">
+					<g:inline template="sn_chg_soc_landing_wizard_translation.xml" />
+					<g:inline template="sn_chg_soc_change_soc_translation.xml" />
+					<g:inline template="sn_chg_soc_cp_translations.xml" />
+					<div role="banner" class="sn-navhub">
+						<sn-soc-context-menu />
+						<div class="schedule-title">
+							<div class="schedule-name">
+								{{dataService.definition.name.display_value}}
+							</div>
+							<div class="schedule-label">
+								{{::changeSoCCtrl.messages['Change Schedule']}}
+							</div>
+						</div>
+						<div class="schedule-right-controls">
+							<span class="loading-indicator icon-loading icon-lg" ng-show="isLoading()">
+								<span class="sr-only" role="alert">${gs.getMessage('Loading events')}</span>
+							</span>
+							<button id="style_side"
+									aria-label="{{::changeSoCCtrl.messages['Span Styles']}}"
+									uib-tooltip="{{::changeSoCCtrl.messages['Span Styles']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="isLoading()"
+									ng-click="openView('style', event)"
+									class="btn btn-icon icon-label nav-control-btn"
+									ng-class="{'state-active': (activeAside === 'style' || activeAside === 'style_def')}" />
+							<button id="share_side"
+									ng-if="changeSoCCtrl.share.canWrite"
+									aria-label="{{::changeSoCCtrl.messages['Share']}}"
+									uib-tooltip="{{::changeSoCCtrl.messages['Share']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="isLoading()"
+									ng-click="openView('share', event)"
+									class="btn btn-icon icon-share nav-control-btn"
+									ng-class="{'state-active': (activeAside === 'share')}" />
+							<button id="config_side"
+									aria-label="{{::changeSoCCtrl.messages['Configuration']}}"
+									uib-tooltip="{{::changeSoCCtrl.messages['Configuration']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="isLoading()"
+									ng-click="openView('config', event)"
+									class="btn btn-icon icon-configuration nav-control-btn"
+									ng-class="{'state-active': (activeAside === 'config')}" />
+							<button id="keyboard_side"
+									aria-label="{{::changeSoCCtrl.messages['Keyboard Shortcuts']}}"
+									uib-tooltip="{{::changeSoCCtrl.messages['Keyboard Shortcuts']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="isLoading()"
+									ng-click="openView('keyboard', event)"
+									class="btn btn-icon icon-keyboard nav-control-btn"
+									ng-class="{'state-active': (activeAside === 'keyboard')}" />
+						</div>
+					</div>
+					<div class="control">
+						<div class="control-left">
+							<sn-soc-filter-control />
+							<sn-soc-filter configuration="filter" template="sn_chg_soc_snSocFilter.xml" />
+						</div>
+						<div class="control-notif"></div>
+						<div class="control-right">
+							<button id="zoom_in"
+									uib-tooltip="{{::changeSoCCtrl.messages['Zoom in']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="ganttScale.level === ganttScale.scaleMax"
+									ng-click="zoomIn()"
+									class="btn btn-default icon-add control-btn zoom-in-btn"
+									aria-label="{{::changeSoCCtrl.messages['Zoom in']}}" />
+							<button id="zoom_out"
+									uib-tooltip="{{::changeSoCCtrl.messages['Zoom out']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="ganttScale.level === 0"
+									ng-click="zoomOut()"
+									class="btn btn-default icon-connect-minimize control-btn zoom-out-btn"
+									aria-label="{{::changeSoCCtrl.messages['Zoom out']}}" />
+							<button id="page_left"
+									uib-tooltip="{{::changeSoCCtrl.messages['Page left']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="isLoading()"
+									ng-keydown="pageLeft($event)"
+									soc-mouse-down="pageLeft()"
+									soc-mouse-down-freq="200"
+									class="btn btn-default icon-vcr-left control-btn"
+									aria-label="{{::changeSoCCtrl.messages['Page left']}}" />
+							<button id="show_today"
+									uib-tooltip="{{::changeSoCCtrl.messages['Show today']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="isLoading()"
+									ng-click="scrollToday()"
+									class="btn btn-default control-btn today-btn"
+									aria-label="{{::changeSoCCtrl.messages['Show today']}}">{{::changeSoCCtrl.messages['Today']}}</button>
+							<button id="page_right"
+									uib-tooltip="{{::changeSoCCtrl.messages['Page right']}}"
+									tooltip-placement="auto bottom"
+									tooltip-trigger="'focus mouseenter'"
+									ng-disabled="isLoading()"
+									ng-keydown="pageRight($event)"
+									soc-mouse-down="pageRight()"
+									soc-mouse-down-freq="200"
+									class="btn btn-default icon-vcr-right control-btn"
+									aria-label="{{::changeSoCCtrl.messages['Page right']}}" />
+						</div>
+					</div>
+
+					<div change-soc="" id="change-soc" gantt-full-size=".control" class="soc-container" role="main"></div>
+					<sn-aside role="complementary" name="change_soc_side" />
+				</body>
+			</html>
+		</j2:if>
+	</j2:if>
+</j:jelly>

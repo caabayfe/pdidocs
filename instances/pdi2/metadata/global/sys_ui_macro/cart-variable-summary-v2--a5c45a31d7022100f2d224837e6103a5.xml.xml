@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate>
+        var theLabels = sc_cart_item_labels;
+    </g:evaluate>
+    <table cellspacing="0" cellpadding="0" width="100%" class="description_table" data-sn-macro-sys-id="${jvar_macro_sys_id}">
+        <j:forEach items="${theLabels}" var="jvar_labels">
+             <g:evaluate jelly="true">
+                 var questionLabel = jelly.jvar_labels[0];
+                 var displayValue = jelly.jvar_labels[1];
+                 var macro = jelly.jvar_labels[2];
+                 var questionId = jelly.jvar_labels[3];
+				 var question_type = jelly.jvar_labels[4];
+				 var question_value = jelly.jvar_labels[5];
+				 if (question_type == '33')
+					 var question_state = jelly.jvar_labels[6] ? jelly.jvar_labels[6] : '';
+				 if(gs.getProperty('glide.ui.escape_text') == 'false') {
+					questionLabel = SNC.GlideHTMLSanitizer.sanitize(questionLabel);
+					displayValue = SNC.GlideHTMLSanitizer.sanitize(displayValue);
+				} else {
+					questionLabel = GlideStringUtil.escapeNonPrintable(questionLabel);
+					displayValue = GlideStringUtil.escapeNonPrintable(displayValue);
+				}
+             </g:evaluate>
+			<j:if test="${questionLabel != null}">
+				<tr>
+				   <td class="label_col">
+						${questionLabel}$[SP]
+					</td>
+					<td class="value_col">
+						<j:if test="${macro == ''}">
+							<j:if test="${question_type == 33}">
+								<j:if test="${question_value &amp;&amp; question_state == 'not_available'}">
+									<g:evaluate var="attachment_err_display">
+										var attachment_err_display = gs.getMessage("{0} [unavailable]", displayValue);
+										attachment_err_display;
+									</g:evaluate>
+									<span class="sc-attach-unavailable" tabindex="0">
+										${attachment_err_display}
+									</span>
+								</j:if>
+								<j:if test="${question_value &amp;&amp; question_state != 'not_available'}">
+									<a href="sys_attachment.do?sys_id=${question_value}" style="curser:pointer">${HTML:displayValue}</a>
+								</j:if>
+							</j:if>
+							<j:if test="${question_type != 33}">
+								${HTML:displayValue}
+							</j:if>
+						</j:if>
+						<j:if test="${macro != ''}">
+							<g:macro_invoke macro="${macro}" silent_warnings="true" />
+						</j:if>
+					</td>
+				</tr>
+			</j:if>
+        </j:forEach>
+    </table>
+</j:jelly>

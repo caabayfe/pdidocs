@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+		<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+		<g:inline template="app_templates.xml"/>
+		<!-- Add an Application picker -->
+		<g:requires name="styles/app_notification.css"/>
+		<g:requires name="scripts/ApplicationPicker.js" inline="true"/>
+		<g:requires name="scripts/ApplicationChangeNotificationHandler.js" position="last" inline="true"/>
+		<span id="application_picker" version="2" role="${gs.getProperty('glide.ui.apps_picker.role', 'admin')}">
+        <legend>${gs.getMessage("Application")}</legend><ul>
+    		<li class="row form-control-row three-controls">
+        <SELECT id="application_picker_select" name="application_picker_select" class="form-control pull-left" onchange="g_application_picker.changeApplication();">
+			<option value="" data-scope_name="global">${gs.getMessage("Loading...")}</option>
+		</SELECT>
+        <a title="${gs.getMessage('Show selected application')}" class="icon-view btn btn-icon" target="gsft_main" name="application_drill" id="application_drill">
+			<span class="sr-only">${gs.getMessage('View current application under development')}</span>
+        </a>
+		<a title="${gs.getMessage('View list of Applications')}" 
+		class="icon-list btn btn-icon" target="gsft_main" href="sys_scope_list.do?sysparm_query=active=true">
+		</a>
+		<a title="${gs.getMessage('Refresh application picker')}" class="icon-refresh btn btn-icon" name="application_refresh" id="application_refresh">
+        </a>
+		<script language="javascript">
+			g_application_picker = new ApplicationPicker("application_picker");
+			g_application_picker.on("afterload", function () {
+				$("application_drill").on("click", function () {
+					var select = $("application_picker_select");
+					var chosen = select.options[select.selectedIndex].value;
+
+					CustomEvent.fire(GlideEvent.NAV_OPEN_URL, {
+						url: "sys_scope.do?sys_id=" + chosen,
+						openInForm: true
+					});
+				});
+
+				$("application_refresh").on("click", function (event) {
+					g_application_picker.fillApplications();
+					event.stopPropagation ? event.stopPropagation() : (event.cancelBubble = true);
+				});
+			});
+		</script>
+    </li>
+		</ul>
+			</span>
+	</j:jelly>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+	Glide List implementation for use within Macros / UI Pages :
+
+	*jvar_html_identifier => HTML element id . If this is provided in table_name.field format ,
+	it brings up the list as might be defined at field level in table definition using the defined references.
+	*jvar_tab_name => Required to pull preview from the supplied table , on hovering over the info icon.
+	*jvar_dependent => Dependent field (Optional)
+	*jvar_ref_qual_elements => Reference qualifier (Optional)
+	*jvar_reference => Reference (Table Name - Optional . If this option is provied.
+	Don't use table_name.field format for jvar_html_identifier)
+	*jvar_list_title => Title of the list
+-->
+
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div class="form-field input_controls">
+		<button id="${jvar_html_identifier}_unlock"
+				data-target="#${jvar_html_identifier}"
+				data-placement="auto"
+				title=""
+				style="margin-right: 5px; display: none;"
+				data-auto-close="false"
+				data-type="glide_list_unlock"
+				tabindex="0"
+				class="btn btn-default btn-ref"
+				data-ref="${jvar_html_identifier}"
+				data-original-title="${gs.getMessage('Edit')}">
+			<span aria-hidden="true" class="icon icon-locked"></span>
+			<span class="sr-only">${gs.getMessage('Edit')}</span>
+		</button>
+		<span id="${jvar_html_identifier}_edit">
+			<div class="glide-list">
+				<select id="select_0${jvar_html_identifier}"
+						onchange="toggleGlideListIcons('${jvar_html_identifier}', false);"
+						name="select_0${jvar_html_identifier}"
+						class="form-control"
+						multiple="yes">
+				</select>
+				<input type="hidden" id="${jvar_html_identifier}SELECTED" value="" />
+				<input type="hidden" id="${jvar_html_identifier}SELECTEDTABLE" value="" />
+				<div class="button-column">
+					<button id="remove.${jvar_html_identifier}"
+							class="btn btn-default btn-ref"
+							title=""
+							style="display: inline-block;"
+							data-type="glide_list_remove"
+							data-ref="${jvar_html_identifier}"
+							disabled=""
+							data-original-title="Remove selected item">
+						<span aria-hidden="true" class="icon icon-cross"></span>
+						<span class="sr-only">${gs.getMessage('Remove selected item')}</span>
+					</button>
+					<button id="view2link.${jvar_html_identifier}"
+							onclick="openGlidePopupSelection(event, '${jvar_tab_name}')"
+							title="" onmouseout="lockPopup(event)"
+							name="view2.${jvar_html_identifier}"
+							tabindex="-1"
+							class="btn btn-default btn-ref icon-view icon"
+							disabled=""
+							data-original-title="${gs.getMessage('View selected item')}">
+						<span class="sr-only">${gs.getMessage('View selected item')}</span>
+					</button>
+					<button id="${jvar_html_identifier}_lock"
+							title=""
+							style="padding-top: 3px; cursor: pointer; display: inline-block; visibility: visible;"
+							data-type="glide_list_lock"
+							tabindex="0"
+							class="btn btn-default btn-ref"
+							type="button"
+							data-ref="${jvar_html_identifier}"
+							data-original-title="${gs.getMessage('Lock')}">
+						<span aria-hidden="true" class="icon icon-unlocked"></span>
+						<span class="sr-only">${gs.getMessage('Lock')}</span>
+					</button>
+				</div>
+			</div>
+			<div style="padding-top: 4px" class="input-group">
+				<input id="sys_display.${jvar_html_identifier}"
+					   title=""
+					   islist="true"
+					   name="sys_display.${jvar_html_identifier}"
+					   class="form-control"
+					   onkeyup="return acReferenceKeyUp(this, event);
+								refFlipImage(this, '${jvar_html_identifier}');"
+					   onkeypress="return acReferenceKeyPress(this, event)"
+					   onkeydown="return acReferenceKeyDown(this, event);"
+					   onfocus="if (!this.ac)
+									addLoadEvent(function() {
+																var e = gel('sys_display.${jvar_html_identifier}');
+																if (!e.ac)
+																	new AJAXReferenceCompleter(e, '${jvar_html_identifier}', '${jvar_dependent}', '${jvar_ref_qual_elements}', '${jvar_reference}');
+												})"
+					   autocomplete="off"
+					   function="addChoiceLocal('${jvar_html_identifier}')"
+					   data-original-title="${gs.getMessage('Select target record')}"
+					   aria-label="${gs.getMessage('Select target record')}">
+				</input>
+				<span class="input-group-btn">
+				<button class="btn btn-default btn-ref"
+						onclick="reflistOpen( '${jvar_html_identifier}','null','${jvar_tab_name}','null', 'false', '');
+								 mousePositionSave(event);"
+						title="" data-original-title="${gs.getMessage('Lookup Using List')}">
+					<span aria-hidden="true" class="icon icon-search"></span>
+					<span class="sr-only">${gs.getMessage('Lookup Using List')}</span>
+				</button>
+				</span>
+			</div>
+		</span>
+		<p id="${jvar_html_identifier}_nonedit"
+		   class="form-control-static"
+		   title="" style="direction: ltr; display: none;"
+		   data-original-title="${jvar_list_title}">
+		</p>
+		<input id="${jvar_html_identifier}"
+			   value=""
+			   type="HIDDEN"
+			   name="${jvar_html_identifier}">
+		</input>
+	</div>
+	<script>
+		var mappedField = null;
+
+		// Alter the label attribute to ensure it still works whilst still allowing the GlideListElement logic to work
+		var selectLabelElem = $$("label[for='${jvar_label_for_value}']");
+		if (selectLabelElem ${AND} selectLabelElem.length === 1)
+			selectLabelElem[0].writeAttribute('for', 'select_0${jvar_html_identifier}');
+
+		addUnloadEvent(function() {
+			var element = gel("sys_display.${jvar_html_identifier}");
+			if (element ${AND} element.ac) {
+				if (element.ac.destroy){
+					element.ac.destroy();
+				}
+			}
+		});
+
+		function addChoiceLocal(fieldid) {
+			var selectBox = gel('select_0'+fieldid);
+			var value = gel(fieldid).value;
+			var displayWidget = gel('sys_display.' + fieldid);
+			var display = displayWidget.value;
+			displayWidget.value= '';
+			var select = new Select('select_0'+fieldid);
+			// don't add duplicates
+			if (select.contains(value)) {
+				return;
+			}
+			var opt = document.createElement("option");
+			opt.value = value;
+			opt.text = display;
+
+			selectBox.options.add(opt);
+			synchLists(fieldid);
+		}
+
+		function addChoiceExternal(fieldid, value, displayValue) {
+			var selectBox = gel('select_0'+fieldid);
+			var opt = document.createElement("option");
+			opt.value = value;
+			opt.text = displayValue;
+			selectBox.options.add(opt);
+			synchLists(fieldid);
+		}
+
+		function synchLists(fieldid) {
+			var sel0 = gel('select_0' + fieldid);
+			var distribution = gel(fieldid);
+			var ovalue = distribution.value;
+			saveAllSelected([ sel0 ], [ distribution ], ',', '\\', '--None--');
+		}
+
+		function openGlidePopupSelection(event, table) {
+			var select = gel('select_0${jvar_html_identifier}');
+			var sysid = glideListGetSelected(select);
+			if (sysid) {
+				// If we get here, there is only one item selected. When multiple items are selected
+				// toggleGlideListIcons disables the Info icon
+				gel("${jvar_html_identifier}SELECTED").value = sysid;
+				gel("${jvar_html_identifier}SELECTEDTABLE").value = table;
+				popLightWeightReferenceDiv(event, '${jvar_html_identifier}SELECTED', true);
+			}
+		}
+	</script>
+</j:jelly>

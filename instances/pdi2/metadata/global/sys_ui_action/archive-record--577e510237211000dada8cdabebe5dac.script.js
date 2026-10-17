@@ -1,0 +1,1 @@
+new GlideArchiveRecord().archive(current);

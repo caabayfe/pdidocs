@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+	  var usSysId = "${RP.getWindowProperties().get('us_sys_id')}";
+		var inHierarchy = "${RP.getWindowProperties().get('in_hierarchy')}";
+		var appInstalls = sn_update_set.UpdateSetUtil.getAppInstalls(usSysId, inHierarchy == 'true', true);
+	</g:evaluate>
+
+	<j:if test="${inHierarchy}">
+		<h5>${gs.getMessage('This update set batch contains the following app install(s). Continue changing state to complete?')}</h5>
+	</j:if>
+	<j:if test="${!inHierarchy}">
+		<h5>${gs.getMessage('This update set contains the following app install(s). Continue changing state to complete?')}</h5>
+	</j:if>
+
+	<j:if test="${appInstalls.length > 0}">
+		<g:evaluate jelly="true">
+			var appIndex = 0;
+		</g:evaluate>
+		<ul id="appInstalls">
+			<j:while test="${appIndex != appInstalls.length}">
+				<li id="${appIndex}">${appInstalls[appIndex]}</li>
+				<g:evaluate>appIndex++</g:evaluate>
+			</j:while>
+		</ul>
+	</j:if>
+	
+	<span class="input-group-checkbox">
+		<input id="cb" class="checkbox" type="checkbox" name="cb"/>
+		<label for="cb" class="checkbox-label">${gs.getMessage("Don't show this warning again")}</label>
+	</span>
+
+	<footer class="modal-footer">
+    	<button id="cancel_button" onClick="onCancel()"
+	  		data-dismiss="modal" class="btn btn-default">${gs.getMessage('Cancel')}</button>
+    	<button id="ok_button" onClick="onConfirm()"
+	  		data-dismiss="modal" class="btn btn-primary">${gs.getMessage('Proceed')}</button>
+    </footer>
+</j:jelly>

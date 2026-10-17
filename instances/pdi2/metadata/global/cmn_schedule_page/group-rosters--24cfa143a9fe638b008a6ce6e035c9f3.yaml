@@ -1,0 +1,88 @@
+_meta:
+  hash: 7438dafc091ed68b13790b93a406de27de1a0f432673c4cbad4107cbd1728337
+  hash_version: 1
+  scope: global
+  sys_class_name: cmn_schedule_page
+  sys_created_by: glide.maint
+  sys_created_on: 2014-02-04 15:01:17
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 24cfa143a9fe638b008a6ce6e035c9f3
+  sys_mod_count: '0'
+  sys_package: ffb1568f83778310292aca75eeaad343
+  sys_scope: global
+  sys_update_name: cmn_schedule_page_24cfa143a9fe638b008a6ce6e035c9f3
+  sys_updated_by: admin
+  sys_updated_on: 2018-02-20 14:15:46
+description: ''
+header_html: |-
+  <g:requires name="scripts/moment.min.js" />
+  <label id="label_group_list" class="header">${gs.getMessage('Group')}:</label>$[SP]
+     <select id="group_list" name="group_list" width="120" onchange="groupChange();" tabindex="1">
+        <!-- get the groups that have a roster defined -->
+        <g:evaluate>
+           var groupIds = [];
+           var rotaGR = new GlideRecord('cmn_rota');
+           rotaGR.addActiveQuery();
+           rotaGR.query();
+           while (rotaGR.next())
+              groupIds.push(rotaGR.group + '');
+
+           if (groupIds.length > 0) {
+              rotaGR = null;
+              var groupGR = new GlideRecord('sys_user_group');
+              groupGR.addQuery('sys_id', groupIds);
+              groupGR.orderBy('name');
+              groupGR.query();
+           }
+        </g:evaluate>
+        <j:if test="${groupIds.length == 0}">
+           <option value="-1">-- ${gs.getMessage('No groups available')} --</option>
+        </j:if>
+
+        <j:if test="${groupIds.length > 0}">
+           <j:while test="${groupGR.next()}">
+              <g:evaluate var="jvar_group_name" expression="groupGR.name"/>
+              <option value="${groupGR.sys_id}">${HTML:jvar_group_name}</option>
+           </j:while>
+        </j:if>
+     </select>
+
+  <!-- Show a message if there is no schedule -->
+  <j:if test="${groupIds.length == 0}">
+      <script>
+          var u_g_form = new GlideForm('',true,true,true,true);
+          u_g_form.addInfoMessage('There are no active schedules');
+      </script>
+  </j:if>
+
+  <!-- get the group associated with the specified rota -->
+  <g:evaluate var="jvar_group_id" jelly="true">
+     var groupId = "";
+     var sysId = jelly.sysparm_sys_id;
+     if (sysId) {
+        var gr = new GlideRecord("cmn_rota");
+        gr.addQuery("schedule", sysId);
+        gr.query();
+        if (gr.next())
+           groupId = gr.group;
+     }
+     if (groupId == "") {
+        var sysparmGroup = jelly.sysparm_group_id;
+        if (sysparmGroup)
+           groupId = sysparmGroup;
+     }
+     groupId;
+  </g:evaluate>
+  <input type="hidden" id="group_id" name="group_id" value="$[jvar_group_id]" />
+  <g:evaluate var="jvar_is_read_only_user" jelly="true" >
+  	var is_read_only_user = !new OnCallSecurityNG().rotaMgrAny();
+  	is_read_only_user;
+  </g:evaluate>
+  <input type="hidden" id="is_read_only_user" name="is_read_only_user" value="$[jvar_is_read_only_user]" />
+init_function: rosterPageInit
+name: Group rosters
+sys_name: Group rosters
+sys_policy: ''
+type: roster
+view_type: Calendar

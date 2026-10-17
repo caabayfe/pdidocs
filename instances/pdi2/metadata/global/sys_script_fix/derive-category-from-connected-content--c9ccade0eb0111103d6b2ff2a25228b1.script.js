@@ -1,0 +1,1 @@
+new global.TopicCategoryUtil().setConnectedCategoryFromConnectedContent();

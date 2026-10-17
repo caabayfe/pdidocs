@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_isNextPg" expression="RP.getParameterValue('sysparm_next_pg')"/>
+	<j:choose>
+		<j:when test="${jvar_isNextPg != 'true'}">
+			<script>
+				var iframeMsgHelper = (function () {
+				function createPayload(action, modalId, data) {
+					return {
+						messageType: 'IFRAME_MODAL_MESSAGE_TYPE',
+						modalAction: action,
+						modalId: modalId,
+						data: (data ? data : {})
+					};
+				}
+
+				function pm(window, payload) {
+					if (window.parent === window) {
+						console.warn('Parent is missing. Is this called inside an iFrame?');
+						return;
+					}
+					window.parent.postMessage(payload, location.origin);
+				}
+
+				function IFrameMessagingHelper(window) {
+					this.window = window;
+					this.src = location.href;
+					this.messageHandler = this.messageHandler.bind(this);
+					this.window.addEventListener('message', this.messageHandler);
+				}
+
+				IFrameMessagingHelper.prototype.messageHandler = function (e) {
+					if (e.data.messageType !== 'IFRAME_MODAL_MESSAGE_TYPE' || e.data.modalAction !== 'IFRAME_MODAL_ACTION_INIT') {
+						return;
+					}
+					this.modalId = e.data.modalId;
+				};
+
+				IFrameMessagingHelper.prototype.confirm = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CONFIRMED', this.modalId, data);
+					pm(this.window, payload);
+				};
+
+				IFrameMessagingHelper.prototype.cancel = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CANCELED', this.modalId, data);
+					pm(this.window, payload);
+				};
+
+				return new IFrameMessagingHelper(window);
+			}());
+			</script>
+			<div style="text-align:left;" class="modal-md">
+				<g:evaluate var="jvar_objList" expression="RP.getParameterValue('sysparm_delobj_list')"/>
+				<div style="margin-top: 0px; color:rgb(220, 20, 60); font-weight:bold; text-align:center; font-size: larger;">
+					${gs.getMessage('Warning!')}
+				</div>
+				<div style="margin: 5px 5px 0px;">
+					${gs.getMessage('Deleting this record will result in the automatic deletion of the following related records:')}
+				</div>
+				<g:macro_invoke macro="show_cascade_del_objs_table" obj_list="${jvar_objList}" />
+				<div style="margin: 5px 5px 0px;">
+					${gs.getMessage('Note that the related records may trigger their own cascade deletions.')}<div></div>
+					${gs.getMessage('Proceed?')}
+				</div>
+				<div class="empty-space"></div>
+				<div align="right" class="modal-footer">
+					<g:dialog_buttons_ok_cancel ok="return ok()" ok_style_class="btn btn-destructive" ok_text="${gs.getMessage('Delete')}" cancel="return cancel()" ok_type="button" cancel_type="button"/>
+				</div>
+			</div>
+			<script>
+				document.getElementById("ok_button").focus();
+			</script>
+		</j:when>
+		<j:otherwise></j:otherwise>
+	</j:choose>
+	<style>
+		.btn-destructive {
+			background-color: rgb(220, 20, 60);
+		}
+		.outputmsg_div, #page_timing_div {
+			display:none !important;
+		}
+		.modal-alert, .modal-md {
+			width: 100%;
+		}
+		.modal-alert .modal-footer {
+			padding: 10px 0px;
+		}
+		.modal-md .modal-footer {
+			padding: 20px 10px 5px;
+		}
+		div.empty-space:after {
+			content: "\00a0";
+		}
+	</style>
+</j:jelly>

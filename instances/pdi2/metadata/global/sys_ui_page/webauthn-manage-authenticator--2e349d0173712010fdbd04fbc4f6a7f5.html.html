@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates()}">
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+	</j:if>
+   <j:if test="${gs.getProperty('glide.webauthn.enabled', 'false') == 'true'}">
+      <g:include_script src="WebAuthnUtil.jsdbx" />
+      <g:evaluate jelly="true">
+         var authenticator_sys_id = '${RP.getWindowProperties().get("authenticator_sys_id")}';
+         var platformCred = new GlideRecord('sys_user_public_credential');
+         platformCred.addQuery('sys_id', authenticator_sys_id); 
+         platformCred.query();
+         platformCred;
+      </g:evaluate>
+      <g:evaluate var="jvar_authenticator_sys_id" jelly="true">
+         var authenticator_sys_id = '${RP.getWindowProperties().get("authenticator_sys_id")}';
+         authenticator_sys_id;
+      </g:evaluate>
+	   <main>
+      <div>
+         <div class="row" style="font-size: medium; margin-bottom: 3%;">
+            <div class="flex col-sm-12">
+               <p style="font-size: large;"><b>${gs.getMessage('You have successfully registered this authenticator.')}</b></p>
+            </div>
+         </div>
+            <j:while test="${platformCred.next()}">
+               <div class="row col-sm-12 col-md-12 col-lg-12">
+                  <j:if test="${platformCred.type == 'cross-platform'}">
+                     <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                        <img src="security_key_activated.svg" alt="Security key"/>
+                     </div>
+                  </j:if>
+                  <j:if test="${platformCred.type == 'platform'}">
+                     <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                        <img src="internal_authenticator_activated.svg" alt="Built-in authenticator"/>
+                     </div>
+                  </j:if>
+                  <div class="col-sm-10 col-md-10 col-lg-10">
+                     <p>${platformCred.credential_nickname}</p>
+                     <p>${gs.getMessage('Registration time:')} ${platformCred.registration_time}</p>
+                     <p>${gs.getMessage('Last used time:')} ${platformCred.last_used_time}</p>
+                  </div>
+               </div>
+            </j:while>
+            <footer class="modal-footer flex float-right">
+               <button class="btn btn-default"   id="btnClose" style="margin-right:16px;" onclick="closeDialog()">${gs.getMessage('Close')}</button>
+               <button class="btn btn-primary" id="btnRemove" onclick="removeAuthenticator()">${gs.getMessage('Remove')}</button>
+            </footer>
+      </div>
+	   </main>
+   </j:if>
+</j:jelly>

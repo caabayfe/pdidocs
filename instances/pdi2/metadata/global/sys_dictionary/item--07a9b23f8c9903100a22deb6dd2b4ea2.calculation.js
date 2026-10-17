@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) {var displayValueArgs = []; displayValueArgs.push(current.signal_type.getDisplayValue()); displayValueArgs.push(current.start_at.getDisplayValue()); var displayValue = gs.getMessage('{0} at {1}', displayValueArgs); return displayValue;})(current);

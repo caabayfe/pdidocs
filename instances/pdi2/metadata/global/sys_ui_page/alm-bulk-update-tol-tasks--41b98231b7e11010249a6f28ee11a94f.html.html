@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+	<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:ui_form>
+	<g:requires name="scripts/lib/jquery_includes.js"/>
+	<g:evaluate jelly="true">
+		var tolMaxExceededMessage = (jelly.RP.getWindowProperties().get('maxExceededMsg') || '') + '';
+		tolMaxExceededMessage =  new GlideStringUtil().unEscapeHTML(tolMaxExceededMessage);
+		var maxCountValue = (jelly.RP.getWindowProperties().get('maxCount') || '') + '';
+	</g:evaluate>
+	<g2:evaluate>
+		var jvar_sys_id = "${RP.getWindowProperties().get('sysId')}";
+	</g2:evaluate>
+	<input type="hidden" id="cancelled" name="cancelled" value="false"/>
+	<input type="hidden" id="selectedLines" name="selectedLines" value=""/>
+	<input type="hidden" id="transfer_order" name="transfer_order" value=""/>
+	<input type="hidden" id="selectedLinesCount" name="selectedLinesCount" value=""/>
+	<input type="hidden" id="maxLinesCount" name="maxLinesCount" value="${maxCountValue}"/>
+	<j2:if test="$[!empty(sysparm_domain)]">
+		<input type="hidden" id="sysparm_domain" name="sysparm_domain" value="${sysparm_domain}"/>
+	</j2:if>
+	<j2:if test="$[!empty(sysparm_domain_scope)]">
+		<input type="hidden" id="sysparm_domain_scope" name="sysparm_domain_scope" value="${sysparm_domain_scope}" />
+	</j2:if>
+	<style>
+		.slush_bucket_css {
+			min-width: 590px;
+		}
+		#tol_above_100_msg_div {
+			margin-bottom: 7px;
+		}
+	</style>
+	<div class="parent">
+		<div class="row">
+			<div id="error-message-container"  class="alert alert-danger" style="display:none;" role="alert">
+				${gs.getMessage('Select at least one transfer order line to update')}
+			</div>
+		</div>
+		<div id="tol_above_100_msg_div">
+			<div class="row">
+				<div class="alert alert-info">
+					<p>${tolMaxExceededMessage}</p>
+				</div>
+			</div>
+		</div>
+		<div id="receive_msg_div">
+			<div class="row">
+				<div class="alert alert-info">
+					<p>$[gs.getMessage('Bulk update will apply to total quantity for each TOL, no partial update')]</p>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-6">
+				<label id="select_stage_label">${gs.getMessage('Select a stage')}</label>
+			</div>
+			<div class="col-md-6">
+				<select aria-labelledby="select_stage_label" class="form-control" name="line_item_stage" id="line_item_stage" onchange="loadLineItems(event.target.value);">
+					<option disabled="disabled" selected="seleted">${gs.getMessage('Select a stage')}</option>
+					<option value="requested">${gs.getMessage('Requested')}</option>
+					<option value="shipment_preparation">${gs.getMessage('Shipment Preparation')}</option>
+					<option value="in_transit">${gs.getMessage('In Transit')}</option>
+					<option value="received">${gs.getMessage('Received')}</option>
+					<option value="delivered">${gs.getMessage('Delivered')}</option>
+				</select>
+			</div>
+		</div>
+		<div id="form_div">
+			<div id="assigned_div">
+				<br/>
+				<div class="row">
+					<div class="col-md-6">
+						<label id="assigned_to_label">${gs.getMessage('Assigned to')}</label>
+					</div>
+					<div class="col-md-6">
+						<g:ui_reference aria-labelledby="assigned_to_label" name="assigned_to" id="assigned_to" table="sys_user" field="user_name" query="roles=itil"/>
+					</div>
+				</div>
+			</div>
+			<div id="in_transit_div">
+				<br/>
+				<div class="row">
+					<div class="col-md-6">
+						<label id="tracking_no_label">${gs.getMessage('Tracking Number')}</label>
+					</div>
+					<div class="col-md-6">
+						<input aria-labelledby="tracking_no_label" type="text" name="tracking_number" id="tracking_number" class="form-control" maxlength="40"/>
+					</div>
+				</div>
+				<br/>
+				<div class="row">
+					<div class="col-md-6">
+						<label id="ship_date_label">${gs.getMessage('Ship date')}</label>
+					</div>
+					<div class="col-md-6">
+						<g:ui_date aria-labelledby="ship_date_label" name="ship_date" id="ship_date" value=""/>
+					</div>
+				</div>
+				<br/>
+				<div class="row">
+					<div class="col-md-6">
+						<label id="vendor_label">${gs.getMessage('Vendor')}</label>
+					</div>
+					<div class="col-md-6">
+						<g:ui_reference aria-labelledby="vendor_label" name="vendor" id="vendor" table="core_company" field="name" query="vendor=true"/>
+					</div>
+				</div>
+			</div>
+			<div id="slush_bucket" class="slush_bucket_css">
+				<br/>
+				<div class="row">
+					<div class="col-md-12">
+						<label>$[gs.getMessage('Please select the transfer order lines to update respective tasks')]</label>
+					</div>
+				</div>
+				<div class="row">
+					<div>
+						<g:ui_slushbucket name="slush" up_down="false"/>
+					</div>
+				</div>
+			</div>
+			<br/>
+			<div id="tol_details">
+				<div class="row" id="asset_details">
+					<div class="column col-md-6" id="model"></div>
+					<div class="column col-md-6" id="asset"></div>
+				</div>
+				<div class="row" id="qty_details">
+					<div class="column col-md-6" id="qty_req"></div>
+					<div class="column col-md-6" id="qty_rec"></div>
+				</div>
+			</div>
+			<div class="row" id="update_div">
+				<div class="col-md-12">
+					<g:dialog_button id="update_btn" title="${gs.getMessage('Update')}" style_class="btn btn-primary float-right" onclick="return updateAndClose();">${gs.getMessage('Update')}</g:dialog_button>
+				</div>
+			</div>
+		</div>
+	</div>
+	</g:ui_form>
+</j:jelly>

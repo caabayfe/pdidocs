@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:choose>
+        <j:when test="${JSUtil.notNil(knowledgeRecord.sys_id)}">
+            <iframe id="iframe_live_feed" src="$knowledge_feedback.do?sysparm_stack=no${AND}sysparm_kb_id=$[knowledgeRecord.sys_id]" width="100%" height="1" scrolling="no" aria-label="${gs.getMessage('Knowledge feedback frame')}"></iframe>
+        </j:when>
+        <j:otherwise>
+            <iframe id="iframe_live_feed" src="" width="100%" height="1" scrolling="no" aria-label="${gs.getMessage('Knowledge feedback frame')}"></iframe>
+        </j:otherwise>
+    </j:choose>
+    <script>
+        CustomEvent.observe('content_frame.resized', resizeFrame);
+        CustomEvent.observe('content_frame.loaded', resizeFrame);
+
+        function resizeFrame(id, height){
+            if (!id)
+                return;
+    
+            var f = $(id);
+            if (!f)
+                return;
+		
+            if(height > 107)  
+				f.height = height+16;
+		    else
+		        f.height = height;
+		
+			if(parent.document) {
+				parent.CustomEvent.fire('content_frame.resized', window.name, parent.document.body.scrollHeight);			
+			}
+        };
+    </script>
+</j:jelly>

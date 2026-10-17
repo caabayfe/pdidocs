@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	  <g2:evaluate var='jvar_hasAccess'>
+		  var gr = new GlideRecord('cmdb_data_classification_mapping');
+		  var hasWriteAccess = gr.canWrite();
+		  var isNewRecord = current.isNewRecord();
+		  var showToolbar = !isNewRecord $[AND] hasWriteAccess;
+      </g2:evaluate>
+	  <j2:if test="$[showToolbar + '' == 'true']">
+      <style>
+		  #security_tags {
+              margin:0;
+              padding:0;
+              list-style:none;
+          	}
+		  
+		  #securityTagToolbarApp{
+              height:34px !important;
+          	}
+		  
+		 .container {
+			 width: 100%
+			}
+		  		  
+         .tag-pill{
+			text-decoration:none;
+			color:#4a4a4a;
+			font-size:12px;
+			font-weight:bold;
+			padding:0 15px;
+			line-height:32px;
+			height: auto;
+			display:inline-block;
+			text-align:center;
+			background-color:#e6e9eb;
+			-webkit-border-radius: 16px;
+			-moz-border-radius: 16px;
+			border-radius: 16px;
+			margin-left: 10px;
+			outline:0 !important;
+			margin-bottom: 5px;
+		}
+		  
+		.tag-pill a{
+			color:#ffffff;
+			text-decoration: none;
+		}
+		  
+		.selectedTag {
+			cursor: default;
+		}
+		
+		.tag-pill .remove-tag-icon:hover, .tag-pill .remove-tag-icon:focus, .tag-pill:hover .remove-tag-icon, .tag-pill:focus .remove-tag-icon {
+			color:#990000;
+			opacity: 1.0;
+   		    cursor: pointer;
+		}
+
+		.tag-pill:hover, .tag-pill:focus{
+		    color:#ffffff;
+			opacity: 1.0;
+		}
+		
+	    .tag-pill.black {
+		  background-color:#000000;
+		  color:#ffffff;
+		}
+	    .tag-pill.blue {
+		  background-color:#6abecf;
+		  color:#2e2e2e;
+		}
+		.tag-pill.gray {
+		  background-color:#e6e9eb;
+		  color:#4a4a4a;
+		  text-shadow: 1px 1px white;
+		}
+		.tag-pill.green {
+		  background-color:#48C891;
+		  color:#2e2e2e;
+		}
+		.tag-pill.orange {
+		  background-color:#FBF1B4;
+		  color:#2e2e2e;
+		}
+		.tag-pill.pink {
+		  background-color:#48C891;
+		  color:#29250D;
+		}	    
+		.tag-pill.deeppink {
+		  background-color:#C71585;
+		  color:#FFFFFF;
+		}
+		.tag-pill.purple {
+		  background-color:#7c4ea4;
+		  color:#ffffff;
+		}
+		.tag-pill.red {
+		  background-color:#c83c36;
+		  color:#ffffff;
+		}
+      </style>
+
+      <div id="securityTagToolbarApp"></div>
+	  <hr class="divider"/>
+      <script type="text/ng-template" id="securityTagToolbarTemplate">
+        <div ng-controller="securityTagToolbarController" ng-show="data.availableTags.length > 0 || data.appliedTags">
+			<div class="container pull-left">
+				<div class="row">
+					<form role="form" class="form-inline">  
+						<div class="form-group col-xs-2">
+							<select id="securityTagSelect" ng-model="data.selectedTag" ng-change="manageTags()" ng-show="data.availableTags.length > 0" class="form-control" ng-options="availableTag.name group by availableTag.group for availableTag in data.availableTags">
+								<option value=''>${gs.getMessage('Select classification tag')}</option>
+							</select>
+							<select ng-show="data.availableTags.length == 0" class="form-control">
+								<option value=''>${gs.getMessage('No Classifications Available')}</option>
+							</select>
+						</div>
+					    <div id="security_tags" ng-show="data.appliedTags" class="form-field input_controls">
+							<span ng-repeat="appliedTag in data.appliedTags" style="background-color:{{appliedTag.color}}" class="tag-pill {{appliedTag.color}}" ng-focus="appliedTag.hasFocus = true" ng-blur="appliedTag.hasFocus = false" ng-keyup="removeTag(appliedTag, $event)" tabindex="0">
+								<span id="security_tag_{{appliedTag.sys_id}}" class="selectedTag">{{appliedTag.name}}</span>$[SP]$[SP]$[SP]<span class="remove-tag-icon icon-workflow-rejected" ng-click="removeTag(appliedTag)"/>
+							</span>
+						</div>
+					</form>
+				</div> <!-- End Row -->
+			</div> <!-- End Container -->
+        </div>
+      </script>
+
+      <script>
+		  var SecurityTagsToolbar = (function() {
+			  var listeners = [];
+			  var isManual = false;
+			  return { 
+				addListener: function (fn) {
+				  if (typeof fn === "function") {
+					listeners.push(fn);
+				  }
+				},
+		        rebuild: function(){
+		  			if(!isManual){
+						for (var i = 0; i ${AMP}lt; listeners.length; i++) {
+							listeners[i]();
+						}
+		  			}
+		  			isManual = false;
+		  		},
+		        isManual: function(manual){
+		  			isManual = manual;
+		  		}
+			  };
+			})();
+		  
+          addLoadEvent(function() {
+              if(typeof angular == 'undefined')
+                  return;
+		  
+			  var security_tag_module = angular.module("securityTagToolbarApp", []);
+		  
+		      security_tag_module.directive("select", function() {
+                  return {
+                    restrict: "E",
+                    require: "?ngModel",
+                    scope: false,
+                    link: function (scope, element, attrs, ngModel) {
+                      if (!ngModel) {
+                        return;
+                      }
+                      element.bind("keyup", function() {
+                        element.triggerHandler("change");
+                      })
+                    }
+                 }
+              });
+
+              security_tag_module.controller("securityTagToolbarController", function($scope) {
+                  $scope.data = {};
+
+                  // public methods
+                  $scope.manageTags = function(newTagId) {
+					  if (!newTagId)
+						  newTagId = $scope.data.selectedTag.id;
+                      if (!newTagId)
+                          return;
+					  //console.log(newTagId);
+                      var recordSysId = g_form.getUniqueValue();
+                      var recordTableName = g_form.getTableName();
+
+                      var ajax = new GlideAjax("ClassficationTagUtilAjax");
+                      ajax.addParam("sysparm_name", "manageSecurityTagOnRecordAjax");
+                      ajax.addParam("sysparm_securityTagId", newTagId);
+                      ajax.addParam("sysparm_recordId", recordSysId);
+                      ajax.addParam("sysparm_table", recordTableName);
+					  //ajax.addParam("sysparm_macro", "macro");
+                      ajax.getXMLAnswer( function(rawData) {
+                          if (rawData != null $[AMP]$[AMP] rawData != '') {
+                              var responseData = JSON.parse(rawData);
+                              if (responseData.status === 'ok') {
+		  						  SecurityTagsToolbar.isManual(true);
+                                  loadAppliedSecurityTags(recordSysId, recordTableName);
+                              }
+                          }
+                      });
+					  $scope.data.selectedTag = null;
+                  };
+		  		  
+				  $scope.removeTag = function(appliedTag, event) {
+					  if (!appliedTag || !appliedTag.sys_id)
+						  return;
+		  
+					  if (event) {
+						  if (!appliedTag.hasFocus)
+							  return;
+						  if (event.which !== 46 $[AMP]$[AMP] event.which !== 8)
+							  return;
+					  }
+					  
+					  $scope.manageTags(appliedTag.sys_id);
+				  };
+
+                  // private methods
+                  function loadAppliedSecurityTags(recordSysId, recordTableName) {
+                      var ajax = new GlideAjax("ClassficationTagUtilAjax");
+                      ajax.addParam("sysparm_name", "getSecurityTagsByRecordAjax");
+                      ajax.addParam("sysparm_recordId", recordSysId);
+                      ajax.addParam("sysparm_table", recordTableName);
+                      ajax.getXMLAnswer( function(rawData) {
+                          if (rawData != null $[AMP]$[AMP] rawData != '') {
+                              var responseData = JSON.parse(rawData);
+                              if (responseData.status === 'ok') {
+                                  $scope.$apply(function () {
+                                      $scope.data.appliedTags = responseData.content != null ? responseData.content : [];
+                                  });
+                              }
+                          }
+                      });
+                  };
+
+                  function loadSecurityTagList() {
+                      var selectableTags = [];
+                      var ajax = new GlideAjax("ClassficationTagUtilAjax");
+                      ajax.addParam("sysparm_name", "getSecurityTagMap");
+                      ajax.getXMLAnswer( function(rawData) {
+                          if (rawData != null $[AMP]$[AMP] rawData != '') {
+                              var responseData = JSON.parse(rawData);
+                              if (responseData.status === 'ok') {
+                                  var content = responseData.content;
+                                  for (var property in content) {
+                                      if (content.hasOwnProperty(property)) {
+                                          for (var i = 0; i ${AMP}lt; (content[property]).length; i++) {
+                                              var tag = (content[property])[i];
+                                              selectableTags.push({'id': tag.sys_id, 'name': tag.name, 'group': property});
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          $scope.$apply(function () {
+                              if (selectableTags != null)
+                                  $scope.data.availableTags = selectableTags;
+                          });
+                      });
+                  };
+		  
+		  		  function refreshToolbar(){
+		  			loadAppliedSecurityTags(g_form.getUniqueValue(), g_form.getTableName());
+		  		  };
+		  
+		  		  SecurityTagsToolbar.addListener(refreshToolbar);
+
+                  // onload
+                  loadSecurityTagList();
+                  loadAppliedSecurityTags(g_form.getUniqueValue(), g_form.getTableName());
+              });
+              angular.element(document).ready(function() {
+                  var template = document.getElementById("securityTagToolbarTemplate");
+                  var appDiv = document.getElementById("securityTagToolbarApp");
+                  setTimeout(function() {
+                      appDiv.innerHTML = template.innerHTML;
+                      angular.element(appDiv).data('$injector', '');
+                      angular.bootstrap(angular.element(appDiv), ['securityTagToolbarApp']);
+                  }, 0);
+              });
+          });
+      </script>
+	</j2:if>
+</j:jelly>

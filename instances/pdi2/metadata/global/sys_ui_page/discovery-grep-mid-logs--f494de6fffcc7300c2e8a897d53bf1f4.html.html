@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<script language="javascript" src="DiscoRPC.jsdbx" />
+	<style type="text/css">
+		html, body {
+			flex-direction: column;
+			display: flex;
+			border: 0 !important;
+			margin: 0 !important;
+			padding: 0 !important;
+		}
+		.wide-container {
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		.tall-container {
+			display: flex;
+			flex-direction: row;
+		}
+		.dragger {
+			background: black;
+			border:1px solid gray;
+		}
+		.divider {
+			background: black;
+			border:1px solid gray;
+		}
+		.flex-unit {
+			flex: 1 1;
+			min-width: 0px;
+			word-break: break-all;
+			overflow: hidden;
+		}
+		.hider {
+			z-index: 1;
+			position:absolute;
+			left: 0;
+			bottom: 0;
+			right: 0;
+			top: 0;
+			display: block
+		}
+		.to-flex-empty {
+		animation-duration: 1s;
+		animation-name: to-flex-empty;
+		}
+		.to-flex-unit {
+		animation-duration: 1s;
+		animation-name: to-flex-unit;
+		}
+
+		@keyframes to-flex-unit {
+		to {
+			flex: 1 1
+			}
+		}
+
+		@keyframes to-flex-empty {
+			to {
+				flex: 0 0 0px
+			}
+		}
+		#page_timing_div {
+			display: none;
+		}
+		.colResizeCursor {
+			cursor: col-resize;
+		}
+		.rowResizeCursor {
+			cursor: row-resize;
+		}
+		.filter-select {
+			width: 420px;
+			height: 40px;
+			position: absolute;
+			right: 20px;
+			top: 5px;
+			overflow:hidden;
+			padding-top: 5px;
+		}
+		.filter-select:hover {
+			max-height: 80%;
+			height: unset;
+			background-color: lightyellow;
+			border: 1px solid black;
+			overflow: auto;
+		}
+		.gml-section-title {
+			font-size: 23px;
+			padding: 5px 15px 5px 5px;
+		}
+		.gml-item-title {
+			font-size: 17px;
+			padding: 5px;
+		}
+		.gml-record.selected {
+			display: default;
+		}
+		.gml-record {
+			display: inline-block;
+		}
+		.column-one {
+			flex: 1 1
+		}
+		.column-two {
+			flex: 2 2
+		}
+		.column-three {
+			flex: 1.8 1.8
+		}
+		.column-four {
+			flex: 3 3
+		}
+		.column-five {
+			flex: 13 13
+		}
+		.datarow {
+			padding-left:5px;
+		}
+		.hilite_1 { background-color: #ffff0033; }
+		.hilite_3 { background-color: #00ff0033; }
+		.hilite_2 { background-color: #ff000033; }
+		.hilite_4 { background-color: #00ffff33; }
+		.hilite_5 { background-color: #ff00ff33; }
+		.hilite_6 { background-color: #0000ff33; }
+		.hilite_7 { background-color: #00000033; }
+		.column-title { border-bottom: 1px solid black }
+		.column-title div {
+			font-size:18px;
+		}
+
+	</style>
+	<div id="debugmsg" />
+	<div id="cover" style="z-index:1;position:absolute;left:0;right:0;top:0;bottom:0;opacity:0" class="hide"></div>
+
+	<div class="wide-container" style="height:100%">
+		<div style="padding-bottom:5px">
+			<span class="gml-section-title">Limit Search</span>
+			<span class="gml-item-title">From</span><input id="gml-start" />
+			<span class="gml-item-title">To</span><input id="gml-end" />
+			<span id="gml_summary" style="padding-left:40px;padding-right:10px;">Showing {shown} of {total} lines</span>
+			<button id="gml_grablogs">Grab Logs</button>
+			<button id="gml-refresh" style="position:absolute;right:70px;top:5px;">Refresh</button>
+			<button id="gml-help-button" style="position:absolute;right:10px;top:5px;">Help</button>
+		</div>
+		<div class="divider"></div>
+		<div id="gml_filter" >
+			<div>
+				<span class="gml-section-title" style="{showTitle}">Filter</span>
+				<select class="gml-action" value="{action}" style="margin-right:10px;">
+					<option value="include">Include</option>
+					<option value="exclude">Exclude</option>
+					<option value="hilite">Hilite</option>
+				</select>
+				<select class="gml-type" value="{type}" style="margin-right:10px;">
+					<option value="text">Text search</option>
+					<option value="regex">Regex search</option>
+					<option value="file">File</option>
+					<option value="ecc_queue">ECC Queue record</option>
+					<option value="discovery_status">Status</option>
+					<option value="ecc_agent">MID server</option>
+				</select>
+				Search for
+				<input class="gml-search {?action==hilite}{cssClass}{/action} {@hideSearch}hidden{/hideSearch}" value="{search}" style="margin-right:10px;margin-left:10px;"/>
+				<div class="gml-record {@hideRecPicker} hidden{/hideRecPicker}" style="margin-right:10px;margin-left:10px;">
+					<input class="gml-record {@hideRecPicker} hidden{/hideRecPicker}{?action==hilite} {cssClass}{/action}" value="{queueName}" />
+					<label class="{?type!=ecc_queue}hidden{/type}">
+						<input type="checkbox" style="margin-left:10px;margin-right:5px;margin-top:0px"/>
+						{?showEmpty==0}Match chosen{/showEmpty}{?showEmpty==1}Match not empty{/showEmpty}{?showEmpty==2}Match empty{/showEmpty}
+					</label>
+				</div>
+				<select class="gml-file {?action==hilite}{cssClass}{/action} {@hideFilePicker}hidden{/hideFilePicker}" value="{filename}" style="margin-right:10px;margin-left:10px;">
+					<option value="agent0.log">Agent</option>
+					<option value="wrapper.log">Wrapper</option>
+				</select>
+				<span>Matches {matches} lines</span>
+				<button class="gml-removefilter filterTableAction btn btn-default deleteButton" style="margin-left:10px;"><span class="icon-cross" /></button>
+				{?showAnd}<button class="gml-addfilter btn-default" style="margin-left:10px;">AND</button>{/showAnd}
+				<div class="divider" style="margin-top:5px"></div>
+			</div>
+		</div>
+			<div id="gml-header" class="column-title datarow tall-container" style="overflow-y:scroll">
+				<!-- <div class="sort-file column-one">File</div> -->
+				<div class="sort-mid column-two">MID Server</div>
+				<div class="sort-date column-three">Date</div>
+<!--				<div class="sort-thread column-four">Thread</div> -->
+				<div class="sort-queueId column-four">ECC Queue</div>
+				<div class="sort-msg column-five">Message</div>
+			</div>
+		<div id="gml_result_container" class="flex-unit" style="overflow:auto">
+				
+			<div id="gml_result">
+				<div style="height:{above}px;"></div>
+				{#result}
+					{?hilite}
+						{#allFilters}<div class="{value}">{/allFilters}
+					{/hilite}
+					<div class="datarow tall-container">
+<!--						<div class="column-one">{?file==agent0.log}Agent{/file}{?file==wrapper.log}Wrapper{/file}</div> -->
+						<div class="column-two">{mid}</div>
+						<div class="column-three">{date}</div>
+<!--						<div class="column-four">{thread}</div> -->
+						<div class="column-four">{queueId}</div>
+						<div class="column-five">{msg}</div>
+					</div>
+					{?hilite}
+						{#allFilters}</div>{/allFilters}
+					{/hilite}
+				{/result}
+				<div style="height:{below}px"></div>
+			</div>
+		</div>
+	</div>
+	<div id="gml-help" class="hidden" style="position:fixed;top:30px;bottom:30px;left:30px;right:30px;background-color:#f5f5f5;border:1px solid">
+		<div id="gml-close-help" style="width:15px;height:15px;border-radius:50%;margin:10px;background-color:red;float:right"></div>
+		<pre style="border:0">View and filter MID logs
+
+Use this module to view MID Server logs that the diagnostic utility has fetched to the agent_file
+table, based on the filters that you have set. This data is saved in the browser.
+
+    1. Limit the search results by selecting a date range.
+       Initially, the range is set to 1 day.
+    2. Set the action to one of these types:
+       - Include
+       - Exclude
+       - Hilite
+       Any records which match the filter condition have this action applied.
+    3. Select one of these filters:
+       - Text: Case insensitive search for the given text in the log message.
+       - Regex: Case insensitive regex to match against the log message.
+       - File: Source file (agent or wrapper).
+       - ECC Queue Record: Messages generated by a specific ECC queue output record. These records
+         have the option to match empty or not empty. Click in the field to display a list of ECC
+         Queue records for selection.
+       - Status: Messages generated by a specific discovery status. Click in the field to display
+         a list of status records for selection.
+       - MID server: Messages from a given MID Server. Click in the field to display a list of MID
+         Server records for selection.
+    4. Click And in the condition builder to add additional filters as needed.
+       If there are no Include filters, all records match by default. If a record matches both
+       Include and Exclude filter conditions, the record is excluded. Filters are encoded in the
+       URL.  Reloading the URL applies the same filters.
+    5. Add additional Hilite filters in different colors.
+       There are 6 Hilite colors available. After the sixth Hilite filter is applied, the color
+       defaults to gray.  Colors are blended for lines that match more than one filter.
+    6. Click Grab Logs to fetch log files (agent and wrapper) from all MID Servers that match the
+       current filter.
+       The screen auto-updates when new files are received. The page polls constantly and
+       refreshes when anything new is received. This could result in unexpected screen refreshes
+       if someone else grabs the MID Server logs.
+    7. Click Refresh to re-draw the current screen.
+</pre>
+	</div>
+</j:jelly>

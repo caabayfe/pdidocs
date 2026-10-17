@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+   <!-- query for our script -->
+   <g2:evaluate>
+      var scr = new GlideRecord('ecc_agent_script');
+      scr.get(gs.getSession().getProperty('run_script'));
+   </g2:evaluate>
+
+   <!-- query for our parameters -->
+   <g2:evaluate>
+      var pars = new GlideRecord('ecc_agent_script_param');
+      pars.addQuery('script', gs.getSession().getProperty('run_script'));
+      pars.orderBy('name');
+      pars.query(); 
+   </g2:evaluate>
+
+   <FORM action="mid_tools.do" method="post" style="margin:5px;">
+      <P style="font-size:1.25em"><B>Enter MID server script parameters:</B></P>
+      <P>$[scr.getValue('name')]</P>
+      <P>$[scr.getValue('description')]</P>
+
+      <!-- get the parameters -->
+      <TABLE style="font-size:1.1em;margin-top:20px;width:100%;margin-left:0;" cellpadding="5" border="0">
+         <j2:while test="$[pars.next()]">
+            <TR>
+               <TD style="">
+                  $[pars.getValue('name')]
+               </TD>
+               <TD style="width:65px;">
+                  <INPUT type="text" name="$[pars.getValue('name')]" value="$[pars.getValue('default_value')]" />
+               </TD>
+               <TD>
+                  $[pars.getValue('description')]
+               </TD>
+            </TR>
+         </j2:while>
+      </TABLE>
+      <INPUT type="hidden" name="have_params" value="true" />
+      <INPUT type="hidden" name="mid_server" value="$[gs.getSession().getProperty('mid_server')]" />
+      <INPUT type="hidden" name="run_script" value="$[gs.getSession().getProperty('run_script')]" />
+      <INPUT style="margin-top:5px;margin-left:2px;" type="submit" name="run_script_button" value="Run script" />
+   </FORM>
+</j:jelly>

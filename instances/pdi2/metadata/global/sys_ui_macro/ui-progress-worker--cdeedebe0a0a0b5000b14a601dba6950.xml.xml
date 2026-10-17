@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    		  <g:macro worker_id="REQUIRED" show_cancel="true" rows="2"/>
+				<script>
+				  function reload() {
+					var el = gel("cancel_button");
+					if (el)
+					  el.style.display = "none";
+
+					el = gel("refreshing");
+					el.style.display = "";
+
+					reloadWindow(window);
+				  }
+
+				</script>
+				<table cellpadding="0" cellspacing="0" width="100%">
+					<tr>
+						<td>
+							<div id="progress" class="caption" aria-label="Progress">Progress</div>
+						</td>
+					</tr>
+
+				<g:evaluate var="jvar_item" jelly="true" expression="
+				   var pgr = new GlideRecord('sys_progress_worker'); 
+				   pgr.addQuery('sys_id', jelly.jvar_worker_id);
+				   pgr.query();
+				   "/>
+				<j:if test="${pgr.next()}">
+					  <j:if test="${jvar_rows == 'grow'}">
+						<g:evaluate var="jvar_rows" expression="
+						  var msg = pgr.message;
+						  var msgs = msg.split('\n');
+						  jvar_rows = msgs.length + 1 + '';
+						"/>
+					  </j:if>
+					  <tr>
+						<td>
+						  <g:ui_input_field name="name" label="Name" value="${pgr.name}" size="100" style="width:100%;" readonly="true"/>
+						</td>
+					  </tr>
+					  <tr>
+						<td>
+						  <g:ui_input_field name="pstate" label="State" style="${pgr.state.getStyle()};width:100%;" value="${pgr.state.getDisplayValue()}" readonly="true"/>
+						</td>
+					  </tr>
+					  <tr id="completion_code">
+						<td>
+						  <g:ui_input_field name="code" label="Completion code" style="${pgr.state_code.getStyle()};width:100%;" value="${pgr.state_code.getDisplayValue()}" readonly="true"/>
+						</td>
+					  </tr>
+					  <tr>
+						<td>
+						  <g:ui_multiline_input_field name="message" label="Message" value="${HTML:pgr.message}" rows="${jvar_rows}" readonly="true" style="height:auto; width: 100%"/>
+						</td>
+					  </tr>
+				</j:if>
+					<!-- cancel -->
+					<j:if test='${jvar_show_cancel == "true"}'>
+					  <tr id="cancel_button" style="display:none">
+						<td colspan="2" align="left">
+							<g:dialog_button name="import_cancel_button" id="import_cancel_button">Cancel</g:dialog_button>
+							<span id="cancelling" style="display: none">	
+								<image src="images/loading_anim2.gifx" /><strong>Cancelling...</strong>
+					</span>	
+						</td>
+					  </tr>
+					</j:if>
+					<!-- refreshing message -->
+					<tr id="refreshing" style="display:none">
+					  <td colspan="2" align="left">
+						<image src="images/loading_anim2.gifx" /><strong>Refreshing...</strong>
+					  </td>
+					</tr>
+				</table>
+				  <j:if test='${pgr.state == "running" || pgr.state == "starting" || pgr.state == "unknown"}'>
+					<script>
+					  var el = gel("cancel_button");
+					  if (el)
+						el.style.display = "";
+
+					  el = gel("completion_code");
+					  el.style.display = "none";
+
+					  setTimeout('reload();', 5000);
+					</script>
+				 </j:if>
+</j:jelly>

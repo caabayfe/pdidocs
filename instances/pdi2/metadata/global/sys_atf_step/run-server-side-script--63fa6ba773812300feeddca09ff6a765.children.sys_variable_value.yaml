@@ -1,0 +1,313 @@
+- document: sys_atf_step
+  document_key: 63fa6ba773812300feeddca09ff6a765
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2018-10-16 04:44:41
+  sys_id: 3844d43773052300feeddca09ff6a730
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2018-11-21 19:40:57
+  value: |-
+    // set this to true if you want to log more 'debug' messages to the outputMessage
+    var debugMessages = false;
+    var outputMessage = "";
+
+    // table name or elements in the table
+    var CMDB_CI_METRIC_EXTENSION_TABLE = "cmdb_ci_metric_extension";
+    var RESOURCE_METRIC_EXTENSION_TABLE = "ci_resource_metric_extension";
+    var ECC_AGENT_EXT_CONTEXT_METRIC = "ecc_agent_ext_context_metric";
+    var SA_METRIC_MAP_TABLE = "sa_metric_map";
+    var SYS_METRIC_TABLE = "sys_metric";
+    var NAME = "name";
+    var ELEMENT = "element";
+
+    var assertEqual;
+    var currentOperationalExtensionCiGr;
+    var currentOperationalExtensionCiSysId;
+    var currentOperationalExtensionCiName;
+    var currentMetricType;
+    var currentCiResourceMetric = '';
+    var currentResource;
+    var activeMidSysIds = '';
+    var periodToVerify;
+    // clotho transformer results
+    var transformerResults;
+
+    // set start and end times to query MetricBase
+    var end = new GlideDateTime();
+    var start = new GlideDateTime(end);
+
+    /**
+     * Utility function to append a message to the output message
+     * @param {*} message 
+     */
+    function debug(message) {
+    	outputMessage += message + "\r\n";
+    }
+
+    /**
+     * Utility function to add a message to the output message if the debugMessages flag is turned
+     * on
+     * @param {*} message
+     */
+    function logDebug(message) {
+    	if (debugMessages)
+    		debug(message);
+    }
+
+    /**
+     * Function to query Operational Intelligence Metrics Extensions that are currently running
+     */ 
+    function getRunningMetricExtensions() {
+    	var operationalExtensionsGr = new GlideRecord(ECC_AGENT_EXT_CONTEXT_METRIC);
+    	operationalExtensionsGr.addEncodedQuery('status=Started^NQstatus=Warning^error_message=Warning: Rest api is not available because web server is shutdown.^ORerror_message=Warning: Could not start rest api because web server is not running.');
+    	operationalExtensionsGr.query();
+    	
+    	while (operationalExtensionsGr.next()) {
+    		activeMidSysIds += operationalExtensionsGr.mid_server + ",";
+    	}
+    	// remove last comma
+    	activeMidSysIds = activeMidSysIds.substring(0, activeMidSysIds.length - 1);
+    	logDebug("The mid sys ids with active extensions are " + activeMidSysIds);
+    	return operationalExtensionsGr;
+    }
+
+    /**
+     * Function to query Operational Intelligence Metrics Extension CIs
+     */
+    function getMetricExtensionCis() {
+    	var operationalExtensionsCIsGr = new GlideRecord(CMDB_CI_METRIC_EXTENSION_TABLE);
+    	operationalExtensionsCIsGr.addQuery("mid_sys_id", "IN", activeMidSysIds);
+    	operationalExtensionsCIsGr.query();
+    	return operationalExtensionsCIsGr;
+    }
+
+    /**
+     * Function to change the start time to a default of 60 minutes from current time
+     */
+    function defaultStartTime() {
+    	var minutesAgoStart = 60;
+    	start.addSeconds(-1 * minutesAgoStart * 60);
+    	logDebug("Defaulting start date. The start date to query MetricBase is " + start.toString() + " (UTC)");
+    }
+
+    /**
+     * Function to adjust the start and end time to query MetricBase by reading the Global Metric Configuration, or default
+     * if its not set
+     * 
+     * @see defaultStartTime
+     * @see adjustStartTimeBasedOnConfig
+     */
+    function adjustStartAndEndTime() {
+    	// Read the Metrics Global Configuration to check collection time intervals
+    	var config = SNC.MetricScriptableApis.getGlobalConfig();
+    	if (config) {
+    		logDebug("The Metric Config used is " + config);
+    		// Parse the config object
+    		configJsonObject = JSON.parse(config);
+    		//Verify if valid object and valid properties
+    		if (configJsonObject && configJsonObject.batcher_schedule_time_millis && configJsonObject.health_metrics_collection_interval_min) {
+    			adjustStartTimeBasedOnConfig(configJsonObject);
+    		}
+    		else {
+    			defaultStartTime();
+    		}
+    	}
+    	else {
+    		defaultStartTime();
+    	}
+    }
+
+    /**
+     * Function to adjust start time to query MetricBase by reading the Global Metric Configuration object,
+     * taking into consideration the health metrics collection interval and the batcher schedule time
+     * 
+     * @param {*} configJsonObject 
+     */
+    function adjustStartTimeBasedOnConfig(configJsonObject) {
+    	var healthMetricsMinutes = configJsonObject.health_metrics_collection_interval_min;
+    	var batcherScheduledMillis = configJsonObject.batcher_schedule_time_millis;
+    			
+    	logDebug("Adjusting the start date to account for " + healthMetricsMinutes 
+    			 + " minutes for health collection and " + batcherScheduledMillis + " milliseconds for batcher schedule time");
+    	
+    	// convert to seconds
+    	var healthMetricsInSeconds = healthMetricsMinutes * 60;
+    	var batcherScheduledInSeconds = batcherScheduledMillis / 1000;
+    	
+    	// sum up the health metrics and the batcher schedule and increase by 2x
+    	periodToVerify = healthMetricsInSeconds + batcherScheduledInSeconds;
+    	var addedSeconds = periodToVerify * 2;
+    	// remove those seconds from the start date
+    	start.addSeconds(-addedSeconds);
+    	logDebug("The start date to query MetricBase is " + start.toString() + " (UTC)");
+    }
+
+    /**
+     * Function to actually query the MetricBase metric data for a specific Operational Intelligence Metrics Extension 'CI' by
+     * querying the Metric To CI table and picking the latest updated entry where we select 1 Metric Type to query MetricBase for
+     */
+    function verifyMetricDataForCiMetricExtension() {
+    	currentOperationalExtensionCiSysId = currentOperationalExtensionCiGr.getUniqueValue();
+    	currentOperationalExtensionCiName = currentOperationalExtensionCiGr.name;
+    	
+    	debug("Now checking the CI extension '" + currentOperationalExtensionCiName + 
+            " (" + currentOperationalExtensionCiSysId + ")'");
+    	selectMetricTypeFromMetricMap();
+    	
+    	// build CI/Resource/Metric message for debug
+    	currentCiResourceMetric = "CI: " + currentOperationalExtensionCiName;
+    	if (currentResource && currentResource != "") {
+    		currentCiResourceMetric += "/Resource: " + currentResource;
+    	}
+    	currentCiResourceMetric += "/Metric: " + currentMetricType.name;
+    	debug("Verifying data for " + currentCiResourceMetric);
+    	verifyDataExistsInMetricBase();
+    }
+
+    /**
+     * Function to Query the Metric to CI table and pick a metric type, based on the last updated time
+     */
+    function selectMetricTypeFromMetricMap() {
+    	// query sa_metric_map where we find the operational extension ci sys id and sort by last updated
+    	var metricMap = new GlideRecord(SA_METRIC_MAP_TABLE);
+    	metricMap.addActiveQuery();
+    	metricMap.addQuery("source", "ITOA_Metrics");
+    	metricMap.orderByDesc("sys_updated_on");
+    	metricMap.addQuery("cmdb_ci", currentOperationalExtensionCiSysId);
+    	metricMap.query();
+    	
+    	var numberOfEntriesMetricMap = metricMap.getRowCount();
+    	logDebug("Number of entries in metric map found " + numberOfEntriesMetricMap);
+    	
+    	assertEqual({name: "Metric map does not have enough entries for the CI '" + currentOperationalExtensionCiName + " (" + currentOperationalExtensionCiSysId + ")'", 
+                     shouldbe: true, value: numberOfEntriesMetricMap > 0});
+    	
+    	// get the first row
+    	metricMap.next();
+    	var metricTypeId = metricMap.metric_type_id;
+    	var metricTypeName = metricTypeId.metric_type;
+    	var metricTinyName = metricTypeId.metric_type_tiny_name;
+    	currentResource = metricMap.resource_id.name;
+
+    	currentMetricType = {
+    		id: metricTypeId,
+    		name: metricTypeName,
+    		tinyName: metricTinyName
+    	};
+    	
+    	debug("The metric type selected was '" + currentMetricType.name + " (" + currentMetricType.id + ")'");
+    }
+
+    /**
+     *    Function to execute the clotho transform
+     */
+    function executeTransform(ciTable) {
+    	var transformer = new sn_clotho.Transformer(ciTable);
+    	transformer.metric(currentMetricType.tinyName);
+    	
+    	// execute and return result
+    	transformerResults = transformer.execute(start, end);
+    	return transformerResults.toArray().length;
+    }
+
+    /**
+     * Function to query if there is any data stored in MetricBase for a specific CI / Metric Type
+     */
+    function verifyDataExistsInMetricBase() {
+    	// check if metric_type exists in the MetricBase metric table
+    	var metricBaseTypes = new GlideRecord(SYS_METRIC_TABLE);
+    	var queryForTableName = metricBaseTypes.addQuery(NAME, CMDB_CI_METRIC_EXTENSION_TABLE);
+    	queryForTableName.addOrCondition(NAME, RESOURCE_METRIC_EXTENSION_TABLE);
+    	metricBaseTypes.addQuery(ELEMENT, currentMetricType.tinyName);
+    	metricBaseTypes.query();
+    	
+    	assertEqual({name: "Metric type '" + currentMetricType.tinyName + "' should exist in sys_metric table", 
+                     shouldbe: 1, value: metricBaseTypes.getRowCount()});
+    	metricBaseTypes.next();
+    	var tableType = metricBaseTypes.getValue(NAME);
+    	var ciTable = "";
+    	logDebug("The table type in sys_metric was " + tableType);
+    	
+    	if (tableType && tableType === CMDB_CI_METRIC_EXTENSION_TABLE) {
+    		ciTable = new GlideRecord(CMDB_CI_METRIC_EXTENSION_TABLE);
+    		ciTable.get(currentOperationalExtensionCiSysId);
+    	}
+        else {
+    		ciTable = new GlideRecord(RESOURCE_METRIC_EXTENSION_TABLE);
+    		ciTable.addQuery('cmdb_ci', currentOperationalExtensionCiSysId);
+    		ciTable.addQuery('name', currentResource);
+    		ciTable.query();
+        }
+    	
+    	// execute transform for clotho
+    	var transformResultsSize = executeTransform(ciTable);
+    	
+    	// if we fail the first time , substract another periodToVerify and try again
+    	if (transformResultsSize == 0) {
+    		logDebug("Substracted another period to the start time, now it is " + start.toString() + " (UTC)");
+    		start.addSeconds(-periodToVerify);
+    		transformResultsSize = executeTransform(ciTable);
+    	}
+    	logDebug("MetricBase Result size of Transform is " + transformResultsSize);
+    	assertEqual({name: "MetricBase Result size of Transform for " + currentCiResourceMetric + " should be one. Start date is " + start, shouldbe: 1, value: transformResultsSize });
+
+    	var dataResults = transformerResults.getData().getValues();
+    	var dataResultsSize = dataResults.length;
+    	assertEqual({name: "MetricBase Data Values result for " + currentCiResourceMetric + " should be at least one", shouldbe: true, value: dataResultsSize > 0});
+    	
+    	var countNotNan = 0;
+    	for (var i = 0; i < dataResults.length; i++) {
+    		if (!isNaN(dataResults[i])) {
+    			countNotNan++;
+    		}
+    	}
+    	debug("The Metric Data (not a NaN) count  is " + countNotNan);
+    	assertEqual({name: "The Metric Data (not a NaN) count for " + currentCiResourceMetric + " should be at least one", shouldbe: true, value: countNotNan > 0});
+    }
+
+    /**
+     * Main function for the ATF test
+     */
+    (function(outputs, steps, stepResult, assertEqual) {
+    	assertEqual = assertEqual;
+    	// First query for the Operational Intelligence Metrics Extensions
+    	var numOfExtensions = getRunningMetricExtensions().getRowCount();
+    	logDebug("Number of running Operational Intelligence Metrics Extensions found " + numOfExtensions);
+    	assertEqual({name: "Number of running Operational Intelligence Metrics Extensions is " + numOfExtensions, shouldbe: true, value: numOfExtensions > 0});
+    	
+    	// Now look for the CIs for the extensions
+    	var operationalExtensionsCIsGr = getMetricExtensionCis();
+    	var numOfCis = operationalExtensionsCIsGr.getRowCount();
+    	
+    	logDebug("Number of Operational Intelligence Metrics Extensions CIs found " + numOfCis);
+    	assertEqual({name: "Number of Operational Intelligence Metrics Extensions should match CIs count " + numOfCis, shouldbe: true, value: numOfCis >= numOfExtensions});
+    	
+    	// adjust the start / end date time
+    	adjustStartAndEndTime();
+    	
+    	while (operationalExtensionsCIsGr.next()) {
+    		currentOperationalExtensionCiGr = operationalExtensionsCIsGr;
+    		verifyMetricDataForCiMetricExtension();
+    	}
+    	
+    	// finish test
+    	stepResult.setOutputMessage("The overall output message for this test step is:\r\n " + outputMessage);
+    }
+    )(outputs, steps, stepResult, assertEqual);
+  variable: 989d9e235324220002c6435723dc3484
+- document: sys_atf_step
+  document_key: 63fa6ba773812300feeddca09ff6a765
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2018-10-16 04:44:41
+  sys_id: bc44d43773052300feeddca09ff6a72f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2018-10-16 04:44:41
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777

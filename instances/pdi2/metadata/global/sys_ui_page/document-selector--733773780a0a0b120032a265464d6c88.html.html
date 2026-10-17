@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate>
+        var table_name = RP.getWindowProperties().get( 'sysparm_table' );
+        var document_key = RP.getWindowProperties().get( 'sysparm_key' );
+        var document_display = RP.getWindowProperties().get( 'sysparm_display' );
+        var tableChoicesScript = RP.getWindowProperties().get( 'tableChoicesScript' );
+        var showAllTables = RP.getWindowProperties().get( 'showAllTables' );
+        var tableReadOnly = ('true' == RP.getWindowProperties().get('tableReadOnly'));
+        var parent_ref = RP.getWindowProperties().get( 'sysparm_parent_ref' );
+  </g:evaluate>
+    <input type="hidden" id="initial_table_name" value="${table_name}" />
+    <input type="hidden" id="parent_ref" name="parent_ref" value="${parent_ref}" />
+    <g:ui_table>
+	<div class="form-group">
+                <label for="table_name"> ${gs.getMessage('Table name')}:
+                </label>
+                <j:if test="${tableReadOnly}">
+                    <input style="${jvar_add_style}" id="table_name" name="table_name"
+                        value="${table_name}" class="form-control disabled" readonly="readonly"/>
+                </j:if>
+                <j:if test="${!tableReadOnly}">
+                    <select id="table_name" name="table_name" class="form-control" onchange="setupReference()">
+                        <j:if test="${tableChoicesScript == ''}">
+                            <g:table_options selected="${table_name}" all="${showAllTables}"/>
+                        </j:if>
+                        <j:if test="${tableChoicesScript != ''}">
+                            <g:scripted_table_options selected="${table_name}" script="${SAFE:tableChoicesScript}" />
+                        </j:if>
+                    </select>
+                </j:if>
+		</div>
+		<div class="form-group">
+			<label id="document_key_label"> ${gs.getMessage('Document')}: </label>
+                <g:ui_reference name="document_key" table="${table_name}" value="${document_key}" displayvalue="${document_display}" />
+            </div>
+			<div class="modal-footer">
+				<span class="pull-right">
+	                <g:dialog_buttons_ok_cancel ok="return validateAndSubmit();" />
+				</span>
+			</div>
+
+    </g:ui_table>
+
+</j:jelly>

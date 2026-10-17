@@ -1,0 +1,56 @@
+<div class="your-favorites-container panel panel-default b panel-wrapper" ng-if="data.loading || data.contentList.length || data.showEmptyState">
+  <div class="panel-heading b-b">
+    <h3 class="panel-title">{{::data.favoriteTitle}}</h3>
+  </div>
+   <div ng-if="data.loading" class="your-favorites-container panel-body">
+      <div class="skeleton-loader-wrapper">
+        <div class="skeleton-loader" ng-repeat="item in c.favArray"></div>
+      </div>
+   </div>
+  <div ng-if="!data.loading && data.contentList.length" class="panel-body">
+    <div ng-class="{'scrolling-panel': c.data.isCarouselView}">
+      <div class="slide-control-container left-control" ng-if="c.data.isCarouselView && c.indicatorDots > 0 && c.activeIndicatorIndex != 0">
+        <div class="slide-control" ng-click="c.swipeLeft(1, $event)" aria-hidden="true"></div>
+        <button class="btn btn-default favorite-control-circle" ng-click="c.swipeLeft(1, $event)" aria-label="${Click to swipe the cards to left}"> 
+          <i class="glyphicon glyphicon-menu-left flip-icon-rtl" aria-hidden="true"></i> 
+        </button>
+      </div>
+      <div class="favorite-section" ng-class="{'card-view' : c.data.listType === 'card_list'}" id="favorite-list-item-contents-section" tabindex="-1">
+        <div id="favorite-body-content" class="favorite-body-content" ng-repeat="content in data.contentList">
+          <div class="favorite-flex-item" id="{{c.data.listType}}_{{content.sysId}}" ng-class="{'card-border' : c.data.listType === 'card_list'}">
+            <sp-widget widget="content.cardWidget"></sp-widget>
+          </div>
+        </div>
+      </div>
+      <div class="slide-control-container right-control" ng-if="c.data.isCarouselView && c.indicatorDots > 0 && c.activeIndicatorIndex != c.indicatorDots-1">
+        <div class="slide-control" ng-click="c.swipeRight(1, $event)" aria-hidden="true"></div>
+        <button class="btn btn-default favorite-control-circle" ng-click="c.swipeRight(1, $event)" aria-label="${Click to swipe the cards to right}"> 
+          <i class="glyphicon glyphicon-menu-right flip-icon-rtl" aria-hidden="true"></i> 
+        </button>
+      </div>
+      <div class="fader-container" ng-if="c.data.isCarouselView">
+        <div class="fader left-fade" ng-if="c.indicatorDots > 0" ng-show="c.activeIndicatorIndex != 0">
+        </div>
+        <div class="fader right-fade" ng-if="c.indicatorDots > 0" ng-show="c.activeIndicatorIndex != c.indicatorDots-1">
+        </div>
+      </div>
+    </div>
+    <div class="favorite-footer" ng-class="c.getFooterClass()">
+      <div class="favorite-carousel-indicator-wrapper" ng-if="c.indicatorDots > 0">
+        <span role="button" tabindex="0" ng-repeat="x in [].constructor(c.indicatorDots) track by $index" class="favorite-carousel-indicator circle"
+              ng-attr-aria-label="{{'Go to page ' + ($index + 1)}}" id="favorite_page_{{$index + 1}}" ng-click="c.indicatorNavigation($index, $event)"
+              ng-class="c.getDotClass($index)" ng-attr-aria-current="{{$index === c.activeIndicatorIndex ? 'page' : undefined}}">
+        </span>
+      </div>
+      <div class="view-all-container">
+        <a tabindex="0" class="view-all" href="{{c.data.favNavigation}}" aria-label="${View all favorites}">${View all}
+          <i aria-hidden="true" class="fa fa-chevron-right flip-icon-rtl"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="no-app" ng-if="!data.loading && !data.contentList.length && data.showEmptyState">
+    <i class="fa" ng-class="data.emptyStateIcon" aria-hidden="true"></i>
+    <span>${You haven't favorited anything yet}</span>
+  </div>
+</div>

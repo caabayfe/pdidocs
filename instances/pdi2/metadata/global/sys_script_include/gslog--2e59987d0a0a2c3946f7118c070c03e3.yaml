@@ -1,0 +1,108 @@
+_meta:
+  hash: f974ce503da99affc7026f138fee4956ed073cc3e3fc208da259bc966a0ebc09
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: james.grinter
+  sys_created_on: 2011-02-16 12:06:45
+  sys_id: 2e59987d0a0a2c3946f7118c070c03e3
+  sys_mod_count: '82'
+  sys_package: e200be338c1103100a22deb6dd2b4e9a
+  sys_scope: global
+  sys_update_name: sys_script_include_2e59987d0a0a2c3946f7118c070c03e3
+  sys_updated_by: admin
+  sys_updated_on: 2016-04-25 14:45:23
+access: public
+active: 'true'
+api_name: global.GSLog
+caller_access: ''
+client_callable: 'false'
+description: |-
+  Authors: James Grinter, Chris Henson
+
+  Make logging and debugging from Script easier by implementing levels of log output, selectable by per-caller identified sys_properties values.
+
+  This implements both Log4j style logging and BSD Syslog style logging.  As default, the logger will use BSD style logging.
+  PLEASE CHOOSE ONE AND STICK TO IT (within a class anyhow)
+
+  This can only be used server side.
+
+  __Log4j Style Logging__
+
+  Log4j logging levels are available, Trace, Debug, Info, Warn, Error and Fatal.
+
+  Usage:
+
+  var [this.]_log = new GSLog("[logging level property to lookup]" ,"[class, method, script name logged as the caller]");
+  _log.setLog4J(); //Tells the logging class you want to use Log4J style logging.
+
+  To set the log level:
+  _log.setLevel(GSLog.TRACE);  [If you're logging at trace you're probably logging too much]
+  _log.setLevel(GSLog.DEBUG);
+  _log.setLevel(GSLog.INFO); [The default]
+  _log.setLevel(GSLog.WARN);
+  _log.setLevel(GSLog.ERROR);
+  _log.setLevel(GSLog.FATAL);
+
+  If you use any of the BSD log levels not part of Log4J they will be set to the appropriate Log4J level.
+
+  To log a message:
+
+  _log.trace("Message");
+  _log.debug("Message");
+  _log.info("Message");
+  _log.warn("Mesage");
+  _log.error("Mesasge");
+  _log.fatal("Message");
+
+  For some improvement in performance you can use the atLevel method to prevent string manipulations/concatenations in the logging method call:
+
+  if (_log.atLevel(GSLog.ERROR)) { _log.error("Message" +x +" " +y+ " " + z); }
+
+  Additional methods:
+  _log.getLevel();  // Returns the current logging level
+  _log.debugOn();  //Sets the log level to debug
+  _log.disableDatabaseLogs(); //Switches output to only use gs.print and not gs.log
+
+  __BSD Syslog Style Logging__
+
+  Logs can be at the level of Debug, Info, Notice, Warning, Err, Crit (after BSD syslog.h and followers).
+  The default logging level would normally be Notice, so levels should be chosen accordingly.
+
+  - caller (optional - a string), indicates who the caller is, and will be logged with every message.
+  - message is written to the log if the current level is the same, or lower. (i.e. a level of 'notice' will lead to emerg, alert, crit, err, warning, and notice level messages being logged) 
+
+  Status of Interface: Evolving, subject to change.
+
+  // Usage:
+
+  // use the level set in named property, and optionally set caller (can use 'this.type' if calling from a "Script Include" Class)
+  // Default threshold, if unspecified by the named property, is 'notice'.
+  var lu = new GSLog(property, caller);
+
+  // log messages, at specific levels
+  lu.logDebug(message);
+  lu.logInfo(message);
+  lu.logNotice(message);
+  lu.logWarning(message);
+  lu.logErr(message); // or lu.logError(message);
+  lu.logCrit(message);
+  lu.logAlert(message);
+  lu.logEmerg(message);
+
+  // log a message at loglevel 
+  // logLevel (a string) can be one of: 'emerg', 'alert', 'crit', 'err', 'warning', 'notice', 'info', 'debug' (after BSD syslog.h, and many followers)
+  lu.log(loglevel, message);
+
+  // change log threshold level
+  lu.setLevel(loglevel);
+  // get current log level
+  var loglevel = lu.getLevel();
+
+  if (lu.debugOn())
+     // do more extensive debugging operations ...
+mobile_callable: 'false'
+name: GSLog
+sandbox_callable: 'false'
+sys_name: GSLog
+sys_policy: ''

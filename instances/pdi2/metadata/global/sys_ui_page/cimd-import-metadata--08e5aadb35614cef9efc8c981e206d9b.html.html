@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:ui_form id="cimd_import_form">
+        <div class="modal-body" id="modalBody" style="padding-top:0px;">
+            <div class="row">
+                <div class="notification notification-info" id="infoAlert" style="margin-bottom:10px" role="status">
+                    <span class="notification-icon icon-info" aria-hidden="true"></span>
+                    ${gs.getMessage("Enter the CIMD metadata URL to fetch OAuth client configuration")}
+                </div>
+            </div>
+            <div class="row">
+                <div class="notification notification-danger" id="errorAlert" style="display:none; margin-bottom:10px" role="alert" aria-live="assertive">
+                    <span class="notification-icon icon-cross-circle" aria-hidden="true"></span>
+                    <span id="lblError"></span>
+                </div>
+            </div>
+
+            <div id="fetchMetadataSection">
+                <div class="row" style="margin-bottom:10px">
+                    <div class="form-group">
+                        <label class="control-label" id="labelURL" for="txtURL">${gs.getMessage('CIMD Metadata URL')}</label>
+                        <input id="txtURL" class="form-control" type="text" name="txtURL" aria-labelledby="labelURL" onkeydown="return enterAction(event)" placeholder="${gs.getMessage('https://client.example.com/.well-known/oauth-client')}" />
+                    </div>
+                </div>
+            </div>
+
+            <div id="metadataForm" style="display:none">
+                <div class="row" style="margin-bottom:10px">
+                    <div class="form-group">
+                        <span class="control-label" id="labelClientId">${gs.getMessage('Client ID (CIMD URL)')}</span>
+                        <div id="lblClientId" style="padding:8px; border:1px solid #ddd; border-radius:4px;background-color: RGB(var(--now-color_background--secondary));" aria-labelledby="labelClientId"></div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-bottom:15px" role="radiogroup" aria-labelledby="statusLabel">
+                    <div>
+                        <label id="statusLabel" style="font-weight:bold; margin-bottom:8px; display:block">${gs.getMessage('Metadata Sync Mode')}</label>
+                        <div>
+                            <span class="input-group-radio" style="margin-bottom:8px">
+                                <input id="rbLive" class="radio" type="radio" name="configType" value="live" onChange="onConfigTypeChange()" aria-describedby="descLive" />
+                                <label for="rbLive" class="radio-label"><b>${gs.getMessage('Live')}</b>
+                                </label>
+                            </span>
+                            <div id="descLive" style="color: RGB(var(--now-color_text--tertiary));margin-bottom:10px;">${gs.getMessage('For fully trusted clients. Automatically fetches the latest configuration from Client ID metadata.')}</div>
+
+                            <span class="input-group-radio" style="margin-bottom:8px">
+                                <input checked="checked" id="rbManual" class="radio" type="radio" name="configType" value="manual" onChange="onConfigTypeChange()" aria-describedby="descManual" />
+                                <label for="rbManual" class="radio-label"><b>${gs.getMessage('Static')}</b></label>
+                            </span>
+                            <div id="descManual" style="color: RGB(var(--now-color_text--tertiary));margin-bottom:10px;">${gs.getMessage('For pre-approved clients. Uses the initial configuration captured during onboarding. No automatic updates are made in the future.')}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pinnedConfigFields" style="display:block">
+                    <div class="row" style="margin-bottom:10px">
+                        <div class="form-group">
+                            <label class="control-label" for="txtClientName" id="labelClientName">${gs.getMessage('Client Name')} <span style="color:red" aria-hidden="true">*</span></label>
+                            <input id="txtClientName" class="form-control" type="text" name="txtClientName" aria-labelledby="labelClientName" aria-required="true" />
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-bottom:10px">
+                        <div class="form-group">
+                            <label class="control-label" for="txtRedirectUris" id="labelRedirectUris">${gs.getMessage('Redirect URIs')} <span style="color:red" aria-hidden="true">*</span></label>
+                            <textarea id="txtRedirectUris" class="form-control" name="txtRedirectUris" rows="3" placeholder="${gs.getMessage('Comma-separated list')}" aria-labelledby="labelRedirectUris" aria-required="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-bottom:10px">
+                        <div class="form-group">
+                            <label class="control-label" for="txtResponseTypes" id="labelResponseTypes">${gs.getMessage('Response Types')}</label>
+                            <input id="txtResponseTypes" class="form-control" type="text" name="txtResponseTypes" placeholder="${gs.getMessage('code')}" aria-labelledby="labelResponseTypes" />
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-bottom:10px">
+                        <div class="form-group">
+                            <label class="control-label" for="txtClientUri" id="labelClientUri">${gs.getMessage('Client URI')}</label>
+                            <input id="txtClientUri" class="form-control" type="text" name="txtClientUri" aria-labelledby="labelClientUri" />
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-bottom:10px">
+                        <div class="form-group">
+                            <label class="control-label" for="txtLogoUri" id="labelLogoUri">${gs.getMessage('Logo URI')}</label>
+                            <input id="txtLogoUri" class="form-control" type="text" name="txtLogoUri" aria-labelledby="labelLogoUri" />
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-bottom:10px">
+                        <div class="form-group">
+                            <span class="input-group-checkbox">
+                                <input id="chkLocalhostRedirection" class="checkbox" type="checkbox" name="chkLocalhostRedirection" />
+                                <label for="chkLocalhostRedirection" class="checkbox-label">${gs.getMessage('Localhost redirection allowed')}</label>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="padding-bottom:5px; padding-top:0px; padding-left:0px; padding-right:0px">
+            <button class="btn btn-default" id="btnCloseOrCancel" type="button" onclick="return cancel()">${gs.getMessage('Enter the details instead')}</button>
+            <button id="btnCreate" class="btn btn-primary" type="button" onclick="return createCIMDEntity()" style="display:none">${gs.getMessage('Create')}</button>
+            <button id="btnFetch" class="btn btn-primary" type="button" onclick="return fetchMetadata()">${gs.getMessage('Fetch Metadata')}</button>
+        </div>
+
+    </g:ui_form>
+</j:jelly>

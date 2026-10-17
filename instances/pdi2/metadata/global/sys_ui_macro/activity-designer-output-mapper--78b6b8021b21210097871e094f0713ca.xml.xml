@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<script>
+  var debugUI = ("$[gs.getProperty('com.glideapp.workflow.ui.debug')]" == 'true');
+</script>
+
+<g2:evaluate var='jvar_templatemeta' jelly="true">
+    var query = (jelly.sysparm_query || '') + '';
+    var templateSysId;
+    var templateMeta = {};
+    var json = new JSON();
+    if (query) {
+        var matches = query.match(/base_provider=([0-9a-zA-Z]{32})/);
+        if (matches) {
+            templateSysId = matches[1];
+        }
+    }
+    if (!templateSysId)
+        templateSysId = __ref__.getGlideRecord().getValue('base_provider');
+    var templateGr = new GlideRecord('wf_element_provider');
+    if (templateGr.get(templateSysId)) {
+        var templateName = templateGr.getValue('name');
+        var api = new SNC.DataStructureAPI(templateName);
+        templateMeta.output = json.decode(api.getProviderOutputMeta());
+        templateMeta.defaultOutput = api.getProviderSetting('default_output');
+    }
+    var encodedMeta = json.encode(templateMeta);
+    encodedMeta;
+</g2:evaluate>
+
+<g2:evaluate var='jvar_samplepayloads' jelly="true">
+    var payloads = {};
+    var json = new JSON();
+    var transformsString = (__ref__.output_transform || '') + '';
+    if (transformsString) {
+        var transformsArray = json.decode(transformsString);
+        for (var i = 0; i != transformsArray.length; i++) {
+            var transform = transformsArray[i];
+            if (transform.hasOwnProperty('samplePayload') $[AMP]$[AMP]
+                (transform.samplePayload != '') $[AMP]$[AMP] !payloads.hasOwnProperty(transform.samplePayload)) {
+                var sampleGr = new GlideRecord('wf_sample_payload');
+                if (sampleGr.get(transform.samplePayload)) {
+                    payloads[transform.samplePayload] = {
+                        "name": sampleGr.getValue('name'),
+                        "dataType": sampleGr.getValue('data_type'),
+                        "sampleData": sampleGr.getValue('sample_data')
+                    };
+                }
+            }
+        }
+    }
+    var encodedPayloads = json.encode(payloads);
+    encodedPayloads;
+</g2:evaluate>
+
+<script>
+  var templateMeta = $[NOESC:jvar_templatemeta];
+  var samplePayloads = $[NOESC:jvar_samplepayloads];
+</script>
+
+<link rel="stylesheet" type="text/css" href="styles/multilist.css"></link>
+
+<tr>
+  <td colspan="2" id="parsing_rules_block">
+    <table colspacing="0" colpadding="0" border="0"><tr>
+	<td id="label.${ref}"  data-type="label" class="label"  nowrap="true" type="related_tags">
+            <label for="${ref}" onclick="return labelClicked(this);" dir="ltr" style="text-align:left;padding-bottom:2px;">Parsing rules</label>
+	</td>
+    </tr></table>
+
+    <div id='output_transform_mapper'>
+    </div>
+  </td>
+</tr>
+
+<j2:if test="$[__ref__.getGlideRecord().getValue('base_provider') == '1bce1222d7123100a70f42285e6103b1']">
+	<div id="hide_parsing_block">
+		<p>Parsing rules are hidden, it is recommended to use the auto mapping feature inside 'Test Inputs'</p>
+		<button id="show_parsing_rules_anyway" type="button" class="btn btn-default" onclick="showParsingRules();">Show Anyway</button>
+	</div>
+	<script>
+		$j('#parsing_rules_block').hide();
+
+		function showParsingRules() {
+			$j('#parsing_rules_block').show();
+			$j('#hide_parsing_block').hide();
+		}
+	</script>
+</j2:if>
+
+<g:requires name="scripts/jquery-ui-supported.js" />
+<g:requires name="scripts/classes/json2.js" />
+<g:requires name="classes/multilist.js" />
+<g:requires name="scripts/classes/activityOutputMapper.js"/>
+</j:jelly>

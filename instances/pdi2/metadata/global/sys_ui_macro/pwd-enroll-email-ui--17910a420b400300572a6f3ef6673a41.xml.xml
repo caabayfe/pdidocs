@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  
+   <g:include_script src="$pwd_enroll_email_ui.jsdbx" />
+  
+    <input type="hidden" name="user_id" value="${gs.getUserID()}" />
+    <input type="hidden" name="verification_id" value="${jvar_verification_id}" /> 
+  <input type="hidden" name="mandatory" value="${jvar_mandatory}" />   
+  <input type="hidden" name="tab_index" value="${jvar_tab_index}" />   
+  
+  <script type="text/javascript" >
+    // When the page gets loaded, execute the event handler for on-load event.
+	// Known issue: When multiple verification methods have "addLoadEvent" only one of them executes
+    addLoadEvent(
+      function() {
+		console.log("executing email on load function");
+        email_on_load('${jvar_form_id}');
+      },
+    '${jvar_form_id}'
+    );
+
+    // When the page gets loaded, register the event hanlder for on-submit event for the form.
+    addSubmitEvent(
+        function() { 
+          return email_on_submit('${jvar_form_id}');
+        },
+      '${jvar_form_id}'   
+    );
+  </script>
+	
+	<g:evaluate var="jvar_profile_email">
+		var userGr = new GlideRecord('sys_user');
+		userGr.get(gs.getUserID());
+		userGr.getValue('email');
+	</g:evaluate>
+
+  <span id="steps_header_${jvar_verification_id}" class="pwd-section-subtitle">${gs.getMessage('You must authorize at least one email')}<br/></span>
+
+  <div id="email_addresses_${jvar_verification_id}" name="email_addresses_${jvar_verification_id}" class="pwd-enroll-email-devices">
+    <!-- Emails will be added here -->
+  </div>
+
+  <br/>
+  
+	<!-- using text-align: right mimics using float: right on the buttons. Otherwise they appear in reverse order on the page -->
+  <div style="overflow: hidden; text-align: right;">
+	<j:if test="${jvar_profile_email != 'null'}">
+		<button id="add_profile_email_btn" class="btn btn-primary btn-pwd-submit" 
+		  onclick="addProfileEmail(this); return false;" style="margin-right: 5px; float: none" aria-label="${gs.getMessage('Add')} ${jvar_profile_email}">${gs.getMessage('Add')} ${jvar_profile_email}</button>
+    </j:if>
+    <button id="add_email_btn" style="float: none" data-target="#add_email_address_dlg" class="btn btn-primary btn-pwd-submit" data-toggle="modal"
+      onclick="
+       openAddEmailDialog(this);
+       return false;
+      " aria-label="${gs.getMessage('Add Email')}">${gs.getMessage('Add Email')}</button>
+  </div>
+	
+  <!-- "Add Email" Dialog -->
+  <div id="add_email_address_dlg" tabindex="-1" aria-hidden="true" class="modal" role="dialog" aria-labelledby="modal1_title">
+    <div class="modal-dialog">
+      <div class="modal-content pwd-add-device-dialog">
+        <div class="modal-header">
+		  <button data-dismiss="modal" class="btn btn-icon close icon-cross">					
+			<span class="sr-only">${gs.getMessage("Close dialog")}</span>	
+		  </button>
+          <h4 class="modal-title">${gs.getMessage("Add an Email")}</h4>
+        </div>
+        <div class="modal-body">
+            <div class="form-group is-required" id="email_name_form_group_${jvar_verification_id}">
+              <label for="sysparm_email_address_name_${jvar_verification_id}" class="control-label col-sm-4">
+                <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+                ${gs.getMessage('Email name')}
+              </label>
+              <span class="col-sm-8">
+                <input type="text" maxlength="20" id="sysparm_email_address_name_${jvar_verification_id}" name="sysparm_email_address_name_${jvar_verification_id}" value="" placeholder="" 
+             class="form-control pwd-form-control" aria-required="true" autocomplete="off"
+                       onkeypress="clearEmailFieldError('retype_email_address_name_${jvar_verification_id}', 'email_name_form_group_${jvar_verification_id}');" aria-describedby="retype_email_address_name_${jvar_verification_id}"
+					   oninput="updateMandatoryMarker(this, 'email_name_form_group_${jvar_verification_id}')" />
+                <span id="retype_email_address_name_${jvar_verification_id}" class="help-block" style="text-align:left" role="alert" aria-live="polite"></span>
+              </span>
+            </div>
+        
+        
+        <div class="form-group is-required" id="email_form_group_${jvar_verification_id}">
+          <label for="sysparm_email_addr_${jvar_verification_id}" class="control-label col-sm-4">
+            <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+            ${gs.getMessage('Email Address')}
+          </label>
+          <span class="col-sm-8">
+            <input type="text" id="sysparm_email_addr_${jvar_verification_id}" 
+                 name="sysparm_email_addr_${jvar_verification_id}" value="" placeholder="YourEmail@YourDomain.com"
+                 class="form-control pwd-form-control" aria-required="true" autocomplete="off"
+                 onkeypress="clearEmailFieldError('retype_email_addr_${jvar_verification_id}', 'email_form_group_${jvar_verification_id}');"
+                               aria-describedby="retype_email_addr_${jvar_verification_id}" 
+							   oninput="updateMandatoryMarker(this, 'email_form_group_${jvar_verification_id}')"/>
+            <span id="retype_email_addr_${jvar_verification_id}" class="help-block" style="text-align:left" role="alert" aria-live="polite"></span>
+          </span>
+        </div>
+        </div>
+		  
+        <footer class="modal-footer flex">
+          <button id="dismiss_add_email_dialog_${jvar_verification_id}" data-dismiss="modal" style="display:none;"></button>
+          <button data-dismiss="modal" class="btn btn-default" aria-label="${gs.getMessage('Close dialog')}">
+            ${gs.getMessage('Cancel')}
+          </button>
+			
+          <button id="sysverb_add_new_email_${jvar_verification_id}" class="btn btn-primary"
+            onclick="
+			  var email = getEmail(this);
+              if (addNewEmail(this)) {
+                gel('dismiss_add_email_dialog_${jvar_verification_id}').click();
+				/* focus on 'Verify' button */
+				setTimeout(function() {
+				  var deviceId = getDeviceIdUsingEmail('${jvar_verification_id}', email);
+				  gel('email_address_verify_button_'+deviceId).focus();
+				}, 100);
+              }
+              return false;
+            " aria-label="${gs.getMessage('Add Email')}">
+            ${gs.getMessage('Add Email')}
+          </button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- "Verify Email" Dialog -->
+
+  <div id="verify_email_address_dlg" tabindex="-1" aria-hidden="true" class="modal" role="dialog" aria-labelledby="modal1_title" aria-describedby="modal1_description">
+    <div class="modal-dialog">
+      <div class="modal-content pwd-verify-device-dialog">
+        <div class="modal-header">
+			<button data-dismiss="modal" class="btn btn-icon close icon-cross">					
+			<span class="sr-only">${gs.getMessage("Close dialog")}</span>	
+			</button>
+          <h4 id="modal1_title" class="modal-title">${gs.getMessage("Verify the Email Address")}</h4>
+          <span id="modal1_description" class="pwd-modal-subtitle">
+            ${gs.getMessage('The system sent a code to the email address. Enter the code and click Verify.')}$[SP]$[SP]
+          </span>
+        </div>
+		  
+        <div class="modal-body">
+            <input type="hidden" id="verify_email_address_id_${jvar_verification_id}" value=""/>
+
+            <div class="form-group" id="verify_email_address_name_form_group_${jvar_verification_id}">
+              <label for="verify_email_address_name_${jvar_verification_id}" class="control-label col-sm-4">
+                ${gs.getMessage('Email name')}
+              </label>
+              <span class="col-sm-8">
+                <input type="text" id="verify_email_address_name_${jvar_verification_id}" value="" class="form-control pwd-form-control" disabled="true"/>
+              </span>
+            </div>
+
+
+        <div class="form-group" id="verify_email_address_number_form_group_${jvar_verification_id}">
+          <label for="verify_email_address_email_${jvar_verification_id}" class="control-label col-sm-4">
+            ${gs.getMessage('Email address')}
+          </label>
+          <span class="col-sm-8">
+            <input type="text" id="verify_email_address_email_${jvar_verification_id}" value="" class="form-control pwd-form-control" disabled="true"/>
+          </span>
+        </div>
+       
+
+            <div class="form-group is-required" id="verify_dialog_email_code_form_group_${jvar_verification_id}">
+              <label for="verify_dialog_email_code_${jvar_verification_id}" class="control-label col-sm-4">
+                <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" aria-label="${gs.getMessage('Required')}"></span>
+                ${gs.getMessage('Code')}
+              </label>
+              <span class="col-sm-8">
+                <div style="display:-webkit-box">
+                  <input type="text" id="verify_dialog_email_code_${jvar_verification_id}" 
+             name="sysparm_email_code_${jvar_verification_id}" value="" placeholder="${gs.getMessage('Enter code')}"
+                         class="form-control pwd-form-control" style="width:160px; display:inline-block" aria-required="true" autocomplete="off"
+                         onkeypress="clearEmailFieldError('verify_email_dialog_error_msg_${jvar_verification_id}','verify_dialog_email_code_form_group_${jvar_verification_id}');"
+                         aria-describedby="verify_email_dialog_error_msg_${jvar_verification_id}" 
+						 oninput="updateMandatoryMarker(this, 'verify_dialog_email_code_form_group_${jvar_verification_id}')"/>$[SP]
+                  <button class="btn btn-primary"
+                    onclick="
+                      resendEmailEnrollmentCode(this);
+                      return false;
+                    " aria-label="${gs.getMessage('Send New Code')}">
+                    ${gs.getMessage('Send New Code')}
+                  </button>
+                </div>
+                <span id="verify_email_dialog_error_msg_${jvar_verification_id}" class="help-block" style="text-align:left"></span>
+              </span>
+            </div>
+        </div>
+			
+        <footer class="modal-footer flex">
+          <button id="dismiss_verify_email_dialog_${jvar_verification_id}" data-dismiss="modal" style="display:none;"></button>
+          <button data-dismiss="modal" class="btn btn-default" aria-label="${gs.getMessage('Close dialog')}">
+            ${gs.getMessage('Cancel')}
+          </button>
+          <button id="sysverb_verify_email_${jvar_verification_id}" class="btn btn-primary"
+            onclick="
+              if (verifyEmailAddressWithEnrollmentCode(this)) {
+                gel('dismiss_verify_email_dialog_${jvar_verification_id}').click();
+              }
+              return true;
+            " aria-label="${gs.getMessage('Verify')}">
+            ${gs.getMessage('Verify')}
+          </button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+</j:jelly>

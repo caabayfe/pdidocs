@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:if test="${jvar_cart_items.size() > 0}">
+
+    <g:evaluate jelly="true">
+		var catalog = jelly.sysparm_catalog ? jelly.sysparm_catalog : catalog;
+		var catalog_view = jelly.sysparm_catalog_view ? jelly.sysparm_catalog_view : catalog_view;
+		var params = null;
+		if( jelly.RP )
+			params = {"sysparm_parent_sys_id":jelly.RP.getParameterValue("sysparm_parent_sys_id"), "sysparm_parent_table":jelly.RP.getParameterValue("sysparm_parent_table"), "sysparm_view":jelly.RP.getParameterValue("sysparm_view")};
+		else
+			params = {"sysparm_parent_sys_id":jelly.sysparm_parent_sys_id, "sysparm_parent_table":jelly.sysparm_parent_table, "sysparm_view":jelly.sysparm_view};
+		params.sysparm_processing_hint=jelly.sysparm_processing_hint;
+		var editCartAction = GlideappCatalogURLGenerator.getEditCartUrlWithParams(catalog, catalog_view, jelly.sysparm_processing_hint, jelly.sysparm_link_parent, params);
+		editCartAction = "window.location='" + editCartAction + "';CustomEvent.fireTop('cart.edit');";
+		var checkoutAction = GlideappCatalogURLGenerator.getCheckoutActionWithParams(catalog, catalog_view, gs.getSessionToken(), params);
+		var continueShoppingAction = GlideappCatalogURLGenerator.getContinueShoppingActionWithParams(catalog, catalog_view, params);
+    </g:evaluate>
+    <tr class="sc_cart_buttons" role="navigation" aria-labelledby="shopping_cart_title">
+        <td colspan="6">
+            <j:if test="${jvar_sc_edit_cart_button == 'true'}">
+                <g:sc_button classes="request_catalog_button_with_icon" img="images/button_arrow_rt.gifx" id="catalog_cart_edit_button" onclick="${editCartAction}" label="${jvar_sc_edit_cart_label}" title="${jvar_sc_edit_cart_label}"/>
+            </j:if>
+            <j:if test="${jvar_sc_proceed_checkout_button == 'true'}">
+                <g:sc_button classes="request_catalog_button_with_icon" img="images/button_arrow_rt.gifx" id="catalog_cart_proceed_checkout" onclick="if(typeof g_form !== 'undefined' ${AND} !g_form.modified) this.onclick='';${checkoutAction};" label="${jvar_sc_proceed_checkout_label}" title="${jvar_sc_proceed_checkout_label}" isPrimary="true"/>
+            </j:if>
+            <j:if test="${jvar_sc_continue_shopping_button == 'true'}">
+                 <g:sc_button classes="request_catalog_button_with_icon" img="images/button_arrow_lt.gifx" id="catalog_cart_continue_shopping" onclick="${continueShoppingAction}" label="${jvar_sc_continue_shopping_label}" title="${jvar_sc_continue_shopping_label}"/>
+            </j:if>
+        </td>
+    </tr>
+</j:if>
+</j:jelly>

@@ -1,0 +1,49 @@
+<div class="filter-container">
+   <div class="filter-bar">
+      <div class="filter-group" ng-class="{'mg-bt-sm' : c.filterPills && c.filterPills.length > 0, 'mg-bt-xl' : !c.filterPills || c.filterPills.length == 0}">
+         <p class="filter-label">${Filter by:}</p>
+         <div ng-repeat="fc in c.filtersData | filter:{displayOnUI: true} | limitTo:c.limitFilters" ng-init="($last && c.adjustFilters())">
+            <fieldset class="dropdown" ng-keydown="c.handleAccessibilityInDropdown($event)">
+               <button id="filter-{{fc.categoryId}}" class="btn btn-link dropdown-toggle filter-group-button" aria-haspopup="true" data-toggle="dropdown" data-filter-grp-id="{{fc.categoryId}}" aria-label="${Filter by:} {{fc.title}}">{{fc.title}}
+               <span ng-show="fc.selectedFilters.length > 0">({{fc.selectedFilters.length}})</span>
+               <span class="caret"></span>
+               </button>
+               <div class="dropdown-menu" ng-style="c.getDropdownStyle()">
+                  <ul class="list-group filter-container-style" ng-class="{'custom-padding': fc.isFilterGroupPresent}">
+                     <li ng-repeat="filter in fc.filters" class="list-group-item {{!$last ? 'mg-bt-sm': ''}} {{$last && c.isScrollable ? 'mg-bt-lg': ''}} {{$index > 0 && filter.isGroup && fc.filters[$index-1].isGroup == false ? 'mg-tp-sm': ''}}">
+                       <span class="filter-style" ng-class="{'standalone-filter-style' : filter.subFilters == undefined || filter.subFilters.length == 0}">
+                         <span aria-expanded="{{filter.expand}}" aria-label="${Filter group} {{filter.filterName}}" class="fa-collapse-style" tabindex="0" ng-if="filter.subFilters !== undefined && filter.subFilters.length > 0" ng-click="c.expandFilters(fc, filter)">
+                           <i class="fa" ng-class="{'fa-angle-right' : !filter.expand, 'fa-angle-down': filter.expand}" aria-hidden="true"></i>
+                         </span>
+                         <button role="checkbox" aria-checked="mixed" ng-show="c.areSomeSubfilterSelected(filter)" ng-click="c.onFilterValueChange(fc, filter)" class="intermediate-select-style" aria-label="{{c.getFilterAriaLabel(filter)}}"><i class="fa fa-minus-square"></i></button>
+                         <input type="checkbox" id="{{fc.categoryId + '-' +filter.filterId}}" name="{{filter.filterName}}" ng-show="!c.areSomeSubfilterSelected(filter)" ng-model="filter.selected" ng-change="c.onFilterValueChange(fc, filter)" aria-label="{{c.getFilterAriaLabel(filter)}}">
+                         <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{filter.filterName}}" for="{{fc.categoryId + '-' +filter.filterId}}" ng-class="{'filter-group-label-style' : filter.isGroup}">{{filter.filterName}}</label>
+                       </span>
+                        <ul role="list" class="list-group subfilter-wrapper" ng-if="filter.expand" aria-label="{{filter.filterName}}">
+                           <li role="listitem" ng-repeat="subfilter in filter.subFilters" class="list-group-item {{!$last ? 'mg-bt-sm': ''}}">
+                              <div class="subfilter-style">
+                                 <input type="checkbox" id="{{fc.categoryId + '-' +filter.filterId + '-' + subfilter.filterId}}" name="{{subfilter.filterName}}" ng-model="subfilter.selected" ng-change="c.onFilterValueChange(fc, filter, subfilter)" aria-label="${Filter} {{subfilter.filterName}}">
+                                 <label ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{subfilter.filterName}}" for="{{fc.categoryId + '-' +filter.filterId + '-' + subfilter.filterId}}">{{subfilter.filterName}}</label>
+                              </div>
+                           </li>
+                        </ul>
+                     <hr ng-hide="!filter.isGroup || ($last && filter.isGroup)" class="initials" ng-class="{'mg-tp-lg' : filter.isGroup && !$last}"/>
+                     </li>
+                  </ul>
+                 <div class="dropdown-footer">
+                    <hr class="action-separator-style" ng-hide="!c.isScrollable"/>
+                    <!-- Filter Actions -->
+                    <div class="filter-actions display-flex space-between mg-tp-lg">
+                      <button class="clearBtn btn btn-link btn-sm pd-initial" ng-click="c.clearFilters(fc, $event)" ng-disabled="!fc.enableClearBtn" aria-label="${Clear filter}">${Clear}</button>
+                      <button class="applyBtn btn btn-primary btn-sm" data-filter-grp-apply="filter-desktop-apply" data-filter-grp-apply-id="{{fc.categoryId}}" ng-click="c.applyFilter(fc)" ng-disabled="!fc.enableApplyBtn" aria-label="${Apply filter}">${Apply}</button>
+                    </div>
+                 </div>
+               </div>
+            </fieldset>
+         </div>
+        <button id="all-filters" data-toggle="modal" data-target="#ec-flyout-filter-modal" data-keyboard="false" 
+                data-backdrop="static" class="btn btn-link dropdown-toggle all-filters" ng-click="c.toggleFlyout = true" aria-haspopup="true">${All filters}
+        </button>
+      </div>
+   </div>
+</div>

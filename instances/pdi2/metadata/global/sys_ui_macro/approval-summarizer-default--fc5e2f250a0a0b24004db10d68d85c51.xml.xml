@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_has_source">
+        var flag = !${ref}.sysapproval.nil() || !${ref}.source_table.nil();
+        flag;
+    </g:evaluate>
+    <j:if test="${jvar_has_source}">
+        <g:evaluate var="jvar_ni" jelly="true"
+            expression="
+            var gr = null;
+            if ( !${ref}.source_table.nil()) {
+                gr = new GlideRecord(${ref}.source_table);
+                gr.get( ${ref}.document_id);
+            } else {
+                gr = new GlideRecord('task');
+                gr.get(${ref}.sysapproval);
+            }
+        " />
+        <g:evaluate>
+            g_approval_form_request = true; // this global is checked in ACLs
+        </g:evaluate>
+        <g:evaluate>
+            var rp_backup = RP;
+        </g:evaluate>
+        <g:evaluate var="jvar_my_form">
+            var gc = new GlideController();
+            var p = new GlidePopup(gc, (gr.getRecordClassName() || '') + '');
+            p.putParameter("sys_id", (gr.sys_id || '') + '');
+            p.putParameter("sysparm_view", "approval");
+            //PRB579164: Skip g_form creation in activities.xml if activities displayed in formatter
+            p.putParameter("sysparm_skip_gform", "true");
+	     p.putParameter("sysparm_table", gr.getRecordClassName());
+	     p.putParameter("sysparm_readonly_activity", "true");
+            var rp = p.getRenderProperties();
+            rp.setSmallCaption(true);
+            rp.setInlinePopup(true);
+            rp.setReadOnly(false);
+            p.getPopup();
+        </g:evaluate>
+        <tr id="approval_summary_row">
+            <td width="100%" colspan="2">
+                <j2:if test="${gs.getProperty('glide.security.use_csrf_token')}">
+                    <input type="HIDDEN" name="sysparm_ck" value="$[gs.getSessionToken()]" />
+                </j2:if>
+                <div id="approval_summary" style="padding-top:8px;display:none;">
+                    <div class="caption" style="padding:4px;">${gs.getMessage('Summary of Item being approved')}</div>
+                    <div style="padding-left:2px;">
+                        <div class="form-horizontal">
+                            <g:no_escape>${jvar_my_form}</g:no_escape>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <g:evaluate>
+            delete g_approval_form_request; // removes the global
+        </g:evaluate>
+        <script>
+            addRenderEvent(moveSummaryForm);
+            function moveSummaryForm() {
+                var e = $("approval_summary");
+                var form = $("sysapproval_approver.do");
+                var formParent = form.parentNode;
+                formParent.appendChild(e);
+                e.show();
+            }
+        </script>
+        <g:evaluate>
+            RP = rp_backup;
+        </g:evaluate>
+    </j:if>
+</j:jelly>

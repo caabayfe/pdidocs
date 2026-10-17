@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:set var="jvar_name" value="show_ci_health_${ref}" />
+	<j2:set var="jvar_can_access_cmdb_endpoint" value="$[__ref__.canWrite()]" />
+	<j2:if test="$[jvar_can_access_cmdb_endpoint]">
+		<g2:evaluate var="jvar_is_valid_ci" jelly="true">
+			if (__ref__.getSysIdValue() == null)
+				false;
+			else
+				__ref__.hasValidReference();
+		</g2:evaluate>
+		<g2:set_if var="jvar_health_display" test="$[jvar_is_valid_ci == true]" true="visible" false="hidden" />
+		<g2:set_if var="jvar_health_position" test="$[jvar_is_valid_ci == true]" true="" false="absolute" />
+		<g2:set_if var="jvar_health_left" test="$[jvar_is_valid_ci == true]" true="" false="-1000px" />
+
+		<!-- Add an icon to the right side of the reference field -->
+		<a id="${jvar_name}"
+				name="${jvar_name}"
+				style="visibility: $[jvar_health_display];position: $[jvar_health_position];left: $[jvar_health_left];"
+				aria-label="${HTML:gs.getMessage('Open in CMDB Workspace')}"
+				title="${gs.getMessage('Open in CMDB Workspace')}"
+				alt="${gs.getMessage('Open in CMDB Workspace')}"
+				class="icon ref-button btn btn-default btn-ref"
+				target="cmdb_health_dashboard_${ref}"
+				role="link"
+				tabindex="0">
+			<span id="icon_${jvar_name}" class="icon-refreshing"/>
+		</a>
+
+		<script>
+			(function () {
+				var buttonElem = $("${jvar_name}");
+				var buttonIconElem = $("icon_${jvar_name}");
+
+				var classHealthOK = "icon-database";
+				var classHealthNotOK = "icon-database";
+				var classRefreshing = "icon-refreshing";
+
+				function checkHealth(element, original, changed, loading) {
+					var isValidCI = $[jvar_is_valid_ci];
+
+					// If we've hidden the icon on form load it means that either we don't have a CI in the associated field 
+					// or the value in that field is invalid so we don't want to show the field until there's been a change
+					if (loading $[AND] !isValidCI)
+						return;
+
+					if (changed) {
+						refreshHealthIcon();
+						buttonElem.style.visibility = 'visible';
+						buttonElem.style.position = '';
+						buttonElem.style.left = '';
+
+						new Ajax.Request('/api/now/cmdbHealth/healthInfo', {
+							method: 'get',
+							requestHeaders: {
+								'X-UserToken': window.g_ck,
+								'Accept': 'application/json'
+							},
+							parameters: {
+								"sysparm_ci_sys_ids" : changed
+							},
+							onSuccess: function(response) {
+								displayHealthIcon(response);
+							},
+							onFailure: function() {
+								hideHealthIcon();
+							}
+						});
+					} else
+						hideHealthIcon();
+				}
+
+				function displayHealthIcon(response){
+					if (response $[AND] response.responseJSON $[AND] response.responseJSON.result $[AND] response.responseJSON.result.length != 0) {
+						var result = response.responseJSON.result[0];
+
+						$("${jvar_name}").writeAttribute("href", result.health_dashboard_url);
+
+						if (result.health_result) {
+							buttonIconElem.removeClassName(classRefreshing);
+							buttonIconElem.addClassName(classHealthOK);
+						} else {
+							buttonIconElem.removeClassName(classRefreshing);
+							buttonIconElem.addClassName(classHealthNotOK);
+						}
+					} else
+						hideHealthIcon();
+				}
+
+				function hideHealthIcon(){
+					buttonElem.style.visibility = 'hidden';
+					buttonElem.style.position = 'absolute';
+					buttonElem.style.left = '-1000px';
+
+					$("${jvar_name}").writeAttribute("href", "#");
+				}
+
+				function refreshHealthIcon(){
+					buttonIconElem.addClassName(classRefreshing);
+					buttonIconElem.removeClassName(classHealthOK);
+					buttonIconElem.removeClassName(classHealthNotOK);
+				}
+
+				// Create an event handler to watch for changes on the field this "icon" is rendered next to
+				var h = new GlideEventHandler('onChange_cmdb_ci_health_${ref}', checkHealth, '${ref}');
+				g_event_handlers.push(h);
+
+				// Prevent clicks if there isn't a valid href
+				buttonElem.on("click", function (event) {
+					var url = this.readAttribute("href");
+					if (!url || url == "#")
+						event.preventDefault();
+				});
+			})();
+		</script>
+	</j2:if>
+</j:jelly>

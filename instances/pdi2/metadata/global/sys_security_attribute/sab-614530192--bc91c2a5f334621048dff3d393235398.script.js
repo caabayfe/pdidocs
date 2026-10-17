@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_smart_imp_auto_m2m_temp_cat_to_action_cat');

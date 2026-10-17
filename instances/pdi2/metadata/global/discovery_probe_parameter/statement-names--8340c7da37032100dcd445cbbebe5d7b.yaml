@@ -1,0 +1,59 @@
+_meta:
+  hash: a887394b4aa44d0441680f0d5f4a68ad58d4e5b1ab5e81d67b5ea86dede3d1d5
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: roy.laurie
+  sys_created_on: 2014-09-11 18:01:55
+  sys_id: 8340c7da37032100dcd445cbbebe5d7b
+  sys_mod_count: '9'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_8340c7da37032100dcd445cbbebe5d7b
+  sys_updated_by: now.discovery_infra
+  sys_updated_on: 2025-10-09 23:31:34
+active: 'true'
+name: statement_names
+probe: 5355955237402000627d8c00dfbe5ddf
+sys_name: statement_names
+sys_policy: ''
+value: ''
+value_script: |-
+  // Aggregates CIM statement names for all classifications
+
+  // enumerate all active CIM classifications
+  var classifierRecord = new GlideRecord('discovery_classy_cim');
+  classifierRecord.addActiveQuery();
+  classifierRecord.query();
+
+  // foreach classification, record the statement names in order
+  var statementNames = [];
+
+  while (classifierRecord.next()) {
+    var classifierId = '' + classifierRecord.sys_id;
+
+    // query for criteria in this classification
+    var criteriaRecord = new GlideRecord('discovery_class_criteria');
+    criteriaRecord.addActiveQuery();
+    criteriaRecord.addQuery('classy', classifierId);
+    criteriaRecord.query();
+
+    // foreach criteria, record the statement name
+    while (criteriaRecord.next()) {
+      var statementName = '' + criteriaRecord.name;
+      if (!JSUtil.contains(statementNames, statementName))
+        statementNames.push(statementName);
+    }
+  }
+
+  // Get queries that CIM - Classify wants to make
+  var classifyQueries = new GlideRecord('discovery_probes_cim_query');
+  classifyQueries.addQuery('probe', '5355955237402000627d8c00dfbe5ddf');    // sys_id of CIM - Classify probe
+  classifyQueries.query();
+  while (classifyQueries.next()) {
+     var result = SncDiscoveryCodeSigningUtil.isRecordTrusted('discovery_probes_cim_query', classifyQueries.getUniqueValue(), 'ecc_queue');
+     if (result)
+          statementNames.push('' + classifyQueries.name);
+  }
+
+  answer = statementNames.join(ProbeHandlerCim.STATEMENT_PARAMETER_DELIMITER);

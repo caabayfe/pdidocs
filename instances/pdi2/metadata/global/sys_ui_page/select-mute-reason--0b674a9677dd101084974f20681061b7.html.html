@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true" object="true">
+		var reasons = new GlideRecordSecure('scan_mute_rule_reason');
+		reasons.query();
+	</g:evaluate>
+	
+	<g:evaluate var="jvar_obj_list" expression="RP.getWindowProperties().get('sysparm_obj_list')" />
+	<g:evaluate var="jvar_check_ids" expression="RP.getWindowProperties().get('sysparm_check_ids')" />
+	
+	<input type="hidden" id="test_obj_list" name="test_obj_list" value="${jvar_obj_list}"/>
+	<input type="hidden" id="check_ids" name="check_ids" value="${jvar_check_ids}"/>
+		
+    <div class="form-horizontal">
+        <div class="form-group is-required" id="reason_selector">
+            <div nowrap="true" type="string" choice="0">
+                <label class="col-sm-12 col-md-4 control-label" id="reason_picker_label">
+                    <span class="label-text">${gs.getMessage('Reason')}</span>
+                </label>
+            </div>
+            <div class="col-sm-12 col-md-6 form-field input_controls">
+                <select name="reason_picker" id="reason_picker" style="width:200px" class="form-control select2">
+                    <j:while test="${reasons.next()}">
+                        <option value = "${reasons.sys_id}" >${gs.getMessage(reasons.mute_reason)}</option>
+                    </j:while>
+                </select>
+            </div>
+            <div class="col-sm-12 col-md-2 form-field-addons"></div>
+        </div>
+        <footer align="right" class="modal-footer flex">	
+			<button class="btn btn-default" onClick="closeDialog()">${gs.getMessage('Cancel')}</button>
+            <button class="btn btn-primary" id="mute_button" onClick="this.disabled=true;actionOK()">${gs.getMessage('Mute')}</button>
+        
+        </footer>
+    </div>
+</j:jelly>

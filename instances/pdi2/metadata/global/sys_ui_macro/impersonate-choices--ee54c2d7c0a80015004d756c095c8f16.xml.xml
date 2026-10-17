@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <j:set var="jvar_list" value="${jvar_history.split(',')}" />
+    <j:set var="jvar_current_user" value="${user.getID()}" />
+    <!-- if we're impersonating right now then our "root" user always shows up -->
+    <j:if test="${gs.getImpersonatingUserName() != null}">
+        <option value="${gs.getImpersonatingUserName()}" style="color:green">${gs.getImpersonatingUserDisplayName()}</option>
+    </j:if>
+    <j:if test="${gs.getImpersonatingUserName() == null}">
+        <option value="${gs.getUser().getID()}" style="color:green">${gs.getUser().getFullName()}</option>
+    </j:if>
+    <j:forEach var="jvar_current_item" items="${jvar_list}">
+        <j:if test="${jvar_current_item != jvar_current_user}">
+            <g:evaluate jelly="true">
+                var recent_user = GlideUser.getUser(jelly.jvar_current_item);
+				if (recent_user != null)
+                	var recent_name = GlideStringUtil.escapeHTML(recent_user.getFullName());
+            </g:evaluate>
+			<j:if test="${recent_user != null}">
+				<option value="${recent_user.getID()}">${recent_name} </option>
+	  		</j:if>
+        </j:if>
+    </j:forEach>
+</j:jelly>

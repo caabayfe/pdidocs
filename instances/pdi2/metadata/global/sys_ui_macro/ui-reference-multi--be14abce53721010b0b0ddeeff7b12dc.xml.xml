@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide">
+	<g:macro name="REQUIRED" label="REQUIRED" table="REQUIRED" display_value="REQUIRED" order_by="0" query="" value="" onchange="" onradiochange="" placeholder="" hide=""/>
+	
+	<div class="multi-select-group">		
+		<div class="input-group-radio">
+			<input class="radio" type="radio" id="radio-${jvar_name}" name="radioName" value="${jvar_label}" onchange="${jvar_onradiochange}" />			
+			<label class="radio-label" for="radio-${jvar_name}">${jvar_label}</label>
+		</div>
+
+		<j:if test="${!jvar_hide}">
+			<div class="multi-select-container" nowrap="true" style="${jvar_style};">
+				<input type="hidden" name="${jvar_name}" class="form-control" id="${jvar_name}" value="${jvar_value}" />
+			</div>
+		</j:if>
+	</div>
+	
+	<script>		
+	addAfterPageLoadedEvent(function() {
+		var pageSize = 20;
+		var columns = '';
+		$j("#${jvar_name}").select2({
+			placeholder: "${JS:jvar_placeholder}",
+			multiple: true,
+			ajax: {
+				url: "data_table.do",
+				dataType: "json",
+				quietMillis: NOW.ac_wait_time,
+				data: function(search, page) {
+					return {
+						sysparm_reference: "${JS:jvar_table}",
+						sysparm_target: "",
+						sysparm_query: "${JS:jvar_query}",
+						sysparm_columns: "${JS:jvar_display_value}",
+						iSortCol_0: "${JS:jvar_order_by}",
+						iDisplayStart: ((page - 1) * pageSize) + "",
+						iDisplayLength: pageSize,
+						sSearch_0: search
+					};
+				},
+				results: function(data, page) {
+					var more = (page * pageSize) ${LT} data.iTotalRecords;
+					return {results: data.aaData, more: more};
+				}
+			},
+			formatResult: function(item) {
+				return item.DT_RowId.substring(item.DT_RowId.indexOf(':') + 1);
+			},
+			formatSelection: function(item) {
+				return item.DT_RowId.substring(item.DT_RowId.indexOf(':') + 1);
+			},
+			id: function(item) {
+				return item.DT_RowId.split(":")[0];
+			},
+			initSelection : function (element, callback) {
+        		    $j.ajax({
+                		url:  "data_table.do",
+                		type: "POST",
+                		dataType: "json",
+                		data:  {
+					sysparm_reference: "${JS:jvar_table}",
+					sysparm_target: "",
+					sysparm_query: "sys_idIN" + $(element).val(),
+					sysparm_columns: "${JS:jvar_display_value}",
+					iSortCol_0: "${JS:jvar_order_by}",
+                			iDisplayStart: "0",
+                			iDisplayLength: 1000,
+                			sSearch_0: null,
+					paging: false
+				}
+			    }).done(function(data) {
+					callback(data.aaData);
+			    });
+      			}
+		});
+		if ("${JS:jvar_onchange}") {
+			$j("#${jvar_name}").on("change", function(e) { ${JS:jvar_onchange} });
+		}
+	});
+		
+	</script>
+	<style type="text/css">
+		.select2-search-choice-close {
+			display: block;
+			width: 12px;
+			height: 13px;
+			position: absolute;
+			right: 5px;
+			top: 4px;
+			text-decoration: none;
+			outline: none;
+		}
+		
+		<!-- fix for wierd layout issue on multi select result list -->
+		.select2-container.select2-container-multi.form-control {
+			height: auto;
+		}
+			
+		.multi-select-group {
+			display: flex;
+			align-items: center;
+			margin: 14px 0;
+		}
+		
+		.multi-select-container {
+			flex: 70%;
+		}
+			
+		.multi-select-group .input-group-radio {
+			flex: 30%;
+		}
+		
+		<!-- overwrite pills appearance -->
+		.multi-select-container .select2-container-multi .select2-choices .select2-search-choice  {
+			min-height: 24px;
+			border: 1px solid #228477;
+			background-color: #EEF8F8;
+			padding-right: 31px;
+			color: #228477;
+		}
+		
+		.multi-select-container .select2-container-multi .select2-search-choice-close {
+			font-size: 15px;
+			right: 7px;
+		}						  				  
+										
+	</style>
+</j:jelly> 

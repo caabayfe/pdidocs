@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<form id="mimSmsPopup">
+	<g:requires name="scripts/lib/jquery_includes.js" />
+	<g:requires name="scripts/heisenberg/heisenberg_all.js" />
+	<g:requires name="scripts/notify/js_includes_notify.js"></g:requires>
+	<g:requires name="/NotifyOnTaskUIProcessor.jsdbx"></g:requires>
+    <j:set var="jvar_sys_id" value="${RP.getWindowProperties().get('sys_id')}" />
+	<j:set var="jvar_source_table" value="${RP.getWindowProperties().get('source_table')}" />
+	<j:set var="jvar_type" value="${RP.getWindowProperties().get('type')}" />
+	<g:evaluate var="jvar_max_sms_len">
+		var maxSMSConcatenation = gs.getProperty('glide.notify.sms.max_concatenation');
+		var maxLength = maxSMSConcatenation * 160;	// keep it simple as UTF8 in JS is a bit troublesome
+		maxLength;
+	</g:evaluate>
+	<g:evaluate var="jvar_task" jelly="true">
+		var task = new GlideRecord(jelly.jvar_source_table);
+		task.get(jelly.jvar_sys_id);
+		task;
+	</g:evaluate>
+	<g:evaluate var="jvar_display_message" jelly="true">
+		var display = "none";
+		if (jelly.jvar_type == "sms")
+			display = "block";
+		display;
+	</g:evaluate>
+	<g:evaluate var="jvar_users" jelly="true"> <!--this variable holds all the fields appearing on this UI page -->
+		//find sys_id of sys_user table
+		var sysUserTable = new GlideRecord("sys_db_object");
+		sysUserTable.get("name", "sys_user");
+		//get all source record fields
+		var gr = new GlideRecord(jelly.jvar_source_table);
+		var fields = gr.getElements();
+		var users = [];
+		//get all the fields from source record that are references to the sys_user or 
+		//fields that are refernces to table that extend sys_user
+		for (var i = 0; i &lt; fields.size(); i++) {
+			var field = fields.get(i);
+			var ed = field.getED();
+			//refernce to the table that extends sys_user is also acceptable
+			if (ed.isReference()) {
+				var reference = ed.getReference();
+				var refTable = new TableUtils(reference);
+					if (refTable.getAbsoluteBase() == "sys_user") {
+						users.push({"label":field.getLabel(), "name":field.getName()});
+				}
+			}
+		}
+		//add group manager
+		var managerField = gr.getElement('assignment_group.manager');
+		users.push({"label":managerField.getLabel(), "name":managerField.getName()});
+		//add On-call user
+		if (GlidePluginManager.isRegistered('com.snc.on_call_rotation')) {
+			users.push({"label":gs.getMessage("On-call user"), "name":"rota"});
+		}
+		//add myself
+		users.push({"label":gs.getMessage("Myself"), "name":"myself"});
+		//add other
+		users.push({"label":gs.getMessage("Other"), "name":"other"});
+		JSON.stringify(users);
+	</g:evaluate>
+	<g:evaluate var="jvar_available_users_json">
+		//this variable holds fields that are going to be enabled on ui page
+		var availableUsers = {};
+		for (var i = 0; i &lt; users.length; i++) {
+			if (task.getDisplayValue(users[i].name)) {
+				availableUsers[users[i].name] = {"display_value" : task.getDisplayValue(users[i].name), "label" : users[i].label, "value" : task.getValue(users[i].name)};   
+			} 
+		}
+
+		if (task.assignment_group &amp;&amp; task.assignment_group.manager) {
+			availableUsers['manager'] = {"display_value" : task.assignment_group.manager.getDisplayValue(), "label" : gs.getMessage("Manager"), "value" : task.assignment_group.manager + '' };  
+		}
+		
+		if (GlidePluginManager.isRegistered('com.snc.on_call_rotation') &amp;&amp; task.assignment_group) {
+				var ocr = new SNC.OnCallRotation();
+				var user = ocr.getEscalateeAt(task.getValue("assignment_group"), new GlideDateTime(), 1);
+				if (user) {
+					availableUsers['rota'] = {"display_value" : user.getDisplayValue(), "label" : gs.getMessage("On-call user"), "value" : user.getUniqueValue()};   
+				}
+		}
+		availableUsers['myself'] = {"display_value" : gs.getUserDisplayName(), "label" : gs.getMessage("Myself"), "value" : gs.getUser().getID()};   
+		JSON.stringify(availableUsers);
+	</g:evaluate>
+	
+	<style type="text/css"> 
+		#page table{
+			 border-spacing:1px;
+		}
+		#page td {
+			 padding:1px;
+		}
+		#other_label a:hover {
+			text-decoration:line-through;
+			color:red;
+		}
+		#users {
+			max-height: 190px;
+			overflow-y: auto;
+		}
+	</style>
+	
+	<div id="page">
+		<div id="pnlNotification">
+
+		</div>
+	<input type="hidden" name="cancel_or_submit" id="cancel_or_submit" value=""/>
+	<input type="hidden" name="task_id" id="task_id" value="${jvar_sys_id}"/>
+	<input type="hidden" name="type" id="type" value="${jvar_type}" />
+	<input type="hidden" name="source_table" id="source_table" value="${jvar_source_table}" />
+	<input type="hidden" name="custom_users" id="custom_users" value=""/>
+	<input type="hidden" name="custom_user_names" id="custom_user_names" value="" />
+	<input type="hidden" name="available_users" id="available_users" value="${jvar_available_users_json}" />
+	<input type="hidden" name="users" id="users" value="${jvar_users}" />
+
+	<table align="center" style="width:340px">
+		<tr>
+			<td>
+				<div>
+				<table width="100%">
+					<tr>
+						<td colspan="2">
+							<j:if test="${jvar_type == 'sms'}">
+							  <h4>${gs.getMessage("Recipients")}</h4>
+							</j:if>
+							<j:if test="${jvar_type == 'conference'}">
+							  <h4>${gs.getMessage("Participants")}</h4>
+							</j:if>
+							
+						</td>
+					</tr>
+				</table>
+				</div>
+				<div id="users">
+				<table width="100%" >
+					<j:forEach items="${users}" var="jvar_user" begin="0" indexVar="jvar_select_index">
+						<j:if test="${jvar_select_index % 2 == 0}">
+							<tr>	
+								<td width="50%">
+									<g:evaluate var="jvar_fieldLabel" jelly="true" expression="users[jelly.jvar_select_index].label" />
+									<g:evaluate var="jvar_fieldName" jelly="true" expression="users[jelly.jvar_select_index].name" />
+									<div style="float: left" width="10px">
+										<span class="input-group-checkbox">
+											<g:ui_checkbox class="checkbox" id="${jvar_fieldName}" name="${jvar_fieldName}"/>
+										</span>
+									</div>
+									<div>
+										<label style="display:inline" class="checkbox-label" for="${jvar_fieldName}"><span id="${jvar_fieldName}_label">${jvar_fieldLabel}</span></label>
+									</div>
+								</td>
+								<td width="50%">
+									<g:evaluate var="jvar_usersLength" jelly="true" expression="users.length" />	
+									<j:if test="${jvar_select_index &lt; (jvar_usersLength - 1)}">
+										<g:evaluate var="jvar_select_index" jelly="true" expression="jelly.jvar_select_index + 1" />	
+										<g:evaluate var="jvar_fieldLabel" jelly="true" expression="users[jelly.jvar_select_index].label" />
+										<g:evaluate var="jvar_fieldName" jelly="true" expression="users[jelly.jvar_select_index].name" />
+										<div style="float: left" width="10px">
+											<span class="input-group-checkbox">
+												<g:ui_checkbox class="checkbox" id="${jvar_fieldName}" name="${jvar_fieldName}"/>
+											</span>
+										</div>
+										<div>
+											<label style="display:inline" class="checkbox-label" for="${jvar_fieldName}"><span id="${jvar_fieldName}_label">${jvar_fieldLabel}</span></label>
+										</div>
+									</j:if>
+								</td>	
+							</tr>		
+						</j:if>
+					</j:forEach>
+				</table>
+				</div>
+				<div>
+				<table width="100%">
+				<tr>
+					<td colspan="2">
+						<div id="user_add" style="display:none">
+							<table align="center">
+							<tr>
+								<td align="right">
+									<g:ui_reference id="user_ref" name="user_ref" table="sys_user" show_popup="false" />
+								</td>
+								<td>
+									<button id="add_user" type="button" onclick="notifyUiProcessor.addUser()">${gs.getMessage("Add")}</button>
+									<button id="clear_users" type="button" onclick="notifyUiProcessor.clearUsers()">${gs.getMessage("Clear all")}</button>
+								</td>
+							</tr>
+							</table>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<div id="message_section" style="display:${jvar_display_message}" >
+							<table>
+								<tr>
+									<td>
+										<h4>${gs.getMessage("Message")}</h4>
+									</td>
+									<td style="text-align:right">
+										<div id="count"/>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2" style="text-align:center">
+										<textarea name="message_text" id="message_text" style="resize: none;" cols="50" rows="4" maxlength="${jvar_max_sms_len}" onchange="notifyUiProcessor.countCharacters()" onkeyup="notifyUiProcessor.countCharacters()">${task.number}: </textarea>
+									</td>
+								</tr>
+							</table>
+						</div>
+					</td>
+				</tr>
+				</table>
+			</div>
+			</td>
+		</tr>
+		<tr>
+			<td style="text-align:right" class="pull-right">
+				<button class="btn btn-default action_contex" id="cancel_popup" name="cancel_popup" >${gs.getMessage('Cancel')}</button>
+				$[SP]
+				<button type="submit" class="btn btn-primary action_contex" id="submit_popup" name="submit_popup">
+					<j:if test="${jvar_type == 'sms'}">
+						${gs.getMessage('Send')}
+					</j:if>
+					<j:if test="${jvar_type == 'conference'}">
+						${gs.getMessage('Start')}
+					</j:if>
+				</button>
+			</td>
+		</tr>
+	</table>
+	</div>
+</form>
+	<div id="alert3" tabindex="-1" aria-hidden="true" class="modal" role="dialog" aria-labelledby="alert3_title">
+     <div class="modal-dialog modal-sm modal-alert">
+         <div class="modal-content">
+             <header class="modal-header">
+                 <h4 id="alert3_title" class="modal-title">Info Alert</h4>
+             </header>
+             <div class="modal-body">
+                 <p>Just letting you know that something happened. Nothing to worry about...</p>
+             </div>
+             <footer class="modal-footer flex">
+                 <button data-dismiss="modal" class="btn btn-primary">OK</button>
+             </footer>
+         </div>
+     </div>
+ </div>
+	<div id="notifyAlert" style="display: none;" class="notification">
+			<span class="message">Negative Notification</span>
+		   <button data-dismiss="alert" class="btn btn-icon close icon-cross">
+			   <span class="sr-only">Close</span>
+		   </button>
+		</div>
+</j:jelly>

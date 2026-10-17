@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script>
+		
+		var totalCount = 0;
+		var pageCount = 0;
+		var pageOffset = 0;
+		var pageLimit = 20;
+		var searchInProgress = false;
+		
+		function fetchFromRestApi(table, query, unreadOnly, success, failure) {
+			var ga = new GlideAjax('PublicationsQueryProcessor');
+			ga.addParam('sysparm_name','fetchPublications');
+			ga.addParam('sysparm_query', query);
+			ga.addParam('sysparm_limit', pageLimit);
+			ga.addParam('sysparm_offset', pageOffset);
+			if(unreadOnly) {
+				ga.addParam('sysparm_unread_only', 'true');
+			}
+			ga.addParam('sysparm_escapeHTML', 'true');
+			ga.getXML(function(response) {
+				var answer = response.responseXML.documentElement.getAttribute("answer");
+				success(answer);
+			});
+		}
+		
+		function search(category, searchTerm, orderBy, unreadOnly, success, failure) {
+			searchInProgress = true;
+			var query = "";
+			orderBy = orderBy || "publish_date";
+			if(category) {
+				query += "category="+category+"^";
+			}
+			if(searchTerm) {
+				query += "textLIKE"+searchTerm+"^ORshort_descriptionLIKE"+searchTerm+"^";
+			}
+			query += "ORDERBYDESC"+orderBy;
+			fetchFromRestApi('sn_publications_publication', query, unreadOnly, success, failure);
+		}
+		
+		function doFilter() {
+				setTimeout(function() {
+				var category = encodeURIComponent($j('#category_filter').val());
+				var searchTerm = encodeURIComponent($j('#publication_keywords').val());
+				var sortBy = encodeURIComponent($j('#sort-order').val());
+				var unreadyOnly = $j('#showUnread').hasClass('active');
+				window.location.href = window.location.pathname + "?" + ["sysparm_category="+category, "sysparm_searchTerm="+searchTerm, "sysparm_sortBy="+sortBy, "sysparm_unread_only="+unreadyOnly].join("${AMP}");		
+			}, 500);
+		}
+		
+				
+		function getParamsMap() {
+			var paramMap = {};
+			var queryString = window.location.search;
+			var qParts = [];
+			if(!queryString || queryString.indexOf('?') != 0) {
+				return paramMap;
+			}
+			qParts = queryString.slice(1).split("${AMP}");
+			for(var i = 0; i != qParts.length; ++i) {
+				var argParts = qParts[i].split('=');
+				if(argParts.length != 2) {
+					continue;
+				}
+				paramMap[argParts[0]] = decodeURIComponent(argParts[1]);
+			}
+			return paramMap;
+		}
+				
+		function initControls(category, searchTerm, sortBy, unreadOnly) {
+			if(category) {
+				$j('#category_filter').val(category);
+			}
+			if(searchTerm) {
+				$j('#publication_keywords').val(searchTerm);
+			}
+			if(sortBy) {
+				$j('#sort-order').val(sortBy);
+			}
+			if(unreadOnly) {
+				$j('#showUnread').addClass('active');
+				$j('#allView').removeClass('active');
+			}
+		}
+		
+		function getPublicationContent(publication) {
+			var content = publication.content;
+			if(!content) return "";
+			content = content.replace(/(&lt;([^>]+)>)/ig,"");
+			content = (content.length > 503) ? content.substr(0, 500) + "..." : content;
+			return content;
+		}
+		
+		function appendSearchResult(publication) {
+			var publicationTemplate = '<div class="container-fluid-pub item-padding ng-scope"><div class="article"><div class="main-content  col-xs-11 col-md-11"><div class="title"><h5><a target="_self" class="ng-binding" href="view_pub.do?sysparm_id='+publication.sys_id+'">'+publication.short_description+'</a></h5></div><span class="searchresults-metatop ng-scope"><small class="info-row text-muted">';
+			if(publication.category) {
+					publicationTemplate += '<div class="line-block ng-binding ng-scope">' + publication.category + '</div>';
+			}
+			publicationTemplate += '<div class="line-block '+(publication.category?'icon-circle-solid':'')+'">${gs.getMessage('Published')}';
+			publicationTemplate += ' <time class="ng-binding">' + publication.publish_date.split(' ')[0] + '</time></div>';
+			publicationTemplate += '<div class="line-block icon-circle-solid">${gs.getMessage('Expires')}';
+			publicationTemplate += ' <time class="ng-binding">' + publication.expiry_date.split(' ')[0]+'</time>' +
+			'</div></small></span><div class="ng-binding" style="color: #485563 !important;font-size: 13px;line-height: 1.42857;">';
+			publicationTemplate += getPublicationContent(publication) + '</div></div></div></div>';
+			$j('#resultsContainer').append(publicationTemplate);
+		}
+		
+		function paginate() {
+			if(pageCount >= totalCount || searchInProgress)
+				return;
+			pageOffset += pageLimit;
+			searchFromParams();
+		}
+		
+		function renderPublications(response) {
+			var response = JSON.parse(response);
+			if(!response) {
+				$j('#unreadPubCount').html('0');
+				$j('#allPubCount').html('0');
+				return;
+			}
+			var publications = response.result;
+			totalCount = isUnreadOnly() ? response.unreadCount : response.count;
+			$j('#unreadPubCount').html(response.unreadCount);
+			$j('#allPubCount').html(response.count);
+			for(var i = 0; i != publications.length; ++i) {
+				appendSearchResult(publications[i]);
+			}
+			pageCount += publications.length;	
+			searchInProgress = false;
+		}		
+		
+		function showFailure(error) {
+			console.log("Error fetching search results:"+JSON.stringify(error));
+		}
+		
+		function isUnreadOnly() {
+			return getParamsMap()['sysparm_unread_only'] == 'true';
+		}
+		
+		function setListingHeight() {
+			var navHeight = $j('.navbar-header').height();
+			var docHeight = $j('body').height();
+			$j('#main-content').css('overflow-y', 'auto');			
+			$j('#main-content').css('height', docHeight-navHeight);		
+		}				
+		
+		function searchFromParams(skipInitControls) {
+			var parmMap = getParamsMap();
+			var category = getParamsMap()['sysparm_category'];
+			var searchTerm = getParamsMap()['sysparm_searchTerm'];
+			var sortBy = getParamsMap()['sysparm_sortBy'];
+			var unreadOnly = isUnreadOnly();
+			if(!skipInitControls) {
+				initControls(category, searchTerm, sortBy, unreadOnly);		
+			}
+			search(category, searchTerm, sortBy, unreadOnly, renderPublications, showFailure);		
+		}
+		
+		$j(function() {						
+			searchFromParams();
+			$j("#publication_keywords").keyup(function(event) {
+				if(event.keyCode == 13) {
+					doFilter();
+				}
+			});
+			setListingHeight();
+			$j(window).resize(function() {
+				setListingHeight();
+			});
+			$j('#main-content').scroll(function () {
+                    if  ($j('#main-content').scrollTop() >= $j('#main-content')[0].scrollHeight - $j('#main-content').height()) {
+						paginate();
+                    }
+            }); 
+		});
+	</script>	
+    <style>
+        .publication-nav {
+            background-color: #e6e8ea;
+            border-bottom: #bdc0c4 1px solid;
+            display: block;
+            padding-left: 10px;
+        }
+
+        .m-icon-article {
+            width: 20px;
+            height: 20px;
+            background: url("/styles/source/article.svg") no-repeat;
+        }
+
+        .container-fluid-pub {
+            padding: 0 0 0 0;
+            margin-top: 15px !important;
+            margin-bottom: 20px !important;
+            color: #485563 !important;
+            display: table;
+        }
+
+        .article {
+            background-color: transparent !important;
+            border: none;
+			min-width: 600px;
+        }
+
+        .article .main-content {
+            display: inline-block;
+        }
+
+        .article .title {
+            display: block;
+            vertical-align: middle;
+        }
+
+        .article .title h5 {
+            display: inline-block;
+            color: #278efc;
+            margin: 0;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1.42857;;
+        }
+
+        a {
+            color: #278efc;
+            text-decoration: none;
+        }
+
+        .article .searchresults-metatop {
+            display: block;
+            margin: 0;
+        }
+
+        .article .searchresults-metatop .info-row {
+            display: block;
+            font-family: "Arial", sans-serif;
+            font-size: 13px;
+            color: #81878e;
+        }
+
+        .article .searchresults-metatop div.line-block {
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .icon-circle-solid:before {
+            content: "\f12e";
+        }
+
+        .article .searchresults-metatop div.icon-circle-solid:before {
+            font-size: 0.65em;
+            margin: 0 4px;
+        }
+
+        .search-bar form .separator {
+            margin-left: -4px;
+        }
+        .search-bar .no-padding {
+            padding: 0;
+        }
+        .input-group-transparent {
+            position: relative;
+        }
+		.sort {
+			text-align: right;
+			margin-top: 10px;
+		}		
+		
+		.sort label {
+			padding-right: 7px;
+		    display: inline-block;
+			max-width: 100%;
+			margin-bottom: 5px;
+		    text-align: right;
+			color: #485563 !important;
+		}
+		
+		.sort .select, .select {
+			display: inline;
+			width: 110px;
+			transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;		
+			height: 32px;
+			padding: 6px 9px;
+			font-size: 13px;
+			line-height: 1.42857;
+			color: #343d47;
+			background-color: #fff;
+			background-image: none;
+			border: 1px solid #bdc0c4;
+			border-radius: 3px;
+		}
+		
+		.pageHeader .breadCrumb {
+			float: left;
+		}		
+		
+		.pageHeader .breadCrumb .title {
+			font: 22px "SourceSansPro", "Helvetica Neue", "Helvetica", Arial, sans-serif;
+			margin: 0;
+			color: #000000;
+		}	
+		
+		.pageHeader {
+			padding-bottom: 9px;
+			border-bottom: 1px solid #e6e8ea;
+		}		
+				
+		@media(max-width:550px) {
+			nav.publication-nav div.category-filter-container {
+				left: -45px;				
+			}
+		}
+
+    </style>
+	
+    <nav class="navbar navbar-default publication-nav" role="navigation"><div class="container-fluid">
+        <div class="col-lg-8 col-md-8 col-sm-8 no-padding col-xs-7" style="margin-top:5px;">
+            <form name="searchbar" novalidate="novalidate" class="ng-valid ng-dirty ng-valid-parse ng-submitted" style="">
+                <div class="container-fluid no-padding">
+                    <div class="category-filter-container col-lg-2 col-md-3 col-sm-4 col-xs-2 no-padding col-xs-2" style="">
+						<select name="category" id="category_filter" class="select" style="width:110px" onchange="doFilter()">
+						data-placeholder="Category">
+							<option value="">${gs.getMessage('All Categories')}</option>
+							<j:forEach items="${GlideChoiceList.getChoiceList('sn_publications_publication','category')}" var="jvar_choice">
+								<j:if test="${jvar_choice.value!=''}">
+									<option value="${jvar_choice.value}">
+										${jvar_choice.label}
+									</option>
+								</j:if>
+							</j:forEach>
+						</select>
+					</div>
+						<div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 input-group-transparent no-padding">
+                        <input tabindex="1" name="keywords" focus="" placeholder="${gs.getMessage('Search Publications')}"
+                               id="publication_keywords"
+                               type="search" onreturn="doFilter()" value="${sysparm_searchTerm}"
+							   style="border-radius:0"
+                               class="form-control form-control-search form-field ng-valid ng-touched ng-dirty ng-valid-parse"
+                               aria-invalid="false"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-5 buttons ng-scope" style="text-align:right">
+            <ul role="tablist" class="nav nav-segmented sn-tabs-basic">
+                <li id="allView" class="segment-header  active" onclick="doFilter()">
+					<div class="ng-binding">${gs.getMessage("All")} (<span id='allPubCount'></span>)</div>
+                </li>
+                <li id="showUnread" class="segment-header" onclick="doFilter()">
+                    <div class="ng-binding">${gs.getMessage("Unread")}  (<span id='unreadPubCount'></span>)</div>
+                </li>
+            </ul>
+        </div>
+    </div><div class="snc-kb-navbar-right"></div></nav>
+	    <div style="margin-left:30px;margin-right:30px;">	
+		<div class="pageHeader" aria-hidden="false" style="">
+			<div class="breadCrumb ng-scope">
+				<h2 class="title titleText">${gs.getMessage('Publications')}</h2>
+			</div>
+			<div class="sort" aria-hidden="false">
+				<label for="sort-order">${gs.getMessage('Sort by')}</label>
+				<select name="select" id="sort-order" class="select" onchange="doFilter()">
+					<option label="${gs.getMessage('Publish Date')}" value="publish_date" selected="selected">${gs.getMessage('Publish Date')}</option>
+					<option label="${gs.getMessage('Expiry Date')}" value="expiry_date">${gs.getMessage('Expiry Date')}</option>
+				</select>
+			</div>
+		</div>
+		<div id="resultsContainer"></div>
+	</div>
+
+</j:jelly>

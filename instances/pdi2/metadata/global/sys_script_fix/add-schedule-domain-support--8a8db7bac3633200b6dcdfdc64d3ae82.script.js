@@ -1,0 +1,1 @@
+new ScheduleDomainSupport().fixDomainSupport();

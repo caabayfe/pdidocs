@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<table border="0" cellspacing="2" cellpadding="0" width="100%">
+	<tbody>		
+		<j2:if test="$[jvar_labels.hasNext()]">
+			<j2:while test="$[jvar_labels.next() == 'true']">
+				<j2:if test="$[jvar_labels.canRead()]" >
+				<j2:if test="$[jvar_labels.getTableName() != 'label_history']" >						   
+				<j2:set var="jvar_label_file" value="$[jvar_labels.getDisplayValue('table')]" />
+				<j2:set var="jvar_label_key" value="$[jvar_labels.getDisplayValue('table_key')]" />		   
+				<g2:evaluate var="jvar_item" jelly="true" expression="
+					var label_desc = gs.getDisplayValueFor((jelly.jvar_label_file || '') + '', 
+						(jelly.jvar_label_key || '') + '', 
+						'short_description');
+				 "/>
+				<tr>
+					<td>
+						<a class="kb_link" href="$[jvar_labels.getDisplayValue('url')]">
+							$[jvar_labels.getDisplayValue('id_display')]</a>						
+					</td>
+					<td>$[jvar_labels.getDisplayValue('id_type')]</td>
+					<td>$[HTML:label_desc]</td>
+				</tr>
+				</j2:if>
+				<j2:if test="$[jvar_labels.getTableName() == 'label_history']" >
+				<j2:set var="jvar_label_title" value="$[jvar_labels.getDisplayValue('title')]" />
+				<g2:evaluate var="jvar_item" expression="
+					var id = '$[JS:jvar_label_title]';
+					var idx = id.indexOf('-');
+					var key = id.substring(0, idx);
+					var table = id.substring(idx+1); 
+					idx = table.indexOf('^');
+					var label_desc = '';
+					if (idx > -1) {
+					   label_desc = table.substring(idx+2);
+					   table = table.substring(0, idx-1);
+					}	
+				 "/>
+				<tr>
+					<td>
+						<a class="kb_link" href="$[jvar_labels.getDisplayValue('url')]">
+							$[key]</a>						
+					</td>
+					<td>$[table]</td>
+					<td>$[label_desc]</td>
+				</tr>
+				</j2:if></j2:if>
+			</j2:while>				
+		</j2:if>
+	</tbody>
+	</table>
+</j:jelly>

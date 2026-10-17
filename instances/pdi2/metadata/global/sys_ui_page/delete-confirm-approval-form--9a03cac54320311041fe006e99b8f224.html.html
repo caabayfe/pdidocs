@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:evaluate var="jvar_has_flow" jelly="true" object="true">
+	var approvalSysId = jelly.sysparm_obj_id;
+	var flowApprovalsUtil = new FlowApprovalsUtil();
+	var answer = flowApprovalsUtil.hasFlowWaitingForApprovals(approvalSysId);
+	if (!answer)
+		answer = flowApprovalsUtil.hasWorkflowWaitingForApprovals(approvalSysId);
+	answer;
+</g:evaluate>
+	<div style="text-align:left;">
+		<br/>
+		<j:set var="jvar_objList" value="${sysparm_delobj_list}"/>
+		<j:set var="jvar_is_domain_used" value="${sysparm_is_domain_used}" />
+		<j:choose>
+			<j:when test="${empty(jvar_objList)}">
+				<j2:choose>
+					<j2:when test="${sysparm_is_domain_used == 'true'}">
+						<div style="margin-top: 0px; color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+							${gs.getMessage('Warning!')}
+						</div>
+						<div>${gs.getMessage('One or more data/process records fall under this domain. Do you still want to delete?')}</div>
+					</j2:when>
+					<j2:when test="$[!gs.nil('${sysparm_msg_override}')]">
+						<div>$[HTML:gs.getMessage("${JS:sysparm_msg_override}")]</div><br/>
+					</j2:when>
+					<j2:when test="${jvar_has_flow == 'true'}">
+						<div style="margin-top: 0px; color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+							${gs.getMessage('Warning!')}
+						</div>
+						<div>${gs.getMessage('This record is associated with a Flow or Workflow. Deleting this record will prevent the Flow or Workflow from completing. Are you sure you want to delete this record?')}</div><br/>
+					</j2:when>
+					<j2:otherwise>
+						<div>${gs.getMessage('Delete this record?')}</div><br/>
+					</j2:otherwise>
+				</j2:choose>
+			</j:when>
+			<j:otherwise>
+				<div style="margin-top: 0px; color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+					${gs.getMessage('Warning!')}
+				</div>
+				<j2:choose>
+					<j2:when test="$[!gs.nil('${sysparm_cascade_msg_override}')]">
+						<div style="margin: 5px 5px 0px;">
+							$[HTML:gs.getMessage("${JS:sysparm_cascade_msg_override}")]<br/>
+						</div>
+					</j2:when>
+					<j2:otherwise>
+						<div style="margin: 5px 5px 0px;">
+							${gs.getMessage('Deleting this record will result in the automatic deletion of the following related records:')}<br/>
+						</div>
+					</j2:otherwise>
+				</j2:choose>
+				<!-- display related objects table -->
+				<g:macro_invoke macro="show_cascade_del_objs_table" obj_list="${jvar_objList}" />
+				<div style="margin: 5px 5px 0px;">
+					${gs.getMessage('Note that the related records may trigger their own cascade deletions.')}<br/>
+					${gs.getMessage('Proceed?')}
+				</div>
+			</j:otherwise>
+		</j:choose>
+		<br/>
+		<div align="right" class="modal-footer">
+			<g:dialog_buttons_ok_cancel ok="return ok()" ok_style_class="btn btn-destructive" ok_text="${gs.getMessage('Delete')}" cancel="return cancel()" ok_type="button" cancel_type="button"/>
+		</div>
+	</div>
+	<script>
+		document.getElementById("ok_button").focus();
+	</script>
+</j:jelly>

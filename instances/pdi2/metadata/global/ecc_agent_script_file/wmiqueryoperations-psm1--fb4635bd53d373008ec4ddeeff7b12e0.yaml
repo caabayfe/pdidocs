@@ -1,0 +1,419 @@
+_meta:
+  hash: 3917d3efcfcea40e39af79682213fc74177ac9accd9b799514ce6014c2fdaa44
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: nisan.barzion
+  sys_created_on: 2019-08-16 23:19:02
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: fb4635bd53d373008ec4ddeeff7b12e0
+  sys_mod_count: '44'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_fb4635bd53d373008ec4ddeeff7b12e0
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-03 15:53:55
+active: 'true'
+checksum: ''
+description: 'All query operations for WMI Collector '
+directory: 'false'
+name: WMIQueryOperations.psm1
+parent: 5b2635bd53d373008ec4ddeeff7b1261
+script: |-
+  <#
+      This method execute WMI Query on a remote host with credentials, or using the same user as the process running.
+      It also work on localhost
+  #>
+  function executeQuery {
+      param([string]$namespace, [string]$query)
+
+      $namespace = standardizeNamespace -namespace $namespace;
+      $internalWhere = getInternalWhere -query $query -namespace $namespace;
+      
+      try {
+          if ($global:computer) {
+              if ($global:cred) {
+                  $cimSession = Get-SharedCimSession -ComputerName $global:computer -Credential $global:cred;
+              } else {
+                  $cimSession = Get-SharedCimSession -ComputerName $global:computer;
+              }
+              $sb = { Get-CimInstance -CimSession $cimSession -Namespace $namespace -Query $query -ErrorAction Stop };
+          } else {
+              $sb = { Get-CimInstance -Namespace $namespace -Query $query -ErrorAction Stop };
+          }
+
+          SNCLog-DebugInfo("About to run:" + $ExecutionContext.InvokeCommand.ExpandString($sb));
+          Invoke-Command $sb | Format-Query-Result -internalNamespace $INTERNAL_NAMESPACE -internalClassname $INTERNAL_CLASSNAME -internalWhere $internalWhere;
+      } catch{
+          write-error ("Could not get query $query on namespace=$namespace. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  function Format-Query-Result {
+      [cmdletbinding()]
+      param([parameter(Mandatory=$true, ValueFromPipeline=$true)]$pipelineInput, [string]$internalNamespace, [string]$internalClassname, [string]$internalWhere)
+
+      Process {
+          foreach ($input in $pipelineInput) {
+              "";
+              if ($internalWhere) {
+                  $internalWhere;
+              }
+              "{0}`t:`t{1}" -f $internalNamespace, $_.CimSystemProperties.Namespace
+              "{0}`t:`t{1}" -f $internalClassname, $_.CimSystemProperties.Classname
+              "__CLASS`t:`t{0}" -f $_.CimSystemProperties.Classname
+              foreach ($property in ($_.CimInstanceProperties)) {
+                  # We do not want to return empty values
+                  if ($property.Value -is [array]) {
+                      $property.Name + "`t:`t" + (arrayToString -arr $property.Value);
+                  } elseif ($property.Value -ne $null) {
+                      # propertyToString method is in CommonUtils
+                      $propStr = propertyToString -property $property;
+                      if (-not [string]::IsNullOrWhiteSpace($propStr)) {
+                          $propStr
+                      }
+                  }
+              }
+              ""
+          }
+      }
+  }
+
+  <#
+      Corrently is not used - future support.
+      Fetching registry while supporting wildcards - requires powershell on the target host as it is using Get-ItemProperty on the target
+  #>
+  function getMultipleRegistryTablesValues {
+      param([string]$baseKey, [string]$key, [string]$commaSeparatedValues, [int]$launchProcessWaitTime = 300)
+      
+      $regFetch = "";
+      
+      $entry = $baseKey + "/" + $key;
+      if ($commaSeparatedValues -and $commaSeparatedValues.indexOf("*") -eq -1 ){
+          # Add specific fields on registry
+          SNCLog-DebugInfo "Will get specific registry entries: $commaSeparatedValues for $baseKey/$key";
+          $arrValues = $commaSeparatedValues -split "\s*,\s*"; # split and trim
+          foreach ($val in $arrValues){
+              $regFetch += $entry + "/" + $val + ",";
+          }
+          
+          #This method is in WMIFetch.psm1
+          $regFetch = removeLastComma -str $regFetch;
+      } else{
+          SNCLog-DebugInfo "Will get all entries: $commaSeparatedValues";
+          $regFetch = $entry + "/*";
+      }
+      
+      SNCLog-DebugInfo "Running: fetchMultipleWMI -computer $computer -cred $cred -wmi 'true' -WMI_FetchData '$regFetch' -filterHotfixValue 'true' -output_format 'raw' -launchProcessWaitTime $launchProcessWaitTime;";
+      #This method is in WMIFetch.psm1
+      fetchMultipleWMI -computer $computer -cred $cred -wmi "true" -WMI_FetchData $regFetch -filterHotfixValue "true" -output_format "raw" -launchProcessWaitTime $launchProcessWaitTime;
+  }
+
+  <#
+      Uses old probe code to fetch registry values.
+      $hive should be the full name of the registry hive such as HKEY_LOCAL_MACHINE
+      This method throws exceptions
+  #>
+  function getRegistryValues{
+      param([string]$hive, [string]$key, [string]$commaSeparatedNames)
+     
+      # Method is in WMIFetch; This is used to clear the arrays so we will only bring the value needed for now.
+      clearRegistryFetchArrays;
+      
+      $entry = $hive + "\" + $key;
+      # If * is in the values, that means we should fetch all of the registry values
+      if ($commaSeparatedNames -and $commaSeparatedNames.indexOf("*") -eq -1 ){
+          # Add specific fields on registry
+          $arrValues = $commaSeparatedNames -split "\s*,\s*"; # split and trim
+          SNCLog-DebugInfo "Will get specific registry entries: $commaSeparatedNames for $hive/$key";
+          # This method is in WMIFetch.psm1
+          addRegistryValuesToFetch -entry $entry -specificKeys $arrValues -shouldThrow -computer $computer -cred $cred;
+      }
+      else{
+          # Fetch all fields on registry
+          SNCLog-DebugInfo "Will get all entries for $hive/$key";
+          # This method is in WMIFetch.psm1
+          addRegistryValuesToFetch -entry $entry -shouldThrow -computer $computer -cred $cred;
+      }
+      
+      SNCLog-DebugInfo "Running: fetchAndOutputRegistries -computer $computer -cred $cred;";
+      # This method is in WMIFetch.psm1
+      return fetchAndOutputRegistries -computer $computer -cred $cred -outputForWMIProvider $true;
+  }
+
+  <#
+      This method List a class of a WMIObject and returns a specific attribute of the class.
+      If the attirubte cannot be found, return empty string
+  #>
+  function enumClass{
+      param([string]$namespace, [string]$classname)
+      
+      # If we did not get a namespace, use the default
+      if (-not $namespace){
+          $nameSpace = "root\cimv2";
+      }
+      
+      try{
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              if ($computer -and $cred){
+                  SNCLog-DebugInfo "About to run: Get-WmiObject -List -Class $classname -namespace $namespace -ComputerName $computer -Credential $cred -ErrorAction Stop;";
+                  $obj = Get-WmiObject -List -Class $classname -namespace $namespace -ComputerName $computer -Credential $cred -ErrorAction Stop;
+              } elseif ($computer){
+                  SNCLog-DebugInfo "About to run: Get-WmiObject -List -Class $classname -namespace $namespace -ComputerName $computer -ErrorAction Stop";
+                  $obj = Get-WmiObject -List -Class $classname -namespace $namespace -ComputerName $computer -ErrorAction Stop;
+              }
+              else{
+                  SNCLog-DebugInfo "About to run: Get-WmiObject -List -Class $classname -namespace $namespace -ErrorAction Stop;";
+                  $obj = Get-WmiObject -List -Class $classname -namespace $namespace -ErrorAction Stop;
+              }
+              return $obj;
+          }
+
+          # PS7+
+          if ($computer){
+              if ($cred) {
+                  $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+              } else {
+                  $cimSession = Get-SharedCimSession -ComputerName $computer
+              }
+              SNCLog-DebugInfo "About to run: Get-CimClass -ClassName $classname -Namespace $namespace -CimSession $($cimSession.InstanceId) -ErrorAction Stop;";
+              $obj = Get-CimClass -ClassName $classname -Namespace $namespace -CimSession $cimSession -ErrorAction Stop;
+          } else {
+              SNCLog-DebugInfo "About to run: Get-CimClass -ClassName $classname -Namespace $namespace -ErrorAction Stop;";
+              $obj = Get-CimClass -ClassName $classname -Namespace $namespace -ErrorAction Stop;
+          }
+          return $obj;
+      } catch{
+          write-error ("Could not get an object from $namespace/$classname. " + $_.Exception.Message);
+      }
+      
+      return "";
+  }
+
+  function enumProperties{
+      param([string]$namespace, [string]$classname)
+      
+      $obj = enumClass -namespace $namespace -classname $classname;
+      if ($obj -and $obj.Properties){
+          return $obj.Properties.Name;
+      } elseif ($obj -and $obj.CimClassProperties) {
+          return $obj.CimClassProperties.Name;
+      }
+  }
+
+  function enumMethods{
+      param([string]$namespace, [string]$classname)
+      
+      $obj = enumClass -namespace $namespace -classname $classname;
+      $output = "";
+      
+      if ($obj -and $obj.Methods) {
+          foreach ($item in $obj.Methods){
+              # look for methods with no input/output parameters
+              if (-not $item.InParameters){
+                  if ($item.OutParameters -and $item.OutParameters.Properties.Count -eq 1){
+                      $output += $item.Name + "`n";
+                  }
+              }
+          }
+      } elseif ($obj -and $obj.CimClassMethods) {
+          foreach ($item in $obj.CimClassMethods){
+              # PS7+ logic matches the PS5 logic
+              $inputParams = $item.Parameters | Where-Object {
+                  $_.Qualifiers.Name -contains "In"
+              }
+              $outputParams = $item.Parameters | Where-Object {
+                  $_.Qualifiers.Name -contains "Out"
+              }
+              if (-not $inputParams -and $outputParams -and $outputParams.Count -eq 1){
+                  $output += $item.Name + "`n";
+              }
+          }
+      }
+      
+      return $output.trim();
+  }
+
+  <#
+      This method enumurates the keys under a parent key.
+      Parent key may be empty and will return the keys directly under the hive
+      $hive should be a hex decimal value of the hive as a String.
+      For example: 
+          HKEY_CLASSES_ROOT = 0x80000000
+          HKEY_CURRENT_USER = 0x80000001
+          HKEY_LOCAL_MACHINE = 0x80000002
+          HKEY_USERS = 0x80000003
+          HKEY_CURRENT_CONFIG = 0x80000005
+          HKEY_DYN_DATA = 0x80000006
+  #>
+  function enumKeys{
+      param([string]$hive, [string]$parentKey)
+
+      try{
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              if ($cred) {
+                  $reg = Get-WmiObject -list -computer $computer -credential $cred -namespace root\default -ErrorAction Stop | where-object {$_.Name -eq "StdRegProv"}
+              } else {
+                  $reg = Get-WmiObject -list -computer $computer -namespace root\default -ErrorAction Stop | where-object {$_.Name -eq "StdRegProv"}
+              }
+              $res = $reg.EnumKey($hive, $parentKey);
+              if ($res -and $res.sNames) {
+                  return $res.sNames;
+              }
+          } else {
+              if ($computer){
+                  if ($cred) {
+                      $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+                  } else {
+                      $cimSession = Get-SharedCimSession -ComputerName $computer
+                  }
+                  $reg = Get-CimClass -Namespace 'root\default' -ClassName 'StdRegProv' -CimSession $cimSession -ErrorAction Stop;
+                  $res = $reg | Invoke-CimMethod -MethodName 'EnumKey' -Arguments @{hDefKey=[uint32]$hive; sSubKeyName=$parentKey} -CimSession $cimSession -ErrorAction Stop;
+              } else {
+                  $reg = Get-CimClass -Namespace 'root\default' -ClassName 'StdRegProv' -ErrorAction Stop;
+                  $res = $reg | Invoke-CimMethod -MethodName 'EnumKey' -Arguments @{hDefKey=[uint32]$hive; sSubKeyName=$parentKey} -ErrorAction Stop;
+              }
+              
+              if ($res -and $res.sNames) {
+                  return $res.sNames;
+              }
+          }
+      } catch{
+          Write-error ("Could not query '$parentKey' from $hive." + $_.Exception.Message);
+      }
+      return "";
+  }
+
+  function enumRootClass {
+      param([string]$namespace, [string]$class)
+      
+      try {
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              if ($cred) {
+                  $sb = { Get-WmiObject -namespace $namespace -class $class -ComputerName $computer -Credential $cred -ErrorAction Stop };
+              } elseif ($computer) {
+                  $sb = { Get-WmiObject -namespace $namespace -class $class -ComputerName $computer -ErrorAction Stop };
+              } else {
+                  $sb = { Get-WmiObject -namespace $namespace -class $class -ErrorAction Stop };
+              }
+              SNCLog-DebugInfo("About to run:" + $ExecutionContext.InvokeCommand.ExpandString($sb));
+              Invoke-Command $sb | Format-Single-Property -Property "Name";
+          } else {
+              if ($computer){
+                  if ($cred) {
+                      $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+                  } else {
+                      $cimSession = Get-SharedCimSession -ComputerName $computer
+                  }
+                  $result = Get-CimInstance -Namespace $namespace -ClassName $class -CimSession $cimSession -ErrorAction Stop
+                  $result | Format-Single-Property -Property "Name";
+              } else {
+                  $result = Get-CimInstance -Namespace $namespace -ClassName $class -ErrorAction Stop
+                  $result | Format-Single-Property -Property "Name";
+              }
+          }
+      } catch {
+          Write-Error ("Could not get instances of class $class in namespace=$namespace. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  function Format-Single-Property {
+      [cmdletbinding()]
+      param([parameter(Mandatory=$true, ValueFromPipeline=$true)]$pipelineInput, [string]$Property)
+
+      Process {
+          ForEach ($input in $pipelineInput) {
+              $input.$Property;
+          }
+      }
+  }
+
+  function enumClasses{
+      param([string]$namespace)
+      
+      # If we did not get a namespace, use the default
+      if (-not $namespace){
+          $nameSpace = "root\cimv2";
+      }
+      
+      return enumRootClass -namespace $namespace -class "meta_class";
+  }
+
+  function enumNamespaces{
+      param([string]$namespace)
+      
+      # If we did not get a namespace, use the default
+      if (-not $namespace){
+          $nameSpace = "root";
+      }
+
+      return enumRootClass -namespace $nameSpace -class "__NAMESPACE";
+  }
+
+  function getProcessUserAndDomain {
+      param([string]$commaSeparatedPids);
+      $pids = $commaSeparatedPids -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ };
+      if (-not $pids) { return @() }
+
+      if ($PSVersionTable.PSVersion.Major -lt 6) {
+          if ($cred){
+              SNCLog-DebugInfo "About to run: Get-WmiObject -ClassName 'Win32_Process' -ComputerName $computer -Credential $cred -ErrorAction Stop | Where-Object -Property 'processid' -Value $pids -In;";
+              $processes = Get-WmiObject -ClassName 'Win32_Process' -ComputerName $computer -Credential $cred -ErrorAction Stop | Where-Object -Property 'processid' -Value $pids -In;
+          }
+          # If we do not have credential, but we have computer (use MID service account credential)
+          elseif ($computer){
+              SNCLog-DebugInfo "About to run: Get-WmiObject -ClassName 'Win32_Process' -ComputerName $computer -ErrorAction Stop | Where-Object -Property 'processid' -Value $pids -In;";
+              $processes = Get-WmiObject -ClassName 'Win32_Process' -ComputerName $computer -ErrorAction Stop | Where-Object -Property 'processid' -Value $pids -In;
+          }else{
+              SNCLog-DebugInfo "About to run: Get-WmiObject -ClassName 'Win32_Process' -ErrorAction Stop | Where-Object -Property 'processid' -Value $pids -In;";
+              $processes = Get-WmiObject -ClassName 'Win32_Process' -ErrorAction Stop | Where-Object -Property 'processid' -Value $pids -In;
+          }
+      
+          foreach ($process in $processes) {
+              $owner = $process | Invoke-WmiMethod -Name 'GetOwner' -ErrorAction Stop;
+              "ProcessId:$($process.ProcessId),User:$($owner.User),Domain:$($owner.Domain)";
+          }
+      } else {
+          # PS7+: Use Get-CimInstance + Invoke-CimMethod
+          $pidList = ($pids | ForEach-Object { [int]$_ }) -join ','
+          $query = "SELECT ProcessId FROM Win32_Process WHERE ProcessId IN ($pidList)"
+
+          $params = @{
+              Query = $query
+              ErrorAction = 'Stop'
+          }
+
+          if ($computer){
+              if ($cred) {
+                  $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+              } else {
+                  $cimSession = Get-SharedCimSession -ComputerName $computer
+              }
+              $params.CimSession = $cimSession
+          }
+
+          Get-CimInstance @params | ForEach-Object {
+              try {
+                  $invokeParams = @{
+                      InputObject = $_
+                      MethodName = 'GetOwner'
+                  }
+                  if ($params.CimSession) {
+                      $invokeParams.CimSession = $params.CimSession
+                  }
+                  $owner = Invoke-CimMethod @invokeParams
+                  "ProcessId:$($_.ProcessId),User:$($owner.User),Domain:$($owner.Domain)"
+              } catch {
+                  "ProcessId:$($_.ProcessId),User:_get_owner_failed_,Domain:_get_owner_failed_"
+              }
+          }
+      }
+  }
+script_attachment: ''
+source: ''
+sys_name: WMIQueryOperations.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

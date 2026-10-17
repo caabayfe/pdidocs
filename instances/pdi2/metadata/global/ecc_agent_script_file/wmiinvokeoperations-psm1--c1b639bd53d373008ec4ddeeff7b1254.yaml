@@ -1,0 +1,260 @@
+_meta:
+  hash: 6a7389700c8aa2195dc8bc9d73274835de61ead80216027b0a214a9912a02bcc
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: nisan.barzion
+  sys_created_on: 2019-08-16 23:32:49
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: c1b639bd53d373008ec4ddeeff7b1254
+  sys_mod_count: '23'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_c1b639bd53d373008ec4ddeeff7b1254
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-23 15:53:05
+active: 'true'
+checksum: ''
+description: All invoke operations for WMI Collector
+directory: 'false'
+name: WMIInvokeOperations.psm1
+parent: 5b2635bd53d373008ec4ddeeff7b1261
+script: |-
+  <#
+      This method execute command on the remote host and types the result on the console (no return value).
+      This method uses launchProcess method in LaunchProc.
+  #>
+  function executeCommand{
+      param([string]$command, [int]$timeoutSec, [bool]$stdErrInStdOut=$true)
+      
+      if (-not $command){
+          write-error "Command is required for this operation, quit";
+          return;
+      }
+      
+      if ($computer){
+          try{
+              if (-not $tmpDir){
+                  SNCLog-DebugInfo "Did not received tmpDir. starting queries to get tmpDir";
+                  $tmpDir = getTempDirectory;
+              }
+
+              if (-not $tmpDir) {
+                  throw 'Could not execute command because $tmpDir is null';
+              }
+              
+              <# We need a relative path for the UNC path:
+                  $uncPath = \\<IP>\<path1>\<path2>..
+                  $uncRelativePath = <path1>\<path2>..
+              #>
+              
+              # mapAdminShareUncPath is in WMIFileOperations.psm1
+              $uncPath = mapAdminShareUncPath -remoteHost $computer -localPath $tmpDir;
+              $uncRelativePath = getRelativeUncPath -uncPath ($uncPath.toString());
+              # Check if we can access the UNC Path, if not create a drive that will assure the use of UNC Path. If fails an exception will be thrown.
+              if (-not (test-path -path $uncPath)) {
+                  SNCLog-DebugInfo "Cannot access $uncPath, mapping a drive.";
+                  # mapDrive is in CommonUtils.psm1
+                  $drive = mapDrive -path $uncPath;
+                  SNCLog-DebugInfo "A mapped drive: $drive was created to access $uncPath";
+              }
+
+              SNCLog-DebugInfo "Got a relative UNC path: $uncRelativePath for $computer";
+              
+              <# launchProcess is in LaunchProc.psm1. launchProcess method types the output directly on the screen
+                  launchProcess is using a relative UNC path, this is why we have $uncRelativePath
+              #>
+              if ($timeoutSec -and $timeoutSec -gt 0) {
+                  SNCLog-DebugInfo "Running: launchProcess -computer $computer -cred $cred -command '$command' -secondsToWait $timeoutSec -remoteBaseDir $uncRelativePath -UTF8 -shouldKillProcess $true -stdErrInStdOut $stdErrInStdOut;";
+                  # This Method is in LaunchProc
+                  launchProcess -computer $computer -cred $cred -command $command -secondsToWait $timeoutSec -remoteBaseDir $uncRelativePath.toString() -UTF8 -shouldKillProcess $true -stdErrInStdOut $stdErrInStdOut;
+                } else {
+                  # This Method is in LaunchProc
+                  SNCLog-DebugInfo "Running: launchProcess -computer $computer -cred $cred -command '$command' -remoteBaseDir $uncRelativePath -UTF8 -shouldKillProcess $true -stdErrInStdOut $stdErrInStdOut;";
+                  launchProcess -computer $computer -cred $cred -command $command -remoteBaseDir $uncRelativePath -UTF8 -shouldKillProcess $true -stdErrInStdOut $stdErrInStdOut;
+              }
+          } finally{
+              if ($drive){
+                  SNCLog-DebugInfo "Unmapping drive: $drive";
+                  unmapDrive -drive $drive;
+              }
+          }
+      }else{
+          #Run Locally:
+          return invoke-expression $command;
+      }
+  }
+
+  function getRelativeUncPath{
+      param([string]$uncPath)
+      
+      $uncPath = standardizePath -path $uncPath;
+      $rtn = $uncPath;
+      
+      if (isUncPath -path $uncPath){
+          $arr = $uncPath.split("\", 4);
+
+          # Remove the \\<IP>\ fron UNC
+          if ($arr[3]){
+              $rtn = $arr[3];
+          }
+      }
+      
+      if ($rtn.endsWith("\")){
+          $rtn = $rtn.substring(0, $rtn.length - 1);
+      }
+      
+      return $rtn;
+  }
+
+  function invokeMethodOnClass {
+      param([string]$class, [string]$method)
+      
+      try{
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              if ($cred) {
+                  SNCLog-DebugInfo "About to invoke method: Invoke-WmiMethod -class $class -name $method -computer $computer -credential $cred -EA Stop";
+                  $info = Invoke-WmiMethod -class $class -name $method -computer $computer -credential $cred -EA Stop;
+              } else {
+                  SNCLog-DebugInfo "About to invoke method: Invoke-WmiMethod -class $class -name $method -computer $computer -EA Stop;";
+                  $info = Invoke-WmiMethod -class $class -name $method -computer $computer -EA Stop;
+              }
+          } else {
+              if ($cred) {
+                  $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+              } else {
+                  $cimSession = Get-SharedCimSession -ComputerName $computer
+              }
+              SNCLog-DebugInfo "About to invoke method: Invoke-CimMethod -CimSession $($cimSession.InstanceId) -ClassName $class -MethodName $method -ErrorAction Stop";
+              $info = Invoke-CimMethod -CimSession $cimSession -ClassName $class -MethodName $method -ErrorAction Stop;
+          }
+
+          if ($info.ReturnValue -eq 0) {
+              return $true
+          } else{
+              write-error ("Could not invoke $method on $class, got return value: " + $info.ReturnValue + "($info)");
+          }
+      } catch{
+          write-error ("Could not invoke wmi method $method on ${class}: " + $_.Exception.Message);
+      }
+  }
+
+  function invokeMethodOnObjects {
+      param([string]$query, [string]$namespace, [string]$method)
+      
+      $namespace = standardizeNamespace -namespace $namespace;
+      
+      try{
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              SNCLog-DebugInfo "About to run: Get-WmiObject/Invoke-WmiMethod -query $query -namespace $namespace -method $method -computer $computer -credential $cred";
+              if ($cred){
+                  $objClass = Get-WmiObject -namespace $namespace -Query $query -ComputerName $computer -Credential $cred -ErrorAction Stop | ForEach-Object { Invoke-WmiMethod -InputObject $_ -Name $method } ;
+              }
+              elseif ($computer){
+                  $objClass = Get-WmiObject -namespace $namespace -Query $query -ComputerName $computer -ErrorAction Stop | ForEach-Object { Invoke-WmiMethod -InputObject $_ -Name $method } ;
+              }else{
+                  $objClass = Get-WmiObject -namespace $namespace -Query $query -ErrorAction Stop | ForEach-Object { Invoke-WmiMethod -InputObject $_ -Name $method } ;
+              }
+          } else {
+              SNCLog-DebugInfo "About to run: Get-CimInstance/Invoke-CimMethod -query $query -namespace $namespace -method $method -ComputerName $computer -Credential $cred";
+              if ($computer) {
+                  if ($cred) {
+                      $cimSession = Get-SharedCimSession -ComputerName $computer -Credential $cred
+                  } else {
+                      $cimSession = Get-SharedCimSession -ComputerName $computer
+                  }
+                  $objClass = Get-CimInstance -namespace $namespace -Query $query -CimSession $cimSession -ErrorAction Stop | ForEach-Object { Invoke-CimMethod -InputObject $_ -MethodName $method -CimSession $cimSession } ;
+              } else {
+                  $objClass = Get-CimInstance -namespace $namespace -Query $query -ErrorAction Stop | ForEach-Object { Invoke-CimMethod -InputObject $_ -MethodName $method } ;
+              }
+          }
+
+          # We would like to return all properties requested - this way we walk over all properties better than Get-WMIObject/Get-CimInstance -query
+          $output = "";
+          $objClass | ForEach-Object {
+              # Use .Properties for PS5 (ManagementBaseObject), CimInstanceProperties for PS7 (CimInstance, excludes metadata), or fallback to PSObject.Properties
+              $properties = if ($_.Properties) { $_.Properties } elseif ($_.CimInstanceProperties) { $_.CimInstanceProperties } else { $_.PSObject.Properties };
+
+              foreach($property in $properties) {
+                  if ($property.Value -is [array]){
+                      $output += $property.Name + "`t:`t" + $ARRAY_INDICATOR_START + ($property.Value -join ",") + $ARRAY_INDICATOR_END + "`n";
+                  } else {
+                      $output += $property.Name + "`t:`t" + $property.Value + "`n";
+                  }
+              }
+              $output += "`n";
+          }
+          
+          if ($output){
+              $output = $output.trim();
+          }
+          
+          return $output;
+      } catch{
+          write-error ("Could not get query $query on namespace=$namespace. Original Exception: " + $_.Exception.Message);
+      }
+  }
+
+  <#
+     Detects and returns the correct PowerShell executable to use for WMI operations.
+     Returns either the path to PowerShell 7+ or "powershell" as fallback.
+     The result is cached in $global:powershellExecutableRemote for subsequent calls.
+  #>
+  function detectRemotePowerShellExecutable {
+      # Check if already detected in this session
+      if ($global:powershellExecutableRemote) {
+          SNCLog-DebugInfo "Remote PowerShell executable already set: $global:powershellExecutableRemote"
+          return $global:powershellExecutableRemote
+      }
+
+      # Default to standard PowerShell
+      $executable = "powershell"
+
+      # Only try PS7 detection if preferred for remote sessions
+      if ($global:preferPS7Remote) {
+          try {
+              SNCLog-DebugInfo "Detecting PowerShell 7+ on remote host: $computer"
+
+              # Command that outputs "Version:<major>, Path:<path>" for each pwsh.exe found
+              # Using cmd.exe for /f loop to find all pwsh.exe locations and get their versions
+              $ps7DetectCommand = "cmd.exe /c `"for /f `"tokens=* delims=`" %p in ('where.exe pwsh.exe 2^>nul') do @`"%p`" -NoProfile -NonInteractive -Command `"Write-Output ('Version:' + `$PSVersionTable.PSVersion.Major + ', Path:%p')`" 2^>nul`""
+
+              # executeCommand handles all the WMI remoting (admin share, creds, impersonation, etc.)
+              $output = executeCommand -command $ps7DetectCommand -timeoutSec 10
+
+              if ($output) {
+                  # Parse output lines looking for Version:X, Path:Y pattern
+                  $lines = $output -split "`r?`n"
+                  foreach ($line in $lines) {
+                      $line = $line.Trim()
+                      if ($line -match 'Version:(\d+),\s*Path:(.+)$') {
+                          $version = [int]$matches[1]
+                          $path = $matches[2].Trim()
+
+                          if ($version -ge 7) {
+                              $executable = $path
+                              SNCLog-DebugInfo "Found PowerShell $version at: $path"
+                              break
+                          }
+                      }
+                  }
+              }
+          } catch {
+              $executable = "powershell"
+              SNCLog-DebugInfo "PowerShell 7 detection failed: $_. Falling back to default 'powershell'"
+          }
+      }
+
+      # Cache and return
+      $global:powershellExecutableRemote = $executable
+      SNCLog-DebugInfo "Using PowerShell executable: $executable"
+      return $executable
+  }
+script_attachment: ''
+source: ''
+sys_name: WMIInvokeOperations.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

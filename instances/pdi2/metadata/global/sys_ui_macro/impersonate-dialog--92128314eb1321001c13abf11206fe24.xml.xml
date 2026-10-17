@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:ui_form>
+<g:evaluate var="jvar_impersonate_name" expression="gs.getImpersonatingUserName()" />
+<g:evaluate var="jvar_imp_display_name" expression="gs.getImpersonatingUserDisplayName()" />
+<g:evaluate>
+    var name = gs.getImpersonatingUserName();
+    var actual_user = null;
+    if (name == null || name == '')
+        actual_user = user;
+    else
+        actual_user = GlideUser.getUser(name);
+    var recent_impersonations = actual_user.getPreference('recent.impersonations');
+</g:evaluate>
+
+<input type="hidden" name="imp_type" id="imp_type" value="" />
+<table width="100%">
+	<tr id="select_row">
+            <td>
+                <table>
+                     <tr>
+                         <td><label for="imp_recent"> ${gs.getMessage('Recent Impersonations')} </label></td> 
+                     </tr>
+                     <tr>
+                           <td nowrap="true"> 
+                               <select id="imp_recent" multiple="true" size="6" name="imp_recent" style="width:250px" onclick="clearRef()" ondblclick="gel('ok_button').click()">
+                                   <g:impersonate_choices history ="${recent_impersonations}" /> 
+                               </select>
+                           </td>
+                     </tr>
+                     <tr>
+                        <g:evaluate var="jvar_impersonate_query">
+                          var answer = 'QUERY:active=true^locked_out=false^web_service_access_only=false^ORweb_service_access_onlyISEMPTY';
+                          if (!actual_user.hasRole('admin'))
+                            answer += '^roles!=admin';
+
+                          if (GlideTableDescriptor.get('sys_user').isValidField('identity_type'))
+                            answer += '^identity_type!=ai_agent^ORidentity_type=NULL';
+
+                          answer;
+                        </g:evaluate>
+                        <input id="impersonate_query" type="hidden" value="${jvar_impersonate_query}" />
+		        <td nowrap="true" align="right">
+			    <g:ui_reference name="${jvar_impersonate_query}" table="sys_user" onchange="clearSelect()"/>
+		        </td> 
+                       </tr>
+                </table>
+	    </td>
+        </tr>
+	<tr id ="poll_img" style="display:none" border="1">
+		<td colspan="2"  align="center" width="300px">
+			<img src="./images/ajax-loader.gifx" alt="${gs.getMessage('Please Wait')}" />
+                        <p id="poll_text" style="font-weight:bold;">
+				${gs.getMessage('Please Wait')}
+			</p>
+		</td>
+	</tr>
+        <tr>
+            <td colspan="2"><br /></td>
+        </tr>
+        <tr id="dialog_buttons">
+                <td colspan="2" align="right">
+                    <g:dialog_buttons_ok_cancel ok="return impOk()" ok_id="ok_button" cancel_type="button" />
+                </td>
+        </tr>
+</table>
+<script>
+var e = gel("sys_display.${jvar_impersonate_query}");
+if (e)
+   e.focus();
+</script>
+</g:ui_form>
+</j:jelly>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_login_origin">
+        var sysparm_request_id = gs.getSession().getProperty('sysparm_request_id');
+        var processId = new SNC.PwdTrackingManager().getProcessIdByRequestId(sysparm_request_id);
+        var storedLoginURL = gs.getSession().getProperty('login_locate_sso.login_url');
+        var loginURL = GlideStringUtil.notNil(storedLoginURL) ? storedLoginURL : "";
+        var proc = new GlideRecord('pwd_process');
+        proc.addQuery('sys_id', processId);
+        proc.query();
+        if(proc.next()){
+        if(GlideStringUtil.notNil(proc.redirect_url))
+        loginURL = proc.redirect_url;
+        }
+
+        var redirect_url = gs.getSession().getProperty('pwd_reset_done_redirect');
+        if(redirect_url) {
+        loginURL = redirect_url;
+        gs.getSession().clearProperty('pwd_reset_done_redirect');
+        }
+
+        loginURL;
+    </g:evaluate>
+    <g:evaluate var="jvar_button_style" jelly="true">
+        var buttonStyle = (jelly.jvar_display == 'false') ? 'display: none;' : '';
+        buttonStyle;
+    </g:evaluate>
+    <button name="sysverb_pwd_done" id="sysverb_pwd_done" tabindex="0" data-redirect-url="${jvar_login_origin}" class="btn btn-primary btn-pwd-submit default-focus-online" style="${jvar_button_style}">${gs.getMessage("Done")}</button>
+    <script type="text/javascript">
+        if (isDoneButtonRedirectMissing()) {
+            var doneButton = gel("sysverb_pwd_done");
+            doneButton.setAttribute("data-redirect-url", isMobile() ? "/oauth_login.do" : "/login.do");
+        }
+
+        gel("sysverb_pwd_done").onclick = function() {
+            var redirectUrl = this.getAttribute("data-redirect-url");
+            if (redirectUrl) {
+                if (window.top)
+                    window.top.location.href = redirectUrl;
+                else
+                    window.location.href = redirectUrl;
+            }
+            return false;
+        };
+
+        function isDoneButtonRedirectMissing() {
+            var doneButton = gel("sysverb_pwd_done");
+            if (!doneButton)
+                return false;
+
+            return !doneButton.getAttribute("data-redirect-url");
+        }
+
+        function isMobile() {
+            var ua = window.navigator.userAgent;
+            if (ua.match(/Android/i) ||
+                ua.match(/webOS/i) ||
+                ua.match(/iPhone/i) ||
+                ua.match(/iPad/i) ||
+                ua.match(/iPod/i) ||
+                ua.match(/BlackBerry/i) ||
+                ua.match(/Windows Phone/i))
+                return true;
+            return false;
+        }
+    </script>
+</j:jelly>

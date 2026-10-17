@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.listTable {
+			width: 100%;
+			border: 1px solid;
+		}
+		
+		.listTable td, .listTable th {
+			border: 1px solid #ddd;
+			padding: 8px;
+			width: 150px;
+		}
+		
+		.listTable th[scope=col] {
+			padding-top: 12px;
+			padding-bottom: 12px;
+			text-align: left;
+			background-color: black;
+			color: white;
+		}
+		
+		.listTable tr:nth-child(even) {
+			background-color: #f2f2f2;
+		}
+		
+		.listTable tr:hover {
+			background-color: #ddd; 
+		}
+		
+		.icon-loading {
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+	</style>
+	
+	<g2:evaluate var="jvar_workspaceParam" expression="RP.getParameterValue('sysparm_workspace')"/>
+
+	<g2:evaluate var="jvar_attributes" object="true">
+		var attributes = new Array();
+
+		var grAttributes = new GlideRecord('sys_choice');
+		grAttributes.addQuery('name', 'sys_aw_list_attribute');
+		grAttributes.addQuery('language', gs.getSession().getLanguage());
+		grAttributes.orderBy('sequence');
+		grAttributes.query();
+		
+		while(grAttributes.next()) {
+			attributes[attributes.length] = {
+				name: grAttributes.getValue('label'),
+				value: grAttributes.getValue('value')
+			}
+		}
+
+		attributes;
+	</g2:evaluate>
+
+	<g2:evaluate jelly="true">
+		var grListCategory = new GlideRecord('sys_aw_list_category');
+		grListCategory.addActiveQuery();
+		if (jelly.jvar_workspaceParam != "")
+			grListCategory.addQuery('workspace', jelly.jvar_workspaceParam);
+		grListCategory.orderBy('order');
+		grListCategory.query();
+	</g2:evaluate>
+	
+	<g2:evaluate var="jvar_workspaces" object="true">
+		var workspaces = new Array();
+		
+		var grWorkspace = new GlideRecord('sys_aw_master_config');
+		grWorkspace.addActiveQuery();
+		grWorkspace.query();
+		
+		while (grWorkspace.next()) {
+			workspaces[workspaces.length] = {
+				name: grWorkspace.getDisplayValue(),
+				value: grWorkspace.getUniqueValue()
+			}
+		}
+
+		workspaces;
+	</g2:evaluate>
+	
+	<nav id="list-attributes-nav" class="navbar navbar-default" role="navigation">
+		<div style="margin-top: 15px; margin-left: 15px">
+			<label for="selected_workspace">${gs.getMessage('Select Workspace')}:</label>
+			<select style="margin-left: 10px" id="selected_workspace">
+				<option value="">${gs.getMessage('All')}</option>
+				
+				<j2:forEach items="$[jvar_workspaces]" var="jvar_workspace">
+					<g2:evaluate jelly="true">
+						var workspaceName = jelly.jvar_workspace.name;
+						var workspaceValue = jelly.jvar_workspace.value;
+						var selectedWorkspace = workspaceValue == jelly.jvar_workspaceParam;
+					</g2:evaluate>
+					<j2:if test="$[selectedWorkspace]">
+						<option selected="true" value="$[workspaceValue]">$[workspaceName]</option>
+					</j2:if>
+					<j2:if test="$[!selectedWorkspace]">
+						<option value="$[workspaceValue]">$[workspaceName]</option>
+					</j2:if>
+				</j2:forEach>
+			</select>
+		</div>
+			<g:dialog_button
+				id="save_button"
+				style_class="btn btn-primary pull-right"
+				onclick="return submitAttributes()">
+				${gs.getMessage('Save')}
+			</g:dialog_button>
+	</nav>
+	<h1>
+		${gs.getMessage('List Attributes')}
+	</h1>
+	
+	<j2:while test="$[grListCategory.next()]">
+		<h2>
+			$[grListCategory.getDisplayValue();]
+		</h2>
+		<g2:evaluate jelly="true">
+			var grListQuery = new GlideRecord('sys_aw_list');
+			grListQuery.addQuery('category', grListCategory.getUniqueValue());
+			if (jelly.jvar_workspaceParam != "")
+				grListQuery.addQuery('workspace', jelly.jvar_workspaceParam);
+			grListQuery.orderBy('order');
+			grListQuery.query();
+		</g2:evaluate>
+		
+		<table id="listTable_$[grListCategory.getDisplayValue()]" class="listTable">
+			<thead>
+				<tr>
+					<th scope="col">
+						${gs.getMessage('List Name')}
+					</th>
+					<j2:forEach items="$[jvar_attributes]" var="jvar_attribute">
+						<g2:evaluate jelly="true">
+							var attributeName = jelly.jvar_attribute.name;
+							var attributeValue = jelly.jvar_attribute.value;
+							
+							var srArray = [];
+							srArray.push(attributeName);
+							srArray.push(grListCategory.getDisplayValue());
+							
+							var msg = gs.getMessage('Select All {0} Rows for Category {1}', srArray);
+						</g2:evaluate>
+						<th scope="col" aria-label="$[attributeName]">
+							<label for="$[grListCategory.getUniqueValue()]_$[attributeValue]">
+								<input aria-describedby="$[grListCategory.getUniqueValue()]_$[attributeValue]_description" type="checkbox" class="select-all" id="$[grListCategory.getUniqueValue()]_$[attributeValue]" value="$[attributeValue]"/>
+								$[attributeName]
+							</label>
+							<span id="$[grListCategory.getUniqueValue()]_$[attributeValue]_description" 
+								  aria-hidden="true"  
+								  class="sr-only">
+								$[msg]
+							</span>
+							
+						</th>
+					</j2:forEach>
+				</tr>
+			</thead>
+			
+			<tbody>
+				<j2:while test="$[grListQuery.next()]">
+					<tr data-sysid="$[grListQuery.getUniqueValue()]">
+						<th scope="row">
+							$[grListQuery.getDisplayValue()]
+						</th>
+						<j2:forEach items="$[jvar_attributes]" var="jvar_attribute">
+							<g2:evaluate var="jvar_isChecked" jelly="true">
+								var isChecked;
+								var listAttributes = grListQuery.getValue('list_attributes');
+							
+								if (listAttributes)
+									isChecked = listAttributes.indexOf(jelly.jvar_attribute.value) > -1;
+								else
+									isChecked = false;
+							
+								isChecked;
+							</g2:evaluate>
+
+							<g2:evaluate jelly="true">
+								var attributeName = jelly.jvar_attribute.name;
+								var attributeValue = jelly.jvar_attribute.value;
+							</g2:evaluate>
+						
+							<j2:if test="$[jvar_isChecked]">
+								<td>
+									<label for="$[grListQuery.getUniqueValue()]_$[jvar_attribute.value]">
+										<input type="checkbox" id="$[grListQuery.getUniqueValue()]_$[jvar_attribute.value]" name="$[grListCategory.getUniqueValue()]_$[jvar_attribute.value]" class="checkbox" checked="true" value="$[jvar_attribute.value]"/> 
+										<span class="sr-only">
+											Attribute $[jvar_attribute.name] for List $[grListQuery.getDisplayValue()]
+										</span>
+									</label>
+								</td>
+							</j2:if>
+							<j2:if test="$[!jvar_isChecked]">
+								<td>
+									
+									<label for="$[grListQuery.getUniqueValue()]_$[jvar_attribute.value]">
+										<input type="checkbox" id="$[grListQuery.getUniqueValue()]_$[jvar_attribute.value]" name="$[grListCategory.getUniqueValue()]_$[jvar_attribute.value]" class="checkbox" value="$[jvar_attribute.value]"/> 
+										<span class="sr-only">
+											Attribute $[jvar_attribute.name] for List $[grListQuery.getDisplayValue()]
+										</span>
+									</label>
+								</td>
+							</j2:if>
+						</j2:forEach>
+					</tr>
+				</j2:while>
+			</tbody>
+		</table>
+	</j2:while>
+	
+	<br/>
+	<i class="icon-loading icon-lg"/>
+	<g:dialog_button
+			id="save_button_bottom"
+			style_class="btn btn-primary pull-right"
+			onclick="return submitAttributes()">
+			${gs.getMessage('Save')}
+	</g:dialog_button>
+</j:jelly>

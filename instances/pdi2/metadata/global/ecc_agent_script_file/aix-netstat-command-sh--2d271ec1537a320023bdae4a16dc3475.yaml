@@ -1,0 +1,47 @@
+_meta:
+  hash: 45bf51161bbc95937e7dda88399812287959052a0dd432c26b7b9a4d0a53aaa1
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: now.discovery.content
+  sys_created_on: 2017-05-16 12:29:55
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 2d271ec1537a320023bdae4a16dc3475
+  sys_mod_count: '4'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_2d271ec1537a320023bdae4a16dc3475
+  sys_updated_by: now.discovery.content
+  sys_updated_on: 2025-04-09 06:57:00
+active: 'true'
+checksum: ''
+description: ''
+directory: 'false'
+name: aix_netstat_command.sh
+parent: ec515c705352320023bdae4a16dc3488
+script: |-
+  #!/bin/sh
+  # Copyright © ServiceNow, Inc. 2017. All rights reserved.
+  BASE_DIR=$1
+  cp "${BASE_DIR}/connection_samples/all_connections.log" "${BASE_DIR}/connection_samples/all_connections_tmp.log"
+  #netstat output | match tcp | collepse all space into one space | remove CLOSED conneciton | sort | uniq
+  sudo netstat -Aan | grep tcp | tr -s ' ' | grep -v CLOSED | sort | uniq > "${BASE_DIR}/connection_samples/connections_list.log"
+  #get pid of each connection 
+  while read line; do 
+  	rmsock `echo $line | cut -d ' ' -f1` tcpcb | cut -d ' ' -f9; 
+  done < "${BASE_DIR}/connection_samples/connections_list.log" >"${BASE_DIR}/connection_samples/connections_pid.log"
+  #combine connection result with PID added | remove keyword with before which is error
+  #TODO: filter any other error type?
+  paste "${BASE_DIR}/connection_samples/connections_list.log" "${BASE_DIR}/connection_samples/connections_pid.log" | grep -v "before" > "${BASE_DIR}/connection_samples/connections_with_pid.log"
+  #cat connections | match LISTEN | print result | separate ip.port 
+  cat  "${BASE_DIR}/connection_samples/connections_with_pid.log" | grep LISTEN | awk -F' ' 'length($8)>0{print "on " $8 " " $5 }' | sed 's/\(.*\)\./\1 /' > "${BASE_DIR}/connection_samples/connection_sample.log"
+  cat  "${BASE_DIR}/connection_samples/connections_with_pid.log" | grep ESTABLISHED | awk -F' ' 'length($8)>0{print "to " $8 " " $5 " " $6 }' | sed 's/\(.*\)\./\1 /' | awk -F' ' '{print $1" " $2" " $4" " $5" " $3 }' | sed 's/\(.*\)\./\1 /' >> "${BASE_DIR}/connection_samples/connection_sample.log"
+  cat "${BASE_DIR}/connection_samples/connection_sample.log" "${BASE_DIR}/connection_samples/all_connections_tmp.log" | sort > "${BASE_DIR}/connection_samples/all_connections.log"
+script_attachment: ''
+source: ''
+sys_name: aix_netstat_command.sh
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

@@ -1,0 +1,549 @@
+_meta:
+  hash: f0773a59900cd39c231f082500a0dec296b7c26351d7c3964e91d76d991b3958
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2007-10-26 20:36:18
+  sys_id: de07453f0a0a0b7800d06b79122bbc5b
+  sys_mod_count: '83'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_de07453f0a0a0b7800d06b79122bbc5b
+  sys_updated_by: hardik.modi
+  sys_updated_on: 2017-07-11 00:48:30
+active: 'true'
+name: sqlinfo.ps1
+probe: de069b6d0a0a0b7800d600a7ff5a8724
+sys_name: sqlinfo.ps1
+sys_policy: ''
+value: |-
+  # MSSQL Probe
+  # Retrieves the available Microsoft SQL Server instances and databases for the specified hostname. Will cycle through all known
+  # IP addresses if the specified source IP doesn't work.
+  # Command-line usage: sqlinfo.ps1 [ip] <instance name>
+  # Requirements:
+  #   * Windows Credentials:
+  #     * Must have access to target machine and MSSQL
+  #     * If origin and target are in different domains: the origin domain must trust the target domain
+  #       and the credential must be allowed local logon for the origin
+  #   * If the target is Windows 2000 (or Windows 2003 in some cases) it will need Remote Registry enabled.
+  #   * The origin must have the MSSQL management library (SMO) installed.
+  #   * Redirection:
+  #     * All usages of the out-null cmdlet were replaced with equivalent redirects to $null
+  #     * If two probes were running simultaneously they trigger an IO Exception contending for the out-null file
+  #     * The error commonly occurred in fetchSqlServerProcesses, but all usage of out-null was replaced
+  # Copyright 2013 ServiceNow
+  # @author Roy Laurie <roy.laurie@service-now.com>
+  ##############################################################################################################
+  #set error action preference to Stop so in the event of error from command, it should throw exception. Instead of just log and continue. Continue is the default option if not specified.
+  $ErrorActionPreference='Stop'
+
+  function loadAssembly($name) {
+      if (![reflection.assembly]::LoadWithPartialName($name)) {
+          Write-Error -Message "Unable to load assembly $name. The SMO library must be installed on the MID Server host" -Category NotInstalled
+          Exit 4
+      }
+  }
+
+  loadAssembly("Microsoft.SqlServer.Smo")
+  loadAssembly("Microsoft.SqlServer.SqlWmiManagement")
+
+  ##
+  # InstanceInfo Class
+  Add-Type @'
+  public class InstanceInfo {
+      public string instanceName;
+      public string errorMessage;
+      public string serviceName;
+      public string version;
+      public string engineEdition;
+      public string edition;
+      public string servicepack;
+      public int port;
+      public bool portDynamic;
+      public int pid;
+      public string[] databases;
+  }
+  '@
+
+  ##
+  # Fetches all processes running on the target machine that are running 'sqlserver'
+  # @return WMI:Win32_Service
+  function fetchSqlServerProcesses($ip) {
+      try {
+          if ($cred) {
+              $processes = Get-WmiObject -ComputerName $ip Win32_Process -filter "Name='sqlservr.exe'" -Credential $cred 2>$null
+          } else {
+              $processes = Get-WmiObject -ComputerName $ip Win32_Process -filter "Name='sqlservr.exe'" 2>$null
+          }
+          
+          if (!$processes) {
+              return @()
+          }
+          
+          $processes = $processes | Sort-Object -Property ProcessId 2>$null
+          if (!$processes) {
+              return @()
+          }
+          
+          # Note the cred/nocred gwmi call nested in the foreach cmdlet
+          $processes = $processes |
+              ForEach-Object -process {
+                  if ($cred) {
+                      Get-WmiObject -ComputerName $ip Win32_Service -filter ("ProcessId=" + $_.ProcessId) -Credential $cred
+                  } else {
+                      Get-WmiObject -ComputerName $ip Win32_Service -filter ("ProcessId=" + $_.ProcessId)
+                  }
+              } 2>$null
+
+          if (!$processes) {
+              return @()
+          }
+          
+          return $processes
+      } catch [System.Exception] {
+          return @()
+      }
+  }
+
+  ##
+  # Retrieves the IP addresses for the specified Windows machine
+  function fetchIpAddresses($targetIp) {
+      if ($cred) {
+          $adapters = Get-WmiObject Win32_NetworkAdapterConfiguration -ComputerName $sourceIp -Credential $cred
+      } else {
+          $adapters = Get-WmiObject Win32_NetworkAdapterConfiguration -ComputerName $sourceIp
+      }
+      
+      [array]$ipAddresses = $adapters |
+          Where { $_.IPAddress } |
+          Select -Expand IPAddress |
+          Where { $_ -notlike '*:*' -and $_ -notlike '169.254.*' -and $_ -notlike '0.0.0.0' }
+      
+      return $ipAddresses
+  }
+
+  ## 
+  # Determine netbios name by passing the provided ip to nbstat and then retrieving the first unique result 
+  # ignore any exceptions and just return empty string, will be handled by sensor as needed 
+  # @return string 
+  function resolveNetbiosName($ipAddresses) { 
+      for ($i = 0; $i -lt $ipAddresses.Length; ++$i) { 
+          $ip = $ipAddresses[$i] 
+          try { 
+              $netbiosNames = nbtstat -A $ip | Where {$_ -match "UNIQUE" } 
+              $netbiosNames[0] -replace "^\s+", "" -match "^[\w\-]+" >$null 
+              $netbiosName = $matches[0] 
+
+              if ($netbiosName) { 
+                  return $netbiosName 
+              } 
+          } catch [System.Exception] { 
+              continue 
+          } 
+      } 
+      return ""
+  } 
+
+  ##
+  # Fetch the MSSQL instance names for a target
+  # if SMO fails attempt to use registry (always for Win2000, sometimes forWin2003)
+  # @return string[]
+  function fetchInstanceNames($ip) {
+      try {
+          $instanceNames = fetchInstanceNamesBySmo $ip
+          if ($instanceNames) {
+              return $instanceNames
+          }
+      } catch [System.Exception] {
+          # Microsoft.SqlServer.Management.Smo.SmoException thrown if Win2000
+          # just fallback to registry
+      }
+      
+      try {
+          $instanceNames = fetchInstancesNamesByRegistry $ip
+      } catch [System.Exception] {
+          return $null
+      }
+
+      return $instanceNames
+  }
+
+  ##
+  # Fetch the MSSQL instance names for a target by using remote SMO WMI calls.
+  # @return string[]
+  function fetchInstanceNamesBySmo($ip) {
+      # Must use correct ProviderArchitecture to get ServerInstances
+      $architectures = @("Default", "Use64Bit", "Use32Bit")
+      foreach ($architecture in $architectures) {
+          $manager = New-Object Microsoft.SqlServer.Management.Smo.WMI.ManagedComputer($ip)
+          if ($cred) {
+              $manager.ConnectionSettings.Username = $cred.Username
+              $manager.ConnectionSettings.SetPassword($cred.GetNetWorkCredential().Password)
+          }
+          $manager.ConnectionSettings.ProviderArchitecture = $architecture
+          $manager.Initialize() >$null
+          
+          $instanceNames = @()
+          foreach ($instance in $manager.ServerInstances) {
+              $instanceNames += $instance.Name
+          }
+          
+          if ($instanceNames.Length -gt 0) {
+              return $instanceNames
+          }
+      }
+      
+      return $null
+  }
+
+  ##
+  # Fetch the MSSQL instance names for at target by using remote registry calls.
+  # @return string[]
+  function fetchInstancesNamesByRegistry($ip) {
+      $HKLM = 2147483650
+      $reg = getRegistryProvider
+      $instanceNames = ($reg.GetMultiStringValue($HKLM, "SOFTWARE\Microsoft\Microsoft SQL Server", "InstalledInstances")).sValue
+
+      return $instanceNames
+  }
+
+  ##
+  # Get the instance info based on the instance name... Also adding cluster support by Looping through each IP address
+  function fetchInstanceInfoForKnownName ($targetInstanceName, $ipAddresses) {
+      for ($i = 0; $i -lt $ipAddresses.Length; ++$i) {
+          $ip = $ipAddresses[$i]
+          $info = fetchInstanceInfo $targetInstanceName $ip
+          if ($info.errorMessage) {
+              continue
+          }
+          return $info
+      }
+      # If we couldn't get anything, then return null
+      return $null
+  }
+
+  ##
+  # Connects to the MSSQL instance via SMO and queries it for meta information and database names
+  # @return InstanceInfo
+  function fetchInstanceInfo ($instanceName, $ip) {
+      $info = New-Object InstanceInfo
+      $info.instanceName = $instanceName
+
+      # determine tcp port
+      fillPortInfo $info $ip $instanceName
+    
+      $dbInstance = $ip + "\" + $instanceName
+      if ($info.port) {
+          $dbInstance += "," + $info.port
+      }
+
+      # connection settings
+      $server = New-Object Microsoft.SqlServer.Management.Smo.Server($dbinstance)
+      if ($cred) {
+          $server.ConnectionContext.LoginSecure = $true
+          $server.ConnectionContext.ConnectAsUser = $true
+          $server.ConnectionContext.ConnectAsUsername = formatConnectAsUsername $cred.Username
+          $server.ConnectionContext.ConnectAsUserPassword = $cred.GetNetWorkCredential().Password
+      }
+
+      $success = $false
+      try {
+          $success = $server.Initialize()
+      } catch [System.Exception] {
+          $info.errorMessage = "Error connecting to MSSQL instance: " + $_.Exception.Message
+          $success = $false
+      }
+
+      if ($success -ne $true) {
+          if (!$info.errorMessage) {
+              $info.errorMessage = "Unable to connect to MSSQL instance " + $dbInstance
+          }
+          return $info
+      }
+
+      $info.serviceName = $server.ServiceName
+      $info.version = $server.VersionString
+      $info.edition = $server.Information.Edition
+      $info.engineEdition = $server.Information.EngineEdition
+      $info.servicepack = $server.ProductLevel
+
+      # fetch databases
+      foreach($db in $server.Databases) {
+          $info.databases += $db.Name
+      }
+
+
+      return $info
+  }
+
+  function fillPortInfo([InstanceInfo] $info, $ip, $instanceName) {    
+      try {
+          fillPortInfoBySmo $info $ip $instanceName
+          return  # assume success if no exception
+      } catch [System.Exception] {
+          # Microsoft.SqlServer.Management.Smo.SmoException thrown if Win2000
+          # do not catch explicitly, just fallback to registry
+      }
+      
+      try {
+          fillPortInfoByRegistry $info $ip $instanceName
+      } catch [System.Exception] {
+          # do nothing
+      }
+  }
+
+  function fillPortInfoBySmo([InstanceInfo] $info, $ip, $instanceName) {
+      if ($cred) {
+          $manager = New-Object Microsoft.SqlServer.Management.Smo.WMI.ManagedComputer($ip,
+              $cred.Username, $cred.GetNetWorkCredential().Password)
+      } else {
+          $manager = New-Object Microsoft.SqlServer.Management.Smo.WMI.ManagedComputer($ip)
+      }
+
+      $ipallProps = $manager.ServerInstances[$instanceName].ServerProtocols['Tcp'].IPAddresses['IPAll'].IPAddressProperties
+      if ($ipallProps['TcpDynamicPorts'].Value -eq '') {
+          $info.port = $ipallProps['TcpPort'].Value
+      } else {
+          $info.port = $ipallProps['TcpDynamicPorts'].Value
+          $info.portDynamic = $true
+      }
+  }
+
+  function fillPortInfoByRegistry([InstanceInfo] $info, $ip, $instanceName) {
+      $HKLM = 2147483650
+      $reg = getRegistryProvider
+      $port = ($reg.GetStringValue($HKLM, "SOFTWARE\Microsoft\MSSQLServer\" + $instanceName + "\SuperSocketNetLib\Tcp", "TcpPort")).sValue
+      if ($port) {
+          $info.port = $port
+      }
+  }
+
+  ##
+  # Used by fetchInstancesNamesByRegistry and fillPortInfoByRegistry
+  function getRegistryProvider() {
+      if ($cred) {
+          $reg = Get-WmiObject -List -Namespace root\default -ComputerName $ip -Credential $cred | Where-Object {$_.Name -eq "StdRegProv"}
+      } else {
+          $reg = Get-WmiObject -List -Namespace root\default -ComputerName $ip | Where-Object {$_.Name -eq "StdRegProv"}
+      }
+      
+      return $reg
+  }
+
+  ##
+  # Convert username to UPN format, required for SMO Windows Authentication
+  # e.g. domain\username to username@domain
+  function formatConnectAsUsername ($origuser) {
+      $usersplit = $origuser.split("\")
+      if ($usersplit.Length -ne 2) {
+          return $origuser
+      }
+      $domain = $usersplit[0]
+      $username = $usersplit[1]
+
+      if ($domain -match "\." ) {
+          return $username
+      }
+      
+      return $username + "@" + $domain
+  }
+
+  ##
+  # Determine the PID for a given instance name
+  function getPIDByInstanceName ($instanceName, $processes) {
+      foreach ($process in $processes) {
+          $indexedName = "MSSQL$" + $instanceName
+          if ($process.Name -eq $instanceName -or $process.Name -eq $indexedName) {
+              return $process.ProcessId
+          }
+      }
+      return ""
+  }
+
+  ##
+  # Construct the return payload XML based on the instance and database info
+  function constructXMLPayload($instanceInfoList, $netbiosName, $warnings) {
+      # initialize result xml
+      $xmlDoc = New-Object System.Xml.XmlDocument
+      $xmlRoot = $xmlDoc.CreateElement("sqlserver")
+      $xmlDoc.AppendChild($xmlRoot) >$null
+
+      if ($instanceInfoList.count -gt 0) {
+        # netbiosName
+        $node = $xmlDoc.CreateElement('netbiosName')
+        $node.AppendChild($xmlDoc.CreateTextNode($netbiosName)) >$null
+        $xmlRoot.AppendChild($node) >$null
+      } else {
+          # output warnings only when we couldn't retrieve an instance
+          foreach ($warning in $warnings) {
+              $node = $xmlDoc.CreateElement('warning')
+              $node.AppendChild($xmlDoc.CreateTextNode($warning)) >$null
+              $xmlRoot.AppendChild($node) >$null
+          }   
+      }
+      
+      foreach ($info in $instanceInfoList) {
+          # initialize mssql instance xml
+          $xmlInstance = $xmlDoc.CreateElement("sqlInstance")
+          $xmlRoot.AppendChild($xmlInstance) >$null
+          # instanceName
+          $node = $xmlDoc.CreateElement('instanceName')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.instanceName)) >$null
+          $xmlInstance.AppendChild($node) >$null
+
+          # error
+          if ($info.errorMessage) {
+              $node = $xmlDoc.CreateElement('error')
+              $node.AppendChild($xmlDoc.CreateTextNode($info.errorMessage)) >$null
+              $xmlInstance.AppendChild($node) >$null
+              continue
+          }       
+
+          # serviceName
+          $node = $xmlDoc.CreateElement('serviceName')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.serviceName)) >$null
+          $xmlInstance.AppendChild($node) >$null
+          # version
+          $node = $xmlDoc.CreateElement('version')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.version)) >$null
+          $xmlInstance.AppendChild($node) >$null
+          # Service Pack level
+          $node = $xmlDoc.CreateElement('servicepack')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.servicepack)) | out-null
+          $xmlInstance.AppendChild($node) | out-null
+          # port
+          $node = $xmlDoc.CreateElement('port')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.port)) >$null
+          $xmlInstance.AppendChild($node) >$null
+          # portDynamic
+          $node = $xmlDoc.CreateElement('portDynamic')
+          if ($info.portDynamic) {
+              $portDynamic = 'true'
+          } else {
+              $portDynamic = 'false'
+          }
+          
+          $node.AppendChild($xmlDoc.CreateTextNode($portDynamic)) >$null
+          $xmlInstance.AppendChild($node) >$null
+          # pid
+          $node = $xmlDoc.CreateElement('pid')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.pid)) >$null
+          $xmlInstance.AppendChild($node) >$null
+          # engineEdition
+          $node = $xmlDoc.CreateElement('engineEdition')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.engineEdition)) >$null
+          $xmlInstance.AppendChild($node) >$null
+          # edition
+          $node = $xmlDoc.CreateElement('edition')
+          $node.AppendChild($xmlDoc.CreateTextNode($info.edition)) >$null
+          $xmlInstance.AppendChild($node) >$null        
+          
+          $xmlDatabases = $xmlDoc.CreateElement('databases')
+          $xmlInstance.AppendChild($xmlDatabases) >$null
+
+          foreach($db in $info.databases) {
+              if (!$db) {
+                  continue
+              }
+
+              $xmlDb = $xmlDoc.CreateElement("database")
+              $xmlDb.setAttribute("id", $db)
+              $xmlDatabases.AppendChild($xmlDb) >$null
+          }
+      }
+
+      return $xmlDoc
+  }
+
+  function main($sourceIp, $targetInstanceName) {
+      if (!$sourceIp) {
+          Write-Error "Usage: sqlinfo.ps1 [ip] <instance name>"
+          Exit 4
+      }
+
+      $warnings = @()
+      $instanceInfoList = @()
+      [array]$ipAddresses = fetchIpAddresses $sourceIp
+
+      # If we have the instance name, then let's just fetch it!
+      if ($targetInstanceName) {
+          $info = fetchInstanceInfoForKnownName $targetInstanceName $ipAddresses
+          if ($info) {
+              $instanceInfoList += $info
+          } else {
+              # no info returned for the known instance name
+              # if there is a credential, exit so others can be attempted or fallback to the MID user
+              # if there is no credential, we have failed with the MID user and can go no further
+              if ($cred) {
+                  Exit 1
+              } else {
+                  Exit 3
+              }
+          }
+      } else {    
+          # If we do not have instance name (which is typical of SQL 2000), 
+          # then we need to find them, query them and then correlate them by PID
+          
+          #Initialize the IP address we're going to go after...
+          $ipAddr = $sourceIp
+          
+          # Get a list of instance names...    
+          for ($i = 0; $i -lt $ipAddresses.Length; ++$i) {
+              $ip = $ipAddresses[$i]
+              $instanceNames = fetchInstanceNames $ip
+              if (!$instanceNames) {
+                  $warnings += "Unable to list MSSQL instances for " + $ip
+                  continue
+              }
+              $ipAddr = $ip  # Use this IP for fetching instance info
+              break
+          }
+          
+          # Query each of the instanceNames and find the corresponding PID for each
+          # Get the list of processes first...
+          # Assume success if we have at least one good one
+          $success = $false
+          $processes = fetchSqlServerProcesses $sourceIp  
+          foreach ($instanceName in $instanceNames) {
+              $info = fetchInstanceInfo $instanceName $ipAddr
+              if (!$info.errorMessage) {
+                  $success = $true
+                  $info.pid = getPIDByInstanceName $instanceName $processes
+              }
+              $instanceInfoList += $info
+          }
+
+          # no info returned for any instance names, or no instance names were returned
+          # if there is a credential, exit so others can be attempted or fallback to the MID user
+          # if there is no credential, we have failed with the MID user and can go no further
+          # otherwise return all results
+          if ($success -ne $true) {
+              if ($cred) {
+                  Exit 1
+              } else {
+                  Exit 3
+              }
+          }
+      }
+      
+      # Get the netbios name of the target (it's used to help with constructing a MSSQL record that resembles the real naming convention)
+      $netbiosName = resolveNetbiosName $ipAddresses
+
+      # construct the payload and print the result
+      $xmlDoc = constructXMLPayload $instanceInfoList $netbiosName $warnings
+      Write-Host $xmlDoc.innerXml
+      Exit 0
+  }
+
+  if ($args.length -gt 0) { # from command line
+      $computer = $args[0]
+      $instanceName = $args[1]
+  } else { # from probe
+      # $computer already set as global
+      $instanceName = "${sqlInstance}" # from g_probe_parameters set by process classifier
+  }
+
+  main $computer $instanceName
+value_script: ''

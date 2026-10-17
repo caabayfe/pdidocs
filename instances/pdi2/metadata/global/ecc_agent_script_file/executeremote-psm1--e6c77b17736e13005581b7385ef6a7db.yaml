@@ -1,0 +1,436 @@
+_meta:
+  hash: 8bd3b094d21149ce67aeed84a0a4abbf5000a827c8605d5952fcee72e9c09abf
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: benjamin.phan
+  sys_created_on: 2018-06-13 01:31:01
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: e6c77b17736e13005581b7385ef6a7db
+  sys_mod_count: '67'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_e6c77b17736e13005581b7385ef6a7db
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-18 15:06:16
+active: 'true'
+checksum: ''
+description: Contains functions for executing a given .ps1 file on a remote target machine
+directory: 'false'
+name: ExecuteRemote.psm1
+parent: 5adc4a4073f213005581b7385ef6a7bc
+script: |-
+  function getConfigurableParm {
+     param([string]$variable, [string]$defaultValue)
+     $value = [Environment]::GetEnvironmentVariable($variable)
+     if (-not $value) {
+          $value = $defaultValue;
+      }
+      return $value;
+  }
+   
+  <# Benjamin Phan:
+     This function should probably not be called outside of executeRemote, since this function depends on variables being set
+     by executeRemote. We might want to refactor executeRemote so that this part is placed inline rather than in this function.
+     I originally made it this way because it seemed easier to read, but really it should not be a function in case someone
+     comes across it and tries to use it standalone.
+  #>
+  function launchWMI {
+     param([string]$computer, [System.Management.Automation.PSCredential]$cred, [string]$sourceScript, [string]$scriptBlock, [switch]$copyScriptToTarget, [int]$launchProcessWaitTime)
+
+     # set powershell executable
+     $psExecutable = findPowerShellExecutable -computer $computer -cred $cred
+
+     $context = startImpersonation $cred
+     $cmdLongline = "mode con lines=1 cols=$([int16]::MaxValue-1)";
+     if ($copyScriptToTarget) {
+         $executionPolicyFlag = ' -ExecutionPolicy Bypass';
+     } else {
+         $executionPolicyFlag = '';
+     }
+     # the space between powershell and the executionPolicyFlag is contained in the executionPolicyFlag itself
+     $cmdPowerShellPrefix = "$psExecutable$executionPolicyFlag -NonInteractive -WindowStyle Hidden";
+     
+
+     # set some useful variables
+     $varString = "Set-Variable -Name 'SNC_isWmi' -Value `$true -Scope Global; "
+
+
+     # check if we have any variables we need to send to the remote session
+     $remoteVarsVariable = Get-ChildItem -Path Env:SNCExecuteRemoteVars 2> $null
+     if ($?) {
+         $paramNamesString = $remoteVarsVariable.Value
+         $vars = ($paramNamesString -split ",")
+
+         # build up command containing variables and values to pass to remote session
+         Foreach ($var in $vars) {
+             $varObj = Get-Variable -Name $var
+             $varName = $varObj.Name
+             $varVal = $varObj.Value
+
+             # only need to escape single quotes, double quotes are passed properly without escaping
+             $escapedVarVal = $varVal -replace "'","''"
+             $varString += "Set-Variable -Name '$varName' -Value '$escapedVarVal' -Scope Global; "
+         }
+     }
+
+     # If we got a sourceScript as a file path and we should not copy the script to the target, run the script as script block.     
+     if ($sourceScript -and -not $copyScriptToTarget) {
+        $scriptBlock = (Get-Content -path $sourceScript)
+     }
+
+     # Set PSStyle.OutputRendering to PlainText to skip ANSI escape sequences
+     $PSStyleCommand = "if (`$PSStyle) {`$PSStyle.OutputRendering = 'PlainText'}"
+
+     if ($scriptBlock){
+        # If we get a string as a script block, attach the the command to make sure that the windows is large enough for long line and pass is as the powerlshell command
+        $varCommand = "& {$cmdLongline; $varString $scriptBlock}";
+
+        # escape the command for cmd
+        # for sequences of backslashes followed by double quote, double the number of quotes
+        # also convert any " to \""
+        $escapedCommand = $varCommand -replace '(\\*)"', '$1$1\""'
+        $command = "$cmdPowerShellPrefix -command `"$PSStyleCommand $escapedCommand`""
+     }
+     else {
+        # Create directories as needed and copy script to directory
+        $pathExists = Test-Path -Path $remoteHomeDir
+        if (-not $?) {
+          throw "Failed to test the path $remoteHomeDir"
+        }
+        if (-not $pathExists) {
+          New-Item -ItemType directory -Path $remoteHomeDir -Force > $null
+          if (-not $?) {
+           throw "Failed to create directory $remoteHomeDir"
+          }
+        }
+
+        Copy-Item -Path $sourceScript -Destination $remoteScriptPath -Force -Recurse
+        if (-not $?) {
+           throw "Failed to copy script $sourceScript to target $remoteScriptPath"
+        }
+
+       # create a script on the target that contains the commands to set powershell params
+       $paramFileGuid = [System.Guid]::NewGuid()
+       $targetParamFileName = "executeRemote_params_$paramFileGuid.ps1"
+       $remoteParamScript = "$remoteHomeDir\$targetParamFileName"
+       $localParamScript = "$localHomeDir\$targetParamFileName"
+
+       # add the home directory and script path to the parameters that are passed to the remote powershell process
+       $varString += "Set-Variable -Name 'SNC_remoteScriptDirectory' -Value '$localHomeDir' -Scope Global; "
+       $varString += "Set-Variable -Name 'SNC_remoteScriptPath' -Value '$localScriptPath' -Scope Global; "
+           
+       New-Item -ItemType "file" -Path $remoteParamScript -Force > $null
+       Set-Content -Value $varString -Path $remoteParamScript -Force -Encoding UTF8
+
+       $hasParams = $true
+       $runParamsScript = "try { & `"$localParamScript`"; } catch {}"
+        
+       # Potential security issue: passing parameters to target through plain text
+       $varCommand = "& {$cmdLongline; $runParamsScript & `"$localScriptPath`" `"$localParamScript`"}"
+       $escapedCommand = $varCommand -replace '(\\*)"', '$1$1\""'
+       $command = "$cmdPowerShellPrefix -command `"$PSStyleCommand $escapedCommand`""
+     }
+
+     # Run script remotely
+     try {
+        # call launchProcess with -UTF8 so that unicode characters are brought back and put into the payload properly
+        if ($launchProcessWaitTime) {
+           launchProcess -computer $computer -cred $cred -command $command -UTF8 -secondsToWait $launchProcessWaitTime -shouldKillProcess $true
+        } else {
+           launchProcess -computer $computer -cred $cred -command $command -UTF8
+        }
+     } catch [System.IO.FileNotFoundException] {
+          throw;
+     } catch {
+        write-error $_.Exception.Message
+     } finally {
+       if (-not $scriptBlock){
+          Remove-Item -Path $remoteScriptPath -Force
+          if ($hasParams) {
+             Remove-Item -Path $remoteParamScript -Force
+          }
+       }
+     }
+     endImpersonation $context
+  }
+
+  <#
+     Returns the correct PowerShell executable to use for WMI operations.
+     The executable path should already be set in $global:powershellExecutableRemote
+     by the time this function is called. Falls back to "powershell" if not set.
+  #>
+  function findPowerShellExecutable {
+
+     # Return cached value if available
+     if ($global:powershellExecutableRemote) {
+         # values cached in the Java layer do not handle escaping for paths containing spaces, do so here
+         return "`"$global:powershellExecutableRemote`""
+     }
+
+     # Fallback to standard PowerShell if not set
+     return "powershell"
+  }
+
+  function executeRemote {
+      Param([string]$computer, [string][Parameter(Mandatory=$true,ParameterSetName='filePath')]$filePath, [string][Parameter(Mandatory=$true,ParameterSetName='scriptBlock')]$scriptBlock, [boolean] $wmi, [System.Management.Automation.PSCredential]$cred, [switch][Parameter(ParameterSetName='filePath')]$copyScriptToTarget, [int]$launchProcessWaitTime)
+
+      # for WMI, read base_dir from the env.  for WinRM, use the shell
+      if ($wmi) {
+          $targetBaseDir  = getConfigurableParm -variable "SNC_base_dir" -defaultvalue "admin$\temp"
+      } elseif ($SNC_base_dir) {
+          $targetBaseDir  = $SNC_base_dir
+      } else {
+           $targetBaseDir  = "admin$\temp"
+      }
+
+      $instanceName = getConfigurableParm -variable "SNC_instance" -defaultvalue "unregistered"
+
+      $targetFileGuid = [System.Guid]::NewGuid()
+      $targetFileName = "psscript_executeRemote_$targetFileGuid.ps1"
+
+      $homeDir = "$targetBaseDir\$instanceName"
+      $localHomeDir = "$env:temp\$instanceName"
+      $localScriptPath = "$localHomeDir\$targetFileName"
+      $remoteHomeDir = "\\$computer\$homeDir"
+      $remoteScriptPath = "$remoteHomeDir\$targetFileName"
+      
+      if ($wmi) {
+          launchWMI -computer $computer -launchProcessWaitTime $launchProcessWaitTime -cred $cred -sourceScript $filePath -scriptBlock $scriptBlock -copyScriptToTarget:$copyScriptToTarget;
+      } else {
+          # This is a WimRM session
+          $remotePs = getRemoteSession;
+          if ($remotePs) {
+              # pass powershell_param_ variables to the remote session
+              if ($SNC_REMOTE_VARIABLES) {
+                  $varNames = $SNC_REMOTE_VARIABLES -split ","
+                  Foreach ($varName in $varNames) {
+                      $value = (Get-Variable $varName).Value
+
+                      # only need to escape single quotes, double quotes are passed properly without escaping
+                      $escapedValue = $value -replace "'","''"
+                      $sbString = "Set-Variable -Name '$varName' -Value '$escapedValue'"
+                      if (isJEACodeSigning) {
+                          invokeJEAExecuteScript $remotePs $sbString
+                      } else {
+                          $paramsSb = [scriptblock]::Create($sbString)
+                          Invoke-Command -Session $remotePs -ScriptBlock $paramsSb
+                      }
+                  }
+              }
+              # If it is JEA code signing, we want to enforce copy script file to target so that we can verify it signature.
+              # Note that isJEACodeSigning is a function returning a boolean value. Don't use it directly in a boolean expression
+              # like (isJEACodeSigning -and $filePath). It will be evaluated to $true even if $filePath is empty!
+              # There is a good article about PS logical operators at https://4sysops.com/archives/powershell-logical-operators/
+              if ($copyScriptToTarget -or ((isJEACodeSigning) -and $filePath)) {
+                  # copy the script to the target
+                  SendFileExecuteRemote -Path $filePath -Destination $localHomeDir -Name $targetFileName -Session $remotePs > $null
+
+                  # pass the directory of the script on target to the remote session
+                  $sbString = "Set-Variable -Name 'SNC_remoteScriptDirectory' -Value '$localHomeDir'"
+                  if (isJEACodeSigning) {
+                      invokeJEAExecuteScript $remotePs $sbString
+                  } else {
+                      $paramsSb = [scriptblock]::Create($sbString)
+                      Invoke-Command -Session $remotePs -ScriptBlock $paramsSb
+                  }
+
+                  # pass the path of the script on target to the remote session
+                  $sbString = "Set-Variable -Name 'SNC_remoteScriptPath' -Value '$localScriptPath'"
+                  if (isJEACodeSigning) {
+                      invokeJEAExecuteScript $remotePs $sbString
+                  } else {
+                      $paramsSb = [scriptblock]::Create($sbString)
+                      Invoke-Command -Session $remotePs -ScriptBlock $paramsSb
+                  }
+                  
+                  # Tell the remote that we're not using WMI
+                  $sbString = "Set-Variable -Name 'SNC_isWmi' -Value `$false"
+                  if (isJEACodeSigning) {
+                      invokeJEAExecuteScript $remotePs $sbString
+                  } else {
+                      $paramsSb = [scriptblock]::Create($sbString)
+                      Invoke-Command -Session $remotePs -ScriptBlock $paramsSb
+                  }
+
+                  # execute the script on the target
+                  $executeScriptSb = [ScriptBlock]::Create("try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; } finally { & `"$localScriptPath`" }")
+                  if (isJEACodeSigning) {
+                      $output = invokeJEAExecuteScript $remotePs $executeScriptSb.toString() -ErrorAction Continue
+                  } else {
+                      $output = Invoke-Command -Session $remotePs -ScriptBlock $executeScriptSb -ErrorAction Continue
+                  }
+
+                  #remove the script on the target
+                  $removeFileSb = [ScriptBlock]::Create("Remove-Item `"$localScriptPath`" -Force")
+                  if (isJEACodeSigning) {
+                      InvokeJEAExecuteScript $remotePs $removeFileSb.toString() > $null
+                  } else {
+                      Invoke-Command -Session $remotePs -ScriptBlock $removeFileSb > $null
+                  }
+              } elseif ($filePath) {
+                  # execute the script on the target
+                  $output = Invoke-Command -Session $remotePs -FilePath $filePath -ErrorAction Continue
+              } elseif ($scriptblock) {
+                  $scriptBlockRemote = [Scriptblock]::Create($scriptblock);
+                  if (isJEACodeSigning) {
+                      invokeJEAExecuteScript $remotePs $scriptBlockRemote.toString()
+                  } else {
+                      Invoke-Command -Session $remotePs -ScriptBlock $scriptBlockRemote;
+                  }
+              }
+              foreach ($out in $output) {
+                  # must use [Console]::WriteLine because [Console]::OutputEncoding is properly set to UTF8
+                  # Write-Host and Write-Output do not correctly pass unicode characters back to MID Java code
+                  [Console]::WriteLine($out)
+              }
+          } else {
+              Write-Error "Failed to create remote Powershell Session"
+          }
+      }
+  }
+
+  function getRemoteSession{
+      if ($SNC_session -and $SNC_session.getType() -and $SNC_session.getType().Name.ToLower() -eq "pssession"){
+          return $SNC_session
+      }
+      
+      return CreatePSSessionWithComputerName -host $computer -credential $cred;
+  }
+
+  function SendFileExecuteRemote
+  {
+      <#
+      Author: Benjamin Phan
+      10/12/18
+      Ripped from LaunchProc.psm1 with modifications.
+      This Send-File takes in a Destination directory and a Name, which allows us to change the resulting file's name.
+      The original Send-File sets the resulting file's name to be the same as the source file.
+
+      Another difference is that this function does not use using:$variables, since this functionality does not seem
+      to be supported in Powershell 2.0.
+
+      We need this function inside this module because LaunchProc.psm1 is not imported into the Powershell session
+      when we are on the WinRM code path.
+      #>
+      [CmdletBinding()]
+      param
+      (
+          [string[]]$Path,[string]$Destination, [string]$Name, [System.Management.Automation.Runspaces.PSSession]$Session
+      )
+      process
+      {
+          foreach ($p in $Path)
+          {
+              try
+              {
+                  if ($p.StartsWith('\\'))
+                  {
+                      Write-Verbose -Message "[$($p)] is a UNC path. Copying locally first"
+                      Copy-Item -Path $p -Destination ([environment]::GetEnvironmentVariable('TEMP', 'Machine'))
+                      $p = "$([environment]::GetEnvironmentVariable('TEMP', 'Machine'))\$($p | Split-Path -Leaf)"
+                  }
+                  if (Test-Path -Path $p -PathType Container) # If the path is a directory, get all files under directory
+                  {
+                      Write-Log -Source $MyInvocation.MyCommand -Message "[$($p)] is a folder. Sending all files"
+                      $files = Get-ChildItem -Path $p -File -Recurse
+                      $sendFileParamColl = @()
+                      foreach ($file in $Files)
+                      {
+                          $sendParams = @{
+                              'Session' = $Session
+                              'Path' = $file.FullName
+                          }
+                          if ($file.DirectoryName -ne $p) ## It's a subdirectory
+                          {
+                              $subdirpath = $file.DirectoryName.Replace("$p\", '')
+                              $sendParams.Destination = "$Destination\$subDirPath"
+                          }
+                          else
+                          {
+                              $sendParams.Destination = $Destination
+                          }
+                          $sendFileParamColl += $sendParams
+                      }
+                      foreach ($paramBlock in $sendFileParamColl)
+                      {
+                          SendFileExecuteRemote @paramBlock
+                      }
+                  }
+                  else # Sending individual file
+                  {
+                      Write-Verbose -Message "Starting WinRM copy of [$($p)] to [$($Destination)]"
+                      $remoteScript = {
+                          param($dest, $fname, $len, $destBytes)
+                          if (-not (Test-Path -Path $dest -PathType Container))
+                          {
+                              $null = New-Item -Path $dest -Type Directory -Force
+                          }
+                          $fileDest = "$dest\$fname"
+                          if (-not $destBytes) {
+                              ## Create a new array to hold the file content
+                              $destBytes = New-Object byte[] $len
+                              $position = 0
+                              
+                              ## Go through the input, and fill in the new array of file content
+                              foreach ($chunk in $input)
+                              {
+                                  [GC]::Collect()
+                                  [Array]::Copy($chunk, 0, $destBytes, $position, $chunk.Length)
+                                  $position += $chunk.Length
+                              }
+                          }
+                          
+                          [IO.File]::WriteAllBytes($fileDest, $destBytes)
+                          
+                          Get-Item $fileDest
+                          [GC]::Collect()
+                      }
+                      
+                      # Get the source file, and then get its contents
+                      $sourceBytes = [System.IO.File]::ReadAllBytes($p);
+                      $Length = $sourceBytes.Length
+                      if (isJEACodeSigning) {
+                          $_params = @{  
+                              "dest" = $Destination
+                              "fname" = $Name
+                              "len" = $Length
+                              "destBytes" = $sourceBytes
+                          }
+                          $_fileDest = invokeJEAExecuteScript $Session $remoteScript.toString() $_params
+                          return $_fileDest;
+                      } else {
+                          # Stream the chunks into the remote script.
+                          $streamChunks = @();
+                          
+                          # Now break it into chunks to stream.
+                          $streamSize = 1MB;
+                          for ($position = 0; $position -lt $sourceBytes.Length; $position += $streamSize)
+                          {
+                              $remaining = $sourceBytes.Length - $position
+                              $remaining = [Math]::Min($remaining, $streamSize)
+                              
+                              $nextChunk = New-Object byte[] $remaining
+                              [Array]::Copy($sourcebytes, $position, $nextChunk, 0, $remaining)
+                              $streamChunks +=, $nextChunk
+                          }
+                          $streamChunks | Invoke-Command -Session $Session -ScriptBlock $remoteScript -ArgumentList $Destination,$Name,$Length
+                      }
+                      Write-Verbose -Message "WinRM copy of [$($p)] to [$($Destination)] complete"
+                  }
+              }
+              catch
+              {
+                  Write-Error $_.Exception.Message
+              }
+          }
+      }
+  }
+script_attachment: ''
+source: ''
+sys_name: ExecuteRemote.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

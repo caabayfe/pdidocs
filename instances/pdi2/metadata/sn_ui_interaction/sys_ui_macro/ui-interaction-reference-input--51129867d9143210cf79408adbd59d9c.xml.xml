@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="ref" value="input_map.${jvar_input.name}"/>
+	<g:set_if var="jvar_element_display" test="${jvar_shown}" true="display: block;" false="display: none;"/>
+
+	<j:set var="jvar_mandatory_class" value=""/>
+	<j:if test="${jvar_input.required}">
+		<j:set var="jvar_mandatory_class" value="is-required"/>
+		<j:if test="${jvar_value != ''}">
+			<j:set var="jvar_mandatory_class" value="is-prefilled"/>
+		</j:if>
+	</j:if>
+
+	<g:evaluate jelly="true" var="jvar_display_value">
+		var value = "";
+
+		if (jelly.jvar_value != '') {
+			var gr = new GlideRecordSecure(jelly.jvar_input.typeMetadata.reference);
+			if (gr.get(jelly.jvar_value)) {
+				value = gr.getDisplayValue();
+			}
+		}
+
+		value;
+	</g:evaluate>
+
+	<g:set_if var="jvar_label_class" test="${jvar_input.required}" true="mandatory" false=""/>
+	<g:set_if var="jvar_required_marker" test="${jvar_input.required}" true="required-marker" false=""/>
+
+	<div id="element.${ref}" class="form-group ${jvar_mandatory_class}" style="${jvar_element_display}">
+		<div id="label.${ref}">
+			<label onclick="return labelClicked(this);" for="${ref}" dir="ltr" class="col-xs-12 col-md-3 col-lg-3 control-label">
+				<span id="status.${ref}" role="note" data-dynamic-title="${jvar_input.description}" mandatory="${jvar_input.required}" oclass="${jvar_label_class}" class="${jvar_label_class} ${jvar_required_marker}"/>
+				<span title="${jvar_input.description}" class="label-text" data-html="false">${jvar_input.label}</span>
+			</label>
+		</div>
+		<div class="col-xs-10 col-md-7 col-lg-7 form-field input_controls">
+			<input type="hidden" id="${ref}" name="${jvar_input.name}" data-required="${jvar_input.required}" data-type="reference" value="${jvar_value}" onchange="onInputMapChange('${ref}');" />
+			<div class="input-group ref-container">
+				<input id="sys_display.${ref}" name="sys_display.${ref}" aria-labelledby="label.${ref}" type="search" autocomplete="off" autocorrect="off" value="${jvar_display_value}" data-type="ac_reference_input" class="form-control element_reference_input" spellcheck="false" onfocus="if (!this.ac) new AJAXReferenceCompleter(this, '${ref}', '', 'QUERY:${jvar_input.typeMetadata.referenceFilter}', '${jvar_input.typeMetadata.reference}');" aria-required="true"/>
+				<span class="input-group-btn">
+					<button id="lookup.${ref}" name="lookup.${ref}" type="button" class="btn btn-default" title="Lookup using list" aria-haspopup="true" tabindex="-1" role="button" aria-label="Look up value for field: ${jvar_input.label}" data-original-title="Lookup using list" onclick="mousePositionSave(event);reflistOpen( '${ref}', '${jvar_input.name}', '${jvar_input.typeMetadata.reference}', '', 'false', '', '${jvar_input.typeMetadata.referenceFilter}', '')">
+						<span class="icon icon-search" aria-hidden="true"></span>
+					</button>
+				</span>
+			</div>
+		</div>
+		<div class="col-xs-2 col-md-1 col-lg-1 form-field-addons">
+			<g:macro_invoke macro="configure_ui_interaction_dynamic_value"/>
+		</div>
+	</div>
+</j:jelly>

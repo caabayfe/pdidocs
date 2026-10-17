@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/classes/GlideListWidget.js" />
+    <g:inline template="reporting_includes.xml" />
+    <j:set var="jvar_sysparm_query" value="${sysparm_query}" />
+    <j:set var="jvar_sysparm_table" value="${sysparm_table}" />
+    <j:set var="jvar_sysparm_sysid" value="${sysparm_sysid}" />
+
+	<j:if test="${!RP.isPortal()}">
+		<j:set var="jvar_use_name_for_list_id" value="true"/>
+	</j:if>
+
+	<g:evaluate var="jvar_bubbleGR" object="true" jelly="true">
+		var bubbleId = (jelly.jvar_sysparm_sysid || '') + '';
+		var tableName = (jelly.jvar_sysparm_table || '') + '';
+		var bubbleGR = new GlideRecord('asmt_bubble_chart');
+		// Use the bubble chart definition if it is specified. If not, query for the default 
+		// bubble chart to be used for the table
+		if (bubbleId == '' &amp;&amp; tableName == '') {
+			// error message and show it to the user
+			gs.log(" Please indicate the table or chart id");
+		}
+		else if (bubbleId == '') {
+			bubbleGR.addQuery('metric_type.table', tableName);
+			bubbleGR.addQuery('isdefault', true);
+			bubbleGR.setLimit(1);
+			bubbleGR.query();
+		}
+		else {
+			bubbleGR.addQuery('sys_id', bubbleId);
+			bubbleGR.query();
+		}
+		bubbleGR;
+	</g:evaluate>
+        
+	<j:choose>
+		<j:when test="${jvar_bubbleGR.next()}">
+			<g:evaluate var="jvar_table" object="true" jelly="true">
+				var jtable = {};
+				jtable.name = (jelly.jvar_bubbleGR.getElement('metric_type.table') || '') + '';
+				var gr = new GlideRecord(jtable.name);
+				jtable.label = gr.getLabel();
+				jtable.plural = gr.getPlural();
+				<j:set var="jvar_bubble_name" value="${jvar_bubbleGR.getValue('name')}" />;					
+				//get the filter condition associated with the metric type
+				var filterCondition = (jelly.jvar_sysparm_query || '') + '';
+				if (filterCondition == '')
+					filterCondition = (jelly.jvar_bubbleGR.getElement('metric_type.condition') || '') + '';
+				jtable.filter = filterCondition;   		
+				JSON.stringify(jtable);
+			</g:evaluate>
+				
+			<g:list_default table="${jvar_bubbleGR.getValue('metric_type.table')}"/>
+			
+			<!-- Set up ListProperties for the list -->
+			<g:evaluate jelly="true">
+                var tableInfo = ${SAFE:jvar_table};
+				ListProperties.setListName(tableInfo.label);
+				ListProperties.setTitle(tableInfo.plural);
+				ListProperties.setListID(tableInfo.label);
+				ListProperties.setHasTopNav(true);
+				ListProperties.setHasTitle(true);
+				ListProperties.setHasTitleContextMenu(true);
+				ListProperties.setHasFilter(true);
+				ListProperties.setHasBreadcrumbs(true);
+				ListProperties.setHasSearch(false);
+				ListProperties.setHasTopVCR(true);
+				ListProperties.setHasHeader(true);
+				ListProperties.setHasHeaderContextMenu(false);
+				ListProperties.setHasListMechanic(true);
+				ListProperties.setHasRowContextMenu(false);
+				ListProperties.setShowLinks(true);
+				ListProperties.setHasPopup(true);
+				ListProperties.setShowEmpty(true);
+				ListProperties.setHasBottomNav(true);
+				ListProperties.setHasActions(false);
+				ListProperties.setHasBottomVCR(true);
+				ListProperties.setCanChangeView(true);
+				ListProperties.setCanGroup(false);
+			</g:evaluate>
+	
+			<!-- register for list printing -->
+			<j:set var="jvar_handle_list_printing" value="true"/>
+		
+			<g:evaluate var="jvar_series" object="true" jelly="true">
+				var result = {}; 
+				var mainObj = {};
+				var mainDmdData = [];
+				var dataArray = {}; 
+				var topLeftDmdData = {};
+				var topRightDmdData = {};
+				var bottomLeftDmdData = {};
+				var bottomRightDmdData = {}; 
+				topLeftDmdData.data = []; 
+				topRightDmdData.data = []; 
+				bottomLeftDmdData.data = []; 
+				bottomRightDmdData.data = []; 
+				mainObj.data = mainDmdData;
+				mainObj.metaData = {};
+                var tableInfo = ${SAFE:jvar_table};
+				var metricType = jelly.jvar_bubbleGR.getValue('metric_type') + '';
+				
+				if ((jelly.jvar_bubbleGR || '') + '') { 
+					var bubbleXCategory = (jelly.jvar_bubbleGR.getDisplayValue('metric_x_category') || '') + '';
+					var bubbleYCategory = (jelly.jvar_bubbleGR.getDisplayValue('metric_y_category') || '') + '';
+					var bubbleZCategory = (jelly.jvar_bubbleGR.getDisplayValue('metric_z_category') || '') + '';
+					var allCategories = [
+						(jelly.jvar_bubbleGR.getValue('metric_x_category') || ''), 
+						(jelly.jvar_bubbleGR.getValue('metric_y_category') || ''), 
+						(jelly.jvar_bubbleGR.getValue('metric_z_category') || '')
+					];
+
+					var catResGR = new GlideAggregate('asmt_category_result');
+					catResGR.addQuery('metric_type', metricType);
+					catResGR.addQuery('category','IN', allCategories);
+					catResGR.addEncodedQuery('assessment_group.sys_created_onRELATIVEGE@year@ago@1');
+					catResGR.groupBy('category');
+					catResGR.groupBy('source_id');
+					catResGR.addAggregate('AVG', 'rating');
+					catResGR.query();
+					while (catResGR.next()) {
+						var scoreValue = catResGR.getAggregate('AVG', 'rating');
+						var asmtCategory = catResGR.getDisplayValue('category');
+						var dmnSysId = catResGR.getValue('source_id');
+				
+						var sourceGR = new GlideRecord(tableInfo.name);
+						sourceGR.get(dmnSysId);
+
+						if(!result[dmnSysId]) {
+							result[dmnSysId] = {};
+							result[dmnSysId].customTitle = sourceGR.getDisplayValue('short_description') || "";
+							result[dmnSysId].customURL = tableInfo.name + ".do?sys_id=" + dmnSysId;
+						}
+
+						if( asmtCategory == bubbleXCategory)
+							result[dmnSysId].x = parseFloat(scoreValue);
+						else if(asmtCategory == bubbleYCategory)
+							result[dmnSysId].y = parseFloat(scoreValue);
+						else if(asmtCategory == bubbleZCategory)
+							result[dmnSysId].z = parseFloat(scoreValue);
+					}
+				
+					var sourceIds = "";
+					for(var source_id in result) 
+					   sourceIds += source_id + ",";
+					
+					var asmtGR = new GlideRecord('asmt_assessable_record');
+					asmtGR.addQuery('metric_type', metricType);
+					asmtGR.addQuery('source_id', "IN", sourceIds);
+					asmtGR.query();
+					var key;
+					while(asmtGR.next()) {
+					    key = asmtGR.getValue('source_id');
+						dataArray = {}; 
+						dataArray.x = result[key].x || 0; 
+						dataArray.y = result[key].y || 0; 
+						dataArray.z = result[key].z || 0;
+						dataArray.customTitle = result[key].customTitle;
+						dataArray.customURL = result[key].customURL;						
+							
+						//build the scorecard URL
+						var asmtTitle =  tableInfo.label + " Scorecard";
+							dataArray.customURL = 'assessment_scorecard.do?sysparm_record_sysid=' + key + '$[AMP]sysparm_assessable_table=' + tableInfo.name
+							 + '$[AMP]sysparm_metric_type=' + metricType + '$[AMP]sysparm_display=' + encodeURIComponent(asmtGR.name) + '$[AMP]sysparm_title=' 
+							 + encodeURIComponent(asmtTitle);
+							if (dataArray.customTitle == "")
+								dataArray.customTitle = asmtGR.getDisplayValue('name');
+						
+						//Push the data to the right quadrant
+						var max = parseInt((jelly.jvar_bubbleGR.getElement('metric_type.scale_factor') || '') + '');
+						if (dataArray.x &gt;= 0 &amp;&amp; dataArray.x &lt; (max/2) &amp;&amp; dataArray.y &gt;= 0 &amp;&amp; dataArray.y &lt; (max/2))
+							bottomLeftDmdData.data.push(dataArray); 
+						else if (dataArray.x &gt;= (max/2) &amp;&amp; dataArray.x &lt;= max &amp;&amp; dataArray.y &gt;= 0 &amp;&amp; dataArray.y &lt; (max/2))
+							bottomRightDmdData.data.push(dataArray); 
+						else if (dataArray.x &gt;= 0 &amp;&amp; dataArray.x &lt; (max/2) &amp;&amp; dataArray.y &gt;= (max/2) &amp;&amp; dataArray.y &lt;= max)
+							topLeftDmdData.data.push(dataArray); 
+						else if (dataArray.x &gt;= (max/2) &amp;&amp; dataArray.x &lt;= max &amp;&amp; dataArray.y &gt;= (max/2)  &amp;&amp; dataArray.y &lt;= max)
+							topRightDmdData.data.push(dataArray);
+					}	
+					mainDmdData[0] = topLeftDmdData;
+					mainDmdData[1] = topRightDmdData;
+					mainDmdData[2] = bottomLeftDmdData;
+					mainDmdData[3] = bottomRightDmdData;
+					
+					// Default meta data for the bubble chart
+					var metaData = {
+						quadrants: {
+							topRight : { caption: 'Consider', color: '#FF9933'},
+							topLeft : { caption: 'Resource', color: '#7FBF7F'},
+							bottomRight : { caption: 'Re-evaluate', color: '#FF4D4D'},
+							bottomLeft : { caption: 'Consider', color: '#FF9933'},
+							font: { size: '14px', color: 'white'}
+						},
+						xAxis: { 
+							title: 'Risk',
+							min: 0,
+							max: 10,
+							tickInterval: 1
+						},
+						yAxis: {
+							title: 'Value',
+							min: 0,
+							max: 10,
+							tickInterval: 1
+						},
+						zAxis: {
+							title: 'Size',
+							min: 0,
+							max: 10,
+							tickInterval: 1
+						}
+					};
+					metaData.xAxis.title = ((jelly.jvar_bubbleGR.getValue('x_axis') || '') + '') || 
+									((jelly.jvar_bubbleGR.getDisplayValue('metric_x_category') || '') + '') || metaData.xAxis.title;
+					metaData.yAxis.title = ((jelly.jvar_bubbleGR.getValue('y_axis') || '') + '') || 
+									((jelly.jvar_bubbleGR.getDisplayValue('metric_y_category') || '') + '') || metaData.yAxis.title;
+					metaData.zAxis.title = ((jelly.jvar_bubbleGR.getValue('z_axis') || '') + '') || 
+									((jelly.jvar_bubbleGR.getDisplayValue('metric_z_category') || '') + '') || metaData.zAxis.title;
+
+					metaData.quadrants.bottomLeft.caption = ((jelly.jvar_bubbleGR.getValue('quad_1') || '') + '') || metaData.quadrants.bottomLeft.caption;
+					metaData.quadrants.bottomRight.caption = ((jelly.jvar_bubbleGR.getValue('quad_2') || '') + '') || metaData.quadrants.bottomRight.caption;
+					metaData.quadrants.topLeft.caption =  ((jelly.jvar_bubbleGR.getValue('quad_3') || '') + '') || metaData.quadrants.topLeft.caption;
+					metaData.quadrants.topRight.caption = ((jelly.jvar_bubbleGR.getValue('quad_4') || '') + '') || metaData.quadrants.topRight.caption;
+					 
+					metaData.quadrants.bottomLeft.color = ((jelly.jvar_bubbleGR.getValue('quad_1_color') || '') + '') || metaData.quadrants.bottomLeft.color;
+					metaData.quadrants.bottomRight.color = ((jelly.jvar_bubbleGR.getValue('quad_2_color') || '') + '') || metaData.quadrants.bottomRight.color;
+					metaData.quadrants.topLeft.color = ((jelly.jvar_bubbleGR.getValue('quad_3_color') || '') + '') || metaData.quadrants.topLeft.color;
+					metaData.quadrants.topRight.color = ((jelly.jvar_bubbleGR.getValue('quad_4_color') || '') + '') || metaData.quadrants.topRight.color;
+					metaData.quadrants.font.color = ((jelly.jvar_bubbleGR.getValue('quad_label_color') || '') + '') || metaData.quadrants.font.color;
+					metaData.xAxis.min = metaData.yAxis.min = metaData.zAxis.min = 0;
+					metaData.xAxis.max = metaData.yAxis.max = metaData.zAxis.max = max;
+					mainObj.metaData = metaData;
+				}
+				new JSON().encodeObject(mainObj);
+			</g:evaluate>
+		
+		
+			<g:evaluate var="jvar_widget_id" expression="GlideGuid.generate(this);" />
+
+			<div id="page_title" data-form-title="$[gs.getMessage('{0} Bubble Chart', '${jvar_bubble_name}')]" style="display: none;"/>
+			<div id="bubbleChartOuter" style="position:relative; margin: 0 auto; width: 1000px">
+			<div id="bubbleChartTitle" style="text-align: center; font-size: 16px">${jvar_bubble_name} Bubble Chart</div>
+			<div id="bubbleChartInner" style="height: 500px; width: 1000px;"/>
+			</div>
+
+			<!-- and build the list output -->
+			<span id="bubble_list_span" style="">
+			<g:inline template="list2_default.xml"/>
+			</span>
+		</j:when>
+		<j:otherwise>
+			<div style="color:#678;text-align:center;position:absolute;top:40%;width:100%;">
+				<div>
+					<span style="font-size:150%;border-bottom-style:solid;border-bottom-width:1px;">${gs.getMessage("BUBBLE CHART CANNOT BE DISPLAYED")}</span>
+					<p style="margin:5px auto;width:80%;">${gs.getMessage('To use Bubble Charts, please configure them using Application menu.')}</p>
+				</div>
+			</div>
+		</j:otherwise>
+	</j:choose>	
+    <script>
+        var GlideWidgetRefresh = Class.create(GlideListWidget, {
+            initialize: function (widgetID, listID) {
+                GlideListWidget.prototype.initialize.call(this, widgetID, listID);
+            },
+            _refresh: function (listTable, /*GlideList2*/ list, initialLoad) {
+                if (!initialLoad) {
+                    this._showList();
+                }
+            },
+
+            _showList: function () {
+                show("bubble_list_span");
+            },
+
+            type: 'GlideWidgetRefresh'
+        });
+
+        new GlideWidgetRefresh('${jvar_widget_id}', 'bubble_scorecard');
+
+		var createBorder = function (chart, metadata) { // on complete
+            var quadrants = metadata.quadrants;
+            var font = quadrants.font ||  { size: '14px', color: 'white'};
+            var dualAxisHorizontalOffset = 64;
+            var dualAxisVerticalOffset = 38;
+
+            var chartWidth = $(chart.container).getWidth() - dualAxisHorizontalOffset;
+            var chartHeight = $(chart.container).getHeight();
+            var horizontalOffset = 32;
+            var verticalOffset = 20;
+
+            //Border Dimensions
+            var horizontalWidth = (chartWidth /2) - horizontalOffset;
+            var verticalWidth = 20;
+            var horizontalHeight = verticalWidth;
+            var verticalHeight = (chartHeight / 2) - (2 * verticalOffset) - dualAxisVerticalOffset + 5;
+
+            //Border Rectangles Co-ordinates
+            var leftX = 65;
+            var midX = (chartWidth / 2) + horizontalOffset + 1;
+            var rightX = chartWidth - verticalWidth + 1;
+            var topLevel1Y = verticalOffset + dualAxisVerticalOffset - 1;
+            var topLevel2Y = topLevel1Y + horizontalHeight - 1;
+            var bottomLevel1Y = chartHeight/2 + 2;
+            var bottomLevel2Y = chartHeight - (2 * verticalOffset) - verticalWidth - 12;
+
+            //Text Co-ordinates
+            var leftVerticalTextX = 15 + (2 * horizontalOffset);
+            var leftHorizontalTextX = (chartWidth / 4) + horizontalOffset;
+            var rightHorizontalTextX = (chartWidth / 2) + (chartWidth / 5) + horizontalOffset;
+            var rightVerticalTextX = chartWidth - 6;
+            var topHorizontalTextY = 14 + verticalOffset + dualAxisVerticalOffset;
+            var bottomHorizontalTextY = chartHeight - verticalOffset - dualAxisVerticalOffset;
+            var topVerticalTextY = topHorizontalTextY + horizontalHeight + verticalHeight/2 ;
+            var bottomVerticaltextY = topVerticalTextY + verticalHeight + verticalHeight/8;
+
+            var borderConfig = [{
+                horizontalBar : { x: leftX, y: topLevel1Y, w: horizontalWidth, h: horizontalHeight, color: quadrants.topLeft.color},
+                verticalBar : { x:leftX, y: topLevel2Y, w: verticalWidth, h: verticalHeight, color: quadrants.topLeft.color},
+                horizontalText : { text: quadrants.topLeft.caption, x: leftHorizontalTextX, y: topHorizontalTextY},
+                verticalText : { text: quadrants.topLeft.caption, x: leftVerticalTextX, y: topVerticalTextY}
+            }, {
+                horizontalBar : { x: midX, y: topLevel1Y, w: horizontalWidth, h: horizontalHeight, color: quadrants.topRight.color},
+                verticalBar : { x:rightX, y: topLevel2Y, w: verticalWidth, h: verticalHeight, color: quadrants.topRight.color},
+                horizontalText : { text: quadrants.topRight.caption, x: rightHorizontalTextX, y: topHorizontalTextY},
+                verticalText : { text: quadrants.topRight.caption, x: rightVerticalTextX, y: topVerticalTextY}
+            }, {
+                horizontalBar : { x: leftX, y: bottomLevel1Y, w: verticalWidth, h: verticalHeight, color: quadrants.bottomLeft.color},
+                verticalBar : { x: leftX, y: bottomLevel2Y, w: horizontalWidth, h: horizontalHeight, color: quadrants.bottomLeft.color},
+                horizontalText : { text: quadrants.bottomLeft.caption, x: leftHorizontalTextX, y: bottomHorizontalTextY},
+                verticalText : { text: quadrants.bottomLeft.caption, x: leftVerticalTextX, y: bottomVerticaltextY}
+            }, {
+                horizontalBar : { x: rightX, y: bottomLevel1Y, w: verticalWidth, h: verticalHeight, color: quadrants.bottomRight.color},
+                verticalBar : { x: midX, y: bottomLevel2Y, w: horizontalWidth, h: horizontalHeight, color: quadrants.bottomRight.color},
+                horizontalText : { text: quadrants.bottomRight.caption, x: rightHorizontalTextX, y: bottomHorizontalTextY},
+                verticalText : { text: quadrants.bottomRight.caption, x: rightVerticalTextX, y: bottomVerticaltextY}            
+            }];
+
+            var i=0;
+            var config;
+
+            while (borderConfig[i]) {
+                config = borderConfig[i];
+
+                chart.renderer.rect(config.verticalBar.x, config.verticalBar.y, config.verticalBar.w, config.verticalBar.h, 0).attr({
+                    fill: config.verticalBar.color
+                }).add(); 
+                chart.renderer.rect(config.horizontalBar.x, config.horizontalBar.y, config.horizontalBar.w, config.horizontalBar.h, 0).attr({
+                    fill: config.horizontalBar.color
+                }).add();
+                chart.renderer.text(config.horizontalText.text, config.horizontalText.x, config.horizontalText.y).attr({
+                    rotation: 0
+                }).css({
+                    fontSize: font.size,
+                    color: font.color
+                }).add();
+                chart.renderer.text(config.verticalText.text, config.verticalText.x, config.verticalText.y).attr({
+                    rotation: -90
+                }).css({
+                    fontSize: font.size,
+                    color: font.color
+                }).add();
+
+                i++;
+            }
+
+        };
+
+        function setChartContainerWidth(chartContainer) {
+            var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+            if (!(windowWidth > 600)) {
+                windowWidth = 600;
+            }
+            else if (windowWidth > 1000) {
+                windowWidth = 1000;
+            }
+
+            $(chartContainer).setStyle({ width: windowWidth + 'px'});
+            $(chartContainer).up(0).setStyle({ width: windowWidth + 'px'});
+        };
+
+        function getChartColors(quadrants) {
+            var colors = [];
+
+            if (quadrants.topLeft.hasOwnProperty('color'))
+                colors.push(quadrants.topLeft.color);
+
+            if (quadrants.topRight.hasOwnProperty('color'))
+                colors.push(quadrants.topRight.color);
+            
+            if (quadrants.bottomLeft.hasOwnProperty('color'))
+                colors.push(quadrants.bottomLeft.color);
+
+            if (quadrants.bottomRight.hasOwnProperty('color'))
+                colors.push(quadrants.bottomRight.color);
+
+            return colors;
+        };
+
+        function drawChart(series, metadata) {
+            var chartContainer = 'bubbleChartInner';
+            var chartOptions;
+            var chart; 
+            var colors;
+            var titleColor = '#707070';
+
+            window.series = series;
+            window.metadata = metadata;
+            setChartContainerWidth(chartContainer);
+            
+            chartOptions = {
+
+                chart: {
+                    type: 'bubble',
+                    renderTo: chartContainer,
+                    borderWidth: 0,
+                    plotBackgroundColor: '#F2F2F2',
+                    reflow: false,
+                    spacingTop: 20,
+                    spacingRight: 18,
+                    spacingLeft: 20,
+                    spacingBottom: 20
+                },
+                credits: {
+                    enabled: false
+                },
+                exporting: {
+                    enabled: false
+                },
+                xAxis: [{
+                    title: {
+                        text: metadata.xAxis.title.escapeHTML(),
+                        style: {
+                            color: titleColor,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    offset: 20,
+                    gridLineWidth: 1,
+                    endOnTick: false,
+           		 	maxPadding: 0.1,
+                    min: metadata.yAxis.min,
+                    max: metadata.yAxis.max,
+                    tickInterval: metadata.xAxis.tickInterval,
+                    plotLines: [{
+                        color: '#707070',
+                        width: 2,
+                        value: (metadata.xAxis.min + metadata.xAxis.max) / 2
+                    }],
+                    tickWidth: 0,
+                    lineWidth: 0
+
+                },
+                {
+                    title: {
+                        text: metadata.xAxis.title.escapeHTML(),
+                        style: {
+                            color: titleColor,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    offset: 20,
+                    endOnTick: false,
+           		 	maxPadding: 0.1,
+                    min: metadata.yAxis.min,
+                    max: metadata.yAxis.max,
+                    tickInterval: metadata.xAxis.tickInterval,
+                    tickWidth: 0,
+                    lineWidth: 0,
+                    linkedTo:0,
+                    opposite:true
+
+                }],
+                yAxis: [{
+                        title: {
+                            text: metadata.yAxis.title.escapeHTML(),
+                            style: {
+                                color: titleColor,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        offset: 20,
+                        endOnTick: false,
+           		 		maxPadding: 0.1,
+                        min: metadata.yAxis.min,
+                        max: metadata.yAxis.max,
+                        tickInterval: metadata.yAxis.tickInterval,
+                        tickWidth: 0,
+                        plotLines: [{
+                            color: '#707070',
+                            width: 2,
+                            value: (metadata.yAxis.min + metadata.yAxis.max) / 2
+                        }]
+
+                    },
+                    {
+                        title: {
+                            text: metadata.yAxis.title.escapeHTML(),
+                            style: {
+                                color: titleColor,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        offset: 20,
+                        endOnTick: false,
+           		 		maxPadding: 0.1,
+                        min: metadata.yAxis.min,
+                        max: metadata.yAxis.max,
+                        tickInterval: metadata.yAxis.tickInterval,
+                        tickWidth: 0,
+                        lineWidth: 0,
+                        tickWidth: 0,
+                        linkedTo: 0,
+                        opposite:true
+                }],
+                plotOptions: {
+                    series: {
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: function() {
+                                    if (this.hasOwnProperty('customURL')) {
+                                        location.href = this.customURL;
+                                    }
+
+                                }
+                            }
+                        }
+                    },
+                    bubble: {
+                    	dataLabels: {
+                    		enabled: true,
+                    		color: titleColor,
+                    		style: {
+                    			textShadow: ''
+                    		},
+                                format: undefined,
+                    		formatter: function() {
+                    			return this.point.customTitle;
+  							}
+  						}
+  					}
+                },                
+                tooltip:{
+                	useHTML: true,
+                    formatter:function(){
+                        var tip = '<table style="color:#707070;"><tr><td width="50%"></td><td width="50%"></td></tr>';
+                        if (this.point.hasOwnProperty('customTitle')) {
+                            tip = tip + '<tr><td colspan="2"><b>'+ this.point.customTitle.escapeHTML() + '</b></td></tr>';
+                        }
+						
+						tip = tip + '<tr><td style="text-align:right;color:#666">'+ metadata.xAxis.title.escapeHTML() + ': </td>' +
+            '<td style="color:#333">' + this.point.x + '</td></tr>';
+            			tip = tip + '<tr><td style="text-align:right;color:#666">' + metadata.yAxis.title.escapeHTML() + ': </td>' +
+            '<td style="color:#333">' + this.point.y + '</td></tr>';
+            			tip = tip + '<tr><td style="text-align:right;color:#666">' + metadata.zAxis.title.escapeHTML() + ': </td>' +
+            '<td style="color:#333">' + this.point.z + '</td></tr>';            
+                        tip = tip + '</table>'; 
+                        return tip;
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                title: {
+                    text: ''
+                },
+                series: series
+            };
+
+            colors =  getChartColors(metadata.quadrants);
+            if (colors.length > 0)
+                chartOptions.colors = colors;
+
+            chart = new Highcharts.Chart(chartOptions, function(chart){createBorder(chart, metadata)});
+ 
+        };
+
+        addLoadEvent(function () {
+
+            var data = JSON.parse('${jvar_series}');
+            var tableInfo = JSON.parse('${jvar_table}');
+            // If invalid JSON - display the error message 
+            var demandFilterRunFunc = function (table, filter) {
+                window.location = "bubble_scorecard.do?sysparm_query=" + getFilter(table, true, tableInfo.label) 
+                					+ "$[AMP]sysparm_table=" + tableInfo.name + "$[AMP]sysparm_sysid=${jvar_sysparm_sysid}";
+            };
+
+            runFilterHandlers[tableInfo.name] = demandFilterRunFunc;          
+            GlideList2.get(tableInfo.label).setDefaultFilter(tableInfo.filter);
+                
+            drawChart(data['data'], data['metaData']);
+        });
+    </script>
+
+</j:jelly>

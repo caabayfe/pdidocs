@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<!--A Heisenberg page header as specified in our style guide-->
+	<g:evaluate var="jvar_is_kb_languages_new_ui" jelly='true'>
+    	var isActive = GlidePluginManager.isActive('com.glideapp.knowledge.i18n2');
+    	isActive;
+    </g:evaluate>
+	<j2:if test="$[sysparm_media != 'print']">
+	<div class="row navbar navbar-default snc-article-header-toolbar" role="navigation">
+		<div class="col-xs-7 kb-container-fluid">
+			<div class="row kb-navbar-header">
+				<div class="col-xs-2 head-back-n-star">
+					<j:if test="${RP.getParameterValue('sysparm_popup') != 'true'}">
+						<j:choose>
+							<j:when test="${jvar_text_direction == 'rtl'}">
+								<button role="link" id="backButton" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Back')}" aria-label="${gs.getMessage('Back')}" class="btn btn-default icon-chevron-right navbar-btn pull-left"><j2:if test="$[jvar_isMSIE8 || jvar_isMSIE7]">${AMP}gt;</j2:if></button>
+							</j:when>
+							<j:otherwise>
+								<button role="link" id="backButton" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Back')}" aria-label="${gs.getMessage('Back')}"  class="btn btn-default icon-chevron-left navbar-btn snc-article-toolbar-btn pull-left"><j2:if test="$[jvar_isMSIE8 || jvar_isMSIE7]">${AMP}lt;</j2:if></button>
+							</j:otherwise>
+						</j:choose>
+					</j:if>
+					<j2:if test="$[sysparm_show_favorite != 'false']">
+					  <j2:if test="$[GlideMobileExtensions.getDeviceType() == 'doctype']">
+						<j2:if test="$[pm.isActive('com.glide.ui.ui16') == true ${AND} gs.getUser().getPreference('use.concourse') == 'true'  ${AND} isMobileView != true]">
+							<g2:inline template="magellan_create_favorites_modal.xml" />
+							<script>
+								(function() {
+									var historyData = {
+										title: '$[HTML,JS:gs.nil(knowledgeRecord.short_description) ? kbViewInfo.wikiLinkText :knowledgeRecord.short_description]',
+										isTable: false,
+										url: '/kb_view.do?sysparm_article=${number}'
+									};
+									CustomEvent.fire('magellanNavigator.sendHistoryEvent', historyData);
+								})();
+								function showCreateFavoriteModal() {
+									if (MagellanCreateFavorites $[AND] MagellanCreateFavorites.addFavorite) {
+										MagellanCreateFavorites.addFavorite({
+										title : '$[HTML,JS: gs.nil(knowledgeRecord.short_description) ? kbViewInfo.wikiLinkText :knowledgeRecord.short_description]',
+										icon : 'book',
+										url: '/kb_view.do?sysparm_article=${number}'
+									});
+									}
+								}
+							</script>
+							<button onclick="showCreateFavoriteModal()" class="btn btn-icon icon-star pull-left" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Create Favorite')}" aria-label="${gs.getMessage('Create Favorite')}"></button>
+						</j2:if>
+					  </j2:if>
+					</j2:if>
+				</div>
+				<div class="col-xs-10 head-bc">
+					<g:inline template="kb_view_breadcrumb" />
+				</div>
+			</div>
+		</div>
+		<j:if test="${isMobileView != true}">
+			<div class="col-xs-5 snc-kb-navbar-right">
+			   <g:evaluate var="jvar_not_important" expression="
+					var knowHelp = new SNC.KnowledgeHelper();
+					var show_kb_rating_options = knowHelp.getBooleanProperty(knowledgeRecord,'glide.knowman.show_rating_options',true);
+					var roles = gs.getProperty('glide.knowman.show_rating_options.roles');
+					if (roles == null || roles == '')
+					  ;
+					else {
+						var hasRole = gs.hasRole(roles);
+						if (hasRole == false)
+							show_kb_rating_options = false;
+					}
+				" />
+				
+				<div class="header-bar-btn-group"  id="header-bar-button-group">
+					<j:if test="${jvar_is_kb_languages_new_ui == 'true'}">
+							<g:kb_languages_new_ui />
+					</j:if>
+					<j:if test="${showAttachToTask}">
+						<button id="attachToTask" title="${attachToTaskLabel}" aria-label="${attachToTaskLabel}" class="btn btn-default navbar-btn snc-article-header-toolbar-button pull-right">${attachToTaskLabel}</button>
+					</j:if>
+
+					<j:if test="${kbViewInfo.isSubscriptionEnabled &amp;&amp; !kbViewInfo.externalArticle}">
+
+					<j:choose>
+						<j:when test="${kbViewInfo.isArticleSubscribedAtKB}">
+							<button id="unsubscribeAtKb" data-toggle="modal" data-target="#unSubscribe" title="${gs.getMessage('Subscribed at {0} Knowledge Base',kb_name)}" class="btn btn-default snc-article-header-toolbar-button-subscription navbar-btn pull-right">
+								<span class="subscribed">${gs.getMessage("Subscribed")}</span>
+								<span class="unsubscribe">${gs.getMessage("Unsubscribe")}</span>
+							</button>
+							<button id="subscribeArticle" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Subscribe Article')}" class="btn btn-default snc-article-header-toolbar-button-hide snc-article-header-toolbar-button-subscription navbar-btn pull-right">${gs.getMessage("Subscribe")}</button>
+							<button id="unsubscribeArticle" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Unsubscribe Article')}" class="btn btn-default snc-article-header-toolbar-button-subscription snc-article-header-toolbar-button-hide navbar-btn pull-right">
+									<span class="subscribed" >${gs.getMessage("Subscribed")}</span>
+									<span class="unsubscribe">${gs.getMessage("Unsubscribe")}</span>
+							</button>
+						</j:when>
+						<j:otherwise>
+							<j:choose>
+								<j:when test="${!kbViewInfo.isArticleSubscribed}">
+									 <button id="subscribeArticle" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Subscribe Article')}" class="btn btn-default snc-article-header-toolbar-button-subscription navbar-btn pull-right">${gs.getMessage("Subscribe")}</button>
+									<button id="unsubscribeArticle" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Unsubscribe Article')}" class="btn btn-default snc-article-header-toolbar-button-subscription snc-article-header-toolbar-button-hide navbar-btn pull-right">
+										<span class="subscribed">${gs.getMessage("Subscribed")}</span>
+										<span class="unsubscribe">${gs.getMessage("Unsubscribe")}</span>
+									</button>
+								</j:when>
+								<j:otherwise>
+									<button id="subscribeArticle" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Subscribe Article')}" class="btn btn-default snc-article-header-toolbar-button-hide snc-article-header-toolbar-button-subscription navbar-btn pull-right">${gs.getMessage("Subscribe")}</button>
+									<button id="unsubscribeArticle" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Unsubscribe Article')}" class="btn btn-default snc-article-header-toolbar-button-subscription navbar-btn pull-right">
+										<span class="subscribed">${gs.getMessage("Subscribed")}</span>
+										<span class="unsubscribe">${gs.getMessage("Unsubscribe")}</span>
+									</button>
+								</j:otherwise>
+							</j:choose>
+						</j:otherwise>
+					</j:choose>
+				</j:if>
+
+					<j:if test="${showFlagArticle &amp;&amp; show_kb_rating_options}"><!-- keep the extra spaces in ' Flag Article ' to get upper case words -->
+						<button id="flagArticle" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage(' Flag Article ')}" aria-label="${gs.getMessage(' Flag Article ')}" class="btn btn-default navbar-btn snc-article-header-toolbar-button pull-right">${gs.getMessage(" Flag Article ")}</button>
+					</j:if>
+
+					<j:if test="${showCreateIncident}">
+						<button id="createIncident" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Create Incident')}" aria-label="${gs.getMessage('Create Incident')}" class="btn btn-default navbar-btn snc-article-header-toolbar-button pull-right">${gs.getMessage("Create Incident")}</button>
+					</j:if>
+
+					<j:if test="${showMoreInfo}">
+						<button id="moreInformation" title="${gs.getMessage('Information')}" aria-label="${gs.getMessage('Information')}"  class="btn btn-default navbar-btn snc-article-header-toolbar-button pull-right">
+							<j2:choose>
+								<j2:when test="$[jvar_isMSIE8 || jvar_isMSIE7]">
+									${gs.getMessage("Information")}
+								</j2:when>
+								<j2:otherwise>
+									<span class="icon icon-view"></span>
+								</j2:otherwise>
+							</j2:choose>
+						</button>
+					</j:if>
+
+					<j:if test="${showUpdateAction}">
+						<button role="link" id="editArticle" style="margin-left:0.4em;" data-toggle="tooltip" data-persistent="true" title="${gs.getMessage('Edit content')}" aria-label="${gs.getMessage('Edit content')}" class="btn btn-default navbar-btn snc-article-header-toolbar-button pull-right">${gs.getMessage("Edit")}</button>
+					</j:if>
+				</div>
+			</div>
+
+		</j:if>
+	</div>
+
+	<!-- Confirmation dialog box -->
+	<div id="kb_confirmationDlg" tabindex="-1" aria-hidden="true" class="modal" role="dialog" aria-labelledby="modal1_title">
+		<div class="modal-dialog modal-sm modal-alert">
+			<div class="modal-content" tabindex="0" aria-label="${gs.getMessage('Cancel changes confirmation dialog')}" >
+				<header class="modal-header">
+					<h4 id="modal1_title" class="modal-title" >${gs.getMessage('Cancel changes')}</h4>
+				</header>
+				<div class="modal-body" tab-index="0" aria-label="${gs.getMessage('Discard all changes?')}" aria-role="question" >
+					<p>${gs.getMessage('Discard all changes?')}</p>
+				</div>
+				<footer class="modal-footer flex">
+					<button data-dismiss="modal" aria-label="${gs.getMessage('No')}"  class="btn btn-default kb-no-btn" onclick="$j('#kb_confirmationDlg').hide()">${gs.getMessage('No')}</button>
+					<button data-dismiss="modal" aria-label="${gs.getMessage('Yes')}" class="btn btn-danger kb-yes-btn">${gs.getMessage('Yes')}</button>
+				</footer>
+			</div>
+		</div>
+	</div>
+	<div id="unSubscribe" aria-hidden="true" class="modal" role="dialog" aria-labelledby="modal2_title">
+		<div class="modal-dialog modal-sm">
+			<div class="modal-content">
+				<header class="modal-header">
+					<h4 id="modal2_title" class="modal-title">${gs.getMessage('Unsubscribe')}</h4>
+				</header>
+				<div class="modal-body">
+					<j:if test="${escapeTextProperty=='true'}">	
+						<p>${gs.getMessage('In order to unsubscribe from this article, you will need to unsubscribe from the parent Knowledge Base: {0}.',kb_name)}</p>
+						<p><b>${gs.getMessage('Would you like to unsubscribe from {0} ?',kb_name)}</b></p>
+					</j:if>
+					<j:if test="${escapeTextProperty=='false'}">	
+						<p>${JS:gs.getMessage('In order to unsubscribe from this article, you will need to unsubscribe from the parent Knowledge Base: {0}.',kb_name)}</p>
+						<p><b>${JS:gs.getMessage('Would you like to unsubscribe from {0} ?',kb_name)}</b></p>
+					</j:if>
+				</div>
+				<footer class="modal-footer flex">
+					<button data-dismiss="modal" class="btn btn-default kb-no-btn">${gs.getMessage('No')}</button>
+					<button id="unsubscribeDialog" data-dismiss="modal" class="btn btn-primary kb-yes-btn">${gs.getMessage('Yes')}</button>
+				</footer>
+			</div>
+		</div>
+	</div>	
+	</j2:if>
+</j:jelly>

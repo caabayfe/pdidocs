@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <g:include_script src="$pwd_util.jsdbx" />
+    <g:evaluate var="jvar_process" object="true" jelly="true">
+        // Clear all related session parameters, to ensure this is a new request
+        gs.getSession().clearProperty('sysparm_request_id');
+        gs.getSession().clearProperty('sysparm_sys_user_id');
+        gs.getSession().clearProperty('sysparm_enrolled_user_id'); // TODO: this should not be passed in session, the request ID should be enough
+        gs.getSession().clearProperty('sysparm_is_verified'); // TODO: this should not be passed in session, the request ID should be enough
+        gs.getSession().clearProperty('pwd_redirect_url');
+
+        // Retrieve url for process from the page url, use "default" if none was provided:
+        var sysparm_url = RP.getParameterValue('sysparm_url');
+        if (sysparm_url == "") {
+        sysparm_url = 'default';
+        }
+
+        // Get the process ID through the URL associated with the process:
+        var procId = new SNC.PwdProcessManager().getProcessIdByProcessURL(sysparm_url);
+        var p = new SNC.PwdProcess(procId);
+        var midStatus = PwdResetHelper.IsMidRunning(procId);
+        var ret_process_id = "";
+
+        // redirect the page to the error page if process does not exist, is not public or is inactive
+        if (!p.exists()) {
+        gs.getSession().putProperty('sysparm_error', 'process_does_not_exist');
+        new SNC.PwdUtil().redirect('/$pwd_error.do?jvar_stage=1');
+        } else if (!p.isPublic()) {
+        gs.getSession().putProperty('sysparm_error', 'process_not_public');
+        new SNC.PwdUtil().redirect('/$pwd_error.do?jvar_stage=1&amp;sysparm_process_id='+procId);
+        } else if (!p.isActive()) {
+        gs.getSession().putProperty('sysparm_error', 'process_not_active');
+        new SNC.PwdUtil().redirect('/$pwd_error.do?jvar_stage=1&amp;sysparm_process_id='+procId);
+        } else if(!midStatus) {
+        gs.getSession().putProperty('sysparm_error', 'midserver_not_running');
+        new SNC.PwdUtil().redirect('/$pwd_error.do?jvar_stage=1&amp;sysparm_process_id='+procId);
+        }
+        p;
+    </g:evaluate>
+
+    <g:macro_invoke macro="$pwd_error_message" error_message="" />
+
+    <g:evaluate var="jvar_process_id" jelly="true">
+        jelly.jvar_process.getId();
+    </g:evaluate>
+
+    <g:evaluate var="jvar_process_name" jelly="true">
+        jelly.jvar_process.getLabel();
+    </g:evaluate>
+
+    <g:evaluate var="jvar_process_display_captcha" jelly="true">
+        jelly.jvar_process.getDisplayCaptcha();
+    </g:evaluate>
+
+    <g:evaluate var="jvar_google_captcha_enabled" jelly="true">
+        gs.getProperty('password_reset.captcha.google.enabled');
+    </g:evaluate>
+
+    <g:evaluate var="jvar_show_header_footer" jelly="true">
+        // Always show the header and footer macro, unless there's a URL param
+        // which specifies not to show it
+        var showHeaderFooter = true;
+        if (jelly.sysparm_show_custom_header_footer == 'false')
+        showHeaderFooter = false;
+
+        gs.getSession().putProperty('show_custom_header_footer', showHeaderFooter);
+        showHeaderFooter;
+    </g:evaluate>
+
+    <g:evaluate jelly="true">
+        if (jelly.sysparm_redirect_url) {
+        var jvar_cleaned_redirect_url = GlideSecurityUtils.cleanURL(jelly.sysparm_redirect_url);
+        gs.getSession().putProperty('pwd_redirect_url', PwdResetHelper.getAllowedRedirectUrl(jvar_cleaned_redirect_url, jelly.jvar_process_id));
+        } else {
+        gr = new GlideRecord("pwd_process");
+        if (gr.get(jelly.jvar_process_id) ${AMP}${AMP} gr.getValue('redirect_url')) {
+        gs.getSession().putProperty('pwd_redirect_url', gr.getValue('redirect_url'));
+        }
+        }
+    </g:evaluate>
+
+    <g:evaluate var="jvar_display_add_on" jelly="true">
+        var ret = '';
+        gr = new GlideRecord("pwd_process");
+        if (gr.get(jelly.jvar_process_id)) {
+        ret = gr.getDisplayValue('user_experience_entry');
+        }
+        ret;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_identification_list" jelly="true" object="true">
+        var idenList = {processor_ids: [], labels: []};
+
+        var procGr = new GlideRecord('pwd_process');
+        procGr.get(jelly.jvar_process.getId());
+        var idenSysIds = procGr.getValue('identification_type');
+
+        var idenGr = new GlideRecord('pwd_identification_type');
+        idenGr.addQuery('sys_id', 'IN', idenSysIds);
+        idenGr.query();
+        if (idenGr.getRowCount() > 0) {
+        while(idenGr.next()) {
+        idenList.processor_ids.push(idenGr.getValue('identification_processor'));
+        idenList.labels.push(gs.getMessage(idenGr.getValue('identification_label')));
+        }
+        }
+        // Provide default behavior. Since identification type is not mandatory for a process.
+        else {
+        idenList.processor_ids.push('default');
+        idenList.labels.push(gs.getMessage('User name'));
+        }
+
+        idenList;
+    </g:evaluate>
+
+    <g:evaluate var="jvar_iden_processor_ids" object="true" jelly="true" expression="jelly.jvar_identification_list.processor_ids" />
+    <g:evaluate var="jvar_iden_labels" object="true" jelly="true" expression="jelly.jvar_identification_list.labels" />
+    <!-- ACTUAL PAGE STARTS HERE -->
+
+    <main>
+        <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+        <g:include_script src="pwd_mobile.jsdbx" />
+        <g:include_script src="pwd_csrf_common_ui_script.jsdbx" />
+
+        <!-- Read the lanugage info from the session for any client java script -->
+        <div id="global_lang" selected="${gs.getSession().getLanguage()}" />
+
+        <j:if test="${jvar_google_captcha_enabled &amp;&amp; jvar_process_display_captcha}">
+            <g:include_script src="$google_captcha.jsdbx" />
+        </j:if>
+
+        <g:macro_invoke macro="$pwd_reset_stylesheet" />
+
+        <span class="sr-only">${gs.getMessage('ServiceNow Password Reset, step 1 out of 3')}</span>
+        <j:set var="jvar_use_polaris_templates" value="${sn_ui.PolarisUI.canUsePolarisTemplates()}" />
+        <j:choose>
+            <!-- Polarisberg (external/stylized auth) -->
+            <j:when test="${jvar_use_polaris_templates &amp;&amp; !gs.isLoggedIn()}">
+                <!-- Box override via margin because the frame has padding baked in -->
+                <div id="$pwd_reset" class="login-wrapper">
+                    <g:inline template="polarisberg_login_wrapper_svg.xml" />
+
+                    <div class="login-container">
+                        <div class="login-logo">
+                            <g:inline template="polarisberg_login_logo.xml" />
+                        </div>
+                        <!-- Process custom header -->
+                        <j:if test="${jvar_show_header_footer}">
+                            <!-- Pulled from from $pwd_process_flow (UI macro); we don't need the whole thing -->
+                            <j:if test="${!empty(jvar_process_id)}">
+                                <g:evaluate var="jvar_custom_header_name" jelly="true">
+                                    var customHeaderMacroName;
+                                    var p = new SNC.PwdProcess(jelly.jvar_process_id);
+                                    if (p.exists())
+                                    customHeaderMacroName = p.getHeaderMacroName();
+                                    customHeaderMacroName;
+                                </g:evaluate>
+                                <j:if test="${!empty(jvar_custom_header_name)}">
+                                    <div class="login-card login-card-custom-header">
+                                        <g:macro_invoke macro="${jvar_custom_header_name}" stage="1" />
+                                    </div>
+                                </j:if>
+                            </j:if>
+                        </j:if>
+                        <div class="login-card ${jvar_hide_illustrations}">
+                            <div class="login-form">
+                                <ol class="login-forgot-password-steps" role="list">
+                                    <li class="current" aria-current="step">
+                                        <span class="step-circle" aria-hidden="true">1</span>
+                                        <span class="step-label">Identify</span>
+                                    </li>
+                                    <li class="stepper-separator" aria-hidden="true"></li>
+                                    <li>
+                                        <span class="step-circle" aria-hidden="true">2</span>
+                                        <span class="step-label">Verify</span>
+                                    </li>
+                                    <li class="stepper-separator" aria-hidden="true"></li>
+                                    <li>
+                                        <span class="step-circle" aria-hidden="true">3</span>
+                                        <span class="step-label">Reset</span>
+                                    </li>
+                                </ol>
+
+
+                                <form action="" onsubmit="return verifyIdentity();">
+                                    <input type="hidden" id="sysparm_process_id" name="sysparm_process_id" value="${jvar_process_id}" />
+                                    <input type="hidden" id="midserver_status" name="midserver_status" value="${jvar_midserver_status}" />
+
+                                    <header>
+                                        <h1>${gs.getMessage('Forgot password?')}</h1>
+                                    </header>
+
+                                    <section name="identify_fields">
+                                        <j:forEach items="${jvar_iden_labels}" var="jvar_iden_label" begin="0" indexVar="jvar_iden_index">
+                                            <div class="login-form-field is-required" id="user_id_form_group_${jvar_iden_index}">
+                                                <g:evaluate var="jvar_iden_processor_id" jelly="true" expression="jelly.jvar_iden_processor_ids[jelly.jvar_iden_index];" />
+                                                <input type="hidden" name="sysparm_processor_id_${jvar_iden_index}" id="sysparm_processor_id_${jvar_iden_index}" value="${jvar_iden_processor_id}" />
+
+                                                <label for="sysparm_user_id_${jvar_iden_index}" class="control-label">
+                                                    ${jvar_iden_label}
+                                                    <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${jvar_iden_label} ${gs.getMessage('Required')}"></span>
+                                                </label>
+                                                <input type="text" placeholder="" maxlength="80" id="sysparm_user_id_${jvar_iden_index}" name="sysparm_user_id_${jvar_iden_index}" value="" autocomplete="off" class="form-control pwd-form-control ${sysparm_user_id_class}" onkeypress="userIDRetype(${jvar_iden_index});" aria-required="true" aria-invalid="false" aria-describedby="retype_user_id_${jvar_iden_index}" oninput="updateMandatoryMarker(this, 'user_id_form_group_${jvar_iden_index}'); toggleNextButton();" aria-label="${gs.getMessage('Enter your')} ${jvar_iden_label}" />
+                                                <span id="retype_user_id_${jvar_iden_index}" style="display:none" class="help-block" role="alert" aria-live="polite"></span>
+                                            </div>
+                                        </j:forEach>
+                                    </section>
+
+                                    <section name="captcha_section">
+                                        <j:if test="${jvar_process_display_captcha}">
+                                            <div class="login-form-field is-required" id="captcha_form_group">
+                                                <label for="sysparm_captcha" class="control-label">
+                                                    ${gs.getMessage("Captcha")}
+                                                    <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Captcha')} ${gs.getMessage('Required')}"></span>
+                                                </label>
+
+                                                <j:if test="${!jvar_google_captcha_enabled}">
+                                                    <div class="login-captcha-container">
+                                                        <img class="login-captcha-image" id="captcha_image" src="pwd_jcaptcha.do" title="${gs.getMessage('Captcha Image')}" role="presentation" />
+
+                                                        <div class="login-captcha-buttons">
+                                                            <g:dialog_button id="captcha_button" class="login-captcha-refresh" type="button" onclick="return refreshCaptcha();" title="${gs.getMessage('Refresh CAPTCHA')}"><i class="icon-refresh"></i></g:dialog_button>
+                                                            <div class="login-captcha-audio-button">
+                                                                <g:dialog_button id="captcha_button" type="button" onclick="return playAudio();" title="${gs.getMessage('Speak the CAPTCHA')}"><i class="icon-speaker"></i></g:dialog_button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <input type="text" maxlength="10" name="sysparm_captcha" id="sysparm_captcha" value="" autocomplete="off" class="form-control pwd-form-control" onkeypress="userCaptchaRetype();" aria-required="true" aria-describedby="retype_captcha" aria-label="${gs.getMessage('Type the Captcha')}" oninput="updateMandatoryMarker(this, 'captcha_form_group'); toggleNextButton();" />
+                                                </j:if>
+
+                                                <j:if test="${jvar_google_captcha_enabled}">
+                                                    <div id="google_captcha" site_key="${gs.getProperty('google.captcha.site_key')}">$[SP]</div>
+                                                </j:if>
+                                                <span id="retype_captcha" class="help-block" />
+                                            </div>
+                                        </j:if>
+                                    </section>
+
+                                    <j:if test="${!empty(jvar_display_add_on)}">
+                                        <g:macro_invoke macro="${jvar_display_add_on}" />
+                                    </j:if>
+
+                                    <input type="hidden" name="sysparm_action" id="sysparm_action" value="password_reset_form" />
+                                    <button name="sysverb_pwd_reset" id="sysverb_pwd_reset" class="btn btn-primary" type="submit" onclick="return verifyIdentity();" aria-label="${gs.getMessage('Next step')}" aria-disabled="true" tabindex="-1">${gs.getMessage('Next')}</button>
+
+                                    <g:macro_invoke macro="$pwd_done_button" display="false" />
+                                </form>
+
+                            </div>
+                            <section name="footer_section">
+                                <footer>
+                                    <div class="login-card-footer text-left">
+                                        <a class="btn btn-link" id="redirect_url_msg" href="/login.do" tabindex="0">
+                                            ${gs.getMessage('Log in with user name and password')}
+                                        </a>
+                                    </div>
+                                </footer>
+                            </section>
+                            <j:if test="${gs.getProperty('glide.ui.branding.works_with.is_visible', 'false') == 'true'}">
+                                <g:macro_invoke macro="ShowSNBrandTaglineOnLoginPage" />
+                            </j:if>
+                        </div>
+                        <!-- Process custom footer -->
+                        <j:if test="${jvar_show_header_footer}">
+                            <g:macro_invoke macro="$pwd_process_footer" stage="1" process="${procId}" use_polaris="true" />
+                        </j:if>
+                    </div>
+                </div>
+            </j:when>
+            <!-- Heisenberg -->
+            <j:otherwise>
+                <g:macro_invoke macro="$pwd_process_flow" stage="1" process="${jvar_process_id}" show_custom_header="${jvar_show_header_footer}" />
+
+                <center id="$pwd_reset">
+                    <div class="pwd-reset-box">
+                        <form action="" onsubmit="return verifyIdentity();">
+                            <input type="hidden" id="sysparm_process_id" name="sysparm_process_id" value="${jvar_process_id}" />
+                            <input type="hidden" id="midserver_status" name="midserver_status" value="${jvar_midserver_status}" />
+                            <j:forEach items="${jvar_iden_labels}" var="jvar_iden_label" begin="0" indexVar="jvar_iden_index">
+                                <div class="form-group is-required" id="user_id_form_group_${jvar_iden_index}">
+                                    <g:evaluate var="jvar_iden_processor_id" jelly="true" expression="jelly.jvar_iden_processor_ids[jelly.jvar_iden_index];" />
+                                    <input type="hidden" name="sysparm_processor_id_${jvar_iden_index}" id="sysparm_processor_id_${jvar_iden_index}" value="${jvar_iden_processor_id}" />
+
+                                    <label for="sysparm_user_id_${jvar_iden_index}" class="control-label col-sm-3">
+                                        <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${jvar_iden_label} ${gs.getMessage('Required')}"></span>
+                                        ${jvar_iden_label}
+                                    </label>
+                                    <span class="col-sm-9">
+                                        <input type="text" placeholder="" maxlength="80" id="sysparm_user_id_${jvar_iden_index}" name="sysparm_user_id_${jvar_iden_index}" value="" autocomplete="off" class="form-control pwd-form-control ${sysparm_user_id_class}" onkeypress="userIDRetype(${jvar_iden_index});" aria-required="true" aria-invalid="false" aria-describedby="retype_user_id_${jvar_iden_index}" oninput="updateMandatoryMarker(this, 'user_id_form_group_${jvar_iden_index}'); toggleNextButton();" aria-label="${gs.getMessage('Enter your')} ${jvar_iden_label}" />
+                                        <span id="retype_user_id_${jvar_iden_index}" style="display:none" class="help-block" role="alert" aria-live="polite"></span>
+                                    </span>
+                                </div>
+                            </j:forEach>
+
+                            <j:if test="${jvar_process_display_captcha}">
+
+                                <div class="form-group is-required" id="captcha_form_group">
+                                    <label for="sysparm_captcha" class="control-label col-sm-3">
+                                        <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('CAPTCHA')} ${gs.getMessage('Required')}"></span>${gs.getMessage("CAPTCHA")}</label>
+
+                                    <span class="col-sm-9">
+                                        <j:if test="${!jvar_google_captcha_enabled}">
+                                            <div class="captcha-image-container">
+                                                <img class="captcha-image" id="captcha_image" src="pwd_jcaptcha.do" role="presentation" />
+                                                <div class="captcha-container-buttons">
+                                                    <g:dialog_button id="captcha_button" type="button" onclick="return refreshCaptcha();" title="${gs.getMessage('Refresh CAPTCHA')}"><i class="icon-refresh"></i></g:dialog_button>
+                                                    <g:dialog_button id="captcha_button" type="button" onclick="return playAudio();" title="${gs.getMessage('Speak the CAPTCHA')}"><i class="icon-speaker"></i></g:dialog_button>
+                                                </div>
+                                            </div>
+                                            <input type="text" placeholder="${gs.getMessage('Type the CAPTCHA')}" maxlength="10" name="sysparm_captcha" id="sysparm_captcha" value="" autocomplete="off" class="form-control pwd-form-control" onkeypress="userCaptchaRetype();" aria-required="true" aria-describedby="retype_captcha" aria-label="${gs.getMessage('Type the CAPTCHA')}" oninput="updateMandatoryMarker(this, 'captcha_form_group'); toggleNextButton();" />
+                                        </j:if>
+
+                                        <j:if test="${jvar_google_captcha_enabled}">
+                                            <div id="google_captcha" site_key="${gs.getProperty('google.captcha.site_key')}">$[SP]</div>
+                                        </j:if>
+                                        <span id="retype_captcha" class="help-block" />
+                                    </span>
+                                </div>
+                            </j:if>
+
+                            <j:if test="${!empty(jvar_display_add_on)}">
+                                <g:macro_invoke macro="${jvar_display_add_on}" />
+                            </j:if>
+
+                            <input type="hidden" name="sysparm_action" id="sysparm_action" value="password_reset_form" />
+                            <span class="col-sm-12">
+                                <button name="sysverb_pwd_reset" id="sysverb_pwd_reset" class="btn btn-primary btn-pwd-submit" onclick="return verifyIdentity();" aria-label="${gs.getMessage('Next step')}" aria-disabled="true" tabindex="-1">
+                                    ${gs.getMessage('Next')}
+                                </button>
+                            </span>
+
+                            <span class="col-sm-12">
+                                <g:macro_invoke macro="$pwd_done_button" display="false" />
+                            </span>
+
+                        </form>
+                    </div>
+                </center>
+            </j:otherwise>
+        </j:choose>
+
+        <!--
+        Adding a new CSRF token here. This page does not check whether there's a violation or not because this page
+        is the starting point.
+    -->
+        <g:evaluate var="jvar_csrf_token" jelly="true">
+            new SNC.PwdSecurityManager().generateSecureToken();
+        </g:evaluate>
+
+        <form id="pwd_master_form" name="pwd_master_form" method="post">
+            <input type="hidden" id="sysparm_error" name="sysparm_error" value="" />
+            <input type="hidden" id="pwd_csrf_token" name="pwd_csrf_token" value="${jvar_csrf_token}" />
+            <input type="hidden" name="sysparm_process_id" value="${jvar_process_id}" />
+        </form>
+
+        <!-- Process footer -->
+        <j:if test="${!jvar_use_polaris_templates &amp;&amp; jvar_show_header_footer}">
+            <g:macro_invoke macro="$pwd_process_footer" stage="1" process="${procId}" use_polaris="false" />
+        </j:if>
+    </main>
+</j:jelly>

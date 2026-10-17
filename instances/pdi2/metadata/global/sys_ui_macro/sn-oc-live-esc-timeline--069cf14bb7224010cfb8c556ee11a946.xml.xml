@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script type="text/ng-template" id="oc_esc_time_ticker.html">
+		<div class="oc-time-ticker" ng-if="from">
+			<span>
+				<span ng-if="negativeDifference" class="state-error">${gs.getMessage('Due')}</span>
+				<span ng-if="!negativeDifference" uib-tooltip="{{tooltip}}" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="true" tooltip-append-to-body="true">{{getTime()}}</span>
+				<div ng-if="showIndicators">
+					<span ng-if="timer.days == '00'">${gs.getMessage('(HH:MM:SS)')}</span>
+					<span ng-if="timer.days != '00'">${gs.getMessage('(DD:HH:MM:SS)')}</span>
+				</div>
+			</span>
+		</div>
+	</script>
+<div>
+		<div class="notification notification-info" ng-show="notification.visible">
+			<div class="notification-message">${gs.getMessage("Tasks are also escalated to overlapping Shift ")}
+				<span ng-repeat="rota in notification.rotas track by $index">
+					<span class="oc-modal-msg-rota alert-link" ng-click="showOverlappingRota(rota)">{{"'" + rota.name.display_value + "'"}}</span>
+					<span ng-if="!$last">,</span>
+				</span>
+			</div>
+			<button class="btn close icon-cross" ng-click="notification.visible=false" tabindex="0">
+				<span class="sr-only">${gs.getMessage("Close")}</span>
+			</button>
+		</div>
+		<div class="notification notification-info" ng-show="currentEscalation.status.value==='cancelled'">
+			<div class="notification-message">${gs.getMessage("This escalation has been cancelled")}</div>
+		</div>
+		<div class="escalation-picker-wrapper col-sm-12">
+			<div class="escalation-selector">
+				<div class="col-sm-3">
+					<label for="escalation-dropdown">${gs.getMessage('Escalation:')}</label>
+				</div>
+				<div class="col-sm-9">
+					<select id="escalation-dropdown" sn-escalation-select="" ng-options="escalation.sys_id.value as escalation.name for escalation in escalations track by escalation.sys_id.value" ng-model="escalationPicker.sys_id" ng-change="changeEscalation()">
+						<option value=""></option>
+				   </select>
+				</div>
+			</div>
+		</div>
+		<div class="field-wrapper col-sm-12" ng-if="selectedRota">
+			<div class="field-label col-sm-3">
+				<label for="escalation-group">${gs.getMessage('Shift:')}</label>
+			</div>
+			<div class="field-value col-sm-9" id="escalation_group" >
+				<span class="truncate" uib-tooltip="{{selectedRota.name.display_value + '(' + currentGroup.name.display_value + ')'}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true"> {{selectedRota.name.display_value + " (" + currentGroup.name.display_value + ")"}} </span>
+			</div>
+		</div>
+		<div class="field-wrapper col-sm-12" ng-if="selectedRota &amp;&amp; selectedRota.is_custom_escalation">
+			<div class="field-label col-sm-3">
+				<label for="escalation-policy">${gs.getMessage('Escalation policy:')}</label>
+			</div>
+			<div class="field-value col-sm-9" id="escalation_policy">
+				<span class="truncate" uib-tooltip="{{selectedRota.escalation_set.name.display_value}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{selectedRota.escalation_set.name.display_value}}</span>
+			</div>
+		</div>
+		<div class="field-wrapper col-sm-12" ng-if="currentEscalation.category">
+			<div class="field-label col-sm-3">
+				<label for="escalation-category">${gs.getMessage('Escalation category:')}</label>
+			</div>
+			<div class="field-value col-sm-9" id="escalation_category">
+				<span class="truncate" uib-tooltip="{{currentEscalation.category.display_value}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{currentEscalation.category.display_value}}</span>
+			</div>
+		</div>
+
+	<div class="clear"></div>
+	<div class="oc-escalation-wrapper" ng-if="response.status === responseType.success">
+		<div class="oc-esc-path-tl">
+			<div class="oc-per-level-details" ng-class="{active: escalationLevel.status === 'active', complete: escalationLevel.status === 'complete'}" ng-if="selectedRota.escalation_levels.length > 0" ng-repeat="escalationLevel in selectedRota.escalation_levels">
+				<div class="oc-live-esc-data-container">
+					<div ng-class="{'oc-level-user-background': escalationLevel.isFocused}"></div>
+					<div class="oc-live-tl-vert-bar"></div>
+					<div class="oc-live-esc-tl-data">
+						<div ng-class="{'oc-live-esc-tl-icon': escalationLevel.status !== 'pending', 'oc-esc-tl-icon': escalationLevel.status === 'pending'}"> 
+							<div ng-class="escalationLevel.status &amp;&amp; escalationLevel.status == 'pending' ? 'oc-esc-tl-level': 'oc-live-esc-tl-level'" role="img" aria-label="${gs.getMessage('Escalation Level {0} {1}', ['{{escalationLevel.escalation_level}}','{{escalationLevel.status}}'])}">{{escalationLevel.escalation_level}}</div>
+						</div>
+						<div class="oc-esc-tl-roster">
+							<div class="oc-esc-tl-user">
+								<div>
+									<span class="oc-esc-tl-user-name truncate" role="button" tabindex="0" ng-click="updateAvatarsPerLevel(escalationLevel)" uib-tooltip="{{getLevelTitle(escalationLevel)}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{getLevelTitle(escalationLevel)}}</span>
+								</div>
+								<span class="oc-esc-tl-roster-name truncate" uib-tooltip="{{escalationLevel.roster_details.name}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{escalationLevel.roster_details.name}}</span>
+							</div>
+							<div class="oc-esc-notif-wrapper">
+								<span class="oc-workflow-status-icon" ng-if="escalationLevel.status !== 'active' || (escalationLevel.status === 'active' &amp;&amp; !escalationLevel.isExpanded)" ng-class="{'icon-workflow-progress state-active': escalationLevel.status == 'active', 'icon-success-circle state-active': escalationLevel.response_type === 'accepted', 
+		'icon-error-circle state-error': escalationLevel.response_type === 'rejected',
+		'icon-workflow-complete': escalationLevel.response_type === 'no_answer' &amp;&amp; escalationLevel.status == 'complete', 'icon-history': escalationLevel.status == 'pending'}"></span>
+								
+								<div>
+									<div class="oc-live-esc-notif-list" ng-class="{'notif-list-pending': escalationLevel.roster_details.notifications.repeats[0].status == 'pending', 'notif-list-active': escalationLevel.roster_details.notifications.repeats[0].status != 'pending'}">
+										
+										<span class="oc-workflow-status-icon oc-active-reminder-pointer" ng-if="escalationLevel.status === 'active' &amp;&amp; escalationLevel.roster_details.notifications.repeats[0].status === 'active'" ng-class="{'icon-workflow-progress state-active': escalationLevel.status == 'active'}"></span>
+										<span ng-if="escalationLevel.isExpanded &amp;&amp; escalationLevel.roster_details.notifications.repeats.length > 1">
+											<span class="oc-live-esc-notif-icon" ng-if="escalationLevel.roster_details.notifications.repeats[0].response_type !== 'partial_reject'" ng-class="{'oc-notif-rejected': escalationLevel.roster_details.notifications.repeats[0].response_type === 'rejected', 'oc-notif-complete': (escalationLevel.roster_details.notifications.repeats[0].status !== 'pending') &amp;&amp; (!escalationLevel.roster_details.notifications.repeats[0].response_type || escalationLevel.roster_details.notifications.repeats[0].response_type === 'accepted'), 'oc-notif-pending': escalationLevel.roster_details.notifications.repeats[0].status === 'pending'}"/>
+
+											<span class="oc-live-esc-notif-icon" ng-if="escalationLevel.roster_details.notifications.repeats[0].response_type === 'partial_reject'" ng-class="{'oc-notif-partial-reject': escalationLevel.roster_details.notifications.repeats[0].response_type == 'partial_reject'}" uib-tooltip="${gs.getMessage('Some escalatees have rejected the communication')}" tooltip-class="oc-truncate-tooltip" tooltip-placement="right" tooltip-enable="true" tooltip-append-to-body="true"/>
+										</span>
+										<span ng-if="escalationLevel.roster_details.notifications.repeats.length > 0" ng-click="expandNotifications(escalationLevel, $event)">
+											<span ng-if="!escalationLevel.isExpanded">
+												<span class="oc-notif-left-spacing oc-truncate oc-level-delay state-error" ng-if="escalationLevel.acknowledged &amp;&amp; escalationLevel.response_type === 'rejected'">${gs.getMessage('Rejected at {0}','{{escalationLevel.acknowledged.at.display_value}}')}</span>								
+												
+												<span class="oc-notif-left-spacing oc-truncate oc-level-delay" ng-if="escalationLevel.acknowledged &amp;&amp; escalationLevel.response_type === 'accepted'">${gs.getMessage('Accepted at {0}','{{escalationLevel.acknowledged.at.display_value}}')}</span>
+												
+												<span class="oc-notif-left-spacing oc-truncate oc-level-delay" ng-if="!escalationLevel.response_type || escalationLevel.response_type === 'no_answer'" uib-tooltip="{{escalationLevel.roster_details.notifications.repeats[0].message}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="right" tooltip-enable="false" tooltip-append-to-body="true">{{escalationLevel.roster_details.notifications.repeats[0].message}}</span>
+											</span>
+											<span ng-if="escalationLevel.isExpanded">
+												<span class="oc-notif-left-spacing oc-level-delay oc-truncate oc-vertical-middle" ng-class="{'state-error': (escalationLevel.roster_details.notifications.repeats[0].response_type === 'rejected' || escalationLevel.roster_details.notifications.repeats[0].response_type === 'invalid')}" uib-tooltip="{{escalationLevel.roster_details.notifications.repeats[0].message}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="right" tooltip-enable="false" tooltip-append-to-body="true">{{escalationLevel.roster_details.notifications.repeats[0].message}}</span>
+											</span>
+											<span class="sr-only">${gs.getMessage('Status {0}', '{{escalationLevel.roster_details.notifications.repeats[0].status}}')}</span>
+										</span>
+									</div>
+									<div class="oc-live-esc-notif-list" ng-if="escalationLevel.isExpanded" ng-class="{'notif-list-pending': curr_notification.status == 'pending', 'notif-list-active': curr_notification.status != 'pending'}" ng-repeat="curr_notification in escalationLevel.roster_details.notifications.repeats | limitTo: (1 - escalationLevel.roster_details.notifications.repeats.length) track by $index">
+										<span class="oc-workflow-status-icon oc-active-reminder-pointer" ng-if="escalationLevel.status === 'active' &amp;&amp; curr_notification.status === 'active'" ng-class="{'icon-workflow-progress state-active': escalationLevel.status == 'active'}"></span>
+										
+										<span class="oc-live-esc-notif-icon" ng-if="curr_notification.response_type !== 'partial_reject'" ng-class="{'oc-notif-rejected': curr_notification.response_type === 'rejected', 'oc-notif-complete': (curr_notification.status !== 'pending') &amp;&amp; (!curr_notification.response_type || curr_notification.response_type === 'accepted'), 'oc-notif-pending': curr_notification.status === 'pending'}"/>
+										
+										<span class="oc-live-esc-notif-icon" ng-if="curr_notification.response_type === 'partial_reject'" ng-class="{'oc-notif-partial-reject': curr_notification.response_type == 'partial_reject'}" uib-tooltip="${gs.getMessage('Some escalatees have rejected the communication')}" tooltip-class="oc-truncate-tooltip" tooltip-placement="right" tooltip-enable="true" tooltip-append-to-body="true"/>
+										
+										<span class="oc-notif-left-spacing oc-truncate oc-vertical-middle" ng-class="{'text-completed': curr_notification.status == 'complete', 'state-error': (curr_notification.response_type === 'rejected' || curr_notification.response_type === 'invalid'), 'state-active': curr_notification.response_type === 'accepted'}" uib-tooltip="{{curr_notification.message}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{curr_notification.message}}
+										<span class="sr-only">${gs.getMessage('Status {0}', '{{curr_notification.status}}')}</span>
+										</span>
+									</div>
+								</div>
+								<div class="oc-notif-no-audience" ng-if="escalationLevel.roster_details.notifications.repeats.length === 0">
+									<span>${gs.getMessage('No information available')}</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="oc-total-level-time-wrapper" >
+					<div ng-if="escalationLevel.status == 'complete'">
+						<span class="icon-history" ng-if="escalationLevel.total_time" role="img" aria-label="${gs.getMessage('Escalation Step total time')}"></span>
+						<span class="oc-total-level-time text-completed" ng-if="escalationLevel.total_time">{{escalationLevel.total_time}}</span>
+						<span class="state-error" ng-if="$last &amp;&amp; !escalationLevel.total_time">${gs.getMessage('Due')}</span>
+					</div>
+					<div class="oc-live-esc-timer" ng-if="escalationLevel.status == 'active'" aria-label="${gs.getMessage('{0}', '{{stepTimerMessage}}')}">
+						<sn-time-ticker label="stepTimerMessage" from="stepTimer.display_value_internal" direction="future" tick="true" format=""></sn-time-ticker>
+					</div>
+				</div>
+			</div>
+			<div class="oc-per-level-details" ng-if="selectedRota.escalation_levels.length > 0">
+				<div class="oc-esc-live-data-container">
+					<div class="oc-live-esc-tl-data">
+						<div ng-class="!currentEscalation.active || (selectedRota.is_complete &amp;&amp; selectedRota.final_wait_time == 0) ? 'oc-live-esc-tl-icon' : 'oc-esc-tl-icon'">
+							<div class="oc-esc-tl-level"></div>
+						</div>
+						<div class="oc-timeline-end">${gs.getMessage('End')}</div>
+					</div>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+</div>
+<div ng-if="response.status === responseType.error" class="oc-no-esc-steps" >
+	{{response.error_message}}
+</div>
+</j:jelly>

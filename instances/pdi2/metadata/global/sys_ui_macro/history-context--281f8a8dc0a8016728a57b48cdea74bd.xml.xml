@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+      <script>
+         var mHistory = new GwtContextMenu('context_historysub${jvar_section_id}');
+         mHistory.clear();
+         <g2:evaluate var="jvar_url" jelly="true">
+            var url = new GlideURL("history.do");
+            url.set("sysparm_sys_id", __ref__.sys_id);
+            url.set("sysparm_table", __ref__.getTableName());
+            url.set("sysparm_view", jelly.sysparm_view);
+            url.set("sysparm_nostack", "true");
+            if (jelly.sysparm_record_row)
+               url.set("sysparm_record_row", jelly.sysparm_record_row);
+            if (jelly.sysparm_record_rows)
+               url.set("sysparm_record_rows", jelly.sysparm_record_rows);
+            if (jelly.sysparm_record_list )
+               url.set("sysparm_record_list", encodeURIComponent(jelly.sysparm_record_list));
+            new GlideTinyURL().createTinyURL(url);
+         </g2:evaluate>
+         mHistory.addURL("${gs.getMessage('Calendar')}", "$[jvar_url]");
+         gcm.addMenu("${gs.getMessage('History')}", mHistory);
+
+         <g:evaluate var="jvar_history_line" >
+            var t = new GlideAuditor(__ref__.getTableName(), null).auditTable();
+            if (t) {
+                var t1 = new GlideRecord('sys_history_set');
+                t1.initialize();
+                t1.setValue('id', __ref__.sys_id);
+                t1.setValue('table', __ref__.getTableName());
+                t = t1.canRead();
+            }
+         </g:evaluate>
+         <g:evaluate var="jvar_cmdb_table" >
+            var cmdbTable = 'cmdb_ci' == GlideDBObjectManager.getAbsoluteBase(__ref__.getTableName());
+            cmdbTable;
+         </g:evaluate>
+         <g2:evaluate var="jvar_compatibility">
+            SNC.CMDBCompatibility.checkCompatibility();
+         </g2:evaluate>
+      </script>
+
+      <j:if test="${jvar_history_line}" >
+         <input type="hidden" name="show_history" id="show_history" />
+         <script>
+            function showHistoryList(){
+               if(g_form)
+                  g_form.checkMandatory = false;
+               if (window.g_sc_form)
+                  window.g_sc_form.checkMandatory = false;
+               gsftSubmit(gel('show_history'));
+            }
+            mHistory.addHref("${gs.getMessage('List')}", "showHistoryList()");
+         </script>
+         <j:if test="${pm.isActive('com.snc.cmdb')}">
+            <j:if test="${jvar_cmdb_table}">
+               <j2:if test="$[jvar_compatibility == 'allow']" >
+                  <input type="hidden" name="show_timeline" id="show_ci_timeline" />
+                  <script>
+                     function showCiTimeline(){
+                        if (g_form)
+                           g_form.checkMandatory = false;
+                        gsftSubmit(gel('show_ci_timeline'));
+                     }
+                     mHistory.addHref("${gs.getMessage('Timeline')}", "showCiTimeline()");
+                  </script>
+               </j2:if>
+            </j:if>
+         </j:if>
+      </j:if>
+</j:jelly>

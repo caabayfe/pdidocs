@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_menu_selection" expression="RP.getParameterValue('menu_selection')"/>
+    <g:evaluate var="jvar_my_list_id" expression="RP.getParameterValue('list_id')"/>
+	<g:evaluate var="jvar_list_sys_id" expression="RP.getParameterValue('sysparm_list_id')"/>
+	<g:evaluate object="true" jelly="true">
+		var currentMyList = myListItem();
+		function myListItem () {
+			var answer = [];
+            var gr = new GlideRecord(jelly.jvar_menu_selection);
+            gr.addQuery('sys_id', jelly.jvar_my_list_id);
+			gr.query();
+			while(gr.next()) {
+				answer.push(gr.getValue('table') + '^' + gr.getValue('columns'));
+			}
+			return answer.join('.');
+		};
+	</g:evaluate>
+	<g:evaluate object="true" jelly="true">
+		var currentList = listItem();
+		function listItem () {
+			var answer = [];
+			var gr = new GlideRecord('sys_aw_list');
+			gr.addQuery('sys_id', jelly.jvar_list_sys_id);
+			gr.query();
+			while(gr.next()) {
+				answer.push(gr.getValue('table') + '^' + gr.getValue('columns'));
+			}
+			return answer.join('.');
+		};
+	</g:evaluate>
+	<g:evaluate var="jvar_isNextPg" expression="RP.getParameterValue('sysparm_next_pg')"/>
+	<j:choose>
+		<j:when test="${jvar_isNextPg != 'true'}">
+			<script>				   
+				var iframeMsgHelper = (function () {
+				function createPayload(action, modalId, data) {
+					return {
+						messageType: 'IFRAME_MODAL_MESSAGE_TYPE',
+						modalAction: action,
+						modalId: modalId,
+						data: (data ? data : {})
+					};
+				}
+				function pm(window, payload) {
+					if (window.parent === window) {
+						console.warn('Parent is missing. Is this called inside an iFrame?');
+						return;
+					}
+					window.parent.postMessage(payload, location.origin);
+				}
+				function IFrameMessagingHelper(window) {
+					this.window = window;
+					this.src = location.href;
+					this.messageHandler = this.messageHandler.bind(this);
+					this.window.addEventListener('message', this.messageHandler);
+				}
+				IFrameMessagingHelper.prototype.messageHandler = function (e) {
+					if (e.data.messageType !== 'IFRAME_MODAL_MESSAGE_TYPE' || e.data.modalAction !== 'IFRAME_MODAL_ACTION_INIT') {
+						return;
+					}
+					this.modalId = e.data.modalId;
+				};
+				IFrameMessagingHelper.prototype.confirm = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CONFIRMED', this.modalId, data);
+					pm(this.window, payload);
+				};
+				IFrameMessagingHelper.prototype.cancel = function (data) {
+					var payload = createPayload('IFRAME_MODAL_ACTION_CANCELED', this.modalId, data);
+					pm(this.window, payload);
+				};
+				return new IFrameMessagingHelper(window);
+			}());
+			</script>
+			<form class="aw_personalize_cols_slushbucket">
+				<div class="modal-md">
+					<g:ui_slushbucket up_down="true"/>
+					<div align="right" class="modal-footer">
+						<g:dialog_buttons_ok_cancel ok="return actionOK()" cancel_style_class="sn-btn sn-btn__md sn-btn__default" ok_style_class="sn-btn sn-btn__md sn-btn__primary" ok_text="${gs.getMessage('Update')}" cancel="return cancel()" ok_type="button" cancel_type="button"/>
+					</div>
+				</div>
+			</form>
+			<script>
+		addLoadEvent(function () {
+			populateSlushbucket('${currentMyList}');
+			populateSlushbucket('${currentList}');
+		});
+	</script>
+		</j:when>
+		<j:otherwise></j:otherwise>
+	</j:choose>
+	<style>
+		HTML[data-doctype=true] button:not(.btn):hover, HTML[data-doctype=true] INPUT.button:hover {
+		    -moz-box-shadow: none;
+		    -webkit-box-shadow: none;
+		    box-shadow: none;
+		}
+		html[data-doctype="true"] button:not(.btn):active, html[data-doctype="true"] input.button:active {
+		    box-shadow: none;
+		}
+		.outputmsg_div, #page_timing_div {
+			display:none !important;
+		}
+		.modal-alert, .modal-md {
+			height: 100%;
+			max-height: 100%;
+			margin: 12px 1px 1px;
+		}
+		.modal-alert .modal-footer {
+			padding: 10px 0px;
+		}
+		.modal-md .modal-footer {
+			padding: 7px 14px 0;
+		}
+		.sn-btn__primary {
+		   	border-color: RGB(15, 67, 55) !important;
+			color: RGB(255, 255, 255) !important;
+			background-color: RGB(30, 133, 109) !important;
+		}
+		.sn-btn__default {
+		  	border-color: RGB(172, 180, 181) !important;
+			color: RGB(22, 27, 28)!important;
+			background-color: RGB(228, 230, 231)!important;
+		}
+		
+		.sn-btn__md {
+			height: 32px !important;
+			font-size: 16px !important;
+			padding-right: 16px !important;
+			padding-left: 16px! important;
+		}
+		.sn-btn {
+            display: inline-flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: inherit !important;
+            line-height: 1.25 !important;
+            font-family: inherit !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+            vertical-align: middle !important;
+            margin: 0 !important;
+            border-width: 1px !important;
+            border-style: solid !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border-radius: 1px !important;
+            min-height: 32px !important;
+		}
+		.sn-btn:first-of-type, .sn-btn.is-first-of-type {
+		    margin: 0;
+		}
+		.sn-btn:focus {
+    		outline-color: -webkit-focus-ring-color !important;
+			outline-style: auto !important;
+			outline-width: 5px !important;
+		}
+		.sn-btn__primary:active, .sn-btn__primary.is-active {
+		    background-color: RGB(15, 67, 55) !important;
+		}
+		.sn-btn__primary:hover, .sn-btn__primary.is-hover {
+    		background-color: RGB(23, 100, 82) !important;
+		}
+		.sn-btn__default:active, .sn-btn__default.is-active {
+		    color: RGB(1, 60, 71) !important;
+			background-color: RGB(172, 180, 181) !important;
+		}
+		.sn-btn__default:hover, .sn-btn__default.is-hover {
+			color: RGB(1, 89, 107) !important;
+    		background-color: RGB(209, 214, 214) !important;
+		}
+	</style>
+</j:jelly>

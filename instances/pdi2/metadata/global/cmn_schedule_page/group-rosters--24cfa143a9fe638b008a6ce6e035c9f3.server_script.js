@@ -1,0 +1,1 @@
+new OCRotation(schedulePage).buildRotas();

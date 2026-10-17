@@ -1,0 +1,244 @@
+_meta:
+  hash: 87b01c5ce8850feae0c5bd9b2e6d6c2efd3c6eea5e46b49b53cbdeabd446d2e9
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: thanh.phan
+  sys_created_on: 2018-06-08 01:19:49
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: fbebdd359f6213005581decf857fcfae
+  sys_mod_count: '6'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_fbebdd359f6213005581decf857fcfae
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-10-21 18:55:00
+active: 'true'
+checksum: ''
+description: Utility for creating remote PSSession
+directory: 'false'
+name: PSRemoteSession.psm1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  function CreatePSSessionWithComputerName {
+      param([string]$Host, [string]$Port, [Nullable[bool]]$UseSSL,
+            [System.Management.Automation.PSCredential]$Credential, [string]$ConfigurationName, [string]$AdditionalOptions)
+
+      $connectionOption = FormConnectionOptionWithComputerName -Host $Host -Port $Port -UseSSL $UseSSL
+      CreateNewPSSession -ConnectionOption $connectionOption -Credential $Credential -ConfigurationName $ConfigurationName -AdditionalOptions $AdditionalOptions
+  }
+
+  function CreatePSSessionWithURI {
+      param([string]$Host, [string]$Port, [string]$UriPath, [Nullable[bool]]$UseSSL,
+            [System.Management.Automation.PSCredential]$Credential, [string]$ConfigurationName, [string]$AdditionalOptions)
+
+      $connectionOption = FormConnectionOptionByURI -Host $Host -Port $Port -UriPath $UriPath -UseSSL $UseSSL
+      CreateNewPSSession -ConnectionOption $connectionOption -Credential $Credential -ConfigurationName $ConfigurationName -AdditionalOptions $AdditionalOptions
+  }
+
+  function FormConnectionOptionWithComputerName {
+      param([string]$Host, [string]$Port, [Nullable[bool]]$UseSSL)
+
+      #
+      # handle optional parameters: if not speficied, use default values from environment variables
+      #
+      if ([string]::IsNullOrEmpty($Port)) {
+          $Port = $env:SNC_targetPort
+      }
+
+      if ($UseSSL -eq $null) {
+          $UseSSL = ($env:SNC_useSSL -eq "true")
+      }
+
+  	$options = "-ComputerName $Host";
+
+      if (-not [string]::IsNullOrEmpty($Port)) {
+          $options +=  " -Port $Port"
+      }
+
+  	if ($UseSSL) {
+          $options +=  " -UseSSL"
+      }
+
+      $options
+  }
+
+  function FormConnectionOptionByURI {
+      param([string]$Host, [string]$Port, [string]$UriPath, [Nullable[bool]]$UseSSL)
+
+      #
+      # handle optional parameters: if not speficied, use default values from environment variables
+      #
+      if ([string]::IsNullOrEmpty($Port)) {
+          $Port = $env:SNC_targetPort
+      }
+
+      if ($UseSSL -eq $null) {
+          $UseSSL = ($env:SNC_useSSL -eq "true")
+      }
+
+      # default to "/wsman" if URI path not specified
+      if ([string]::IsNullOrEmpty($UriPath)) {
+          $UriPath = "/wsman"
+      }
+
+      # form URI
+      if ($UseSSL -eq $true) {
+          $protocol = "https"
+      } else {
+          $protocol = "http"
+      }
+  	$uri = $protocol + "://" + $Host;
+      if (-not [string]::IsNullOrEmpty($Port)) {
+          $uri += ":$Port"
+      }
+  	$uri += $UriPath;
+
+      "-ConnectionUri $uri"
+  }
+
+  function CreateNewPSSession {
+      param([string]$ConnectionOption, [System.Management.Automation.PSCredential]$Credential, [string]$ConfigurationName, [string]$AdditionalOptions)
+
+      # if credential is not explicitly specified, use the global variable $cred
+      if (-not ($Credential)) {
+          $Credential = $cred
+      }
+
+      # if additional options are not explicitly specified, use environment variable
+      if ([string]::IsNullOrEmpty($AdditionalOptions)) {
+          $AdditionalOptions = $env:SNC_additionalPSSessionOptions
+      }
+
+      # form the New-PSSession command, using the connection option as the base,
+      # adding credential, SSL certificate options, and other options if applicable
+      $cmd = "New-PSSession $connectionOption"
+
+      if ($Credential) {
+          # care must be taken in using single quote here: $credential is an object and
+          # we do not want the variable to be expanded and turned into a string;
+          # it will be evaluated when the script block is executed
+          $cmd += ' -Credential $Credential'
+          SNCLog-DebugInfo "Running CreateNewPSSession with user $($Credential.UserName)"
+      } else {
+          $cmd += ' -Authentication NegotiateWithImplicitCredential'
+          SNCLog-DebugInfo "Running CreateNewPSSession without explicit credential"
+      }
+
+      if ($env:SNC_skipSSLCertCheckOptions) {
+          $soCmd = "New-PSSessionOption $env:SNC_skipSSLCertCheckOptions"
+          $soSb = [Scriptblock]::Create($soCmd)
+          $so = & $soSb
+          # care must be taken in using single quote here: $so is an object
+          $cmd += ' -SessionOption $so'
+      }
+
+      if (-not [string]::IsNullOrEmpty($ConfigurationName)) {
+          $cmd += " -ConfigurationName `"$ConfigurationName`""
+      }
+
+      if (-not [string]::IsNullOrEmpty($AdditionalOptions)) {
+          $cmd += " $AdditionalOptions"
+      }
+
+      SNCLog-DebugInfo ("Running create session script: " + $ExecutionContext.InvokeCommand.ExpandString($cmd))
+      $sb = [Scriptblock]::Create($cmd)
+      & $sb
+  }
+
+   function Get-SessionConfiguration {
+  	param(
+  		[Parameter(Mandatory=$true)][string]$TargetHost,
+  		[Parameter(Mandatory=$true)][string]$User,
+  		[Parameter(Mandatory=$true)][string]$Password,
+  		[Parameter(Mandatory=$true)][int]$TimeoutSec,
+  		[Parameter(Mandatory=$true)][string]$ConfigurationName
+  	)
+
+  	$output = @{
+  		Success = $false
+  		ConfigurationName = $null
+  		PSVersion = $null
+  		Error = $null
+  	}
+
+  	try {
+
+  		$credential = getCred -user $User -password $Password
+
+  		# Create a new runspace
+  		$runspace = [runspacefactory]::CreateRunspace()
+  		$runspace.Open()
+  		$ps = [powershell]::Create()
+  		$ps.Runspace = $runspace
+
+  		# Add the script to get session configuration
+  		[void]$ps.AddScript({
+  			param($hostName, $cred, $configName)
+
+  			try {
+  				$sessionParams = @{
+  					ComputerName = $hostName
+  					Credential = $cred
+  					ConfigurationName = $configName
+  					ErrorAction = 'Stop'
+  				}
+
+  				$session = New-PSSession @sessionParams
+  				$config = Invoke-Command -Session $session -ScriptBlock {
+  					param($cn)
+  					Get-PSSessionConfiguration -Name $cn -ErrorAction Stop
+  				} -ArgumentList $configName -ErrorAction Stop
+
+  				# Return a clean object
+  				[PSCustomObject]@{
+  					Name = $config.Name
+  					PSVersion = $config.PSVersion
+  				}
+  			}
+  			finally {
+  				if ($session) { Remove-PSSession -Session $session -ErrorAction SilentlyContinue }
+  			}
+  		}).AddArgument($TargetHost).AddArgument($credential).AddArgument($ConfigurationName)
+
+  		# Run the command asynchronously
+  		$asyncResult = $ps.BeginInvoke()
+  		$waitHandle = $asyncResult.AsyncWaitHandle
+
+  		# Wait for completion or timeout
+  		$completed = $waitHandle.WaitOne($TimeoutSec * 1000)
+
+  		if (-not $completed) {
+  			$output.Error = "Operation timed out after $TimeoutSec seconds"
+  		}
+  		else {
+  			$result = $ps.EndInvoke($asyncResult)
+  			if ($result -and -not ($result -is [System.Management.Automation.ErrorRecord])) {
+  				$output.Success = $true
+  				$output.ConfigurationName = $result[0].Name
+  				$output.PSVersion = $result[0].PSVersion
+  				$output.Error = $null
+  			}
+  			else {
+  				$output.Error = $result.Exception.Message
+  			}
+  		}
+
+  	} catch {
+  		$output.Error = $_.Exception.ToString()
+
+  	} finally {
+  		if ($ps) { $ps.Dispose() }
+  		if ($runspace) { $runspace.Dispose() }
+  	}
+
+  	return $output
+  }
+script_attachment: ''
+source: ''
+sys_name: PSRemoteSession.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

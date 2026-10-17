@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="ref" value="input_map.${jvar_input.name}"/>
+	<g:set_if var="jvar_element_display" test="${jvar_shown}" true="display: block;" false="display: none;"/>
+	<g:evaluate jelly="true" var="jvar_string_value">
+		var value = jelly.jvar_value;
+
+		if (typeof jelly.jvar_value != "string") {
+			value = JSON.stringify(jelly.jvar_value, null, 4);
+		}
+
+		value;
+	</g:evaluate>
+
+	<j:set var="jvar_mandatory_class" value=""/>
+	<j:if test="${jvar_input.required}">
+		<j:set var="jvar_mandatory_class" value="is-required"/>
+		<j:if test="${jvar_string_value != ''}">
+			<j:set var="jvar_mandatory_class" value="is-prefilled"/>
+		</j:if>
+	</j:if>
+
+	<g:set_if var="jvar_label_class" test="${jvar_input.required}" true="mandatory" false=""/>
+	<g:set_if var="jvar_required_marker" test="${jvar_input.required}" true="required-marker" false=""/>
+
+	<j:set var="jvar_show_script_tree" value="false"/>
+	<g:requires name="scripts/GlideEditor5Includes.js" includes="true"/>
+	<g:requires name="styles/GlideEditor5Includes.css" includes="true"/>
+	<g:requires name="scripts/gwt_tree2.js"/>
+	<g:requires name="scripts/classes/ScriptTableTree.js"/>
+	<g:requires name="scripts/classes/ScriptTableNode.js"/>
+	<g:requires name="scripts/classes/FieldTreeNode.js"/>
+	<g:requires name="scripts/utils/index.js" includes="true" />
+	<g:requires name="scripts/snc-code-editor/codemirror/mode/javascript/javascript.js" params="sysparm_substitute=false"/>
+
+	<div id="element.${ref}" class="form-group row ${jvar_mandatory_class}" style="${jvar_element_display}">
+		<div id="label.${ref}">
+			<label onclick="return labelClicked(this);" for="${ref}" dir="ltr" class="col-xs-12 col-md-3 col-lg-3 control-label">
+				<span id="status.${ref}" role="note" data-dynamic-title="${jvar_input.description}" mandatory="${jvar_input.required}" oclass="${jvar_label_class}" class="${jvar_label_class} ${jvar_required_marker}"/>
+				<span title="${jvar_input.description}" class="label-text" data-html="false">${jvar_input.label}</span>
+			</label>
+		</div>
+		<div class="col-xs-10 col-md-7 col-lg-7 form-field input_controls">
+		<div class="row">
+				<div class="col-xs-12 col-md-12 col-lg-12">
+					<textarea id="${ref}" name="${jvar_input.name}" data-required="${jvar_input.required}" data-type="json" class="script-field" style="width: 100%;" rows="10" wrap="soft">
+						${jvar_string_value}
+					</textarea>
+				</div>
+			</div>
+		</div>
+		<div class="col-xs-2 col-md-1 col-lg-1 form-field-addons">
+			<g:macro_invoke macro="configure_ui_interaction_dynamic_value"/>
+		</div>
+	</div>
+	<style type="text/css">
+		.cm-color-preview {
+			/* gutter width */
+			width: 12px;
+		}
+		.cm-color-preview-marker {
+			width: 10px;
+			height: 10px;
+			margin: 4px 1px;
+		}
+	</style>
+	<script>
+		(function() {
+			var cmEditor = CodeMirror.fromTextArea(document.getElementById("${ref}"), {
+				value: "${JS:jvar_string_value}",
+				mode: "application/ld+json",
+				lineNumbers: true,
+				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers", "cm-color-preview"],
+				foldGutter: true,
+				tabMode: "indent",
+				indentUnit: 4,
+				indentWithTabs: false,
+				lint: true,
+				readOnly: false
+			});
+
+			// parse out any colors on init
+			cmEditor.operation(function() {
+				var doc = cmEditor.getDoc();
+				doc.eachLine(function(line) {
+					renderColorPreviewMarker(doc, line);
+				});
+			});
+
+			function renderColorPreviewMarker(doc, line) {
+				var bgMarker = getColorMarkerForString(line.text);
+				doc.setGutterMarker(line, "cm-color-preview", bgMarker);
+			}
+
+			function getColorMarkerForString(text) {
+				var rgbRegex = /(\d+\s*,\s*\d+\s*,\s*\d+)/ig;
+				var rgb = text.match(rgbRegex)
+				if (!rgb)
+					return;
+				var marker = document.createElement("div");
+				marker.addClassName("cm-color-preview-marker");
+				marker.style.backgroundColor = "rgb(" + rgb + ")";
+				return marker;
+			}
+
+			var renderLineTimeout;
+			var updatedLines = [];
+			function processUpdatedLines(doc) {
+				doc.operation(function() {
+					for(var i=0; i ${LT} updatedLines.length; i++) {
+						renderColorPreviewMarker(doc, updatedLines[i]);
+					}
+					updatedLines = [];
+				});
+			}
+			cmEditor.on("renderLine", function(doc, line, el) {
+				updatedLines.push(line);
+				clearTimeout(renderLineTimeout);
+				renderLineTimeout = setTimeout(function(){ processUpdatedLines(doc) }, 250);
+			});
+			cmEditor.on("change", function(cm, change) {
+				gel('${ref}').value = cm.getValue();
+				var textAreaElement = cm.getTextArea();
+				textAreaElement.isFocused=false;
+				multiModified(textAreaElement);
+				onInputMapChange('${ref}');
+			});
+			cmEditor.on("keydown", function(cm, change) {
+				var textAreaElement = cm.getTextArea();
+				multiKeyDown(textAreaElement);
+			});
+			cmEditor.on("blur", function(cm, change) {
+				var textAreaElement = cm.getTextArea();
+				textAreaElement.isFocused=false;
+			});
+			cmEditor.on("focus", function(cm, change) {
+				var textAreaElement = cm.getTextArea();
+				textAreaElement.isFocused=true;
+			});
+			window.jQuery(cmEditor.display.wrapper).css("background-color", "").attr('id', "cm.${ref}");
+		})();
+	</script>
+</j:jelly>

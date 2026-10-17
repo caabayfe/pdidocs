@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <div style="text-align:left;">
+    <br/>
+	<j:set var="jvar_objId" value="${sysparm_obj_id}"/>
+    <j:set var="jvar_objList" value="${sysparm_delobj_list}"/>
+	<g:evaluate jelly="true" object="true">
+		var minorVersions = new GlideRecord('kb_version');
+		minorVersions.addQuery('knowledge',jelly.jvar_objId);
+		minorVersions.query();
+	</g:evaluate>
+	<g:evaluate jelly="true" object="true">
+		var updatedVersions = new GlideRecord('kb_knowledge');
+		var isLatestVersion = false;
+		if(updatedVersions.get(jelly.jvar_objId)){
+			isLatestVersion = new KBVersioning().isLatestVersion(updatedVersions);
+		}
+	</g:evaluate>
+    <j:set var="jvar_is_domain_used" value="${sysparm_is_domain_used}" />
+    <j:choose>
+		<j:when test="${empty(jvar_objList)}">
+			<j2:choose>
+				<j2:when test="${sysparm_is_domain_used == 'true'}">
+		            <div style="margin-top: 0px; color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+		                ${gs.getMessage('Warning!')}
+		            </div>
+					<div>${gs.getMessage('One or more data/process records fall under this domain. Do you still want to delete?')}</div>
+				</j2:when>
+				<j2:when test="$[!gs.nil('${sysparm_msg_override}')]">
+					<div>$[HTML:gs.getMessage("${JS:sysparm_msg_override}")]</div>
+				</j2:when>
+				<j2:otherwise>
+      	    		<div> ${gs.getMessage('Delete this record?')} </div><br/>
+				</j2:otherwise>
+			</j2:choose>
+   		</j:when>
+		<j:choose>
+			<j:when test="${!isLatestVersion &amp;&amp; new KBCommon().isVersioningEnabled()}">
+				<div style="margin: 5px 5px 0px;">
+					${gs.getMessage('It is not recommended to delete older versions of an article which has higher versions. It may lead to data inconsistencies.')} <br/>
+				</div>
+			</j:when>
+		</j:choose>
+
+		<j:when test="${minorVersions.hasNext() &amp;&amp; new KBCommon().isVersioningEnabled()}">
+			<div style="margin: 5px 5px 0px;">
+				${gs.getMessage('Deleting a draft version of this article will only delete this particular version, and not all the older published versions of the articles. This deletion will also remove all minor versions of this article, up to the last published version. The following versions will be deleted :')} <br/>
+			</div>
+
+			<div style="margin: 5px 5px 0px;">
+				<table border="0px">
+					<j:while test="${minorVersions.next()}">
+						<tr><td>${minorVersions.knowledge.number +" v"+minorVersions.version}</td></tr>
+					</j:while>
+				</table>
+			</div>
+            <div style="margin: 5px 5px 0px;">
+				<br/>
+                ${gs.getMessage('Please confirm.')}
+            </div>
+		</j:when>
+
+		<j:otherwise>
+            <div style="margin-top: 0px; color:tomato; font-weight:bold; text-align:center; font-size: larger;">
+                ${gs.getMessage('Warning!')}
+            </div>
+            <div style="margin: 5px 5px 0px;">
+                ${gs.getMessage('Deleting this record will result in the automatic deletion of the following related records:')} <br/>
+            </div>
+
+            <!-- display related objects table -->
+            <g:macro_invoke macro="show_cascade_del_objs_table" obj_list="${jvar_objList}" />
+            <div style="margin: 5px 5px 0px;">
+                ${gs.getMessage('Note that the related records may trigger their own cascade deletions.')} <br/>
+                ${gs.getMessage('Proceed?')}
+            </div>
+         </j:otherwise>
+    </j:choose>
+    <br/>
+
+
+    <div align="right" class="modal-footer">
+        <g:dialog_buttons_ok_cancel ok="return ok()" ok_style_class="btn btn-destructive" ok_text="${gs.getMessage('Delete')}" cancel="return cancel()" ok_type="button" cancel_type="button"/>
+    </div>
+    </div>
+
+    <script>
+       document.getElementById("ok_button").focus();
+    </script>
+</j:jelly>

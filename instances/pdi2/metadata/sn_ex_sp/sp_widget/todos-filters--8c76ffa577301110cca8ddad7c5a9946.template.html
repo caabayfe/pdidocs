@@ -1,0 +1,29 @@
+<div ng-init="c.init()" ng-if="c.filtersData.length > 0">
+  <div ng-include="'sn-ec-filter-mobile'" ng-if="c.view === 'mobile'"></div>
+  <div ng-include="'sn-ec-filter-desktop'" ng-if="c.view === 'desktop'"></div>
+  <div class="modal fade modal-flyout" id="ec-flyout-filter-modal">
+    <div class="modal-dialog modal-lg" ng-if="c.toggleFlyout">
+      <div class="flyout-template-container" ng-include="'sn-ec-filter-flyout'"></div>
+    </div>
+  </div>
+</div>
+<hr ng-show="c.filterPills.length" class="pills-container-separator" ng-class="{'mobile-margin-style': c.view === 'mobile'}"/>
+<div class="filter-pills-container" ng-show="c.filterPills.length">
+  <div class="{{ c.view === 'mobile' && c.filterPillsHeight > 80 && c.showMoreLessButtons ? 'filter-pills-height' : '' }} filter-pill-display-flex" id="filter-pills-group" role="group" aria-label="${Currently filtered by}">
+    <!-- Applied Filters -->
+    <div ng-repeat="pill in c.filterPills">
+      <div class="pill rounded">
+        <span ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{pill.value}}" class="pill-text"> {{pill.value}} </span>
+        <button ng-click="c.clearPill(pill)" class="pill-button" aria-label="{{pill.clearLabel}}" ng-keydown="c.focusFilter($event, pill)">
+          <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <button ng-if="c.view === 'desktop'" class="btn btn-link btn-sm" ng-click="c.clearAllPills()" aria-label="${Clear applied filters}" ng-keydown="c.focusFilter($event)">${Clear all}</button>
+  </div>
+  <div ng-if="c.view === 'mobile'" class="filter-pill-actions display-flex {{c.filterPillsHeight <= 80 ? 'flex-end': 'space-between'}}">
+    <button ng-click="c.showMoreLessButtons=false" ng-if="c.filterPillsHeight > 80 && c.showMoreLessButtons" class="btn btn-link" aria-label="${Show more}">${Show more}</button>
+    <button ng-click="c.showMoreLessButtons=true" ng-if="c.filterPillsHeight > 80 && !c.showMoreLessButtons" class="btn btn-link" aria-label="${Show less}">${Show less}</button>
+    <button class="btn btn-link" ng-click="c.clearAllPills()" aria-label="${Clear applied filters}" ng-keydown="c.focusFilter($event)">${Clear all}</button>
+  </div>
+</div>

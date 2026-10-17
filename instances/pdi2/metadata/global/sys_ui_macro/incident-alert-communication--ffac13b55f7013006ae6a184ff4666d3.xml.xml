@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_sys_id" expression="RP.getParameterValue('sys_id')" jelly="true"/>
+	<g2:evaluate var="jvar_update_channels" jelly="true" object="true">
+		var updateChannels = [];
+		var updateChannelsGr = new GlideRecord('comm_channel_config');
+		updateChannelsGr.addActiveQuery();
+		updateChannelsGr.addQuery('classification', 'update');
+		updateChannelsGr.query();
+		while (updateChannelsGr.next()) {
+			updateChannels.push(updateChannelsGr.getDisplayValue('type'));
+		}
+		updateChannels;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_incident_alert_tasks_with_communication" jelly="true" object="true">
+
+		var communicationManagementUtils = new sn_comm_management.CommunicationManagementUtil();
+		var incidentAlertTasksWithCommunication = [];
+		var incidentAlertTaskGr = new GlideRecordSecure('incident_alert_task');
+		incidentAlertTaskGr.addQuery('incident_alert', jelly.jvar_sys_id);
+		incidentAlertTaskGr.orderBy('order');
+		incidentAlertTaskGr.query();
+
+		while(incidentAlertTaskGr.next()) {
+			var commChannelGr = new GlideRecord('comm_channel');
+			commChannelGr.addQuery('comm_channel_config.classification', 'IN', 'update');
+			commChannelGr.addQuery('comm_task', incidentAlertTaskGr.getUniqueValue());
+			commChannelGr.query();
+			if (commChannelGr.hasNext()) {
+				var incidentAlertTask = {};
+				incidentAlertTask.sys_id = incidentAlertTaskGr.getUniqueValue();
+				incidentAlertTask.g_scratchpad = {};
+				incidentAlertTask.number = incidentAlertTaskGr.getDisplayValue('number');
+				incidentAlertTask.priority = incidentAlertTaskGr.getDisplayValue('priority');
+				incidentAlertTask.state = incidentAlertTaskGr.getDisplayValue('state');
+				incidentAlertTask.assigned_to = incidentAlertTaskGr.getDisplayValue('assigned_to');
+				incidentAlertTask.comm_plan = incidentAlertTaskGr.getValue('comm_plan');
+				incidentAlertTask.short_description = incidentAlertTaskGr.getDisplayValue('short_description');
+				incidentAlertTask.link = incidentAlertTaskGr.getLink(true);
+				incidentAlertTask.canSendUpdates = communicationManagementUtils.canSendUpdates(incidentAlertTaskGr, true)
+				incidentAlertTasksWithCommunication.push(incidentAlertTask);
+			}
+		}
+		incidentAlertTasksWithCommunication;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_incident_alert_task_labels" jelly="true" object="true">
+		var labels = {};
+		var gr = new GlideRecord('incident_alert_task');
+		gr.newRecord();
+		labels.number = gr.number.getLabel();
+		labels.priority = gr.priority.getLabel();
+		labels.state = gr.state.getLabel();
+		labels.assigned_to = gr.assigned_to.getLabel();
+		labels.short_description = gr.short_description.getLabel();
+		labels;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_incident_alert_tasks_with_communication_string" jelly="true">
+		JSON.stringify(incidentAlertTasksWithCommunication);
+	</g2:evaluate>
+	<g2:evaluate var="jvar_escape_text" jelly="true">
+		var escapeTextProperty = gs.getProperty("glide.ui.escape_text");
+		escapeTextProperty == "true";
+	</g2:evaluate>
+	<g2:evaluate var="jvar_escape_script" jelly="true">
+		var escapeScriptProperty = gs.getProperty("glide.ui.escape_all_script");
+		escapeScriptProperty == "true";
+	</g2:evaluate>
+	<script>
+		var incidentAlertTasksWithCommunication = [];
+		<j2:if test="$[jvar_escape_text == true &amp;&amp; jvar_escape_script == true]">
+			incidentAlertTasksWithCommunication = JSON.parse("$[jvar_incident_alert_tasks_with_communication_string]");
+		</j2:if>
+		<j2:if test="$[jvar_escape_text != true || jvar_escape_script != true]">
+			incidentAlertTasksWithCommunication = JSON.parse("$[JS: jvar_incident_alert_tasks_with_communication_string]");
+		</j2:if>
+		function sendUpdates(sys_id) {
+		var incidentAlertTask = getIncidentAlertTaskWithCommunication(sys_id);
+			try {
+				var ga = new GlideAjax('sn_comm_management.CommunicationManagementUtilAjaxSNC');
+				ga.addParam('sysparm_name', 'getCommTaskSourceTable');
+				ga.addParam('sysparm_comm_task', incidentAlertTask.sys_id);
+				ga.getXML(function(response) {
+					var sourceTable = response.responseXML.documentElement.getAttribute("answer");
+					if(sourceTable) {
+						var dialog = getDefaultGlideModal("task_communication", incidentAlertTask.short_description, 800, true);
+						dialog.on('beforeclose', function(event) {
+							var reload = dialog.getPreference('reload');
+							if(reload)
+								location.reload();
+						});
+						dialog.renderIframe("$task_communication.do?sysparm_stack=no${AMP}amp;sysparm_sys_id=" + sys_id + "${AMP}amp;sysparm_table=" + sourceTable);
+					}
+				});
+			}
+			catch(err) {
+				console.log(err);
+			}
+		}
+
+		function getDefaultGlideModal(name, title, width, flexiableHeight) {
+			if (!name)
+				return;
+			var modal = new GlideModal(name);
+			modal.setTitle(title);
+			modal.setWidth(width ? width : 1200);
+			if(!flexiableHeight)
+				modal.setAutoFullHeight(true);
+			return modal;
+		}
+		function getIncidentAlertTaskWithCommunication(incidentAlertTaskSysId) {
+			var incidentAlertTask;
+			for (i=0;i${AMP}lt;incidentAlertTasksWithCommunication.length;i++) {
+				incidentAlertTask = incidentAlertTasksWithCommunication[i];
+				if (incidentAlertTask.sys_id == incidentAlertTaskSysId) {
+					break;
+				}
+			}
+			return incidentAlertTask;
+		}
+	</script>
+	<style>
+		.incident-alerts-wrapper .incident-alert {
+			padding: 10px 0px;
+			border-bottom: 1px solid #bdc0c4;
+			padding-bottom: 10px;
+		}
+		.-polaris .incident-alerts-wrapper .incident-alert {
+			border-bottom: 1px solid RGB(var(--now-color_grouped--gray-1, 118, 123, 128));
+		}
+		.incident-alerts-wrapper .incident-alert.header {
+		    background: #e6e8ea;
+			padding-top: 10px;
+			border-top: 1px solid #bdc0c4;
+		}
+		.-polaris .incident-alerts-wrapper .incident-alert.header {
+		    background: RGB(var(--now-color_background--tertiary,var(--now-color--neutral-2,228,230,234)));
+			border-top: 1px solid RGB(var(--now-color_grouped--gray-1, 118, 123, 128));
+		}
+		.incident-alerts-wrapper .incident-alert .incident-alert-column {
+			padding: 0px 13px;
+		    word-break: break-word;
+		}
+		.incident-alerts-wrapper .incident-alert .incident-alert-column.number a{
+			color: #343d47 !important;
+			text-decoration: underline;
+		}
+		.-polaris .incident-alerts-wrapper .incident-alert .incident-alert-column.number a{
+			color: RGB(var(--now-text-link--primary--color,var(--now-color--link-2,1,119,142))) !important;
+		}
+		.incident-alerts-wrapper .incident-alert.header .incident-alert-column.number a{
+			text-decoration: none !important;
+		}
+		.incident-alerts-wrapper .incident-alert.header .incident-alert-column{
+			font-weight: bold;
+			font-size: 13px;
+		}
+	</style>
+	<div class="incident-alerts-wrapper">
+		<j2:if test="$[jvar_incident_alert_tasks_with_communication.length == 0]">
+			<div role="alert" class="outputmsg info notification notification-info">
+				<span class="outputmsg_text">
+					$[gs.getMessage('No communication task exist with channels {0}', updateChannels.join(', '))]
+				</span>
+			</div>
+		</j2:if>
+		<j2:if test="$[jvar_incident_alert_tasks_with_communication.length > 0]">
+			<div class="incident-alert header col-xs-12">
+				<div class="incident-alert-column number col-xs-2">
+					$[jvar_incident_alert_task_labels.number]
+				</div>
+				<div class="incident-alert-column col-xs-2">
+					$[jvar_incident_alert_task_labels.priority]
+				</div>
+				<div class="incident-alert-column col-xs-2">
+					$[jvar_incident_alert_task_labels.state]
+				</div>
+				<div class="incident-alert-column col-xs-2">
+					$[jvar_incident_alert_task_labels.assigned_to]
+				</div>
+				<div class="incident-alert-column col-xs-2">
+					$[jvar_incident_alert_task_labels.short_description]
+				</div>
+				<div class="incident-alert-column col-xs-2">
+					$[gs.getMessage('Actions')]
+				</div>
+				<div style="clear: both"></div>
+			</div>
+			<j2:forEach items="$[jvar_incident_alert_tasks_with_communication]" var="jvar_incident_alert_task">
+				<div class="incident-alert col-xs-12">
+					<div class="incident-alert-column number col-xs-2">
+						<a href="/$[jvar_incident_alert_task.link]">$[jvar_incident_alert_task.number]</a>
+					</div>
+					<j2:if test="$[jvar_escape_text == true]">
+						<div class="incident-alert-column col-xs-2">
+							$[jvar_incident_alert_task.priority]
+						</div>
+						<div class="incident-alert-column col-xs-2">
+							$[jvar_incident_alert_task.state]
+						</div>
+						<div class="incident-alert-column col-xs-2">
+							$[jvar_incident_alert_task.assigned_to]
+						</div>
+						<div class="incident-alert-column short_description col-xs-2">
+							$[jvar_incident_alert_task.short_description]
+						</div>
+					</j2:if>
+					<j2:if test="$[jvar_escape_text != true]">
+						<div class="incident-alert-column col-xs-2">
+							$[HTML,JS: jvar_incident_alert_task.priority]
+						</div>
+						<div class="incident-alert-column col-xs-2">
+							$[HTML,JS: jvar_incident_alert_task.state]
+						</div>
+						<div class="incident-alert-column col-xs-2">
+							$[HTML,JS: jvar_incident_alert_task.assigned_to]
+						</div>
+						<div class="incident-alert-column short_description col-xs-2">
+							$[HTML,JS: jvar_incident_alert_task.short_description]
+						</div>
+					</j2:if>
+					<j2:if test="$[jvar_incident_alert_task.canSendUpdates == true]">
+						<div class="incident-alert-column col-xs-2">
+							<a href="javascript:void(0)" onClick="sendUpdates('$[jvar_incident_alert_task.sys_id]')">$[gs.getMessage('Compose')]</a>
+						</div>
+					</j2:if>
+				</div>
+			</j2:forEach>
+		</j2:if>
+	</div>
+</j:jelly>

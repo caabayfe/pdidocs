@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <div style="text-align:left;">
+      <input type="hidden" id="session_id" name="session_id" value="${sysparm_session_id}"/>
+	  <input type="hidden" id="node_id" name="node_id" value="${sysparm_node_id}"/>
+      <div style="margin-top: 6px; color: tomato; font-size:larger;text-align:center;">
+         <b>Warning</b>
+      </div>
+      
+      <div style="margin: 6px 5px 0px;">
+        This transaction is not normally cancelable because it is a system transaction. If you cancel this transaction, important system functions may not complete.<br/>
+      </div>
+   
+      <div style="margin: 6px 5px;">
+         Are you sure you want to kill this transaction?<br/>
+      </div>
+   </div>
+   
+   <div align="right">
+      <g:dialog_buttons_ok_cancel ok="return onOK();" cancel="return onCancel();"/>
+   </div>
+   <script>
+		function onCancel() {
+			GlideDialogWindow.get().destroy();
+			return false;
+		}
+
+		function onOK() {
+			var session_id = $('session_id').value;
+			var node_id = $('node_id').value;
+			var ga = new GlideAjax('TransactionKillAjax');
+			ga.addParam('sysparm_name', 'forceKillCluster');
+			ga.addParam('sysparm_session_id', session_id);
+			ga.addParam('sysparm_node_id', node_id);
+			ga.getXML(afterKill);
+			return true; 
+		}
+
+		function afterKill(response) {
+			GlideDialogWindow.get().destroy();
+		}
+   </script>
+</j:jelly>

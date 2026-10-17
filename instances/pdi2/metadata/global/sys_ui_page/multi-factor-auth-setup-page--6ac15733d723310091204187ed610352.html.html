@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<link href="84f0346b87120300cfab6dd207cb0b72.cssdbx?" rel="stylesheet" type="text/css"/>
+	<j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates()}">
+		<g:inline template="output_messages2.xml" />
+	</j:if>
+	<j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates()}">
+		<style>
+			.ga-setup-table {
+				margin: auto;
+				padding: 20px;
+			}
+
+			@media (min-width: 600px) {
+			.center {
+				margin: auto;
+				margin-top: 5%;
+				width: 25%;
+				padding-top: 16px;
+				padding-bottom: 16px;
+				border: 1px solid green;
+				box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+			}
+
+			@media (min-width: 600px) {
+			.ga-setup-table {
+				margin: auto;
+				padding: 20px;
+			}
+			}
+
+			.bar {
+				margin: 0 0 4px 0;
+			}
+
+			.bar span {
+				position: relative;
+				display: block;
+				text-align: center;
+				line-height: 1.2;
+			}
+
+			.bar span:before, .bar span:after {
+				content: '';
+				position: absolute;
+				width: calc(50% - 20px);
+				height: 1px;
+				background-color: #b3bac7;
+				top: 8px;
+			}
+
+			.bar span:before {
+				right: 0;
+			}
+
+			.bar span:after {
+				left: 0;
+			}
+
+			.setup_mfa_header {
+				text-align: center;
+			}
+
+			.width_100 {
+		   		width: 100%;
+			}
+
+			.margin_10 {
+		   		margin-top: 10px;
+			}
+		</style>
+	</j:if>
+	<j:if test="${sn_ui.PolarisUI.canUsePolarisTemplates()}">
+		<style>
+			p {
+				margin-top: 15px;
+				font-size: var(--now-global-font-size--sm, 12px);
+			}
+			a.btn-link{
+				font-weight: 700;
+				font-size: var(--now-global-font-size--sm, 12px);
+			}
+		</style>
+	</j:if>
+	<g:evaluate jelly="true">
+          var bucket = ['info'];
+          if (gs.hasMessages(bucket))
+             gs.flushMessages();
+	</g:evaluate>
+	<div data-form-title="${title}"></div>
+	<g:evaluate var="jvar_selected_mfa_factor" jelly="true">
+		var value = gs.getSession().getHttpSession().getAttribute("selectedMfaFactor");
+		value;
+	</g:evaluate>
+	<g:include_script src="MFAUtils.jsdbx" />
+	<g:include_script src="WebAuthnUtil.jsdbx" />
+	<g:evaluate jelly="true">
+      var title = gs.getMessage('Enable multi-factor authentication');
+      gs.getSession().getHttpSession().setAttribute("isPartialSession", "true");
+      var totp = new GlideRecord('user_multifactor_auth');
+      totp.addQuery('user', gs.getUserID());
+      totp.addQuery('is_validated', true);
+      totp.query();
+      totp;
+   </g:evaluate>
+	<g:evaluate var="jvar_new_mfa_ui_property_enabled" jelly="true" object="true">
+      var result = false;
+	  var propValue = new GlideRecord('sys_properties');
+      propValue.addQuery('name', 'glide.auth.mfa.ui.v2.enabled');
+      propValue.query();
+	  if(propValue.next()){
+		result = propValue.getValue('value');
+	  }
+	  result;
+	</g:evaluate>
+	<g:evaluate jelly="true">
+		var title = gs.getMessage('Enable multi-factor authentication');
+		gs.getSession().getHttpSession().setAttribute("isPartialSession", "true");
+	</g:evaluate>
+   <j:set var="jvar_can_register_authenticator" value="${SNC.WebAuthnUtils.isRegistrationInMfaFlowEnabled();}" />
+
+	<g:evaluate var="jvar_mfa_factors_user_can_setup" jelly="true" object="true">
+		var mfaConfiguration = SNC.MultifactorAuthUtil.getMfaFactorsForSetup();
+		mfaConfiguration;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_mfa_setup_completed" jelly="true" object="true">
+		var isSetupDone = (jelly.jvar_mfa_factors_user_can_setup.totp == "true" || jelly.jvar_mfa_factors_user_can_setup.email == "true" || jelly.jvar_mfa_factors_user_can_setup.fido == "true");
+		isSetupDone;
+	</g:evaluate>
+	<g:evaluate var="jvar_display_message_email" jelly="true" object="true">
+		var display_message_email = gs.getMessage('Get a verification code sent to {0}', '${jvar_mfa_factors_user_can_setup.emailAddress}');
+		display_message_email;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_show_sn_branding_tagline" jelly="true">
+		var showSNBrandingTagline = gs.getProperty('glide.ui.branding.works_with.is_visible', 'false');
+		showSNBrandingTagline;
+	</g:evaluate>
+
+    <j:set var="jvar_now_brand_tagline">
+        <j:if test="${gs.getProperty('glide.ui.branding.works_with.is_visible', 'false') == 'true'}">
+            <g:macro_invoke macro="ShowSNBrandTaglineOnLoginPage" />
+        </j:if>
+    </j:set>
+	
+    <g:ui_form>
+        <input type="hidden" id="mfa_setup_completed" name="mfa_setup_completed" value="${totp.hasNext()}" />
+      	<input type="hidden" id="sys_mfa_check_remembered_browser" name="sys_mfa_check_remembered_browser" value="" />
+		<input type="hidden" id="sys_web_authn_registration_successful" name="sys_web_authn_registration_successful" value="" />
+		<input type="hidden" id="sys_web_authentication_successful" name="sys_web_authentication_successful" value="" />
+      	<input type="hidden" id="sys_web_authn_registration_skipped" name="sys_web_authn_registration_skipped" value="" />
+		<input type="hidden" id="sys_mfa_factor_validate" name="sys_mfa_factor_validate" value="" />
+		<input type="hidden" id="sys_selected_mfa_factor" name="sys_selected_mfa_factor" value="${jvar_selected_mfa_factor}" />
+		<input type="hidden" id="show_sn_branding_tagline" name="show_sn_branding_tagline" value="${jvar_show_sn_branding_tagline}" />
+        <j:choose>
+            <!-- Polarisberg -->
+            <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates()}">
+				<j:choose>
+					<!-- New MFA UI page section starts here -->
+					<j:when test="${jvar_new_mfa_ui_property_enabled}">
+						<div class="login-wrapper">
+						<g:inline template="polarisberg_login_wrapper_svg.xml"/>
+
+						<div id="mfa_container" class="login-container">
+						<g:inline template="output_messages2.xml" />
+							<div class="login-logo">
+								<g:inline template="polarisberg_login_logo.xml"/>
+							</div>
+								<div class="login-card ${jvar_hide_illustrations}">
+									<div id="login_form_to_include_branding_mfaV2">
+									<div class="login-form">
+										<div class="notification notification-failure" id="divNotification" style="display:none;">
+											<button data-dismiss="alert" class="btn-icon close icon-cross">
+												<span class="sr-only">Close</span>
+											</button>
+										</div>
+										<div id="mfa_options" name="mfa_options">
+											<j:if test="${!jvar_mfa_setup_completed}">
+												<h1>${gs.getMessage('Setup Multi-factor Authentication(MFA)')}</h1>
+												<h2>${gs.getMessage('Select one of the following methods to complete the setup.')}</h2>
+												<div class="login-form-field">
+													<div role="radiogroup">
+														<j:if test="${jvar_mfa_factors_user_can_setup.totp}">
+															<span class="input-group-radio">
+																<input id="totp_factor" class="radio" type="radio" role="radio" name="mfa_factor" value="mfa_TOTP_div" checked="checked"></input>
+																<label for="totp_factor" class="radio-label">
+																	${gs.getMessage('Setup authenticator app')}
+																</label>
+															</span><br/>
+														</j:if>
+														<j:if test="${jvar_mfa_factors_user_can_setup.fido}">
+															<span class="input-group-radio">
+																<input id="fido_factor" class="radio" type="radio" role="radio" name="mfa_factor" value="mfa_FIDO_div"></input>
+																<label for="fido_factor" class="radio-label">
+																	${gs.getMessage('Setup Biometric authentication, Passkey or Hardware Security key')}
+																</label>
+															</span><br/>
+														</j:if>
+														<j:if test="${jvar_mfa_factors_user_can_setup.email}">
+															<span class="input-group-radio">
+																<input id="email_factor" class="radio" type="radio" role="radio" name="mfa_factor" value="mfa_EMAIL_div"></input>
+																<label for="email_factor" class="radio-label">
+																	${jvar_display_message_email}
+																</label>
+															</span><br/>
+														</j:if>
+													</div>
+													<div class="flex">
+														<button class="btn btn-primary width_100 btn_wo_box_shadow" data-toggle="modal" id="continue" type="button" style="margin-top:20px; width:100%;" onclick="continueToSetup()">${gs.getMessage('Continue')}</button>
+													</div>
+												</div>
+											</j:if>
+											<j:if test="${jvar_mfa_setup_completed}">
+												<div id="tdSuccessDownload">
+													<p tabindex="0">${gs.getMessage('You have already configured the multi-factor authentication for your profile.')}</p>
+												</div>
+											</j:if>
+										</div>
+										<div>
+											<div id="mfa_TOTP_div" style="display:none">
+												<g:mfa_totp_setup />
+											</div>
+											<div id="mfa_FIDO_div" style="display:none">
+												<g:mfa_fido_setup />
+											</div>
+											<div id="mfa_EMAIL_div" style="display:none">
+												<g:mfa_email_setup />
+											</div>
+										</div>
+									</div>
+									<div class="login-card-footer text-center" id="login_card_footer_mfaV2">
+										<a id="linkBypassSetup" class="btn btn-link" onclick="bypassSetup();" style="display:none;" href="#">
+											${gs.getMessage('Postpone setup')}
+										</a>
+										<p id="remainingBypassCountPara" style="display:none;">${gs.getMessage('Times MFA setup can be postponed is ')}<span id="remainingBypassCount"></span></p>
+										<input type="hidden" name="hdnBypassSetup" id="hdnBypassSetup" />
+									</div>
+									<g:no_escape>${jvar_now_brand_tagline}</g:no_escape>
+									</div>
+								</div>
+							</div>
+						</div>
+					</j:when>
+					<!-- New MFA UI page section ends here -->
+
+					<!-- OLD MFA UI page section starts here -->
+					<j:otherwise>
+						<div class="login-wrapper">
+							<g:inline template="polarisberg_login_wrapper_svg.xml"/>
+
+							<div class="login-container wide">
+								<div class="login-logo">
+									<g:inline template="polarisberg_login_logo.xml"/>
+								</div>
+								<div class="login-card ${jvar_hide_illustrations}">
+									<div id="login_form_to_include_branding_mfaV1">
+									<div class="login-form">
+
+										<div class="notification notification-failure" id="divNotification" style="display:none;">
+											<button data-dismiss="alert" class="btn-icon close icon-cross">
+												<span class="sr-only">Close</span>
+											</button>
+										</div>
+
+										<h1>${gs.getMessage('Enable multi-factor authentication (MFA)')}</h1>
+										<h2><a href="/api/now/v1/context_doc_url/mfa-auth-apps" target="_blank">${gs.getMessage('More information')}</a></h2>
+
+										<j:if test="${!totp.hasNext()}">
+											<ol>
+												<li>
+													${gs.getMessage('Download an authenticator app that supports Time Based One-Time Password (TOTP) on your mobile device.')}
+												</li>
+												<li>
+													${gs.getMessage('Open the app and scan the QR code below to pair your mobile device')}
+												</li>
+											</ol>
+
+											<div class="login-form-field">
+												<img id="imgCode" tabindex="0" alt="${gs.getMessage('Scan this QR code to pair your mobile device')}" />
+											</div>
+											<div class="login-form-field">
+												<label tabindex="0">${gs.getMessage('Or enter this code in your app:')}</label>
+												<div class="mfa-setup-code" tabindex="0" title="">
+													<div id="lblCode"></div>
+													<button type="button" name="${gs.getMessage('Click to copy code')}" id="copy_code" aria-label="${gs.getMessage('Click to copy code')}" data-original-title="${gs.getMessage('Click to copy code')}" data-toggle="tooltip" class="btn btn-default sn-tooltip-basic icon icon-copy" title="" onclick="copyCodeToClipboard()" />
+												</div>
+												<label id="cod_cop_msg" style="color: rgb(31, 132, 118); margin-top: 5px; display: none;" tabindex="0"></label>
+											</div>
+
+											<ol class="mfa-setup-step-3" start="3">
+												<li>
+													${gs.getMessage('Enter the code generated by the Authenticator app below')}
+												</li>
+											</ol>
+
+											<div class="login-form-field">
+												<label tabindex="0">${gs.getMessage('6-digit verification code')}</label>
+												<input id="txtResponse" class="form-control" type="text" placeholder="${gs.getMessage('XXXXXX')}" aria-label="${gs.getMessage('Enter the 6 digit code generated by the authenticator app')}" name="txtResponse" autocomplete="off"/>
+											</div>
+
+											<button class="btn btn-primary btn_wo_box_shadow"  data-toggle="modal" id="btnValidate" onclick="return validateResponse('${jvar_form_id}');">${gs.getMessage('Pair device and Login')}</button>
+										</j:if>
+										<j:if test="${totp.hasNext()}">
+											<div id="tdSuccessDownload">
+												<p tabindex="0">${gs.getMessage('You have successfully configured the authenticator app in your mobile device. If you have lost your device, please go to your user profile section to pair a new device.')}</p>
+											</div>
+										</j:if>
+									</div>
+									<div class="login-card-footer text-center" id="login_card_footer_mfaV1">
+										<a id="linkBypassSetup" class="btn btn-link" onclick="bypassSetup();" style="display:none;" href="#">
+											${gs.getMessage('Postpone setup')}
+										</a>
+										<p id="remainingBypassCountPara" style="display:none;">${gs.getMessage('Times MFA setup can be postponed is ')}<span id="remainingBypassCount"></span></p>
+										<input type="hidden" name="hdnBypassSetup" id="hdnBypassSetup" />
+									</div>
+									<g:no_escape>${jvar_now_brand_tagline}</g:no_escape>
+									</div>
+								</div>
+							</div>
+						</div>
+					</j:otherwise>
+					<!-- OLD MFA UI page section ends here -->
+				</j:choose>
+            </j:when>
+
+
+            <!-- Heisenberg -->
+            <j:otherwise>
+				<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+
+				<div class="notification notification-failure" id="divNotification" style="display:none;">
+					<button data-dismiss="alert" class="btn-icon close icon-cross">
+						<span class="sr-only">Close</span>
+					</button>
+				</div>
+
+				<j:choose>
+					<!-- New MFA UI page section starts here -->
+					<j:when test="${jvar_new_mfa_ui_property_enabled}">
+						<div id = "mfa_options" name="mfa_options" class="center">
+							<j:if test="${!jvar_mfa_setup_completed}">
+								<div id="mfa_header" class="setup_mfa_header" name="mfa_header" role="banner">
+									<label class="ga-label-header-large" aria-label="Setup Multi-factor Authentication">${gs.getMessage('Setup Multi-factor Authentication(MFA)')}</label>
+								</div>
+								<div id="setup_mfa_factor" name="setup_mfa_factor" class="ga-setup-table" role="main" style="display: block;">
+									<label class="ga-label" for="mfa-factor" style="text-align:center;">${gs.getMessage('Select one of the following methods to complete the setup.')}</label>
+								</div>
+								<div role="radiogroup">
+									<j:if test="${ jvar_mfa_factors_user_can_setup.totp }">
+										<span class="input-group-radio">
+											<input id="totp_factor" class="radio" type="radio" role="radio" name="mfa_factor" value="mfa_TOTP_div" checked="checked"></input>
+											<label for="totp_factor" class="radio-label">
+												${gs.getMessage('Setup authenticator app')}
+											</label>
+										</span><br/>
+									</j:if>
+									
+									<j:if test="${ jvar_mfa_factors_user_can_setup.fido }">
+									<span class="input-group-radio">
+										<input id="fido_factor" class="radio" type="radio" role="radio" name="mfa_factor" value="mfa_FIDO_div"></input>
+										<label for="fido_factor" class="radio-label">
+											${gs.getMessage('Setup Biometric authentication, Passkey or Hardware Security key')}
+										</label>
+									</span><br/>
+									</j:if>
+									<j:if test="${jvar_mfa_factors_user_can_setup.email}">
+										<span class="input-group-radio">
+											<input id="email_factor" class="radio" type="radio" role="radio" name="mfa_factor" value="mfa_EMAIL_div"></input>
+											<label for="email_factor" class="radio-label">
+												${jvar_display_message_email}
+											</label>
+										</span><br/>
+								</j:if>
+								</div>
+								<div class="login-card-footer text-center">
+									<a id="linkBypassSetup" class="btn btn-link" onclick="bypassSetup();" style="display:none;" href="#">
+										${gs.getMessage('Postpone setup')}
+									</a>
+								<p id="remainingBypassCountPara" style="display:none;">${gs.getMessage('Times MFA setup can be postponed is ')}<span id="remainingBypassCount"></span></p>
+								<input type="hidden" name="hdnBypassSetup" id="hdnBypassSetup" />
+						</div>
+								<div class="flex ga-setup-table">
+									<button class="btn btn-primary width_100" data-toggle="modal" id="continue" type="button" style="margin-top:20px;" onclick="continueToSetup()">${gs.getMessage('Continue')}</button>
+								</div>
+							</j:if>
+							<j:if test="${jvar_mfa_setup_completed}">
+								<div id="tdSuccessDownload">
+									<p tabindex="0">${gs.getMessage('You have already configured the multi-factor authentication for your profile.')}</p>
+								</div>
+							</j:if>
+						</div>
+
+						<div>
+							<div id="mfa_TOTP_div" style="display:none">
+								<g:mfa_totp_setup />
+							</div>
+							<div id="mfa_FIDO_div" style="display:none">
+								<g:mfa_fido_setup />
+							</div>
+							<div id="mfa_EMAIL_div" style="display:none">
+								<g:mfa_email_setup />
+							</div>
+						</div>
+
+					</j:when>
+					<!-- New MFA UI page section ends here -->
+
+					<!-- OLD MFA UI page section starts here -->
+					<j:otherwise>
+
+						<div class="ga-outer-container">
+							<div class="ga-header-container">
+								<h1 class="ga-label-header-large" tabindex="0">${gs.getMessage('Enable multi-factor authentication(MFA)')}</h1>
+								<a href="/api/now/v1/context_doc_url/using-mfa" target="_blank" id="linkLearnMore">${gs.getMessage('Learn more')}</a>
+								<a id="linkBypassSetup" onclick="bypassSetup();" style="display:none; padding-left: 1em;" href="#">${gs.getMessage('Postpone Setup')}</a>
+								<input type="hidden" name="hdnBypassSetup" id="hdnBypassSetup" />
+
+								<p class="ga-label" id="remainingBypassCountPara" style="display:none;">${gs.getMessage('Times MFA setup can be postponed is ')}<span id="remainingBypassCount"></span></p>
+
+							</div>
+							<j:if test="${!totp.hasNext()}">
+							<div class="ga-flex-container" >
+								<div class="ga-flex-content">
+								<p class="ga-label" tabindex="0">
+									<g:no_escape>${ALLOW_JELLY:gs.getMessage("mfa_setup_step1")}</g:no_escape>
+								</p>
+								</div>
+								<div class="ga-flex-content ga-flex-content-center">
+								<label class="ga-label" tabindex="0">${gs.getMessage('mfa_setup_step2')}</label>
+									<img id="imgCode" tabindex="0" alt="${gs.getMessage('Scan this QR code to pair your mobile device')}" />
+								<label class="ga-label" tabindex="0" style=" text-align: center;">${gs.getMessage('Or type in')}</label>
+								<div style="float: right;">
+									<div style="width: 100%;" tabindex="0" title="">
+										<div id="lblCode" style="font-size: small;display: inline;padding-right: 20px;"></div>
+										<button type="button" name="${gs.getMessage('Click to copy code')}" id="copy_code" aria-label="${gs.getMessage('Click to copy code')}" data-original-title="${gs.getMessage('Click to copy code')}" data-toggle="tooltip" class="btn btn-default sn-tooltip-basic icon icon-copy" title="" onclick="copyCodeToClipboard()" />
+									</div>
+								</div>
+								<label class="ga-label" id="cod_cop_msg" style="text-align: center; color: rgb(31, 132, 118); margin-top: 5px; display: none;" tabindex="0"></label>
+								</div>
+
+								<div class="ga-flex-content">
+								<label class="ga-label" tabindex="0">${gs.getMessage('mfa_setup_step3')}</label>
+									<span class="modal-footer flex">
+										<input id="txtResponse" class="col-sm-9 form-control" type="text" placeholder="${gs.getMessage('6-digit code')}" aria-label="${gs.getMessage('Enter the 6 digit code generated by the authenticator app')}" name="txtResponse" autocomplete="off"/>
+									</span>
+									<span class="modal-footer flex">
+										<button class="btn btn-primary"  data-toggle="modal" id="btnValidate" onclick="return validateResponse('${jvar_form_id}');">${gs.getMessage('Pair device and Login')}</button>
+									</span>
+								</div>
+							</div>
+								</j:if>
+						</div>
+
+
+						<j:if test="${totp.hasNext()}">
+							<div class="ga-outer-container">
+								<div class="ga-header-container">
+									<div class="ga-flex-content" id="tdSuccessDownload">
+										<p class="ga-label" tabindex="0">${gs.getMessage('You have successfully configured the authenticator app in your mobile device. If you have lost your device, please go to your user profile section to pair a new device.')} </p>
+									</div>
+								</div>
+							</div>
+						</j:if>
+					</j:otherwise>
+					<!-- OLD MFA UI page section ends here -->
+				</j:choose>
+       		</j:otherwise>
+    </j:choose>
+        <script>
+            var mfaV2PropertyValue = ${jvar_new_mfa_ui_property_enabled};
+            if(mfaV2PropertyValue){
+			  var canShowTotp = ${ jvar_mfa_factors_user_can_setup.totp == "true" } ;
+			  var canShowFido = ${ jvar_mfa_factors_user_can_setup.fido == "true" };
+			  var canShowEmail = ${ jvar_mfa_factors_user_can_setup.email == "true" };
+
+			  var factorsTobeShown = [];
+			  if ( canShowTotp )
+				factorsTobeShown.push("TOTP");
+			  if ( canShowEmail )
+				factorsTobeShown.push("EMAIL");
+              var doesClientSupportWebAuthn = !!window.PublicKeyCredential;
+              var insideAmb = !!window.parent.document.getElementById("amb_disconnect_modal");
+              if(canShowFido $[AMP]$[AMP] doesClientSupportWebAuthn $[AMP]$[AMP] !insideAmb){
+                  factorsTobeShown.push("FIDO");
+              }
+
+              var factorSelected = getFactorCookie();
+              if(factorsTobeShown $[AMP]$[AMP] factorsTobeShown.length == 1){
+                  $j('div[id^="TryDifferentLogin"]').hide();
+              }
+              if( factorSelected != "") {
+                  mfa_option_selected = "mfa_"+ factorSelected +"_div";
+                  gel(mfa_option_selected).style.display = "block";
+                  document.cookie = "factor=;Expires=Thu, 01 Jan 1970 00:00:01 GMT";
+              }else {
+                  if(factorsTobeShown $[AMP]$[AMP] factorsTobeShown.length == 1){
+                      var singleAvailableFactor = "mfa_"+factorsTobeShown[0]+"_div";
+                      gel(singleAvailableFactor).style.display = "block";
+                      gel("mfa_options").style.display = "none";
+                      mfa_option_selected = singleAvailableFactor;
+                      if(sn_ui.PolarisUI.canUsePolarisTemplates() $[AMP]$[AMP] (singleAvailableFactor === 'mfa_TOTP_div')){
+                          var loginContainer = document.getElementById('mfa_container');
+                          loginContainer.setAttribute("class", "login-container wide");
+                      }
+                      if(factorsTobeShown[0] == 'SMS' || factorsTobeShown[0] == 'EMAIL')
+                          sendMFAOTP(singleAvailableFactor);
+                  } else {
+                      gel("mfa_options").style.display = "block";
+                  }
+              }
+            }
+        </script>
+    </g:ui_form>
+</j:jelly>

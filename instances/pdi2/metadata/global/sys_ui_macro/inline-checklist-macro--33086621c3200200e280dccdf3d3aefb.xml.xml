@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j2:if test="$[!RP.isPopup()]">
+		<g2:evaluate>
+			var isBrowserSupported = (GlideVTBCompatibility.getCompatibility() != 'block');
+			var isNewUI = gs.getProperty('glide.ui.doctype', 'false') == 'true';
+			var isNewRecord = true;
+			if (isBrowserSupported $[AMP]$[AMP] isNewUI) {
+				var sysID = current.getUniqueValue();
+				var tableName = current.getTableName();
+				isNewRecord = current.isNewRecord();
+
+				// get the checklist ID for this record
+				var checklistID = null;
+				var checklist = new GlideRecord("checklist");
+				checklist.addQuery("document", sysID);
+				checklist.addQuery("table", tableName);
+				checklist.query();
+				if (checklist.next())
+					checklistID = checklist.getUniqueValue();
+			}
+		</g2:evaluate>
+		<body>
+			<j2:if test="$[!isNewRecord]">
+				<g:macro_invoke macro="checklist_template" readonly="false" record="$[sysID]" 
+								table="$[tableName]" checklistid="$[checklistID]"/>
+			</j2:if>
+		</body>
+ 	</j2:if>
+</j:jelly>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+   <j:set var="jvar_n" value="show_related_tasks_${ref}"/>
+   <g2:evaluate var="jvar_show_tasks_display" jelly="true">
+      var id = __ref__.getSysIdValue();
+      if (id == null)
+         "none";
+      else {
+         var ga = new GlideRecord('task_ci');
+         ga.addQuery('ci_item', __ref__.getSysIdValue());
+         ga.addQuery('task', '!=', jelly.sys_id);
+         ga.addQuery('task.active', true);
+   		 ga.setLimit(1);
+         ga.query();
+         if (ga.next())
+            "";
+         else
+            "none";
+      }
+   </g2:evaluate>
+
+   <a id="${jvar_n}" 
+     onclick="showTasksDialog('${ref}')"
+     name="${jvar_n}" 
+     style="display:$[jvar_show_tasks_display]"
+     title="${gs.getMessage('Show other active tasks affecting this CI')}">
+     <img border="0" src="images/warning.gifx" />
+   </a>
+   
+   <script>
+      needsRefresh = false;
+      function onChange_cmdb_ci_show_related(element, original, changed, loading) {
+         if (needsRefresh == false) {
+            needsRefresh = true;
+            return;
+         }
+         if (changed.length == 0) {
+            $('${jvar_n}').hide();
+            return;
+         }
+         var ga = new GlideAjax('ShowRelatedTasksAjax');
+         ga.addParam('sysparm_name', 'getRelatedTaskCount');
+         ga.addParam('sysparm_ci', g_form.getValue('${ref}'));
+         ga.addParam('sysparm_task', g_form.getUniqueValue());
+         ga.getXML(relatedTaskReturn);
+      }
+      
+      function relatedTaskReturn(response) {
+         var answer = parseInt(response.responseXML.documentElement.getAttribute("answer"));
+         var e = $('${jvar_n}');
+         if (answer > 0)
+            e.show();
+         else
+            e.hide();
+      }
+      
+      var h = new GlideEventHandler('onChange_incident_cmdb_ci_show_related', onChange_cmdb_ci_show_related, '${ref}');
+      g_event_handlers.push(h);
+      
+      function showTasksDialog(reference){
+         var v = g_form.getValue(reference);
+         var w = new GlideDialogWindow('show_list');
+         w.setTitle(getMessage('Other active tasks affecting this Configuration Item'));
+         w.setPreference('table', 'task_list');
+         w.setPreference('sysparm_view', 'default');
+         w.setPreference('sysparm_query', "active=true^sys_id!=" + g_form.getUniqueValue() + "^SUBQUERYsys_id,task,task_ci^ci_item=" + v + "^ENDSUBQUERY^GROUPBYsys_class_name");
+         w.render();
+      }
+   </script>
+</j:jelly>

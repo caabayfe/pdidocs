@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g2="null" xmlns:g="glide">
+	<!--
+		Parameters
+
+			From any sys_app_file record:
+				sysparm_sys_id - SysID of the file record
+				- OR -
+			From any sys_app_file related (update_synch) record:
+				sysparm_sys_source_id - SysID of the related record
+	 -->    <!-- ############################################################################################################# -->
+	<g2:evaluate jelly="true">
+		var sysId = '';
+		var sysIds = '';
+		var sysTableName = jelly.sysparm_sys_table_name;
+		// Our files can be identified by sys_id, sys_source_id, or lists of either
+		if (JSUtil.notNil(jelly.sysparm_sys_source_id)) {
+			sysIds = jelly.sysparm_sys_source_id;
+		} else if (jelly.sysparm_sys_version_table == "sys_sync_change" $[AND] JSUtil.notNil(jelly.sysparm_sys_source_id_list)) {
+			sysIds = jelly.sysparm_sys_source_id_list;
+			sysTableName = "sys_sync_change";
+		}  else if (JSUtil.notNil(jelly.sysparm_sys_source_id_list)) {
+			sysIds = jelly.sysparm_sys_source_id_list;
+		} 
+
+		var selectedApp;
+		if (JSUtil.notNil(jelly.sysparm_app)) {
+			selectedApp = jelly.sysparm_app;
+		} else {
+			selectedApp = gs.getSession().getProperty("apps.last_used_app");
+		}
+		//Global scope query string - to limit apps that are in global scope.
+		var queryString =  GlideAccessConditionBuilder.buildScopeInGlobalQueryString();
+</g2:evaluate>
+	<div id="add_code_dialog_container">
+		<div style="white-space: normal; padding: 4px;">
+			${gs.getMessage('Files added to an application can be managed, packaged and deployed with that application')}.$[SP]
+		</div>
+		<div style="white-space: normal; padding: 4px;">
+			<strong>$[gs.getMessage('Note')]:</strong>$[SP] $[gs.getMessage('Moving a file moves all of its descendant
+			files along with it. Would you like to continue?')]
+		</div>
+		<table border="0" class="wide">
+			<tr>
+				<td class="label label_spacing" nowrap="true">
+					<span class="label_description" mandatory="false" oclass="">$[SP]</span>
+					<label for="recordid">$[gs.getMessage('File to move')]:</label>
+				</td>
+				<td width="100%" nowrap="true">
+					$[gs.getMessage('{0} files selected', '' + sysIds.split(',').length)]
+				</td>
+			</tr>
+			<tr>
+				<td class="label label_spacing" nowrap="true">
+					<span class="label_description" mandatory="false" oclass="">$[SP]</span>
+					<label for="add_to_app_select_list">${gs.getMessage('To application')}:</label>
+				</td>
+				<td valign="top" width="100%">
+					<g2:ui_reference id="app_picker" 
+							name="app_picker"
+							table="sys_scope"
+							columns="name"
+							columns_search="false" 
+							order_by="name" 
+							show_popup="false"
+							query="$[queryString]"
+							completer="AJAXTableCompleter"/>
+				</td>
+			</tr>
+			<tr>
+				<td id="dialog_buttons" name="buttons" nowrap="true" style="vertical-align:bottom;" colspan="2">
+					<div align="right">
+						<button id="ok_button">
+							${gs.getMessage('Move')}
+						</button>
+						<button id="cancel_button">
+							${gs.getMessage('Cancel')}
+						</button>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</div>
+</j:jelly>

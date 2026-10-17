@@ -1,0 +1,54 @@
+<div id="rosters-modal">
+	<div id="rosters-modal-header" class="oc-rosters-modal-header modal-header">
+		<button data-dismiss="modal" class="btn btn-icon close icon-cross" ng-click="modalInstanceCtrl.close($event)">
+			<span class="sr-only">{{modalInstanceCtrl.form.close}}</span>
+		</button>
+		<h4 class="modal-title">{{modalInstanceCtrl.form.oncallMembers}}: {{modalInstanceCtrl.group.name}}</h4>
+	</div>
+	<div id="rosters-modal-body" class="oc-rosters-modal-body modal-body">
+		<div class="oc-modal-body-container row">
+			<div class="oc-heading-left col-md-6">
+				<div class="oc-headings">
+					<form class="ng-pristine ng-valid oc-filter" role="search">
+						<div class="oc-input-group oc-input-group-popover input-group-transparent">
+							<span class="input-group-addon-transparent icon-filter" ng-class="textMemberSearch ? ['icon-filter-dark'] : ['']"></span>
+							<input id="search-user" ng-model="textMemberSearch" class="form-control form-control-search ng-pristine ng-untouched ng-valid ng-empty" type="search"
+								   name="search-user" placeholder="{{modalInstanceCtrl.form.filterTitle}}" sn-trim-on-blur="" aria-invalid="false" />
+						</div>
+					</form>
+				</div>
+				<div class="member-list-container">
+					<div class="member-row oc-member-row" ng-repeat="member in filteredValues = (modalInstanceCtrl.members | memberfilter:textMemberSearch) track by member.id">
+						<div class="member-cell oc-roster-member" ng-click="modalInstanceCtrl.selectProfile(member, $event)" ng-focus="modalInstanceCtrl.showProfile(member)" role="button" tabindex="0" ng-attr-autofocus="{{$first}}">
+							<div class="user-avatar">
+								<div class="user-presence user-presence-modal">
+									<sn-avatar show-presence="true" class="" enable-context-menu="false" enable-tooltip="false" primary="member.user" />
+								</div>
+								<div class="user-info">
+									<span class="user-name" ng-bind-html="modalInstanceCtrl.highlight(member.user.name, textMemberSearch)"></span>
+									<span class="info">
+										<span class="roster oc-truncate" uib-tooltip="{{modalInstanceCtrl.getRosterName(member.roster)}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" aria-label="{{modalInstanceCtrl.getRosterName(member.roster)}}">{{modalInstanceCtrl.getRosterName(member.roster)}}</span>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="oc-search-results" ng-show="filteredValues.length == 0">
+						{{modalInstanceCtrl.form.noResultsFound}}
+					</div>
+				</div>
+			</div>
+			<div class="oc-heading-right col-md-6">
+				<div class="oc-headings">
+					<div class="right-section-heading">
+						{{modalInstanceCtrl.form.profile}}
+					</div>
+				</div>
+				<div class="right-section">
+					<sn-oncall-user-profile profile="modalInstanceCtrl.selectedMember" group="modalInstanceCtrl.group" show-presence="true"
+											show-direct-message-prompt="modalInstanceCtrl.showDirectMessage" />
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

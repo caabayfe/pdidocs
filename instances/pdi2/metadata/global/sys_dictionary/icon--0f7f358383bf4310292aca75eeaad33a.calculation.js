@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) {var sourcesWithIcon = [1,2,3,4,7,8,9,11,12,13]; if (sourcesWithIcon.indexOf(parseInt(current.source, 10))>=0) { return 'b23997017353101001971e57faf6a7f8'; } return ''; })(current);

@@ -1,0 +1,82 @@
+<section aria-label="${Service Catalog categories}">
+  <div ng-if="c.data.catalogSelectorArr.length > 2" ng-class="{'hidden-xs' : hideCategoryWidgetInXS}" class="panel panel-{{::options.color}} category-widget no-border">
+  <div class="panel-primary panel-heading">
+    <h2 class="h4 panel-title" id="catalog_title">
+      {{::data.messages.catalogTitle}}
+    </h2>
+  </div>
+  <ul class="list-group category-list" id="catalog_title" data-label="Catalogs" aria-label="{{::data.messages.catalogTitle}}">
+    <li class="list-group-item text-overflow-ellipsis" ng-include="'catalog-template.html'"></li>
+  </ul>
+</div>
+<script type="text/ng-template" id="catalog-template.html">
+  <select class="sc-basic-select" aria-label="{{::data.messages.catalogTitle}}" ng-change="changeCatalog(selectedCatalog)" sn-focus="true" ng-model="selectedCatalog" ng-options="catalog.displayValue for catalog in c.data.catalogSelectorArr track by catalog.value"></select>
+</script>
+
+<div ng-class="{'hidden-xs' : hideCategoryWidgetInXS}" class="panel panel-{{::options.color}} category-widget no-border">
+  <div class="panel-heading">
+	<span class="pull-right visible-xs" >
+		<i class="fa fa-times-circle close-button" ng-click="hideBrowseCategory()" tabindex="0" aria-label="${Close category explorer}" data-original-title="${Close category explorer}" data-toggle="tooltip" data-placement="bottom"></i>
+	</span>
+    <h2 class="h4 panel-title">
+      <span ng-if="::options.glyph">
+        <fa name="{{::options.glyph}}"></fa>
+      </span>{{::options.title}}</h2>
+  </div>
+  <ul class="list-group category-list" role="tree" data-label="Catalog filters" aria-label="{{::options.title}}">
+    <li role="none"
+        class="list-group-item text-overflow-ellipsis"
+        ng-if="category.totalCount > 0" ng-include="'category-template.html'"
+        ng-repeat="category in (data.visibleCategoriesList | limitTo: data.limit) track by category.sys_id"
+    </li>
+  </ul>
+  <div class="panel-footer text-center" ng-if="data.showMore">
+    <button class="text-center btn-link" ng-click="loadMore()" id="show-more-btn">{{::data.showMoreMsg}}</button>
+    <div class="text-muted text-center">
+      {{data.more_msg}}
+    </div>
+  </div>
+</div>
+<script type="text/ng-template" id="category-template.html">
+	<div ng-click="categorySelected($event, category)"
+  	ng-keydown="handleKeyPressOnCategory($event, category)"
+	sn-focus="category.sys_id == data.categoryId"
+	ng-enabled="category.totalCount > 0"
+    role="treeitem"
+    aria-current ="{{category.sys_id == data.categoryId}}"
+    ng-class="{true: 'text-active', false: ''}[category.sys_id == data.categoryId]"
+    tabindex="{{category.isFirstCategory ? '0' : '-1'}}"
+    class="group-item group-item-primary pointer sc_category_treeitem_{{::data.visibleCategoriesList.indexOf(category)}}" data-ng-attr-style="padding-left:{{getCategoryPadding(category.level + 1)}}"
+    title="{{::category.title}} {{::category.catalog_tooltip}}"
+    data-toggle="{{!isTouchDevice() ? 'tooltip' : undefined}}"
+    data-placement="top"
+    data-container="body"
+    data-ng-attr-aria-label="{{getCategoryAriaLabel(category)}}"
+    ng-attr-aria-expanded="{{category.subcategories.length > 0 && category.totalCount > category.count ? category.showChildren : undefined}}"
+    aria-posinset = "{{category.position}}"
+    aria-setsize = "{{list.length}}">
+    <div role="none">
+    	<i ng-if="::category.subcategories.length > 0 && category.totalCount > category.count"
+        aria-label="{{category.showChildren ? data.messages.collapse : data.messages.expand}}"
+      	class="l-h-1_6x pull-left fa collapse-icon"
+        data-toggle="tooltip"
+        data-placement="right"
+        data-original-title="{{category.showChildren ? data.messages.collapse : data.messages.expand}}"
+        ng-class="{true: 'fa-minus-square-o', false: 'fa-plus-square-o'}[category.showChildren]"
+        ng-click="displayChildren($event, category)">
+  		</i>
+      <span class="badge pull-right pointer" ng-if="options.omit_badges != 'true' && data.largeDataSet != 'true'">{{::category.totalCount}}</span>
+      <span class="block text-overflow-ellipsis category" id="{{::category.sys_id}}">{{::category.title}}</span>
+    </div>
+  </div>
+ 	<ul class="list-group sub-category-list list-bg-primary" role="group" aria-label="{{category.title}} ${subcategories}" ng-if="category.showChildren && category.subcategories.length > 0" ng-class="{true: 'no-indent', false: ''}[category.level > 2]">
+  	<li role="none"
+    	class="list-group-item text-overflow-ellipsis"
+      ng-include="'category-template.html'"
+      ng-repeat="category in category.subcategories as list track by category.sys_id"
+      ng-if="category.totalCount > 0">
+    </li>
+  </ul>
+</script>
+</section>
+<now-message key="No matches found" value="${No matches found}"/>

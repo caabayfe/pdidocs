@@ -1,0 +1,159 @@
+<div class="panel panel-default b" ng-init="c.trackPage()">
+ <div class="panel-heading" ng-show="::!data.is_associated_ticket_tab">
+    <h2 class="panel-title">{{::data.messages.myRequestsTitle}}</h2>
+  </div>
+
+  <uib-tabset ng-if="::!c.data.hide_draft_tab">
+    <uib-tab ng-repeat="tab in c.tabs" class="uib-vis-tab" heading="{{tab.heading}}" active="tab.active" index="{{tab.id}}" ng-select="{{c.changeSelectedTab(tab.id)}}" add-uib-tab-accessibility>
+        <span ng-include="tab.template"></span>
+    </uib-tab>
+  </uib-tabset>
+
+<div ng-include="'myRequestsTemplate'" ng-if="::c.data.hide_draft_tab"></div>
+
+<script type="text/ng-template" id="draftItemsTemplate">
+  <div class="panels-container list-group">
+   <div ng-show="::c.data.draftItems.length > 0" class="list-group-item row requests-header-container">
+          <div class="col-md-4 col-xs-12 padding-left-large fit-content">
+            <div class="input-group" style="width:100%">
+              <input ng-model="c.data.draftSearchText" ng-change="c.updateFilteredDraftItems()" class="form-control" style="width:100%" placeholder="{{c.data.draftFilterMsg}}" aria-label="{{c.data.draftFilterMsg}}">
+              <span class="input-group-btn">
+                <button class="btn btn-default align-icon" type="button" data-original-title="{{c.data.draftFilterMsg }}" aria-label="{{c.data.draftFilterMsg }}" data-toggle="tooltip" data-placement="bottom">
+                	<i class="fa fa-search"></i>
+                </button>
+              </span>
+            </div><!-- /input-group -->
+          </div>
+    	</div>
+      <div ng-if="c.data.draftItems.length > 0 && (!c.filteredDraftItems || c.filteredDraftItems.length == 0)" class="panel-body panels-container">
+        ${Search didn't match any draft items}
+      </div>
+
+   <div ng-if="c.data.draftItems.length == 0" class="panel-body panels-container panel-align">
+        ${You do not have any draft items}
+   </div>
+      <div role="table" ng-if="(c.filteredDraftItems && c.filteredDraftItems.length > 0)" class="table" aria-label="{{::c.data.draftItemsMsg}}">
+      <div role="rowgroup" class="column-headers">
+        <div role="row" class="list-group-item table-responsive">
+          <span role="columnheader" class="col-xs-4 padder-r-none padder-l-none">${Draft name}</span>
+          <span role="columnheader" class="col-xs-4 padder-md">${Item name}</span>
+          <span role="columnheader" class="col-xs-2 padder-r-none padder-l-none">${my_requests_updated_capital}</span>
+           <span role="columnheader" class="col-xs-1 padder-r-none padder-l-none">${my_requests_delete_draft}</span>
+        </div>
+   	  </div>
+      <div role="rowgroup" class="padder-l-none padder-r-none">
+        <div role="row" ng-repeat="item in c.filteredDraftItems" class="list-group-item draft-item-row table-responsive" style="margin:0px" >
+          <div role="cell" class="draft-item-cell col-xs-4 padder-l-none padder-r-none main-column">
+            <div class="primary-display text-wrap">
+              <a href="?id={{'sc_cat_item'}}&{{'edit=draft'}}&sys_id={{::item.sys_id}}" aria-label="{{::item.cart_item_name}}"> {{::item.cart_item_name}} </a>
+            </div>
+          </div>
+          <div role="cell" class="draft-item-cell col-xs-4 padder-md">
+            <div class="text-wrap">
+              <span> {{::item.name}}</span>
+            </div>
+          </div>
+          <div role="cell" class="draft-item-cell col-xs-2 padder-l-none padder-r-none updated-column">
+            <div class="updated">
+              <i class="fa fa-clock-o" aria-hidden="true" title="${Updated}"></i>
+              <sn-time-ago timestamp="::item.sys_updated_on"/>
+            </div>
+          </div>
+          <span class="col-xs-1 padder-l-none padder-r-none" aria-hidden="true" id="draft-item-tooltip-{{::item.sys_id}}"></span>
+          <div  role="cell" class="draft-item-cell col-xs-1 padder-l-none padder-r-none">
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-clear" ng-click="c.removeDraftItem(item)" aria-label="{{::c.translateDeleteDraftMsg(item.cart_item_name)}}" data-toggle="tooltip" data-placement="left"  data-container="#draft-item-tooltip-{{::item.sys_id}}" title="${Delete Draft Item}">
+              	<i class=" icon-trash btn-remove" aria-hidden="true"></i>
+              </button>
+            </div>
+           </div>
+          </td>
+        </div>
+
+      </div>
+       </div>
+       </div>
+       <div class="col-sm-12 pull-none" ng-if="c.data.hasMoreDrafts" style="padding-bottom:15px">
+          <div class="text-a-c" ng-if="c.fetchingDrafts">
+			  <i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i>
+			  <span class="sr-only">${Loading more draft items}</span>
+          </div>
+          <button class="btn btn-default btn-show-more" ng-click="c.loadMoreDrafts()">${Show more drafts}</button>
+      </div>
+</script>
+
+<script type="text/ng-template" id="myRequestsTemplate">
+    <div class="panels-container list-group">
+			<div ng-show="::!data.is_associated_ticket_tab" class="list-group-item row requests-header-container">
+          <div class="col-md-3 col-xs-12 m-b-sm fit-content">
+            <div class="form-inline control-view" ng-if="c.options.show_view == 'true'">
+            	<label class="control-label hidden-xs wrapper-xs " id="label_view" for="view">${View}</label>
+              <select ng-model="c.viewFilter" id="view" class="form-control adjust-width" ng-change="c.changeView()" style="width:80%"
+                      ng-options="item.key as item.value for item in c.filterOptions">
+              </select>
+            </div>
+          </div>
+          <div class="col-md-4 col-xs-12 padding-left-large fit-content">
+            <div class="input-group" style="width:100%">
+              <input ng-model="c.filterText" ng-keypress="c.checkEnter($event)"class="form-control" style="width:100%" placeholder="{{data.filterMsg}}" aria-label="{{data.filterMsg}}">
+              <span class="input-group-btn">
+                <button class="btn btn-default align-icon" type="button" ng-click="c.search()" data-original-title="{{data.filterMsg}}" aria-label="{{data.filterMsg}}" data-toggle="tooltip" data-placement="bottom">
+                	<i class="fa fa-search"></i>
+                </button>
+              </span>
+            </div><!-- /input-group -->
+
+          </div>
+    	</div>
+
+    	<div ng-if="c.data.request.req_list.length == 0 && !c.filterText" class="panel-body panels-container panel-align">
+        {{c.data.messages.noResultsFound}}
+      </div>
+    	<div ng-if="c.data.request.req_list.length == 0 && c.filterText" class="panel-body panels-container">
+        {{c.data.messages.noSearchResultsFound}}
+      </div>
+      <div role="table" ng-if="c.data.request.req_list.length > 0" class="table" aria-label="{{::data.messages.myRequestsTitle}}">
+      <div ng-show="::!data.is_associated_ticket_tab" role="rowgroup" class="column-headers">
+        <div role="row" class="list-group-item table-responsive">
+          <span role="columnheader" class="col-xs-6 padder-r-none padder-l-none">${Request}</span>
+          <span role="columnheader" class="col-xs-3 padder-r-none padder-l-none">${State}</span>
+          <span role="columnheader" class="col-xs-3 padder-r-none padder-l-none">${my_requests_updated_capital}</span>
+        </div>
+   	  </div>
+      <div role="rowgroup" class="padder-l-none padder-r-none">
+        <div role="row" class="list-group-item table-responsive" ng-repeat="item in c.data.request.req_list | limitTo: c.data.lastLimit track by item.sys_id" style="margin:0px" >
+          <div role="cell" class="col-xs-6 padder-l-none padder-r-none main-column">
+            <div class="primary-display">
+              <a href="?id={{::item.url.id}}&table={{::item.url.table}}&sys_id={{::item.url.sys_id}}" sn-focus="{{::item.highlight}}" aria-label="{{::item.display_field}} , {{::item.display_number}}"> {{::item.display_field}} </a>
+            </div>
+            <small class="text-muted">
+              <div ng-repeat="f in item.secondary_displays" class="secondary-display">
+                <span aria-hidden="true">{{::f.display_value}}</span>
+              </div>
+            </small>
+          </div>
+          <div role="cell" class="col-xs-3 padder-l-none padder-r-none state-column">
+            <div class="state">
+              <span>{{::item.state}}</span>
+            </div>
+          </div>
+          <div role="cell" class="col-xs-3 padder-l-none padder-r-none updated-column">
+            <div class="updated">
+              <i class="fa fa-clock-o" aria-hidden="true" title="${Updated}"></i>
+              <sn-time-ago timestamp="::item.updated_on"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <div class="col-sm-12 pull-none" ng-if="c.data.hasMore" style="padding-bottom:15px">
+					<div class="text-a-c" ng-if="c.fetching">
+          	<i class="fa fa-spinner fa-pulse fa-2x fa-fw"></i>
+						<span class="sr-only">${Loading more requests}</span>
+  	      </div>
+          <button class="btn btn-default btn-show-more" ng-click="c.loadMore()"> {{::data.messages.showMoreRequests}} </button>
+      </div>
+
+</script>
+ <now-message key="Delete {0}" value="${Delete {0}}"></now-message>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+  <g:evaluate var="jvar_extends_table" jelly="true">
+    var extends_table = false;
+    if (jelly.jvar_parent_table != '')
+      extends_table = true;
+    
+    extends_table;
+  </g:evaluate>
+
+  <g:evaluate jelly="true">
+    var gr = new GlideRecord('sys_db_object');
+    gr.orderBy('name');
+    gr.query();
+  </g:evaluate>
+
+  <!-- Generate table options -->
+  <j:choose>
+    <!-- Parent table and tables that extend parent -->
+    <j:when test="${jvar_extends_table == 'true'}">
+      <j:while test="${gr.next()}">
+        <g:evaluate var="jvar_extends_base_table" jelly="true">
+          var extends_base_table = false;
+          var base = GlideDBObjectManager.getAbsoluteBase(gr.name);
+          var parent_table_array = jelly.jvar_parent_table.split(',');
+          if (typeof parent_table_array === 'string') {
+            if (parent_table_array == base)
+              extends_base_table = true;
+          } else {
+            var i = parent_table_array.length;
+            while (i--) {
+              if (parent_table_array[i] == base) {
+                extends_base_table = true;
+                break;
+              }
+            }
+          }
+          
+          extends_base_table;
+        </g:evaluate>
+        
+        <j:if test="${jvar_extends_base_table == 'true'}">
+          <g:evaluate var="jvar_can_access" jelly="true">
+            GlideTableDescriptor.get(gr.name).canRead();
+          </g:evaluate>
+          
+          <j:if test="${jvar_can_access == 'true'}">
+            <option value="${gr.name}">${GlideTableDescriptor.get(gr.name).getLabel()} [${gr.name}]</option>
+          </j:if>
+        </j:if>
+      </j:while>
+    </j:when>
+    
+    <!-- Default table options -->
+    <j:otherwise>
+      <g:table_options />
+    </j:otherwise>
+  </j:choose>
+
+</j:jelly>

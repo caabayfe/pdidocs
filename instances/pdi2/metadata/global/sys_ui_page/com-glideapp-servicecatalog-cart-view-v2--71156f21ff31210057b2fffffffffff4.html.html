@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+ <g:evaluate var="jvar_theme">
+	var theme = gs.getPreference('glide.css.theme.ui16');
+	if (null == theme){
+		var company = gs.getUser().getCompanyRecord();
+		if (null != company)
+			theme = company.getValue("theme");
+	}
+	theme;
+ </g:evaluate>
+ <g:inline template="sc_catalog_view.xml" />
+ <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true"  params="theme=${jvar_theme}"/>
+ <g:if_polaris>
+  <g:then>
+    <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true"  params="theme=${jvar_theme}"/>
+  </g:then>
+ </g:if_polaris>
+ <g:requires name="scripts/js_includes_catalog.js" includes="true"/>
+ <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}"/>
+ <g:if_polaris>
+  <g:then>
+    <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="true"  params="theme=${jvar_theme}"/>
+  </g:then>
+ </g:if_polaris>
+ <g:inline template="sc_sanitize.xml"/>
+ <g:inline template="sc_request_parent_message.xml"/>
+ <form method="POST" action="service_catalog.do" name="service_catalog.do" id="sc_cart.do">
+	 <g:evaluate var="target" jelly="true">
+		var target = "cart_view";
+		if (jelly.sysparm_cart_name == 'saved_items')
+			target = "cart_view_wish_list";
+		target;
+	</g:evaluate>
+	 
+	 <g:com.glideapp.servicecatalog_cart target="${target}" 
+										 prices="true" 
+										 cartName="${sysparm_cart_name}"/>
+ </form>
+</j:jelly>

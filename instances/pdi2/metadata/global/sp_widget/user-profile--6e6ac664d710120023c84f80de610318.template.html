@@ -1,0 +1,100 @@
+<div class="default-focus-outline user-profile-container">
+  <div ng-if="!data.userExists" class="panel panel-default">
+      <div class="panel-body wrapper-lg text-center">
+        <p>${Requested user not found}</p>
+      </div>
+  </div>
+  <div ng-if="data.userExists">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-xs-12 col-sm-4 text-center">
+            <div class="row">
+              <div class="avatar-extra-large avatar-container" style="cursor:default;" aria-hidden="true">
+                <div class="avatar soloAvatar bottom">
+                  <div class="sub-avatar mia" ng-style="avatarPicture"><i class="fa fa-user"></i></div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <button ng-if="::connectEnabled()" ng-click="openConnectConversation()" type="button"
+                      class="btn btn-primary send-message"><span class="glyphicon glyphicon-comment pad-right"></span>${Message}</button>
+              <!-- file upload -->
+              <span ng-if="::data.isLoggedInUsersProfile">
+                <input ng-show="false" type="file" accept="image/jpeg,image/png,image/bmp,image/x-windows-bmp,image/gif,image/x-icon,image/svg+xml" ng-file-select="attachFiles({files: $files})" />
+                <button ng-click="uploadNewProfilePicture($event)"
+                        type="button"
+                        class="btn btn-default send-message">${Upload Picture}</button>
+              </span>
+            </div>
+          </div>
+          <div class="col-xs-12 col-sm-8 user-details">
+            <h2>{{data.name}}</h2>
+            <dl class="user-profile-list">
+              <div ng-if="::displayField('sys_user', 'company', true)">
+                <dt class="pad-right">${Company}</dt>
+                <dd>
+                  <sp-editable-field editable-by-user="data.isLoggedInUsersProfile" table="sys_user" table-id="data.sysUserID" field-model="data.sysUserModel.company"></sp-editable-field>
+                </dd>
+              </div>
+              <div ng-if="::displayField('sys_user', 'title', true)">
+                <dt class="pad-right">${Title}</dt>
+                <dd>
+                  <sp-editable-field editable-by-user="data.isLoggedInUsersProfile" table="sys_user" table-id="data.sysUserID" field-model="data.sysUserModel.title"></sp-editable-field>
+                </dd>
+              </div>
+              <div ng-if="::displayField('sys_user', 'department', true)">
+                <dt class="pad-right">${Department}</dt>
+                <dd>
+                  <sp-editable-field editable-by-user="data.isLoggedInUsersProfile" table="sys_user" table-id="data.sysUserID" field-model="data.sysUserModel.department"></sp-editable-field>
+                </dd>
+              </div>
+              <div ng-if="::displayField('sys_user', 'location', true)">
+                <dt class="pad-right">${Location}</dt>
+                <dd>
+                  <sp-editable-field editable-by-user="data.isLoggedInUsersProfile" table="sys_user" table-id="data.sysUserID" field-model="data.sysUserModel.location"></sp-editable-field>
+                </dd>
+              </div>
+              <div ng-if="::(data.liveProfileID && displayField('live_profile', 'short_description', true))">
+                <dt class="pad-right">${Bio}</dt>
+                <dd>
+                  <sp-editable-field editable-by-user="data.isLoggedInUsersProfile" table="live_profile" table-id="data.liveProfileID" field-model="data.liveProfileModel.short_description"></sp-editable-field>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div ng-class="{'col-md-6': teamExists(), 'col-md-12': !teamExists()}" class="col-sm-12 col-xs-12">
+        <div class="panel panel-default b" ng-if="getSysUserModelFields().length > 0">
+          <div class="panel-heading">
+            <h2 class="panel-title">
+              <i class="fa fa-info-circle m-r-sm" aria-hidden="true"></i>${About}
+            </h2>
+          </div>
+          <div class="body padder-xs" role="presentation">
+            <div class="list-group">
+              <div ng-repeat="fieldModel in sysUserModelFields">
+                <div class="list-group-item">
+                  <div>
+                    <sp-editable-field block="true" table="{{data.table}}" editable-by-user="data.isLoggedInUsersProfile" table-id="data.sysUserID" field-model="fieldModel"></sp-editable-field>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer clearfix" ng-if="data.dateTimeFormatChanged">
+            <a id="refresh-to-complete-date-format-change" href="javascript:void(0)"
+               ng-click="reloadPage()" class="pull-right btn btn-primary"><i class="fa fa-refresh m-r-sm" aria-hidden="true"></i>${Refresh page to complete date/time format change}</a>
+          </div>
+        </div>
+      </div>
+      <div ng-if="teamExists()" class="col-md-6 col-sm-12 col-xs-12">
+        <sp-widget widget="data.teamWidget"></sp-widget>
+      </div>
+    </div>
+    <sp-widget widget="data.userPreferencesWidget"></sp-widget>
+  </div>
+</div>

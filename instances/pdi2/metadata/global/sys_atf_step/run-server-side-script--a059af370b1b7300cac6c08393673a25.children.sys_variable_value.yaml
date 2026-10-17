@@ -1,0 +1,74 @@
+- document: sys_atf_step
+  document_key: a059af370b1b7300cac6c08393673a25
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-08-23 12:54:23
+  sys_id: 52ca63770b1b7300cac6c08393673a03
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-08-23 12:54:23
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777
+- document: sys_atf_step
+  document_key: a059af370b1b7300cac6c08393673a25
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-08-23 12:54:23
+  sys_id: 5aca63770b1b7300cac6c08393673a03
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-08-23 13:04:02
+  value: |-
+    (function(outputs, steps, stepResult, assertEqual) {
+    var group_sysId;
+    var user_SysId;
+
+    var user = new GlideRecord("sys_user");
+    user.setValue("user_name", "ATFTest5.user");
+    user.setValue("first_name", "ATFTest5");
+    user.setValue("last_name", "user");
+    user_SysId = user.insert();
+
+    var ugroup = new GlideRecord("sys_user_group");
+    ugroup.initialize();
+    ugroup.setValue("name","ATF Test Group 5");
+    group_sysId = ugroup.insert();
+
+    var user_group = new GlideRecord("sys_user_grmember");
+    user_group.initialize();
+    user_group.setValue("user",user_SysId);
+    user_group.setValue("group",group_sysId);
+    user_group.insert();
+
+    var todayDate = new GlideDateTime();
+    todayDate.add(-24*60*60*1000);
+
+    var shiftData = {"name":"ATF Test Shift 5","schedule_type":"simple","start_date":todayDate.getDisplayValueInternal(),"specify_holiday":false,"send_reminders":true,"reminder_lead_time":2,"coverage_lead_type":"weekly","coverage_interval":12,"index":0, "all_day": true, "time_zone": "GMT", "days": "1234567"};
+
+    var wizardUtils = new OnCallCreationWizardUtils();
+    var shiftObj = wizardUtils.createShiftFromTemplates(shiftData, group_sysId);
+
+    var rosterData = {
+    	"rota": shiftObj.sys_id + "",
+    	"shift_index":0,
+    	"roster_index":0,
+    	"rotation_start_date":todayDate.getDisplayValueInternal(),
+    	"rotation_interval_type":"weekly",
+    	"rotation_interval_count":1,
+    	"dow_for_rotate":"",
+    	"name":"Primary",
+    	"order":100,
+    	"send_reminders":true,
+    	"reminder_lead_time":2,
+    	"members":[{"member":  user_SysId + "","order":0}]
+    };
+
+    wizardUtils.createRosterAndMembers(rosterData);
+    outputs.record_id =shiftObj.sys_id;
+
+    })(outputs, steps, stepResult, assertEqual);
+  variable: 989d9e235324220002c6435723dc3484

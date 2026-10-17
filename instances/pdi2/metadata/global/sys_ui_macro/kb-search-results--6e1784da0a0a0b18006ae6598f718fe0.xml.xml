@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="styles/legacy/kb_search_results.css" includes="true" />
+	<SCRIPT LANGUAGE="JavaScript" SRC="kb.jsx?v=${gs.getProperty('glide.builddate')}" />
+	<script type="text/javascript">
+		function openAttachment(url, name) {
+			window.open(url, name, "toolbar=no,menubar=no,personalbar=no,width=800,height=600," +
+						"scrollbars=yes,resizable=yes");
+			
+		}
+	</script>
+	<g2:call function="did_you_mean.xml" search="$[sysparm_search]" table=""/>
+	<g:evaluate object="true">
+		var ka = new KnowledgeAccess();
+		ka;
+	</g:evaluate>
+	<g:evaluate var="jvar_cms_text_search">
+		var cms_text_search = gs.getSession().getProperty("cms_kb_text_search");
+		gs.getSession().clearProperty("cms_kb_text_search");
+		cms_text_search;
+	</g:evaluate>
+
+	<g:evaluate var="jvar_time_ago" expression="new GlideTimeAgo()" object="true"/>
+	<j:set var="jvar_show_unpublished" value="${gs.getProperty('glide.knowman.show_unpublished', 'false')}"/>
+	<j:set var="jvar_kb_search_results" value="0"/>
+	<j:if test="${sysparm_current_row != ''}">
+		<j:if test="${sysparm_current_row > 0}">
+			<j:set var="jvar_kb_search_results" value="${sysparm_current_row - 1}"/>
+		</j:if>
+	</j:if>
+	<j:set var="jvar_kb_max_results" value="${gs.getProperty('glide.knowman.search.rowcount', 30)}"/>
+	<j:set var="jvar_has_next" value="${kb.hasNext()}"/>
+
+	<j:while test="${jvar_has_next &amp;&amp; jvar_kb_max_results > jvar_kb_search_results}">
+		<j:set var="jvar_show_bullet" value="false"/>
+		<g:evaluate var="not_important" expression="kb.next();"/>
+		<j:if test="${kb.canRead() &amp;&amp; new KnowledgeHelp().hasRights(kb)}">
+		<!-- print section begining-->
+			<j:set var="jvar_kb_search_results" value="${jvar_kb_search_results + 1}"/>
+			<g:evaluate>
+				var topic = "${JS:kb.topic}";
+				var category = "${JS:kb.category}";
+				if (typeof arr != "undefined") {
+					if (arr[topic] == null)
+						arr[topic] = new Object();
+					
+					if (arr[topic][""] == null)
+						arr[topic][""] = 1;
+					else
+						arr[topic][""] = arr[topic][""] + 1;
+
+					if (arr[topic][category] == null)
+						arr[topic][category] = 1;
+					else if (category != "")
+						arr[topic][category] = arr[topic][category] + 1;
+				}
+			</g:evaluate>
+
+			<j:set var="jvar_printed_some" value="true"/>
+
+			<j:set var="jvar_use_doc_viewer" value="${gs.getProperty('glide.knowman.use_document_viewer', false) == 'true' ? pm.isActive('com.snc.documentviewer') : false}"/>
+			<j:set var="jvar_kb_link" value="kb_view.do?sys_kb_id=${kb.sys_id}${AMP}sysparm_language=$[sysparm_language]${AMP}sysparm_nameofstack=${sysparm_nameofstack}${AMP}sysparm_kb_search_table=${sysparm_kb_search_table}${AMP}sysparm_search=${sysparm_search}"/>
+			<j:if test="${kb.direct == true}">
+				<g:com.glideapp.knowledge_attachment var="jvar_attachid" ref="${kb.sys_id}"/>
+				<j:if test="${!empty(jvar_attachid)}">
+					<j:set var="jvar_kb_link" value="sys_attachment.do?sys_id=${jvar_attachid}"/>
+					<j:if test="${jvar_use_doc_viewer == 'true'}">
+						<j:set var="jvar_kb_link" value="sys_attachment.do?sys_id=${jvar_attachid}${AMP}view=true"/>
+					</j:if>
+				</j:if>
+
+			</j:if>
+			<j:if test="${kb.direct == false}">
+				<j:set var="jvar_use_doc_viewer" value="false"/>
+			</j:if>
+			<tr>
+				<td class="kb_result">
+					<g:evaluate var="jvar_desc" >
+						if (JSUtil.nil(kb.short_description) || JSUtil.nil(GlideStringUtil.normalizeWhitespace(kb.short_description)))
+							gs.getMessage("(empty)");
+						else
+							kb.short_description;
+					</g:evaluate>
+					<g:evaluate var="jvar_display_value" expression="new KnowledgeHelp(kb).findDisplayValue()"/>
+					<g:evaluate var="jvar_is_attachment" expression="
+                        var answer = false;
+                        if (kb.ir_query_attachment)
+                           answer = !kb.ir_query_attachment.isNil();
+                        answer;
+                     "/>
+					<j:if test="${jvar_cms_search_result || jvar_cms_text_search}">
+						<j:set var="jvar_content_link_class" value="content_kb_search" />
+						<g:content_summarizer content="${kb}" />
+					</j:if>
+					<j:if test="${!(jvar_cms_search_result || jvar_cms_text_search)}">
+
+						<h4 class="article">
+							<j:if test="${jvar_use_doc_viewer != 'true'}">
+								<a class="article" href="${jvar_kb_link}"><g:no_escape><g:highlighter search="${sysparm_search}">${jvar_desc}</g:highlighter></g:no_escape></a>
+							</j:if>
+							<j:if test="${jvar_use_doc_viewer == 'true'}">
+								<a class="article" href="#" onclick="openAttachment('${jvar_kb_link}', '${jvar_desc}'); return false;"><g:no_escape><g:highlighter search="${sysparm_search}">${jvar_desc}</g:highlighter></g:no_escape></a>
+							</j:if>
+						</h4>
+						<j:set var="jvar_category" value="${kb.kb_category.getDisplayValue()}" />
+					</j:if>
+					<!-- Start Article Meta Info -->
+					<div class="info-row">
+                        <j:if test="${gs.getProperty('glide.knowman.search.show_author') == 'true'}">
+                        	<j:set var="jvar_show_bullet" value="true"/>
+							<g:evaluate var="jvar_author" expression="gs.getMessage('by {0}',[kb.author.getDisplayValue()])" jelly="true" />
+                            <span class="article-info">
+                                    ${jvar_author}
+                            </span>
+                        </j:if>
+                         <j:if test="${gs.getProperty('glide.knowman.search.show_last_modified') == 'true'}">
+								<g:evaluate var="jvar_modified" expression="gs.getMessage('Last modified {0}', [jelly.jvar_time_ago.format(new GlideDateTime(kb.sys_updated_on))])" jelly="true" />
+                            <span class="article-info">
+                            	<j:if test="${jvar_show_bullet}">
+                                    ${AMP}nbsp;${AMP}bull;${AMP}nbsp;
+                                </j:if>
+                                ${jvar_modified}
+                            </span>
+                            <j:set var="jvar_show_bullet" value="true"/>
+                        </j:if>
+                        <j:if test="${gs.getProperty('glide.knowman.search.show_published') == 'true'}">
+                            <span class="article-info">
+                            	<j:if test="${jvar_show_bullet}">
+                                    ${AMP}nbsp;${AMP}bull;${AMP}nbsp;
+                                </j:if>
+								<g:evaluate var="jvar_pub" expression="gs.getMessage('Published {0}', [jelly.jvar_time_ago.format(new GlideDateTime(kb.published))])" jelly="true" />
+                                ${jvar_pub}
+                            </span>
+						</j:if>
+					</div>
+					 <!-- End Article Meta Info -->
+                     <!-- NEW //-->
+					<div class="kb">
+						<div class="details">
+							<g:no_escape>
+                                <div class="section highlight">
+									<g:highlighter search="${sysparm_search}">${jvar_display_value}</g:highlighter>
+								</div>
+									<g:evaluate jelly="true" object="true" var="jvar_attachmentsList">
+										var attIds = kb.ir_query_attachment.toString();
+										var kbHelper = new SNC.KnowledgeHelper();
+										var searchTerm = jelly.sysparm_search;
+										var articleId = kb.sys_id+'';
+										var attResults = kbHelper.getAttachments(attIds,searchTerm,articleId);
+										var attachmentsList = new global.JSON().decode(attResults);
+										attachmentsList;
+									</g:evaluate>
+									<j:if test="${jvar_attachmentsList.length>0}">
+									<div class="section attachment">
+											<g:kb_attachment_list_entry show_link="true" attachments="${jvar_attachmentsList}" />
+									</div>
+									</j:if>
+							</g:no_escape>
+						</div> 
+					</div>
+					<!-- END NEW //-->
+					<j:set var="jvar_show_bullet" value="false"/>
+					<div class="info-row">
+						<j:if test="${gs.getProperty('glide.knowman.search.show_category', true)}">
+							<j:set var="jvar_show_bullet" value="true"/>
+							<g:evaluate var="jvar_category" jelly="true">
+								var json = new JSON();
+								var jsonStr = new SNC.KnowledgeHelper().getNestedCategories(kb.kb_category);
+								var catArray = json.decode(jsonStr).parentCategories.reverse();
+								var catString = "";
+								if(JSUtil.notNil(catArray)) {
+									if(GlideI18NStyle.getDirection() == "ltr")
+										catString = catArray.join(" / ");
+									else
+										catString = catArray.join(" \ ");
+								}
+								catString;
+							</g:evaluate>
+                            <span class="article-info">
+                                <j:if test="${jvar_category != ''}">
+                                    ${jvar_category}
+									<j:if test="${jvar_show_bullet}">
+										${AMP}nbsp;${AMP}bull;${AMP}nbsp;
+									</j:if>
+								</j:if>
+                            </span>
+						</j:if>
+						<j:if test="${gs.getProperty('glide.knowman.search.show_view_count', true)}">
+							
+							<j:set var="jvar_views" value="${kb.sys_view_count.getDisplayValue()}" />
+							
+							<j:if test="${jvar_views > 0}">
+	                            <div class="article-info article-meta-global-search">
+										<g:evaluate var="jvar_count_view_translated" jelly="true">
+											if (jelly.jvar_views == 1)
+												gs.getMessageS('{0} View', [jelly.jvar_views]);
+											else
+												gs.getMessageS('{0} Views', [jelly.jvar_views]);
+										</g:evaluate>
+										${jvar_count_view_translated}
+	                            </div>
+	                            <j:set var="jvar_show_bullet" value="true"/>
+	                        </j:if>
+						</j:if>
+						<j:if test="${gs.getProperty('glide.knowman.search.show_relevancy') == 'true'}">
+							<g:evaluate var="jvar_relevancy" expression="gs.getMessage('Relevancy {0}',[kb.ir_query_score_double.getDisplayValue()])" jelly="true" />
+							<span class="article-info">
+								<j:if test="${jvar_show_bullet}">
+                                    ${AMP}nbsp;${AMP}bull;${AMP}nbsp;
+                                </j:if>
+								${jvar_relevancy}
+							</span>
+						</j:if>
+					</div>
+				</td>
+			</tr>
+			<!-- print section end-->
+		</j:if>
+		<j:set var="jvar_has_next" value="${kb.hasNext()}"/>
+	</j:while>
+
+	<j:set value="${kb.getRowCount()}" var="jvar_total_rows"/>
+	<g:evaluate jelly="true">
+		var al = new Array();
+		al.push(jelly.jvar_total_rows);
+		al.push(jelly.jvar_kb_max_results);
+		al.push(jelly.sys_nav_count);
+	</g:evaluate>
+
+	<g:evaluate var="jvar_display_tmr_message" jelly="true">
+		parseInt(jelly.jvar_total_rows) >= parseInt(jelly.jvar_kb_max_results)
+	</g:evaluate>
+
+	<j:if test="${jvar_display_tmr_message}">
+		<div class="outputmsg_div">
+			<div class="outputmsg outputmsg_info"><img class="outputmsg_image" src="images/outputmsg_info_24.gifx" title="Informational Message"/>
+				<div class="outputmsg_text">${gs.getMessage("Your search returned too many results - please refine your search terms.",al)}</div>
+			</div>
+		</div>
+	</j:if>
+
+	<!-- keep record of user's search -->
+	<g:evaluate jelly="true">
+		if (jelly.sysparm_search $[AND] jelly.sysparm_search.length != 0) {
+			var kbquery = new GlideRecord('ts_query_kb');
+			kbquery.search_term = jelly.sysparm_search;
+			
+			if (jelly.sysparm_topic $[AND] jelly.sysparm_topic.length != 0 $[AND] jelly.sysparm_topic != 'null')
+				kbquery.topic = jelly.sysparm_topic;
+			
+			if (jelly.sysparm_category $[AND] jelly.sysparm_category.length != 0 $[AND] jelly.sysparm_topic != 'null')
+				kbquery.category = jelly.sysparm_category;
+			
+			kbquery.results = jelly.jvar_total_rows;
+			kbquery.user = gs.getUserID();
+			kbquery.insert();
+		}
+	</g:evaluate>
+</j:jelly>

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null">
+  <g:evaluate var="jvar_from" expression="RP.getParameterValue('from')"/>
+  <input type="hidden" id="from" value="${jvar_from}"/>
+  <!-- Parameter:  sysparm_sys_id  - SysID of the store app record -->
+  <g:evaluate jelly="true">
+    var sysId = jelly.sysparm_sys_id;
+	var pluginId = jelly.sysparm_plugin_id;
+    var validator = new sn_appclient.UninstallValidator(sysId, pluginId);
+	validator.validate();
+
+    var tblMsg = gs.getMessage("Table(s) in this application: {0}", validator.numTables.toString());
+    var gotoTblMsg = gs.getMessage("Show tables");
+
+    var recMsg = gs.getMessage("Record(s) in this application: {0}", validator.numRows.toString());
+    var otherFieldMsg = null;
+    if (validator.numFields > 0)
+      otherFieldMsg = gs.getMessage("Fields defined on tables outside of this application: {0}", validator.numFields);
+
+    var dialogTitle = gs.getMessage("Are you sure you want to uninstall this application: {0} ?", validator.appName);
+    var warningIntro = gs.getMessage("Below are this application's tables that have other applications' fields on them.  Uninstalling this application may compromise these dependent applications.");
+
+    var errorIntro = gs.getMessage("This application's tables can not be deleted because one or more of them are extended by tables in dependent applications.  The extending tables in the dependent applications must be deleted before deleting these.");
+
+    var cbShown = true; // call to processor takes cb.checked...
+    var cbChecked = ((validator.numTables + validator.numFields > 0) &amp;&amp; validator.isActive);
+    var cbEnabled = (validator.extensionWarningCount == 0 &amp;&amp; cbChecked &amp;&amp; validator.numTablesWithoutScopePrefix == 0 );
+    var cbText;
+    if (validator.numTables > 0) {
+      cbText = gs.getMessage("Retain tables and data");
+    } else if (cbEnabled) {
+      cbText = gs.getMessage("Retain fields and data");
+    } else {
+      cbText = "";
+	  cbShown = false;
+    }
+    //var dbug = 'show='+cbShown+'  chkd='+cbChecked+'  ena='+cbEnabled;
+    //gs.breaker(dbug);
+    var disableOk = (validator.extensionWarningCount > 0 &amp;&amp; !validator.isActive) || validator.isUninstallBlocked;
+    var dependentAppActiveErrorMSG =  gs.getMessage("This application cannot be uninstalled because one or more applications are dependent on it. In order to uninstall this application, please uninstall the below dependent applications first"); 
+    if ( (Object.keys(validator.upstreamDependentInActiveStoreApps).length > 0 || Object.keys(validator.upstreamDependentInDevApps).length > 0) &amp;&amp; !validator.isUninstallBlocked) {
+        // there are upstream dependent apps which are inactive
+        //Hence disable unchecking the retain tables option as dependent app tables may extend current app tables
+        cbEnabled = false;
+        cbChecked = (validator.numTables + validator.numFields) > 0;
+        if (!validator.isActive) {
+	       disableOk = true; // this case is for remove tables and data when there are inactive child apps or indev apps
+           var appName = '<b style="margin-left:2px">' + validator.appName + '</b>'
+           dependentAppActiveErrorMSG =  gs.getMessage("This action cannot be performed because one or more application's are dependent on {0}. Please uninstall below applications to continue", validator.appName);
+           validator.isUninstallBlocked = true; // reusing same flag to show error message and block the ui
+        }
+    }
+
+  </g:evaluate>
+  <style type="text/css">
+    table { margin-top: 10px; margin-bottom: 15px; }
+    div.row { margin-bottom: 15px }
+   .dependencies {
+	  padding-inline-start: 0px !important;
+	  margin-left:30px;
+	}
+  </style>
+
+<div>
+ <div id="uninstall_app_dialog_container">
+	<j:if test="${!validator.isUninstallBlocked}">
+		 <div class="annotation-wrapper">
+			 $[dialogTitle]
+		 </div>
+	</j:if>
+	<j:if test="${validator.isUninstallBlocked}">
+		<div class="notification notification-danger">
+				<span class="notification-icon icon-cross-circle"></span>
+				<g:no_escape>${HTML:dependentAppActiveErrorMSG}</g:no_escape>
+		 </div>
+	</j:if>
+	<g:evaluate jelly="true">
+		var jumboAppPluginKeys = Object.keys(validator.upstreamDependentJumboAppPlugins);
+		var jumboAppPluginIndex = 0;
+	</g:evaluate>
+	<j:if test="${jumboAppPluginKeys.length > 0 &amp;&amp; validator.isUninstallBlocked}">
+		<h5>${gs.getMessage("Installed jumbo app plugins")}</h5>
+		<ul class="dependencies">
+			<j:while test="${jumboAppPluginIndex != jumboAppPluginKeys.length}">
+					<li><a href="${validator.upstreamDependentJumboAppPlugins[jumboAppPluginKeys[jumboAppPluginIndex]].link}" target="_blank">${validator.upstreamDependentJumboAppPlugins[jumboAppPluginKeys[jumboAppPluginIndex]].appName}</a></li>
+					<g:evaluate>jumboAppPluginIndex++</g:evaluate>
+			</j:while>
+		</ul>
+	</j:if>
+	<g:evaluate jelly="true">
+		var storeKeys = Object.keys(validator.upstreamDependentStoreApps);
+		var storeIndex = 0;
+	</g:evaluate>
+	<j:if test="${storeKeys.length > 0 &amp;&amp; validator.isUninstallBlocked}">
+		<h5>${gs.getMessage("Installed applications")}</h5>
+		<ul class="dependencies">
+			<j:while test="${storeIndex != storeKeys.length}">
+					<li><a href="${validator.upstreamDependentStoreApps[storeKeys[storeIndex]].link}" target="_blank">${validator.upstreamDependentStoreApps[storeKeys[storeIndex]].appName}</a></li>
+					<g:evaluate>storeIndex++</g:evaluate>
+			</j:while>
+		</ul>
+	</j:if>
+	<g:evaluate jelly="true">
+		var inactiveKeys = Object.keys(validator.upstreamDependentInActiveStoreApps);
+		var inactiveIndex = 0;
+	</g:evaluate>
+	<j:if test="${inactiveKeys.length > 0 &amp;&amp; validator.isUninstallBlocked}">
+		<h5>${gs.getMessage("Uninstalled with retained tables and data")}</h5>
+		<ul class="dependencies">
+			<j:while test="${inactiveIndex != inactiveKeys.length}">
+					<li><a href="${validator.upstreamDependentInActiveStoreApps[inactiveKeys[inactiveIndex]].link}" target="_blank">${validator.upstreamDependentInActiveStoreApps[inactiveKeys[inactiveIndex]].appName} (Remove tables and data)</a></li>
+					<g:evaluate>inactiveIndex++</g:evaluate>
+			</j:while>
+		</ul>
+	</j:if>
+	<g:evaluate jelly="true">
+		var devKeys = Object.keys(validator.upstreamDependentInDevApps);
+		var devIndex = 0;
+	</g:evaluate>
+	 <j:if test="${devKeys.length > 0 &amp;&amp; validator.isUninstallBlocked}">
+		<h5>${gs.getMessage("In Development applications")}</h5>
+		<ul class="dependencies">
+			<j:while test="${devIndex != devKeys.length}">
+				<li><a href="${validator.upstreamDependentInDevApps[devKeys[devIndex]].link}" target="_blank">${validator.upstreamDependentInDevApps[devKeys[devIndex]].appName}</a></li>
+				<g:evaluate>devIndex++</g:evaluate>
+			</j:while>
+		</ul>
+	</j:if>
+	<g:evaluate jelly="true">
+		var sharedScopeKeys = Object.keys(validator.pluginsToBeRemoved);
+		var sharedScopeIndex = 0;
+	</g:evaluate>
+	<j:if test="${sharedScopeKeys.length > 0 &amp;&amp; !validator.isUninstallBlocked}">
+		<h5>${gs.getMessage("Plugins that will be removed:")}</h5>
+		<ul class="dependencies">
+			<j:while test="${sharedScopeIndex != sharedScopeKeys.length}">
+				<li><a href="${validator.pluginsToBeRemoved[sharedScopeKeys[sharedScopeIndex]].link}" target="_blank">${validator.pluginsToBeRemoved[sharedScopeKeys[sharedScopeIndex]].appName}</a></li>
+				<g:evaluate>sharedScopeIndex++</g:evaluate>
+			</j:while>
+		</ul>
+	</j:if>
+<!-- if has tables, Msg & List details of row counts -->
+<div style="margin-left:15px;margin-top: 15px">
+<j:if test="${validator.rcSize > 0}">
+ <ul style="padding-inline-start:0px">
+  <li>$[tblMsg]$[SP]$[SP]$[SP]<a class="navigation_link" href="sys_db_object_list.do?sysparm_query=sys_scopeIN$[validator.uninstallingScopes.join(',')]" target = "_blank">($[gotoTblMsg])</a></li>
+  <li>$[recMsg]</li>
+
+ <!-- if has fields on other tables, Msg -->
+ <j:if test="${otherFieldMsg != null}">  <!-- out-of-scope fields are defined -->
+   <li>${otherFieldMsg}</li>
+ </j:if>
+ </ul>
+</j:if>
+
+<j:if test="${validator.fieldWarningCount > 0}">  <!-- Give specific warnings -->
+<div class="annotation-wrapper">${warningIntro}</div>
+ <table class="table">
+  <thead>
+   <tr>
+    <th>Table</th>
+    <th>Dependent Application</th>
+    <th>Added Field</th>
+   </tr>
+  </thead>
+  <tbody>
+	<j:forEach items="${validator.tableDetails}" var="jvar_table_detail">
+    <tr>
+     <td>
+      <span title="${jvar_table_detail['tableName']}">
+       <a href="${jvar_table_detail['tableURL']}}" target='_blank'>${jvar_table_detail['tableLabel']}</a>
+      </span>
+     </td>
+     <td>
+      <span title="${jvar_table_detail['appScope']}">
+       <a href="${jvar_table_detail['appURL']}" target='_blank'>${jvar_table_detail['appName']}</a>
+      </span>
+     </td>
+     <td>
+      <span title="${info.getWObjectName()}">
+       <a href="${info.getWObjectUrl()}" target='_blank'>${info.getWObjectLabel()}</a>
+      </span>
+     </td>
+    </tr>
+	</j:forEach>
+  </tbody>
+ </table>
+</j:if>
+
+    <j:if test="${validator.extensionWarningCount > 0}">  <!-- Give specific warnings -->
+     <div class="annotation-wrapper">${errorIntro}
+     </div>
+     <table class="table">
+      <thead>
+       <tr>
+        <th>Table</th>
+        <th>Dependent Application</th>
+        <th>Extending Table</th>
+       </tr>
+      </thead>
+      <tbody>
+      	<j:forEach items="${validator.extDetails}" var="jvar_table_detail">
+          <tr>
+           <td>
+            <span title="${jvar_table_detail['tableName']}">
+             <a href="${jvar_table_detail['tableURL']}" target="_blank">${jvar_table_detail['tableLabel']}</a>
+            </span>
+           </td>
+           <td>
+            <span title="${jvar_table_detail['appScope']}">
+             <a href="${jvar_table_detail['appURL']}" target="_blank">${jvar_table_detail['appName']}</a>
+            </span>
+           </td>
+           <td>
+            <span title="${jvar_table_detail['objectName']}">
+              <a href="${jvar_table_detail['objectURL']}" target="_blank">${jvar_table_detail['objectLabel']}</a>
+            </span>
+           </td>
+         </tr>
+       </j:forEach>
+      </tbody>
+     </table>
+    </j:if>
+
+    <!-- The Checkbox, maybe shown, maybe enabled -->
+    <div class="row">
+      <div class="col-sm-12">
+        <span class="input-group-checkbox">
+          <j:if test="${cbShown}">
+            <j:if test="${cbEnabled}">
+              <j:if test="${cbChecked}">
+                <input id="cb" class="checkbox" type="checkbox" name="cb"
+                 checked="checked"/>
+              </j:if><j:if test="${!cbChecked}">
+                <input id="cb" class="checkbox" type="checkbox" name="cb"/>
+              </j:if>
+            </j:if>
+            <j:if test="${!cbEnabled}">
+              <j:if test="${cbChecked}">
+                <input id="cb" class="checkbox" type="checkbox" name="cb"
+                       disabled="disabled" checked="checked"/>
+              </j:if><j:if test="${!cbChecked}">
+                <input id="cb" class="checkbox" name="cb" disabled="disabled" />
+              </j:if>
+            </j:if>
+          </j:if>
+          <label for="cb" class="checkbox-label">${cbText} </label>
+        </span>
+      </div>
+    </div>
+</div>
+    <footer class="modal-footer">
+      <j:if test="${!disableOk}">
+        <button id="cancel_button" onClick="gUninstallAppDialog.exit()"
+		  data-dismiss="modal" class="btn btn-default">${gs.getMessage('Cancel')}</button>
+        <button id="ok_button" onClick="gUninstallAppDialog.uninstallApp()"
+		  data-dismiss="modal" class="btn btn-primary">${gs.getMessage('OK')}</button>
+      </j:if>
+      <j:if test="${disableOk}">
+        <button id="cancel_button" onClick="gUninstallAppDialog.exit()"
+		  data-dismiss="modal" class="btn btn-default">${gs.getMessage('Cancel')}</button>
+      </j:if>
+    </footer>
+  </div>
+</div>
+</j:jelly>

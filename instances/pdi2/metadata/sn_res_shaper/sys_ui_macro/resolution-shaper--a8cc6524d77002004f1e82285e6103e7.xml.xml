@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_has_access" jelly="true">
+			var hasAccess=true;
+			var	roleChecker = gs.getProperty('sn_res_shaper.show_rs_roles', '');
+		    if(!gs.nil(roleChecker)) {
+				hasAccess=false;
+				var roles= roleChecker.split(",");
+				var len = roles.length;
+				for (i = 0; i != len ; i++) {
+					var roleName = roles[i].trim();
+					if(gs.hasRole(roleName)) {
+						hasAccess=true;
+						break;
+					}
+				}
+			}
+			hasAccess;
+		</g2:evaluate>
+	<j2:if test='$[(jvar_has_access == true)]'>
+		<g:inline template="ie_checker.xml" />
+		<g2:evaluate var="jvar_error_message" jelly="true">
+			var message = false;
+			if (jelly.jvar_isMSIE == 'true') {
+				if (jelly.jvar_MSIE_vn ${AMP}lt; 9 ) {
+					message = true;
+				}
+			} 
+			if(!message) {
+				message = gs.getProperty('glide.ui.doctype', 'false') == 'false';
+			}
+			message;
+		</g2:evaluate>
+		<g2:evaluate var="jvar_consumer" jelly="true">
+			var consumerSysID =  current.consumer.user;
+			consumerSysID;
+		</g2:evaluate>	
+		<g2:evaluate var="jvar_new_rec" jelly="true">
+			var isNewRecord =  current.isNewRecord();
+			isNewRecord;
+		</g2:evaluate>	
+		<g2:evaluate var="jvar_is_popup_view" jelly="true">
+			var isPopup = false;
+			var view  = jelly.sysparm_view || '';
+			if (view.indexOf('SYS_POPUP') == 0 || view.indexOf('sys_popup') == 0)
+				isPopup = true;
+			isPopup;
+		</g2:evaluate>
+		<g:evaluate jelly="true">
+			var Timeline = gs.getMessage("Timeline");
+			var loading = gs.getMessage("Loading...");
+			var noTimelineData =  gs.getMessage("No Timeline Data");
+			var aclPrevents = gs.getMessage("Security constraints prevent access to Timeline Data"); 
+		</g:evaluate>
+		<g2:evaluate var="jvar_res_config" jelly="true">
+			var res =  new ResolutionShaperConfigAjax();
+			var tableName=jelly.jvar_table;
+			var configObj = res.getConfigForTable(tableName);
+			var message="Please configure Resolution Shaper for "+jelly.jvar_table;
+			var configMessage=gs.getMessage(message);
+			configObj;
+		</g2:evaluate>
+		<j2:if test='$[!(jvar_error_message == true || jvar_is_popup_view == "true" || jvar_new_rec == "true")]'>
+			<tr><td>
+			<g:requires name="com.sn_resolutionshaper/js_includes_resolutionshaper.js"  includes="true" />
+			<g:requires name="scripts/thirdparty/jquery.qtip/jquery.qtip.css" includes="true"/>
+			<link href="655e356187052300bc5020eac5cb0bba.cssdbx?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet"/>
+				<script>
+					function toggleTimeline(){
+						var timeline = jQuery(".timelineContainer");
+						var timelineBtn = jQuery('#timelineToggle');
+						if(timelineBtn.hasClass("icon-chevron-down")){
+							timeline.hide();
+							timelineBtn.removeClass("icon-chevron-down").addClass("icon-chevron-right");
+						}else{
+							timeline.show();
+							timelineBtn.removeClass("icon-chevron-right").addClass("icon-chevron-down");
+						}
+					}
+				</script>
+				<div class="notification notification-warning show-hide-info-message" tabindex="0">
+					$[configMessage]
+					<button data-dismiss="alert" class="btn btn-icon close icon-cross"><span class="sr-only">Close</span></button>
+				</div>
+			<div class="timelineMainContainer">
+			<span class="timelineHeader">${Timeline}</span>
+			<div class="timelineContainer">
+				<div id="rs_container" class="rsContainer">
+					<div class="loadingTimeline" id="loadingCont">${loading}</div>
+					<div class="loadingTimeline" id="secuConstraints" style="display:none">${aclPrevents}</div>
+					<div class="loadingTimeline" id="noDataMsgCont" style="display:none">${noTimelineData}</div>
+				</div>
+				<div class="dataContainer">
+					<div class="datarow">
+						<span class="timeData" id="fulfillerTimeCont"></span> 
+						<span class="userData" id="fulfillerLabelCont"></span>
+					</div>
+					<div class="dataSeparator"></div>
+					<div class="datarow" style="margin-top:10px;">
+						<span class="timeData" id="requesterTimeCont"></span> 
+						<span class="userData" id="requesterLabelCont"></span>
+					</div>
+				</div>
+			</div>
+			</div>
+			<g:messages>
+				Timeline
+				Loading...
+				No Timeline Data
+				Security constraints prevent access to Timeline Data
+				made
+				lower case comments
+				around
+				Began
+				updated_uppercase
+				With
+				moved
+				To
+				commented		
+				ago
+				second
+				seconds
+				minute
+				minutes
+				hour
+				hours
+				day
+				days
+				week
+				weeks
+				month
+				months
+				year
+				years
+				timeago_number_separator
+				created a new {0}
+				moved {0} To {1}
+				Began {0} - Updated {1}	
+			</g:messages>
+			<script>
+				addAfterPageLoadedEvent(function(){
+						var consumerSysId = "";
+						if(g_form.getValue('consumer')){
+							consumerSysId = "$[jvar_consumer]"; 
+						}
+						var rs_config= JSON.parse('$[jvar_res_config]');
+						if(rs_config $[AMP]$[AMP] rs_config.isSuccess){
+							jQuery(".timelineMainContainer").css('display','block');
+							var sys_id = "${jvar_record_id}" || (window.g_form ? g_form.getUniqueValue() : "");
+							var table_name = "${jvar_table}" || "${ref_parent}";
+							var caller = "${jvar_caller}" ||consumerSysId || (window.g_form ? g_form.getValue('contact') || g_form.getValue('caller') || g_form.getValue('caller_id') : "");
+							var reShaper = new ResolutionShaper(table_name, sys_id, caller, rs_config.config);
+							reShaper.charting();
+						}	else{
+							if("${sysparm_media}"!="print")
+								jQuery(".show-hide-info-message").css('display','block');
+						}				
+				});
+			</script>
+			</td></tr>
+		</j2:if>	
+	</j2:if>	
+</j:jelly>

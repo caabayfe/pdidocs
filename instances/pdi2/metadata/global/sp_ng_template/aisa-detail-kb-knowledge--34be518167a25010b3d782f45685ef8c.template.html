@@ -1,0 +1,39 @@
+<!-- Knowledge Articles -->
+<div class="aisa-detail-container col-md-12">
+  <h2 class="aisa-record-short-description">{{getResultField(detailResult, 'short_description').displayValue}}</h2>
+  <ul class="aisa-article-info">
+    <li ng-if="c.data.kbProperties.show_article_number">
+	  <span class="aisa-article-value">{{getResultField(detailResult, 'number').displayValue}}</span>
+    </li>
+    <li ng-if="c.data.kbProperties.show_author">
+      <i class="fa fa-user" aria-hidden="true"></i>
+      <span class="aisa-article-label">${Authored by}:</span>
+      <span class="aisa-article-value">{{getResultField(detailResult, 'author').displayValue}}</span>
+    </li>
+    <li ng-if="c.data.kbProperties.show_published">
+      <i class="fa fa-calendar" aria-hidden="true"></i>
+      <sn-time-ago timestamp="detailResult._record.published.value"/>
+    </li>
+    <li ng-if="c.data.kbProperties.show_last_modified">
+      <i class="fa fa-calendar" aria-hidden="true"></i>
+      <sn-time-ago timestamp="detailResult._record.sys_updated_on.value"/>
+    </li>
+    <li ng-if="c.data.kbProperties.show_view_count">
+      <i class="fa fa-eye" aria-hidden="true"></i>
+      <span ng-if="getResultField(detailResult, 'sys_view_count').value != 1" class="aisa-article-label">{{i18n.format(i18nMsgs['KB_VIEWS'], getResultField(detailResult, 'sys_view_count').displayValue)}}</span>
+      <span ng-if="getResultField(detailResult, 'sys_view_count').value == 1" class="aisa-article-label">{{i18n.format(i18nMsgs['KB_VIEW'], getResultField(detailResult, 'sys_view_count').displayValue)}}</span>
+      <span class="aisa-article-value"></span>
+    </li>
+    <li ng-if="c.data.kbProperties.show_rating">
+      <span role='presentation' class="sr-only">{{getRatingDesc(getResultField(detailResult, 'rating').displayValue)}}</span>
+      <span class="aisa-rating-readonly" aria-hidden="true">
+        <i ng-repeat="i in [1,2,3,4,5]" ng-class="(getRating(getResultField(detailResult, 'rating').displayValue) >= i) ? ['icon-star', 'aisa-icon-star'] :['icon-star-empty', 'aisa-icon-star-empty']" />
+      </span>
+    </li>
+  </ul>
+	<hr />
+	<p class="article-content" ng-bind-html="sceTrust(detailResult._record.text.display_value)"></p>
+  <div ng-if="getResultField(detailResult, 'display_attachments').value == 'true'" class="b-t m-t">
+    <sp-attachment-manager table="detailResult._record.sys_class_name.value" sys-id="detailResult.sysId" omit-edit="true" />
+  </div>
+</div>

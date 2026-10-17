@@ -1,0 +1,1 @@
+GlideappProcessPriceUpdater.updateProcessPrice(current);

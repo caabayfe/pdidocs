@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+		var title = jelly.sysparm_title;
+		var link = jelly.sysparm_url+"";
+		link = link.replaceAll("javascript","").replaceAll("&lt;","").replaceAll("&gt;","");
+		var removeExternalLink = false;
+
+		// Set link to relative link if property is true for security
+		if (gs.getProperty('com.snc.contextual_search.cxs_new_window.force_relative_link', false) === "true") {
+			removeExternalLink = link.startsWith("http");
+
+			if (!removeExternalLink) {
+				// Add a single slash if it doesn't start with a slash to make the link relative
+				if (!link.startsWith("/"))
+					link = "/" + link;
+
+				// Replace all concurrent occurances of 2 or more "/" with a single slash
+				link = link.replace(/\/{2,}/g,"/");
+			}
+		}
+	</g:evaluate>
+	<h1>${title}</h1>
+	<div id="linkText" style="display:none">
+		<p>
+			<j:if test="${removeExternalLink}">
+				<span>${gs.getMessage("Result link has been removed as external links are disallowed by security settings.")}</span>
+			</j:if>
+			<j:if test="${!removeExternalLink}">
+				<a href="${link}" target="_blank">${gs.getMessage("Click here to view this result. This result will open in a new window.")}</a>
+			</j:if>
+		</p>
+	</div>
+	<div id="noLinkText" style="display:none">
+		<p>${gs.getMessage("Result link has been removed as this UI Page has not been opened in the expected modal.")}</p>
+	</div>
+</j:jelly>

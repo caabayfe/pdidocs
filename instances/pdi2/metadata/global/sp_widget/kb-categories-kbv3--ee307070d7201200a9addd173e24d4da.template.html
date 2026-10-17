@@ -1,0 +1,64 @@
+<nav role="navigation" aria-label="${Knowledge categories}">
+  <div ng-if="::(data.show != true)">
+    ${No categories available}
+  </div>
+  <div ng-show="data.kb" ng-class="{'hidden-xs' : hideCategoryWidgetInXS}" class="panel panel-{{::c.options.color}} category-widget no-border" ng-if="::(data.show == true)">
+    <div class="panel-heading">
+      <h2 class="h4 panel-title" ng-bind="::c.options.title" id="kb_categories_title"></h2>
+    </div>
+    <ul class="list-group category-list" role="tree" aria-labelledby="kb_categories_title">
+      <li role="presentation"
+          class="list-group-item text-overflow" 
+          ng-include="'kbv3-category-template.html'" 
+          ng-repeat="category in c.data.categories track by category.value "
+          ng-if="category.count != 0">
+      </li>
+    </ul>
+    <div class="panel-footer text-center" ng-if="data.showMore">
+      <a href="javascript:void(0)" role="button" class="text-center" ng-click="loadMore()" >{{::data.showMoreMsg}}</a>
+      <div class="text-muted text-center" role="status">
+        {{data.loadAllMsg}}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script type="text/ng-template" id="kbv3-category-template.html">
+  	<div ng-click="categorySelected($event, category)"
+         ng-attr-tabindex="{{category.value == c.data.categoryId || (!c.data.categoryId && category.isFirstCategory) ? '0' : undefined}}"  
+         ng-keydown="handleKeyPress($event, category)"
+		 sn-focus="c.isSelectedCatagory(category.value)"
+		 ng-enabled="category.count != 0"
+         role="treeitem"
+		 ng-attr-aria-expanded="{{category.subcategories.length > 0 ? category.showChildren : undefined}}"
+         ng-attr-aria-selected="{{category.subcategories.length == 0 ? category.value == c.data.categoryId : undefined}}"
+         aria-label="{{category.label}} {{category.count}} {{category.count > 1 ? '${Articles}' : '${Article}'}}"
+         class="group-item group-item-{{::options.color}}"
+         ng-attr-aria-owns="{{category.showChildren && category.subcategories.length > 0 ? category.value + '-subtree' : undefined}}">
+      <i ng-if="::category.subcategories.length > 0" 
+      	  class="l-h-1_6x pull-left fa" 
+          ng-class="{true: 'fa-minus-square-o', false: 'fa-plus-square-o'}[category.showChildren]" 
+          ng-click="displayChildren($event, category)"
+          aria-hidden="true"/></i>
+      <span  ng-if="category.count > 0 && options.omit_badges != 'true'"  class="badge pull-right pointer">{{::category.count}}</span>
+      <span class="block text-overflow category" 
+          ng-class="{true: 'text-{{::options.color}}', false: ''}[category.value == c.data.categoryId]"
+          id="{{::category.value}}">
+          {{::category.label}}
+          <span class="sr-only">${items}</span>
+      </span>
+    </div>
+  	<ul id="{{::category.value}}-subtree"
+        class="list-group sub-category-list list-bg-{{::options.color}}" 
+    		aria-label="{{category.label}} ${subcategories}" 
+        role="group"
+    		ng-if="category.showChildren && category.subcategories.length >0"  
+        ng-class="{true: 'no-indent', false: ''}[category.level > 2]"> 
+      <li role="presentation" 
+      		class="list-group-item text-overflow" 
+          ng-include="'kbv3-category-template.html'"
+          ng-repeat="category in category.subcategories | orderBy: 'label' track by category.value " 
+          ng-if="category.count != 0">
+      </li>
+  	</ul>
+</script>

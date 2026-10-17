@@ -1,0 +1,1 @@
+answer = UxFrameworkScriptables.isDDUserWithUIBuilderPermission();

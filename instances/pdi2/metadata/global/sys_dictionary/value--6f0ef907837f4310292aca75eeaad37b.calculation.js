@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) { if (!gs.nil(current.value_static)) return current.value_static; if (!gs.nil(current.value_reference)) return current.getDisplayValue('value_reference'); return ''; })(current);

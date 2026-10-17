@@ -1,0 +1,1 @@
+answer=new global.SNCAPICallWrapper().hasRightsToConditionalTableQueryRange('sn_grc_reg_change_m2m_reg_alert_taxonomy');

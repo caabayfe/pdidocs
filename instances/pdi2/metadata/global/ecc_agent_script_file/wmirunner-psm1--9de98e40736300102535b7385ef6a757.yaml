@@ -1,0 +1,179 @@
+_meta:
+  hash: 1d850cafa49863d9260803004358b3e2be8b05d51509623ac2f98f6caef43940
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: benjamin.phan
+  sys_created_on: 2020-03-09 20:41:06
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 9de98e40736300102535b7385ef6a757
+  sys_mod_count: '12'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_9de98e40736300102535b7385ef6a757
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-11-03 15:49:12
+active: 'true'
+checksum: ''
+description: Contains the logic for running a WMIRunner probe.
+directory: 'false'
+name: WMIRunner.psm1
+parent: ef89e4fc372001006b882d465abe5d60
+script: |-
+  function executeWMIRunner {
+      param([bool]$useTargetPowerShell=$(throw 'The useTargetPowerShell boolean parameter is required'),
+            [string]$wmiFetchData=$(throw 'The wmiFetchData parameter is required.'),
+            [bool]$filterHotfix=$(throw 'The filterHotfix boolean parameter is required'),
+            # default outputFormat is xml
+            [string]$outputFormat='xml', [int]$launchProcessWaitTime = 300)
+
+      SNCLog-DebugInfo "WMIRunner useTargetPowerShell: $useTargetPowerShell";
+      SNCLog-DebugInfo "WMIRunner wmiFetchData: $wmiFetchData";
+      SNCLog-DebugInfo "WMIRunner filterHotfix: $filterHotfix";
+      SNCLog-DebugInfo "WMIRunner launchProcessWaitTime: $launchProcessWaitTime";
+      
+      filterHotfix -value $filterHotfix;
+      if ($useTargetPowerShell) {
+          # new WMI discovery path
+          SNCLog-DebugInfo 'Running WMIRunner new path';
+          SNCLog-DebugInfo "WMIRunner new WMI discovery outputFormat: $outputFormat";
+
+          # new WMI discovery uses target's PowerShell to fetch all WMI fields/registry values at once
+          fetchMultipleWMI -WMI_FetchData $wmiFetchData -wmi $true -output_format $outputFormat -computer $computer -cred $cred -launchProcessWaitTime $launchProcessWaitTime;
+          return;
+      }
+
+      # legacy WMI discovery
+      SNCLog-DebugInfo 'Running WMIRunner legacy path';
+      $wmiFetchData -split ',' | ForEach-Object {
+          addFetch -entry $_;
+      }
+      fetch -computer $computer -cred $cred;
+  }
+
+  function executeWindowsClassify {
+      param([string]$wmiFetchData=$(throw 'The wmiFetchData parameter is required.'),
+            [bool]$filterHotfix=$(throw 'The filterHotfix boolean parameter is required'),
+            [string]$outputFormat='xml', [int]$launchProcessWaitTime = 300)
+      # Windows Classify needs to check and output the remoting capabilities
+      SNCLog-DebugInfo 'Windows Classify testing remoting capabilities';
+      testRemotingCapabilities;
+      SNCLog-DebugInfo 'Windows Classify performing WMIRunner fetches';
+      executeWMIRunner -useTargetPowerShell $powerShellAccess -wmiFetchData $wmiFetchData -filterHotfix $filterHotfix -outputFormat $outputFormat -launchProcessWaitTime $launchProcessWaitTime;
+  }
+
+
+  function testRemotingCapabilities {
+      # test target admin share access and target's PowerShell capabilities
+      if ($cred) {
+          if (-not $cred.GetNetworkCredential().Domain) {
+              SNCLog-DebugInfo "Credential has no domain, formatting credential user to 'fqdn\user'";
+              $username = formatUser -cred $cred;
+              if($username -ne $cred.username) {
+                  SNCLog-DebugInfo "Rebuild credential with $username";
+                  $global:cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $username, $cred.password;
+              }
+          }
+          SNCLog-DebugInfo "Beginning admin share access test with cred: $($cred.username)";
+          # impersonate credential to access network path
+          $context = startImpersonation -cred $cred;
+          # test admin share access
+          $global:adminShareAccess = Test-Path -Path "\\$computer\admin$" -ErrorAction SilentlyContinue;
+          endImpersonation -context $context;
+      } else {
+          SNCLog-DebugInfo 'Beginning admin share access test with no cred';
+          # test admin share access
+          $global:adminShareAccess = Test-Path -Path "\\$computer\admin$" -ErrorAction SilentlyContinue;
+      }
+      SNCLog-DebugInfo "admin share access: $adminShareAccess";
+
+      if ($adminShareAccess) {
+          $testString = 'execute remote test passed';
+          $testScript = "& { '$testString' }";
+          # test PowerShell access
+          try {
+              SNCLog-DebugInfo 'Beginning PowerShell access test';
+              $res = executeRemote -computer $computer -cred $cred -wmi $true -scriptBlock $testScript -ErrorAction SilentlyContinue;
+          } catch {} finally {
+              $global:powerShellAccess = $res -ne $null -and ($res.Trim() -eq $testString);
+          }
+      } else {
+          $global:powerShellAccess = $False;
+      }
+      SNCLog-DebugInfo "PowerShell access: $powerShellAccess";
+
+      # output remoting capability values
+      "__SNC_ADMIN_SHARE{$($adminShareAccess.ToString().ToLower())}SNC_ADMIN_SHARE__";
+      "__SNC_POWERSHELL{$($powerShellAccess.ToString().ToLower())}SNC_POWERSHELL__";
+  }
+  <######################
+   # Read FQDN (Fully Qualified Domain Name) without hostname of target host
+   ######################>
+  function getFqdnByWmi {
+  	param([System.Management.Automation.PSCredential]$cred)
+  	SNCLog-DebugInfo "WMI Reading $computer FQDN with user: $($cred.username) and isMid: $global:isMid";
+  	try {
+          if ($PSVersionTable.PSVersion.Major -lt 6) {
+              if ($global:isMid -eq $False) {
+                  $fqdn = (Get-WmiObject -Computer $computer -Credential $cred -Query 'select Domain from Win32_ComputerSystem').Domain
+              } else {
+                  $fqdn = (Get-WmiObject -Computer $computer -Query 'select Domain from Win32_ComputerSystem').Domain
+              }
+          } else {
+              # PowerShell 7+
+              if ($global:isMid -eq $False) {
+                  $session = Get-SharedCimSession -ComputerName $computer -Credential $cred
+                  $fqdn = (Get-CimInstance -CimSession $session -Query 'select Domain from Win32_ComputerSystem').Domain
+              } else {
+                  $fqdn = (Get-CimInstance -ComputerName $computer -Query 'select Domain from Win32_ComputerSystem').Domain
+              }
+          }
+          SNCLog-DebugInfo "Target host $computer FQDN=$fqdn"
+          return $fqdn
+      } catch [System.UnauthorizedAccessException] {
+          SNCLog-DebugInfo "`tInvalid credential for WMI/CIM, unauthorized access exception"
+          return ''
+      } catch [System.Exception] {
+          SNCLog-DebugInfo "`tSystem.Exception : $($_.Exception.Message)"
+          return ''
+      }
+  }
+  <######################
+   # For user in format 'user' or 'user@domain', change to FQDN format 'FQDN\user'
+   ######################>
+  function formatUser {
+  	param([System.Management.Automation.PSCredential]$cred)
+  	$creduser = $cred.username;
+  	SNCLog-DebugInfo "WMI Input credential user=$creduser";
+  	if ($creduser.IndexOf("\") -gt 0 -Or $creduser.IndexOf("@") -eq 0) {
+  	    return $creduser;
+      }
+      $UserArray = $null;
+      if($creduser.IndexOf("@") -gt 0) {
+          $UserArray = $creduser.Split("@");
+  		if($UserArray.Length -ne 2 -Or -not $UserArray[0]) {
+  			return $creduser;
+  		}
+      }
+  	$fqdn = getFqdnByWmi -cred $cred;
+  	if(-not $fqdn) {
+  		 # Check with customer if FQDN is not set for target host or exception during reading
+  		SNCLog-DebugInfo "FQDN is empty for $computer";
+  		return $creduser;
+  	} 
+      if($creduser.IndexOf("@") -lt 0) {
+  		$creduser = $fqdn + "\" + $creduser;
+  	} else {
+  		$creduser = $fqdn + "\" + $UserArray[0];
+  	} 
+  	SNCLog-DebugInfo "WMI changed user=$creduser";
+  	return $creduser;
+  }
+script_attachment: ''
+source: ''
+sys_name: WMIRunner.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

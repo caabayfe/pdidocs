@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8" ?>
+  <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:inline template="ie_checker.xml" />
+    <g:requires name="scripts/lib/jquery_includes.js"/>
+	<g2:evaluate var="jvar_table_name">
+		var tableName = current.getTableName();
+		tableName;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_contribute_kb">
+		var knowledgeBases = new SNC.KnowledgeHelper().getWritableKnowledgeBases();
+		var answer = [];
+		while (knowledgeBases.next())
+				answer.push(knowledgeBases.getValue('sys_id'));
+		answer;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_read_kb">
+		var knowledgeBases = new SNC.KnowledgeHelper().getReadableKnowledgeBases();
+		var answer = [];
+		while (knowledgeBases.next())
+				answer.push(knowledgeBases.getValue('sys_id'));
+		answer;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_timeout">
+		gs.minutesAgo(gs.getProperty('glide.ui.session_timeout') || 40);
+	</g2:evaluate>
+	<g2:evaluate var="jvar_msg_lookup_picker">
+		gs.getMessage("Lookup using picker");		
+	</g2:evaluate>
+	<g2:evaluate var="jvar_aria_label_lookup_picker">
+		gs.getMessage("Look up value for field: Category");		
+	</g2:evaluate>		  
+<script>
+	var canCreateCategory='false', oldKnowledgeBase, category_link_id;
+	function getCompatibleColumnWidth() {
+		if ((window.frameElement) $[AMP]$[AMP] ( window.frameElement.id == 'dialog_frame')){
+			return (window.frameElement.getWidth() * 0.75);
+		}
+
+		// Resize if displayed from a dialog
+		return 700; // Default value for content width
+	}
+
+	function canContribute(kbId) {
+		return '$[jvar_contribute_kb]'.indexOf(kbId) > -1;
+	}
+
+	function canRead(kbId) {
+		return '$[jvar_read_kb]'.indexOf(kbId) > -1;
+	}
+
+	function openDialog() {
+		var kb_knowledge_base = g_form.getValue('kb_knowledge_base');
+		var kb_knowledge_base_gr = g_form.getReference('kb_knowledge_base');
+		var table_name = g_form.getTableName();
+		
+		//Verify for canCreate access only if Knowledge Base is changed
+		if(oldKnowledgeBase!=kb_knowledge_base){
+			var ga = new GlideAjax('KBCategoryCrud');
+			ga.addParam('sysparm_name','canCreate');
+			ga.addParam('sysparm_id', kb_knowledge_base); // ID of parent Knowledge Base
+			var responseXML = ga.getXMLWait();
+			if (responseXML $[AMP]$[AMP] responseXML.documentElement) {
+				canCreateCategory = responseXML.getElementsByTagName("result")[0].getAttribute("canCreateCategory");
+				oldKnowledgeBase = kb_knowledge_base;
+			}else{
+				console.log("ERROR: Error in checking for canCreate access on category. Please check the server response below.");
+				console.log(responseXML);
+				canCreateCategory = 'false';
+			}
+		}
+	
+		if (!kb_knowledge_base || !kb_knowledge_base.length)
+			return;
+
+		//when kb_knowledge_base reference is not found
+		if(kb_knowledge_base_gr.currentRow == -1 $[AMP]$[AMP] kb_knowledge_base_gr.rows.length==0)
+			return;
+
+		if (kb_knowledge_base_gr.kb_version === '3') {
+			//Allow only those KBs to which current user can read, contribute and are created newly by him
+			if (!canRead(kb_knowledge_base) $[AMP]$[AMP] !canContribute(kb_knowledge_base) $[AMP]$[AMP] !(kb_knowledge_base_gr.sys_created_by == g_user.userName $[AMP]$[AMP] kb_knowledge_base_gr.sys_created_on > '$[jvar_timeout]'))
+				return ;
+		}
+		var disable_editing = 'false';
+		if(canCreateCategory == 'false') {
+			disable_editing = 'true';
+		}
+		var dialog = new GlideDialogWindow('kb_categories_dialog');
+		dialog.setTitle('${gs.getMessage('Category picker')}');
+		dialog.setSize(getCompatibleColumnWidth(), 250);
+		dialog.setPreference('kb_knowledge_base', kb_knowledge_base);
+		dialog.setPreference('disable_editing', disable_editing);
+		dialog.setPreference('focusTrap', true);
+		dialog.hideCloseButton();
+		dialog.on('beforeclose', function(){
+			setTimeout(function(){
+				if(category_link_id){		
+					$j(category_link_id).focus();
+				}});
+		});
+		dialog.render();
+		var isQuirksMode = (document.compatMode !== 'CSS1Compat');
+		if (!isQuirksMode) {
+			// In modern browsers only: make the dialog box fixed to avoid it scrolling away while using its scrollable content.
+			// Do dialog css adjustment only after whole dialog has been rendered
+			dialog.on("bodyrendered", function() {
+				var wndw = $j(window);
+				var dlgSecPart = $j('.drag_section_part');
+				dlgSecPart.css('width', 'auto').css('height', 'auto');
+				dlgSecPart.css('position', 'absolute');
+				dlgSecPart.css('top', Math.max(0, ((wndw.height() - dlgSecPart.outerHeight()) / 2) + wndw.scrollTop()) + 'px');
+				dlgSecPart.css('left', Math.max(0, ((wndw.width() - dlgSecPart.outerWidth()) / 2) + wndw.scrollLeft()) + 'px');
+	
+			//Set focus to first element or add icon
+				var firstListElm = $j("#body_kb_categories_dialog .colview-container .column .list-item");
+				if(firstListElm.length)
+					firstListElm.first().focus();
+				else{
+					$j("#body_kb_categories_dialog .colview-container .column .btn-add-cat").focus();
+				}
+			});
+		}
+	}
+
+	$j(function($) {
+		//doctype case in split layout
+		var doctypeSplitView = '.vsplit.col-sm-6 > div';
+		//doctype case in row (non split) layout
+		var doctypeRowView = '.section-content > .row > .col-xs-12 > div';
+		//non doctype case in split layout
+		var nonDoctypeSplitView = '.vsplit_bottom_margin > tbody > tr';
+		//non doctype case in row (non split) layout
+		var nondoctypeRowView = '.wide > tbody > tr';
+
+		var category_form_id = 'element.' + '$[jvar_table_name]' + '.kb_category';
+		category_link_id = 'button[id="lookup.' + '$[jvar_table_name]' + '.kb_category"]';
+		var init = function(selector) {
+			$(selector).each(function() {
+				if ($( this ).attr('id') == category_form_id){
+					$( this ).find(category_link_id)
+							.removeAttr("data-type" )
+							.removeAttr("onclick" )
+							.attr("type", "button")
+							.click(openDialog)
+							.removeAttr("title" )
+							.attr("title", '$[jvar_msg_lookup_picker]' )
+							.removeAttr("aria-label" )
+							.attr("aria-label", '$[jvar_aria_label_lookup_picker]' );
+
+				}
+			});
+
+		};
+		//override of deafault onclick event will happen only for one selector that exixt on the page
+		init(doctypeSplitView);
+		init(doctypeRowView);
+		init(nonDoctypeSplitView);
+		init(nondoctypeRowView);
+	});
+</script>
+
+</j:jelly>

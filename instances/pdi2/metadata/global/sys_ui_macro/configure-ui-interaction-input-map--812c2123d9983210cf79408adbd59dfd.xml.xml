@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_name" value="show_input_map:${ref}"/>
+	<j2:set var="jvar_show_button" value="$[current.interaction_input_map.canWrite()]"/>
+	<j2:if test="$[jvar_show_button]">
+		<button id="${jvar_name}" 
+			class="btn btn-ref btn-default icon-cog"
+			onclick="configureInputMap(); return false;"
+			title="${gs.getMessage('Configure the inputs of your UI interaction')}"
+			style="visibility:hidden;">
+			<span class="sr-only">
+				${gs.getMessage('Configure the inputs of your UI interaction')}
+			</span>
+		</button>
+		<script>
+			function configureInputMap() {
+				var d = new GlideModal('sn_ui_interaction_configure_ui_interaction_inputs', true);
+				d.setTitle('${JS:gs.getMessage("Configure inputs")}');
+				d.setPreference('sysparm_prev_interaction', g_form.getValue("interaction"));
+				d.setPreference('sysparm_interaction', g_form.getValue("interaction"));
+				d.setPreference('sysparm_interaction_input_map', g_form.getValue("interaction_input_map"));
+				d.setPreference('focusTrap', true);
+				d.render();
+			}
+
+			function onChange_interaction(element, original, changed, loading) {
+				var visibility = 'hidden';
+				if (changed.length > 0)
+					visibility = 'visible';
+
+				var e = gel('${jvar_name}');
+				e.style.visibility = visibility;
+			}
+
+			var h = new GlideEventHandler('onChange_interaction', onChange_interaction, '${ref}');
+			g_event_handlers.push(h);
+		</script>
+	</j2:if>
+</j:jelly>

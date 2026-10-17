@@ -1,0 +1,1 @@
+answer = new GuidedSetupUtilSNC().isMetaUpdateAllowed();

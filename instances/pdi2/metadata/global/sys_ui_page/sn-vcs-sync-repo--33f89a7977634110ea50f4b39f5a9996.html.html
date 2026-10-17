@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j2:if test="$[gs.hasRole('admin')]">
+		<g:ui_form>
+		<g2:evaluate jelly="true">
+				var repoId = "$[sysparm_sys_id]";
+				var appId = "$[sysparm_app_id]";
+				var infoMessage = gs.getMessage("sync_repo_info_message");
+				var learnMessage = gs.getMessage("learn_more_message");
+				var stashMessage = gs.getMessage("sync_repo_stash_message");
+				var hasOutgoingChanges = sn_vcs.AppSourceControl.hasOutgoingChanges(appId);
+		</g2:evaluate>
+
+		<div id="syncRepoModalBody" class="modal-body">
+			<div class="row mt-10">
+				<div id="infoMessage" class="col-sm-12">
+					<p>$[infoMessage]
+					<a  href="/api/now/v1/context_doc_url/source-control-operation" target="_new">$[learnMessage]</a></p>
+				</div>
+			</div>
+
+			<j2:if test="$[hasOutgoingChanges]">
+				<div class="form-group">
+					<div class="row mt-10">
+						<div id="infoMessage" class="col-sm-12">
+							<p>$[stashMessage]</p>
+						</div>
+					</div>
+					<div class="row mt-10">
+						<label class="control-label col-sm-3" for="stash_message">
+							${gs.getMessage('Stash Message')}</label>
+						<span class="col-sm-9 form-field">
+							<input id="stash_message" type="text" class="col-sm-12" maxlength="250"/>
+						</span>
+					</div>
+				</div>
+			</j2:if>
+		</div>
+
+		<footer class="modal-footer">
+			<button id="btnCancel" onclick="onCancel()" class="btn btn-default" type="button">${gs.getMessage("cancel")}</button>
+			<j2:choose>
+				<j2:when test="$[hasOutgoingChanges]">
+					<button id="btnConvert" onclick="onSync(document.getElementById('stash_message').value)" class="btn btn-primary" type="button">${gs.getMessage("Sync")}</button>
+				</j2:when>
+				<j2:otherwise>
+					<button id="btnConvert" onclick="onSync('')" class="btn btn-primary" type="button">${gs.getMessage("Sync")}</button>
+				</j2:otherwise>
+			</j2:choose>
+		</footer>
+
+	</g:ui_form>
+</j2:if>
+</j:jelly>

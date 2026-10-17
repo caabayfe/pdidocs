@@ -1,0 +1,41 @@
+_meta:
+  hash: 725a8c0186f44716c572789a06c1dbcf88dbd8a16091b321e57c76b9ccc1de53
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: nisan.barzion
+  sys_created_on: 2018-05-08 09:22:29
+  sys_id: 7a8bc8ccc74e13008ec4abbd9b976368
+  sys_mod_count: '9'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_7a8bc8ccc74e13008ec4abbd9b976368
+  sys_updated_by: nisan.barzion
+  sys_updated_on: 2018-05-24 16:27:23
+active: 'true'
+name: should_filter_hotfix
+probe: df4905820a0a0ba500b7ea51b460326c
+sys_name: should_filter_hotfix
+sys_policy: ''
+value: ''
+value_script: |-
+  answer="false";
+  // First check if we have a Windows filter enabled
+  var discovery_spkg_filter_gr = new GlideRecord("discovery_spkg_filter");
+  discovery_spkg_filter_gr.addQuery("filter", "exclude");
+  discovery_spkg_filter_gr.addQuery("type", "windows");
+  discovery_spkg_filter_gr.addQuery("enable", "1");
+  discovery_spkg_filter_gr.query();
+
+  if (discovery_spkg_filter_gr.hasNext()){
+      var spkg_filter_gr = new GlideRecord("discovery_spkg_keys");
+      spkg_filter_gr.addQuery("key", "Hotfix");
+      spkg_filter_gr.addQuery("active", 1);
+      spkg_filter_gr.query();
+
+      // Return if we have a hotfix filtering
+      answer = spkg_filter_gr.hasNext();
+  }
+  else{
+      answer="false";
+  }

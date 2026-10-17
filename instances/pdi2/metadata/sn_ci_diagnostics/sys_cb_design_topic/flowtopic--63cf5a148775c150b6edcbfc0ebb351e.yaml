@@ -1,0 +1,441 @@
+_meta:
+  hash: 6a0d13274a5238aed2b2a21bc97d5352e8b6191577729db22c4646f3f58fa0cd
+  hash_version: 1
+  scope: sn_ci_diagnostics
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2022-02-17 01:49:38
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 63cf5a148775c150b6edcbfc0ebb351e
+  sys_mod_count: '0'
+  sys_package: 434a64fd531db410f738ddeeff7b12c7
+  sys_scope: 434a64fd531db410f738ddeeff7b12c7
+  sys_update_name: sys_cb_design_topic_63cf5a148775c150b6edcbfc0ebb351e
+  sys_updated_by: admin
+  sys_updated_on: 2022-02-17 01:49:38
+compiled_topic: 6fcf5a148775c150b6edcbfc0ebb3518
+design_definition: '{"type":"FlowTopic","type":"FlowTopic","triggers":[{"type":"Trigger","name":"5aa7c43e82914bddaff830e2f294ec11","triggerType":"request","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"id":"5aa7c43e82914bddaff830e2f294ec11"}],"goals":[{"name":"primary","trigger_id":"5aa7c43e82914bddaff830e2f294ec11","nodes":[{"type":"StartGoal","type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"5e7d9609ce50439ea71acb1a1daae8e9","name":"Start"},{"type":"TerminateGoal","type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"1d356664df1c4cc7882ae029bca9eb8f","name":"End"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    vaSystem.switchTopic(JSON.parse(vaInputs.diagnosticcontent).topic,''resume'');\n})()\n","id":"299b43a3ae234736a71e4c09da148c43","name":"Execute Topic","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"InputPrompt","type":"InputPrompt","variable_id":"b2226783c64745a296ba707d881dee90","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"Please confirm if you want to proceed with a topic flow to solve your issue\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"1479a30029aa41b1b03b0b67df37d353","name":"Topic execution confirmation","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Not confirmed","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"topic_execution_confirmation="},"id":"622496a0b316451cb04d9ab36d09e96d","name":"Not confirmed"},{"type":"Branch","type":"Branch","label":"Confirmed","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"topic_execution_confirmation=true"},"id":"0ef6261429a746b7b9b120a575096799","name":"Confirmed"}],"id":"afc4fbeebe3446ff8ec0794e8a1578be","goal_id":"primary"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var content = JSON.parse(vaInputs.diagnosticcontent);\n    gs.error(''selected diagnostic content ------ ''+vaInputs.diagnosticcontent);\n    if (content.healthCheckTopic && content.healthCheckTopic != ''''){\n        vaSystem.switchTopic(content.healthCheckTopic,''resume'');\n    }\n})()\n","id":"4e8b14fb7c2048549ccc8aca8d0abb61","name":"Execute Health Check Topic","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Data collection topic not exist","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var content = JSON.parse(vaInputs.diagnosticcontent);\n    return !content.dataCollectionTopic || content.dataCollectionTopic == ''''\n})()\n"},"id":"15d26aa7929046f1b3c19bf0ed0b939d","name":"Data collection topic not exist"},{"type":"Branch","type":"Branch","label":"Data collection topic exist","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var content = JSON.parse(vaInputs.diagnosticcontent);\n    return content.dataCollectionTopic && content.dataCollectionTopic != ''''\n})()\n"},"id":"90f4554887014e8ab3cbda6268c5ec3c","name":"Data collection topic exist"}],"id":"eba28c1250c34694b7f0530270f0763a","goal_id":"primary"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"7e253fcd8521422fab36ea9325de1d8c","message":{"type":"String","type":"String","mode":"string","value":"gs.getMessageLang(\"If  the solution is not helpful you can answer some more question for customer support. Please select yes to continue.\", vaContext.getRequesterLang())"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"3eedc143c48148fd8ba2a0da5de37deb","name":"Data collection topic confirmation","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"No","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"data_collection_topic_confirmation="},"id":"ebabdb5f66344bd99c45ce7d4d6ade3d","name":"No"},{"type":"Branch","type":"Branch","label":"Yes","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"data_collection_topic_confirmation=true"},"id":"7e804d9949f94867af48ebfd96414e25","name":"Yes"}],"id":"5b49458968f44cc8b852b685d54d11bc","goal_id":"primary"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    vaSystem.switchTopic(JSON.parse(vaInputs.diagnosticcontent).dataCollectionTopic, ''resume'');\n})()\n","id":"3021336aff194c9a82b0d950df7f42df","name":"Execute Data collection Topic","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}}],"edges":[{"type":"Edge","source_node_id":"299b43a3ae234736a71e4c09da148c43","target_node_id":"eba28c1250c34694b7f0530270f0763a","id":"41b65b9157394b0897d883e7d1eab654"},{"type":"Edge","source_node_id":"afc4fbeebe3446ff8ec0794e8a1578be","target_node_id":"1d356664df1c4cc7882ae029bca9eb8f","branch_id":"622496a0b316451cb04d9ab36d09e96d","id":"048f2361686643b08cd1f34d1ca6f33d","name":"622496a0b316451cb04d9ab36d09e96d"},{"type":"Edge","source_node_id":"1479a30029aa41b1b03b0b67df37d353","target_node_id":"afc4fbeebe3446ff8ec0794e8a1578be","id":"60f2417a701a44edb78de15ca2ba7d0d"},{"type":"Edge","source_node_id":"afc4fbeebe3446ff8ec0794e8a1578be","target_node_id":"299b43a3ae234736a71e4c09da148c43","branch_id":"0ef6261429a746b7b9b120a575096799","id":"1e3ca294aee94a6781db1e662dfeea8b","name":"0ef6261429a746b7b9b120a575096799"},{"type":"Edge","source_node_id":"5e7d9609ce50439ea71acb1a1daae8e9","target_node_id":"4e8b14fb7c2048549ccc8aca8d0abb61","id":"9474642159fa4285adcbb191e6fcf382"},{"type":"Edge","source_node_id":"4e8b14fb7c2048549ccc8aca8d0abb61","target_node_id":"1479a30029aa41b1b03b0b67df37d353","id":"ebfafe691a2248368e7b7f25356e0eb7"},{"type":"Edge","source_node_id":"eba28c1250c34694b7f0530270f0763a","target_node_id":"1d356664df1c4cc7882ae029bca9eb8f","branch_id":"15d26aa7929046f1b3c19bf0ed0b939d","id":"5d8f9a73dcda475f89940ce76020c1e1","name":"15d26aa7929046f1b3c19bf0ed0b939d"},{"type":"Edge","source_node_id":"eba28c1250c34694b7f0530270f0763a","target_node_id":"3eedc143c48148fd8ba2a0da5de37deb","branch_id":"90f4554887014e8ab3cbda6268c5ec3c","id":"a6b0c170320547ea9fffc5e0fc4191f8","name":"90f4554887014e8ab3cbda6268c5ec3c"},{"type":"Edge","source_node_id":"3eedc143c48148fd8ba2a0da5de37deb","target_node_id":"5b49458968f44cc8b852b685d54d11bc","id":"b97ae119489f404da2c7d25b515890e5"},{"type":"Edge","source_node_id":"5b49458968f44cc8b852b685d54d11bc","target_node_id":"1d356664df1c4cc7882ae029bca9eb8f","branch_id":"ebabdb5f66344bd99c45ce7d4d6ade3d","id":"55a57495b4e5406ab1f68dd77c5acb98","name":"ebabdb5f66344bd99c45ce7d4d6ade3d"},{"type":"Edge","source_node_id":"5b49458968f44cc8b852b685d54d11bc","target_node_id":"3021336aff194c9a82b0d950df7f42df","branch_id":"7e804d9949f94867af48ebfd96414e25","id":"40df44f089d6473da8373f66a37d752f","name":"7e804d9949f94867af48ebfd96414e25"},{"type":"Edge","source_node_id":"3021336aff194c9a82b0d950df7f42df","target_node_id":"1d356664df1c4cc7882ae029bca9eb8f","id":"64467e9a77ba4847bc336a9bc2d2d0bf"}],"id":"primary"}],"script_variables":[{"type":"VariableDto","type":"String","name":"topicNotExecuted","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"8a76249fc9fa411dbdab1735a87972a3","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"True/False","type":"True/False","id":"b2226783c64745a296ba707d881dee90","name":"topic_execution_confirmation","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"diagnosticcontent","list":false,"id":"1d8a9efc5f2a41f397ea061ce5b8e3eb","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"True/False","type":"True/False","id":"7e253fcd8521422fab36ea9325de1d8c","name":"data_collection_topic_confirmation","formatType":"text","secure":false,"sensitive":false,"list":false}],"applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"434a64fd531db410f738ddeeff7b12c7","library-usage":{"type":"Library","input-parameters":[{"name":"diagnosticcontent","label":"diagnosticContent","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"1d8a9efc5f2a41f397ea061ce5b8e3eb","type":"String"}],"return-values-mapping":[{"name":"istopicexecuted","label":"isTopicExecuted","value":{"type":"String","type":"String","mode":"string","value":"{{vaInputs.topic_execution_confirmation}}"}},{"name":"isdatacollectiontopicexecuted","label":"isDataCollectionTopicExecuted","value":{"type":"String","type":"String","mode":"string","value":"{{vaInputs.data_collection_topic_confirmation}}"}}]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"id":"5a9d5e908775c150b6edcbfc0ebb3573","name":"Diagnostic Topic Executer","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"library":true,"readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 5a9d5e908775c150b6edcbfc0ebb3573
+graph: |-
+  {
+    "graph_api_version": "1.0.40",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "5e7d9609ce50439ea71acb1a1daae8e9": {
+            "id": "5e7d9609ce50439ea71acb1a1daae8e9",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "1d8a9efc5f2a41f397ea061ce5b8e3eb",
+                "name": "diagnosticContent",
+                "required": true,
+                "referenced": true,
+                "disabled": false
+              }
+            ],
+            "variableIds": [
+              "1d8a9efc5f2a41f397ea061ce5b8e3eb"
+            ]
+          },
+          "1d356664df1c4cc7882ae029bca9eb8f": {
+            "id": "1d356664df1c4cc7882ae029bca9eb8f",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": [
+              {
+                "key": "isTopicExecuted",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.topic_execution_confirmation}}",
+                          "displayValue": "Input Variables➛Topic Execution Confirmation"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true,
+                "cannotBeDeleted": true,
+                "alertMessage": "You cannot delete this parameter because other calling topics use it.",
+                "additionalInfoUrl": "/sys_cs_topic_library_usage_list.do?sysparm_query=library_cs_topic_id=6fcf5a148775c150b6edcbfc0ebb3518%5Ecalling_cs_topic_idINf5f9fcaf87ed0150b6edcbfc0ebb35d1,a27f9841874ecd50b6edcbfc0ebb3573",
+                "additionalInfoLabel": "See calling topics"
+              },
+              {
+                "key": "isDataCollectionTopicExecuted",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaInputs.data_collection_topic_confirmation}}",
+                          "displayValue": "Input Variables➛Data Collection Topic Confirmation"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true
+              }
+            ]
+          },
+          "299b43a3ae234736a71e4c09da148c43": {
+            "id": "299b43a3ae234736a71e4c09da148c43",
+            "name": "Execute Topic",
+            "script": "(function execute() {\n    vaSystem.switchTopic(JSON.parse(vaInputs.diagnosticcontent).topic,'resume');\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "1479a30029aa41b1b03b0b67df37d353": {
+            "id": "1479a30029aa41b1b03b0b67df37d353",
+            "stepType": "Prompt",
+            "name": "Topic execution confirmation",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "Please confirm if you want to proceed with a topic flow to solve your issue"
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "b2226783c64745a296ba707d881dee90"
+          },
+          "afc4fbeebe3446ff8ec0794e8a1578be": {
+            "id": "afc4fbeebe3446ff8ec0794e8a1578be",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "4e8b14fb7c2048549ccc8aca8d0abb61": {
+            "id": "4e8b14fb7c2048549ccc8aca8d0abb61",
+            "name": "Execute Health Check Topic",
+            "script": "(function execute() {\n    var content = JSON.parse(vaInputs.diagnosticcontent);\n    gs.error('selected diagnostic content ------ '+vaInputs.diagnosticcontent);\n    if (content.healthCheckTopic && content.healthCheckTopic != ''){\n        vaSystem.switchTopic(content.healthCheckTopic,'resume');\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "eba28c1250c34694b7f0530270f0763a": {
+            "id": "eba28c1250c34694b7f0530270f0763a",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "3eedc143c48148fd8ba2a0da5de37deb": {
+            "id": "3eedc143c48148fd8ba2a0da5de37deb",
+            "stepType": "Prompt",
+            "name": "Data collection topic confirmation",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": "If  the solution is not helpful you can answer some more question for customer support. Please select yes to continue."
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "7e253fcd8521422fab36ea9325de1d8c"
+          },
+          "5b49458968f44cc8b852b685d54d11bc": {
+            "id": "5b49458968f44cc8b852b685d54d11bc",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "3021336aff194c9a82b0d950df7f42df": {
+            "id": "3021336aff194c9a82b0d950df7f42df",
+            "name": "Execute Data collection Topic",
+            "script": "(function execute() {\n    vaSystem.switchTopic(JSON.parse(vaInputs.diagnosticcontent).dataCollectionTopic, 'resume');\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "41b65b9157394b0897d883e7d1eab654",
+            "edgeType": "Edge",
+            "source": "299b43a3ae234736a71e4c09da148c43",
+            "target": "eba28c1250c34694b7f0530270f0763a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "048f2361686643b08cd1f34d1ca6f33d",
+            "edgeType": "Branch",
+            "source": "afc4fbeebe3446ff8ec0794e8a1578be",
+            "target": "1d356664df1c4cc7882ae029bca9eb8f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.topic_execution_confirmation=",
+              "mode": "query"
+            },
+            "label": "Not confirmed"
+          },
+          {
+            "id": "60f2417a701a44edb78de15ca2ba7d0d",
+            "edgeType": "Edge",
+            "source": "1479a30029aa41b1b03b0b67df37d353",
+            "target": "afc4fbeebe3446ff8ec0794e8a1578be",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "1e3ca294aee94a6781db1e662dfeea8b",
+            "edgeType": "Branch",
+            "source": "afc4fbeebe3446ff8ec0794e8a1578be",
+            "target": "299b43a3ae234736a71e4c09da148c43",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.topic_execution_confirmation=true",
+              "mode": "query"
+            },
+            "label": "Confirmed"
+          },
+          {
+            "id": "9474642159fa4285adcbb191e6fcf382",
+            "edgeType": "Edge",
+            "source": "5e7d9609ce50439ea71acb1a1daae8e9",
+            "target": "4e8b14fb7c2048549ccc8aca8d0abb61",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "ebfafe691a2248368e7b7f25356e0eb7",
+            "edgeType": "Edge",
+            "source": "4e8b14fb7c2048549ccc8aca8d0abb61",
+            "target": "1479a30029aa41b1b03b0b67df37d353",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "5d8f9a73dcda475f89940ce76020c1e1",
+            "edgeType": "Branch",
+            "source": "eba28c1250c34694b7f0530270f0763a",
+            "target": "1d356664df1c4cc7882ae029bca9eb8f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var content = JSON.parse(vaInputs.diagnosticcontent);\n    return !content.dataCollectionTopic || content.dataCollectionTopic == ''\n})()\n"
+            },
+            "label": "Data collection topic not exist"
+          },
+          {
+            "id": "a6b0c170320547ea9fffc5e0fc4191f8",
+            "edgeType": "Branch",
+            "source": "eba28c1250c34694b7f0530270f0763a",
+            "target": "3eedc143c48148fd8ba2a0da5de37deb",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var content = JSON.parse(vaInputs.diagnosticcontent);\n    return content.dataCollectionTopic && content.dataCollectionTopic != ''\n})()\n"
+            },
+            "label": "Data collection topic exist"
+          },
+          {
+            "id": "b97ae119489f404da2c7d25b515890e5",
+            "edgeType": "Edge",
+            "source": "3eedc143c48148fd8ba2a0da5de37deb",
+            "target": "5b49458968f44cc8b852b685d54d11bc",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "55a57495b4e5406ab1f68dd77c5acb98",
+            "edgeType": "Branch",
+            "source": "5b49458968f44cc8b852b685d54d11bc",
+            "target": "1d356664df1c4cc7882ae029bca9eb8f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.data_collection_topic_confirmation=",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "40df44f089d6473da8373f66a37d752f",
+            "edgeType": "Branch",
+            "source": "5b49458968f44cc8b852b685d54d11bc",
+            "target": "3021336aff194c9a82b0d950df7f42df",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.data_collection_topic_confirmation=true",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "64467e9a77ba4847bc336a9bc2d2d0bf",
+            "edgeType": "Edge",
+            "source": "3021336aff194c9a82b0d950df7f42df",
+            "target": "1d356664df1c4cc7882ae029bca9eb8f",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "b2226783c64745a296ba707d881dee90": {
+        "id": "b2226783c64745a296ba707d881dee90",
+        "name": "topic_execution_confirmation",
+        "label": "Topic Execution Confirmation",
+        "varType": "boolean",
+        "secure": false,
+        "category": "vaInputs"
+      },
+      "8a76249fc9fa411dbdab1735a87972a3": {
+        "id": "8a76249fc9fa411dbdab1735a87972a3",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "topicNotExecuted",
+        "label": "topicNotExecuted",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "1d8a9efc5f2a41f397ea061ce5b8e3eb": {
+        "id": "1d8a9efc5f2a41f397ea061ce5b8e3eb",
+        "name": "diagnosticcontent",
+        "label": "DiagnosticContent",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        }
+      },
+      "7e253fcd8521422fab36ea9325de1d8c": {
+        "id": "7e253fcd8521422fab36ea9325de1d8c",
+        "name": "data_collection_topic_confirmation",
+        "label": "Data Collection Topic Confirmation",
+        "varType": "boolean",
+        "secure": false,
+        "category": "vaInputs"
+      }
+    }
+  }
+name: Diagnostic Topic Executer
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

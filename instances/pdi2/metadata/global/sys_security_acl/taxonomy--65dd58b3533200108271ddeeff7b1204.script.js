@@ -1,0 +1,1 @@
+answer = gs.hasRole("taxonomy_admin") || current.isNewRecord() || sn_uc.UserCriteriaLoader.userMatches(gs.getUserID(), [current.managers]) || new global.TaxonomyUtil().isTaxonomyContributor(current.sys_id) || new global.TopicPermissionUtil().canViewTaxonomy(current.sys_id);

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null">
+	<!--
+		Parameters
+			sysparm_sys_id - SysID of the app record
+	 -->
+	<g2:evaluate jelly="true">
+		var sysId = "";
+		var name = "";
+		var fileCount = -1;
+		if (jelly.sysparm_sys_id != "") {
+			sysId = jelly.sysparm_sys_id;
+			var app = new GlideRecord("sys_app");
+			app.get(sysId);
+			name = app.name;
+
+			var files = new GlideRecord("sys_metadata");
+			files.addQuery("sys_scope", sysId);
+			files.addQuery("sys_class_name", "!=", "sys_metadata_delete");
+			files.query();
+			fileCount = "" + files.getRowCount();
+		}
+	</g2:evaluate>
+	<g2:evaluate var="jvar_compatibility">
+		GlideVTBCompatibility.getCompatibility();
+	</g2:evaluate>
+<div id="delete_app_dialog_container" width="100%">
+  <div class="modal-dialog modal-sm modal-alert" style="width: 400px">
+    <p>$[gs.getMessage("This will delete the application '{0}'.", name)]
+    </p>
+    <div class="row" style="margin:0px 0 0 0">
+      <span>
+         <p>
+                $[HTML:gs.getMessage("It will also delete all {0} files contained in this application", fileCount)].$[SP]<a
+                class='navigation_link' id='go_to_app_files' href='#'>$[gs.getMessage("Show files")]</a>.
+        </p>
+      </span>
+    </div>
+   <footer class="modal-footer flex">
+     <button onClick="gDeleteAppDialog.exit()"
+             data-dismiss="modal" class="btn btn-default">Cancel</button>
+     <button id="ok_button" onClick="gDeleteAppDialog.deleteApp()"
+             data-dismiss="modal" class="btn btn-danger">Delete</button>
+    </footer>
+  </div>
+</div>
+</j:jelly>

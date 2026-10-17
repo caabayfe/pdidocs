@@ -1,0 +1,1 @@
+SNC.TableEditor.updateModuleAndDocumentation(current);

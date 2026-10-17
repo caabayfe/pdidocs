@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:inline template="angular_template.xml" name="sn_next_available_time_date_picker.xml" />
+    <g:inline template="angular_template.xml" name="sn_next_available_time.xml" />
+    <g:inline template="angular_template.xml" name="sn_next_available_time_window.xml" />
+    <html ng-app="sn.change_request.form.next_available_time" lang="$[gs.getSession().getLanguage()]">
+
+    <head>
+        <g:requires name="scripts/angular_includes_1.5.11.js" includes="true" />
+        <g:requires name="scripts/sn/common/js_includes_common.js" includes="true" />
+        <g:requires name="scripts/bootstrap3/bootstrap.js" />
+        <g:requires name="scripts/angularjs-1.4/thirdparty/angular-ui-bootstrap/ui-bootstrap-tpls-1.1.2.js" />
+        <g:requires name="scripts/js_includes_app.common.apps.calendar.js" includes="true" />
+        <g:requires name="scripts/app.change_request.calendar/thirdparty/bootstrap-datetimepicker.min.js" includes="true" />
+
+        <g:include_script src="change_calendar.nextAvailableTime.jsdbx" />
+        <g:include_script src="sn.itsm.common.accessibility.jsdbx" />
+        <g:include_script src="change_form.nextAvailableTime.jsdbx" />
+
+        <g:requires name="/styles/app.change_request.calendar/icon-fonts/font-awesome-4.2.0/css/font-awesome.min.css" params="c=$[gs.getCssCacheVersionString()]" />
+
+        <j:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]" />
+        <link href="42777ba45777130035ae4786cc94f9b8.cssdbx?c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" rel="stylesheet" type="text/css" />
+        <g:requires name="/styles/css_includes_change_request_calendar.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+        <j:if test="${GlideAccessibility.isEnabled()}">
+            <link href="6632e0385790230035ae4786cc94f91d.cssdbx?c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" rel="stylesheet" type="text/css" />
+        </j:if>
+
+        <style>
+            HTML[data-doctype="true"][ng-app="sn.change_request.form.next_available_time"] body[data-formName="ui_page_render"] {
+                padding: 0px 0px 0px 0px;
+            }
+
+            #page_timing_div.timingDiv {
+                display: none;
+            }
+
+            .btn-icon.close.icon-cross.cnat-modal-close {
+                border: 0;
+                padding: 0;
+                margin-right: 0;
+                min-width: 0;
+                min-height: unset;
+            }
+
+            .btn-icon.close.icon-cross.cnat-modal-close:hover,
+            .btn-icon.close.icon-cross.cnat-modal-close:active {
+                box-shadow: none;
+            }
+
+            .modal-body.cnat-empty-modal-body {
+                padding: 10px;
+            }
+
+            div#cnat div.cnat-modal-footer {
+                padding-bottom: 14px;
+            }
+
+            div#cnat div.modal-footer.cnat-loading-modal-footer {
+                padding-bottom: 0;
+            }
+
+            header span.icon-loading.icon-lg,
+            header span.loading-indicator {
+                width: auto;
+                height: auto;
+            }
+        </style>
+        <script>
+            var lang = "$[gs.getSession().getLanguage()]";
+            var momentLocaleMapper = {
+                'pb': 'pt-br', //Portuguese-Brazil
+                'fq': 'fr-ca', //French Canadian
+                'fc': 'fr-ca', //French Canadian
+                'zt': 'zh-tw', //Chinese Traditional
+                'zh': 'zh-cn' //Chinese Simplified
+            };
+            var locale = momentLocaleMapper[lang] ? momentLocaleMapper[lang] : lang;
+            moment.locale(locale);
+            var timezones = {
+                "ACT": "Australia/Darwin",
+                "AET": "Australia/Sydney",
+                "AGT": "America/Argentina/Buenos_Aires",
+                "ART": "Africa/Cairo",
+                "AST": "America/Anchorage",
+                "BET": "America/Sao_Paulo",
+                "BST": "Asia/Dhaka",
+                "CAT": "Africa/Harare",
+                "CNT": "America/St_Johns",
+                "CST": "America/Chicago",
+                "CTT": "Asia/Shanghai",
+                "EAT": "Africa/Addis_Ababa",
+                "ECT": "Europe/Paris",
+                "IET": "America/Indiana/Indianapolis",
+                "IST": "Asia/Kolkata",
+                "JST": "Asia/Tokyo",
+                "MIT": "Pacific/Apia",
+                "NET": "Asia/Yerevan",
+                "NST": "Pacific/Auckland",
+                "PLT": "Asia/Karachi",
+                "PNT": "America/Phoenix",
+                "PRT": "America/Puerto_Rico",
+                "PST": "America/Los_Angeles",
+                "SST": "Pacific/Guadalcanal",
+                "VST": "Asia/Ho_Chi_Minh"
+            };
+            Object.keys(timezones).forEach(function(abbr) {
+                moment.tz.link(timezones[abbr] + '|' + abbr);
+            });
+
+            var g_tz = '$[JS_STRING:GlideSession.get().getTimeZoneName()]';
+            var g_date_time_format = '$[JS_STRING:gs.getDateTimeFormat().replace(/y/g, "Y").replace(/d/g, "D")]';
+            var g_time_format = '$[JS_STRING:gs.getTimeFormat()]';
+            var g_first_day_of_week = '$[JS_STRING:gs.getProperty("glide.ui.date_format.first_day_of_week", 2)]'; // As per Docs, default first day of week is Monday, value 2
+        </script>
+    </head>
+
+    <body>
+        <now-message key="Next Available Time" value="${gs.getMessage('Next Available Time')}" />
+        <now-message key="Calendar" value="${gs.getMessage('Calendar')}" />
+        <now-message key="Cancel" value="${gs.getMessage('Cancel')}" />
+        <now-message key="Previous week" value="${gs.getMessage('Previous week')}" />
+        <now-message key="Next week" value="${gs.getMessage('Next week')}" />
+        <now-message key="No available time for this range" value="${gs.getMessage('No available time for this range')}" />
+        <now-message key="Previous month" value="${gs.getMessage('Previous month')}" />
+        <now-message key="Next month" value="${gs.getMessage('Next month')}" />
+        <now-message key="Today" value="${gs.getMessage('Today')}" />
+        <g:inline template="sn_next_available_time_translation.xml" />
+        <sn-form-next-available-time />
+    </body>
+
+    </html>
+</j:jelly>

@@ -1,0 +1,1 @@
+new IdentificationRuleValidator().validate(current);

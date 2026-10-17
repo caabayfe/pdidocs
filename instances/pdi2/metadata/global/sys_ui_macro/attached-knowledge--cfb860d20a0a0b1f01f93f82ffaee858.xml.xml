@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+		<g2:evaluate var="tasks" jelly="true" expression="
+			var tasks = new GlideRecordSecure('m2m_kb_task');
+			tasks.addQuery('task',current.sys_id);
+			tasks.orderBy('kb_knowledge.number');
+			tasks.query();
+			"/>
+
+		<style>
+            .attached-kb-articles{
+                width: 17%;
+            }
+            .vsplit .attached-kb-articles{
+                width: 34%;
+            }
+        </style>
+
+		<j2:if test="$[tasks.next()]" >
+				<tr>
+					<td class="label attached-kb-articles label_spacing"> 
+						<span style="margin-right:3px; margin-left:1px;">$[SP]</span>
+						${gs.getMessage('Attached knowledge:')}
+					</td>
+					<td>
+						<g2:evaluate>
+							var hasMore = true;
+						</g2:evaluate>
+						<j2:while test="$[hasMore]">
+							<g2:evaluate>
+								var knowledge = new GlideRecord('kb_knowledge');
+								knowledge.setWorkflow(false);
+								knowledge.get(tasks.getValue('kb_knowledge'));
+							</g2:evaluate>
+							<div>
+								<img src="images/nav_bult.gifx" alt="${gs.getMessage('Knowledge Base Article')}" />
+								<a class="obvious" href="kb_view.do?sys_kb_id=$[knowledge.sys_id]">$[HTML:knowledge.number] - $[HTML:knowledge.short_description]</a>
+							</div>
+							<g2:evaluate>
+								hasMore = tasks.next();
+							</g2:evaluate>
+						</j2:while>
+					</td>
+				</tr>
+		</j2:if>
+
+</j:jelly>

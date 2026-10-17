@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.table-section {
+			border: 1px solid #BDC0C4;
+			border-radius: 3px;
+			box-shadow: 0 1px 1px 0 rgba(0,0,0,0.2);
+		}
+		.table-section .header{
+			font-size: 15px;
+			border-bottom: 1px solid #E6E8EA;
+		}
+		.table-section .header .table-title {
+			margin-left: 15px;
+			font-size: 15px;
+		}
+		.table-section table {
+			padding: 2px;
+			width: 100%
+		}
+		.table-section table th{
+			text-align: left;
+		}
+		.table-section table { border-collapse: collapse; }
+		.table-section tr { border: none; }
+		.table-section td, .table-section th {
+			border-right: solid 1px #E6E8EA;
+			border-left: solid 1px #E6E8EA;
+			padding-left: 13px;
+			padding-right: 13px;
+			padding-top: 6px;
+			padding-bottom: 6px;
+		}
+		.table-section td:first-child, .table-section th:first-child {
+			border-left: none;
+		}
+		.table-section td:last-child, .table-section th:last-child {
+			border-right: none;
+		}
+		html.rtl .table-section table th{
+			text-align: right;
+		}
+		html.rtl .table-section .header .table-title {
+			margin-right: 15px;
+		}
+	</style>
+	<g:evaluate var="jvar_columnsarray" jelly="true" object="true">
+		jelly.jvar_columns.split(",")
+	</g:evaluate>
+	<g:evaluate var="jvar_gr" jelly="true" object="true">
+		var gr = new GlideRecord(jelly.jvar_table);
+		gr.addQuery(jelly.jvar_query);
+		gr.query();
+		gr;
+	</g:evaluate>
+	<g:evaluate var="jvar_labels" jelly="true" object="true">
+		var titlegr = new GlideRecord(jelly.jvar_table);
+		titlegr.newRecord();
+		titlegr
+	</g:evaluate>
+	<div class="table-section">
+		<div class="header">
+			<span class="total-count"><b>${gr.getRowCount()}</b></span>
+			<span class="table-title"><b>${jvar_title}</b></span>
+		</div>
+		<table>
+			<tr>
+				<j:forEach items="${jvar_columnsarray}" var="jvar_column">
+					<g:evaluate var="jvar_c" jelly="true">
+						var c = jelly.jvar_column
+					</g:evaluate>
+					<th><b>${titlegr.getElement(c).getLabel()}</b></th>
+				</j:forEach>
+			</tr>
+			<j:while test="${jvar_gr.next()}">
+				<tr>
+					<j:forEach items="${jvar_columnsarray}" var="jvar_column">
+						<g:evaluate jelly="true" object="true">
+							var value = jelly.jvar_gr.getDisplayValue(jelly.jvar_column);
+						</g:evaluate>
+						<td>
+							<j:if test="${jvar_escape_text == true}">
+								${value}
+							</j:if>
+							<j:if test="${jvar_escape_text != true}">
+								${html: value}
+							</j:if>
+						</td>
+					</j:forEach>
+				</tr>
+			</j:while>
+		</table>
+	</div>
+</j:jelly>

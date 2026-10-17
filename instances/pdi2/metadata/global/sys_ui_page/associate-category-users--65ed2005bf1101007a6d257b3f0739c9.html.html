@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide"
+	xmlns:j2="null" xmlns:g2="null">
+	 <style type="text/css">
+	    .associate select.dropselect {
+	        margin-left: 10px
+	    }
+            .associate .slushselect {
+                width: 430px;
+            }
+             .instructions .highlight {
+                font-weight: bold;
+            }
+	 </style>
+<h3>${gs.getMessage("Create Stakeholders")}</h3>
+	 <g:ui_form>
+    <div class="associate">
+        <div>
+             <select class="dropselect form-control" style="width:auto;" name="assessable" id="assessable" onchange="assessableTypePicked(this.value)">    
+                    <option selected="true" value=""> ${gs.getMessage("-- choose metric type --")} </option> 
+
+                     <g2:evaluate var="jvar_assessable_types">
+                     var type = new GlideRecord("asmt_metric_type");
+                     type.addQuery("schedule_type", "scheduled");
+                     type.orderBy("name");
+                         type.query();
+                         type;
+                    </g2:evaluate>
+
+                    <j2:while test="$[type.next()]">
+                        <option value="$[type.sys_id]"> $[type.name] </option> 
+                    </j2:while>
+
+             </select>
+        </div>
+        <div>
+             <select class="dropselect form-control" style="width:auto;" name="categories" id="categories" onchange="updateAllSlushBuckets()" disabled="true">    
+                <option value=""> ${gs.getMessage("-- choose category --")} </option>
+             </select>
+        </div>
+<div class="instructions">
+<ol>
+<li>${gs.getMessage("Select one or more category users.")}</li>
+<li>${gs.getMessage("Select one or more assessable records.")}</li>
+<li> ${gs.getMessage("Click")} 
+	<span class="highlight">&#160; ${gs.getMessage("Associate")} &#160;</span> 
+	${gs.getMessage("to make the selected category users stakeholders for the selected assessable records.")}
+</li>
+</ol>
+</div>
+	<g:inline template="associate_buckets.xml" />
+	</div>
+	</g:ui_form>
+</j:jelly>

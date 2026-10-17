@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<j:set var="jvar_t" value="${user.getID()}" />
+<g:evaluate var="jvar_can_impersonate" jelly="true">
+  var impersonate = new GlideImpersonate().canImpersonate(jelly.jvar_t);
+  jvar_can_impersonate = impersonate;
+</g:evaluate>
+<j:if test="${gs.getProperty('glide.ui.impersonate_button.enable')}">
+  <j:if test="${jvar_can_impersonate}">
+   <g:evaluate var="jvar_impersonate_name" expression="gs.getImpersonatingUserName()" />
+   <j:choose>
+      <j:when test="${jvar_impersonate_name == 'null'}">
+         <input type="hidden" name="impersonating_toggle_name" id="impersonating_toggle_id" value="" />
+      </j:when>
+      <j:otherwise>
+         <input type="hidden" name="impersonating_toggle_name" id="impersonating_toggle_id" value="${jvar_impersonate_name}" />
+      </j:otherwise>
+   </j:choose>
+   <span id="impersonate_span" style="visibility:hidden;">
+      <img src="images/icons/roleKey_obj.gifx" alt="${gs.getMessage('Administrators can impersonate another user')}"
+         style="cursor:pointer;cursor:hand"
+         title="${gs.getMessage('Administrators can impersonate another user')}"  onclick="impUser.impersonateUser();" />
+   </span>
+   <g:include_script src="ImpersonateButton.jsdbx"/>
+   <script language="javascript">
+      var impUser = new ImpersonateUser("impersonate_span", "impersonating_toggle_id");
+   </script>
+  </j:if>
+  </j:if>
+</j:jelly>

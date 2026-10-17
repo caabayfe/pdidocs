@@ -1,0 +1,1 @@
+SNC.PAScore.updateIndicatorScoreModifiedAtOn1stLevelTable(current.indicator);

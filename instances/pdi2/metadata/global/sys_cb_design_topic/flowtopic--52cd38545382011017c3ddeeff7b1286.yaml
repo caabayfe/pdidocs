@@ -1,0 +1,408 @@
+_meta:
+  hash: 1238691a19dddee1ab89cbbcfa2816a94825a4eef6eaef4f03632430fd70e5bd
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2022-03-01 04:57:05
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 52cd38545382011017c3ddeeff7b1286
+  sys_mod_count: '4'
+  sys_package: 12b77e7b8c1903100a22deb6dd2b4e46
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_52cd38545382011017c3ddeeff7b1286
+  sys_updated_by: admin
+  sys_updated_on: 2023-09-05 14:54:10
+compiled_topic: decd38545382011017c3ddeeff7b127f
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"3ec2f026fe4f4c40afb5bda1172bba93","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"3ec2f026fe4f4c40afb5bda1172bba93"}],"goals":[{"name":"primary","trigger_id":"3ec2f026fe4f4c40afb5bda1172bba93","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"ce45834ee2c94a4dbec5eac8676fa5e1","name":"Start"},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"07aed834619a4e7783e2b0a5c10b98f6","name":"End"},{"type":"ScriptedAction","script":"(function execute() {\n    var SOFTPIN_VERIFICATION_TYPE = ''a67585845302011017c3ddeeff7b1267'';\n    var userId = vaInputs.userid.getValue();\n    var verificationId = vaInputs.verificationid.getValue();\n    var contextId = vaInputs.contextid.getValue();\n\n    //Validate verification and type\n    var passwordResetScopedUtil = new PasswordResetScopedUtil();\n    var verification = passwordResetScopedUtil.getVerificationById(verificationId);\n    if (gs.nil(verificationId) ||\n        !verification.exists() ||\n        verification.getVerificationTypeId() != SOFTPIN_VERIFICATION_TYPE) {\n        vaVars.input_validation_error = true; // Not a valid verification type\n        return;\n    }\n\n    //Check for valid context_id\n    if (gs.nil(contextId)) {\n        vaVars.input_validation_error = true;\n        return;\n    }\n\n     //Check for valid user\n    var userInfo = GlideUser.getUserByID(userId);\n    if (gs.nil(userId) ||\n        !userInfo.exists()) {\n        vaVars.user_validation_error = true; // User Not Found\n    }\n\n})()\n","id":"1c3800ef0b694affb79c55cbdc03ba00","name":"Validate Inputs","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","name":"Input Validation Check","branches":[{"type":"Branch","label":"Invalid Inputs","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return vaVars.input_validation_error;\n})()\n"},"id":"1ab25bc56fe5408dbaff9f3a687e1c21","name":"Invalid Inputs"},{"type":"Branch","label":"Valid Inputs","expression":{"type":"Applicability","mode":"script","value":"(function execute() {\n    return !vaVars.input_validation_error;\n})()\n"},"id":"26782cd3dd6147849ce620ec75c32b6e","name":"Valid Inputs"}],"id":"de09aba86bc0410ba6af149d57952e6a","goal_id":"primary"},{"type":"ScriptedAction","script":"(function execute() {\n    var userId = vaInputs.userid.getValue();\n    var verificationId = vaInputs.verificationid.getValue();\n\n    //Get question for the verification\n    var passwordResetScopedUtil = new global.PasswordResetScopedUtil();\n    var enrollmentMgr = new SNC.PwdEnrollmentManager();\n    vaVars.softpin_question = passwordResetScopedUtil.getSoftPINQuestion(verificationId);\n\n    //Get salt\n    if(vaVars.user_validation_error) {\n         vaVars.salt = passwordResetScopedUtil.getRandomSalt();\n    } else {\n        vaVars.salt = new SNC.PwdSoftPINManager().getSaltByUserAndVerificationId(userId, verificationId);\n\n        if(JSUtil.nil(vaVars.salt)) { // User not enrolled\n            vaVars.salt = passwordResetScopedUtil.getRandomSalt();\n            vaVars.user_validation_error = true; \n        }\n    }\n})()\n","id":"bf4a8ffe77dc48fb80c288e59ef06d7b","name":"Get SoftPIN Question","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}},{"type":"InputPrompt","variable_id":"a2853cc02a384d42b2fd4dd5dc129237","message":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.softpin_question;\n})()\n"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","mode":"script","value":"false"},"skipreprompt":{"type":"Applicability","mode":"script","value":"false"},"id":"109ea03f67ea4e718d8f355089e514e6","name":"SoftPIN input","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"formatType":"Text","validationScript":""},{"type":"ScriptedAction","script":"(function execute() {\n    if(vaVars.user_validation_error) {\n        vaVars.input_validation_error = true;\n        vaVars.error_code = 40000; //Invalid Soft PIN\n        return;\n    }\n    var userId = vaInputs.userid.getValue();\n    var verificationId = vaInputs.verificationid.getValue();\n    var contextId = vaInputs.contextid.getValue();\n    var hashedSoftPIN = vaInputs.softpin_input.getValue();\n    var requestId = '''';\n    var requestExists = new SNC.PwdTrackingManager().requestExists(contextId); //Move to verify processor\n    if (requestExists)\n        requestId = contextId;\n\n    var userInputs = [];\n    userInputs.push({ key: ''sysparm_softpin'', value: hashedSoftPIN });\n    userInputs.push({ key: ''isEncrypted'', value: true });\n    userInputs.push({ key: ''request_id'', value: requestId });\n    userInputs.push({ key: ''context_id'', value: contextId });\n\n    var passwordResetScopedUtil = new global.PasswordResetScopedUtil();\n    var verificationResult = passwordResetScopedUtil.verify(userId, '''', verificationId, requestId, userInputs);\n    if (!verificationResult) {\n        vaVars.input_validation_error = true;\n        vaVars.error_code = 40000; //Invalid Soft PIN\n        var pwdSoftpinMgr = new SNC.PwdSoftPINManager();\n        if(pwdSoftpinMgr.isPinExpirationEnabled() && pwdSoftpinMgr.isPinExpired(userId, verificationId, hashedSoftPIN, true)) {\n                vaVars.error_code = 40001; //Expired Soft PIN\n        }\n    }\n})()","id":"d7aaada7ec634643874ff207142cb894","name":"Validate User provided PIN","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"}}],"edges":[{"type":"Edge","source_node_id":"bf4a8ffe77dc48fb80c288e59ef06d7b","target_node_id":"109ea03f67ea4e718d8f355089e514e6","id":"55bb2a52a7f6420ab7b990b47c4a6887"},{"type":"Edge","source_node_id":"d7aaada7ec634643874ff207142cb894","target_node_id":"07aed834619a4e7783e2b0a5c10b98f6","id":"0b6ea5c7a9114fe393d56f442ee75105"},{"type":"Edge","source_node_id":"ce45834ee2c94a4dbec5eac8676fa5e1","target_node_id":"1c3800ef0b694affb79c55cbdc03ba00","id":"90b1017bcc3a416ea1f78840343b8820"},{"type":"Edge","source_node_id":"1c3800ef0b694affb79c55cbdc03ba00","target_node_id":"de09aba86bc0410ba6af149d57952e6a","id":"c2bd1e97f692409abd878d272b15d0a9"},{"type":"Edge","source_node_id":"de09aba86bc0410ba6af149d57952e6a","target_node_id":"07aed834619a4e7783e2b0a5c10b98f6","branch_id":"1ab25bc56fe5408dbaff9f3a687e1c21","id":"37f711b2df314210b4957dc93cb61c80","name":"1ab25bc56fe5408dbaff9f3a687e1c21"},{"type":"Edge","source_node_id":"de09aba86bc0410ba6af149d57952e6a","target_node_id":"bf4a8ffe77dc48fb80c288e59ef06d7b","branch_id":"26782cd3dd6147849ce620ec75c32b6e","id":"88efaab428224a1e80b79a02aec2ba0c","name":"26782cd3dd6147849ce620ec75c32b6e"},{"type":"Edge","source_node_id":"109ea03f67ea4e718d8f355089e514e6","target_node_id":"d7aaada7ec634643874ff207142cb894","id":"ca28351d9661403486e055ec429e2509"}],"id":"primary"}],"script_variables":[{"type":"String","name":"input_validation_error","value":{"type":"String","mode":"script","value":"(function execute() {\n    /* return ''a default value''; */\n    return false;\n})()\n"},"list":false,"id":"501e1d0b94504c74b61d99a14906a21d","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"softpin_question","value":{"type":"String","mode":"string"},"list":false,"id":"8cec1fb2f0254ad5bb58921c6e3e79fc","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"is_user_enrolled","value":{"type":"String","mode":"string"},"list":false,"id":"f98bab99cd78476e8c9a1431f47fb5ca","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"salt","value":{"type":"String","mode":"string"},"list":false,"id":"c585a84423604129996ce1bc719c0358","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"user_validation_error","value":{"type":"String","mode":"script","value":"(function execute() {\n    /* return ''a default value''; */\n    return false;\n})()\n"},"list":false,"id":"6e1ddb3cdfc143598b88c9d7fb795f7b","formatType":"text","secure":false,"sensitive":false},{"type":"String","name":"error_code","value":{"type":"String","mode":"string"},"list":false,"id":"00024f4e87af4d0db560c574d8f1bcb3","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"String","name":"softpin_input","list":false,"id":"a2853cc02a384d42b2fd4dd5dc129237","formatType":"Text","validationScript":"","secure":true,"sensitive":false,"encryptionSalt":{"type":"String","mode":"script","value":"(function execute() {\n    return vaVars.salt;\n})()\n"},"encryptionHashFunction":"SHA-256"},{"type":"String","name":"userid","list":false,"id":"83bace1414c04ac88e856feb1e84d6f6","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"verificationid","list":false,"id":"f0aa6a970c494845ab48560f3a1041e0","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"String","name":"contextid","list":false,"id":"c770be2d81bd4e44b62e6fd82268dc5a","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"userid","label":"userId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"83bace1414c04ac88e856feb1e84d6f6","type":"String"},{"name":"verificationid","label":"verificationId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"f0aa6a970c494845ab48560f3a1041e0","type":"String"},{"name":"contextid","label":"contextId","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"c770be2d81bd4e44b62e6fd82268dc5a","type":"String"}],"return-values-mapping":[{"name":"status","label":"Status","value":{"type":"String","mode":"script","value":"(function execute() {\n    var response = vaVars.input_validation_error ? ''Error'' : ''Success'';\n    return response;\n})()\n"}},{"name":"error_code","label":"error_code","value":{"type":"String","mode":"string","value":"{{vaVars.error_code}}"}}]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"610cb8d05382011017c3ddeeff7b12b7","name":"SoftPIN Verification","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"modify_confirmation_enabled":false,"library":true,"csTopicId":"decd38545382011017c3ddeeff7b127f","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 610cb8d05382011017c3ddeeff7b12b7
+graph: |-
+  {
+    "graph_api_version": "1.0.47",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "ce45834ee2c94a4dbec5eac8676fa5e1": {
+            "id": "ce45834ee2c94a4dbec5eac8676fa5e1",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "83bace1414c04ac88e856feb1e84d6f6",
+                "name": "userId",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "f0aa6a970c494845ab48560f3a1041e0",
+                "name": "verificationId",
+                "referenced": true,
+                "required": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "c770be2d81bd4e44b62e6fd82268dc5a",
+                "name": "contextId",
+                "referenced": true,
+                "disabled": true,
+                "required": true
+              }
+            ],
+            "variableIds": [
+              "83bace1414c04ac88e856feb1e84d6f6",
+              "f0aa6a970c494845ab48560f3a1041e0",
+              "c770be2d81bd4e44b62e6fd82268dc5a"
+            ]
+          },
+          "07aed834619a4e7783e2b0a5c10b98f6": {
+            "id": "07aed834619a4e7783e2b0a5c10b98f6",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "outputVariables": [
+              {
+                "key": "Status",
+                "value": "(function execute() {\n    var response = vaVars.input_validation_error ? 'Error' : 'Success';\n    return response;\n})()\n",
+                "mode": "script",
+                "disabled": true,
+                "cannotBeDeleted": true,
+                "alertMessage": "You cannot delete this parameter because other calling topics use it.",
+                "additionalInfoUrl": "/sys_cs_topic_library_usage_list.do?sysparm_query=library_cs_topic_id=decd38545382011017c3ddeeff7b127f%5Ecalling_cs_topic_idIN0902a7d2530333006e61ddeeff7b1250,2578d02eebab1110da1861c59c5228e1",
+                "additionalInfoLabel": "See calling topics"
+              },
+              {
+                "key": "error_code",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.error_code}}",
+                          "displayValue": "Script Variables➛error_code"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": true,
+                "cannotBeDeleted": false
+              }
+            ]
+          },
+          "1c3800ef0b694affb79c55cbdc03ba00": {
+            "id": "1c3800ef0b694affb79c55cbdc03ba00",
+            "name": "Validate Inputs",
+            "script": "(function execute() {\n    var SOFTPIN_VERIFICATION_TYPE = 'a67585845302011017c3ddeeff7b1267';\n    var userId = vaInputs.userid.getValue();\n    var verificationId = vaInputs.verificationid.getValue();\n    var contextId = vaInputs.contextid.getValue();\n\n    //Validate verification and type\n    var passwordResetScopedUtil = new PasswordResetScopedUtil();\n    var verification = passwordResetScopedUtil.getVerificationById(verificationId);\n    if (gs.nil(verificationId) ||\n        !verification.exists() ||\n        verification.getVerificationTypeId() != SOFTPIN_VERIFICATION_TYPE) {\n        vaVars.input_validation_error = true; // Not a valid verification type\n        return;\n    }\n\n    //Check for valid context_id\n    if (gs.nil(contextId)) {\n        vaVars.input_validation_error = true;\n        return;\n    }\n\n     //Check for valid user\n    var userInfo = GlideUser.getUserByID(userId);\n    if (gs.nil(userId) ||\n        !userInfo.exists()) {\n        vaVars.user_validation_error = true; // User Not Found\n    }\n\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "de09aba86bc0410ba6af149d57952e6a": {
+            "id": "de09aba86bc0410ba6af149d57952e6a",
+            "stepType": "Decision",
+            "name": "Input Validation Check"
+          },
+          "bf4a8ffe77dc48fb80c288e59ef06d7b": {
+            "id": "bf4a8ffe77dc48fb80c288e59ef06d7b",
+            "name": "Get SoftPIN Question",
+            "script": "(function execute() {\n    var userId = vaInputs.userid.getValue();\n    var verificationId = vaInputs.verificationid.getValue();\n\n    //Get question for the verification\n    var passwordResetScopedUtil = new global.PasswordResetScopedUtil();\n    var enrollmentMgr = new SNC.PwdEnrollmentManager();\n    vaVars.softpin_question = passwordResetScopedUtil.getSoftPINQuestion(verificationId);\n\n    //Get salt\n    if(vaVars.user_validation_error) {\n         vaVars.salt = passwordResetScopedUtil.getRandomSalt();\n    } else {\n        vaVars.salt = new SNC.PwdSoftPINManager().getSaltByUserAndVerificationId(userId, verificationId);\n\n        if(JSUtil.nil(vaVars.salt)) { // User not enrolled\n            vaVars.salt = passwordResetScopedUtil.getRandomSalt();\n            vaVars.user_validation_error = true; \n        }\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "109ea03f67ea4e718d8f355089e514e6": {
+            "id": "109ea03f67ea4e718d8f355089e514e6",
+            "stepType": "TextPrompt",
+            "name": "SoftPIN input",
+            "prompt": {
+              "value": "(function execute() {\n    return vaVars.softpin_question;\n})()\n",
+              "mode": "script"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "a2853cc02a384d42b2fd4dd5dc129237",
+            "inputType": {
+              "format": "Text",
+              "script": ""
+            },
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "d7aaada7ec634643874ff207142cb894": {
+            "id": "d7aaada7ec634643874ff207142cb894",
+            "name": "Validate User provided PIN",
+            "script": "(function execute() {\n    if(vaVars.user_validation_error) {\n        vaVars.input_validation_error = true;\n        vaVars.error_code = 40000; //Invalid Soft PIN\n        return;\n    }\n    var userId = vaInputs.userid.getValue();\n    var verificationId = vaInputs.verificationid.getValue();\n    var contextId = vaInputs.contextid.getValue();\n    var hashedSoftPIN = vaInputs.softpin_input.getValue();\n    var requestId = '';\n    var requestExists = new SNC.PwdTrackingManager().requestExists(contextId); //Move to verify processor\n    if (requestExists)\n        requestId = contextId;\n\n    var userInputs = [];\n    userInputs.push({ key: 'sysparm_softpin', value: hashedSoftPIN });\n    userInputs.push({ key: 'isEncrypted', value: true });\n    userInputs.push({ key: 'request_id', value: requestId });\n    userInputs.push({ key: 'context_id', value: contextId });\n\n    var passwordResetScopedUtil = new global.PasswordResetScopedUtil();\n    var verificationResult = passwordResetScopedUtil.verify(userId, '', verificationId, requestId, userInputs);\n    if (!verificationResult) {\n        vaVars.input_validation_error = true;\n        vaVars.error_code = 40000; //Invalid Soft PIN\n        var pwdSoftpinMgr = new SNC.PwdSoftPINManager();\n        if(pwdSoftpinMgr.isPinExpirationEnabled() && pwdSoftpinMgr.isPinExpired(userId, verificationId, hashedSoftPIN, true)) {\n                vaVars.error_code = 40001; //Expired Soft PIN\n        }\n    }\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "55bb2a52a7f6420ab7b990b47c4a6887",
+            "edgeType": "Edge",
+            "source": "bf4a8ffe77dc48fb80c288e59ef06d7b",
+            "target": "109ea03f67ea4e718d8f355089e514e6",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0b6ea5c7a9114fe393d56f442ee75105",
+            "edgeType": "Edge",
+            "source": "d7aaada7ec634643874ff207142cb894",
+            "target": "07aed834619a4e7783e2b0a5c10b98f6",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "90b1017bcc3a416ea1f78840343b8820",
+            "edgeType": "Edge",
+            "source": "ce45834ee2c94a4dbec5eac8676fa5e1",
+            "target": "1c3800ef0b694affb79c55cbdc03ba00",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "c2bd1e97f692409abd878d272b15d0a9",
+            "edgeType": "Edge",
+            "source": "1c3800ef0b694affb79c55cbdc03ba00",
+            "target": "de09aba86bc0410ba6af149d57952e6a",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "37f711b2df314210b4957dc93cb61c80",
+            "edgeType": "Branch",
+            "source": "de09aba86bc0410ba6af149d57952e6a",
+            "target": "07aed834619a4e7783e2b0a5c10b98f6",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.input_validation_error;\n})()\n"
+            },
+            "label": "Invalid Inputs"
+          },
+          {
+            "id": "88efaab428224a1e80b79a02aec2ba0c",
+            "edgeType": "Branch",
+            "source": "de09aba86bc0410ba6af149d57952e6a",
+            "target": "bf4a8ffe77dc48fb80c288e59ef06d7b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return !vaVars.input_validation_error;\n})()\n"
+            },
+            "label": "Valid Inputs"
+          },
+          {
+            "id": "ca28351d9661403486e055ec429e2509",
+            "edgeType": "Edge",
+            "source": "109ea03f67ea4e718d8f355089e514e6",
+            "target": "d7aaada7ec634643874ff207142cb894",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "501e1d0b94504c74b61d99a14906a21d": {
+        "id": "501e1d0b94504c74b61d99a14906a21d",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    /* return 'a default value'; */\n    return false;\n})()\n"
+        },
+        "name": "input_validation_error",
+        "label": "input_validation_error",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "8cec1fb2f0254ad5bb58921c6e3e79fc": {
+        "id": "8cec1fb2f0254ad5bb58921c6e3e79fc",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "softpin_question",
+        "label": "softpin_question",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "f98bab99cd78476e8c9a1431f47fb5ca": {
+        "id": "f98bab99cd78476e8c9a1431f47fb5ca",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "is_user_enrolled",
+        "label": "is_user_enrolled",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "a2853cc02a384d42b2fd4dd5dc129237": {
+        "id": "a2853cc02a384d42b2fd4dd5dc129237",
+        "name": "softpin_input",
+        "label": "SoftPIN Input",
+        "varType": "string",
+        "secure": true,
+        "category": "vaInputs",
+        "encryptionHashFunction": "SHA-256",
+        "encryptionSalt": {
+          "value": "(function execute() {\n    return vaVars.salt;\n})()\n",
+          "mode": "script"
+        },
+        "nodeId": "109ea03f67ea4e718d8f355089e514e6",
+        "isHidden": false
+      },
+      "c585a84423604129996ce1bc719c0358": {
+        "id": "c585a84423604129996ce1bc719c0358",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "salt",
+        "label": "salt",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "83bace1414c04ac88e856feb1e84d6f6": {
+        "id": "83bace1414c04ac88e856feb1e84d6f6",
+        "name": "userid",
+        "label": "UserId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "ce45834ee2c94a4dbec5eac8676fa5e1",
+        "isHidden": false
+      },
+      "f0aa6a970c494845ab48560f3a1041e0": {
+        "id": "f0aa6a970c494845ab48560f3a1041e0",
+        "name": "verificationid",
+        "label": "VerificationId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "ce45834ee2c94a4dbec5eac8676fa5e1",
+        "isHidden": false
+      },
+      "c770be2d81bd4e44b62e6fd82268dc5a": {
+        "id": "c770be2d81bd4e44b62e6fd82268dc5a",
+        "name": "contextid",
+        "label": "ContextId",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "ce45834ee2c94a4dbec5eac8676fa5e1",
+        "isHidden": false
+      },
+      "6e1ddb3cdfc143598b88c9d7fb795f7b": {
+        "id": "6e1ddb3cdfc143598b88c9d7fb795f7b",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    /* return 'a default value'; */\n    return false;\n})()\n"
+        },
+        "name": "user_validation_error",
+        "label": "user_validation_error",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "00024f4e87af4d0db560c574d8f1bcb3": {
+        "id": "00024f4e87af4d0db560c574d8f1bcb3",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "error_code",
+        "label": "error_code",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+name: SoftPIN Verification
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

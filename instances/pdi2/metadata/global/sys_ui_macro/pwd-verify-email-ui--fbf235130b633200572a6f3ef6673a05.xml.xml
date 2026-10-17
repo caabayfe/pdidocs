@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  
+<script language="javascript">
+addLoadEvent(getEmailVerificationInfo);
+addMacroEventListeners('sysverb_send_email_code', 'sysparm_answer_email_code');
+
+function getEmailVerificationInfo() {
+  var ga = new GlideAjax('PwdAjaxPublicEnrollEmail');
+  ga.addParam('sysparm_name', 'getEmailVerificationInfo');
+  ga.addParam('sysparm_request_id', '${JS,HTML:sysparm_request_id}');
+
+  // add CSRF token for AJAX handling.
+  ga.addParam('sysparam_pwd_csrf_token', findCSRFElement().value);
+  ga.getXML(handleGetEmailVerificationInfoResponse, null);
+}
+
+function handleGetEmailVerificationInfoResponse(response, args) {
+    
+    //let's handle security from AJAX response. 
+    handleSecurityFrom(response);
+
+  var modeElem = response.responseXML.getElementsByTagName("mode");
+  var mode = modeElem[0].getAttribute("name");  
+	
+  gel('sysparm_email_verification_mode').value = mode;
+  
+  var sendCodeButtonName = getMessage("Send Verification Code");
+  sendCodeButtonName = "<b>" + sendCodeButtonName + "</b>"
+  var subscriptionMsg = new GwtMessage().getMessage('Click {0} to send a code to the following email(s):', sendCodeButtonName);
+  var not_enrolled_msg = new GwtMessage().getMessage('Click {0} to send a password reset verification code to the email listed on your profile:', sendCodeButtonName);
+  if (mode == 'subscription') {
+    gel('email_verification_desc').innerHTML = subscriptionMsg;
+        var sendButton = gel('sysverb_send_email_code');
+        sendButton.disabled = '';
+        sendButton.style.cursor = 'pointer';
+        
+        var emails = response.responseXML.getElementsByTagName("email");
+        displayEmails(emails);
+		gel('sysverb_send_email_code').focus();
+  }
+  else if (mode == 'notEnrolled') {
+    gel('email_verification_desc').innerHTML = not_enrolled_msg;
+    gel('sysverb_send_email_code').disabled = '';
+    gel('sysverb_send_email_code').focus();
+
+    var profileEmail = response.responseXML.getElementsByTagName("email")[0];      
+    gel('email_addresses').innerHTML = profileEmail.getAttribute('email');
+  }
+  else{
+      gel('email_verification_desc').innerHTML = "";
+      gel('sysverb_send_email_code').style.display = "none";
+      gel('email_code_sent').innerHTML = "${gs.getMessage('Cannot send you a verification code because you are not enrolled and there is no email address on your user profile. Ask your admin for help.')}";
+      $j("button[name='sysverb_pwd_reset_${JS,HTML:sysparm_verification_id}']").hide();
+  }
+}
+
+function displayEmails(emails) {
+    for (var i = 0; i != emails.length; i++) {
+        var email = emails[i];
+		var validEmail = email.getAttribute('isSubscribed') == 'true' ? email.getAttribute('isVerified') == 'true' : false;
+        if (validEmail) {
+           var newLi = document.createElement("li");
+           var text = document.createTextNode(email.getAttribute('email'));
+           newLi.appendChild(text);
+		   newLi.setAttribute('role', 'listitem');
+           gel('email_addresses').appendChild(newLi);
+        }
+    }
+}
+	
+function sendEmail() {
+  gel('email_code_sent').innerHTML = "";
+  var ga = new GlideAjax('PwdAjaxEmailPublicProcessor');
+  ga.addParam('sysparm_name', 'generateEmailCode');
+  ga.addParam('sysparm_request_id', '${JS,HTML:sysparm_request_id}');
+  ga.addParam('sysparm_verification_id', '${JS,HTML:sysparm_verification_id}');
+	
+  var mode = gel('sysparm_email_verification_mode').value;
+  ga.addParam('sysparm_email_verification_mode', mode);
+
+  // add csrf token for ajax
+  ga.addParam('sysparam_pwd_csrf_token', findCSRFElement().value);
+    
+  ga.getXML(handleSendEmailResponse);
+}
+
+function handleSendEmailResponse(response,args) {
+
+  //let's handle security from AJAX response. 
+  handleSecurityFrom(response);
+
+
+  // reponse message. this always exists.
+  var res =  response.responseXML.getElementsByTagName("response");
+  var status = res[0].getAttribute("status");
+  var message = res[0].getAttribute("message");
+  var value = res[0].getAttribute("value");
+  
+	
+  var profileEmailElem = response.responseXML.getElementsByTagName("profile_email");
+  var profileEmail = "";
+  if (profileEmailElem != null) {
+     if (profileEmailElem.length > 0) { 
+        profileEmail = profileEmailElem[0].getAttribute("sys_id");
+     }
+  }
+
+  gel('sysparm_profile_email').value = profileEmail;
+  gel('email_code_sent').innerHTML = message;
+  gel('sysverb_send_email_code').innerText = getMessage('Resend Verification Code');
+  gel('send-label').innerText = getMessage('Resend Email Verification Code');
+  gel('sysverb_send_email_code').setAttribute('aria-labelledby', 'send-label')
+  gel('input_email_code_section').style.display = 'block';
+  gel('sysparm_answer_email_code').focus();
+}
+
+  </script>
+	
+<g:evaluate var="jvar_verification_label" object="true" jelly="true">
+	var resetUtil = new global.PasswordResetUtil();
+	resetUtil.getVerificationLabel(jelly.sysparm_verification_id);
+</g:evaluate>
+
+ <input type="hidden" size="20" maxlength="20" id="sysparm_email_verification_mode" name="sysparm_email_verification_mode" value="subscription" autocomplete="off"/>
+  <input type="hidden" size="20" maxlength="20" id="sysparm_profile_email" name="sysparm_profile_email" value="" autocomplete="off"/>
+
+
+  <j:choose>
+    <!-- Polarisberg (external/stylized auth) -->
+    <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+      <h1 class="pwd-title" id="email-title">${jvar_verification_label}</h1>
+      <h2 class="pwd-subtitle" id='email_verification_desc'></h2>
+    </j:when>
+    <!-- Heisenberg -->
+    <j:otherwise>
+      <h2 class="pwd-title" id="email-title">${jvar_verification_label}</h2>
+      <h3 class="pwd-subtitle" id='email_verification_desc'></h3>
+    </j:otherwise>
+  </j:choose>
+
+  <div class="form-group" id="input_service_provider_section" style="display:none">
+    <label id="profile_email" for="masked_email" class="control-label col-sm-4">Normal</label>
+  </div>
+
+  <div class="form-group" style="align:center">
+    <ul id ='email_addresses'></ul>
+  </div>
+
+  <label class="sr-only" id="send-label">${gs.getMessage('Send Email Verification Code')}</label>
+  <button type="button" name="sysverb_send_email_code" id="sysverb_send_email_code" class="btn btn-primary btn-pwd-submit" onclick="clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms'); return sendEmail();" disabled='disabled' aria-labelledby="email-title email_verification_desc email_addresses send-label" style="margin-bottom:1.5rem">
+	  ${gs.getMessage('Send Verification Code')}
+  </button>
+
+  <p id="email_code_sent" style="font-weight:bold" aria-live="assertive" role="status"/>
+
+  <div class="form-group is-required" id="input_email_code_section" style="display:none; margin-bottom: 1.5rem;">
+    <label class="control-label" id="enter-code-label">
+	  ${gs.getMessage('Enter verification code')}
+      <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Verification code required')}"></span> 
+    </label>
+    <input type="text" id="sysparm_answer_email_code" maxlength="20" name="sysparm_verification_code" value="${JS,HTML:sysparm_verification_code}" autocomplete="off" placeholder="" class="form-control pwd-form-control" required="required" oninput="updateMandatoryMarker(this, 'input_email_code_section'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');" aria-labelledby="enter-code-label" aria-describedby="email_code_sent"/>
+  </div>
+
+</j:jelly>

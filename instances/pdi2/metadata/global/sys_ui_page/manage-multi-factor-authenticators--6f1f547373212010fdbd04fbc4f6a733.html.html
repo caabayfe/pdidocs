@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates()}">
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true" />
+	</j:if>
+	<link href="84f0346b87120300cfab6dd207cb0b72.cssdbx?" rel="stylesheet" type="text/css"/>
+   <j:set var="jvar_webauthn_enabled" value="${gs.getProperty('glide.webauthn.enabled', 'false');}" />
+	
+	<j:if test="${jvar_webauthn_enabled}">
+		<g:include_script src="WebAuthnUtil.jsdbx" />
+	</j:if>
+	
+	<j:set var="jvar_origin" value="${SNC.WebAuthnUtils.getOrigin();}" />
+	<j:set var="jvar_can_disable_mfa" value="${SNC.MultifactorAuthUtil.canDisableMultifactorAuth();}" />
+	<j:set var="jvar_has_remembered_browser" value="${SNC.MultiFactorAuthBrowserFingerPrintUtil.hasRememberedBrowser();}" />
+
+   
+   <g:requires name="styles/retina_icons/retina_icons.css" includes="true"/>
+   <link href="84f0346b87120300cfab6dd207cb0b72.cssdbx?" rel="stylesheet" type="text/css"/>
+   <g:evaluate jelly="true">  
+      var totp = new GlideRecord('user_multifactor_auth');
+      totp.addQuery('user', gs.getUserID());
+      totp.addQuery('is_validated', true);
+      totp.query();        
+      totp;
+   </g:evaluate>
+   <style type="text/css">
+      .box {
+      border: 1px;
+      margin: 5px;
+      display: flex;
+      }
+      .box_image {
+      padding: 5px;
+      margin: 5px;
+      }
+      .square img {
+      height: 75px;
+      width: 75px;
+      }
+      .box_info {
+      padding: 5px;
+      margin: 5px;
+      }
+      
+   </style>
+   <nav class="navbar navbar-default" role="navigation">
+      <div class="container-fluid">
+         <div class="navbar-header">
+            <button class="btn btn-default icon-chevron-left navbar-btn" title="${gs.getMessage('Back')}" onclick="goBack();"></button>
+            <h1 style="display:inline-block;" class="navbar-title">${gs.getMessage('Multi-Factor Authentication')}</h1>
+         </div>
+      </div>
+   </nav>
+	
+	<div class="notification notification-success" id="divNotificationMain" style="display:none;">
+		<button data-dismiss="alert" class="btn-icon close icon-cross">
+			<span class="sr-only">${gs.getMessage('Close')}</span>
+		</button>
+	</div>
+	
+   <div style="padding-left: 1%;">
+	   
+      <div>
+         <div>
+            <h2> ${gs.getMessage('Multi-Factor Authentication')} </h2>
+         </div>
+			  
+		  <hr></hr>
+		  
+         <div>
+			 <h4>
+	            <p>
+                	${gs.getMessage("multifactor_profile_section_msg")}
+              	</p>
+	            <p>
+                	${gs.getMessage("For more details ")}
+                	<a href="/api/now/v1/context_doc_url/CSHelp-using-mfa" target="_blank" style="padding-left:3px">${gs.getMessage("view our documentation.")}</a>
+              </p>
+			 </h4>
+         </div>
+      </div>
+	   
+      <div>
+		  <h4><br></br><b>${gs.getMessage('Authenticators')}</b></h4>
+         <div>
+            <!-- TOTP authenticator	   -->
+            <div class="flex">
+               <div style="border: 1px solid #E8EDED; box-sizing: border-box; padding:1%">
+                  <div role="heading" aria-level="1" id="totpAuthenticatorHeader">
+                        <h4> ${gs.getMessage('Authenticator app')}</h4>
+                  </div>
+                  <div >
+                     <div>
+                        <h5>${gs.getMessage('Time-Based One Time Password (TOTP) authenticator app')}</h5>
+                     </div>
+                     <div id="totpAuthenticator" role="tabpanel" aria-labelledby="totpAuthenticatorHeader">
+                        <j:while test="${totp.next()}">
+                           <div class="col-sm-12 col-md-12 col-lg-12" style="padding: 16px; margin: 5px;">
+							   <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                                             <img
+                                                src="totp.svg" alt="Authenticator app"
+                                                />
+                                          </div>
+                              <div class="col-sm-10 col-md-10 col-lg-10">
+                                 <div class="col-sm-4 col-md-4 col-lg-4">
+                                    <p>${gs.getMessage('Authenticator App')}</p>
+                                    <p>${gs.getMessage('Registration time:')} ${totp.sys_updated_on} </p>
+                                 </div>
+                                 <div class="col-sm-6 col-md-6 col-lg-6">
+                                    <a href="#edit">
+                                       <h4><i class="icon-edit" style="float:right;"  onclick="openTotpSetupChangeDialog()" role="button" aria-label="manage" tabindex="0" title="${gs.getMessage('manage authenticator')}"></i></h4>
+                                    </a>
+                                 </div>
+                              </div>
+                           </div>
+                        </j:while>
+                     </div>
+                     <j:if test="${totp.getRowCount() &gt; 0 }">
+                        <div>
+                           <a class="navigation_link default-focus-outline" tabindex="0" onclick="openTotpSetupChangeDialog()" role="button">
+							   ${gs.getMessage('Change Authenticator app')}
+                           </a>
+                        </div>
+                     </j:if>
+
+					  <j:if test="${totp.getRowCount() &lt; 1 }">
+                        <div>
+                           <a class="navigation_link default-focus-outline" tabindex="0" onclick="openTotpSetupDialog()" role="button">
+							   ${gs.getMessage('Set up authenticator app')}
+                           </a>
+                        </div>
+                     </j:if>
+                  </div>
+               </div>
+            </div>
+            <j:if test="${jvar_webauthn_enabled}">
+               <g:evaluate jelly="true">
+                  var platformCred = new GlideRecord('sys_user_public_credential');
+				   if(platformCred.isValid()){
+					   platformCred.addActiveQuery();
+					   platformCred.addQuery('user', gs.getUserID());
+					   platformCred.addQuery('type', 'platform');
+				       platformCred.addQuery('origin', "${jvar_origin}");
+					   platformCred.query();
+				   }
+                  platformCred;
+               </g:evaluate>
+               <g:evaluate jelly="true">
+                  var roamingCred = new GlideRecord('sys_user_public_credential');
+				   if(roamingCred.isValid()){
+					   roamingCred.addActiveQuery();
+					   roamingCred.addQuery('user', gs.getUserID());
+					   roamingCred.addQuery('type', 'cross-platform');
+				       roamingCred.addQuery('origin', "${jvar_origin}");
+					   roamingCred.query();
+				   }
+                  roamingCred;
+               </g:evaluate>
+               <j:if test="${jvar_webauthn_enabled}">
+                  <div id="webautnAuthenticators">
+                     <!-- 	Built in authenticator	   -->
+                     <div id="builtInAuthenticatorDiv" class="flex" style="display:none;">
+                        <div style="border: 1px solid #E8EDED; box-sizing: border-box; padding:1%">
+                           <div role="heading" aria-level="1" id="builtInAuthenticatorHeader">
+                                 <h4>${gs.getMessage('Biometric authenticators')} (${platformCred.getRowCount()}) </h4>
+                           </div>
+                           <div>
+                              <div>
+                                 <h5>${gs.getMessage('Device-based authenticators such as WIndows Hello or Apple Touch ID')}</h5>
+                              </div>
+                              <div id="builtInAuthenticator" role="tabpanel" aria-labelledby="builtInAuthenticatorHeader">
+                                 <div>
+                                    <j:while test="${platformCred.next()}">
+                                       <div class="col-sm-12 col-md-12 col-lg-12" style="padding: 16px; margin: 5px;">
+                                          <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                                             <img
+                                                src="internal_authenticator_activated.svg" alt="Built-in authenticator"
+                                                />
+                                          </div>
+                                          <div class="col-sm-10 col-md-10 col-lg-10">
+                                             <div class="col-sm-4 col-md-4 col-lg-4">
+                                                <p>${platformCred.credential_nickname}</p>
+                                                <p>${gs.getMessage('Registration time:')} ${platformCred.registration_time}</p>
+                                             </div>
+                                             <div class="col-sm-6 col-md-6 col-lg-6">
+                                                <a href="#edit">
+                                                   <h4><i id="${platformCred.sys_id}" class="icon-edit" style="float:right;" aria-label="manage" onclick="openManageAuthenticator(this.id,'platform')"></i></h4>
+                                                </a>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </j:while>
+                                 </div>
+                              </div>
+                           </div>
+                           <div>
+                              <a class="navigation_link default-focus-outline" tabindex="0" onclick="openInternalAuthenticatorSetupDialog()" role="button">
+                                 ${gs.getMessage('Register biometric authenticator')}
+                              </a>
+                           </div>
+                        </div>
+                     </div>
+                     <!-- 	Hardware security key	   -->
+                     <div id="roamingAuthenticatorDiv" class="flex" style="display:none;">
+                        <div style="border: 1px solid #E8EDED; box-sizing: border-box; padding:1%">
+                           <div role="heading" aria-level="1" id="securityKeysHeader">
+                                 <h4>${gs.getMessage('Hardware Security keys or Passkeys')} (${roamingCred.getRowCount()})</h4>
+                           </div>
+                           <div>
+                              <div>
+                                 <h5>${gs.getMessage('Hardware security keys such as Yubikey or Passkeys')}</h5>
+                              </div>
+                              <div id="securityKeys" role="tabpanel" aria-labelledby="securityKeysHeader">
+                                 <div>
+                                    <j:while test="${roamingCred.next()}">
+                                       <div class="col-sm-12 col-md-12 col-lg-12" style="padding: 16px; margin: 5px;">
+                                          <div class="col-sm-2 col-md-2 col-lg-2 img square">
+                                             <img
+                                                src="security_key_activated.svg" alt="Security key"
+                                                />
+                                          </div>
+                                          <div class="col-sm-10 col-md-10 col-lg-10">
+                                             <div class="col-sm-4 col-md-4 col-lg-4">
+                                                <p>${roamingCred.credential_nickname}</p>
+                                                <p> ${gs.getMessage('Registration time:')} ${roamingCred.registration_time}</p>
+                                             </div>
+                                             <div class="col-sm-6 col-md-6 col-lg-6">
+                                                <a href="#edit">
+                                                   <h4><i id="${roamingCred.sys_id}" class="icon-edit" style="float:right;" aria-label="manage" onclick="openManageAuthenticator(this.id, 'cross-platform')"></i></h4>
+                                                </a>
+                                             </div>
+                                          </div>
+                                       </div>
+                                    </j:while>
+                                 </div>
+                              </div>
+                           </div>
+                           <div>
+                              <a class="navigation_link default-focus-outline" tabindex="0" onclick="openAuthenticatorKeySetupDialog()" role="button">
+								  ${gs.getMessage('Register Hardware security key or passkey')}
+                              </a>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </j:if>
+            </j:if>
+         </div>
+      </div>
+	  <j:if test="${jvar_can_disable_mfa || jvar_has_remembered_browser}">
+		<div role="region" aria-label="${gs.getMessage('Related Links')}">
+			<h2 class="related_links h4">${gs.getMessage('Related Links')}</h2>
+			<ul class="related_links_container list-unstyled">
+				<j:if test="${jvar_can_disable_mfa}">
+					<li>
+						<a
+							class="navigation_link default-focus-outline"
+							id="disable_multifactor_authentication"
+							tabindex="0"
+							onclick="disableMfa(this)"
+							role="button"
+						>
+							${gs.getMessage('Disable multi-factor authentication')}
+						</a>
+					</li>
+				</j:if>
+				<j:if test="${jvar_has_remembered_browser}">
+					<li>
+						<a
+							class="navigation_link default-focus-outline"
+							id="forget_remembered_browser"
+							tabindex="0"
+							onclick="forgetAllRememberedBrowsers(this)"
+							role="button"
+						>
+							 ${gs.getMessage('Forget all remembered browsers')}
+						</a>
+					</li>
+				</j:if>
+			</ul>
+		</div>
+	</j:if>
+ </div>
+</j:jelly>

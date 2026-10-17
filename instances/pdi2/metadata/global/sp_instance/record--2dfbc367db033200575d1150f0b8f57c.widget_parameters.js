@@ -1,0 +1,3 @@
+{
+	"wishlistTemplate": "wishlist.html"
+}

@@ -1,0 +1,103 @@
+- document: sys_hub_step_instance
+  document_key: f5dddb29fff0221004d0ffffffffffb2
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-09 11:37:12
+  sys_id: 3ddddb29fff0221004d0ffffffffffc4
+  sys_mod_count: '5'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-08-20 12:25:54
+  value: |-
+    (function execute(inputs, outputs) {
+        const SIMPLE_LIST_MACROPONENT_ID = "2b1c080881e05dc63b917044290b233f";
+        const ANALYTICS_LIST_MACROPONENT_ID = "7ff373544303121093711347efb8f23c";
+        const LOG_PREFIX = "[Flow action: Migrate List - Simple Dashboard Widget] ";
+        const migrationUtils = new global.AnalyticsListMigrationUtils();
+        var widgetGr = inputs.widget;
+        try {
+            var widgetSysId = widgetGr.getUniqueValue();
+            if (widgetGr.getValue('component') !== SIMPLE_LIST_MACROPONENT_ID) {
+                gs.error(`${LOG_PREFIX} The given dashboard widget - ${widgetSysId} is not a List - Simple widget and hence is not eligible for migration.`);
+                outputs.ismigrated = false;
+                return;
+            }
+            // Don't migrate if protection policy for the record is read/protected.
+            if(widgetGr.getValue('sys_policy') === "read" || widgetGr.getValue('sys_policy') === "protected") {
+                gs.info(`${LOG_PREFIX} The protection policy for the given dashboard widget - ${widgetSysId} is either read-only or protected and hence is not eligible for migration.`);
+                outputs.ismigrated = false;
+                return;
+            }
+            
+            var simpleListProps = JSON.parse(widgetGr.getValue('component_props'));
+            var analyticsListProps = migrationUtils._getAnalyticsListProps(simpleListProps);
+            widgetGr.setValue('component_props', analyticsListProps);
+            widgetGr.setValue('component', ANALYTICS_LIST_MACROPONENT_ID);
+            // Note that we are using updateNoDomain because widgets are domain separated and we do on the fly migration as system user.
+            if (!widgetGr.updateNoDomain()) {
+                gs.error(`${LOG_PREFIX} Analytics list component migration failed for dashboard widget - ${widgetSysId}`);
+                outputs.ismigrated = false;
+                return;
+            }
+            outputs.ismigrated = true;
+            gs.info(`${LOG_PREFIX} Successfully migrated List - Simple dashboard widget - ${widgetSysId} to Analytics list component.`);
+            
+        } catch (e) {
+            outputs.ismigrated = false;
+            gs.error(`${LOG_PREFIX} Analytics list component migration failed for dashboard widget - ${widgetSysId} - ${e}`);
+        }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_step_instance
+  document_key: f5dddb29fff0221004d0ffffffffffb2
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-09 11:37:12
+  sys_id: 79dddb29fff0221004d0ffffffffffc4
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-09 11:37:12
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: a8ccd3e5fff0221004d0ffffffffffbd
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-09 11:37:12
+  sys_id: 7ddddb29fff0221004d0ffffffffffda
+  sys_mod_count: '3'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2026-08-20 12:25:54
+  value: '{"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON","version":"1.0"}'
+  variable: bddddb29fff0221004d0ffffffffffc7
+- document: sys_hub_action_type_definition
+  document_key: a8ccd3e5fff0221004d0ffffffffffbd
+  order: '3'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-09 11:37:12
+  sys_id: b9dddb29fff0221004d0ffffffffffda
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-09 11:37:12
+  value: '0'
+  variable: b5dddb29fff0221004d0ffffffffffd0
+- document: sys_hub_action_type_definition
+  document_key: a8ccd3e5fff0221004d0ffffffffffbd
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-09 11:37:12
+  sys_id: f5dddb29fff0221004d0ffffffffffda
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-09 11:37:12
+  value: '0'
+  variable: f5dddb29fff0221004d0ffffffffffcc

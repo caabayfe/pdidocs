@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:requires name="scripts/js_includes_catalog.js" includes="true"/>
+    <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true"/>
+    <g:if_polaris>
+       <g:then>
+         <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true"/>
+      </g:then>
+    </g:if_polaris>
+    <g2:evaluate var="jvar_catalog_item">
+       function eval_cat_item() {
+        var cat_item = "";
+		var catItemProducedGr = new GlideRecord("sc_item_produced_record");
+		catItemProducedGr.addQuery("record_key", current.getUniqueValue());
+		catItemProducedGr.query();
+		if (catItemProducedGr.next())
+			cat_item = catItemProducedGr.getValue("producer");
+        return cat_item;
+       }
+       eval_cat_item();
+    </g2:evaluate>
+	
+	<!-- load only the one_to_one variable sets -->
+    <g2:evaluate var="jvar_cat_sets" jelly="true">
+       var jvar_cat_sets = "";
+       var gr = new GlideRecord("io_set_item");
+       gr.addQuery("sc_cat_item", jelly.jvar_catalog_item);
+	   gr.addQuery("variable_set.type", "one_to_one");
+       gr.query();
+       while (gr.next()) {
+          if (jvar_cat_sets.length > 0)
+             jvar_cat_sets += ",";
+          jvar_cat_sets += gr.variable_set;
+       }
+       jvar_cat_sets;
+    </g2:evaluate>
+	
+	<g2:evaluate var="jvar_questionset_read_only" jelly="true">
+		(gs.getProperty('glide.sc.evaluate.variables.write.access', true) == 'true') ? !current.variables.canWrite() : !current.canWrite();
+	</g2:evaluate>
+
+	<div data-sn-macro-sys-id="${jvar_macro_sys_id}">
+		<j2:if test="$[jvar_catalog_item != '']">
+			<j2:set var="jvar_producer_target_record" value="true"/>
+			<g2:client_script type="catalog_question_editor" catalogItem="$[jvar_catalog_item]"/>
+			<g:inline template="catalog_ui_policy.xml"/>
+			<g2:render_component componentName="com.glideapp.servicecatalog.DefaultQuestionEditor"/>
+		</j2:if>
+		<j2:if test="$[jvar_catalog_item == '']">
+			<!--Render old default editor if catalog item is not found -->
+			<g2:render_component componentName="com.glideapp.questionset.DefaultQuestionEditor"/>
+		</j2:if>
+	</div>
+</j:jelly>

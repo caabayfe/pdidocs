@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+   <td style="padding:2px 0px 0px 4px; direction:ltr; color: #666666; padding: 6px 4px 2px 0px;" class="annotation" colspan="99">
+     <div id="sc_ic_add_selected_item_details" class="annotation-wrapper"></div>
+   </td>
+   <!-- <td></td><td id="sc_ic_add_selected_item_details" colspan="99" style="padding:2px 0px 0px 4px; ; color: #666666; padding: 6px 4px 2px 0px;"></td> -->
+   <!-- <div id="sc_ic_add_selected_item_details" colspan="99" style="padding:2px 0px 0px 4px; ; border: 1px solid #6699cc; background-color: #f0f5fb; color: black;"></div> -->
+   <script>
+      var sc_ic_addSelectedItemDetails = Class.create({
+         DETAILS_ELEMENT_ID: "sc_ic_add_selected_item_details",
+         SC_IC_APRVL_DEFN_STAGING: "sc_ic_aprvl_defn_staging",
+         SC_IC_QUESTION: "sc_ic_question",
+
+         updateDetails: function() {
+            var details = this.getDetails();
+            if (details == "")
+               this.hideDetails();
+            else {
+               this.setDetails(details);
+               this.showDetails();
+            }  
+         },
+
+         getDetails: function() {
+            var tableName = g_form.getTableName();
+            var details = "";
+
+            switch(tableName) {
+               case "sc_ic_aprvl_defn_staging":
+                  var aprvlTypeGr = new GlideRecord("sc_ic_aprvl_type_defn_staging");
+                  if (aprvlTypeGr.get(g_form.getValue("sc_ic_aprvl_type_defn_staging")))
+                     details = aprvlTypeGr.description;
+                  break;
+               case "sc_ic_question":
+                  var questionTypeGr = new GlideRecord("sc_ic_question_type");
+                  if (questionTypeGr.get(g_form.getValue("sc_ic_question_type"))) {
+                     details = questionTypeGr.description;
+                  }
+                  break;
+               default:
+                  break;
+            }
+
+            return details;
+         },
+
+         setDetails: function(details) {
+            inner(this.DETAILS_ELEMENT_ID, details);
+         },
+
+         showDetails: function() {
+            show(this.DETAILS_ELEMENT_ID);
+         },
+
+         hideDetails: function() {
+            hide(this.DETAILS_ELEMENT_ID);
+         },
+ 
+         type: "sc_ic_addSelectedItemDetails"
+      });
+   </script>
+</j:jelly>

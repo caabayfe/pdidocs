@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <style>
+        .commentsdiv_empty {background-color: #FFEBE8; margin: 0; padding: 0.5em 0.4em 0.4em 0.4em; display:none;}
+        .commentsdiv_done {display: none; padding: 4px 4px 2px 1px;}
+        .commentsdiv_flagmsg {background-color: #FFEBE8; margin: 0px 7px; padding: 5px 4px; display:none;}
+        .commentsdiv {margin: 0; padding: 0px 0px; min-height: 8em;}
+        .articleComments {width: 100%; min-height: 8em !important; margin-bottom: 3px; padding: 0.4em 0.4em 0.4em 0.4em;}
+        .submit {float: right; padding: 0.2em 0.4em 0.2em 0.4em;}
+    </style>
+
+    <g:evaluate>
+        var commentsdiv_empty = gs.getMessage("Please type feedback before submitting");
+        var commentsdiv_done = gs.getMessage("Your feedback has been submitted, thank you");
+        var commentsdiv_flagmsg = gs.getMessage("Please submit descriptive feedback after flagging an article, or it will not be modified");
+        var submit = gs.getMessage("Submit");
+        var feedback = gs.getMessage("Feedback");
+        var articleComments = gs.getMessage("Add feedback here");
+    </g:evaluate>
+
+    <g2:evaluate var="jvar_not_important" expression="
+        var feedback_property = gs.getProperty('glide.knowman.show_user_feedback', 'onload');
+		var show_user_feedback = (feedback_property.toLowerCase() != 'never');
+        var roles = gs.getProperty('glide.knowman.show_user_feedback.roles');
+        if (roles != null &amp;&amp; roles != '' &amp;&amp; !gs.hasRole(roles))
+            show_user_feedback = false; "/>
+
+    <j2:if test="$[show_user_feedback]">
+        <j2:if test="$[RP.isInteractive()]">
+            <!--span onclick="toggleComments();" style="display: none">
+                <img id="commentsimg" src="images/filter_hide.gifx" style="float:right;" alt="Expand/Collapse Comments"/>
+            </span-->
+            <label class="snc-kb-comment-block-link" for="articleComments">${feedback}</label>
+            <div id="commentsdiv_empty" class="commentsdiv_empty">${commentsdiv_empty}</div>
+            <div id="commentsdiv_done" class="commentsdiv_done">${commentsdiv_done}</div>
+            <div id="commentsdiv_flagmsg" class="commentsdiv_flagmsg">${commentsdiv_flagmsg}</div>
+            <div id="commentsdiv" class="commentsdiv">
+                <textarea id="articleComments" class="articleComments" name="articleComments" placeholder="${articleComments}"></textarea>
+                <button id="feedback_button" class="submit" type="submit" value="sysverb_feedback" onClick="return kbFeedback2('articleComments');" name="not_important">${submit}</button>
+            </div>
+        </j2:if>
+    </j2:if>
+</j:jelly>

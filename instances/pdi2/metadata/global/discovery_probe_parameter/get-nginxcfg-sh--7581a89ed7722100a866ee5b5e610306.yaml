@@ -1,0 +1,106 @@
+_meta:
+  hash: 9957df2ee344c9f0e9b009d786a03a7e8a657a22fb043003fd06370a0efd63b3
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: marjan.marzban
+  sys_created_on: 2014-08-29 20:13:14
+  sys_id: 7581a89ed7722100a866ee5b5e610306
+  sys_mod_count: '34'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_7581a89ed7722100a866ee5b5e610306
+  sys_updated_by: now.discovery.content
+  sys_updated_on: 2025-08-22 08:22:39
+active: 'true'
+name: get-nginxcfg.sh
+probe: 7920e49ed7722100a866ee5b5e610399
+sys_name: get-nginxcfg.sh
+sys_policy: ''
+value: |-
+  #!/bin/sh
+  #
+  CFG_LOCATION=$1
+
+  # If the path names contain some white spaces then the path is wrapped in " " , 
+  # To process we need to remove these characters from the paths.
+  CFG_LOCATION=`echo $CFG_LOCATION | sed -e 's/^\"*//' -e 's/\"*$//'`
+
+  IFS="
+  "
+  # if  /etc/nginx/nginx.conf does not exist, then we try  
+  if [ ! -f "$CFG_LOCATION" ]; then
+  	CFG_LOCATION="/opt/nginx/conf/nginx.conf"
+  	if [ ! -f "$CFG_LOCATION" ]; then
+  		echo "Cannot locate config file: $CFG_LOCATION"
+  		exit 1
+  	fi
+  fi
+
+  # Working on included files in the configuration file
+  INCLUDES=`grep '^[ 	]*include' $CFG_LOCATION`
+  KEYWORDS='server|\{|\}|upstream|location|proxy_pass|round-robin|ip_hash|least_conn|listen'
+  index=0
+  HOSTLIST_SH=""
+
+  # collect all configuration parameters from the included files
+  for i in $INCLUDES
+  do
+      FILEINFO=`echo "${i%?}"`
+      FILE=`echo "$FILEINFO" | sed 's/[ 	]*include[ 	]*//g' | tr -d ' '`
+
+      if [ "$(find $FILE 2>/dev/null)"  != "" ]; then
+          KEYLINES=`grep -v '^[ 	]*#' $FILE | egrep "$KEYWORDS"`
+          for line in $KEYLINES
+          do
+          	LINE=`echo $line | cut -d ':' -f 2-`
+          	echo $LINE
+          	SERVERLINE=`echo $LINE | grep '^[ 	]*server'`
+          	if [ ! -z "$SERVERLINE" -a "$SERVERLINE" != " " ]; then
+          		HOSTLIST_SH="$HOSTLIST_SH
+  $SERVERLINE"
+          		index=`expr $index + 1`
+          	fi     
+          done
+      fi
+  done
+
+  # collect configuration parameters from the config file.
+  grep -v '^[ 	]*#' $CFG_LOCATION | egrep "$KEYWORDS"
+  	
+  # for any domain name used in the parameters we try to get its ip address
+  echo "<HOST-IP-INFORMATION>"
+
+  #Check the domains defined in included files
+  for i in $HOSTLIST_SH
+  do
+  	HOST=`echo "${i%?}" | sed -e 's/^[ 	]*//'`
+  	HOSTINFO=`echo $HOST | sed 's/[ 	][ 	]*/ /g' | cut -d ' ' -f2`
+  	HOSTNAME=`echo $HOSTINFO | cut -d ':' -f1`
+
+      if [ "$(echo $HOSTNAME | grep '[A-Za-z]')" ]; then
+          PINGINFO=`ping -c 1 $HOSTNAME 2>/dev/null | grep PING`
+          IP=`echo $PINGINFO | cut -d '(' -f2 | cut -d ')' -f1`
+          if [ ! -z "$IP" -a "$IP" != " " ]; then
+          	echo $HOSTNAME ':' $IP
+          fi
+      fi
+  done
+
+  #check the domains defined in configuration file
+  HOSTLIST=`grep -v '^[ 	]*#' $CFG_LOCATION | grep '^[ 	]*server'`
+  for i in $HOSTLIST
+  do
+  	HOST=`echo "${i%?}" | sed -e 's/^[ 	]*//'`
+  	HOSTINFO=`echo $HOST | sed 's/[ 	][ 	]*/ /g' | cut -d ' ' -f2`
+  	HOSTNAME=`echo $HOSTINFO | cut -d ':' -f1`
+  		
+  	if [ "$(echo $HOSTNAME | grep '[A-Za-z]')" ]; then
+  		PINGINFO=`ping -c 1 $HOSTNAME 2>/dev/null | grep PING` 
+  		IP=`echo $PINGINFO | cut -d '(' -f2 | cut -d ')' -f1`
+  		if [ ! -z "$IP" -a "$IP" != " " ]; then
+  			echo $HOSTNAME ':' $IP
+  		fi
+  	fi
+  done
+value_script: ''

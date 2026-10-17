@@ -1,0 +1,103 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_window_start" jelly="true">
+        if (!jelly.jvar_cxs_response.meta.sources.interleaved)
+            0;
+        else
+            jelly.jvar_cxs_response.meta.sources.interleaved.window.start;
+    </g:evaluate>
+    <g:evaluate jelly="true">
+        var cxsIsFirstPage = jelly.jvar_window_start == 0;
+        var cxsIsNewRecord = jelly.jvar_cxs_response.request.meta.is_new_record;
+        var cxsResults = jelly.jvar_cxs_response.results;
+        var cxsDocType = jelly.jvar_cxs_response.request.meta.is_doctype;
+        var searchTerm = GlideStringUtil.escapeHTML(jelly.jvar_cxs_response.request.query.freetext);
+        var ariaMsg = "";
+        if (JSUtil.nil(cxsResults)){
+            cxsResults = [];
+            ariaMsg = gs.getMessage("No matching results found for {0}", searchTerm);
+        }
+
+    </g:evaluate>
+    <g:evaluate var="jvar_tableConfig" jelly="true" object="true">
+        //observe the response object in script include cxs_FormatResults
+        var recordId = jelly.jvar_cxs_response.request.meta.form.sys_id;
+        var tableName = jelly.jvar_cxs_response.request.meta.form.tn;
+        var tableActions = cxs_App.getActions("cxs_TableActions");
+        var tableConfig = tableActions.getTableConfig(tableName, recordId);
+        tableConfig;
+    </g:evaluate>
+
+    <g:evaluate jelly="true">
+        //link parent record when order
+        var cxs_link_parent = "";
+        if (cxsIsNewRecord === false) {
+            cxs_link_parent += "${AMP}sysparm_view=catalog_default";
+            if (tableName)
+                cxs_link_parent += "${AMP}sysparm_parent_table=" + tableName;
+            if (recordId)
+                cxs_link_parent += "${AMP}sysparm_parent_sys_id=" + recordId;
+        }
+    </g:evaluate>
+
+    <j:if test="${cxsIsFirstPage}">
+        <g:set_if var="jvar_table_classes" test="${cxsDocType}" true="table table-hover cxs_results_data" false="wideDataList list_table cxs_results_data" />
+        <g:set_if var="jvar_tr_classes" test="${cxsDocType}" true="" false="list_header" />
+        <g:set_if var="jvar_th_classes" test="${cxsDocType}" true="cxs_table_header" false="text-align-left list_hdrcell list_hdr" />
+
+        <table id="cxs_results_data" class="${jvar_table_classes}" aria-label="${gs.getMessage('Related Search Results')}">
+            <caption class="sr-only">Related search ${searchTerm} results</caption>
+            <g:evaluate var="jvar_render_table_headers" expression="cxsResults.length !== 0 ${AND} GlideAccessibility.isEnabled()" />
+            <j:if test="${jvar_render_table_headers}">
+                <thead>
+                    <tr>
+                        <th style="border: 0">${gs.getMessage('Result')}</th>
+                        <th style="border: 0">${gs.getMessage('Description')}</th>
+                        <th style="border: 0">${gs.getMessage('Applied actions')}</th>
+                        <th style="border: 0">${gs.getMessage('Action')}</th>
+                    </tr>
+                </thead>
+            </j:if>
+            <tbody>
+                <j:forEach items="${cxsResults}" var="jvar_cxs_result" indexVar="jvar_cxs_index">
+                    <g:call function="${jvar_result_macro}"
+                            return="jvar_num_cols"
+                            cxs_result="${jvar_cxs_result}"
+                            cxs_index="${jvar_cxs_index}"
+                            cxs_doctype="${cxsDocType}"
+                            cxs_is_new_record="${cxsIsNewRecord}"
+                            cxs_preview_button_active="${jvar_tableConfig.preview_button_active}"
+                    />
+                </j:forEach>
+            </tbody>
+            <tfoot>
+                <j:if test="${cxsResults.length == 0}">
+                    <tr>
+                        <td class="cxs_no_results" id = "aria_msg" data-aria-msg = "${ariaMsg}" style="padding: 30px 0px 30px 0px;">
+                            <div>${gs.getMessage("No matching results found for")}${SP}<span style="font-weight: bold">${searchTerm}</span></div>
+                        </td>
+                    </tr>
+                </j:if>
+            </tfoot>
+        </table>
+        <j:if test="${cxsResults.length != 0}">
+            <div id="cxs_show_more_container" style="display:none" class="cxs_show_more">
+                <button class="btn btn-default" id="cxs_show_more" onclick="cxs_onShowMore(this); return false;">${gs.getMessage("Show more")}</button>
+            </div>
+        </j:if>
+
+    </j:if>
+    <j:if test="${!cxsIsFirstPage}">
+        <j:forEach items="${cxsResults}" var="jvar_cxs_result" indexVar="jvar_cxs_index">
+            <g:call function="${jvar_result_macro}"
+                    cxs_result="${jvar_cxs_result}"
+                    cxs_index="${jvar_window_start}"
+                    cxs_doctype="${cxsDocType}"
+                    cxs_is_new_record="${cxsIsNewRecord}"
+                    cxs_preview_button_active="${jvar_tableConfig.preview_button_active}"
+             />
+            <g:evaluate var="jvar_window_start" jelly="true">
+                parseInt(jelly.jvar_window_start) + 1;
+            </g:evaluate>
+        </j:forEach>
+    </j:if>
+</j:jelly>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/js_includes_amb_recordwatcher.js" includes="true" />
+	
+	<g2:evaluate var="jvar_oc_log_escalation" expression="gs.getProperty('com.snc.on_call_rotation.log_escalations', false);" />
+	<g2:evaluate var="jvar_color_accent">
+		var map = CSSPropertiesRepository.getSessionProperties();
+		map["$color-accent"];
+	</g2:evaluate>
+	
+	<g2:evaluate var="jvar_oc_esc_records" object="true" jelly="true">
+		var ocEscalationGr = null;
+		if (gs.tableExists('on_call_escalation')) {
+			ocEscalationGr = new GlideRecord('on_call_escalation');
+			ocEscalationGr.addQuery('source', RP.getParameterValue("sys_id") + "");
+			ocEscalationGr.query();
+		}
+		ocEscalationGr;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_has_esc_records" jelly="true">
+		var hasEscRecords = false;
+		if (jelly.jvar_oc_esc_records)
+			if (jelly.jvar_oc_esc_records.hasNext())
+				hasEscRecords = true;
+		hasEscRecords;
+	</g2:evaluate>
+	<g2:evaluate var="jvar_has_active_escalations" jelly="true">
+		var isActive = false;
+		if (jelly.jvar_oc_esc_records)
+			while (jelly.jvar_oc_esc_records.next()) {
+				if (jelly.jvar_oc_esc_records.active) {
+					isActive = jelly.jvar_oc_esc_records.active;
+					break;
+				}
+			}
+		isActive;
+	</g2:evaluate>
+	
+	<g:evaluate var="jvar_guid" expression="gs.generateGUID(this);" />
+	<j:set var="jvar_n" value="esc_tracking_${jvar_guid}:${ref}"/>
+	<a id="${jvar_n}"
+		name="${jvar_n}" 
+		tabindex="0"
+		role="button"
+		onclick="showEscalationTrackingModal()"
+		title="${gs.getMessage('Track On-Call Escalation')}"
+		aria-label="${gs.getMessage('Show On Call Escalation Tracking')}"
+		class="reference_decoration btn btn-default icon-on-call-live-escalation hide-oc-live-esc-icon">
+	</a>
+	
+	<style>
+		.live-escalation-active {
+			color: $[jvar_color_accent] !important;
+			border-color: $[jvar_color_accent];
+		}
+		.hide-oc-live-esc-icon {
+			display: none !important;
+		}
+		.show-oc-live-esc-icon {
+			display: inline-block;
+		}
+		
+		body.-polaris .show-oc-live-esc-icon {
+			display: inline-flex;
+		}
+	</style>
+	
+	<script>
+		function showEscalationTrackingIcon(showIcon) {
+			var e = gel('${jvar_n}');
+			if (showIcon) {
+				e.classList.remove('hide-oc-live-esc-icon');
+				e.classList.add('show-oc-live-esc-icon');
+			} else {
+				e.classList.remove('show-oc-live-esc-icon');
+				e.classList.add('hide-oc-live-esc-icon');
+			}
+		}
+		
+		function updateTitle(msg) {
+			var e = gel('${jvar_n}');
+			e.setAttribute('data-original-title', msg);
+			e.setAttribute('title', msg);
+			e.setAttribute('aria-label', msg);
+		}
+		
+		function changeLiveEscColor(isLiveEscalation) {
+			var e = gel('${jvar_n}');
+			if (!e)
+				return;
+			if (isLiveEscalation) {
+				e.classList.add('live-escalation-active');
+				getMessage("Track On-Call Escalation (Live)", updateTitle);
+			} else {
+				e.classList.remove('live-escalation-active');
+				getMessage("Track On-Call Escalation", updateTitle);
+			}
+		}
+		
+		function triggerRecordWatcher() {
+			if (!$[jvar_oc_log_escalation])
+				return;
+		
+			if ($[jvar_oc_log_escalation] $[AMP]$[AMP] $[jvar_has_esc_records]) {
+				showEscalationTrackingIcon(true);
+				changeLiveEscColor($[jvar_has_active_escalations]);
+			}
+		
+			var ambClient = window.g_ambClient || window.top.g_ambClient;
+			['connection.opened',
+			'connection.closed',
+			'connection.broken',
+			'session.logged.in',
+			'session.logged.out',
+			'session.invalidated'
+			].forEach(function (e) {
+				ambClient.subscribeToEvent(e, function() {
+				});
+			});
+
+			var rw =  new amb.RecordWatcher(ambClient);
+			var sysId = g_form.getUniqueValue();
+			var filter = "table=" + g_form.getTableName() + "^source=" + sysId;
+			var watcherChannel = rw.getChannel("on_call_escalation", filter);
+			watcherChannel.subscribe(function(message) {
+				if (message.data.action === "entry" $[AMP]$[AMP] message.data.operation === "insert") {
+					showEscalationTrackingIcon(true);
+					if (message.data.record.active.value === "true")
+						changeLiveEscColor(true);
+				} else if (message.data.action === "change" $[AMP]$[AMP] message.data.operation === "update") {
+					changeLiveEscColor(message.data.record.active.value === "true");
+				}
+			});
+		}
+		window.NOW = window.NOW || {};
+		window.NOW.on_call = window.NOW.on_call || {};
+		window.NOW.on_call.triggerRecordWatcher = triggerRecordWatcher;
+		
+		function dismissModal() {
+			setTimeout(function() {
+				var modal = GlideModal.prototype.get("oc_live_and_past_escalations");
+				modal.destroy();
+			}, 0);
+		}
+
+		function isModalOutsideViewport (el) {
+			if (el $[AMP]$[AMP] (el.width() + el.offset().left) > this.window.innerWidth)
+				return true;
+			return false;
+		}
+		function showEscalationTrackingModal() {
+			var modal = new GlideModal("oc_live_and_past_escalations");
+			ScriptLoader.getScripts('/scripts/incident/glide_custom_modal_accessibility.js', function() {
+				var url = "/$oc_live_and_past_escalations.do?sysparm_full_webrtc=true$[AMP]sysparm_group_id=";
+				url = url + g_form.getValue('assignment_group');
+				url = url + '$[AMP]sysparm_task_table=' + g_form.getTableName();
+				url = url + '$[AMP]sysparm_task_sys_id=' + g_form.getUniqueValue();
+				url = url + "$[AMP]sysparm_stack=no";
+				modal.template = glideCustomModalTemplate;
+				modal.setWidth(807);
+
+				modal.renderIframe(url, function() {
+					var modalContainer = this.parent.jQuery('#oc_live_and_past_escalations');
+					modalContainer.find(".modal-dialog").width("800");
+					modalContainer.find(".modal-content").height("625");
+					modalContainer.find("iframe").height("625");
+
+					var modalDialogEl = modalContainer.find(".modal-dialog");
+					var scrollable = isModalOutsideViewport.bind(this);
+					if (scrollable(modalDialogEl)) {
+						modalContainer.css({
+							"overflow-x": "scroll"
+						});
+					}
+					this.parent.jQuery('#oc_live_and_past_escalations .modal-body > div').css({"top": "0", "bottom": "0", "left": "0", "right": "0"});
+				});
+			});
+			modal.on("beforeclose", function() {
+				NOW.CustomEvent.fireAll("oc_live_esalation.before_modal_close");
+			});
+			NOW.CustomEvent.observe("DismissOCLiveGlideModal", dismissModal);
+		}
+	</script>
+</j:jelly>

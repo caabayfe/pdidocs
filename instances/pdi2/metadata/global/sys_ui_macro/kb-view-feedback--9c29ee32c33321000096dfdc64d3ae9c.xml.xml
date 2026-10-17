@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_not_important" expression="
+		var displayFeedbackOn = 'none';
+		var displayFeedbackOff = '';
+		kbViewInfo.feedbackInitialDisplay = true;
+		if (kbViewInfo.feedbackInitialDisplay) {
+			displayFeedbackOn = '';
+			displayFeedbackOff = 'none';
+		}
+	" />
+	<input type="hidden" aria-hidden="true" id="sys_id" value="${knowledgeRecord.sys_id}" />
+	<input type="hidden" aria-hidden="true" id="article_flag" value="" />
+	<input type="hidden" aria-hidden="true" id="view_id" value="" />
+	<input type="hidden" aria-hidden="true" id="sysparm_search" value="" />
+	<input type="hidden" aria-hidden="true" id="ts_query_id" value="${tsQueryId}" />
+
+	<j:if test="${feedbackRecords.getRowCount() != 0}">
+	<div id="comments_section" class="snc-comments-section" style="display:$[displayFeedbackOn];" role ="list" aria-label="${gs.getMessage('Comments')}">
+		<j:while test="${feedbackRecords.next()}">
+			<div class="snc-kb-comment" role ="listitem" aria-label="${HTML:feedbackRecords.user.getDisplayValue()} ${gs.getMessage('comment')}">
+				<div class="snc-kb-comment-by">
+					<img src="images/icons/feedback.gifx" alt="${gs.getMessage('Feedback')}" aria-label="${gs.getMessage('Feedback')}" />
+					<span class="snc-kb-comment-by-title">$[SP]${gs.getMessage("Posted by")}</span>
+					<span class="snc-kb-comment-by-user">$[SP]${HTML:feedbackRecords.user.getDisplayValue()}</span>
+					<j:if test="${isMobileView == true}">
+						<div></div>
+					</j:if>
+					<span class="snc-kb-comment-by-title">$[SP]${new GlideTimeAgo().getField(feedbackRecords, "sys_created_on");}</span>
+				</div>
+				<div class="snc-kb-comment-by-text"><g2:no_escape>${HTML:kbViewInfo.getFeedbackComment(feedbackRecords)}</g2:no_escape></div>
+			</div>
+		</j:while>
+	</div>
+	</j:if>
+	<j:if test="${feedbackRecords.getRowCount() == 0}">
+	<div id="comments_section" class="snc-comments-section" style="display:$[displayFeedbackOn];">
+		</div>
+	</j:if>
+	<g:inline template="kb_view_feedback_entry" />
+</j:jelly>

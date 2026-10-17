@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+		var quantity_style = jelly.jvar_show_quantity == "true" ? "" : "display: none;";
+    </g:evaluate>
+    <j:if test="${jvar_cat_item.showPrice() || jvar_cat_item.showRecurringPrice()}">
+        <tr>
+            <td>
+                <span id="price_label_span" style="${jvar_label_display}">
+                    <strong>
+                        ${gs.getMessage('price')}
+                    </strong>
+                </span>
+            </td>
+            <j:if test="${jvar_cat_item.showPrice()}">
+                <td class="cart_price_cell">
+                    <span id="price_span" style="${jvar_display}">
+                        ${jvar_display_price}
+                    </span>
+                </td>
+            </j:if>            
+            <j:if test="${!jvar_cat_item.showPrice()}">
+                <td style="font-size:smaller;" class="cart_price_cell">
+                    <span id="recurring_price_span">
+                        + ${jvar_display_recurring_price}
+                    </span>
+                    <span id="recurring_frequency_span">
+                        ${jvar_recurring_frequency}
+                    </span>
+                </td>
+            </j:if>
+        </tr>
+        <j:if test="${jvar_cat_item.showPrice() &amp;&amp; jvar_cat_item.showRecurringPrice()}">
+            <tr>
+                <td colspan="2" style="font-size:smaller;" class="cart_price_cell">
+                    <span id="recurring_price_span">
+                        + ${jvar_display_recurring_price}
+                    </span>
+                    <span id="recurring_frequency_span">
+                        ${jvar_recurring_frequency}
+                    </span>
+                </td>
+            </tr>
+        </j:if>
+    </j:if>
+	<tr style='${quantity_style}'>
+		<td>
+			<span id="quantity_label_span">
+				<strong>
+					<label for="quantity" style='${quantity_style}'>${gs.getMessage('quantity')}</label>
+				</strong>
+			</span>
+		</td>
+		<td>
+			<span id="quantity_span">
+				<g:evaluate expression="var choice_list = GlideScriptChoiceList.getChoiceList('sc_cart_item', 'quantity');" />
+				<select id="quantity" class="form-control" onchange="orderItemWidget.calcPrice()" style='${quantity_style}'>
+					<g:options choiceList="${choice_list}" choiceValue="${jvar_cart_item.quantity}" />
+				</select>
+			</span>
+		</td>
+	</tr>
+</j:jelly>

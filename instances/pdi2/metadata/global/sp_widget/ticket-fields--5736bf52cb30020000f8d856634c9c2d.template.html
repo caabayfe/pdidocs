@@ -1,0 +1,40 @@
+<div ng-if="data.canRead" class="panel b">
+  <div class="panel-heading bg-primary panel-la-jolla-default">
+    <div ng-init="spSearch.targetRequests()">
+      <sp-c-link target="form" table="data.table" id="data.sys_id"></sp-c-link>
+    </div>
+    <h2 class="sr-only">${Ticket details}</h2>
+    <span ng-if="data.agent" >
+      ${Agent working on this {{data.tableLabel}}}:
+      <div>{{data.agent}}</div>
+    </span>
+    <span aria-live="assertive">
+    <span ng-if="!data.agent && data.agentPossible" >${Your request has been submitted}</span>
+    </span>
+    <span ng-if="!data.agentPossible">${{{data.tableLabel}} record details}</span>
+  </div>
+
+  <div class="panel-body">
+    <dl class="ticket-fields" ng-if="data.fields.length > 0">
+        <dt class= "col-md-6 col-sm-12 col-xs-6 break-word"
+            ng-if="field.value && (field.type != 'decimal' || field.type == 'decimal' && field.value != 0)"
+            ng-repeat-start="field in data.fields">{{field.label}}</dt>
+        <dd class= "col-md-6 col-sm-12 col-xs-6 break-word"
+            ng-repeat-end ng-switch="field.type"
+            ng-if="field.value && (field.type != 'decimal' || field.type == 'decimal' && field.value != 0)">
+          <div ng-switch-when="glide_date_time" title="{{field.display_value}}">
+            <sn-time-ago timestamp="::field.value"></sn-time-ago>
+          </div>
+          <div ng-switch-when="multi_small"><pre class="multi-lines">{{field.display_value}}</pre></div>
+          <div ng-switch-default><span class="pre-wrap">{{field.display_value}}</span></div>
+        </dd>
+    </dl>
+    <sp-widget widget="data.variableSummarizerWidget"></sp-widget>
+  </div>
+
+  <div ng-if="data.agentPossible && !data.agent && options.pickup_msg" class="panel-footer">
+    <div id="ticket_fields_footer" class="text-center text-muted" style="font-style: italic;" ng-bind-html="data.pickupMsg">
+    </div>
+  </div>
+
+</div>

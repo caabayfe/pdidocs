@@ -1,0 +1,173 @@
+_meta:
+  hash: 00a33056b6ce66b3d74396fdd9a928a235d9be144ea32affb8cea620f00ae632
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_graphql_schema
+  sys_created_by: admin
+  sys_created_on: 2023-01-11 14:52:24
+  sys_id: 590c160677102d90612a5305cf5a99ee
+  sys_mod_count: '50'
+  sys_package: c071b2bf8c5103100a22deb6dd2b4eab
+  sys_scope: global
+  sys_update_name: sys_graphql_schema_590c160677102d90612a5305cf5a99ee
+  sys_updated_by: admin
+  sys_updated_on: 2023-04-13 10:57:18
+active: 'true'
+application_namespace: now
+contextual_acl_max_depth: ''
+enforce_acl: 638e44107734e110612a5305cf5a995a
+name: DataExtraction
+namespace: dataExtraction
+paths: AttachmentData:attachmentSysId,AttachmentData:content,AttachmentListField:attachmentList,AttachmentListField:name,AttachmentMetadata:attachmentByteSize,AttachmentMetadata:attachmentName,AttachmentMetadata:attachmentSysId,AttachmentMetadata:attachmentType,DependentFieldValueMappingRecord:dependent_value,DependentFieldValueMappingRecord:value,DependentFieldValueMappingsResult:pagination_data,DependentFieldValueMappingsResult:records,DependentFieldsResult:dependent_label,DependentFieldsResult:label,MultiValuedField:name,MultiValuedField:values,PaginationDataOutput:batch_count,PaginationDataOutput:limit,PaginationDataOutput:offset,PaginationDataOutput:table_rotation_info,PaginationDataOutput:total_extracted_attachments,PaginationDataOutput:total_extracted_records,PaginationDataOutput:total_number_records_to_process,Query:attachmentData,Query:dependentFieldValueMappings,Query:dependentFields,Query:trainingData,SingleValuedField:name,SingleValuedField:value,TableRotationInfoOutput:active,TableRotationInfoOutput:rotation_offset,TableRotationInfoOutput:rotation_schedule,TrainingDataBatch:pagination_data,TrainingDataBatch:records,TrainingDataBatch:tag,TrainingDataExtractionError:errorMessages,TrainingDataExtractionError:errorType,TrainingDataRecord:features,TrainingDataRecord:labels,TrainingDataRecord:other_features,TrainingDataRecord:source_sys_id,TrainingDataRecord:sys_created_on,TrainingDataRecord:target_sys_id
+requires_acl_authorization: 'true'
+requires_authentication: 'true'
+requires_snc_internal_role: 'true'
+schema: |-
+  schema {
+  	query: Query
+  }
+
+  input TrainingDataExtractionInput {
+
+  	parameters: String!
+  	pagination_data: PaginationDataInput
+  }
+
+  input DependentFieldsInput {
+  	label_table: String!
+  	labels: [String!]!
+  	domain_sys_id: String
+  }
+
+  input DependentFieldValueMappingsInput {
+  	label_table: String!
+  	dependent_label: String!
+  	domain_sys_id: String
+  	pagination_data: PaginationDataInput!
+  }
+
+  type Query {
+
+  	# Get training data
+  	trainingData(trainingDataExtractionInput: TrainingDataExtractionInput!): TrainingDataExtractionResult
+
+  	# Get the content of the attachments from their ids
+  	attachmentData(attachmentSysIdList: [String!]!): [AttachmentData]!
+
+  	# Identify fields with dependent relationship
+  	dependentFields(dependentFieldsInput: DependentFieldsInput!): [DependentFieldsResult]
+
+  	# Get detailed value mappings between the two fields with dependency
+  	dependentFieldValueMappings(dependentFieldValueMappingsInput: DependentFieldValueMappingsInput!): DependentFieldValueMappingsResult
+  }
+
+  # Supported field types
+  interface Field {
+  	name: String!
+  }
+
+  type SingleValuedField implements Field {
+  	name: String!
+  	value: String!
+  }
+
+  type MultiValuedField implements Field {
+  	name: String!
+  	values: [String]!
+  }
+
+  type AttachmentListField implements Field {
+  	name: String!
+  	attachmentList: [AttachmentMetadata]!
+  }
+
+  # Pagination Data
+  input PaginationDataInput {
+  	batch_count: Int
+  	total_number_records_to_process: Int
+  	total_extracted_records: Int
+  	total_extracted_attachments: Int
+  	offset: Int
+  	limit: Int
+  	table_rotation_info: TableRotationInfoInput
+  }
+
+  input TableRotationInfoInput {
+  	active: Boolean
+  	rotation_schedule: String
+  	rotation_offset: Int
+  }
+
+  type PaginationDataOutput {
+  	batch_count: Int
+  	total_number_records_to_process: Int
+  	total_extracted_records: Int
+  	total_extracted_attachments: Int
+  	offset: Int
+  	limit: Int
+  	table_rotation_info: TableRotationInfoOutput
+  }
+
+  type TableRotationInfoOutput {
+  	active: Boolean
+  	rotation_schedule: String
+  	rotation_offset: Int
+  }
+
+  # Training Data
+  type TrainingDataBatch {
+  	tag: String
+  	pagination_data: PaginationDataOutput
+  	records: [TrainingDataRecord]!
+  }
+
+  type TrainingDataRecord {
+  	target_sys_id: ID!
+  	source_sys_id: ID
+  	sys_created_on: String!
+  	features: [SingleValuedField]!
+  	other_features: [Field]!
+  	labels: [SingleValuedField]!
+  }
+
+  # Attachment metadata type 
+  type AttachmentMetadata {
+  	attachmentSysId: ID!
+  	attachmentType: String
+  	attachmentName: String!
+  	attachmentByteSize: Int
+  }
+
+  # Attachment content type 
+  type AttachmentData {
+  	attachmentSysId: ID!
+  	content(chunked: Boolean): [String]
+  }
+
+
+  type TrainingDataExtractionError {
+
+  	errorType: String!
+  	errorMessages: [String!]!
+  }
+
+  union TrainingDataExtractionResult = TrainingDataBatch | TrainingDataExtractionError
+
+  # Dependent data output
+  type DependentFieldsResult {
+  	label: String!
+  	dependent_label: String!
+  }
+
+  type DependentFieldValueMappingRecord {
+  	value: String
+  	dependent_value: String
+  }
+
+  type DependentFieldValueMappingsResult {
+  	records: [DependentFieldValueMappingRecord]!
+  	pagination_data: PaginationDataOutput!
+  }
+sys_name: TaskIntelligenceDataExtraction
+sys_policy: ''
+type_names: Field,TrainingDataExtractionResult

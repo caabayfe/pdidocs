@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:ui_form>
+  <input type="hidden" name="hold_or_submit" id="hold_or_submit" value=""/>
+  <input type="hidden" name="start_error" id="start_error" value="false"/>
+  <input type="hidden" name="end_error" id="end_error" value="false"/>
+  <j2:if test="$[!empty(sysparm_domain)]">
+	<input type="hidden" id="sysparm_domain" name="sysparm_domain" value="${sysparm_domain}"/>
+  </j2:if>
+  <j2:if test="$[!empty(sysparm_domain_scope)]">
+	<input type="hidden" id="sysparm_domain_scope" name="sysparm_domain_scope" value="${sysparm_domain_scope}" />
+  </j2:if>
+
+  <!-- Get values from dialog preferences passed in -->
+  <j:set var="jvar_renew_contact" value="${RP.getWindowProperties().get('renew_contact')}" />
+  <j:set var="jvar_renew_date" value="${RP.getWindowProperties().get('renew_date')}" />
+  <j:set var="jvar_renew_end_date" value="${RP.getWindowProperties().get('renew_end_date')}" />
+  <j:set var="jvar_renew_option" value="${RP.getWindowProperties().get('renew_option')}" />
+  <j:set var="jvar_cost_type" value="${RP.getWindowProperties().get('cost_type')}" />
+  <j:set var="jvar_cost_adjustment" value="${RP.getWindowProperties().get('cost_adjustment')}" />
+  <j:set var="jvar_cost_percentage" value="${RP.getWindowProperties().get('cost_percentage')}" />
+  <j:set var="jvar_short_text" value="${RP.getWindowProperties().get('short_text')}" />
+  <j:set var="jvar_sys_id" value="${RP.getWindowProperties().get('sys_id')}" />
+  <j:set var="jvar_approver" value="${RP.getWindowProperties().get('approver')}" />
+  <j:set var="jvar_starts" value="${RP.getWindowProperties().get('contract_start_date')}" />
+
+	<g:evaluate>
+		var contractGr = new GlideRecord("ast_contract");
+		var fields = ['renewal_contact','renewal_date','renewal_end_date','renewal_options',
+		 'cost_adjustment_type','cost_adjustment','cost_adjustment_percentage',
+		 'starts','approver'];
+
+		var contractLabels = {};
+		fields.forEach(function (fieldName) {
+			contractLabels[fieldName] = contractGr.getElement(fieldName).getLabel();;
+		});
+		contractLabels;
+	</g:evaluate>
+
+   <input type="hidden" name="contract_starts" id="contract_starts" value="${jvar_starts}"/>
+
+   <!-- Set up form fields and labels -->
+   <table width="100%">
+     <tr id="description_row" valign="top">
+        <th colspan="2">
+           ${jvar_short_text}
+        </th>
+     </tr>
+
+     <tr>
+
+	   <td width="50%">
+	   <j:set var="jvar_mandatory" value="true"/>
+       <div class="form-group is-required form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label>
+			 ${contractLabels.approver}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7" >
+           <g:evaluate var="jvar_request" jelly = "true">
+             var userId = jelly.jvar_approver;
+	         var appUser = new GlideRecord("sys_user");
+               appUser.addQuery("sys_id", userId);
+               appUser.query();
+               appUser.next();
+               appUser;
+           </g:evaluate>
+           <j:if test="${jvar_approver !=''}">
+             <g:ui_reference label='${gs.getMessage("approver")}' mandatory="true" name="approver" table="sys_user" value="${appUser.sys_id}" displayValue="${appUser.name}" />
+           </j:if>
+           <j:if test="${jvar_approver ==''}">
+             <g:ui_reference label='${gs.getMessage("approver")}' mandatory="true" name="approver" table="sys_user" />
+           </j:if>
+	     </div>
+       </div>
+	   </td>
+
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label for="cost_type">
+			 ${contractLabels.cost_adjustment_type}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <select class="form-control" name="cost_type" id="cost_type" value="${jvar_cost_type}">
+                <j:if test="${jvar_cost_type == ''}">
+                <option selected="true" value=""> ${gs.getMessage("--None--")} </option>
+                </j:if>
+                <j:if test="${jvar_cost_type != ''}">
+                <option value=""> ${gs.getMessage("--None--")} </option>
+                </j:if>
+                <j:if test="${jvar_cost_type == 'fixed'}">
+                <option selected="true" value="fixed"> ${gs.getMessage("Fixed")} </option>
+                </j:if>
+                <j:if test="${jvar_cost_type != 'fixed'}">
+                <option value="fixed"> ${gs.getMessage("Fixed")} </option>
+                </j:if>
+                <j:if test="${jvar_cost_type == 'manual'}">
+                <option selected="true" value="manual"> ${gs.getMessage("Manual")} </option>
+                </j:if>
+                <j:if test="${jvar_cost_type != 'manual'}">
+                <option value="manual"> ${gs.getMessage("Manual")} </option>
+                </j:if>
+                <j:if test="${jvar_cost_type == 'cpi'}">
+                <option selected="true" value="cpi"> ${gs.getMessage("CPI")} </option>
+                </j:if>
+                <j:if test="${jvar_cost_type != 'cpi'}">
+                <option value="cpi"> ${gs.getMessage("CPI")} </option>
+                </j:if>
+           </select>
+	     </div>
+       </div>
+	   </td>
+	   </tr>
+	   <tr><td style="height: 4px"></td></tr>
+	   <tr>
+		   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label for="renew_option">
+			 ${contractLabels.renewal_options}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+          <select class="form-control" name="renew_option" id="renew_option" value="${jvar_renew_option}" onchange="calcEndDate();checkStartDate();">
+                <j:if test="${jvar_renew_option == ''}">
+                <option selected="true" value=""> ${gs.getMessage("--None--")} </option>
+                </j:if>
+                <j:if test="${jvar_renew_option != ''}">
+                <option value=""> ${gs.getMessage("--None--")} </option>
+                </j:if>
+                <j:if test="${jvar_renew_option == '1 year'}">
+                <option selected="true" value="1"> ${gs.getMessage("1 year")} </option>
+                </j:if>
+                <j:if test="${jvar_renew_option != '1 year'}">
+                <option value="1"> ${gs.getMessage("1 year")} </option>
+                </j:if>
+                <j:if test="${jvar_renew_option == '2 years'}">
+                <option selected="true" value="2"> ${gs.getMessage("2 years")} </option>
+                </j:if>
+                <j:if test="${jvar_renew_option != '2 years'}">
+                <option value="2"> ${gs.getMessage("2 years")} </option>
+                </j:if>
+                <j:if test="${jvar_renew_option == '3 years'}">
+                <option selected="true" value="3"> ${gs.getMessage("3 years")} </option>
+                </j:if>
+                <j:if test="${jvar_renew_option != '3 years'}">
+                <option value="3"> ${gs.getMessage("3 years")} </option>
+                </j:if>
+           </select>
+
+	     </div>
+       </div>
+	   </td>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label for="cost_percent">
+			 ${contractLabels.cost_adjustment_percentage}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <input class="form-control decimal" type="text" id="cost_percent" name="cost_percent" value="${jvar_cost_percentage}" onclick="select();"
+ onchange="this.value=formatNumber(this.value);onChange('ast_contract. cost_adjustment_percentage');costPercentAdjust();"/>
+	     </div>
+       </div>
+	   </td>
+	</tr>
+	<tr><td style="height: 2px"></td></tr>
+    <tr>
+      <td colspan="2">
+         <div id="startErrorMessage" class="notification-danger"> </div>
+      </td>
+    </tr>
+	<tr><td style="height: 2px"></td></tr>
+    <tr>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label for="start_date">
+			 ${contractLabels.renewal_date}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+			 <g:ui_date name="start_date" id="start_date" value="${jvar_renew_date}"  />
+	     </div>
+       </div>
+	   </td>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label for="cost_adjust">
+			 ${contractLabels.cost_adjustment}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+           <input class="form-control decimal" type="text" id="cost_adjust" name="cost_adjust" value="${RP.getWindowProperties().get('cost_adjustment')}"
+                   onclick="select();" onchange="this.value=formatNumber(this.value);onChange('ast_contract.cost_adjustment');costAdjustPercent();"/>
+	     </div>
+       </div>
+	   </td>
+       </tr>
+       <tr><td style="height: 4px"></td></tr>
+       <tr>
+	   <td width="50%">
+       <div class="form-group form-horizontal">
+	     <div class="col-md-5 text-right">
+		   <g:form_label for="end_date">
+			 ${contractLabels.renewal_end_date}
+		   </g:form_label>
+	     </div>
+	     <div class="col-md-7">
+			<g:ui_date name="end_date" id="end_date" value="${jvar_renew_end_date}" />
+	     </div>
+       </div>
+	   </td>
+
+		   <td width="50%"></td>
+     </tr>
+	 <tr><td style="height: 2px"></td></tr>
+<tr>
+    <td colspan="2">
+        <div id="endErrorMessage" class="notification-danger"></div>
+    </td>
+</tr>
+     <tr><td style="height: 2px"></td></tr>
+     <tr id="dialog_buttons">
+        <td colspan="2" align="right">
+           <div class="modal-footer">
+           <input type="hidden" name="current_sys_id" value="${RP.getWindowProperties().get('sys_id')}"/>
+
+	<g:dialog_button
+		id="cancel"
+		title="${gs.getMessage('Cancel')}"
+		type="${jvar_cancel_type}"
+		style_class="btn btn-default"
+		onclick="return cancelReview();"
+                style="min-width: 5em;">${gs.getMessage('Cancel')}</g:dialog_button>
+	<g:dialog_button
+		id="hold_for_review"
+		title="${gs.getMessage('Save changes but not submitting for review')}"
+		type="${jvar_cancel_type}"
+		style_class="btn btn-default"
+		onclick="return holdReview();"
+                style="min-width: 5em;">${gs.getMessage('Save')}</g:dialog_button>
+	<g:dialog_button
+		id="submit_for_review"
+		title="${gs.getMessage('Will submit this request for review')}"
+		type="${jvar_cancel_type}"
+		style_class="btn btn-primary"
+		onclick="return submitReview();"
+                style="min-width: 5em;">${gs.getMessage('Submit For Review')}</g:dialog_button>
+		</div>
+       </td>
+     </tr>
+  </table>
+</g:ui_form>
+</j:jelly>

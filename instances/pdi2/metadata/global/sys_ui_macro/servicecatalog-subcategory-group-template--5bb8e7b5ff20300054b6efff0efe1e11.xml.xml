@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide">
+<tbody data-sn-macro-sys-id="${jvar_macro_sys_id}">
+<tr class="categories_section">
+   <td>
+      <table style="width: 100%; table-layout: fixed; border-collapse: collapse; background: transparent;" cellpadding="0" cellspacing="0" role="region" aria-label="${jvar_header_bar_title}">
+         <j:set var="jvar_iter_count" value="${0}"/>
+         <j:while test="${jvar_categories.hasNext()}">
+            <j:set var="jvar_ignore" value="${jvar_categories.next()}"/>
+
+            <g:evaluate var="jvar_can_view_category" jelly="true">
+                var jvar_can_view_category = GlideappCategory.get(jelly.jvar_categories.sys_id).canView();
+                jvar_can_view_category;
+            </g:evaluate>
+
+            <j:if test="${jvar_can_view_category}">
+
+            <g:evaluate var="jvar_subcat_url" jelly="true">
+              var params = {"sysparm_parent_sys_id":jelly.RP.getParameterValue("sysparm_parent_sys_id"), "sysparm_parent_table":jelly.RP.getParameterValue("sysparm_parent_table"), "sysparm_view":jelly.RP.getParameterValue("sysparm_view")};
+              var jvar_subcat_url = GlideappCatalogURLGenerator.getCategoryLinkWithParams(jelly.sysparm_catalog, jelly.sysparm_catalog_view, jelly.sysparm_view, jelly.jvar_categories.sys_id, jelly.sysparm_no_checkout, jelly.sysparm_processing_hint, params);
+			  if (jelly.sysparm_cartless == 'true')
+				jvar_subcat_url += '&amp;sysparm_cartless=true';
+              jvar_subcat_url;
+			</g:evaluate>
+            <j:if test="${jvar_iter_count == 0}">
+               <g:no_escape>
+                  ${NS:jvar_open_tr}
+               </g:no_escape>
+               <td style="width: 0px;"><div style="font-size: 0px; height: 60px;"></div></td>
+            </j:if>
+            <td onmouseover="this.className = 'sc_category_cell_hover'" onmouseout="this.className = 'sc_category_cell'" style="width: 50%; vertical-align: top; border: 0px;" class="sc_category_cell" 
+                onclick="document.location.href='${jvar_subcat_url}'">
+                      <div class="category_title_div">
+                        <a href="${jvar_subcat_url}">
+                          ${jvar_categories.getDisplayValue('title')}
+                        </a>
+                      </div>
+                      <div style="font-size: smaller">
+                        ${jvar_categories.getDisplayValue('description')}
+                      </div>
+            </td>
+            <j:set var="jvar_inc" value="${true}"/>
+            <j:if test="${jvar_iter_count == 0 and !jvar_categories.hasNext()}">
+               <td style="width: 50%;">
+                  $[AMP]nbsp;
+               </td>
+               <g:no_escape>
+                  ${NS:jvar_close_tr}
+               </g:no_escape>
+               <j:set var="jvar_inc" value="${false}"/>
+            </j:if>
+            <j:if test="${jvar_iter_count == 1}">
+               <g:no_escape>
+                  ${NS:jvar_close_tr}
+               </g:no_escape>
+               <j:set var="jvar_iter_count" value="${0}"/>
+               <j:set var="jvar_inc" value="${false}"/>
+            </j:if>
+            <j:if test="${jvar_inc}">
+               <j:set var="jvar_iter_count" value="${jvar_iter_count+1}"/>
+            </j:if>
+
+            </j:if>
+
+         </j:while>
+      </table>
+   </td>
+</tr>  
+	</tbody>
+</j:jelly>

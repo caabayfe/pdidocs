@@ -1,0 +1,1 @@
+SNC.TriggerAPI.syncTriggerRecords(current);

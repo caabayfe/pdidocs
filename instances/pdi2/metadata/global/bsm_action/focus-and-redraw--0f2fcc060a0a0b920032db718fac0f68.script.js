@@ -1,0 +1,12 @@
+/**
+  * Script executed on the Client for this action
+  *
+  * 'this' is a reference to the GwtDiagramNode (which is a GlideWindow) that the action was called from
+  * Use 'this.diagram' to reference the GwtDiagram
+ **/ 
+
+focusAndRedraw(this);
+
+function focusAndRedraw(node) {
+   node.diagram.focusAndRedraw(node);	
+}

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<g:ui_form>
+
+  <j:set var="jvar_i" value="0" /> 
+  <j:set var="jvar_contact_starts" value="${RP.getWindowProperties().get('contract_start_date')}" /> 
+  <j:set var="jvar_Contract_ends" value="${RP.getWindowProperties().get('contract_end_date')}" />
+  <j:set var="jvar_contract_amount" value="${RP.getWindowProperties().get('contract_amount')}" />
+  <j:set var="jvar_contract_ratecard" value="${RP.getWindowProperties().get('contract_ratecard')}" />
+  <j:set var="jvar_sys_id" value="${RP.getWindowProperties().get('sys_id')}" />
+  <j:set var="jvar_row_count" value="${RP.getWindowProperties().get('row_count')}" /> 
+
+	<g:evaluate>
+		var contractGr = new GlideRecord("ast_contract");
+		var fields = ["starts", "ends", "cost_adjustment", "payment_amount", "ratecard"];
+		var contractLabels = {};
+		fields.forEach(function(fieldName) {
+			contractLabels[fieldName] = contractGr.getElement(fieldName).getLabel();
+		});
+		contractLabels;
+	</g:evaluate>
+	
+<style type="text/css"> 
+
+.rate input{
+background-color:transparent;
+border: 0px solid;
+}
+
+
+</style>
+
+<table width="100%">
+     <input type="hidden" name="cancel_or_submit" id="cancel_or_submit" value=""/>
+     <input type="hidden" name="error" id="error" value="false"/>
+     <input type="hidden" name="contract_sys_id" value="${jvar_sys_id}"/>
+     <input type="hidden" name="hasRateCard" value="${jvar_contract_ratecard}"/>
+     <input type="hidden" name="rowCount" value="${jvar_row_count}"/>
+	 <j2:if test="$[!empty(sysparm_domain)]">
+		 <input type="hidden" id="sysparm_domain" name="sysparm_domain" value="${sysparm_domain}"/>
+	 </j2:if>
+	 <j2:if test="$[!empty(sysparm_domain_scope)]">
+		 <input type="hidden" id="sysparm_domain_scope" name="sysparm_domain_scope" value="${sysparm_domain_scope}" />
+	 </j2:if>
+
+     <tr>
+	   <td width="50%">
+<div class="form-group form-horizontal">
+	<div class="col-md-4 text-right">
+		<g:form_label>
+			${contractLabels.starts}
+		</g:form_label>
+	</div>
+	<div class="col-md-8">
+		<g:ui_date name="contract_starts" id="contract_starts" value="${jvar_contact_starts}" onchange="datePicked(this.value);" />
+	</div>
+</div>		
+	   </td>
+		 
+	   <td width="50%">
+<div class="form-group form-horizontal">
+	<div class="col-md-6 text-right">
+		<g:form_label>
+			${contractLabels.payment_amount}
+		</g:form_label>
+	</div>
+	<div class="col-md-6">
+           <j:if test="${jvar_contract_ratecard == false}">
+               <input type="text" id="contract_payment" name="contract_payment" class="form-control decimal" value="${jvar_contract_amount}" 
+                       onclick="select();" onchange="this.value=getCurrencyString();onChange('contract_payment');" />
+          </j:if>
+          <j:if test="${jvar_contract_ratecard == true}">
+               <input type="text" id="contract_payment" name="contract_payment" class="form-control decimal" value="${jvar_contract_amount}" readonly="readonly" style="background-color: #eaeaea;"/>
+          </j:if>
+	</div>
+</div>		
+	   </td>		 
+    </tr>
+<tr>
+    <td colspan="2">
+       <div id="startErrorMessage"></div>
+    </td>
+</tr>
+
+    <tr>
+	   <td width="50%">
+<div class="form-group form-horizontal">
+	<div class="col-md-4 text-right">
+		<g:form_label>
+			${contractLabels.ends}
+		</g:form_label>
+	</div>
+	<div class="col-md-8">
+           <g:ui_date name="contract_ends" id="contract_ends" value="${jvar_Contract_ends}" onchange="datePicked(this.value);" />
+	</div>
+</div>		
+	   </td>		
+		<td width="50%"></td>
+    </tr>
+<tr>
+    <td colspan="2">
+       <div id="endErrorMessage"></div>
+    </td>
+</tr>
+</table>
+<table width="100%">
+<j:if test="${jvar_contract_ratecard == true}">
+     <g2:evaluate var="jvar_cards">
+	var rateCardRecord = new GlideRecord("fm_contract_rate_card");
+	rateCardRecord.addQuery("contract", "${jvar_sys_id}");
+	rateCardRecord.query();
+	rateCardRecord;
+        var jvar_i = 0;
+     </g2:evaluate>
+<tr>
+<td colspan='4'>
+  <hr />
+</td>
+</tr>
+
+<tr id="description_row" valign="top">
+        <th colspan="4" style="font-size:larger;">${contractLabels.ratecard}</th>
+</tr>
+        <tr class="list_header" >
+           <th class="list_hdrcell" style="width:25%">${gs.getMessage("Rate Card Name")}</th>
+           <th class="list_hdrcell" style="width:25%">${gs.getMessage("Start Date")}</th>
+           <th class="list_hdrcell" style="width:25%">${gs.getMessage("End Date")}</th>
+           <th class="list_hdrcell" style="width:25%">${gs.getMessage("Base Cost")}</th>
+       </tr>
+
+     <j2:while test="$[rateCardRecord.next()]">
+     <g2:evaluate var="jvar_i" expression="jvar_i++;" />
+     <g2:evaluate jelly="true">
+        var rowClass = ((parseInt(jelly.jvar_i) + 1) % 2) == 0 ? 'list_even' : 'list_odd';
+     </g2:evaluate>
+          <tr class="rate list_row $[rowClass]">
+             <!-- <td colspan='1' style="font-size:larger;">$[rateCardRecord.name]</td> -->
+             <td><input type="text" id="rate_card_name_$[jvar_i]"  name="rate_card_name_$[jvar_i]" value="$[rateCardRecord.name]" 
+                  onclick="style.background='white'; select();" onblur="style.background='transparent';"/>
+             </td> 
+             
+             <td>
+                <g:ui_date name="rate_card_start_$[jvar_i]" id="rate_card_start_$[jvar_i]" value="$[rateCardRecord.start_date.getDisplayValue()]" onchange="datePicked(this.value);" />
+             </td>
+
+             <td>
+                <g:ui_date name="rate_card_end_$[jvar_i]" id="rate_card_end_$[jvar_i]" value="$[rateCardRecord.end_date.getDisplayValue()]" onchange="datePicked(this.value);" />
+             </td>
+
+             <td><input type="text" id="rate_card_cost_$[jvar_i]" name="rate_card_cost_$[jvar_i]" class="decimal" value="$[rateCardRecord.base_cost]" 
+                         onclick="style.background='white'; select();" onblur="style.background='transparent';"/> </td>
+             
+            <input type="hidden" id="rate_card_sysId_$[jvar_i]" name="rate_card_sysId_$[jvar_i]" value="$[rateCardRecord.sys_id]" />
+
+         </tr>
+           
+    </j2:while>
+</j:if>
+</table>
+ <table width="100%">
+        <tr id="dialogbuttons">
+            <td colspan="4" align="right">
+                <g:dialog_buttons_ok_cancel ok_text="${gs.getMessage('Submit Adjustments')}" ok="return actionOK();" cancel="return cancel();"/>
+            </td>
+        </tr>
+</table>
+</g:ui_form>
+</j:jelly>

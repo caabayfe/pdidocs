@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide">
+  <g:macro name="REQUIRED" width="200px" cellstyle="vertical-align:top; border:1px solid #999;" left_title="Available" right_title="Selected" move_right_button_label="Add" move_left_button_label="Remove" aftermove="" aftercopy="" leftreadonly="false" rightreadonly="false"/>
+  <script language="JavaScript" SRC="scripts/classes/GwtWindowList.jsx?v=${gs.getProperty('glide.builddate')}" />
+  <script language="JavaScript" SRC="scripts/classes/GwtSelectTable.jsx?v=${gs.getProperty('glide.builddate')}" />
+  <!-- you can build your options list inline... -->
+  <g:insert/>
+  <table id="${jvar_name}_tbl" border="0" cellspacing="0" cellpadding="0" width="100%">
+    <tr>
+      <td align="center">${jvar_left_title}</td>
+      <td></td>
+      <td align="center">${jvar_right_title}</td>
+    </tr>
+    <tr>
+      <td width="40%" style="${jvar_cellstyle}" dropzone="true">
+        <g:gwt_select_list name="${jvar_name}_left" dropzone="true" readonly="${jvar_leftreadonly}" unique="true"/>
+      </td>
+      <td width="20%" align="center" style="vertical-align:middle;">
+         <!-- add / remove buttons -->
+         <g:ui_select_list_addremove_control name="${jvar_name}" selecttable="${jvar_name}_selectTable" leftzone="${jvar_name}_leftzone" rightzone="${jvar_name}_rightzone" move_left_button_label="${jvar_move_left_button_label}" move_right_button_label="${jvar_move_right_button_label}"/>
+      </td>
+      <td width="40%" style="${jvar_cellstyle}" dropzone="true">
+        <g:gwt_select_list name="${jvar_name}_right" dropzone="true" readonly="${jvar_rightreadonly}" />
+      </td>
+    </tr>
+  </table>
+<script>
+  var ${jvar_name}_selectTable = new GwtSelectTable('${jvar_name}_tbl');
+  ${jvar_name}_selectTable.initZones('${jvar_name}_tbl');
+  ${jvar_name}_selectTable.setMultiSelect(true);
+  var ${jvar_name}_leftzone = ${jvar_name}_selectTable.getList('${jvar_name}_left');
+  var ${jvar_name}_rightzone = ${jvar_name}_selectTable.getList('${jvar_name}_right');
+
+  ${jvar_name}_selectTable.on("aftermove", ${jvar_name}_afterMove);
+  ${jvar_name}_selectTable.on("aftercopy", ${jvar_name}_afterCopy);
+
+  ${jvar_name}_selectTable.setDblClickTarget('${jvar_name}_left', '${jvar_name}_right');
+  ${jvar_name}_selectTable.setDblClickTarget('${jvar_name}_right', '${jvar_name}_left');
+
+  function ${jvar_name}_afterMove() {
+    ${jvar_aftermove};
+  }
+
+  function ${jvar_name}_afterCopy() {
+    ${jvar_aftercopy};
+  }
+
+  // define this in ui page
+  ${jvar_name}_populate(${jvar_name}_leftzone, ${jvar_name}_rightzone);	
+
+  function ${jvar_name}_hideMoveToLeftButton() {
+    var el = gel('${jvar_name}_move_left_text');
+    el.style.display="none";
+
+    el = gel('${jvar_name}_move_left_button');
+    el.style.display="none";
+
+    el = gel('${jvar_name}_move_right_text');
+    el.style.display="";
+
+    el = gel('${jvar_name}_move_right_button');
+    el.style.display="";
+  }
+
+  function ${jvar_name}_hideMoveToRightButton() {
+    var el = gel('${jvar_name}_move_right_text');
+    el.style.display="none";
+
+    el = gel('${jvar_name}_move_right_button');
+    el.style.display="none";
+
+    el = gel('${jvar_name}_move_left_text');
+    el.style.display="";
+
+    el = gel('${jvar_name}_move_left_button');
+    el.style.display="";
+  }
+</script>
+</j:jelly>

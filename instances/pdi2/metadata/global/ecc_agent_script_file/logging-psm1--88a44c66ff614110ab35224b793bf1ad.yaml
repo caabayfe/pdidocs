@@ -1,0 +1,204 @@
+_meta:
+  hash: 576c389f8394bc54c91309c05df2f61a6440e925c26260f0c155d75a020d0f5a
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: admin
+  sys_created_on: 2022-02-11 04:05:37
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 88a44c66ff614110ab35224b793bf1ad
+  sys_mod_count: '14'
+  sys_package: 81d5faf78c9503100a22deb6dd2b4e40
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_88a44c66ff614110ab35224b793bf1ad
+  sys_updated_by: admin
+  sys_updated_on: 2022-03-18 22:24:49
+active: 'true'
+checksum: ''
+description: Manages logging
+directory: 'false'
+name: Logging.psm1
+parent: a3644866ff614110ab35224b793bf1c3
+script: |-
+  $executingScriptDirectory = Split-Path -Path $PSScriptRoot -Parent
+  Import-Module  "$executingScriptDirectory\DiagnosticsUtil" -DisableNameChecking
+
+  <# 
+  .SYNOPSIS
+
+  Log message at log level.
+
+  .DESCRIPTION
+
+  Compares the Level parameter to global log level and logs Message parameter if necessary.
+  If there is no global log level set, no messages at any level will be logged.
+
+  .PARAMETER Message
+  Specifies the message to log.
+
+  .PARAMETER Level
+  Specifies the log level of ERROR, WARN, INFO, DEBUG, or TRACE.
+
+  .EXAMPLE
+
+  # Log an error message.
+  # If the global log level is ERROR, WARN, INFO, DEBUG, or TRACE the message will be logged.
+  Write-SNCLog -Level ERROR -Message "message"
+
+  .EXAMPLE
+
+  # Log a warning message.
+  # If the global log level is WARN, INFO, DEBUG, or TRACE the message will be logged.
+  Write-SNCLog -Level WARN -Message "message"
+
+  .EXAMPLE
+
+  # Log an informational message.
+  # If the global log level is INFO, DEBUG, or TRACE the message will be logged.
+  Write-SNCLog -Level INFO -Message "message"
+
+  .EXAMPLE
+
+  # Log a debug message.
+  # Only if the global log level is DEBUG or TRACE will the message be logged.
+  Write-SNCLog -Level DEBUG -Message "message"
+
+  .EXAMPLE
+
+  # Log a trace message.
+  # Only if the global log level is TRACE will the message be logged.
+  Write-SNCLog -Level TRACE -Message "message"
+
+  #>
+  Function Write-SNCLog {
+      [CmdletBinding()]
+      Param (
+          [Parameter(Mandatory = $True, HelpMessage = "Level: ERROR, WARN, INFO, DEBUG, or TRACE")]
+          [ValidateSet('ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE')]
+          [string]$Level,
+          [Parameter(Mandatory = $False)]
+          [string]$Message
+      )
+
+      $InternalObfuscated = "[snc_internal]"
+
+      $LOG_LEVELS = @{'ERROR' = 1; 'WARN' = 2; 'INFO' = 3; 'DEBUG' = 4; 'TRACE' = 5}
+
+      if ([string]::IsNullOrEmpty($message)) {
+          return
+      }
+
+      if ([string]::IsNullOrEmpty($Global:LogLevel) -or (-not ($Global:LogLevel -in $LOG_LEVELS.keys))) {
+          return
+      }
+
+      if ($LOG_LEVELS.$Level -le $LOG_LEVELS.$Global:LogLevel) {
+          $Message = $Message.replace($global:SncLogPrefix, $InternalObfuscated);
+          $Message = $Message.replace($global:SncLogSuffix, $InternalObfuscated);
+          SNCLog-DebugInfo ("{0}: {1}" -f $Level.ToUpper(), $Message)
+      }
+  }
+
+  <#
+  .SYNOPSIS
+
+  Formats PowerShell ErrorRecord.
+
+  .DESCRIPTION
+
+  When an exception is caught, the automatic variable $_ or $PSItem
+  is a PowerShell ErrorRecord. You can pass this ErrorRecord to
+  this function to get a formatted string suitable for logging.
+
+  Example:
+
+  Invoke-CmdLetNotThere : The term 'Invoke-CmdLetNotThere' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+  At [path_to_mid]\agent\scripts\PowerShell\Custom\Custom.ps1:14 char:1
+  + Invoke-CmdLetNotThere
+  + ~~~~~~~~~~~~~~~~~~~~~
+  + CategoryInfo          : ObjectNotFound: (Invoke-CmdLetNotThere:String) [], CommandNotFoundException
+  + FullyQualifiedErrorId : CommandNotFoundException
+
+  + HRESULT               : [-2146233087]
+  + Stacktrace            :
+  at System.Management.Automation.CommandDiscovery.LookupCommandInfo(String commandName, CommandTypes commandTypes, SearchResolutionOptions searchResolutionOptions, CommandOrigin commandOrigin, ExecutionContext context)
+  at System.Management.Automation.CommandDiscovery.LookupCommandProcessor(String commandName, CommandOrigin commandOrigin, Nullable`1 useLocalScope)
+  at System.Management.Automation.ExecutionContext.CreateCommand(String command, Boolean dotSource)
+  at System.Management.Automation.PipelineOps.AddCommand(PipelineProcessor pipe, CommandParameterInternal[] commandElements, CommandBaseAst commandBaseAst, CommandRedirection[] redirections, ExecutionContext context)
+  at System.Management.Automation.PipelineOps.InvokePipeline(Object input, Boolean ignoreInput, CommandParameterInternal[][] pipeElements, CommandBaseAst[] pipeElementAsts, CommandRedirection[][] commandRedirections, FunctionContext funcContext)
+  at System.Management.Automation.Interpreter.ActionCallInstruction`6.Run(InterpretedFrame frame)
+  at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)
+
+  .PARAMETER CaughtError
+
+  The instance of ErrorRecord that you wish to format.
+
+  .OUTPUTS
+
+  The formatted string representing the ErrorRecord.
+  #>
+  Function Format-SNCError {
+      [CmdletBinding()]
+      Param (
+          [Parameter(Mandatory = $True)]
+          [System.Management.Automation.ErrorRecord]$CaughtError
+      )
+
+      $ErrorFormat =
+      "{0}" +
+      "    + HRESULT               : [{1}]`n" +
+      "    + Stacktrace            :`n{2}`n"
+
+      $ErrorInfo =
+          ($CaughtError | Out-String),
+          $CaughtError.Exception.HResult,
+          $CaughtError.Exception.StackTrace
+
+      $ErrorFormat -f $ErrorInfo
+  }
+
+  <#
+  .SYNOPSIS
+
+  Log general messages related to ServiceNow PowerShell execution.
+  #>
+  Function Write-SNCGeneralLogs {
+      [CmdletBinding()]
+      Param ()
+
+      $originalErrorActionPreference = $ErrorActionPreference
+      # Don't halt functionality if logging error occurs.
+      $ErrorActionPreference = 'SilentlyContinue'
+
+      # PowerShell
+      $VersionTableString = $PSVersionTable.GetEnumerator() | % { "$($_.Name) = [$($_.Value)] `n" }
+      Write-SNCLog DEBUG "`$PSVersionTable: `n$VersionTableString"
+      Write-SNCLog DEBUG "`$ErrorActionPreference = $originalErrorActionPreference"
+      Write-SNCLog DEBUG "`$PID = $PID"
+
+      # MID
+      Write-SNCLog DEBUG "`$env:WRAPPER_WORKING_DIR = $env:WRAPPER_WORKING_DIR"
+
+      # Env
+      Write-SNCLog DEBUG "`$env:UserName = $env:UserName"
+      Write-SNCLog DEBUG "`$env:UserDomain = $env:UserDomain"
+      Write-SNCLog DEBUG "`$env:ComputerName = $env:ComputerName"
+      Write-SNCLog DEBUG "`$env:LogonServer = $env:LogonServer"
+
+      $WinId = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+      $WinPrincipal = [System.Security.Principal.WindowsPrincipal]$WinId
+      Write-SNCLog DEBUG ("User = [{0}], System = {1}, Administrator = {2}" -f
+          $WinId.Name,
+          $WinId.IsSystem,
+          $WinPrincipal.IsInRole('Administrators'))
+
+      $ErrorActionPreference = $originalErrorActionPreference
+  }
+script_attachment: ''
+source: ''
+sys_name: Logging.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

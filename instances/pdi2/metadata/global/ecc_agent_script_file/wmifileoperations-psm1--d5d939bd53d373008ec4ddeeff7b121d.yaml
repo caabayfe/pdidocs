@@ -1,0 +1,415 @@
+_meta:
+  hash: 35af0a8fd9728eb973d2337922ac8d68bab0fa7557d7fd54b7266d1a07971bf7
+  hash_version: 1
+  scope: global
+  sys_class_name: ecc_agent_script_file
+  sys_created_by: nisan.barzion
+  sys_created_on: 2019-08-16 23:33:25
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: d5d939bd53d373008ec4ddeeff7b121d
+  sys_mod_count: '35'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: ecc_agent_script_file_d5d939bd53d373008ec4ddeeff7b121d
+  sys_updated_by: now.midserver
+  sys_updated_on: 2025-09-06 11:03:23
+active: 'true'
+checksum: ''
+description: All Files operations for WMI Collector
+directory: 'false'
+name: WMIFileOperations.psm1
+parent: 5b2635bd53d373008ec4ddeeff7b1261
+script: |-
+  <# 
+      This function is duplicated in the both WMI and WinRM FileOperations modules rather than
+      placed in the CommonUtils module in order to prevent someone from calling the function
+      without the necessary WMI or WinRM module loaded
+  	
+  #>
+  function getFileContent {
+  <#
+      .SYNOPSIS
+          Gets the file content of the given path.
+
+      .PARAMETER path
+          Specifies the path of the text file.
+      .PARAMETER encoding
+          Specifies the encoding of the text file.
+
+      .OUTPUTS
+          System.String
+              The file content as a string.
+  #>
+      param(
+          [string]$path = $(throw 'The path parameter is required'),
+          [string]$encoding = 'Default'
+      )
+
+      # isUncPath and getFileContentUncPath are in CommonUtils.psm1
+      if (isUncPath -path $path) {
+          SNCLog-DebugInfo "Getting file content through UNC path $path";
+          $output = getFileContentUncPath -uncPath $path -encoding $encoding
+      } else {
+          SNCLog-DebugInfo "Getting file content through local path $path";
+          $output = getFileContentLocalPath -localPath $path -encoding $encoding
+      }
+      
+      $output;
+  }
+
+  function getFileContentLocalPath {
+  <#
+      .SYNOPSIS
+          Gets the file content of the given local path.
+
+      .PARAMETER localPath
+          Specifies the local path of the text file.
+      .PARAMETER encoding
+          Specifies the encoding of the text file.
+
+      .OUTPUTS
+          System.String
+              The file content as a string.
+  #>
+      param(
+          [string]$localPath = $(throw 'The localPath parameter is required'),
+          [string]$encoding = 'Default'
+      )
+
+      if (isUncPath -path $localPath) {
+          throw "$localPath is an UNC path"
+      }
+
+      if ($computer) {
+          $uncPath = mapAdminShareUncPath -remoteHost $computer -localPath $localPath;
+          SNCLog-DebugInfo "getting file content from remote host using admin share: getFileContentUncPath -uncPath $uncPath -encoding $encoding"
+          getFileContentUncPath -uncPath $uncPath -encoding $encoding
+      } else {
+          SNCLog-DebugInfo "`$computer is not set, getting file content from local MID server host: Get-Content -Path $localPath -Encoding $encoding"
+          Get-Content -Path $localPath -Encoding $encoding
+      }
+  }
+
+  function mapAdminShareUncPath {
+  <#
+      .SYNOPSIS
+          Maps the given local absolute path to a UNC path using admin share of the remote host.
+
+      .PARAMETER remoteHost
+          Specifies the remote host to map the local path to.
+      .PARAMETER localPath
+          Specifies the local path to map.
+
+      .OUTPUTS
+          System.String
+              The mapped UNC path based on the admin share of the remote host.
+  #>
+      param(
+          [string]$remoteHost = $(throw 'The remoteHost parameter is required'),
+          [string]$localPath = $(throw 'The localPath parameter is required'))
+      
+      
+      # replace drive ':' character with admin share character
+      $localPath = $localPath.Replace(':', '$');
+
+      return Join-Path -Path "\\$remoteHost" -ChildPath $localPath
+  }
+
+  function uncPathToLocalPath {
+      param([string] $uncPath)
+      $uncPath = $uncPath -replace '\\\\.*?\\', '';
+      #Replace only first $ symbol for user share
+      $index = $uncPath.indexOf("$");
+      $uncPath = $uncPath.remove($index,1).insert($index, ":");
+      return $uncPath;
+  }
+
+  <#
+      $destFileName - just a file name no path
+  #>
+  function putFileToTarget{
+      param([string]$sourcePath, [string]$destFileName, [bool]$changeFilePermission)
+      if (-not $tmpDir) {
+          throw 'Could not put file because $tmpDir is null';
+      }
+      
+      # Standardize slashes
+      $sourcePath = standardizePath -path $sourcePath;
+      $destFileName = standardizePath -path $destFileName;
+
+      # If the source file does not exist - exit
+      if (-not $sourcePath -or -not (test-path -path $sourcePath -PathType Leaf)){
+          throw "Source file $sourcePath does not exist on the MID host";
+      }
+
+      # get the filename from the path
+      $fileName = Split-Path -Path $sourcePath -Leaf
+
+
+      # Build the destination path
+      if (-not $destFileName){
+          $dstFullPath = [System.IO.Path]::Combine($tmpDir,$filename);
+      } else {
+          $dstFullPath = [System.IO.Path]::Combine($tmpDir,$destFileName);
+      } 
+     
+      # Build a UNC path to the destination on the remote computer
+      $dstFullUncPath = mapAdminShareUncPath -remoteHost $computer -localPath $dstFullPath;
+      try{
+          putFileUncPath -sourcePath $sourcePath -destinationUncPath $dstFullUncPath -changeFilePermission $changeFilePermission;
+      } catch {
+          throw ("Could not put file as $dstFullUncPath. " + $_.Exception.Message);
+      }
+      
+      return $dstFullPath;
+  }
+
+  <#
+      This method uses the same logic as the old Neebula WMICollector to fetch temporary directory.
+      First we try to get the TempDirectory out of the Win32_BootConfiguration using WMI Query.
+      If TempDirectory is int system32 - we cannot use it as there is a known issue running commands from this dir with Windows2008.
+      If we failed to fetch TempDirectory using WMI query or that it has system32 in the path we try agian.
+      We try next with registry call to the HKEY_CURRENT_USER, Environment and getting the TEMP variable. Same logic about system32.
+      If all fails we default to c:\temp
+  #>
+  function getTempDirectory{
+      param([string]$subdirectory, [string]$serviceName, [boolean]$useSecureTemp)
+      # If already set - return
+      if ($tmpDir){
+          return $tmpDir;
+      }
+      
+     $psBaseDir = [Environment]::GetEnvironmentVariable("SNC_base_dir")
+     if ($psBaseDir) {
+         $tmpDir = $psBaseDir
+      } else {
+          # This Method is in WMIFileOperations
+          # Try and get use local path and attach temp to it
+          $tmpdir = getUserTmpDir
+          SNCLog-DebugInfo "We got user temp dir: $tmpDir";
+
+          if (-not $tmpDir -or $tmpDir.indexOf("system32") -gt -1){
+            SNCLog-DebugInfo "We cannot use system32 based dir found in User TEMP, will not use $tmpDir; Trying to get another temp directory from TempDirectory\Win32_BootConfiguration";
+             # This Method is in WMIQueryOperations
+             try{
+                $qResults = executeQuery -query "Select TempDirectory from Win32_BootConfiguration";
+              } catch {
+                 SNCLog-DebugInfo ("Could not executeQuery: Select TempDirectory from Win32_BootConfiguration. Error " + $_.Exception.Message);
+            }
+            $tmpdir = $null;
+             if ($qResults){
+                # lookupValueByKeyFromString Method is in CommonUtils
+                $tmpDir = lookupValueByKeyFromString -str $qResults -lookupValue "TempDirectory" -delimiter ":";
+            }
+            if (-not $tmpDir -or $tmpDir.indexOf("system32") -gt -1){
+                SNCLog-DebugInfo "We cannot use system32 based dir found in Win32_BootConfiguration\TempDirectory, will not use $tmpDir; default to: c:\temp";
+                $tmpDir = "c:\temp"; # Just like as WMIColelctor
+            }
+       }
+  }
+
+      $tmpDir = Join-Path -Path $tmpDir -ChildPath $subdirectory;
+      
+      $uncPath = mapAdminShareUncPath -remoteHost $computer -localPath $tmpDir;
+      $discoveryUser = $cred.UserName;
+
+
+      if ($useSecureTemp) {
+          # createAndSecureFolderForUser is in EnforceFolderPermissions.psm1
+          $uncTmpDir = createAndSecureFolderForUser -folder $uncPath -discoveryUser $discoveryUser -serviceName $serviceName -secureFolder $true;
+          if ($uncTmpDir) {
+              SNCLog-DebugInfo "UNC tmp dir is $uncTmpDir"
+              SNCLog-DebugInfo "Converting UNC tmp dir to local path tmp dir";
+          
+              $tmpDir = uncPathToLocalPath -uncPath $uncTmpDir;
+              SNCLog-DebugInfo "Tmp dir is $tmpDir";
+              return $tmpDir;
+          }
+          SNCLog-DebugInfo "Failed to create secure temp folder using base path $uncPath";
+      }
+      
+      SNCLog-DebugInfo "Attempting to create unsecure temp folder $uncPath";
+      # attempt to create unsecure temp folder
+      if (createFolder -folder $uncPath -secureFolder $false) {
+          SNCLog-DebugInfo "Successfully created unsecure temp folder $uncPath";
+          SNCLog-DebugInfo "Converting UNC tmp dir to local path tmp dir";
+          
+          $tmpDir = uncPathToLocalPath -uncPath $uncPath;
+          SNCLog-DebugInfo "Tmp dir is $tmpDir";
+          return $tmpDir;
+      }
+
+      SNCLog-DebugInfo "Failed to create unsecured temp folder $uncPath";
+  }
+
+  function getUserTmpDir{
+
+      SNCLog-DebugInfo "Trying to get user temp directory from registry: HEKY_CURRENT_USER";
+      clearRegistryFetchArrays;
+      try{
+          $userTmpDir = getRegistryValues -hive "HKEY_CURRENT_USER" -key "ENVIRONMENT" -commaSeparatedNames "TMP";
+      } catch {
+          SNCLog-DebugInfo ("Could not get user temp dir using registry. Error: " + $_.Exception.Message);
+          return;
+      }
+      return lookupValueByKeyFromString -lookupValue "TMP" -str $userTmpDir -delimiter ":";
+  }
+
+  <#
+      This method create a directory. It can be used on a remove target using a UNC or a shared drive path
+  #>
+  function createDirectory{
+      param([string]$fullPath)
+      
+      # For WMI
+      # Reason for failure could be because we could not fetch file from admin$\temp - that is ok
+      if ($computer){
+          SNCLog-DebugInfo "Creating remote directory where the output will be on C drive";
+          launchProcess -computer $computer -cred $cred -command "mkdir $fullPath" -UTF8 -remoteBaseDir "c$";
+      } else {
+          # Run local command as this is on the MID server
+          try{
+              SNCLog-DebugInfo "Creating $fullPath locally using: New-Item -ItemType 'directory' -Path '$fullPath' -ErrorAction Stop;";
+              New-Item -ItemType "directory" -Path $fullPath -force -ErrorAction Stop > $null;
+          }
+          catch {
+              throw "Could not create $fullPath. Quit";
+          }
+      }
+  }
+
+  <# 
+      This function is duplicated in the both WMI and WinRM FileOperations modules rather than
+      placed in the CommonUtils module in order to prevent someone from calling the function
+      without the necessary WMI or WinRM module loaded
+  #>
+  function deleteFile {
+  <#
+      .SYNOPSIS
+          Deletes the file at the given path.
+
+      .PARAMETER path
+          Specifies the path of the file to delete.
+
+      .OUTPUTS
+          None.
+  #>
+      param([string]$path = $(throw 'The path parameter is required'))
+
+      # isUncPath and deleteFileUncPath are in CommonUtils.psm1
+      if (isUncPath -path $path) {
+          SNCLog-DebugInfo "Deleting file through UNC path $path";
+          deleteFileUncPath -uncPath $path -credential $snccred;
+      } else {
+          SNCLog-DebugInfo "Deleting file through local path $path";
+          deleteFileLocalPath -localPath $path;
+      }
+  }
+
+  function deleteFileLocalPath{
+      param([string]$localPath = $(throw 'The path parameter is required'))
+      
+      if (isUncPath -path $localPath) {
+          throw "$localPath is an UNC path"
+      }
+
+      try{
+          if ($computer) {
+              $uncPath = mapAdminShareUncPath -remoteHost $computer -localPath $localPath;
+              SNCLog-DebugInfo "getting file content from remote host using admin share: getFileContentUncPath -uncPath $uncPath -encoding $encoding"
+              # This method is in CommonUtils
+              deleteFileUncPath -uncPath $uncPath
+          } else {
+              SNCLog-DebugInfo "`$computer is not set, getting file content from local MID server host: Get-Content -Path $localPath -Encoding $encoding"
+              Get-Content -Path $localPath -Encoding $encoding
+          }
+      } catch{
+          throw ("Could not remove $localPath. Exception: " + $_.Exception.Message);
+      }
+  }
+
+  function getUserNameWithDomain {
+      if ($cred) {
+          $user = $cred.UserName;
+          if ($user -and ($user.indexOf("\") -lt 0 -or $user.startsWith(".\"))) {
+              SNCLog-DebugInfo "User does not have domain, will attach the computer name";
+              try{
+                  $qRes = executeQuery -query "Select Name from Win32_ComputerSystem";
+              } catch {
+                  SNCLog-DebugInfo ("Could not executeQuery: Select Name from Win32_ComputerSystem. Error " + $_.Exception.Message);
+              }
+              $compName = lookupValueByKeyFromString -lookupValue "Name" -str $qRes -delimiter ":"
+              
+              if (($user.indexOf("\") -lt 0)) {
+                  return $compName + "\" + $user;
+              }
+              # we are here because we got .\user
+              return ($user.replace(".", $compName));
+          }
+          
+          return $user;
+      }
+      
+      return (whoami).trim();
+  }
+
+  function getFileOwner {
+  <#
+      .SYNOPSIS
+          Gets the owner of the specified file
+
+      .PARAMETER path
+          The path to the file
+
+      .OUTPUTS
+          The owner of the file
+  #>
+      param([string]$path = $(throw "path parameter is required"))
+
+      if (isUncPath -path $path) {
+          $acl = getFileAclUncPath -uncPath $path;
+      } else {
+          $acl = getFileAclLocalPath -localPath $path;
+      }
+
+      return $acl.Owner;
+  }
+
+  function getFileAclLocalPath {
+  <#
+      .SYNOPSIS
+          Gets the acl of the specified file
+
+      .PARAMETER localPath
+          The local path to the file
+
+      .OUTPUTS
+          The acl of the file
+  #>
+      param([string]$localPath = $(throw "localPath parameter is required"))
+
+      try {
+          if ($computer) {
+              # if we have a computer name, create UNC with it and get the acl
+              $uncPath = "\\{0}\{1}" -f $computer, $localPath.Replace(':', '$');
+              SNCLog-DebugInfo "getting file ACL from remote host using admin share: getFileAclUncPath -uncPath $uncPath"
+              $acl = getFileAclUncPath -uncPath $uncPath;
+          } else {
+              # no computer, this is a local call, just use the local path
+              SNCLog-DebugInfo "getting file ACL from local MID: Get-Acl -uncPath $localPath"
+              $acl = Get-Acl $localPath;
+          }
+      } catch {
+          Write-Error ("Could not get file ACL from $localPath. Original exception: " + $_.Exception.Message);
+      }
+
+      return $acl;
+  }
+script_attachment: ''
+source: ''
+sys_name: WMIFileOperations.psm1
+sys_overrides: ''
+sys_policy: ''
+use_attachment: 'false'
+version: ''

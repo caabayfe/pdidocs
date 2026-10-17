@@ -1,0 +1,1 @@
+SNC.PAMLBConversion.updateDataSnapshotStatusForAllIndicators();

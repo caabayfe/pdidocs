@@ -1,0 +1,1 @@
+PwdNameUniquenessValidator.validate(current);

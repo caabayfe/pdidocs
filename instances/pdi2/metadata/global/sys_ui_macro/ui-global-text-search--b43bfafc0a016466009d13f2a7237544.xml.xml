@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_can_search">
+		jvar_can_search = gs.getSession().hasRole( gs.getProperty('glide.ui.can_search'));
+	</g:evaluate>
+	<j:if test="${jvar_can_search}">
+
+		<form action="text_search_exact_match.do" style="display: none;" id="textsearch" target="gsft_main" onSubmit="showLoading();">
+			<span class="globalSearch">
+				<input type="hidden" id="sysparm_tsgroups" name="sysparm_tsgroups" value="" />
+				<input type="hidden" id="sysparm_view" name="sysparm_view" value="text_search" />
+				<g:text_search_widget size="10"/>
+			</span>
+		</form>
+
+		<script>
+			CustomEvent.observe('user.login', function(user) { 
+				if (user.hasRoleFromList('${gs.getProperty('glide.ui.can_search')}')) {
+					showObjectInline(gel("textsearch"));
+					CustomEvent.fire('adjustsearch');
+				} else {
+					hideObject(gel("textsearch"));
+				}
+			});
+
+			CustomEvent.observe('adjustsearch', adjustSearch);
+
+			function adjustSearch() {
+				var ajax = new GlideAjax("TextSearchAjax");
+				ajax.addParam("sysparm_name", "recent");
+				ajax.setWantSessionMessages("false");
+				ajax.getXML(adjustSearchResponse);
+			}
+
+			function adjustSearchResponse(request) {
+				var answer =  request.responseXML.documentElement.getAttribute("answer");
+
+				if (answer == null)
+				return;
+				
+				var gcm = new GwtContextMenu('context_search');
+				gcm.clear();
+				if (answer.indexOf("xyzzyx") != 0) {
+					var db = answer.split("^");
+					for (var i = 0; i != db.length; i++) {
+						var u = new GlideURL('textsearch.do');
+						u.addParam('sysparm_search', encodeURIComponent(db[i]));
+						u.addParam('sysparm_recent_search','true');
+						gcm.addHref(htmlEscape(db[i]), "executeRecentSearch(\""+encodeURIComponent(db[i])+"\",\""+u.getURL()+"\")");
+					}
+				} else { 
+					gcm.addLabel(htmlEscape(answer.substr(6)));
+				}
+			}
+		</script>
+	</j:if>
+</j:jelly>

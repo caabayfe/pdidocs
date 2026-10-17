@@ -1,0 +1,99 @@
+- document: sys_hub_action_type_definition
+  document_key: f420202583d31210730e5b43c22bc021
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 08:18:13
+  sys_id: 2701a06583d31210730e5b43c22bc0ff
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-24 08:18:13
+  value: '0'
+  variable: e701a06583d31210730e5b43c22bc0e9
+- document: sys_hub_step_instance
+  document_key: 21926ca583d31210730e5b43c22bc095
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 08:24:55
+  sys_id: 3d926ca583d31210730e5b43c22bc0ab
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-01-24 08:24:55
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: f420202583d31210730e5b43c22bc021
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 08:18:13
+  sys_id: af01a06583d31210730e5b43c22bc0ff
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-02-12 02:59:55
+  value: '{"version":"1.0","complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"serializationFormat":"JSON"}'
+  variable: 6b01a06583d31210730e5b43c22bc0e4
+- document: sys_hub_step_instance
+  document_key: 21926ca583d31210730e5b43c22bc095
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-01-24 08:24:55
+  sys_id: fd926ca583d31210730e5b43c22bc0ab
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-02-12 03:58:48
+  value: |-
+    (function execute(inputs, outputs) {
+        if(inputs.name){
+            var grp = new GlideRecord('sys_user_group');
+            grp.initialize();
+            grp.name = inputs.name;
+            grp.manager = inputs.manager;
+            grp.description = inputs.description;
+            grp.email = inputs.group_email;
+            grp.type = "458de4f067671300dbfdbb2d07415ad6";//knowledge group type
+            var groupId = grp.insert();
+    	    if(groupId){
+                var grRole = new GlideRecord("sys_group_has_role");
+                grRole.initialize();
+                grRole.group = groupId;
+                grRole.setValue("role","cfa4c4c253302300cc376512a2dc3438"); //knowledge group member role
+                grRole.setValue("inherits",true);
+                grRole.insert();
+    		
+    		//adding knowledge group manager role to ownership group manager
+    		if(inputs.manager!=""){
+    			var role = new GlideRecord('sys_user_has_role'); 
+    			role.initialize();
+    			role.role = "616c46d453302300cc376512a2dc34a0"; //knowledge group manager role
+    			role.user = inputs.manager;
+    			role.granted_by = groupId; 
+    			role.insert();
+    			var msgArray = [];
+    			msgArray.push(role.role.name + "");
+    			msgArray.push(role.user.user_name + "");
+    			gs.log(gs.getMessage('Adding role {0} to {1}', msgArray));
+    		    }
+    	    }
+            if(groupId && inputs.group_members){
+                var grmem = new GlideRecord('sys_user_grmember');
+                var usr = new GlideRecord('sys_user');
+                usr.addQuery("sys_id","IN",inputs.group_members);
+                usr.query();
+                while(usr.next()){
+                    grmem.initialize();
+                    grmem.group = groupId;
+                    grmem.user = usr.sys_id;
+                    grmem.insert();
+                }
+            }
+        }
+     
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b

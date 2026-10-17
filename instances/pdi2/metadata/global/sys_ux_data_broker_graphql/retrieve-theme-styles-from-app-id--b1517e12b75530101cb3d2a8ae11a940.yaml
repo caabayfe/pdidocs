@@ -1,0 +1,86 @@
+_meta:
+  hash: 22b67701a2017bcc1a43909535628939d3fba353fca9db79e1d2db28125521d6
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_ux_data_broker_graphql
+  sys_created_by: admin
+  sys_created_on: 2021-07-14 15:35:05
+  sys_id: b1517e12b75530101cb3d2a8ae11a940
+  sys_mod_count: '6'
+  sys_package: 0350fe778c1103100a22deb6dd2b4eeb
+  sys_scope: global
+  sys_update_name: sys_ux_data_broker_graphql_b1517e12b75530101cb3d2a8ae11a940
+  sys_updated_by: admin
+  sys_updated_on: 2021-07-15 21:18:50
+api_name: global.Retrieve Theme Styles From App ID
+batch_exclude: 'false'
+description: Takes in the sys ID of a sys_ux_app record and returns name and type of styles associated with the app record's theme
+mutates_server_data: 'false'
+name: Retrieve Theme Styles From App ID
+output_schema: ''
+private: 'false'
+props: |-
+  [
+    {
+      "name": "app_id",
+      "label": "App Id",
+      "description": "app record id",
+      "readOnly": false,
+      "fieldType": "string",
+      "mandatory": true,
+      "defaultValue": ""
+    }
+  ]
+query: |-
+  query ($app_id: String) {
+    GlideRecord_Query {
+      sys_ux_app(sys_id: $app_id) {
+        _results {
+          theme {
+            value
+          }
+          _query {
+            GlideRecord_Query {
+              m2m_theme_style(queryConditions: "theme=$$parent.theme$$") {
+                _results {
+                  style {
+                    value
+                  }
+                  _query {
+                    GlideRecord_Query {
+                      sys_ux_style(queryConditions: "sys_id=$$parent.style$$") {
+                        _results {
+                          sys_id {
+                            value
+                          }
+                          name {
+                            value
+                          }
+                          type {
+                            value
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+required_translations: |-
+  [ {
+    "message" : "App Id",
+    "comment" : ""
+  }, {
+    "message" : "app record id",
+    "comment" : ""
+  } ]
+schema_version: 1.0.0
+sys_name: Retrieve Theme Styles From App ID
+sys_policy: ''
+type: query
+use_record_domain: 'false'

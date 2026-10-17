@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_label" jelly="true">
+		var ref = new GlideRecord(jelly.sysparm_table);
+		ref.sys_meta.label;
+	</g:evaluate>
+    <g:evaluate var="jvar_record_row" jelly="true">
+        var record_row = jelly.sysparm_record_row || '';
+        if (record_row)
+            record_row = '${AMP}sysparm_record_row=' + record_row;
+        record_row;
+	</g:evaluate>
+    <g:evaluate var="jvar_record_rows" jelly="true">
+        var record_rows = jelly.sysparm_record_rows || '';
+        if (record_rows)
+            record_rows = '${AMP}sysparm_record_rows=' + record_rows;
+        record_rows;
+	</g:evaluate>
+    <g:evaluate var="jvar_encoded_record_list" jelly="true">
+        var encoded_record_list = jelly.sysparm_record_list || '';
+        if (encoded_record_list)
+            encoded_record_list = '${AMP}sysparm_record_list=' + encodeURIComponent(encoded_record_list);
+        encoded_record_list;
+	</g:evaluate>
+		<j2:choose>
+		  <j2:when test="$[gs.getProperty('glide.ui.doctype')]">
+
+		  	<style>
+				HTML[data-doctype=true] body.non_standard_lists {
+					padding:0;
+				}
+
+				div.form_title {
+					margin: 0 0 10px;
+				}
+
+				div.form_title table {
+					width: 100%;
+				}
+
+				div.form_title .column_head {
+					padding: 6px 0;
+				}
+
+				div.form_title .column_head:first-child {
+					padding-left: 10px;
+					padding-inline-start: 10px;
+				}
+
+				div.form_title .column_head:last-child {
+					padding-left: 6px;
+					padding-inline-start: 6px;
+					width: 100%;
+				}
+
+				div.form-body {
+					padding:0 10px;
+				}
+
+				div.form-body .form-control {
+					display: inline-block;
+					width: auto;
+				}
+
+				.-polaris div.form-body .form-control {
+					display: inline-flex;
+				}
+			</style>
+
+			<div class="form_title">
+				<table data-comment="section table" cellspacing="0">
+					<tbody>
+						<tr class="header">
+							<g:inline template="ui_page_header_back.xml" />
+							<td class="column_head" data-id="bfb81dc9c0a8000900127627db594210" nowrap="true" data-type="section_head">
+								<h1 class="form_header">
+									<input type="HIDDEN" id="sysverb_view_change" name="sysverb_view_change" />
+									<span  class="pointerhand" title="Current View: Default view (click me for other views)">${jvar_label} ${gs.getMessage('History Detail')}</span>
+								</h1>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			</j2:when>
+		<j2:when test="$[gs.getProperty('glide.ui.doctype') != true]">
+
+				<table class="wide">
+					<tr>
+						<td>
+							<table cellSpacing="0" cellPadding="0" border="0">
+								<tr class="header">
+
+									<g:inline template="ui_page_header_back.xml" />
+
+									<td width="100%">
+										${jvar_label} ${gs.getMessage('History Detail')}
+										<input NAME="make_spacing_ok" style="visibility: hidden" title="" />
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</j2:when>
+			</j2:choose>
+			<div class="form-body -history">
+			<table class="wide">
+		        <tr>
+		            <td>
+		                <form name="history">
+		                    <input type="hidden" name="sysparm_sys_id" value="$[sysparm_sys_id]" />
+		                    <input type="hidden" name="sysparm_table" value="$[sysparm_table]" />
+		                    <input type="hidden" id="sysverb_back" />
+		                    <input type="hidden" id="sys_action" name="sys_action" value="none"/>
+		                    <j2:if test="${gs.getProperty('glide.security.use_csrf_token')}" >
+		                      <input type="hidden" name="sysparm_ck" value="$[gs.getSessionToken()]"/>
+		                    </j2:if>
+		                    <g2:history/>
+		                    <br></br>
+		                    <label for="sysparm_field">${gs.getMessage('Highlight changes to field')}: </label>
+		                    <select class="form-control" id="sysparm_field" name="sysparm_field" onChange="nextCalendarAction('month', null, null, null);">
+		                        <option name="" value="">${gs.getMessage('-- None --')}</option>
+		                        <j2:forEach var="jvar_choice" items="$[jvar_fields]">
+		                            <j2:if test="$[jvar_choice.selected=='true']">
+		                                <option selected="true" value="$[jvar_choice.value]">$[jvar_choice.label]</option>
+		                            </j2:if>
+		                            <j2:if test="$[jvar_choice.selected=='false']">
+		                                <option value="$[jvar_choice.value]">$[jvar_choice.label]</option>
+		                            </j2:if>
+		                        </j2:forEach>
+		                    </select>
+		                    <br></br>
+		                    <j2:if test="$[sysparm_calview == 'month' || sysparm_calview == '' || sysparm_calview == null]">
+		                        <j2:set var="jvar_month" value="$[jvar_calendar.firstMonth]" />
+		                        <g2:inline template="calendar_month.xml" />
+		                    </j2:if>
+		                    <j2:if test="$[sysparm_calview == 'week']">
+		                        <g2:inline template="calendar_week.xml" />
+		                    </j2:if>
+		                    <j2:if test="$[sysparm_calview == 'day']">
+		                        <g2:inline template="calendar_day.xml" />
+		                    </j2:if>
+		                    <j2:if test="$[sysparm_calview == 'year']">
+		                        <g2:inline template="calendar_year.xml" />
+		                    </j2:if>
+		                </form>
+		            </td>
+		        </tr>
+		    </table>
+		</div>
+</j:jelly>

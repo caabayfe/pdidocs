@@ -1,0 +1,151 @@
+_meta:
+  hash: a926e41f79ab3a47d38a847dba2612b45dd9a1c30be247807b0a28161bec20c7
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_dictionary
+  sys_created_by: system
+  sys_created_on: 2018-04-12 22:45:53
+  sys_id: 78608a8b83bf4310292aca75eeaad3c9
+  sys_mod_count: '0'
+  sys_package: 54ddf983837f4310292aca75eeaad34c
+  sys_scope: global
+  sys_update_name: sys_dictionary_em_monitor_scripts_script
+  sys_updated_by: admin
+  sys_updated_on: 2018-04-14 22:30:07
+active: 'true'
+array: 'false'
+array_denormalized: 'false'
+attributes: ''
+audit: 'false'
+calculation: ''
+choice: ''
+choice_field: ''
+choice_table: ''
+column_label: Script
+comments: ''
+create_roles: ''
+default_value: |-
+  (function runScript(functionName, scriptId){
+    if (functionName === 'update') {
+     runUpdateHealthMonitorScripts(scriptId);
+     
+    } else if (functionName === 'insert'){ 
+     runInsertHealthMonitorScripts(scriptId);
+    }
+    
+   })(functionName, scriptId);
+   
+   function runInsertHealthMonitorScripts(scriptId) {
+       // modify this example if states are dynamic or if you have more monitors 
+  	 var MONITOR_NAME = 'PUT YOUR--- MONITOR NAME HERE';
+       var MONITOR_SYS_ID  = 'PUT YOUR MONITOR CONFIGURATION SYS ID';
+
+
+       var healthMonitorCommon = new EvtMgmtHealthMonitorCommon();
+  	 healthMonitorCommon.createNewState(MONITOR_NAME, '', '', '', '', MONITOR_SYS_ID, '');
+   }
+
+
+   function runUpdateHealthMonitorScripts(scriptId) {
+  	 
+      // modify this example if states are dynamic or if you have more monitors 
+      var healthMonitorCommon = new EvtMgmtHealthMonitorCommon();
+      var monitorGr = healthMonitorCommon.getMonitorConfigRecord(scriptId);
+  	if(monitorGr.next()) {
+  		 var shouldRun = healthMonitorCommon.shouldRun(monitorGr.sys_id, monitorGr);
+  		 if(shouldRun) {
+  	                 var stateGr = healthMonitorCommon.getAllConfigStates(monitorGr.sys_id);
+  			 if(stateGr.next()) {
+  				 //   CALL TO YOUR IMPLEMENTATION IS HERE 
+                   
+  				 var monitorValue  =  getMonitorValue();
+  				 // add  additional information and description
+                   var additional_info = {};
+                   additional_info['other_info'] = '' + monitorValue;
+  				 var description = gs.getMessage('monitor value: {0} ', monitorValue);
+  				 handleAlertAndState(monitorValue, monitorGr, stateGr, description , additional_info);
+  			 }
+  		 }
+  	}
+
+
+
+  	function getMonitorValue() {
+           // IMPLEMENT MONITOR VALUE CALCULATION
+           return 1;
+       }
+
+  	function handleAlertAndState(value, monitorGr, stateGr, description , additional_info) {
+          var healthMonitorCommon = new EvtMgmtHealthMonitorCommon();
+  	    var severity = healthMonitorCommon.calculateSeverity(value, monitorGr.sys_id, monitorGr, additional_info);		
+  		var newState = healthMonitorCommon.getNextEventAlertStatus(stateGr.sys_id, stateGr, severity);	
+
+          var alertGenerator = new EvtMgmtEventAlertGenerator();
+
+
+  		if (newState == 'Open') { 
+
+  			alertGenerator.openEvent('',severity,description,
+  									additional_info, monitorGr,stateGr,monitorGr.name,stateGr.name,'');
+
+
+  		} else if (newState == 'Closed'){ 
+              alertGenerator.closeEvent('',severity,description,
+  									additional_info, monitorGr,stateGr,monitorGr.name,stateGr.name,'');
+  		}
+  		        
+  		// Update monitor configuration last run
+  		healthMonitorCommon.updateConfigLastRunState(monitorGr.sys_id, ''); 
+  		// Update monitor state status
+  		if (newState != 'Do Nothing') {
+  			healthMonitorCommon.updateState(stateGr.sys_id, severity, newState, value, '', description);
+          }
+  	}
+  }
+defaultsort: ''
+delete_roles: ''
+dependent: ''
+dependent_on_field: ''
+display: 'false'
+dynamic_creation: 'false'
+dynamic_creation_script: ''
+dynamic_default_value: ''
+dynamic_ref_qual: ''
+element: script
+element_reference: 'false'
+foreign_database: ''
+formula: ''
+function_definition: ''
+function_field: 'false'
+internal_type: script
+mandatory: 'false'
+max_length: '8000'
+name: em_monitor_scripts
+next_element: ''
+primary: 'false'
+read_only: 'false'
+read_only_option: ''
+read_roles: ''
+reference: ''
+reference_cascade_rule: ''
+reference_floats: 'false'
+reference_key: ''
+reference_qual: ''
+reference_qual_condition: ''
+reference_type: ''
+sizeclass: ''
+spell_check: 'false'
+staged: 'false'
+sys_name: Script
+sys_policy: ''
+table_reference: 'false'
+text_index: 'false'
+unique: 'false'
+use_dependent_field: 'false'
+use_dynamic_default: 'false'
+use_reference_qualifier: simple
+virtual: 'false'
+virtual_type: script
+widget: ''
+write_roles: ''
+xml_view: 'false'

@@ -1,0 +1,1 @@
+GlideSecurityManager.get().hasRoles();

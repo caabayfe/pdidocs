@@ -1,0 +1,1 @@
+ScheduleValidation.warnEmptySchedules(current);

@@ -1,0 +1,1 @@
+SNC.PAUtils.isPremium() && new SNC.PADomainUtils().isWriteable("pa_indicators", current.sys_id) && new PAUtils().usedInFormulaIndicators(current.sys_id) === false && current.benchmarking != true && (current.type != 4 || gs.hasRole('pa_power_user') || gs.hasRole('pa_admin'));

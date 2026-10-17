@@ -1,0 +1,115 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:inline template="kb_view_common_footer_metadata_attachments" />
+	<g:inline template="kb_attached_tasks_v3"/>
+	<g:inline template="kb_affected_products_v3"/>
+	<div class="snc-article-header-author">
+		<div class="snc-article-author">
+			<j:if test="${!kbViewInfo.externalArticle}">
+			<j:choose>
+				<j:when test="${authorImage.length != 0}">
+					<img id="authorImage" class="snc-article-header-author-image" src="${authorImage}"  aria-label="${gs.getMessage('Author Image')}" alt="${gs.getMessage('Author Image')}" title="${gs.getMessage('Author Image')}" aria-hidden="true" />
+					<script>
+						document.getElementById("authorImage").setAttribute('alt', "${gs.getMessage('Author Image')}");
+					</script>
+				</j:when>
+				<j:otherwise>
+					<div id="authorGhost" class="icon-user-profile snc-article-header-author-ghost" />
+				</j:otherwise>
+			</j:choose>
+			</j:if>
+			<div  class="author-info">
+				<div id="articleAuthor" class="snc-article-footer-metadata-published" style="display: block;padding-top: 5px">
+					<j:choose>
+						<j:when test="${kbViewInfo.externalArticle}"> 
+
+						<g:evaluate var="jvar_external_content">
+								gs.getMessage(gs.getProperty('sn_km_intg.glide.knowman.external.ui_label_for_external_content', 'External Content'))
+						</g:evaluate>
+							${jvar_external_content}
+						</j:when>
+						<j:otherwise>
+					${revisionString}
+						</j:otherwise>
+					</j:choose>
+				</div>
+				<g:evaluate var="jvar_time_ago_msg">
+					var timeAgo = new GlideTimeAgo().getField(knowledgeRecord, "sys_updated_on");
+					gs.getMessage("Last modified {0}", timeAgo);
+				</g:evaluate>
+				<div id="articleModifiedLabel" class="snc-article-footer-metadata-published">
+					${jvar_time_ago_msg}
+				</div>
+			</div>
+		</div>
+		
+<!-- 		KB Extension point call to customize footer -->
+		<g:call_extension extension="global.KMArticleViewFooter" knowledgerecord="${knowledgeRecord}" limit="1"/>
+		
+		<g:evaluate var="jvar_item_cm" object="true" jelly="true">
+			var hasContributor = false;
+			if(GlidePluginManager.isActive('com.sn_communities') &amp;&amp; sn_communities.CommunityKnowledgeHarvest){
+				var h = new sn_communities.CommunityKnowledgeHarvest();
+				var res = h.getHarvestedContentInfo(''+knowledgeRecord.sys_id);
+				if(res &amp;&amp; res.status == 200){
+					var hInfo = res.data;
+					if(hInfo){
+						hasContributor = true;
+						hInfo.message = gs.getMessage("Created from the Community by {0}");
+						var timeAgo2 = new GlideTimeAgo().formatClient(new GlideDateTime(hInfo.postedOn));
+						hInfo.timeAgo = gs.getMessage("Posted {0}", timeAgo2);
+						if(hInfo.contributor.userImage &amp;&amp; hInfo.contributor.userImage.indexOf("?t=")==-1)
+							hInfo.userImage= hInfo.contributor.userImage+'?t=small';
+					}
+				}
+			}
+		</g:evaluate>
+		<j:if test="${hasContributor == true}">
+			<div class="snc-article-contributor">
+				<j:choose>
+					<j:when test="${hInfo.userImage != null &amp;&amp; hInfo.userImage.length != 0}">
+						<img id="contributorImage" class="snc-article-header-author-image" src="${hInfo.userImage}"  aria-label="${gs.getMessage('Contributor Image')}" alt="${gs.getMessage('Contributor Image')}" title="${gs.getMessage('Contributor Image')}" aria-hidden="true" />
+						<script>
+							document.getElementById("contributorImage").setAttribute('alt', "${gs.getMessage('Contributor Image')}");
+						</script>
+					</j:when>
+					<j:otherwise>
+						<div class="ghost icon-user-group snc-article-header-author-ghost snc-article-header-author-ghost-black"></div>
+					</j:otherwise>
+				</j:choose>
+
+				<div class="contributor-info">
+					<div id="contributor-profile" class="snc-article-footer-metadata-published">${hInfo.profileMessage}</div>
+					<j:if test="${hInfo.sourceRoot != null}">
+						<div class="snc-article-footer-metadata-published">
+							<a href="sn_communities_home_launcher.do?id=community_question&amp;sys_id=${hInfo.sourceRoot}" target="_blank_cm2">${hInfo.title}</a>
+						</div>
+						<div class="snc-article-footer-metadata-published">${hInfo.timeAgo}</div>
+					</j:if>
+
+					<script>
+						var aTag = document.createElement('a');
+						aTag.setAttribute('href',"sn_communities_home_launcher.do?id=community_user_profile${AMP}amp;user=${hInfo.contributor.userId}");
+						aTag.innerHTML = "${hInfo.contributor.name}";
+						aTag.setAttribute("target", "_blank_cm2");
+						document.getElementById("contributor-profile").innerHTML = ("${hInfo.message}").replace("{0}",aTag.outerHTML) ;
+					</script>
+				</div>
+			</div>
+		</j:if>
+	</div>
+
+	<j:if test="${ knowledgeRecord.sys_class_name != 'kb_knowledge_block'}">
+		<div id="articleFooterSection" class="snc-article-footer-section" style="display: none;">
+				<div class="snc-article-footer-section-ratings">
+					<g:inline template="kb_view_ratings" />
+				</div>
+			<g:inline template="kb_article_comments" />
+		</div>
+	</j:if>
+	<j:if test="${isMobileView != true}">
+		<div id="articleFooter" class="snc-article-footer">
+			<g:inline template="kb_view_common_footer_metadata_fields" />
+		</div>
+	</j:if>
+</j:jelly>

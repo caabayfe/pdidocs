@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/lib/jquery_includes.js"/>
+	<g:evaluate var="jvar_import_allowed" jelly="true">
+        var allowed = 'none';
+        var targetGR = new GlideRecordSecure(jelly.sysparm_target);
+        if(!GlideSecurityManager.tableLevelACLAllow(targetGR, 'write'))
+            allowed = 'none';
+        else if(GlideUtil.isExpressInstance() &amp;&amp; !gs.hasRole("maint") &amp;&amp; jelly.sysparm_target == "sys_properties") {
+            allowed = 'none';
+        } else if(targetGR.getTableScopeName() == gs.getCurrentApplicationName())
+            allowed = 'all';
+        else {
+            var gr = new GlideRecord("sys_db_object");
+            gr.addQuery("name",jelly.sysparm_target);
+            gr.query();
+            gr.next();
+
+            if(gr.update_access &amp;&amp; gr.create_access)
+                allowed = 'all'; 
+            else if(gr.update_access) 
+                allowed = 'update'; 
+            else if(gr.create_access) 
+                allowed = 'insert'; 
+        } 
+        allowed;
+    </g:evaluate>
+	<style>
+	.form_sections {
+		margin-top:8px;
+		margin-bottom:8px;
+	}
+		
+	h4 {
+		margin: 0;
+	}
+		
+	hr {
+		margin: 0;
+	}
+
+	/* DEF0814994: upload scan/import status + indeterminate progress bar */
+	.scan-status { margin-top:12px; font-size:13px; }
+	.scan-status-success { color:#0b7a35; font-weight:600; }
+	.scan-status-error { color:#b8252b; font-weight:600; }
+	.scan-progress { height:6px; margin-top:6px; background:#e0e0e0; border-radius:3px; overflow:hidden; }
+	.scan-progress-bar { height:100%; width:40%; background:#1f8ce6; border-radius:3px;
+		animation: scanIndeterminate 1.2s ease-in-out infinite; }
+	@keyframes scanIndeterminate { 0% { margin-left:-40%; } 100% { margin-left:100%; } }
+	</style>
+	<script>
+		$j(document).ready(function () {
+			$j("#create_template_yes").show();
+			$j("#text_step_2").show();
+			$j("#footer_upload_button").attr("disabled", "disabled");
+			$j("input[id$='radio_upload_yes']").click(function() {
+				$j("#create_template_yes").show();
+				$j("#text_step_2").show();
+			});
+			$j("button[id$='download_template_button']").click(function() {
+				$j("#download_template_button").attr("disabled", "disabled");
+			});
+			$j("input[id$='radio_upload_no']").click(function() {
+				$j("#create_template_yes").hide();
+				$j("#text_step_2").hide();
+			});
+			$j("#attachFile").change(function(e) {
+				if ($j("#attachFile").val() == "") {
+					$j("#footer_upload_button").attr("disabled", "disabled"); }
+				else {
+					$j("#footer_upload_button").removeAttr("disabled"); }
+			});
+		});
+	</script>
+	<div>
+		<g:inline template="output_messages2.xml" />
+		<form name="import_template_upload" id="import_template_upload" method="post" enctype="multipart/form-data">
+			<input type="hidden" id="sysparm_referring_url" name="sysparm_referring_url" value="${sysparm_referring_url}" />
+			<input type="hidden" id="sysparm_target" name="sysparm_target" value="${sysparm_target}" />
+			<input type="hidden" id="sysparm_process_stage" name="sysparm_process_stage" value="upload" />
+			<input type="hidden" id="sysparm_rows" name="sysparm_rows" value="${sysparm_rows}" />
+			<input type="hidden" id="sysparm_query" name="sysparm_query" value="${sysparm_query}" />
+			<input type="hidden" id="sysparm_view" name="sysparm_view" value="${sysparm_view}" />
+			<input type="hidden" id="import_allowed" name="import_allowed" value="${jvar_import_allowed}" />
+			<input type="hidden" id="sysparm_parent_tracker_id" name="sysparm_parent_tracker_id" value="" />
+			<input type="hidden" id="sysparm_variable_model_id" name="sysparm_variable_model_id" value="${sysparm_variable_model_id}" />
+			<input type="hidden" id="sysparm_template_type" name="sysparm_template_type" value="insert" />
+			<div>
+				<h4 aria-level="2" id="title_import_behavior" aria-label="Import Behavior" tabindex="-1">${gs.getMessage("Import behavior")}</h4>
+				<div class="form_sections" role="group" aria-labelledby="radio_import_behavior_header" tabindex="0">
+					<h5 id="radio_import_behavior_header">
+						<label for="radio_import_behavior_header">${gs.getMessage("Do you want to add the entries from your file to the entries you already have or replace them?")}</label>
+					</h5>
+					<span class="input-group-radio">
+						<input id="radio_add" name="radio_import_behavior" class="radio" type="radio"
+							checked="checked" onclick="setTemplateType('insert')" aria-label="Add test run data sets" tabindex="0">
+							<label for="radio_add" class="radio-label">${gs.getMessage("Add")}</label>
+						</input>
+					</span>
+					<span class="input-group-radio">
+						<input id="radio_replace" name="radio_import_behavior" class="radio" type="radio"
+							onclick="setTemplateType('update')" aria-label="Replace test run data sets" tabindex="0">
+							<label for="radio_replace" class="radio-label">${gs.getMessage("Replace")}</label>
+						</input>
+					</span>
+				</div>
+				<hr style="margin-top:8px;margin-bottom:8px"/>
+				<h4 aria-level="2" id="title_upload_data_file" aria-label="Upload Test Run Data File">${gs.getMessage("Upload Test Run Data File")}</h4>
+				<div class="form_sections" role="group" aria-labelledby="radio_upload_header" tabindex="0">
+					<h5 id="radio_upload_header">
+						<label for="radio_upload_header">
+							${gs.getMessage("Do you want to create an Excel template to enter data?")}
+						</label>
+					</h5>
+					<span class="input-group-radio">
+						<input id="radio_upload_yes" name="radio_upload" class="radio" type="radio" checked="checked" aria-label="Yes, I want to create an excel template" tabindex="0">
+							<label for="radio_upload_yes" class="radio-label">${gs.getMessage("Yes")}</label>
+						</input>
+					</span>
+					<span class="input-group-radio">
+						<input id="radio_upload_no" name="radio_upload" class="radio" type="radio" aria-label="No, I do not want to create an excel template" tabindex="0">
+							<label for="radio_upload_no" class="radio-label">${gs.getMessage("No")}</label>
+						</input>
+					</span>
+				</div>
+				<div id="create_template_yes" class="form_sections">
+					<p style="margin-top:20px" aria-label="Generate and download an Excel template">
+						<b>${gs.getMessage("Step 1")} </b>: ${gs.getMessage("Generate and download an Excel template")}
+					</p>
+					<button id="download_template_button" class="form_action_button btn btn-default" onclick="downloadTemplate(); return false;" aria-label="Download Excel Template" tabindex="0">
+						${gs.getMessage("Download Excel template")}
+					</button>
+				</div>
+				<div id="create_template_no" class="form_sections">
+					<p style="margin-top:20px" aria-label="Upload test run data set template file">
+						<span id="text_step_2"><b>${gs.getMessage("Step 2")} </b>: </span>${gs.getMessage("Upload the template file")}
+					</p>
+					<span>
+						<input size="41" name="attachFile" id="attachFile" type="file" aria-label="Attach excel template" tabindex="0"/>
+					</span>
+				</div>
+				<div id="scan_status" class="scan-status" style="display:none" role="status" aria-live="polite">
+					<div id="scan_status_text"></div>
+					<div id="scan_status_bar" class="scan-progress" style="display:none"><div class="scan-progress-bar"></div></div>
+				</div>
+				<div align="right" class="modal-footer">
+					<button id="footer_cancel_button" type="button" class="form_action_button btn btn-default" onClick="cancelScan(); GlideDialogWindow.get().destroy();" aria-label="Cancel and close import test run data sets dialogue" tabindex="0">
+						${gs.getMessage("Cancel")}
+					</button>
+					<button id="footer_upload_button" type="button" class="btn btn-primary" style="white-space: nowrap" onClick="upload();" aria-label="Upload content of excel template file" tabindex="0">
+						${gs.getMessage("Upload")}
+					</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</j:jelly>

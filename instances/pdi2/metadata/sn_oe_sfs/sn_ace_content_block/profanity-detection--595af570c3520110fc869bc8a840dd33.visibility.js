@@ -1,0 +1,1 @@
+answer = CIPlugin.Profanity().isActive();

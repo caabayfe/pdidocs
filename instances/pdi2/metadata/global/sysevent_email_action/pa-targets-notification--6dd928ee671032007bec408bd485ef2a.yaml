@@ -1,0 +1,150 @@
+_meta:
+  hash: 0d8bbd53ff39b75b14931f8ddf818e44ceaee2631536eb714f5f760a6b04bc18
+  hash_version: 1
+  scope: global
+  sys_class_name: sysevent_email_action
+  sys_created_by: admin
+  sys_created_on: 2017-01-16 13:45:59
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 6dd928ee671032007bec408bd485ef2a
+  sys_mod_count: '9'
+  sys_package: cb377eb38c1903100a22deb6dd2b4ed5
+  sys_scope: global
+  sys_update_name: sysevent_email_action_6dd928ee671032007bec408bd485ef2a
+  sys_updated_by: admin
+  sys_updated_on: 2025-10-30 03:16:02
+action_insert: 'false'
+action_update: 'false'
+active: 'true'
+advanced_condition: ''
+affected_field_on_event: ''
+category: b69d02137f232200ee2e108c3ffa9151
+collection: pa_targets
+condition: ''
+content_type: multipart/mixed
+default_digest: 'false'
+default_interval: ''
+description: ''
+digest_from: ''
+digest_html: ''
+digest_reply_to: ''
+digest_separator_html: ''
+digest_separator_text: ''
+digest_subject: ''
+digest_template: ''
+digest_text: ''
+digest_type: single
+digestable: 'false'
+enable_dynamic_translation: 'false'
+event_name: pa.job.target.notification
+event_parm_1: 'false'
+event_parm_2: 'true'
+exclude_delegates: 'false'
+force_delivery: 'false'
+from: ''
+generation_type: event
+importance: ''
+include_attachments: 'false'
+item: event.parm1
+item_table: ''
+mandatory: 'false'
+message: |-
+  <mail_script>
+  var json = new JSON();
+  var summary = json.decode(event.parm1);
+  var reached = summary.reached;
+  var notReached = summary.not_reached;
+  var escape = GlideStringUtil.escapeHTML;
+
+  if (notReached.length > 0)
+  	template.print('<h3>The following targets have not been met:</h3>')
+
+  for (var i=0; i<notReached.length; i++){
+  	if(notReached[i].uuid != null) {
+  	   // This gets executed for the unreached targets created on pa_targets table.
+  		var name = notReached[i].uuid_display_value;
+  		var uuid = notReached[i].uuid;
+  		var targetValue = notReached[i].target_value;
+  		var gap = notReached[i].gap;
+  		var isGlobal = notReached[i].global;
+  		var score = notReached[i].score;
+  		var notificationMessage = 'The target of ' + escape(targetValue) + ' for the <a href="' + gs.getProperty('glide.servlet.uri') + '$pa_detailed.do?jvar_uuid=' + escape(uuid) +'">' + escape(name) + '</a>' + ' has not been met. The latest score is ' + escape(score) + ', and the gap is ' + gap + '.';
+
+  		template.print('<div>' + notificationMessage + '</div>');
+  		template.print('<br>');
+  	} else {
+  	   // This gets executed for the unreached targets created on target_definition table.
+  		var name = notReached[i].indicator_display_value;
+  		var targetValue = notReached[i].target_value;
+  		var gap = notReached[i].gap;
+  		var score = notReached[i].score;
+  		var sourceId = notReached[i].source_id;
+  		var processedFilterJson = notReached[i].processed_filter_json;
+                  var calendarInfoJson = notReached[i].calendar_info_json;
+  		var notificationMessage = 'The target of ' + escape(targetValue) + ' for the <a href="' + gs.getProperty('glide.servlet.uri') + 'now/platform-analytics-workspace/ac_kpi_details/' + escape(sourceId) +'/params/calendarInfo/'+ escape(calendarInfoJson) + '/breakdowns/'+ escape(processedFilterJson) +'/list-view/panel/target">' + escape(name) + '</a>' + ' has not been met. The latest score is ' + escape(score) + ', and the gap is ' + gap + '.';
+
+  		template.print('<div>' + notificationMessage + '</div>');
+  		template.print('<br>');
+  	}
+  }
+
+  if (reached.length > 0)
+  	template.print('<h3>The following targets have been reached:</h3>')
+
+  for (var i=0; i<reached.length; i++){
+  	if(reached[i].uuid != null) {
+  	   // This gets executed for the reached targets created on pa_targets table.
+  		var name = reached[i].uuid_display_value;
+  		var uuid = reached[i].uuid;
+  		var targetValue = reached[i].target_value;
+  		var gap = reached[i].gap;
+  		var isGlobal = reached[i].global;
+  		var score = reached[i].score;
+  		var date = reached[i].target_reached_date;
+
+  		var notificationMessage = 'The target of ' + escape(targetValue) + ' for the <a href="' + gs.getProperty('glide.servlet.uri') + '$pa_detailed.do?jvar_uuid=' + escape(uuid) +'">' + escape(name) + '</a>' + ' has been met. The latest score is ' + escape(score) + ', and the gap is ' + gap + '.';
+
+  		template.print('<div>' + notificationMessage + '</div>');
+  		template.print('<br>');
+  	} else {
+  	   // This gets executed for the reached targets created on target_definition table.
+  		var name = reached[i].indicator_display_value;
+  		var targetValue = reached[i].target_value;
+  		var gap = reached[i].gap;
+  		var score = reached[i].score;
+  		var sourceId = reached[i].source_id;
+  		var processedFilterJson = reached[i].processed_filter_json;
+                  var calendarInfoJson = reached[i].calendar_info_json;
+
+  		var notificationMessage = 'The target of ' + escape(targetValue) + ' for the <a href="' + gs.getProperty('glide.servlet.uri') + 'now/platform-analytics-workspace/ac_kpi_details/' + escape(sourceId) +'/params/calendarInfo/'+ escape(calendarInfoJson) + '/breakdowns/'+ escape(processedFilterJson) + '/list-view/panel/target">' + escape(name) + '</a>' + ' has been met. The latest score is ' + escape(score) + ', and the gap is ' + gap + '.';
+
+  		template.print('<div>' + notificationMessage + '</div>');
+  		template.print('<br>');
+  	}
+
+  }
+  </mail_script>
+message_html: ''
+message_list: 9c04e42e671032007bec408bd485ef0f
+message_text: ''
+name: PA Targets Notification
+omit_watermark: 'false'
+order: '100'
+push_message_only: 'false'
+recipient_fields: ''
+recipient_groups: ''
+recipient_users: ''
+reply_to: ''
+send_self: 'false'
+sms_alternate: ''
+style: ''
+subject: Targets notification
+subscribable: 'false'
+sys_name: PA Targets Notification
+sys_overrides: ''
+sys_policy: ''
+sys_version: '1'
+template: 7ed0481f3b0b2200c869c2c703efc487
+type: email
+weight: '0'

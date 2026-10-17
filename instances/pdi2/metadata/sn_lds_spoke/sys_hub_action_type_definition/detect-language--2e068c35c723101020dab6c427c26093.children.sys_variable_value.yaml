@@ -1,0 +1,148 @@
+- document: sys_hub_action_type_definition
+  document_key: 2e068c35c723101020dab6c427c26093
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-29 18:04:24
+  sys_id: 057accf5c723101020dab6c427c260c9
+  sys_mod_count: '1'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-29 18:04:56
+  value: ''
+  variable: b87accf5c723101020dab6c427c260af
+- document: sys_hub_step_instance
+  document_key: 7fa6c875c723101020dab6c427c2608c
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-29 17:47:57
+  sys_id: 08b6c875c723101020dab6c427c2609c
+  sys_mod_count: '3'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-30 15:29:01
+  value: |-
+    (function execute(inputs, outputs) {
+        var servicenowLDSBatchingUtil = new ServiceNowLDSBatchingUtil();
+        var servicenowLDSErrorHandler = new ServiceNowLDSErrorHandler();
+        var languageDetector = new sn_ml.LanguageDetector();
+        var texts = inputs.texts;
+        var splitArrays = servicenowLDSBatchingUtil.batchBulkDetectTexts(texts);
+        var response = {};
+        var RESTCalls = 0;
+        outputs.status = 'Success';
+
+        for (var i = 0; i < splitArrays.length; i++) {
+            var textsToDetect = splitArrays[i];
+            var detections = [];
+            var ldsResponse = languageDetector.detectLanguage(textsToDetect);
+            RESTCalls = RESTCalls + 1;
+            if (ldsResponse['statusMessage'] === 'SUCCESS' && ldsResponse['statusCode'] == 200) {
+                for (var j = 0; j < ldsResponse.detections.length; j++) {
+                    var ldsResponseNode = ldsResponse.detections[j];
+                    var detection = {};
+                    detection["detected_language"] = {
+                        "code": ldsResponseNode.detectedLanguage.language,
+                        "confidence": ldsResponseNode.detectedLanguage.confidence
+                    };
+                    detection["status"] = "Success";
+
+                    detection["alternatives"] = [];
+                    for (var k = 0; k < ldsResponseNode.alternatives.length && k < 4; k++) {
+                        var alternative = {
+                            "code": ldsResponseNode.alternatives[k].language,
+                            "confidence": ldsResponseNode.alternatives[k].confidence
+                        };
+                        detection["alternatives"].push(alternative);
+                    }
+                    detections.push(detection);
+                }
+            } else {
+                var errorObj = servicenowLDSErrorHandler.detectLanguageHandler(ldsResponse.statusMessage);
+                outputs.status = "Error";
+                for (var j = 0; j < textsToDetect.length; j++) {
+                    var detection = {
+                        "status": "Error",
+                        "error_code": errorObj.errorCode,
+                        "error_message": errorObj.errorMessage
+                    };
+                    detections.push(detection);
+                }
+                gs.error("Error while detecting the language of text using ServiceNow Language Detection Service. Error:" + ldsResponse.statusMessage + " Response received:" + ldsResponse);
+            }
+
+            for (var detect_index = 0; detect_index < detections.length; detect_index++) {
+                response[textsToDetect[detect_index]] = detections[detect_index];
+            }
+        }
+        var rearrangeResultFromScript = servicenowLDSBatchingUtil.rearrangeJSONResult(texts, response);
+        outputs.detections = rearrangeResultFromScript;
+        outputs.rest_calls = RESTCalls;
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: 2e068c35c723101020dab6c427c26093
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-29 18:04:24
+  sys_id: 417accf5c723101020dab6c427c260c9
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-29 18:04:24
+  value: ''
+  variable: 3c7accf5c723101020dab6c427c260b6
+- document: sys_hub_action_type_definition
+  document_key: 2e068c35c723101020dab6c427c26093
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-29 19:03:11
+  sys_id: 4ae71075c723101020dab6c427c26075
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-29 19:03:11
+  value: ''
+  variable: b87accf5c723101020dab6c427c260bc
+- document: sys_hub_step_instance
+  document_key: 7fa6c875c723101020dab6c427c2608c
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-29 17:55:44
+  sys_id: 4e780cb5c723101020dab6c427c260a1
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-29 17:55:44
+  value: ''
+  variable: 2c226939b3101300176b051a16a8dc83
+- document: sys_hub_step_instance
+  document_key: 7fa6c875c723101020dab6c427c2608c
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-29 17:55:44
+  sys_id: 8a780cb5c723101020dab6c427c260a1
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-29 17:55:44
+  value: ''
+  variable: 74315b04b3201300176b051a16a8dc2b
+- document: sys_hub_step_instance
+  document_key: 7fa6c875c723101020dab6c427c2608c
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-29 17:55:44
+  sys_id: c6780cb5c723101020dab6c427c260a1
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-29 17:55:44
+  value: ''
+  variable: f5e56d79b3101300176b051a16a8dce4

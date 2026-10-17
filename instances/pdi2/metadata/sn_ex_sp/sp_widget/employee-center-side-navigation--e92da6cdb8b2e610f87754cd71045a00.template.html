@@ -1,0 +1,86 @@
+<div ng-class="{'nav-container': showLeftNav, 'nav-container-mobile': !showLeftNav}" ng-style="c.getHeight()">
+  <div ng-if="isLoading" ng-class="showLeftNav ? 'skeleton-loader-container main-container' : 'skeleton-loader-container main-container-mobile'">
+    <div ng-repeat="item in (showLeftNav ? [1,2,3,4,5,6] : [1,2,3,4,5])"> 
+      <div class="item-parent vertical-padding" ng-class="showLeftNav ? 'menu-container' : 'menu-container-mobile'">
+        <div class="bottom-margin-loader icon-container">
+          <span class="icon-loader skeleton-loader"></span>
+        </div>
+        <span class="title-loader skeleton-loader"></span>
+      </div>
+    </div>
+  </div>
+  <div ng-if="!isLoading" ng-class="showLeftNav ? 'parent-menu-container main-container' : 'main-container-mobile'" role="menu">
+    <div ng-repeat="menu in c.visibleMenuItems | orderBy : 'order' track by menu.portal_nav_item"
+         on-finish-repeat="ngRepeatMenuFinished"
+         class="item-parent">
+      <a
+         ng-class="{
+                   'item-container': showLeftNav,
+                   'item-container-mobile': !showLeftNav,
+                   'selected': menu.selected,
+                   }"
+         id="{{menu.portal_nav_item}}"
+         ng-mouseenter="canHover && c.toggleSubMenu($event)"
+         ng-mouseleave="canHover && c.checkHoveredElement(menu,$event)"
+         ng-click="c.handleMenuClick($event)"
+         tabindex="{{(menu.render_as == 'modal_window' || c.hasSubMenu(menu) || c.hasURL(menu)) ? 0 : -1}}"
+         aria-disabled = "{{(menu.render_as == 'modal_window' || c.hasSubMenu(menu) || c.hasURL(menu)) ? false : true}}"
+         aria-label="{{menu.name ? menu.name : menu.label}}"
+         aria-haspopup="{{c.hasSubMenu(menu) || menu.isMoreItem}}"
+         ng-attr-aria-expanded="{{(c.hasSubMenu(menu) || menu.isMoreItem) ? (c.selectedMenu == menu.portal_nav_item ? true : false) : undefined}}" 
+         aria-owns="{{((c.hasSubMenu(menu) || menu.isMoreItem) && c.selectedMenu == menu.portal_nav_item) ? 'sub-menu-' + c.selectedMenu : undefined}}"
+         role="menuitem"
+         data-toggle="tooltip"
+         data-trigger="hover"
+         ec-multiline-ellipsis-tooltip ec-ellipsis-tooltip-title="{{c.getTooltip(menu)}}">
+        <span ng-if="!showLeftNav" class="highlighter-mobile"></span>
+        <div ng-class="showLeftNav ? 'menu-container' : 'menu-container-mobile'">
+          <span ng-class="showLeftNav ? 'icon-container bottom-margin' : 'icon-container-mobile bottom-margin-mobile'">
+            <i class="fa fa-{{menu.menu_icon}}"/>
+          </span>
+          <span ng-class="showLeftNav ? 'menu-title' : 'menu-title-mobile'">{{menu.name ? menu.name : menu.label}}</span>
+        </div>
+        <span ng-if="showLeftNav" class="highlighter"></span>
+      </a>
+    </div>
+  </div>
+  <div class="submenu-container"
+       ng-mouseenter="c.cancelSubmenuClose()"
+       ng-class="{
+                 'hidden-submenu': !c.showSubMenu,
+                 'mobile-mode': showBottomNav,
+                 'desktop-mode': showLeftNav,
+                 'overflow-submenu': c.selectedMenu === 'more_menu_item',
+                 'overflow-transition': true
+                 }"
+       id="sub-menu-{{c.selectedMenu}}"
+       ng-style="c.getSubMenuHeight()">
+    <ul ng-if="c.showSubMenu" 
+        class="submenu-list"
+        ng-mouseleave="c.checkHoveredElement(undefined,$event)"
+        role="menu">
+      <li ng-class="{'list-heading': c.isSubmenuHeading(submenu),
+                    'submenu-item' : submenu.render_as == 'modal_window' || c.hasURL(submenu) || c.hasChildTopicsInMore(submenu) || submenu.isBackButton,
+                    'submenu-no-url' : submenu.render_as != 'modal_window' && !c.hasURL(submenu) && !submenu.isBackButton && (!c.hasChildTopicsInMore(submenu) || c.isSubmenuHeading(submenu)),
+                    'submenu-back-button': submenu.isBackButton,
+                    'submenu-parent-item': c.hasChildTopicsInMore(submenu),
+                    'more-submenu-root-item': c.selectedMenu === 'more_menu_item' && c.moreSubmenuState.currentLevel === 'root' && !submenu.isBackButton}"
+          ng-repeat="submenu in (c.selectedMenu === 'more_menu_item' ? c.moreSubmenuState.displayItems : c.data.menuItemToChildrenMap[c.selectedMenu]) track by submenu.portal_nav_item" role="none">
+        <a id={{submenu.portal_nav_item}} ng-click="c.handleSubMenuClick($event)"
+           tabindex="{{(submenu.render_as != 'modal_window' && !c.hasURL(submenu) && !c.hasChildTopicsInMore(submenu) && !submenu.isBackButton) ? -1 : 0}}"
+           aria-disabled = "{{(submenu.render_as != 'modal_window' && !c.hasURL(submenu) && !c.hasChildTopicsInMore(submenu) && !submenu.isBackButton) ? true : false}}"
+           aria-label="{{submenu.name ? submenu.name : submenu.label}}" role="menuitem"
+           ng-class="{'submenu-clickable': submenu.render_as == 'modal_window' || c.hasURL(submenu) || c.hasChildTopicsInMore(submenu) || submenu.isBackButton}">
+          <span class="submenu-content">
+            <div>
+              <i ng-if="submenu.isBackButton" class="left-arrow fa fa-angle-left flip-icon-rtl submenu-back-icon"></i>
+              <i ng-if="!submenu.isBackButton && c.selectedMenu === 'more_menu_item' && submenu.menu_icon && c.moreSubmenuState.currentLevel === 'root'" class="fa fa-{{submenu.menu_icon}} submenu-topic-icon"></i>
+              <span class="submenu-title">{{submenu.name ? submenu.name : submenu.label}}</span>
+            </div>
+            <i ng-if="c.hasChildTopicsInMore(submenu) && c.selectedMenu === 'more_menu_item' && c.moreSubmenuState.currentLevel === 'root'" class="fa fa-chevron-right flip-icon-rtl submenu-arrow-icon"></i>
+          </span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

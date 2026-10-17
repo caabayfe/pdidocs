@@ -1,0 +1,211 @@
+<div>
+    <div ng-if="!c.data.cannotAccessPerfPage && !c.isPerfTabActiveAndOpen">
+        <div class="tabs">
+            <button class="tab-button" ng-class="{active: selectedTab == 0}" ng-click="setTab(0)">${Benchmark details}</button>
+            <button class="tab-button" ng-class="{active: selectedTab == 1}" ng-click="setTab(1)">${Preview}</button>
+            <div ng-show="selectedTab == 1" class="indicator-text">
+                <span class="red-dot"></span>
+                <span class="text">${Benchmark results are highlighted in red}</span>
+            </div>
+        </div>
+        <div ng-show="selectedTab == 0">
+            <div ng-if="!(status && !slowWidgetsFetched)" class="perf-button-container">
+                <button ng-if="!status && !slowWidgetsFetched" class="perf-button  btn-primary" ng-click="validateFields()">${Validate}</button>
+                <div ng-if="slowWidgetsFetched" class="summary-btn-container">
+                    <button class="perf-button btn-primary" ng-click="openPreview()">${Show preview}</button>
+                    <button class="perf-button btn-primary btn-start-over " ng-click="reloadPage()">${Start over}</button>
+                </div>
+            </div>
+            <div ng-if="!status && !slowWidgetsFetched">
+                <h2 style="color: #425051;">${Benchmark duration}</h2>
+                <div class="form-group">
+                    <label for="url" data-toggle="tooltip" data-placement="top" data-original-title="${Enter the portal URL you wish to analyze}">
+                        <span class="fa fa-asterisk mandatory sp-field-label-padding" ng-class="mandatory-filled" role="img"></span>
+                        ${Portal Page URL}
+                    </label>
+                    <input type="text" id="url" class="form-control" ng-model="c.pageUrl" ng-class="{'is-invalid': c.isInvalidUrl}">
+                    <div class="invalid-feedback" ng-if="c.isInvalidUrl">${Provided URL must have same domain as current page
+                        and be a valid URL}</div>
+                </div>
+                <hr class="divider">
+                <p>${Please provide the thresholds values in milliseconds for the analysis. Any widget on that page that
+                    exceeds the provided thresholds will be highlighted.}</p>
+                <div class="form-group">
+                    <label for="load-time" data-toggle="tooltip" data-placement="top" data-original-title="${Any widget whose load time i.e client script + server script exceeds the threshold will be highlighted}">${Widget Load Time(ms)}</label>
+                    <input type="text" id="load-time" class="form-control" ng-model="c.loadDuration" ng-model-options="{updateOn: 'blur'}" ng-class="{'is-invalid': c.isInvalidLoadTime}">
+                    <div class="invalid-feedback" ng-if="c.isInvalidLoadTime">${Please enter a number greater than zero}
+                    </div>
+                </div>
+
+                <div ng-if="c.data.canAccessPerfPageAndLogs" class="form-group">
+                    <label for="acl-duration" data-toggle="tooltip" data-placement="top" data-original-title="${Any widget executing ACL’s taking more than the set time will be highlighted}">${ACL
+                        Execution time(ms)}</label>
+                    <input type="text" id="acl-duration" class="form-control" ng-model="c.aclDuration" ng-model-options="{updateOn: 'blur'}" ng-class="{'is-invalid': c.isInvalidAclDuration}">
+                    <div class="invalid-feedback" ng-if="c.isInvalidAclDuration">${Please enter a number greater than zero}</div>
+                </div>
+
+                <div ng-if="c.data.canAccessPerfPageAndLogs" class="form-group">
+                    <label for="db-duration" data-toggle="tooltip" data-placement="top" data-original-title="${Any widget executing DB queries taking more than the set time will be highlighted}">${DB
+                        Call Execution Time(ms)}</label>
+                    <input type="text" id="db-duration" class="form-control" ng-model="c.dbDuration" ng-model-options="{updateOn: 'blur'}" ng-class="{'is-invalid': c.isInvalidDbDuration}">
+                    <div class="invalid-feedback" ng-if="c.isInvalidDbDuration">${Please enter a number greater than zero}</div>
+                </div>
+
+                <div ng-if="c.data.canAccessPerfPageAndLogs" class="form-group">
+                    <label for="br-duration" data-toggle="tooltip" data-placement="top" data-original-title="${Any widget executing Business rules taking more than the set time will be highlighted}">${Business
+                        Rule Execution Time(ms)}</label>
+                    <input type="text" id="br-duration" class="form-control" ng-model="c.brDuration" ng-model-options="{updateOn: 'blur'}" ng-class="{'is-invalid': c.isInvalidBrDuration}">
+                    <div class="invalid-feedback" ng-if="c.isInvalidBrDuration">${Please enter a number greater than 90}</div>
+                </div>
+                <hr class="divider">
+                <div ng-if="c.data.canAccessPerfPageAndLogs" class="form-group">
+                    <label for="load-time" data-toggle="tooltip" data-placement="top" data-original-title="${Any AJAX calls exceeding the configured threshold will be highlighted}">${Ajax
+                        Calls Time(ms)}</label>
+                    <input type="text" id="ajax-processing-time" class="form-control" ng-model="c.ajaxProcessingDuration" ng-model-options="{updateOn: 'blur'}" ng-class="{'is-invalid': c.isInvalidAjaxProcessingDuration}">
+                    <div class="invalid-feedback" ng-if="c.isInvalidAjaxProcessingDuration">${Please enter a number greater than zero}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="load-time" data-toggle="tooltip" data-placement="top" data-original-title="${Time to wait for Ajax calls after the page to load has completed"}>${Ajax
+                        Waiting Time(sec)}</label>
+                    <input type="text" id="ajax-waiting-time" class="form-control" ng-model="c.ajaxWaitingTime" ng-model-options="{updateOn: 'blur'}" ng-class="{'is-invalid': c.isInvalidAjaxWaitingDuration}">
+                    <div class="invalid-feedback" ng-if="c.isInvalidAjaxWaitingDuration">${Please enter a number greater than 30}</div>
+                </div>
+            </div>
+            <div ng-if="status && !slowWidgetsFetched" class="column loading-spinner-container">
+                <fa name="spinner" spin="true"></fa>
+                <div class="loading-status">{{status}} ...</div>
+            </div>
+            <div ng-if="slowWidgetsFetched" class="column widget-summary">
+                <h2>${Benchmark results}</h2>
+                <p>${Showing results for:}</p>
+                <div class="result-values">
+                    <span>${Load time} - {{c.loadThresholdDuration}} ${ms}</span>
+                    <span ng-if="c.data.canAccessPerfPageAndLogs">${ACL Duration} - {{c.aclThresholdDuration}} ${ms}</span>
+                    <span ng-if="c.data.canAccessPerfPageAndLogs">${DB Duration} - {{c.dbThresholdDuration}} ${ms}</span>
+                    <span ng-if="c.data.canAccessPerfPageAndLogs">${Business Rule Duration} - {{c.brThresholdDuration}} ${ms}</span>
+                </div>
+                <div class="perf-summary">
+                    <div class="perf-summary-container">
+                        <div class="summary-card-container">
+                            <div ng-if="!c.isslowWidgetsListEmpty" class="well well-lg">
+                                <p class="card-text">{{c.slowWidgetsSummary.length}}/{{c.totalWidgetsOnPageCount}} widgets
+                                    <span ng-show="c.slowWidgetComponentSummary.aclsCount">, {{c.slowWidgetComponentSummary.aclsCount}} ${ACLs}</span>
+                                    <span ng-show="c.slowWidgetComponentSummary.businessRulesCount">, {{c.slowWidgetComponentSummary.businessRulesCount}} ${Business Rules}</span>
+                                    <span ng-show="c.slowWidgetComponentSummary.dbCallsCount">, {{c.slowWidgetComponentSummary.dbCallsCount}} ${DB Queries}</span>
+                                    <span> ${exceeding threshold values}<span>
+                                            <span ng-show="c.slowWidgetComponentSummary.errorsCount">${and} {{c.slowWidgetComponentSummary.errorsCount}} ${Errors identified.}</span>
+                                            <span ng-show="!c.slowWidgetComponentSummary.errorsCount">.</span>
+                                </p>
+                            </div>
+                            <div ng-if="!c.isAjaxApiListEmpty" class="well well-lg">
+                                <p ng-show="c.ajaxApiComponentSummary.aclsCount || c.ajaxApiComponentSummary.businessRulesCount || c.ajaxApiComponentSummary.dbCallsCount || c.ajaxApiComponentSummary.errorsCount" class="card-text">
+                                    For {{c.ajaxApiLogSummary.length}} AJAX Calls: 
+                                    <span ng-show="c.ajaxApiComponentSummary.aclsCount">
+                                        {{c.ajaxApiComponentSummary.aclsCount}} ${ACLs}
+                                    </span>
+                                    <span ng-show="c.ajaxApiComponentSummary.businessRulesCount">
+                                        <span ng-if="c.ajaxApiComponentSummary.aclsCount">, </span>
+                                        {{c.ajaxApiComponentSummary.businessRulesCount}} ${Business Rules}
+                                    </span>
+                                    <span ng-show="c.ajaxApiComponentSummary.dbCallsCount">
+                                        <span ng-if="c.ajaxApiComponentSummary.aclsCount || c.ajaxApiComponentSummary.businessRulesCount">, </span>
+                                        {{c.ajaxApiComponentSummary.dbCallsCount}} ${DB Queries}
+                                    </span>
+                                    <span> ${exceeding threshold values}<span></span>
+                                        <span ng-show="c.ajaxApiComponentSummary.errorsCount">
+                                            ${and} {{c.ajaxApiComponentSummary.errorsCount}} ${Errors identified.}
+                                        </span>
+                                        <span ng-show="!c.ajaxApiComponentSummary.errorsCount">.</span>
+                                </p>
+                                <p ng-hide="c.ajaxApiComponentSummary.aclsCount || c.ajaxApiComponentSummary.businessRulesCount || c.ajaxApiComponentSummary.dbCallsCount || c.ajaxApiComponentSummary.errorsCount" class="card-text">
+                                    {{c.ajaxApiLogSummary.length}} AJAX Calls exceeded the threshold .
+                                </p>
+                            </div>
+                            <div ng-if="c.isslowWidgetsListEmpty && c.isAjaxApiListEmpty" class="well well-lg">
+                                <p class="card-text"><span class="notification-icon icon-info"><span class="sr-only">Info
+                                            Message</span></span>${No widgets found exceeding the threshold, update the threshold
+                                    values and rerun the analysis}</p>
+                            </div>
+                        </div>
+                        <div class="summary-list-container">
+                            <div ng-if="!c.isslowWidgetsListEmpty" class="widget-list" ng-style="{'max-height': c.isAjaxApiListEmpty ? '600px' : '260px'}">
+                                <table class="widget-table">
+                                    <thead>
+                                        <tr>
+                                            <th>${Widgets name}</th>
+                                            <th>${Total time}</th>
+                                            <th>${Client load time}</th>
+                                            <th>${Server script time}</th>
+                                            <th ng-if="c.data.canAccessPerfPageAndLogs">${#ACLs}</th>
+                                            <th ng-if="c.data.canAccessPerfPageAndLogs">${#Business rules}</th>
+                                            <th ng-if="c.data.canAccessPerfPageAndLogs">${#DB calls}</th>
+                                            <th ng-if="c.data.canAccessPerfPageAndLogs && c.slowWidgetComponentSummary.errorsCount > 0">${#Errors}</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="slowWidget in c.slowWidgetsSummary" ng-click="handlePlayIconClick(slowWidget, $index, 'widgetList')" ng-class="{'selected' : $index == index && table == 'widgetList'}">
+                                            <td>{{slowWidget.widgetName}}</td>
+                                            <td>{{slowWidget.totalTime}} ms</td>
+                                            <td>{{slowWidget.clientLoadTime}} ms</td>
+                                            <td>{{slowWidget.scriptExecutionTime}} ms</td>
+                                            <td ng-if="c.data.canAccessPerfPageAndLogs">{{ (slowWidget.acls && slowWidget.acls.length) || '-' }}</td>
+                                            <td ng-if="c.data.canAccessPerfPageAndLogs">{{ (slowWidget.businessRules && slowWidget.businessRules.length) || '-' }}</td>
+                                            <td ng-if="c.data.canAccessPerfPageAndLogs">{{ (slowWidget.dbCalls && slowWidget.dbCalls.length) || '-' }}</td>
+                                            <td ng-if="c.data.canAccessPerfPageAndLogs && c.slowWidgetComponentSummary.errorsCount > 0">{{ (slowWidget.errors && slowWidget.errors.length) || '-' }}</td>
+                                            <td><i class="fa fa-play"></i></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div ng-if="!c.isAjaxApiListEmpty" class="ajax-api-list" ng-style="{'max-height': c.isslowWidgetsListEmpty ? '600px' : '260px'}">
+                                <table class="widget-table">
+                                    <thead>
+                                        <tr>
+                                            <th>${Ajax Api}</th>
+                                            <th>${Processing time}</th>
+                                            <th>${#ACLs}</th>
+                                            <th>${#Business rules}</th>
+                                            <th>${#DB calls}</th>
+                                            <th ng-if="c.ajaxApiComponentSummary.errorsCount > 0">${#Errors}</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="ajaxApiLog in c.ajaxApiLogSummary" ng-click="handlePlayIconClick(ajaxApiLog, $index, 'ajaxList')" ng-class="{'selected' : $index == index && table == 'ajaxList'}">
+                                            <td>{{ajaxApiLog.tPage}}</td>
+                                            <td>{{ajaxApiLog["processing time"]}} ms</td>
+                                            <td>{{ (ajaxApiLog.acls && ajaxApiLog.acls.length) || '-' }}</td>
+                                            <td>{{ (ajaxApiLog.businessRules && ajaxApiLog.businessRules.length) || '-' }}</td>
+                                            <td>{{ (ajaxApiLog.dbCalls && ajaxApiLog.dbCalls.length) || '-' }}</td>
+                                            <td ng-if="c.ajaxApiComponentSummary.errorsCount > 0">{{ (ajaxApiLog.errors && ajaxApiLog.errors.length) || '-' }}</td>
+                                            <td><i class="fa fa-play"></i></td>
+                                        </tr>
+                                    </tbody>
+                                </table> 
+                            </div> 
+                        </div>
+                    </div>
+                    <div ng-if="!c.isslowWidgetsListEmpty || !c.isAjaxApiListEmpty" class="summary-widget well well-lg">
+                        <div ng-if="c.data.widgetSummary" class="card-text">
+                            <sp-widget widget="c.data.widgetSummary"></sp-widget>
+                        </div>
+                        <div ng-if="!c.data.widgetSummary" class="card-text default-message">
+                            ${Please select a widget from the list to view its details.}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div ng-show="selectedTab == 1">
+            <iframe id="performance_preview" ng-src="{{iframeSrc}}"></iframe>
+        </div>
+    </div>
+    <div ng-if="c.data.cannotAccessPerfPage && !c.isPerfTabActiveAndOpen">
+        ${You do not have permissions to access this page.}
+    </div>
+    <div ng-if="!c.data.cannotAccessPerfPage && c.isPerfTabActiveAndOpen" class="perf-multi-tab-mssg">
+         ${The performance analyzer is active in another tab. Only one instance is allowed. <a href="javascript:void(0)" ng-click="c.cancelAndOpenNew()" >Click here</a> to cancel the ongoing performance analyzer transaction and open a new one here.}
+    </div>
+</div>

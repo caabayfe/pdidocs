@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+ 
+<g:evaluate var="jvar_use_notify" jelly="true">
+	var resetUtil = new global.PasswordResetUtil();
+	resetUtil.useNotifyInPasswordReset();
+</g:evaluate>
+	
+<script language="javascript">
+addLoadEvent(getVerificationInfo);
+addMacroEventListeners('sysverb_send_code', 'sysparm_answer_sms_code');
+
+function getVerificationInfo() {
+	var ga = new GlideAjax('PwdAjaxPublicEnrollSMS');
+	ga.addParam('sysparm_name', 'getSMSVerificationInfo');
+	ga.addParam('sysparm_request_id', '${JS,HTML:sysparm_request_id}');
+    
+    // add CSRF token for AJAX handling.
+    ga.addParam('sysparam_pwd_csrf_token', findCSRFElement().value);
+	ga.getXML(handleGetVerificationInfoResponse, null);
+}
+
+function handleGetVerificationInfoResponse(response, args) {
+    
+    //let's handle security from AJAX response. 
+    handleSecurityFrom(response);
+
+	var modeElem = response.responseXML.getElementsByTagName("mode");
+	var mode = modeElem[0].getAttribute("name");	
+
+        gel('sysparm_sms_verification_mode').value = mode;
+	
+	    var sendCodeButtonName = getMessage("Send Verification Code");
+	    sendCodeButtonName = "<b>" + sendCodeButtonName + "</b>"
+        var subscriptionMsg = new GwtMessage().getMessage('Click {0} to send a code to the following device(s):', sendCodeButtonName);
+        var mobileMsg = getMessage('Select a service provider for the mobile phone number on your profile and click the Send Verification Code button to send a verification code'); ;
+
+	if (mode == 'subscription' || (mode == "mobile" $[AND] "${jvar_use_notify}" == "true")) {
+		gel('sms_verification_desc').innerHTML = subscriptionMsg;
+		gel('input_service_provider_section_sms').style.display = 'none';
+        var sendButton = gel('sysverb_send_code');
+        sendButton.disabled = '';
+	    sendButton.style.cursor = 'pointer';
+        
+	    if (mode == 'subscription') {
+            var devices = response.responseXML.getElementsByTagName("device");
+            displayPhones(devices);
+	    }
+	    else {
+	        var device = response.responseXML.getElementsByTagName("device")[0];
+	        displayMobilePhone(device);
+	    }
+		gel('sysverb_send_code').focus();
+	}
+	else if (mode == 'mobile') {
+		gel('sms_verification_desc').innerHTML = mobileMsg;
+		gel('input_service_provider_section_sms').style.display = 'inline';
+		
+		var providers = response.responseXML.getElementsByTagName("provider");
+		var numProviders = providers.length;
+		if (numProviders == 0) {
+		    gel('sms_code_sent').innerHTML = getMessage('There is no service provider in the system.');
+		    gel('sysverb_send_code').focus();
+		} else {
+		    var select = gel("sys_select.service_provider_" + '${JS,HTML:sysparm_verification_id}');
+		    for (var i = 0; i != numProviders; i++) {
+		        var provider = providers[i];
+		        var option = document.createElement("option");
+		        if (Prototype.Browser.IE) {
+		            option.innerText = provider.getAttribute("name");
+		        } else {
+		            option.text = provider.getAttribute("name");
+		        }
+		        option.value = provider.getAttribute("sys_id");
+		        select.appendChild(option);
+		    }
+		    var profilePhone = response.responseXML.getElementsByTagName("device")[0];
+		    gel('profile_phone').innerHTML = profilePhone.getAttribute('phone');
+		    select.focus(); // Focus on the select element if providers exist
+		}
+	}
+	else {
+	    gel('sms_verification_desc').innerHTML = "";
+	    gel('sysverb_send_code').style.display = "none";
+	    gel('sms_code_sent').innerHTML = getMessage('Cannot send you a verification code because no mobile device is specified on your user profile. Ask your admin for help.');
+	    $j("button[name='sysverb_pwd_reset_${JS,HTML:sysparm_verification_id}']").hide();
+	}
+}
+
+function displayPhones(devices) {
+    for (var i = 0; i != devices.length; i++) {
+        var device = devices[i];
+        if (device.getAttribute('isSubscribed') == 'true') {
+           var newLi = document.createElement("li");
+           var text = document.createTextNode(device.getAttribute('phone'));
+           newLi.appendChild(text);
+		   newLi.setAttribute('role', 'listitem');
+           gel('sms_devices').appendChild(newLi);
+        }
+    }
+}
+
+function displayMobilePhone(device) {
+	var newLi = document.createElement("li");
+    var text = document.createTextNode(device.getAttribute('phone'));
+    newLi.appendChild(text);
+	newLi.setAttribute('role', 'listitem');
+    gel('sms_devices').appendChild(newLi);
+}
+
+function sendSMS() {
+	clearError();
+	gel('sms_code_sent').innerHTML = "";
+	var ga = new GlideAjax('PwdAjaxSMSPublicProcessor');
+	ga.addParam('sysparm_name', 'generateSMSCode');
+	ga.addParam('sysparm_request_id', '${JS,HTML:sysparm_request_id}');
+	ga.addParam('sysparm_verification_id', '${JS,HTML:sysparm_verification_id}');
+
+    var provider = gel('service_provider_' + '${JS,HTML:sysparm_verification_id}').value;
+    ga.addParam('sysparm_service_provider', provider);
+
+    var mode = gel('sysparm_sms_verification_mode').value;
+    ga.addParam('sysparm_sms_verification_mode', mode);
+    
+    // add csrf token for ajax
+    ga.addParam('sysparam_pwd_csrf_token', findCSRFElement().value);
+    
+    ga.getXML(handleSendSMSResponse);
+}
+
+function handleSendSMSResponse(response,args) {
+
+    //let's handle security from AJAX response. 
+    handleSecurityFrom(response);
+
+	// reponse message. this always exists.
+	var res =  response.responseXML.getElementsByTagName("response");
+	var status = res[0].getAttribute("status");
+	var message = res[0].getAttribute("message");
+	var value = res[0].getAttribute("value");
+	
+	var profileDeviceElem = response.responseXML.getElementsByTagName("profile_device");
+	var profileDevice = "";
+	if (profileDeviceElem != null) {
+		if (profileDeviceElem.length > 0) { 
+			profileDevice = profileDeviceElem[0].getAttribute("sys_id");
+		}
+	}
+
+    gel('sysparm_sms_profile_device').value = profileDevice;
+	gel('sms_code_sent').innerHTML = message;
+	gel('sysverb_send_code').innerText = getMessage('Resend Verification Code');
+	gel('input_sms_code_section').style.display = 'block';
+	
+	if (status != "success") {
+	    gel('sms_code_sent').style.color = '#E62715';  // red
+	}
+	
+	gel('sysverb_send_code').setAttribute('aria-labelledby', 'send-sms-label');
+	gel('send-sms-label').innerText = getMessage('Resend SMS Verification Code');
+	gel('sysparm_answer_sms_code').focus();
+	
+}
+
+function checkProviderField() {
+	var provider = gel('service_provider_' + '${JS,HTML:sysparm_verification_id}').value;
+	var sendButton = gel('sysverb_send_code');
+	
+	sendButton.disabled = 'disabled';
+	sendButton.style.cursor = 'default';
+	if (provider != null) {
+              if (provider.length > 0) {
+		 sendButton.disabled = '';
+		 sendButton.style.cursor = 'pointer';
+              }
+	}
+}
+
+  </script>
+	
+<g:evaluate var="jvar_verification_label" object="true" jelly="true">
+	var resetUtil = new global.PasswordResetUtil();
+	resetUtil.getVerificationLabel(jelly.sysparm_verification_id);
+</g:evaluate>
+
+  <input type="hidden" size="20" maxlength="20" id="sysparm_sms_verification_mode" name="sysparm_sms_verification_mode" value="subscription" autocomplete="off"/>
+  <input type="hidden" size="20" maxlength="20" id="sysparm_sms_profile_device" name="sysparm_sms_profile_device" value="" autocomplete="off"/>
+
+
+  <j:choose>
+    <!-- Polarisberg (external/stylized auth) -->
+    <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+      <h1 class="pwd-title" id="sms-title">${jvar_verification_label}</h1>
+      <h2 class="pwd-subtitle" id='sms_verification_desc'></h2>
+    </j:when>
+    <!-- Heisenberg -->
+    <j:otherwise>
+      <h2 class="pwd-title" id="sms-title">${jvar_verification_label}</h2>
+      <h3 class="pwd-subtitle" id='sms_verification_desc'></h3>
+    </j:otherwise>
+  </j:choose>
+
+  <div class="form-group" id="input_service_provider_section_sms" style="display:none">
+    <label id="profile_phone" for="masked_phone" class="control-label col-sm-4">Normal</label>
+    <span class="col-sm-8">
+      <input id="service_provider_${JS,HTML:sysparm_verification_id}" class="" type="hidden" onchange="onChange('service_provider_${JS,HTML:sysparm_verification_id}')" name="service_provider_${JS,HTML:sysparm_verification_id}" value="" mandatory="true"/>
+      <input value="" id="sys_display.service_provider_${JS,HTML:sysparm_verification_id}" type="hidden" name="sys_display.service_provider_${JS,HTML:sysparm_verification_id}"/>
+      <select id="sys_select.service_provider_${JS,HTML:sysparm_verification_id}" style="; margin-right:2px; width:160px; " name="sys_select.service_provider_${JS,HTML:sysparm_verification_id}"
+        onchange="onSelChange('sys_select.service_provider_${JS,HTML:sysparm_verification_id}'); updateAndFlip(this, 'service_provider_${JS,HTML:sysparm_verification_id}');checkProviderField();" aria-label="${gs.getMessage('Select a service provider for the mobile phone number on your profile')}">
+        <option value="">${gs.getMessage('Select a provider')}</option>
+      </select>
+    </span>
+  </div>
+
+  <div class="form-group">
+    <ul id='sms_devices' role="list"></ul>
+  </div>
+
+  <label class="sr-only" id="send-sms-label" aria-hidden="true">${gs.getMessage('Send SMS Verification Code')}</label>
+  <button type="button" name="sysverb_send_code" id="sysverb_send_code" class="btn btn-primary btn-pwd-submit" onclick="clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms'); return sendSMS();" disabled="disabled" aria-labelledby="sms-title sms_verification_desc sms_devices send-sms-label" style="margin-bottom:1.5rem;">
+	  ${gs.getMessage('Send Verification Code')}
+  </button>
+
+  <p id="sms_code_sent" style="font-weight:bold" aria-live="assertive" role="status"/>
+
+  <div class="form-group is-required" id="input_sms_code_section" style="display:none">
+    <label class="control-label" id="enter-sms-code-label">
+	  ${gs.getMessage('Enter verification code')}
+      <span class="required-marker sn-tooltip-basic" title="${gs.getMessage('Required')}" data-original-title="${gs.getMessage('Required')}" role="img" aria-label="${gs.getMessage('Verification code required')}"></span> 
+    </label>
+    <input type="text" id="sysparm_answer_sms_code" maxlength="20" name="sysparm_verification_code" value="${JS,HTML:sysparm_verification_code}" autocomplete="off" placeholder="" class="form-control pwd-form-control" required="required" oninput="updateMandatoryMarker(this, 'input_sms_code_section'); clearFieldError('password_comment_${JS,HTML:sysparm_verification_id}', 'verification_forms');" aria-labelledby="enter-sms-code-label" aria-describedby="sms_code_sent"/>
+  </div>
+
+</j:jelly>

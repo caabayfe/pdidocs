@@ -1,0 +1,700 @@
+_meta:
+  hash: a74839bb434134480059e798c0ffb89bcdd51ab4048221da6835fc833c3df850
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_topic
+  sys_created_by: admin
+  sys_created_on: 2020-07-06 23:33:17
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 3596671a3b3110102c67667993efc489
+  sys_mod_count: '144'
+  sys_package: aeddf2bf8c5d03100a22deb6dd2b4eb7
+  sys_scope: global
+  sys_update_name: sys_cb_topic_3596671a3b3110102c67667993efc489
+  sys_updated_by: admin
+  sys_updated_on: 2024-10-02 21:00:47
+applicability: ''
+applicability_mode: query
+autopilot_topic: 'false'
+category: ''
+channels: ''
+connect_queue: ''
+context_profiles: ''
+description: Contextual search to search only knowledge articles that have been made with the FAQ template.
+dialog_acts_enabled: 'false'
+expose_on_palette: 'false'
+flexible_conversation_switching: 'true'
+foundational: 'false'
+graph: |-
+  {
+    "graph_api_version": "1.0.68",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "f6c73c5de66f4ee8a67cd992bac57ace": {
+            "id": "f6c73c5de66f4ee8a67cd992bac57ace",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "name": "query",
+                "value": "",
+                "id": "d3b4a2dfabae4582a6bde857ca9dddf4",
+                "disabled": true,
+                "referenced": true,
+                "type": "String",
+                "hint": "",
+                "required": true
+              },
+              {
+                "name": "portal",
+                "value": "",
+                "id": "f0d3a9136af949e99faf47e6fecc188d",
+                "referenced": false,
+                "disabled": true,
+                "type": "String",
+                "hint": "",
+                "required": false
+              },
+              {
+                "name": "kb_knowledge_base",
+                "value": "",
+                "id": "502f202695044ea883cefa9ceb6de424",
+                "referenced": true,
+                "disabled": true,
+                "type": "String",
+                "hint": "",
+                "required": false
+              }
+            ],
+            "variableIds": [
+              "d3b4a2dfabae4582a6bde857ca9dddf4",
+              "f0d3a9136af949e99faf47e6fecc188d",
+              "502f202695044ea883cefa9ceb6de424"
+            ]
+          },
+          "ab1eb0cf7f2c4b1fb17f116198a2fa8b": {
+            "id": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "outputVariables": [
+              {
+                "key": "Results_Returned",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.results_returned}}",
+                          "displayValue": "vaVars➛results_returned"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": false
+              },
+              {
+                "key": "Results_Helpful",
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.results_helpful}}",
+                          "displayValue": "vaVars➛results_helpful"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple",
+                "disabled": false
+              }
+            ]
+          },
+          "000df41e27ee439e8622ae78cf59ae8e": {
+            "id": "000df41e27ee439e8622ae78cf59ae8e",
+            "name": "FAQ Conversation Builder",
+            "script": "(function execute() {\n    var contextualSearch = new global.VAGlobalContextualSearchUtil();\n    var response = contextualSearch.search(\n        vaVars.search_context_sys_id, vaInputs.query, vaInputs.kb_knowledge_base\n    );\n    var success = contextualSearch.processSearchResponse(response);\n    if (!success) {\n        return;\n    }\n\n    var relevantSearchResults = contextualSearch.processGeneralResults(response, 6, -2, vaSystem);\n    vaVars.searchResultCount = relevantSearchResults.length;\n    vaVars.search_result_json_string = JSON.stringify(relevantSearchResults);\n    vaVars.index = 0;\n    return;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "39362b36cffd49a6847adfaed75284eb": {
+            "id": "39362b36cffd49a6847adfaed75284eb",
+            "stepType": "Decision",
+            "name": "Did the search return results?"
+          },
+          "e857c2794e864bb88fe9fe6835424228": {
+            "id": "e857c2794e864bb88fe9fe6835424228",
+            "stepType": "BooleanPrompt",
+            "name": "Did Info Help",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "Did this information help you?"
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "24c1f84aa4554693934e136b10052132",
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "25c9bf78462c43ac8f222941c32a4f85": {
+            "id": "25c9bf78462c43ac8f222941c32a4f85",
+            "name": "Record Outputs",
+            "script": "(function execute() {\n    if(vaInputs.did_info_help == 'true') {\n        vaVars.results_helpful = true;\n    } else {\n        vaVars.results_helpful = false;\n    }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "97e6ba4ac4994fa3b6d51d11a44b27f9": {
+            "id": "97e6ba4ac4994fa3b6d51d11a44b27f9",
+            "stepType": "TextOutput",
+            "name": "Found Information",
+            "value": [
+              {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "text": "I found this information that might help you"
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "simple"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "secure": false,
+            "requestFeedback": true
+          },
+          "a121a58686e349389bfb2d87c500bbf4": {
+            "stepType": "ReferenceChoicePrompt",
+            "name": "Choose FAQ",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "I found some information that might help you"
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "variableId": "b8d263516fe442cab62a76e97f88ea85",
+            "id": "a121a58686e349389bfb2d87c500bbf4",
+            "mode": "external",
+            "script": "(function execute() {\n    var options = [];\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n\n    for (i = 0; i < searchJsonObj.length; i++) {\n        options.push({ 'value': i, 'label': searchJsonObj[i].title });\n    }\n\n    options.push({ 'value': '-1', 'label': 'I\\'m looking for something else' })\n\n    return options;\n})()\n",
+            "noRecordsResponseMsg": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "text": "No records found."
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "condition": {
+              "value": "(function execute() {\n    var options = [];\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n\n    for (i = 0; i < searchJsonObj.length; i++) {\n        options.push({ 'value': i, 'label': searchJsonObj[i].title });\n    }\n\n    options.push({ 'value': '-1', 'label': 'I\\'m looking for something else' })\n\n    return options;\n})()\n",
+              "mode": "external_script"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "hasCardHeader": false,
+            "skipReprompt": {
+              "value": "",
+              "mode": "query"
+            },
+            "detailDescription": ""
+          },
+          "20a65688fa144d31b08edbcc4221900c": {
+            "id": "20a65688fa144d31b08edbcc4221900c",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "715713859aad4988b21d989932fd5c4d": {
+            "id": "715713859aad4988b21d989932fd5c4d",
+            "stepType": "TextOutput",
+            "name": "Display FAQ",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n   // relevant properties to get record\n    var searchJsonObj = JSON.parse(vaVars.search_result_json_string);\n    var resultNumber = searchJsonObj[vaVars.selected_faq].meta.number;\n    var faqUtil = new global.VAFaqUtil();\n    // build the header text\n    header_text =  faqUtil.buildHeaderText(resultNumber, vaVars.selected_type);\n    \n    header_text += '<br><br>';\n\n    var linkBuilder = new global.cxs_SearchResultLinkBuilder();\n    var link = linkBuilder.build(searchJsonObj[vaVars.selected_faq], vaInputs.portal);\n\n    header_text += '<a href=\"'+link.link+'\" target=\"_blank\" >'+ 'Read full article'+ '</a>';\n    //header_text += '[Read full article]('+link.link+')'\n    return header_text;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "requestFeedback": true
+          }
+        },
+        "edges": [
+          {
+            "id": "b4f61440bc6a4ed285c0b41004176975",
+            "edgeType": "Edge",
+            "source": "715713859aad4988b21d989932fd5c4d",
+            "target": "e857c2794e864bb88fe9fe6835424228",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "cfdd788f234f41439c62550133fb69d5",
+            "edgeType": "Edge",
+            "source": "e857c2794e864bb88fe9fe6835424228",
+            "target": "25c9bf78462c43ac8f222941c32a4f85",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "bfced8c9d7844407861578b25adeda19",
+            "edgeType": "Branch",
+            "source": "39362b36cffd49a6847adfaed75284eb",
+            "target": "a121a58686e349389bfb2d87c500bbf4",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if(vaVars.searchResultCount > 1) {\n        vaVars.results_returned = true;\n        return true;\n    }\n    return false;\n})()\n"
+            },
+            "label": "More than one"
+          },
+          {
+            "id": "6c8ed8984ecf453d99b5cbb33e701466",
+            "edgeType": "Branch",
+            "source": "39362b36cffd49a6847adfaed75284eb",
+            "target": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (!(vaVars.searchResultCount > 0)) {\n        vaVars.results_helpful = false;\n        vaVars.results_returned = false;\n        return true;\n    }\n    return false;\n\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "8b9293ae660f4e2ab52c3a4019775fa9",
+            "edgeType": "Edge",
+            "source": "f6c73c5de66f4ee8a67cd992bac57ace",
+            "target": "000df41e27ee439e8622ae78cf59ae8e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f33dceaf22d74448a5a0bf72c97b007b",
+            "edgeType": "Edge",
+            "source": "000df41e27ee439e8622ae78cf59ae8e",
+            "target": "39362b36cffd49a6847adfaed75284eb",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "72e1ebb1e9b24ab09473e85a9d2ce7c7",
+            "edgeType": "Edge",
+            "source": "25c9bf78462c43ac8f222941c32a4f85",
+            "target": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "fa92125b6d164b67ad7396861735142f",
+            "edgeType": "Branch",
+            "source": "39362b36cffd49a6847adfaed75284eb",
+            "target": "97e6ba4ac4994fa3b6d51d11a44b27f9",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if(vaVars.searchResultCount === 1) {\n        vaVars.results_returned = true;\n        vaVars.selected_faq = 0;\n        vaVars.selected_type = 'single';\n        return true;\n    }\n    return false;\n})()\n"
+            },
+            "label": "Found one"
+          },
+          {
+            "id": "07848213c0474b9e9c8e439aac465b3d",
+            "edgeType": "Edge",
+            "source": "a121a58686e349389bfb2d87c500bbf4",
+            "target": "20a65688fa144d31b08edbcc4221900c",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "7fcab0167c41412d83df7cb5525fefaa",
+            "edgeType": "Branch",
+            "source": "20a65688fa144d31b08edbcc4221900c",
+            "target": "ab1eb0cf7f2c4b1fb17f116198a2fa8b",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.choose_faq.getValue() == '-1';\n})()\n"
+            },
+            "label": "Something else"
+          },
+          {
+            "id": "0cb304cf11eb4faa8b483861fd379591",
+            "edgeType": "Branch",
+            "source": "20a65688fa144d31b08edbcc4221900c",
+            "target": "715713859aad4988b21d989932fd5c4d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (vaInputs.choose_faq.getValue() != '-1') {\n        // need parseInt because it was keeping decimals\n        vaVars.selected_faq = parseInt(vaInputs.choose_faq.getValue());\n        vaVars.selected_type = 'multi';\n        return true;\n    }\n    return false;\n})()\n"
+            },
+            "label": "Selected one"
+          },
+          {
+            "id": "e4d6570f5f1743589f0d870a9781250b",
+            "edgeType": "Edge",
+            "source": "97e6ba4ac4994fa3b6d51d11a44b27f9",
+            "target": "715713859aad4988b21d989932fd5c4d",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "d3b4a2dfabae4582a6bde857ca9dddf4": {
+        "id": "d3b4a2dfabae4582a6bde857ca9dddf4",
+        "name": "query",
+        "label": "Query",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "f6c73c5de66f4ee8a67cd992bac57ace",
+        "isHidden": false
+      },
+      "f0d3a9136af949e99faf47e6fecc188d": {
+        "id": "f0d3a9136af949e99faf47e6fecc188d",
+        "name": "portal",
+        "label": "Portal",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "f6c73c5de66f4ee8a67cd992bac57ace",
+        "isHidden": false
+      },
+      "502f202695044ea883cefa9ceb6de424": {
+        "id": "502f202695044ea883cefa9ceb6de424",
+        "name": "kb_knowledge_base",
+        "label": "Kb_knowledge_base",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "f6c73c5de66f4ee8a67cd992bac57ace",
+        "isHidden": false
+      },
+      "015b41a0d2854206a6d16e9e0d1a7847": {
+        "id": "015b41a0d2854206a6d16e9e0d1a7847",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "search_result_json_string",
+        "label": "search_result_json_string",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "da1f29f67f014b7ab38be2af098d512f": {
+        "id": "da1f29f67f014b7ab38be2af098d512f",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return '';\n})()\n"
+        },
+        "name": "index",
+        "label": "index",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "cf0ea9b6e582499e8d27fa193e5263aa": {
+        "id": "cf0ea9b6e582499e8d27fa193e5263aa",
+        "value": {
+          "mode": "simple",
+          "value": "3"
+        },
+        "name": "limit",
+        "label": "limit",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "c5d7293c470648058916b524b55e36b8": {
+        "id": "c5d7293c470648058916b524b55e36b8",
+        "value": {
+          "mode": "simple",
+          "value": "753c0f743b4290102c67667993efc459"
+        },
+        "name": "search_context_sys_id",
+        "label": "search_context_sys_id",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "286c3dc4e01c41eb8ce96e221054dbb6": {
+        "id": "286c3dc4e01c41eb8ce96e221054dbb6",
+        "value": {
+          "mode": "simple",
+          "value": "0"
+        },
+        "name": "searchResultCount",
+        "label": "searchResultCount",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4f43a1dc506f41a0be90761ebc0be688": {
+        "id": "4f43a1dc506f41a0be90761ebc0be688",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "results_returned",
+        "label": "results_returned",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "4d2ef878c61e4658b0ca3b874ead7cce": {
+        "id": "4d2ef878c61e4658b0ca3b874ead7cce",
+        "value": {
+          "mode": "simple",
+          "value": "false"
+        },
+        "name": "results_helpful",
+        "label": "results_helpful",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "dbc9b074f96146b6ba9d234490a75461": {
+        "id": "dbc9b074f96146b6ba9d234490a75461",
+        "value": {
+          "mode": "simple",
+          "value": ""
+        },
+        "name": "DEBUG_JSON_RESULT",
+        "label": "DEBUG_JSON_RESULT",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "24c1f84aa4554693934e136b10052132": {
+        "id": "24c1f84aa4554693934e136b10052132",
+        "name": "did_info_help",
+        "label": "Did Info Help",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "nodeId": "e857c2794e864bb88fe9fe6835424228",
+        "isHidden": false
+      },
+      "b8d263516fe442cab62a76e97f88ea85": {
+        "id": "b8d263516fe442cab62a76e97f88ea85",
+        "name": "choose_faq",
+        "label": "Choose FAQ",
+        "varType": "reference",
+        "table": "",
+        "category": "vaInputs",
+        "nodeId": "a121a58686e349389bfb2d87c500bbf4",
+        "isHidden": false
+      },
+      "c8fc39ab3cfc42d0ab37505be696ee0d": {
+        "id": "c8fc39ab3cfc42d0ab37505be696ee0d",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "selected_faq",
+        "label": "selected_faq",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "66f751f675a14311a4fca3326995e602": {
+        "id": "66f751f675a14311a4fca3326995e602",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return 'none';\n})()\n"
+        },
+        "name": "selected_type",
+        "label": "selected_type",
+        "varType": "script",
+        "category": "vaVars"
+      }
+    }
+  }
+key_phrases: ''
+library: 'true'
+live_agent: 'false'
+model_type: nlu_keyword
+modify_confirmation_enabled: 'false'
+name: FAQ Conversation Builder
+nlu_intent: ''
+nlu_intent_label: ''
+nlu_model: ''
+nlu_model_label: ''
+nlu_provider: ''
+palette_label: ''
+roles: ''
+root_topic_id: ''
+secure_custom_input_control: 'false'
+source_topic_id: ''
+sys_name: FAQ Conversation Builder
+sys_policy: read
+title: FAQ Conversation Builder
+triggerable_by_notification: 'false'
+type: TOPIC_BLOCK

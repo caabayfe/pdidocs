@@ -1,0 +1,10 @@
+var thisSysID = current.sys_id;
+var device = new GlideRecord('cmn_notif_device');
+device.user = thisSysID;
+device.email_address = current.email;
+device.primary_email = true;
+device.active = true;
+device.type = 'Email';
+device.name = gs.getMessage('Primary email');
+device.insert();
+gs.addInfoMessage(gs.getMessage('Primary email device created for') + ' ' + GlideStringUtil.escapeHTML(current.name));

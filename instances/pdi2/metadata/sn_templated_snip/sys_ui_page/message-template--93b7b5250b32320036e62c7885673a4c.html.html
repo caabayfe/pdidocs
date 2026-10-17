@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:ui_form id="note_template_dialog">
+		<script src="scripts/heisenberg/heisenberg_all.js" />
+		<j:set var="jvar_sys_id" value="${sysparm_sys_id}" />
+		<j:set var="jvar_table_name" value="${sysparm_table_name}" />
+		<g:evaluate var="jvar_categories" object="true" jelly="true"
+					expression="new NoteTemplateCheck().getCategories(jelly.jvar_table_name,jelly.jvar_sys_id)" />
+		<style>
+			.field-column {
+				font: 12px "SourceSansPro", "Helvetica Neue", "Helvetica", Arial, sans-serif;
+				height: 40px;
+				opacity: 1;
+				padding: 15px 0px 0px 0px;
+				margin-bottom: 5px;
+				text-transform: uppercase;
+			}
+			
+			.ovfl {
+				height:375px;
+				border:1px solid #BDC0C4; 
+				border-radius: 3px;
+				padding:6px;
+				overflow-y:auto;
+			}
+					
+			.message-form {
+				margin-right: 15px;
+			}
+		</style>
+		<div class="outputmsg_div" id="infoMsg" style="display: none;"><div id="output_messages" class="outputmsg_container" style=""><h2 class="sr-only">Notifications</h2><button class="btn btn-icon close icon-cross" onclick="GlideUI.get().clearOutputMessages(this); return false;"><span class="sr-only">Close Messages"</span></button><div class="outputmsg_div"><div class="outputmsg outputmsg_success notification notification-success"><span class="notification-icon icon-check-circle"><span class="sr-only">Success Message</span></span><span class="outputmsg_text">Copied to clipboard</span></div></div></div><script>addRenderEvent(function() {CustomEvent.fire('glide_optics_inspect_update_watchfield', '');});</script></div>
+
+		<div class="message-form sn-aside-body" style="margin-right: 8px;">
+			
+			<div class="vsplit col-md-12 form-group form-horizontal" style="padding-right: 0px; padding-left: 7px; margin-bottom: 4px">
+				
+			<div class="field-column">
+				<g:form_label for="template_select">
+					${gs.getMessage("Template")}
+				</g:form_label>
+			</div>
+			<div>
+				<select id="template_select" class="form-control select2" aria-label="Select template">
+					<j:forEach items="${jvar_categories}" var="jvar_category">
+						<g:evaluate jelly="true">
+							var template = jelly.jvar_category;
+						</g:evaluate>
+						<option value="${template}">${template}</option>
+					</j:forEach>
+				</select>
+			</div>
+			<div class="field-column">
+				<g:form_label for="selected_template">
+					${gs.getMessage("Message")}
+				</g:form_label>
+			</div>
+			<div>
+				<div class="ovfl" id="selected_template" name="selected_template" value="" aria-label="selected_template" ></div>
+			</div>
+		</div>
+		
+		<footer id="okCancel" style="padding: 5px 0px 10px 20px; text-align: right">
+			<input type="hidden" id="task_sys_id" name="task_sys_id" value="${sysparm_sys_id}" aria-label="task_sys_id"></input>
+			<input type="hidden" id="task_table_name" name="task_table_name" value="${sysparm_table_name}" aria-label="task_table_name"></input>
+	
+			<g:macro ok="onSubmit()"
+					 ok_id="ok_button"
+					 ok_type="button" />
+			<g:dialog_button id="${jvar_ok_id}" type="${jvar_ok_type}" style_class="btn btn-primary" onclick="${jvar_ok}" style="margin-top: 6px;">${gs.getMessage('Copy to clipboard')}</g:dialog_button>
+			
+		 </footer>
+		</div>
+	</g:ui_form>
+	
+</j:jelly>

@@ -1,0 +1,3 @@
+{
+  'isServiceWorkspace': true
+}

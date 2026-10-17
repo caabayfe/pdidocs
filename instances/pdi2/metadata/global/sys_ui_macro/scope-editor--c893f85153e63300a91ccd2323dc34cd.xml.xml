@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:include_script src="populate_scope_editor_slushbucket.jsdbx"/>
+	<style>
+		.slushbody {
+			text-align: inherit;
+		}
+		
+		.modal-footer .pull-left {
+			text-align: left;
+		}
+		
+		.modal-footer .pull-left .role 
+		{
+			display: block;
+		}
+		
+		.modal-footer .pull-left .label 
+		{
+			margin-right: 0px;
+			font-weight: bold;
+		    color: #000;
+			font-size: 13px;
+		}
+		
+		.scope_slushbucket{
+			margin-right:95px;
+		}
+		
+		.scope_slushbucket div#upDownButtons {
+			display: none;
+		}
+			
+		
+	</style>
+	<g2:evaluate var="jvar_sysId"
+		expression="RP.getParameterValue('sys_id')" />
+	<g2:evaluate object="true" jelly="true">
+		var availableScopes = availableList();
+		function availableList() {
+			var answer = [];
+			var grProfile = new GlideRecord('oauth_entity_profile');
+			grProfile.addQuery('oauth_entity', jelly.jvar_sysId);
+			grProfile.addQuery('default', 'true');
+			grProfile.query();
+			if (grProfile.next()) {
+				var grScopes = new GlideRecord('oauth_entity_scope');
+				grScopes.addQuery('oauth_entity', grProfile.oauth_entity);
+				grScopes.query();
+				while(grScopes.next()) {
+					if (grScopes.getValue('in_default_profile') == 0) {
+						answer.push(GlideStringUtil.base64Encode(grScopes.getValue('name')) + ':' + GlideStringUtil.base64Encode(grScopes.sys_id));
+					}
+				}
+		  	}
+		  	return answer.join('^');
+		}
+		availableScopes;
+	</g2:evaluate>
+	<g2:evaluate object="true" jelly="true">
+		var selectedScopes = selectedList();
+		function selectedList() {
+			var answer = [];
+			var grProfile = new GlideRecord('oauth_entity_profile');
+			grProfile.addQuery('oauth_entity', jelly.jvar_sysId);
+			grProfile.addQuery('default', 'true');
+			grProfile.query();
+			if (grProfile.next()) {
+				var grScopes = new GlideRecord('oauth_entity_scope');
+				grScopes.addQuery('oauth_entity', grProfile.oauth_entity);
+				grScopes.query();
+				while(grScopes.next()) {
+					if (grScopes.getValue('in_default_profile') == 1) {
+						answer.push(GlideStringUtil.base64Encode(grScopes.getValue('name')) + ':' + GlideStringUtil.base64Encode(grScopes.sys_id));
+					}
+				}
+		  	}
+		  	return answer.join('^');
+		}
+		selectedScopes;
+	</g2:evaluate>
+	<form>
+		<div class="scope_slushbucket col-xs-8">	
+			<div>
+				<g:ui_slushbucket name="scope_slush" left_header="${gs.getMessage('Available Scopes')}" right_header="${gs.getMessage('Default Profile Scopes')}" />
+			</div>
+			<div class="modal-footer">
+				<span class="pull-right">
+					<g:dialog_buttons_ok_cancel ok="editScopes();" ok_type="button" cancel_type="button" cancel="cancel();"/>
+				</span>
+			</div>
+		</div>	
+	</form>
+	<script>
+		addLoadEvent(function () {
+			populateLeftAndRightScopeEditor('$[availableScopes]', '$[selectedScopes]');
+		});
+	</script>
+</j:jelly>

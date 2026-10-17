@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+  <g2:evaluate>
+	  var type = new OnCallRotation().getEscalationType($[ref].sys_id);
+	  var hasCustomEscalation = new OCEscalationDesigner().hasCustomEscalation($[ref].sys_id);
+	  var msg_intro = gs.getMessage('Escalation type')
+	  var msg = gs.getMessage('None (no active rosters defined)');
+
+	  if (hasCustomEscalation){
+		  msg = gs.getMessage('Custom');
+	  }
+	  else if (type == 'roster'){
+		  msg = gs.getMessage('Rotate through rosters');
+	  }
+	  else if (type == 'member'){
+		  msg = gs.getMessage('Rotate through members');
+	  }
+  </g2:evaluate>
+	<g:inline template="set_theme_vars.xml" />
+	<g:evaluate var="jvar_rota_escalation_color" jelly="true">
+		var isPolaris = jelly.jvar_use_polaris;
+		var color = isPolaris === "true" ? "RGB(var(--now-color_text--primary, var(--now-color--neutral-18, 22, 27, 28)))" : "#666666";
+		color;
+	</g:evaluate>
+
+  <tr id="rota_system_escalation_types">
+    <td colspan="2" style="${jvar_style}; color: ${jvar_rota_escalation_color};">
+     <div>
+      <j2:if test="$[hasCustomEscalation || type=='roster' || type=='member']">
+        $[msg_intro]: <b>$[msg]</b>
+      </j2:if>
+      <j2:if test="$[!hasCustomEscalation ${AND} type!='roster' ${AND} type!='member']">
+        $[msg_intro]: <font color="tomato"><b>$[msg]</b></font>
+      </j2:if>
+     </div>
+    </td>
+  </tr>
+  <tr id="rota_custom_escalation_type">
+	  <!-- Place holder for opening custom escalation designer via GlideModal-->
+  </tr>
+</j:jelly>

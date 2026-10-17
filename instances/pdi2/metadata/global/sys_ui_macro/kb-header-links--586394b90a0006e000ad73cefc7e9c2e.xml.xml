@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+ Knowledge management v2
+-->
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate jelly="true">
+		var navons = new GlideRecord('kb_navons');
+		navons.addQuery('type', 'link');
+		navons.addQuery('active', 'true');
+if(jelly.jvar_links $[AMP]$[AMP] jelly.jvar_links.length > 0)
+	navons.addQuery('name', 'IN', jelly.jvar_links.join());
+		navons.orderBy('order');
+		navons.query();
+	</g2:evaluate>
+	
+	<j2:set var="jvar_no_banner" value="false"/>
+	<j:if test="${gs.nil(gs.getProperty('glide.knowman.frameless_logo'))}">
+		<j2:if test="$[navons.hasNext() == false]">
+			<j2:set var="jvar_no_banner" value="true"/>
+		</j2:if>
+	</j:if>
+
+	<style type="text/css">
+	  A.obvious {
+		  color: black;
+		  text-decoration: underline;
+	  }
+	</style>
+
+	<j2:if test="$[jvar_no_banner == false]">
+		<table border="0" width="100%" cellspacing="1" style="margin-top: -4px;">
+			<tr>
+				<td width="99%" align="left" valign="top">
+				<j:if test="${gs.getProperty('glide.knowman.frameless_logo') != ''}">
+					<div id="image_div" style="display: none; margin-bottom: 4px;">
+						<a href="kb_home.do"><img src="${gs.getProperty('glide.knowman.frameless_logo')}" alt="${gs.getMessage('Knowledge')}" border="0"/></a>
+					</div>
+			
+					<script>
+						if (!inFrame()) {
+							var d = document.getElementById('image_div');
+							if (d) {
+								d.style.display = "block";
+							}
+						}
+					</script>
+				</j:if>
+				</td>
+				<j2:if test="$[navons.hasNext()]">
+					<j2:set var="jvar_bar" value="false"/>
+					<j2:while test="$[navons.next()]">
+						<g2:evaluate var="jvar_cond">
+							GlideController.evaluateCondition(navons.condition);
+						</g2:evaluate>
+						<g2:evaluate var="jvar_cansee" expression="gs.hasRole(navons.roles)"/>
+						<j2:if test="$[jvar_cond == true &amp;&amp; jvar_cansee]">
+							<j2:if test="$[jvar_bar != false]">
+								<td valign="top">|</td>
+							</j2:if>
+							<td valign="top" nowrap="true"><a class="obvious" id="link.$[navons.sys_id]" href="$[navons.url]">$[navons.name.getDisplayValue()]</a></td>
+							<j2:if test="$[navons.script != '']">
+								<script language="javascript">$[NOESC:navons.script]</script>
+							</j2:if>
+							<j2:set var="jvar_bar" value="true"/>
+						</j2:if>
+					</j2:while>
+				</j2:if>
+			</tr>
+		</table>
+	</j2:if>
+</j:jelly>

@@ -1,0 +1,1 @@
+answer = gs.hasRole("taxonomy_admin") || new global.TaxonomyUtil().isTaxonomyManager(current.taxonomy) || new global.TaxonomyUtil().isTaxonomyContributor(current.taxonomy) || new global.TopicPermissionUtil().isTopicManager(current.getUniqueValue()) || new global.TopicPermissionUtil().isTopicContributor(current.getUniqueValue()) || current.isNewRecord();

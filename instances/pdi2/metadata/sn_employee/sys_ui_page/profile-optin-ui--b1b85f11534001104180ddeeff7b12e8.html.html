@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="scripts/angular_1.5.11/angular.min.js" includes="true" />
+	<style>
+		#main_container {
+		border: 1px solid #bdc0c4;
+		border-radius: 5px;
+		margin: 10px 20px 10px 10px;
+		padding: 30px;
+		position: relative;
+		overflow: auto;
+		}
+
+		header#main_header.modal-header {
+		border-bottom: none;
+		}
+
+		#main_content {
+		padding: 10px;
+		vertical-align: middle;
+		}
+
+		.brief_intro {
+		font-size: 1.4em;
+		margin: 20px 0 40px 0;
+		}
+
+		.optin-alert {
+		margin-top: 20px;
+		margin-left: 15px;
+		margin-right: 15px;
+		}
+
+		.optin-checkbox-section {
+		margin-left: 10px;
+		clear: both;
+		}
+
+		.optin-required-marker {
+		padding-left: 0px;
+		clear: both;
+		}
+
+		.required-marker:before {
+		padding: 0px !important;
+		}
+
+		.opt-in-button-padding {
+		padding-left: 10px;
+		}
+		span::after {
+		content: ' ';
+		}
+
+		html.rtl .checkbox-label:before {
+		margin-left: 5px
+		}
+	</style>
+	<div ng-app="employeeProfileOptIn" ng-controller="epOptInCtrl">
+		<div class="alert alert-info optin-alert" ng-show="optedOut">
+			<button class="btn btn-icon close icon-cross" ng-click="optedOut=false">
+				<span class="sr-only">${gs.getMessage("Close Messages")}</span>
+			</button>
+			<p class="bold_paragraph" ng-if="!empDefPresent" id="opt_in_message">${gs.getMessage("You must create an active employee definition before you can opt in to employee profiles")}</p>
+		</div>
+		<div id="main_container">
+			<header id="main_header" class="modal-header">
+				<h1 id="alert3_title" class="modal-title" ng-hide="showOptInFeature()">${gs.getMessage("Want to opt in to employee profiles?")}</h1>
+				<h1 id="alert4_title" class="modal-title" ng-hide="showOptOutFeature()">${gs.getMessage("Want to opt out of employee profiles?")}</h1>
+			</header>
+			<div id="main_content">
+				<div id="opt_in_intro" ng-hide="showOptInFeature()">
+					<span class="brief_intro">
+						${gs.getMessage("If you choose to opt in, employees will have access to a customizable profile page that details their contact info, job description, and more. ")}
+					</span>
+					<span ng-if="isNewOrgChartExist" class="brief_intro">
+						${gs.getMessage("An org chart functionality will also be enabled when your organization uses employee profiles. ")}
+					</span>
+					<span class="brief_intro">
+						${gs.getMessage("Additionally, opting in will also allow employee profiles to be used in AI and ML profile data models.")}
+					</span>
+					<p class="brief_intro">
+						${gs.getMessage("You can opt out again at any time, and your system will revert back to its previous workflow.")}
+					</p>
+				</div>
+				<div id="opt_out_intro" ng-hide="showOptOutFeature()">
+					<span class="brief_intro">
+						${gs.getMessage("Employees currently have access to a customizable profile page that details their contact info, job description, and more. ")} </span>
+					<span ng-if="isNewOrgChartExist" class="brief_intro">
+						${gs.getMessage("Employees can also view the org chart. ")}
+					</span> 
+					<span class="brief_intro">
+						${gs.getMessage("Additionally, employee profiles can also be used in AI and ML profile data models.")}
+					</span>
+					<p class="brief_intro">
+						${gs.getMessage("If you'd like to opt out, your system will revert back to its previous workflow.")}
+					</p>
+				</div>
+
+			</div>
+			<div ng-hide="showOptInFeature()" class="optin-checkbox-section">
+				<div ng-class="(uiModel.agreement != true) ? 'form-group is-required col-xs-12': 'form-group is-prefilled col-xs-12'" class="optin-required-marker">
+					<label for="field5" id="required_label" class="control-label" style="margin-right: 2px!important">
+						<span id="req_marker" class="required-marker"></span>
+					</label>
+					<span class="input-group-checkbox">
+						<input id="optin_checkbox" class="checkbox" type="checkbox" name="optin_checkbox"
+							   ng-model="uiModel.agreement" ng-checked="checkOptInCheckbox()"
+							   ng-disabled="disableOptInCheckbox()" aria-labelledby="optin_checkbox_select"></input>
+						<label for="optin_checkbox" id="optin_checkbox_select" class="checkbox-label">
+							${gs.getMessage('Yes, opt in to employee profiles')}
+						</label>
+					</span>
+				</div>
+			</div>
+			<div class="opt-in-button-padding">
+				<span>
+					<button type="button" class="btn btn-primary" ng-click="optIn()" ng-disabled="disableOptInButton()"
+							ng-hide="showOptInFeature()">${gs.getMessage("Opt-in")}</button>
+				</span>
+				<span>
+					<button type="button" class="btn btn-primary" ng-click="optOut()"
+							ng-hide="showOptOutFeature()">${gs.getMessage("Opt-out")}</button>
+				</span>
+			</div>
+		</div>
+	</div>
+</j:jelly>

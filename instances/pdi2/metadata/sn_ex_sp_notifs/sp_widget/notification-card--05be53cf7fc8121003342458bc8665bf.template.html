@@ -1,0 +1,51 @@
+<div class="notification-container" aria-labelledby="state-{{data.sysId}} description-{{data.sysId}} time-{{data.sysId}}" tabindex="0" ng-keydown="openNotificationKeyDown($event)">
+  <a class="notification-link-container" ng-click="openNotification('primary')" ng-href="{{c.data.cardData.url}}" ng-attr-target="{{c.data.openInNewTab ? '_blank' : '_self'}}" tabindex="-1" ng-if="isNotificationActive">
+    <div class="status-avatar-container" ng-if="isNotificationActive">
+      <div class="state-indicator">
+        <div class="state-indicator-badge" id="state-{{data.sysId}}" aria-label="${unread}" ng-if="data.isUnread">
+        </div>
+      </div>
+      <div class="icon-container" ng-class="{'color-critical': (data.isCritical)}" ng-style="getStyle()">
+        <i ng-class="{'icon-color-inverse': (data.invertIconColor)}" class="icon-color fa {{data.cardData.icon}} " ng-if="!data.cardData.isCustomIcon" />
+        <img src="{{data.cardData.icon}}" class="icon-custom" ng-if="data.cardData.isCustomIcon" />
+      </div>
+    </div>
+    <div class="content-container" ng-if="isNotificationActive">
+      <p class="content-description" id="description-{{data.sysId}}" ng-class="{'content-unread' : (data.isUnread)}">
+        {{data.cardData.description}}</p>
+    </div>
+  </a>
+  <div class="utility-container" ng-if="isNotificationActive">
+    <sn-time-ago class="timestamp" id="time-{{data.sysId}}" timestamp="data.cardData.createdOn"
+                 tabindex="-1" ng-click="openNotification('secondary')"></sn-time-ago>
+    <div class="dropdown action-dropdown" id="action-dropdown" >
+      <button class="fa fa-ellipsis-v button-action dropdown-toggle" 
+        type="button"
+        data-toggle="dropdown"
+        ng-if="data.moreEnabled" 
+        tabindex="0" 
+        id="actionMenu" 
+        aria-haspopup="true" 
+        aria-expanded="false" 
+        aria-label="${View actions for} {{data.cardData.description}}" 
+        ng-click="c.handleClick($event)"
+        ng-keydown="c.handleDropdownKeyPress($event)">
+</button>
+
+      <ul class="dropdown-menu" aria-labelledby="actionMenu" role="menu" id="dropdown-menu">
+        <li ng-repeat="action in data.actions" ng-class="{'dropdown-header': action.actionName==data.reminderActionName}" ng-if="action.enabled" role="presentation">
+          <a ng-if="action.actionName && action.actionName!==data.reminderActionName" aria-label="{{action.parentLabel ? action.parentLabel + ' ' + action.label : c.getName(action,data)}}" tabindex="0" class="action-item" ng-click="c.handleAction($event,action,data)"  ng-class="{'dropdown-child': action.parentLabel}"  ng-keydown="c.handleKeydown($event, action, data)">{{c.getName(action,data)}}</a>
+          <span ng-class="action-disabled" ng-if="action.actionName==data.reminderActionName">{{action.label}}</span>
+        </li>
+      </ul>
+      
+    </div>  
+  </div>
+  <div class="undo-content-container" ng-if="!isNotificationActive">
+    <p class="undo-content-description" id="undo-description-{{data.sysId}}">
+      ${Notification cleared}</p>
+  </div>
+  <div class="undo-button-container" ng-if="!isNotificationActive">
+    <button class="undo-btn" ng-click="c.serverActionCall($event, 'UNDO')" ng-keydown="c.handleUndoKeyDown($event, 'UNDO')">${Undo}</button>
+  </div>
+</div>

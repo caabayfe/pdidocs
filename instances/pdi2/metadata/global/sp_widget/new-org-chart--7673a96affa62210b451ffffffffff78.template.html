@@ -1,0 +1,155 @@
+<div class="org-chart-widget">
+  <div class="main">
+    <!-- Search Container -->
+    <div class="search-container" ng-if="::!data.hideSearch">
+      <div class="search-section">
+        <label for="user-search" class="sr-only">{{::data.i18n.searchMsg}}</label>
+        <sn-record-picker field="c.user" table="'sys_user'" display-field="'name'" value-field="'sys_id'"
+                          display-fields="'email'" search-fields="'name'" page-size="100" id="user-search"
+                          placeholder="{{::data.i18n.searchMsg}}">
+        </sn-record-picker>
+      </div>
+    </div>  
+    <div ng-if="!data.isError">
+      <div class="org-chart-container" role="region">
+        <!-- Manager Hierarchy -->
+        <div class="manager-section" ng-if="data.managerHierarchy.length > 0">
+          <div class="manager-container" ng-repeat="user in data.managerHierarchy | orderBy:'-'"
+                id="manager_card_{{::user.sys_id}}">
+            <div ng-include="'basic-user-card-template'" class="flex-display"
+                  onload="cardType='primary'"></div>
+            <div class="divider" ng-class="{'last-divider':$last}"></div>
+          </div>
+        </div>
+
+        <!-- Selected user section -->
+        <div class="selected-user-section" id="selectedUserCardContainer">
+          <div class="selected-user-main-container">
+            <div class="selected-card-primary-container" id="primary_card_{{data.selectedUser.sys_id}}"
+                  ng-if="data.selectedUser.sys_id">
+              <sn-avatar class="avatar-large" primary="data.selectedUser.sys_id"
+                          aria-label="{{data.i18n.profilePictureLabel}} {{data.selectedUser.title}}"></sn-avatar>
+              <div class="selected-card-user-details">
+                <div class="selected-card-primary-text-container">
+                  <div class="selected-card-primary-row">
+                    <div
+                          class="text-ellipsis text-ellipsis-two-line selected-card-primary-title">
+                      {{data.selectedUser.title}}</div>
+                  </div>
+                  <div>
+                    <span
+                          class="text-ellipsis text-ellipsis-two-line selected-card-primary-description">{{data.selectedUser.description}}</span>
+                  </div>
+                </div>
+                <div class="selected-card-secondary-text-container" ng-if="data.selectedUser.hasSecondaryFields">
+                  <div ng-repeat="row in data.secondaryFields" class="selected-card-secondary-row" ng-if="data.selectedUser[row.f]">
+                    <i class="fa fa-fw fa-{{row.i}} secondary-field-icon" ng-class="{'row-icon': row.i}"></i>
+                    <a ng-if="row.t && row.t != 'url' && row.tag" ng-href="{{row.tag + data.selectedUser[row.f]}}" target="{{row.target || '_blank'}}"
+                        class="selected-card-secondary-text selected-card-secondary-text-link text-ellipsis text-ellipsis-two-line">
+                      {{::data.selectedUser[row.f]}}
+                    </a>
+                    <a class="selected-card-secondary-text text-ellipsis text-ellipsis-two-line"
+                        ng-if="row.t && row.t == 'url'"
+                        ng-href="::data.selectedUser[row.f]" target="{{row.target || '_blank'}}">{{::data.selectedUser[row.f]}}</a>
+                    <span ng-if="!row.t"
+                          title="{{::data.selectedUser[row.f]}}" class="selected-card-secondary-text text-ellipsis text-ellipsis-two-line">{{::data.selectedUser[row.f]}}</span>
+                  </div>
+                </div>
+              </div>
+              <span ng-if="data.selectedUser.reportCount > 0"
+                    class="selected-card-report-count" data-toggle="tooltip" data-placement="top"
+                    data-original-title="{{data.selectedUser.reportCountTooltip}}"
+                    aria-hidden="true">{{data.selectedUser.reportCount > 99 ? "99+" :
+                data.selectedUser.reportCount}}</span>
+            </div>
+            <div class="action" ng-if="::!data.hideAction">
+              <div class="action-container">
+                <a class="btn btn-primary actions primary-action"
+                    tabindex="0" role="button" ng-keydown="c.handleEnterKeyPress($event,data.selectedUser.sys_id,'profile')"
+                    ng-click="c.openProfile($event,data.selectedUser.sys_id)" data-container="body"
+                    data-title="${View profile}">
+                  <span class="fa fa-user-circle icon" />
+                  <div class="text-wrap">${View profile}</div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Direct Report Section -->
+        <div class="report-section" ng-if="c.directReports.length>0">
+          <div class="divider "></div>
+          <!-- Report Overview -->
+          <div class="report-overview">
+            <div class="report-overview-text" id="directReportsOverviewText">
+              <span> ${Direct reports ({{data.directReportCount}})} </span>
+            </div>
+
+          </div>
+
+          <!-- Direct report hierarchy -->
+          <div id="directReportContainer" class="report-container" ng-if="c.directReports.length > 0" role="tabpanel"
+                aria-labelledby="directReportsOverviewText">
+            <div ng-repeat="user in c.directReports; track by user.sys_id" class="flex-display"
+                  aria-label="User {{$index + 1}} of {{c.directReports.length}}">
+              <div ng-include="'basic-user-card-template'" class="flex-display"
+                    onload="cardType='secondary'"></div>
+              <div class="separator-mobile"
+                    ng-class="{'last-separator-mobile': $last && !c.hasMoreReport}"></div>
+            </div>
+
+            <div ng-if="isReportLoading" class="flex-display"
+                  ng-repeat="item in [1,2,3,4,5,6,7,8,9,10,11,12]">
+              <div class="secondary-card-container">
+                <div class="avatar-loader"></div>
+                <div class="primary-text-container">
+                  <div class="skeleton-loader title-loader"></div>
+                  <div class="skeleton-loader additional-info-loader"></div>
+                </div>
+              </div>
+              <div class="separator-mobile"></div>
+            </div>
+
+          </div>
+          <div class="show-more-button" ng-if="c.hasMoreReport">
+            <button ng-if="!isReportLoading" class="btn btn-default"
+                    ng-click="c.showMoreDirectReports()" ng-keydown="c.handleEnterKeyPress($event, null, 'report')">
+              ${Show more}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State-->
+    <div ng-if="data.isError">
+      <div class="error-message">
+        <p>{{data.errorMsg}}</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/ng-template" id="basic-user-card-template">
+<a ng-class="cardType=='primary' ? 'primary-card-container' : 'secondary-card-container' "
+   href
+   ng-click="c.selectNewUser(user.sys_id)"
+   ng-keydown="c.handleEnterKeyPress($event,user.sys_id,'new')"
+   id="primary_card_{{::user.sys_id}}"
+   aria-label="{{::user.ariaLabel}}">
+  <sn-avatar class="avatar-large" primary="user.sys_id"></sn-avatar>
+  <div class="primary-text-container">
+    <div class="primary-row">
+      <span class="text-ellipsis text-ellipsis-two-line primary-title">{{::user.title}}</span>
+      <span ng-if="user.reportCount > 0"
+            class="report-count"
+            data-toggle="tooltip"
+            data-placement="top"
+            data-original-title="{{::user.reportCountTooltip}}"
+            aria-hidden="true">{{user.reportCount > 99 ? "99+" : user.reportCount}}</span>
+    </div>
+    <div>
+      <span class="text-ellipsis text-ellipsis-two-line primary-description">{{::user.description}}</span>
+    </div>
+  </div>
+</a>
+</script>

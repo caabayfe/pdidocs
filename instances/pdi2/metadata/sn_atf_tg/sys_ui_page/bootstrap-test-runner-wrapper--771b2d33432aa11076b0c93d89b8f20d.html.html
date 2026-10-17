@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div id='dw-ui-container'></div>
+	<script src='/sn_atf_tg.dw_ui.jsdbx?rand=undefined' />
+	<script>
+    // Try and find DW wherever it may be
+		var DW;
+		if (window.DW) {
+			DW = window.DW;
+		}
+		else if (top.DW) {
+			DW = top.DW;
+		} 
+		else if (top.gsft_main) {
+			if (top.gsft_main.DW) {
+				DW = top.gsft_main.DW;
+			}
+		}
+    top.DW = DW;
+  	window.DW = DW;
+    if (top.gsft_main)
+	    top.gsft_main.DW = DW;
+	DW.SnowScopeUtil.setSnowScope(DW.SnowScopeUtil.getSnowScope());
+	DW.TransactionBrowser.BrowserTransaction.loggedIn = "${gs.isLoggedIn()}";
+	DW.TransactionBrowser.BrowserTransaction.userName = "${gs.getUser().name}";
+	var str = "" + "${gs.getUser().getRoles().toString()}";
+	DW.TransactionBrowser.BrowserTransaction.roles = str.split(",");
+	DW.TransactionBrowser.BrowserTransaction.isImpersonating = "${gs.getSession().isImpersonating()}";
+	DW.Transaction.Transaction.set(new DW.TransactionBrowser.BrowserTransaction());
+	document.body.onload = function() {
+		DW.SnowPage.displayPage(document.getElementById('dw-ui-container'), "bootstrap_test_runner_wrapper");
+	}
+	</script>
+</j:jelly>

@@ -1,0 +1,1 @@
+AggregateDiscoveryPerfMetrics.rollup();

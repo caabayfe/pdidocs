@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<SPAN id="${jvar_html_identifier}_edit">
+		<TABLE cellSpacing="0" cellPadding="0" border="0">
+			<TR>
+				<TD>
+					<SELECT id="select_0${jvar_html_identifier}"
+							style="margin:2px;
+								   WIDTH: 160px"
+								   multiple="yes"
+							size="4"
+							name="select_0${jvar_html_identifier}">
+					</SELECT>
+				</TD>
+				<TD class="bodySmall" vAlign="center">
+					<TABLE cellSpacing="0" cellPadding="0" border="0">
+						<TR>
+							<TD>
+								<A onclick="simpleRemoveOption(gel('select_0${jvar_html_identifier}'));synchLists('${jvar_html_identifier}');">
+									<IMG width="16"
+										 height="16"
+										 title="${gs.getMessage('Remove selected item')}"
+										 src="images/delete_edit.gifx"
+										 alt="${gs.getMessage('Remove selected item')}"
+										 border="0" />
+								</A>
+							</TD>
+						</TR>
+						<TR>
+							<TD>
+								 <A id="view2link.${jvar_html_identifier}"
+								   tabindex="-1"
+								   onmousemove="glideListPopupSelection(event, '${jvar_html_identifier}', '${jvar_tab_name}')"
+								   title=""
+								   onmouseout="lockPopup(event)">
+									<IMG id="view2.${jvar_html_identifier}"
+										 title="${gs.getMessage('View selected item')}"
+										 alt="${gs.getMessage('View selected item')}"
+										 height="15"
+										 width="15"
+										 name="view2.${jvar_html_identifier}"
+										 src="images/icons/hover_icon.gifx"
+										 border="0">
+									</IMG>
+								</A>
+							</TD>
+						</TR>
+						<TR>
+							<TD>
+								<IMG id="${jvar_html_identifier}_lock"
+									onclick="lock(this, '${jvar_html_identifier}', '${jvar_html_identifier}_edit', '${jvar_html_identifier}_nonedit', 'select_0${jvar_html_identifier}', '${jvar_html_identifier}_nonedit')"
+									src="images/unlocked.gifx"
+									style="align: left; padding-top: 3px; cursor: pointer; display: none"
+									title="${gs.getMessage('Lock')}"
+									alt="${gs.getMessage('Lock')}"/>
+							</TD>
+						</TR>
+					</TABLE>
+				</TD>
+			</TR>
+			<TR>
+				<TD>
+					<INPUT id="sys_display.${jvar_html_identifier}"
+						islist="true"
+						style="margin:2px;width:160px;"
+						name="sys_display.${jvar_html_identifier}"
+						onfocus="if (!this.ac)
+						new AJAXReferenceCompleter(this, '${jvar_html_identifier}', '${jvar_dependent}', '${jvar_ref_qual_elements}', '${jvar_reference}');"
+						onkeydown="return acReferenceKeyDown(this, event);"
+						onkeyup="return acReferenceKeyUp(this, event)"
+						onkeypress="return acReferenceKeyPress(this, event)"
+						function="addChoiceLocal('${jvar_html_identifier}')"
+						autocomplete="off"/>
+				</TD>
+				<TD>
+					<A onclick="reflistOpen( '${jvar_html_identifier}','null','${jvar_tab_name}','null', 'false', '');
+								mousePositionSave(event);"
+						tabindex="-1">
+						<IMG src="images/reference_list.gifx"
+							 border="0"
+							 title="${gs.getMessage('Lookup using list')}"
+							 alt="${gs.getMessage('Lookup using list')}"
+							 width="16"
+							 height="16"
+						/>
+					</A>
+				</TD>
+			</TR>
+		</TABLE>
+	</SPAN>
+	<SPAN id="${jvar_html_identifier}_nonedit">
+	</SPAN>
+	<IMG id="${jvar_html_identifier}_unlock"
+		 onclick="unlock(this, '${jvar_html_identifier}', '${jvar_html_identifier}_edit', '${jvar_html_identifier}_nonedit')"  
+		 src="images/locked.gifx"
+		 style="cursor: pointer; display: inline; margin-left: 2px;"
+		 title="${gs.getMessage('Unlock')}"
+		 alt="${gs.getMessage('Unlock')}"/>
+	<INPUT id="${jvar_html_identifier}"
+		   value=""
+		   type="HIDDEN"
+		   name="${jvar_html_identifier}">
+	</INPUT>
+  <script>
+	  function addChoiceLocal(fieldid) {
+		var selectBox = gel('select_0' + fieldid);
+		var value = gel(fieldid).value;
+		var displayWidget = gel('sys_display.' + fieldid);
+		var display = displayWidget.value;
+		displayWidget.value = '';
+		var select = new Select('select_0' + fieldid);
+		// don't add duplicates
+		if (select.contains(value)) {
+			return;
+		}
+		var opt = document.createElement("option");
+		opt.value = value;
+		opt.text = display;
+
+		selectBox.options.add(opt);
+		synchLists(fieldid);
+	  }
+
+	  function addChoiceExternal(fieldid, value, displayValue) {
+		var selectBox = gel('select_0' + fieldid);
+		var opt = document.createElement("option");
+		opt.value = value;
+		opt.text = displayValue;
+		selectBox.options.add(opt);
+		synchLists(fieldid);
+	  }
+
+	  function synchLists(fieldid) {
+		var sel0 = gel('select_0' + fieldid);
+		var distribution = gel(fieldid);
+		var ovalue = distribution.value;
+		saveAllSelected([sel0], [distribution], ',', '\\', '--None--');
+	  }
+
+	  addRenderEvent(function() {
+		var sel = gel('select_0${jvar_html_identifier}');
+		var ul = gel('${jvar_html_identifier}_lock');
+		unlock(gel('${jvar_html_identifier}_unlock'), '${jvar_html_identifier}',
+			'${jvar_html_identifier}_edit', '${jvar_html_identifier}_nonedit');
+	  });
+  </script>
+</j:jelly>

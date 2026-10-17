@@ -1,0 +1,1 @@
+((!(new CertificationUtils()).hasChildren(current.sys_id, "cert_template", "filter")) && (!(new CertificationUtils()).hasChildren(current.sys_id, "cert_schedule", "filter")) && (!(new CertificationUtils()).hasChildren(current.sys_id, "cert_audit", "filter")))

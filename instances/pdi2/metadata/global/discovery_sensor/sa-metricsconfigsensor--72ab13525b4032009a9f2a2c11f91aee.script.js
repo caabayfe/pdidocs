@@ -1,0 +1,1 @@
+SNC.MetricScriptableApis.processMetricConfigSensor(g_probe);

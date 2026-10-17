@@ -1,0 +1,1 @@
+new KBKnowledgeBase().canCreate(current);

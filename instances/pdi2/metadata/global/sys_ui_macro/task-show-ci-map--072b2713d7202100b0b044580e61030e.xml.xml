@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <j:set var="jvar_n" value="show_map:${ref}" />
+
+	<!-- Find sys_id of current ref and if it is a service -->
+    <g2:evaluate var="jvar_ngbsm_service" jelly="true">
+		SNC.BSMCompatibility.doesCIHaveAssociations(__ref__.getSysIdValue())
+    </g2:evaluate>
+
+    <!-- Add a clickable icon to the right side of the reference field -->
+    <a>
+        <span
+            id="${jvar_n}"
+            onclick="showMap('${jvar_n}')"
+            name="${jvar_n}"
+            style="visibility: hidden"
+            aria-label="${HTML:gs.getMessage('Open in Dependency Views, opens in new tab')}"
+            title="${gs.getMessage('Open in Dependency Views')}"
+            alt="${gs.getMessage('Open in Dependency Views')}"
+            class="icon ref-button icon-tree btn btn-default btn-ref"
+			tabindex="0"
+			role="link"
+        ></span>
+    </a>
+
+    <!-- Add script to handle display check and URL generation -->
+    <script>
+        // Only show the button is the reference field has content
+        function onChange_cmdb_ci_bsm(element, original, changed, loading) {
+            var visibility = 'hidden';
+            if (changed.length > 0)
+                visibility = 'visible';
+
+            var e = gel('${jvar_n}');
+            e.style.visibility = visibility;
+        }
+
+        // Only allow clicking when the reference field contains full, valid data
+        function showMap(name) {
+            var fieldName = name.split(':')[1];
+            var n = gel(fieldName);
+            n = n.value;
+
+            if (n.length == 0)
+                alert("Populate CI field first");
+            else
+                showBSMMap(n, fieldName);
+        }
+
+        // Construct a link to the correct version of BSM and open it
+        function showBSMMap(sys_id, fieldName) {
+            var url = '';
+
+            // When using NGBSM, use a simplified link
+            url += '$ngbsm.do?id=' + sys_id;
+            url += '&amp;amp;';
+            url += 'serviceView=' + '$[jvar_ngbsm_service]';
+			url += '&amp;amp;';
+		    url += 'sysparm_nostack=true'; //PRB675289 - support 'back' correctly 
+            url += '&amp;amp;';
+            url += 'fromTask=' + g_form.getUniqueValue();
+
+            // Open the map in a new window and focus it
+            g_navigation.open(url, 'super_bsm_map');
+        }
+
+        // Create input changed event handlers for all relevant tables
+        var a = ['incident', 'change_request', 'problem'];
+        for (i = 0; i &amp;lt; a.length; i++) {
+            var h = new GlideEventHandler('onChange_' + a[i] + '_cmdb_ci_bsm', onChange_cmdb_ci_bsm, '${ref}');
+            g_event_handlers.push(h);
+        }
+    </script>
+</j:jelly>

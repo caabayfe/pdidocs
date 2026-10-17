@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <!-- Checking if csrf security violation has happened or not. -->
+    <g:macro_invoke macro="$pwd_csrf_validation" />
+    <!-- ACTUAL PAGE STARTS HERE -->
+    <g:requires name="scripts/lib/jquery_includes.js" includes="true" />
+    <g:include_script src="pwd_mobile.jsdbx" />
+    <g:evaluate var="sysparm_request_id">gs.getSession().getProperty('sysparm_request_id');</g:evaluate>
+    <g:evaluate var="jvar_process_id" jelly="true">
+        var pwd_process_id;
+        var found = new SNC.PwdTrackingManager().requestExists(jelly.sysparm_request_id);
+        if(found) {
+        pwd_process_id = new SNC.PwdTrackingManager().getProcessIdByRequestId(jelly.sysparm_request_id);
+        }
+        pwd_process_id;
+    </g:evaluate>
+    <span class="sr-only" id="pwd-reset-confirm-title">${gs.getMessage('ServiceNow Password Reset, step 2 out of 3')}</span>
+    <g:evaluate var="jvar_show_header_footer" jelly="true">
+        var showHeaderFooter = gs.getSession().getProperty('show_custom_header_footer');
+        showHeaderFooter;
+    </g:evaluate>
+    <main>
+        <j:choose>
+            <g:macro_invoke macro="$pwd_reset_stylesheet" />
+            <!-- Polarisberg (external/stylized auth) -->
+            <j:when test="${sn_ui.PolarisUI.canUsePolarisTemplates() &amp;&amp; !gs.isLoggedIn()}">
+                <!-- Box override via margin because the frame has padding baked in -->
+                <div id="$pwd_confirm" class="login-wrapper">
+                    <g:inline template="polarisberg_login_wrapper_svg.xml" />
+                    <div class="login-container">
+                        <div class="login-logo">
+                            <g:inline template="polarisberg_login_logo.xml" />
+                        </div>
+                        <!-- Process custom header -->
+                        <j:if test="${jvar_show_header_footer}">
+                            <!-- Pulled from from $pwd_process_flow (UI macro); we don't need the whole thing -->
+                            <j:if test="${!empty(jvar_process_id)}">
+                                <g:evaluate var="jvar_custom_header_name" jelly="true">
+                                    var customHeaderMacroName;
+                                    var p = new SNC.PwdProcess(jelly.jvar_process_id);
+                                    if (p.exists())
+                                    customHeaderMacroName = p.getHeaderMacroName();
+                                    customHeaderMacroName;
+                                </g:evaluate>
+                                <j:if test="${!empty(jvar_custom_header_name)}">
+                                    <div class="login-card login-card-custom-header">
+                                        <g:macro_invoke macro="${jvar_custom_header_name}" stage="1" />
+                                    </div>
+                                </j:if>
+                            </j:if>
+                        </j:if>
+                        <div class="login-card ${jvar_hide_illustrations}">
+                            <div class="login-form">
+                                <h1>${gs.getMessage("Password reset instructions sent")}</h1>
+                                <h2 id="pwd-reset-confirm-msg">${gs.getMessage("Email/SMS has been sent to you providing instructions to reset your password")}</h2>
+                                <g:macro_invoke macro="$pwd_done_button" />
+                            </div>
+                            <j:if test="${gs.getProperty('glide.ui.branding.works_with.is_visible', 'false') == 'true'}">
+                                <g:macro_invoke macro="ShowSNBrandTaglineOnLoginPage" />
+                            </j:if>
+                        </div>
+                        <!-- Process custom footer -->
+                        <j:if test="${jvar_show_header_footer}">
+                            <g:macro_invoke macro="$pwd_process_footer" stage="1" process="${jvar_process_id}" use_polaris="true" />
+                        </j:if>
+                    </div>
+                </div>
+            </j:when>
+            <!-- Heisenberg -->
+            <j:otherwise>
+                <g:macro_invoke macro="$pwd_process_flow" stage="3" process="${jvar_process_id}" show_custom_header="${jvar_show_header_footer}" />
+                <center id="$pwd_confirm">
+                    <div class="pwd-notification-box pwd-page-box">
+                        <i class="icon-success pwd-icon pwd-icon-success" />
+                        <p id="pwd-reset-confirm-msg" class="pwd-title">${gs.getMessage("Email/SMS has been sent to you providing instructions to reset your password")}</p>
+                        <span class="col-sm-12">
+                            <g:macro_invoke macro="$pwd_done_button" />
+                        </span>
+                    </div>
+                </center>
+                <!-- Process footer -->
+                <g:macro_invoke macro="$pwd_process_footer" stage="3" process="${jvar_process_id}" />
+            </j:otherwise>
+        </j:choose>
+    </main>
+</j:jelly>

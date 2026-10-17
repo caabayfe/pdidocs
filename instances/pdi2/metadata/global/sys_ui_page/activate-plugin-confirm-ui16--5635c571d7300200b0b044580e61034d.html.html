@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide"
+	xmlns:j2="null" xmlns:g2="null">
+<j2:if test="$[gs.hasRole('admin')]">
+	<g:ui_form>
+		<input type="hidden" id="cancelled" name="cancelled" value="false" />
+
+		<g2:evaluate jelly="true">
+			var plugin = new GlideRecord("v_plugin");
+			plugin.addQuery("sys_id", jelly.sysparm_plugin_id);
+			plugin.query();
+			if (plugin.hasNext())
+                plugin.next();
+
+			plugin;
+		</g2:evaluate>
+
+		<g2:evaluate jelly="true" var="jvar_customizedVersion">
+		    var custVer = "none";
+            var scopeGr = new GlideRecord("sys_scope");
+            scopeGr.addQuery("scope", plugin.scope);
+            scopeGr.addQuery("scope", "!=", "global");
+            scopeGr.query();
+
+            var sysId = null;
+            if (scopeGr.next())
+                sysId = scopeGr.sys_id;
+
+            if (sysId != null) {
+                var customGr = new GlideRecord("sys_app_customization");
+                customGr.addQuery("vendor_app", sysId);
+                customGr.query();
+                if (customGr.next()) {
+                    var version = customGr.getValue("version");
+                    if (version != 'none')
+                        custVer = version;
+                }
+            }
+
+			custVer;
+		</g2:evaluate>
+
+        <input type="hidden" id="customized_version" name="customized_version" value="$[jvar_customizedVersion]" />
+
+		<j2:if test="$[!plugin.isValidRecord()]">
+			<b>ERROR</b>
+			<br />
+			'${sysparm_plugin_id}': ${gs.getMessage("Plugin not found")}
+		</j2:if>
+		
+		<j2:if test="$[plugin.block_install]">
+			<b>ERROR</b>
+			<br />
+			${gs.getMessage("Activation of plugin isn't supported in the current environment.")}
+		</j2:if>
+
+		<g2:evaluate jelly="true" var="jvar_should_redirect">
+			var shouldRedirect = false;
+			var redirectAppName;
+			if (plugin.active == 'active' $[AMP]$[AMP] plugin.scope != 'global' $[AMP]$[AMP]
+				(sn_app_api.AppStoreAPI.isAppstorePlugin(plugin.scope) || sn_jumbo_app.JumboAppAPI.isJumboPlugin(plugin.id))) {
+					shouldRedirect = true;
+					var appGr = new GlideRecord('sys_store_app');
+					appGr.get(scopeGr.getUniqueValue())
+					redirectAppId = JSUtil.nil(appGr.getValue('parent_app')) ? appGr.getUniqueValue() : appGr.getValue('parent_app');
+					redirectAppName = JSUtil.nil(appGr.getValue('parent_app')) ? appGr.getValue('name') : appGr.getDisplayValue('parent_app');
+			}
+			shouldRedirect;
+		</g2:evaluate>
+		
+		<j2:if test="$[plugin.isValidRecord()]">
+
+		<input type="hidden" id="plugin_id" name="plugin_id" value="$[plugin.id]" />
+		<input type="hidden" id="plugin_name" name="plugin_name" value="$[plugin.name]" />
+		<input type="hidden" id="plugin_sys_id" name="plugin_sys_id" value="$[plugin.sys_id]" />
+		<input type="hidden" id="list_view" name="list_view" value="${sysparm_list_view}" />
+
+			<g2:set_if var="jvar_plugin_desc" test="$[plugin.description != '']"
+				true="$[plugin.description]" false="${gs.getMessage('No description available')}" />
+
+			<g2:set_if var="jvar_action" test="$[plugin.active == 'active']"
+				true="${gs.getMessage('Repair')}" false="${gs.getMessage('Activate')}" />
+			<j2:if test="$[jvar_should_redirect]">
+				<div class="notification notification-info">
+					<span class="notification-icon icon-info"></span>
+					${gs.getMessage("Please repair store applications from the store app or parent app record.")} $[SP] <a  href="javascript:void(0)" onclick="window.open('/sys_store_app.do?sys_id=$[redirectAppId]', '_self'); return false">$[redirectAppName]</a>
+				</div>
+		    </j2:if>
+
+			<table border="0" width="100%">
+				<tr>
+					<td rowspan="2" nowrap="true" width="110px" style="vertical-align:top;">
+						<img src="images/plugin_activate.gifx" alt="${gs.getMessage('Activate/Repair')}"
+							style="vertical-align:top;" />
+					</td>
+					<td valign="top" width="100%" height="100%">
+						<span style="font-size: 11pt;">
+							<b>$[plugin.name]</b>
+							<j2:if test="$[plugin.active == 'active']">
+								$[SP](${gs.getMessage('currently installed')})
+						</j2:if>
+							<br />
+						</span>
+						<span style="margin-top: 6px;">
+							$[jvar_plugin_desc]
+							<j2:if test="$[sn_lef.GlideEntitlement.isLicenseCheckRequired(plugin.id)]">
+								<div style="color:tomato; font-weight:bold;">
+								<br />
+								${gs.getMessage('This plugin is associated with a for fee subscription service.')}
+								</div>
+								<div style="color:tomato;">
+								${gs.getMessage('See your current subscriptions within the Subscription Management application in your production ServiceNow instance. By clicking the Applications within the Subscription you can view the included plugins.')}
+								</div>
+							</j2:if>
+
+							<j2:if test="$[plugin.requires.toString().length > 0 &amp;&amp; !plugin.block_install &amp;&amp; !jvar_should_redirect]">
+								<g2:evaluate var="jvar_req">
+									var req = new GlideRecord("v_plugin");
+									req.addQuery("id", "IN", plugin.requires);
+									req.query();
+									req;
+								</g2:evaluate>
+								<j2:if test="$[req.hasNext()]">
+									<br />
+									<b>$[gs.getMessage('Plugin dependency status')]</b>
+									<br />
+									<j2:while test="$[req.next()]">
+										<j2:if test="$[req.active == 'active']">
+											<a href="v_plugin.do?sys_id=$[req.sys_id]" target="_blank">
+												$[req.name] (${gs.getMessage('currently installed')})
+											</a>
+										</j2:if>
+										<j2:if test="$[req.active != 'active']">
+											<a href="v_plugin.do?sys_id=$[req.sys_id]" style="color:tomato"	target="_blank">
+												$[req.name] (${gs.getMessage('will be activated')})
+											</a>
+										</j2:if>
+										<br />
+									</j2:while>
+								</j2:if>
+							</j2:if>
+
+							<g2:evaluate var="jvar_conditional_plugins">
+								var gr_inactive_plugins = GlidePluginManager.getUninstalledConditionalPlugins(plugin.id);
+								gr_inactive_plugins.query();
+								gr_inactive_plugins;
+							</g2:evaluate>
+
+							<j2:if test="$[gr_inactive_plugins.hasNext()]">
+								<br />
+								<br />
+								<b>$[gs.getMessage('Some files will not be loaded because these plugins are inactive:')]</b>
+								<br />
+								<j2:while test="$[gr_inactive_plugins.next()]">
+									<a onclick="popListDiv(event, 'v_plugin', '$[gr_inactive_plugins.sys_id]','')" style="color:tomato" target="_blank">$[gr_inactive_plugins.name]</a>
+									<br />
+								</j2:while>
+							</j2:if>
+
+							<j2:if test="$[plugin.help != '']">
+								<div style="margin-top: 10px;">
+									<a class="web" href="$[plugin.help]" target="_new">Learn more</a>
+								</div>
+							</j2:if>
+							<g2:evaluate var="jvar_show_activate_button">
+							   (plugin.active == 'active' || gs.getXMLText(plugin.definition, "//no_activate") != "true") &amp;&amp; !plugin.block_install $[AMP]$[AMP] !shouldRedirect;
+							</g2:evaluate>
+							<j2:if test="$[jvar_show_activate_button]">
+							   <j2:if test="$[plugin.has_demo_data == true]">
+								<div style="margin-top: 10px;">
+                                                                   <label>
+									<g2:ui_checkbox id="load_demo" name="load_demo"	value="false" />
+									${gs.getMessage('Load demo data')}
+                                                                   </label>
+								</div>
+							   </j2:if>
+							</j2:if>
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td nowrap="true" height="30px" width="100%" style="vertical-align:bottom;">
+						<div align="right">
+							<g:macro ok="onSubmit()"
+								cancel="onCancel()"
+								ok_id="ok_button" cancel_id="cancel_button" ok_type="button"
+								cancel_type="button" />
+							<g:dialog_button id="${jvar_cancel_id}" type="${jvar_cancel_type}" style_class="btn btn-default"
+								onclick="${jvar_cancel}">${gs.getMessage('Cancel')}</g:dialog_button>$[SP]
+							<j2:if test="$[jvar_show_activate_button]">
+								<g:dialog_button id="${jvar_ok_id}" type="${jvar_ok_type}" style_class="btn btn-primary"
+								onclick="${jvar_ok}">$[jvar_action]</g:dialog_button>$[SP]
+							</j2:if>
+							<j2:if test="$[jvar_should_redirect]">
+								<g:dialog_button id="contiue_to_app" type="${jvar_submit_type}" style_class="btn btn-primary ml-5 pull-right"
+												 onclick="continueToApp('/sys_store_app.do?sys_id=$[redirectAppId]'); return false">
+									${gs.getMessage('Continue to Application')}
+								</g:dialog_button>
+							</j2:if>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</j2:if>
+	</g:ui_form>
+</j2:if>
+</j:jelly>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false"
+    xmlns:j="jelly:core"
+    xmlns:g="glide"
+    xmlns:j2="null"
+    xmlns:g2="null">
+
+    <g:evaluate var="jvar_status" object="true">
+        var statusApi = new sn_mab_api.AiHealthStatus();
+
+        var status = {};
+        status.isAisInstalled = statusApi.isAisInstalled();
+        status.isAisEnabled = statusApi.isAisEnabled();
+        status.isAisInitialized = statusApi.isAisInitialized();
+        status.isAisQueueWritable = statusApi.isAisQueueWritable();
+        status.isSemanticSearchInstalled = statusApi.isSemanticSearchInstalled();
+        status.isNowAssistInstalled = statusApi.isNowAssistInstalled();
+        status.isAisEnabledForMab = statusApi.isAisEnabledForMab();
+        status.isAisIndexEventProcessorRunning = statusApi.isAisIndexEventProcessorRunning();
+		status.areAllSystemsOperationalForAisInMab = statusApi.areAllSystemsOperationalForAisInMab();
+		status.currentAisNodeVersion = statusApi.currentAisNodeVersion();
+		status.isAisOnRagArchitecture = statusApi.isAisOnRagArchitecture();
+		status.aisIndexAudit = statusApi.aisIndexAudit().split('\n');
+
+        jvar_status = status;
+    </g:evaluate>
+
+    <style>
+		#maib-status {
+		  padding: 0 50px 0 50px;
+		}
+    </style>
+
+    <div id="maib-status">
+        <hr/>
+        <span class="modal-title h1">${'MAIB Admin Page'}</span>
+        <hr/>
+        <div class="modal-body">
+            <span class="modal-title h4">${'Semantic Search Status: '}</span>
+            <j:choose>
+                <j:when test="${jvar_status.areAllSystemsOperationalForAisInMab == true}">
+                        <span style="color:green;">✔</span>
+                </j:when>
+                <j:otherwise>
+                    <span style="color:red;">✖</span>
+                </j:otherwise>
+            </j:choose>
+            <div>
+                <p>Is AIS Installed?: ${jvar_status.isAisInstalled}</p>
+                <p>Is AIS Enabled?: ${jvar_status.isAisEnabled}</p>
+                <p>Is AIS Initialized?: ${jvar_status.isAisInitialized}</p>
+                <p>Is AIS Queue Writable?: ${jvar_status.isAisQueueWritable}</p>
+                <p>Is Semantic Search Installed?: ${jvar_status.isSemanticSearchInstalled}</p>
+                <p>Is Now Assist Installed?: ${jvar_status.isNowAssistInstalled}</p>
+                <p>Is AIS Enabled for MAB?: ${jvar_status.isAisEnabledForMab}</p>
+				<p>Is "AIS Index Event Processor" Running (if true, we will be blocked)?: ${jvar_status.isAisIndexEventProcessorRunning}</p>
+            </div>
+			<hr/>
+			<span class="modal-title h4">${'Is AIS On RAG Architecture: '}</span>
+            <j:choose>
+                <j:when test="${jvar_status.isAisOnRagArchitecture == true}">
+                        <span style="color:green;">✔</span>
+                </j:when>
+                <j:otherwise>
+                    <span style="color:red;">✖</span>
+                </j:otherwise>
+            </j:choose>
+			<div>
+				<p>Current AIS.Node Version Needed: ${jvar_status.currentAisNodeVersion}</p>
+			</div>
+			<hr/>
+			<span class="modal-title h4">${'AIS Index Audit: '}</span>
+			<div>
+				<j:forEach indexVar="i" items="${jvar_status.aisIndexAudit}">
+					${jvar_status.aisIndexAudit[i]}<br/>
+				</j:forEach>
+			</div>
+        </div>
+        <hr/>
+    </div>
+</j:jelly>

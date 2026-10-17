@@ -1,0 +1,1 @@
+(function calculatedFieldValue(current) { if (JSUtil.notNil(current.name) && JSUtil.notNil(current.dns_domain)){ return 'https://' + current.name + '.'+ current.dns_domain; } else { return 'https://' + current.ip_address; } })(current);

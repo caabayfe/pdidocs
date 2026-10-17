@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<style>
+		.show_related_records_hidden {
+			visibility: hidden;
+			position: absolute;
+			left: -1000px;
+		}
+	</style>
+   <j:set var="jvar_n" value="show_related_tasks_${ref}"/>
+	<g:evaluate var="jvar_safe_js_ref" jelly="true">
+		ref = jelly.ref.split('.').join('');
+	</g:evaluate>
+	<g2:evaluate var="jvar_show_related_active_tasks" jelly="true">
+		gs.getProperty("glide.ui.task.show_related_active_tasks", false);
+	</g2:evaluate>
+   <g2:evaluate var="jvar_show_tasks_display" jelly="true">
+      var id = __ref__.getSysIdValue();
+      if (id === null || $[jvar_show_related_active_tasks] === false)
+         "show_related_records_hidden";
+      else {
+         var ga = new GlideRecord('task_ci');
+         ga.addQuery('ci_item', __ref__.getSysIdValue());
+         ga.addQuery('task', '!=', jelly.sys_id);
+         ga.addQuery('task.active', true);
+   		 ga.setLimit(1);
+         ga.query();
+         if (ga.next())
+            "";
+         else
+            "show_related_records_hidden";
+      }
+   </g2:evaluate>
+
+   <button id="${jvar_n}"
+		   type="button"
+		   aria-haspopup="true"
+		   aria-label="${gs.getMessage('Show other active tasks affecting this CI')}"
+		   onclick="showTasksDialog('${ref}')"
+		   name="${jvar_n}"
+		   class="btn btn-ref btn-default icon-warning-circle $[jvar_show_tasks_display]"
+		   tabindex="$[jvar_ua_optional_tabindex]"
+		   title="${gs.getMessage('Show other active tasks')}">
+   </button>
+
+   <script>(function() {
+      needsRefresh = false;
+      function onChange_cmdb_${jvar_safe_js_ref}_ci_show_related(element, original, changed, loading) {
+         if (needsRefresh == false) {
+            needsRefresh = true;
+            return;
+         }
+         if (changed.length == 0 || $[jvar_show_related_active_tasks] === false) {
+            $('${jvar_n}').addClassName('show_related_records_hidden');
+            return;
+         }
+         var ga = new GlideAjax('ShowRelatedTasksAjax');
+         ga.addParam('sysparm_name', 'getRelatedTaskCount');
+         ga.addParam('sysparm_ci', g_form.getValue('${ref}'));
+         ga.addParam('sysparm_task', g_form.getUniqueValue());
+         ga.getXML(relatedTaskReturn);
+      }
+
+      function relatedTaskReturn(response) {
+         var answer = parseInt(response.responseXML.documentElement.getAttribute("answer"));
+         var e = $('${jvar_n}');
+         if (answer > 0)
+            e.removeClassName('show_related_records_hidden');
+         else
+		    e.addClassName('show_related_records_hidden');
+      }
+
+      var h = new GlideEventHandler('onChange_incident_${jvar_safe_js_ref}_cmdb_ci_show_related', onChange_cmdb_${jvar_safe_js_ref}_ci_show_related, '${ref}');
+      g_event_handlers.push(h);
+
+      })();
+
+      function showTasksDialog(reference) {
+         var v = g_form.getValue(reference);
+         var w = new GlideDialogWindow('show_list');
+         w.setTitle(getMessage('Other active tasks affecting this Configuration Item'));
+         w.setPreference('table', 'task_ci_list');
+         w.setPreference('sysparm_view', 'task_rel_ci');
+         w.setPreference('sysparm_query', "task.active=true^task.sys_id!=" + g_form.getUniqueValue() + "^ci_item=" + v);
+	     w.setPreference('focusTrap', true);
+         w.render();
+      }
+   </script>
+</j:jelly>

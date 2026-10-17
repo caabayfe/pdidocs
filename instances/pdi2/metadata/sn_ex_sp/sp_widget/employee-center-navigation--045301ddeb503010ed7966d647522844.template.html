@@ -1,0 +1,211 @@
+<div class="employee-center-navigation">
+  <div class="main-menu-width-calc">
+    <div ng-repeat="item in data.menuItems track by item.sys_id" on-finish-repeat="ngRepeatFinished" class="navigation-menu-item-calc">
+      <fa ng-if="::item.glyph" name="{{::item.glyph}}"></fa>
+      {{item.name ? item.name : item.label}}
+      <span class="icon" ng-class="(selectedMenuItem && item.sys_id === selectedMenuItem.sys_id) ? 'fa fa-caret-up' : 'fa fa-caret-down'" ng-if="hasChildItems(item)"></span>
+    </div>
+  </div>
+  <div ng-if="!showMobileMenuOnDesktop && !isMobileView && isLoading">
+    <div ng-if="isLoading" class="skeleton-container-nav-row">
+      <div class="skeleton-loader-wrapper-nav">
+        <div class="skeleton-loader-nav skeleton-loader-header-nav" ng-repeat="item in [1,2,3,4]"></div>
+      </div>
+    </div>
+  </div>
+  <div ng-if="!showMobileMenuOnDesktop && !isMobileView && !isLoading">
+    <!-- topic-based navigation menu -->
+    <div ng-if="!(data.leftAlignMenuItems.length || data.rightAlignMenuItems.length)" class="main-menu" ng-click="handleClickOnMainMenu($event)" role="menubar">
+      <div ng-repeat="item in data.menuItems track by item.sys_id" class="navigation-menu-item" aria-label="{{item.name ? item.name : item.label}}" ng-class="{'selected-item': (selectedMenuItem && item.sys_id === selectedMenuItem.sys_id), 'menu-link': !c.doesMenuItemHaveChildren(item)}" ng-click="handleMainMenuItemClick(item, $event)" ng-attr-aria-expanded="{{ c.doesMenuItemHaveChildren(item) ? ((selectedMenuItem && item.sys_id === selectedMenuItem.sys_id) || false) : undefined}}" aria-owns="{{ ((selectedMainMenu && item.sys_id === selectedMainMenu.sys_id) || (selectedMenuItem && item.sys_id === selectedMenuItem.sys_id)) ? 'menu_'+selectedMenuItem.sys_id : undefined }}" tabindex="0" role="menuitem" aria-haspopup="{{c.doesMenuItemHaveChildren(item)}}">
+        <fa ng-if="::item.glyph" name="{{::item.glyph}}" class="inline-icon"></fa>
+        {{item.name ? item.name : item.label}}
+        <span class="icon" ng-class="(selectedMenuItem && item.sys_id === selectedMenuItem.sys_id) ? 'fa fa-caret-up' : 'fa fa-caret-down'" ng-if="getChildNavItems(item).length"></span>
+      </div>
+    </div>
+    <div ng-if="data.leftAlignMenuItems.length || data.rightAlignMenuItems.length" class="main-menu main-menu-navigation" ng-click="handleClickOnMainMenu($event)" role="menubar">
+      <div class="left-align-menu">
+        <div ng-repeat="item in data.leftAlignMenuItems track by item.portal_nav_item"
+        class="navigation-menu-item" aria-label="{{item.name ? item.name : item.label}}"
+        ng-class="{'selected-item': ((selectedMainMenu && item.portal_nav_item === selectedMainMenu.portal_nav_item)
+                      || (selectedMenuItem && item.portal_nav_item == selectedMenuItem.portal_nav_item)), 'menu-link': !c.doesMenuItemHaveChildren(item), 'expanded-menu': item.submenu_type == 'expanded'}"
+        ng-click="handleMainMenuItemClick(item, $event)"
+        ng-attr-aria-expanded="{{ c.doesMenuItemHaveChildren(item) ? ((selectedMainMenu && item.portal_nav_item === selectedMainMenu.portal_nav_item) || (selectedMenuItem && item.portal_nav_item == selectedMenuItem.portal_nav_item) || false) : undefined}}"
+        aria-owns="{{ (selectedMainMenu && item.sys_id === selectedMainMenu.sys_id && showMenu) ? 'tab_' + selectedMainMenu.sys_id : (selectedMenuItem && item.sys_id === selectedMenuItem.sys_id && !showMenu) ? 'menu_' + selectedMenuItem.sys_id : undefined }}" tabindex="0" role="menuitem" aria-haspopup="{{c.doesMenuItemHaveChildren(item)}}">
+          <fa ng-if="::item.glyph" name="{{::item.glyph}}" class="inline-icon"></fa>
+          {{item.name ? item.name : item.label}}
+          <span class="icon"
+          ng-class="((selectedMainMenu && item.portal_nav_item === selectedMainMenu.portal_nav_item)
+                    || (selectedMenuItem && item.portal_nav_item == selectedMenuItem.portal_nav_item)) ? 'fa fa-caret-up' : 'fa fa-caret-down'" ng-if="hasChildItems(item)"></span>
+        </div>
+      </div>
+      <div class="right-align-menu">
+        <div ng-repeat="item in data.rightAlignMenuItems track by item.portal_nav_item"
+        class="navigation-menu-item" aria-label="{{item.name ? item.name : item.label}}"
+        ng-class="{'selected-item': ((selectedMainMenu && item.portal_nav_item === selectedMainMenu.portal_nav_item)
+                            || (selectedMenuItem && item.portal_nav_item == selectedMenuItem.portal_nav_item)), 'menu-link': !c.doesMenuItemHaveChildren(item), 'expanded-menu': item.submenu_type == 'expanded'}"
+        ng-click="handleMainMenuItemClick(item, $event)"
+        ng-attr-aria-expanded="{{ c.doesMenuItemHaveChildren(item) ? ((selectedMainMenu && item.portal_nav_item === selectedMainMenu.portal_nav_item) || (selectedMenuItem && item.portal_nav_item == selectedMenuItem.portal_nav_item) || false) : undefined}}"
+        aria-owns="{{ (selectedMainMenu && item.sys_id === selectedMainMenu.sys_id && showMenu) ? 'tab_' + selectedMainMenu.sys_id : (selectedMenuItem && item.sys_id === selectedMenuItem.sys_id && !showMenu) ? 'menu_' + selectedMenuItem.sys_id : undefined }}" tabindex="0" role="menuitem" aria-haspopup="{{c.doesMenuItemHaveChildren(item)}}">
+          <fa ng-if="::item.glyph" name="{{::item.glyph}}" class="inline-icon"></fa>
+          {{item.name ? item.name : item.label}}
+          <span class="icon" ng-class="((selectedMainMenu && item.portal_nav_item === selectedMainMenu.portal_nav_item) || (selectedMenuItem && item.portal_nav_item == selectedMenuItem.portal_nav_item)) ? 'fa fa-caret-up' : 'fa fa-caret-down'" ng-if="hasChildItems(item)"></span>
+        </div>
+      </div>
+    </div>
+    <div class="dropdown-container visibility" ng-if="showMenu || selectedMenuItem" ng-style="megaMenuPosition">
+      <div class="menu-container" ng-class="{'expanded' : selectedMainMenu}">
+        <div class="tab-container" ng-if="showMenu && !showMenuOnLeft" id="tab_{{selectedMainMenu.sys_id}}">
+        <div class="tab-list-container" role="menu">
+          <div class="tab-list" ng-repeat="item in c.data.menuItemToChildrenMap[selectedMainMenu.portal_nav_item] | orderBy: 'order'" ng-click="handleMainMenuItemClick(item, $event, true)" tabindex="0" role="menuitem" ng-class="{'selected-item': (selectedMenuItem && item.sys_id === selectedMenuItem.sys_id), 'menu-link': !c.doesMenuItemHaveChildren(item)}"
+               aria-owns="{{(selectedMenuItem && item.sys_id === selectedMenuItem.sys_id) ? 'menu_'+selectedMenuItem.sys_id : undefined }}">
+            <span class="tab-name">{{item.type == 'topic' ? item.name : item.label}}</span>
+            <span ng-if="c.hasSubMenuData(item)" class="tab-icon fa fa-angle-right fa-lg"></span>
+          </div>
+          </div>
+          <div class="tab-browse browse-button-container" ng-if="showMenu && getBrowseButtontext(selectedMainMenu, true)">
+            <a class="browse-button btn btn-primary" aria-label="{{tabbedBrowseButtontext}}" ng-href="{{returnRedirectionPath(selectedMainMenu)}}" tabindex="0" ng-click="browseAll(selectedMainMenu)">
+              <span>{{tabbedBrowseButtontext}}</span>
+            </a>
+          </div>
+        </div>
+        <!-- Simple dropdown menu for one level of sub-topics  -->
+        <div ng-if="selectedMenuItem && !showMegaMenu && !getQuickLinksForMenuItem(selectedMenuItem).length && selectedMenuItem.render_as !== 'modal_window'" id="menu_{{selectedMenuItem.sys_id}}" class="simple-menu" ng-class="{ 'ie': c.isIE }">
+          <ul class="simple-list" role="menu">
+            <li class="dropdown-menu-item" ng-repeat="subMenuItem in getLevelOneMenuItems(selectedMenuItem) track by subMenuItem.sys_id" aria-label="{{subMenuItem.name ? subMenuItem.name : subMenuItem.label}}" ng-click="handleMegaMenuItemClick($event, subMenuItem)" tabindex="0" role="menuitem">
+              <span>
+                <fa ng-if="::subMenuItem.glyph" name="{{::subMenuItem.glyph}}" class="inline-icon"></fa>{{subMenuItem.name ? subMenuItem.name : subMenuItem.label}}
+              </span>
+            </li>
+            <li class="dropdown-menu-item" aria-label="${Browse all}" ng-click="handleMegaMenuItemClick($event, selectedMenuItem)" ng-if="selectedMenuItem.taxonomy && !c.data.activePortalNavRecord" tabindex="0" role="menuitem">
+              <span>${Browse all}</span>
+              <span class="icon fa fa-chevron-right flip-icon-rtl"></span>
+            </li>
+            <li class="dropdown-menu-item" ng-click="handleMegaMenuItemClick($event, selectedMenuItem)" ng-if="c.data.activePortalNavRecord && getBrowseButtontext(selectedMenuItem)" tabindex="0" aria-label="{{browseButtontext}}" role="menuitem">
+              <span>{{browseButtontext}}</span>
+              <span class="icon fa fa-chevron-right flip-icon-rtl"></span>
+            </li>
+          </ul>
+        </div>
+        <!-- Mega menu for 2 levels of topic hierarchy -->
+        <div ng-if="showMegaMenu" class="mega-menu visibility" id="menu_{{selectedMenuItem.sys_id}}">
+          <div class="mega-menu__items">
+            <div class="sub-topics-container" ng-if="getLevelOneMenuItems(selectedMenuItem).length">
+              <div ng-repeat="item in levelOneMenuItems track by item.sys_id" ng-if="getLevelTwoMenuItems(item).length" ng-init="groups = getLevelTwoTopicsAsGroupsOfTen(levelTwoMenuItems)" class="level-one-item">
+                <div>
+                  <a ng-init="item.ngHref = getMegaMenuItemHref(item)" ng-href="{{item.ngHref}}" id="level-one-topic-name-{{$index}}" class="level-one-topic-name" ng-click="handleMegaMenuItemClick($event, item)" ng-attr-title="{{ c.isIE ? item.name : undefined }}" aria-label="{{item.name}}" ng-class="{'level-one-first-item': $index==0}">
+                    <span class="level-one-topic-ellipsis">
+                      {{item.name ? item.name : item.label}}
+                    </span>
+                  </a>
+                </div>
+                <!-- Grouping 10 sub topics each into one -->
+                <div class="sub-topic-groups" aria-labelledby="level-one-topic-name-{{$index}}">
+                  <ul class="simple-list sub-topics-list" ng-repeat="group in groups track by $index">
+                    <li ng-repeat="subTopic in group track by subTopic.sys_id">
+                      <a ng-init="subTopic.ngHref = getMegaMenuItemHref(subTopic)" ng-href="{{subTopic.ngHref}}" class="level-two-topic-name" ng-attr-title="{{ c.isIE ? subTopic.name : undefined }}" ng-click="handleMegaMenuItemClick($event, subTopic)" aria-label="{{item.name}},{{subTopic.name}}">
+                        <span class="level-two-topic-ellipsis">{{subTopic.name ? subTopic.name : subTopic.label}}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <!-- All sub topics with no children sit inside a separate grid item -->
+              <div class="level-one-item" ng-if="getLevelOneTopicsWithNoChildren(selectedMenuItem).length">
+                <ul class="simple-list orphan-list" role="none">
+                  <li ng-repeat="subTopic in levelOneTopicsWithNoChildren track by subTopic.sys_id">
+                    <a ng-init="subTopic.ngHref = getMegaMenuItemHref(subTopic)" ng-href="{{subTopic.ngHref}}" class="level-one-topic-name" ng-attr-title="{{ c.isIE ? subTopic.name : undefined }}" ng-click="handleMegaMenuItemClick($event, subTopic)" aria-label="{{subTopic.name}}">
+                      <span class="level-one-topic-ellipsis">
+                         {{subTopic.name ? subTopic.name : subTopic.label}}
+                      </span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="quick-links-container" ng-if="getQuickLinksForMenuItem(selectedMenuItem).length">
+              <span class="quick-links-container__title" id="quick-links-container-title">${Quick Links}</span>
+              <ul class="simple-list" aria-labelledby="quick-links-container-title">
+                <li ng-repeat="link in QuickLinksForMenuItem">
+                  <a ng-href="{{link.url}}" aria-label="{{link.target ? link.title + ' opens in a new tab' : link.title}}" ng-click="handleQuickLinkClick($event, link)" target="{{link.target}}">
+                    <span class="quick-link-title" ng-attr-title="{{ c.isIE ? link.title : undefined }}">{{link.title}}</span>
+                    <span class="icon fa fa-external-link fa-align-bottom" title="${External link}" tabindex="-1" ng-if="(link.target == '_blank')"></span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="browse-button-container" ng-if="!c.data.activePortalNavRecord || (c.data.activePortalNavRecord && getBrowseButtontext(selectedMenuItem))">
+            <a class="browse-button btn btn-primary" ng-if="!c.data.activePortalNavRecord" ng-click="browseAll(selectedMenuItem)" ng-href="{{returnRedirectionPath(selectedMenuItem)}}" aria-label="${Browse all}" tabindex="0">
+              <span>${Browse all}</span>
+            </a>
+            <a id="inner-button" class="browse-button btn btn-primary" ng-if="c.data.activePortalNavRecord && getBrowseButtontext(selectedMenuItem)" ng-click="browseAll(selectedMenuItem)" ng-href="{{returnRedirectionPath(selectedMenuItem)}}" aria-label="{{browseButtontext}}" tabindex="0">
+              <span>{{browseButtontext}}</span>
+            </a>
+          </div>
+        </div>
+        <!-- This div is used when megamenu opens on the left -->
+        <div class="tab-container" ng-if="showMenu && showMenuOnLeft" id="tab_{{selectedMainMenu.sys_id}}">
+        <div class="tab-list-container" role="menu">
+          <div class="tab-list" ng-repeat="item in c.data.menuItemToChildrenMap[selectedMainMenu.portal_nav_item] | orderBy: 'order'" ng-click="handleMainMenuItemClick(item, $event, true)" tabindex="0" role="menuitem" ng-class="{'selected-item': (selectedMenuItem && item.sys_id === selectedMenuItem.sys_id), 'menu-link': !c.doesMenuItemHaveChildren(item)}"
+               aria-owns="{{(selectedMenuItem && item.sys_id === selectedMenuItem.sys_id) ? 'menu_'+selectedMenuItem.sys_id : undefined }}">
+            <span class="tab-name">{{item.type == 'topic' ? item.name : item.label}}</span>
+            <span ng-if="c.hasSubMenuData(item)" class="tab-icon fa fa-angle-right fa-lg"></span>
+          </div>
+          </div>
+          <div class="tab-browse browse-button-container" ng-if="showMenu && getBrowseButtontext(selectedMainMenu, true)">
+            <a class="browse-button btn btn-primary" aria-label="{{tabbedBrowseButtontext}}" ng-href="{{returnRedirectionPath(selectedMainMenu)}}" ng-click="browseAll(selectedMainMenu)" tabindex="0">
+              <span>{{tabbedBrowseButtontext}}</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div ng-if="(showMobileMenuOnDesktop || isMobileView)" class="navigation--xs">
+  <!-- Skeleton loader for mobile menu -->
+    <div ng-if="isLoading" class="skeleton-container-nav">
+      <div class="skeleton-loader-wrapper-nav">
+        <div class="skeleton-loader-nav skeleton-loader-header-nav"></div>
+        <div class="skeleton-loader-nav" ng-repeat="item in [1,2,3]"></div>
+      </div>
+    </div>
+    <!-- topic-based mobile navigation menu -->
+    <ul class="mobile-main-menu" role="menu" ng-if="!showMobileMegaMenu && !isLoading">
+      <li ng-repeat="item in data.menuItems track by item.sys_id" class="mobile-navigation-menu-item mega-menu-item {{'mobile-menu-item-' + item.sys_id}}" ng-click="handleMobileMainMenuItemClick(item)" aria-label="{{item.name ? item.name : item.label}}" ng-class="{'menu-link': !c.doesMenuItemHaveChildren(item)}" ng-attr-aria-expanded="{{ c.doesMenuItemHaveChildren(item) ? ((selectedMenuItem && item.sys_id === selectedMenuItem.sys_id) || false) : undefined}}" role="menuitem" tabindex="0" aria-haspopup={{c.doesMenuItemHaveChildren(item)}}>
+        <span>
+          <fa ng-if="::item.glyph" name="{{::item.glyph}}" class="inline-icon"></fa>{{item.name ? item.name : item.label}}
+        </span>
+        <span class="icon fa fa-chevron-right flip-icon-rtl" tabindex="-1" ng-if="hasChildItems(item)"></span>
+      </li>
+    </ul>
+    <ul class="mobile-mega-menu" ng-if="showMobileMegaMenu" role="menu">
+      <li class="mobile-mega-menu__item back-container mega-menu-item" ng-click="goBackOnMobileView()" aria-label="${Back}" role="menuitem" tabindex="0">
+        <span tabindex="-1" class="icon fa fa-chevron-left back-button flip-icon-rtl"></span> ${Back}
+      </li>
+      <li class="selected-topic-name" aria-hidden="true">
+        <span>{{selectedMobileMenuItem.name ? selectedMobileMenuItem.name : selectedMobileMenuItem.label}}</span>
+      </li>
+      <li ng-repeat="item in levelOneMenuItems track by item.sys_id" class="mobile-mega-menu__item mega-menu-item {{'mobile-menu-item-' + item.sys_id}}" ng-class="{'mobile-navigation-menu-item': levelOneMenuItems.length}" ng-attr-aria-expanded="{{ levelOneMenuItems.length ? ((selectedMenuItem && item.sys_id === selectedMenuItem.sys_id) || false) : undefined}}" ng-click="handleMobileMegaMenuItemClick(item)" aria-label="{{item.name ? item.name : item.label}}" role="menuitem" tabindex="0">
+        <span>
+          <fa ng-if="::item.glyph" name="{{::item.glyph}}" class="inline-icon"></fa> {{item.name ? item.name : item.label}}
+        </span>
+        <span tabindex="-1" class="icon fa fa-chevron-right flip-icon-rtl" ng-if="hasChildItems(item) || (item.render_as == 'modal_window' && item.widget)"></span>
+      </li>
+      <li class="browse-all mega-menu-item" ng-if="selectedMobileMenuItem && selectedMobileMenuItem.taxonomy" ng-click="redirectToBrowseAll(selectedMobileMenuItem)" aria-label="${Browse all}" role="menuitem" tabindex="0">
+        <a tabindex="-1" ng-href="{{returnRedirectionPath(selectedMobileMenuItem)}}" aria-label="${Browse all}" aria-hidden="true">
+          <span>${Browse all}<span class="icon fa fa-chevron-right flip-icon-rtl"></span></span>
+        </a>
+      </li>
+      <!-- Quick Links section -->
+      <ul class="mobile-mega-menu__quick-links-container" role="menu" ng-if="isLevelOneMobileMegaMenu && getQuickLinksForMenuItem(selectedMobileMenuItem).length">
+        <li class="mobile-mega-menu__quick-links-title" aria-hidden="true">${Quick Links}</li>
+        <li class="mobile-mega-menu__quick-link mega-menu-item" role="menuitem" tabindex="0" ng-repeat="link in QuickLinksForMenuItem">
+          <a ng-href="{{link.url}}" aria-label="{{link.target ? link.title + ' opens in a new tab' : link.title}} - ${Quick Links}" tabindex="-1" ng-click="handleQuickLinkClick($event, link)" target="{{link.target}}">
+            <span class="quick-link-title" ng-attr-title="{{ c.isIE ? link.title : undefined }}">{{link.title}}</span>
+            <span class="icon fa fa-external-link fa-align-bottom" title="${External link}" tabindex="-1" ng-if="(link.target == '_blank')"></span>
+          </a>
+        </li>
+      </ul>
+    </ul>
+  </div>
+</div>

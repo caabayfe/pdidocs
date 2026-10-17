@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null"> 
+        <g:macro id="" table="" type="" first_form_section="false" />
+        <j:set var="jvar_t" value="${JS:sysparm_view}" />
+        <g:evaluate jelly="true" var="jvar_build_context">
+           var view = jelly.jvar_t;
+           var b = true;
+           if (RP.isPortal() || RP.isPopup() || view == "sys_ref_list")
+              b = false;
+           b;
+        </g:evaluate>
+        <j:if test="${jvar_build_context}" >
+        <j2:if test="$[jvar_view_changer == true]">
+        <g:evaluate var="jvar_views" object="true" jelly="true" >
+            var vm = RP.getViewManager();
+            vm.setTable(jelly.ref);
+            vm.setTarget('${jvar_type}');
+            vm.getList(RP);
+        </g:evaluate> 
+        <j:if test="${jvar_views.size() > 0}" >
+            var cmViews = new GwtContextMenu('${jvar_id}',${jvar_first_form_section});
+	    cmViews.clear();
+	    cmViews.setTableName('${jvar_table}');
+            var views_sa = new GwtContextMenu('context_labelMenu',${jvar_first_form_section});
+            views_sa.clear();
+
+            <j:forEach var="jvar_view" items="${jvar_views}" >
+               <j:if test="${jvar_view.selected=='true'}">
+                  <j:set var="jvar_img" value="images/checked.pngx" />
+               </j:if>
+               <j:if test="${jvar_view.selected!='true'}">
+                  <j:set var="jvar_img" value="images/s.gifx" />
+               </j:if>
+	       cmViews.addHref("${HTML:jvar_view.label}", "switchView('${jvar_type}','${jvar_table}','${JS:jvar_view.value}')", "${jvar_img}");
+	       views_sa.addHref("${HTML:jvar_view.label}", "switchView('${jvar_type}','${jvar_table}','${JS:jvar_view.value}')", "${jvar_img}");
+            </j:forEach>
+	    gcm.addMenu('${gs.getMessage('uppercase_view')}', cmViews);
+        </j:if>
+        </j2:if>
+        </j:if>
+</j:jelly>

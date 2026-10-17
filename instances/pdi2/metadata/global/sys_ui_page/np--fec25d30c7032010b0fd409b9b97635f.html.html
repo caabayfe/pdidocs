@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <script type="text/javascript">
+        window.top.Magellan = {};
+        window.top.Magellan.globals = {};
+    </script>
+    <g:inline template="html_page_script_globals.xml"/>
+    <g:evaluate var="jvar_settings_menu_notifications_tab">
+        typeof NotificationPreferenceUI == 'function' ${AND} new NotificationPreferenceUI().enabled({ concourse: true, cms: false });
+    </g:evaluate>
+    <g:evaluate var="jvar_notification_preference_ui_subscription_enabled">
+        GlideProperties.getBoolean('glide.notification.preference.ui.subscription.enabled', true);
+    </g:evaluate>
+    <script type='text/javascript'>
+        window.NOW.notificationProperties = {
+        notifications: ${jvar_settings_menu_notifications_tab},
+        subscriptions: ${jvar_notification_preference_ui_subscription_enabled}
+        };
+    </script>
+    <!-- Overrides as very last includes for priority order; Polarisberg needed to override Concourse includes. -->
+    <g:if_polaris>
+        <g:then>
+            <g2:requires name="/styles/sn/concourse/css_includes_concourse_polaris.css" includes="true" params="$[jvar_css_cache_key]"/>
+            <j:if test="${sn_ui.PolarisUI.canUsePolarisTemplates()}">
+                <g:requires name="styles/notification_preference/polaris/notification_preference.css" params="$[jvar_css_cache_key]"/>
+            </j:if>
+        </g:then>
+        <g:else>
+            <g2:requires name="/styles/sn/concourse/css_includes_concourse.css" includes="true" params="$[jvar_css_cache_key]"/>
+            <j:if test="${jvar_settings_menu_notifications_tab}">
+                <g:requires name="styles/notification_preference/notification_preference.css" params="$[jvar_css_cache_key]"/>
+            </j:if>
+        </g:else>
+    </g:if_polaris>
+    <g2:requires name="scripts/sn/concourse/js_includes_concourse.js" includes="true" />
+    <g2:requires name="notification_preference/js_includes_notification_preference.js" includes="true" />
+    <g:inline template="notification_preference_preload.xml" />
+    <div class="np-container" ng-controller="notificationController">
+        <header class="modal-header np-header clearfix">
+            <div class="np-header-left">
+                <j:if test="${sn_ui.PolarisUI.canUsePolarisTemplates()}">
+                    <button class="btn btn-default icon pull-left" ng-if="viewStack.length &gt; 1" ng-keypress="back($event)" ng-click="back($event)" tabindex="0">
+                        <span class="icon-chevron-left" aria-hidden="true" />
+                        <span class="btn-back-text" ng-bind="previousView().title" />
+                    </button>
+                </j:if>
+                <j:if test="${!sn_ui.PolarisUI.canUsePolarisTemplates()}">
+                    <button class="btn btn-back icon pull-left" ng-if="viewStack.length &gt; 1" ng-keypress="back($event)" ng-click="back($event)" tabindex="0">
+                        <span class="icon-chevron-left" aria-hidden="true" />
+                        <span class="btn-back-text" ng-bind="previousView().title" />
+                    </button>
+                </j:if>
+            </div>
+            <div class="np-header-center">
+                <h4 class="modal-title text-center" ng-bind="currentView().title" id="settings_modal_panel_header"/>
+            </div>
+            <div class="np-header-right">
+            </div>
+        </header>
+        <div class="form-horizontal view-stack settings-tab-panels" aria-labelledby="settings_modal_panel_header">
+            <div class="tab-pane view-stack-item" role="tabpanel" ng-repeat="view in viewStack" data-name="{{view.name}}"
+                 ng-include="" src="getViewTemplate(view)" ng-hide="$index &lt; viewStack.length - 1" id="{{'tabpanel_' + view.tab}}" aria-labelledby="settings_modal_panel_header"/>
+        </div>
+    </div>
+</j:jelly>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:macro id="" label="" value="" displayvalue="" table="" query=""/>
+	<div class="form-horizontal is-required form-group row reference-list">
+		<j:if test="${!empty(jvar_value)}">
+			<div class="col-xs-4 col-md-2 text-right is-prefilled">
+				<g:form_label for="sys_display.${jvar_id}">
+					${jvar_label}
+				</g:form_label>
+			</div>
+		</j:if>
+		<j:if test="${empty(jvar_value)}">
+			<div class="col-xs-4 col-md-2 text-right">
+				<g:form_label for="sys_display.${jvar_id}">
+					${jvar_label}
+				</g:form_label>
+			</div>
+		</j:if>
+		<div id="${jvar_id}_list" class="col-lg-3 col-md-5 col-sm-6 col-xs-7">
+			<g:ui_reference name="${jvar_id}" id="${jvar_id}" displayvalue="${jvar_displayvalue}" value="${jvar_value}" table="${jvar_table}" query="${jvar_query}" completer="AJAXTableCompleter"/>
+		</div>
+	</div>
+	<style>
+		.reference-list .icon-search{
+			color:#343d47 !important;
+			border-bottom-right-radius:3px !important;
+			border-top-right-radius:3px !important;
+		}
+		.reference-list .icon-info{
+			margin-left:5px !important;
+			color:#343d47 !important;
+			border-bottom-left-radius:3px !important;
+			border-top-left-radius:3px !important;
+		}
+	</style>
+	<script>
+		$j('#${jvar_id}_list .icon-info').attr('onclick', $j('#${jvar_id}_list .icon-info').attr('onmouseover'));
+		$j('#${jvar_id}_list .icon-info').attr('onmouseover','');
+		$j('#${jvar_id}_list .icon-info').attr('onmouseout','');
+		
+		$j('#${jvar_id}').attr('onchange',$j('#${jvar_id}').attr('onchange')+' ${jvar_id}Entered();');
+		
+		$j('#${jvar_id}_list .form-control').removeAttr('title');
+		
+		$j('#${jvar_id}_list .icon-info').attr('title','${gs.getMessage("Preview this record")}');
+		
+		gel('sys_display.${jvar_id}').setAttribute('aria-required',true);
+		
+		function ${jvar_id}Entered(){
+			var element = document.getElementById('${jvar_id}');
+			var labelDiv = element.parentElement.parentElement.childNodes[0];
+			if(element.value){
+				labelDiv.className += " is-filled";
+			}
+			setTimeout(function(){
+				if(document.getElementById('${jvar_id}').value==="")
+					labelDiv.className = "col-xs-4 col-md-2 text-right";
+			},100);
+		}
+	</script>
+</j:jelly>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate>
+		var testId = RP.getWindowProperties().get('test_id');
+		var testName = "";
+		var readonly = false;
+		if (testId != null) {
+			var gr = new GlideRecord('sys_atf_test');
+			gr.get(testId);
+			testName = gr.name;
+			readonly = true;
+		}
+	</g:evaluate>
+	
+	<g:evaluate jelly="true" object="true">
+		var templates = new GlideRecord('sys_atf_test_template');
+		templates.query();
+	</g:evaluate>
+	
+	<div class="form-horizontal">
+		<div class="form-group">
+			<div nowrap="true" type="string" choice="0">
+				<label for="test_name" class="col-sm-12 col-md-4 control-label">
+					<span class="label-text">${gs.getMessage('Test name')}</span>
+				</label>
+			</div>
+			<div class="col-sm-12 col-md-6 form-field input_controls">
+				<j:if test="${readonly}">
+					<input id="test_name" value="${testName}" class="form-control" readonly="readonly"/>
+				</j:if>
+				<j:if test="${!readonly}">
+					<input id="test_name" value="New Test" class="form-control"/>
+				</j:if>
+			</div>
+			<div class="col-sm-12 col-md-2 form-field-addons"></div>
+		</div>
+		<div class="form-group is-required" id="test_template_selector">
+			<div nowrap="true" type="string" choice="0">
+				<label class="col-sm-12 col-md-4 control-label" id="test_template_picker_label">
+				    <span class="required-marker label_description" aria-label="${gs.getMessage('Mandatory - must be populated before Submit')} "></span>
+					<span class="label-text">${gs.getMessage('Template')}</span>
+				</label>
+			</div>
+			<div class="col-sm-12 col-md-6 form-field input_controls">
+				<select id="test_template_picker" style="width:200px" class="form-control select2" onChange="templateChanged()">
+					<option value=''>${gs.getMessage(' -- None -- ')}</option>
+					<j:while test="${templates.next()}">
+						<option value = "${templates.sys_id}" >${gs.getMessage(templates.name)}</option>
+					</j:while>
+				</select>
+			</div>
+			<div class="col-sm-12 col-md-2 form-field-addons"></div>
+		</div>
+
+		<!-- table field -->
+		<div class="form-group" style="display: none" id="tableDiv">
+			<div nowrap="true" type="string" choice="0">
+				<label for="sys_display.test_table_picker" class="col-sm-12 col-md-4 control-label">
+					<span class="required-marker label_description" aria-label="${gs.getMessage('Mandatory - must be populated before Submit')} "></span>
+					<span class="label-text">${gs.getMessage('Table')}</span>
+				</label>
+			</div>
+			<div class="col-sm-12 col-md-6 form-field input_controls">
+				<g2:ui_reference id="test_table_picker"
+						 name="test_table_picker"
+						 table="sys_db_object"
+						 columns="name"
+						 columns_search="false"
+						 order_by="name"
+						 show_popup="false"
+						 completer="AJAXTableCompleter"/>
+			</div>
+			<div class="col-sm-12 col-md-2 form-field-addons"></div>
+		</div>
+
+		<!-- catalog item field -->
+		<div class="form-group" style="display: none" id="itemDiv">
+			<div nowrap="true" type="string" choice="0">
+				<label for="sys_display.test_item_picker" class="col-sm-12 col-md-4 control-label">
+					<span class="required-marker label_description" aria-label="${gs.getMessage('Mandatory - must be populated before Submit')} "></span>
+					<span class="label-text">${gs.getMessage('Catalog item')}</span>
+				</label>
+			</div>
+			<div class="col-sm-12 col-md-6 form-field input_controls">
+				<g2:ui_reference id="test_item_picker"
+						 name="test_item_picker"
+						 table="sc_cat_item"
+						 columns="name"
+						 columns_search="false"
+						 order_by="name"
+						 show_popup="false"
+						 query="active=true^type!=bundle^type!=package^sys_class_name!=sc_cat_item_guide^sys_class_name!=sc_cat_item_content^EQ"
+						 completer="AJAXTableCompleter"/>
+			</div>
+			<div class="col-sm-12 col-md-2 form-field-addons"></div>
+		</div>
+
+		<!-- record producer field -->
+		<div class="form-group" style="display: none" id="rpDiv">
+			<div nowrap="true" type="string" choice="0">
+				<label for="sys_display.test_rp_picker" class="col-sm-12 col-md-4 control-label">
+					<span class="required-marker label_description" aria-label="${gs.getMessage('Mandatory - must be populated before Submit')} "></span>
+					<span class="label-text">${gs.getMessage('Record Producer')}</span>
+				</label>
+			</div>
+			<div class="col-sm-12 col-md-6 form-field input_controls">
+				<g2:ui_reference id="test_rp_picker"
+						 name="test_rp_picker"
+						 table="sc_cat_item_producer"
+						 columns="name"
+						 columns_search="false"
+						 order_by="name"
+						 show_popup="false"
+						 query="active=true^EQ"
+						 completer="AJAXTableCompleter"/>
+			</div>
+			<div class="col-sm-12 col-md-2 form-field-addons"></div>
+		</div>
+
+		<footer align="right" class="modal-footer flex">
+			<button class="btn btn-default" onClick="closeDialog()">${gs.getMessage('Cancel')}</button>
+			<button class="btn btn-primary" id="add_button" onClick="this.disabled=true;addTemplate('$[testId]')">${gs.getMessage('Add')}</button>
+		</footer>
+	</div>	
+	
+	<script>
+	(function enableSelect2() {
+		$j('#test_template_selector select').select2();
+	})();
+	</script>
+</j:jelly>

@@ -1,0 +1,75 @@
+_meta:
+  hash: dffa1f1cdae63b99d1d7018c49305dad218ffc2d1792989a3a996e033a709741
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: ben.yukich
+  sys_created_on: 2011-06-14 23:19:20
+  sys_id: 4f82e54d37530000dadacffbcfbe5d64
+  sys_mod_count: '19'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_4f82e54d37530000dadacffbcfbe5d64
+  sys_updated_by: tim.broberg
+  sys_updated_on: 2013-05-22 23:02:20
+active: 'true'
+name: oracle_instance.sh
+probe: 3f82e14d37530000dadacffbcfbe5dbb
+sys_name: oracle_instance.sh
+sys_policy: ''
+value: |-
+  SID=$1
+  ORATABS="/var/opt/oracle/oratab /etc/oratab /var/opt/unix/oratab /etc/oracle/oratab /etc/opt/oracle/oratab /shared/opt/oracle/oratab"
+  FAILED=0
+  ERR=""
+
+  get_pfile() {
+      PFILES="${ORA_HOME}/dbs/spfile${SID}.ora ${ORA_HOME}/dbs/spfile.ora ${ORA_HOME}/dbs/init${SID}.ora"
+      for PFILE in $PFILES; do
+          if [ -f $PFILE ]; then
+              FAILED=`strings $PFILE 1> /dev/null 2>&1; echo $?`
+              [ "$FAILED" != 0 ] && ERR="Could not read Oracle (s)pfile: $PFILE. $ERR" && return
+              echo "snc_pfile_contents="
+              strings $PFILE
+              return
+          fi
+      done
+      FAILED=1
+      ERR="No Oracle (s)pfile found (or insufficient permissions). $ERR"
+  }
+
+  get_version() {
+      VERSION=`echo exit | ORACLE_HOME=$ORA_HOME $ORA_HOME/bin/sqlplus /NOLOG 2>&1 | sed -n 's/.*: Release \([0-9\.]*\) .*/\1/p'`
+      [ "$VERSION" != "" ] && echo "snc_ora_version=$VERSION" && return
+      VERSION=`${ORA_HOME}/bin/lsnrctl status 2>&1 | grep Version | sed -ne 's/.*: Version \([0-9.]*\) .*/\1/p'`
+      [ "$VERSION" != "" ] && echo "snc_ora_version=$VERSION" && return
+      VERSION=`echo $ORA_HOME | sed -ne 's/.*\/\([0-9.]*\)\/.*/\1/p'`
+      [ "$VERSION" != "" ] && echo "snc_ora_version=$VERSION" && return
+      FAILED=1
+      ERR="Could not determine Oracle instance version. $ERR"
+  }
+
+  runit() {
+      [ ! $SID ] && echo "No Oracle SID was provided" && exit 1
+      for ORATAB in $ORATABS; do
+          if [ -f $ORATAB ]; then
+              INSTANCES=`cat $ORATAB | sed -n 's/^\([^:#]*\):\([^:]*\):.*/\1:\2/p'`
+              for INST in $INSTANCES; do
+                  if [ "X`echo $INST | cut -d ':' -f 1`" = "X$SID" ]; then
+                      ORA_HOME=`echo $INST | cut -d ':' -f 2`
+                      echo "snc_ora_home=$ORA_HOME"
+                      get_version
+                      get_pfile
+                      return
+                  fi
+              done
+          fi
+      done
+      FAILED=1
+      ERR="No Oracle oratab file found. $ERR"
+  }
+
+  runit
+  [ "$FAILED" != 0 ] && echo "snc_error=$ERR"
+  exit 0
+value_script: ''

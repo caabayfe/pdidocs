@@ -1,0 +1,52 @@
+<div class="no-data-message" ng-if="!data.items.length && data.showNoDataMsg">
+        ${No data available}
+</div>
+<div id="tabpanel-grid-" role="tabpanel" aria-labelledby="{{'tab-grid'}}" ng-if="view == 'grid' && data.items.length > 0" style="overflow:hidden">
+  <table class="table table-striped item-table" aria-label="{{::data.title}}" aria-describedby="id-caption-category">
+    <caption id="id-caption-category"><span class="sr-only">{{::data.title}}</span></caption>
+    <thead>
+      <tr>
+        <th id="id-header-item" scope="col">${Item}</th>
+        <th id="id-header-description" scope="col">${Description}</th>
+          <th id="id-header-price" scope="col" ng-if="data.showPrices">${Price}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="item in data.items | orderBy: 'order' | limitTo: data.limit track by item.sys_id">
+        <td id="id-item-{{item.sys_id}}" headers="id-header-item" scope="row">
+          <a href="{{::getItemHREF(item)}}" class="panel-body block height-100" ng-click="handleItemClick(item, $event)">
+            <div>
+              <img ng-src="{{::item.picture}}?t=small" ng-if="item.picture" alt="" class="m-r-sm m-b-sm item-image pull-left" aria-hidden="true"/>
+              <span class="catalog-text-wrap catalog-item-name">{{::item.name}}</span>
+              <span ng-if="item.content_type == 'external'"><span class="sr-only">${External Link}</span> ➚</span>
+            </div>
+          </a>
+          </td>
+          <td headers="id-header-description id-item-{{item.sys_id}}" class="catalog-text-wrap">{{::item.short_description}}</td>
+          <td headers="id-header-price id-item-{{item.sys_id}}" ng-if="data.showPrices">{{::item.price}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div id="tabpanel-card-" ng-if="view == 'card' && data.items.length > 0" role="tabpanel" aria-labelledby="{{'tab-card'}}">
+  <ul class="row item-list-style-type-none item-card-row" role="list" aria-label="{{data.title}}">
+    <li class="item-card-column"  ng-class="{'item-card-column-small': data.useSmallIcons}" ng-repeat="item in data.items | orderBy: 'item.order'" role="listitem">
+      <div class="panel panel-default item-card b sc-panel">
+        <a href="?id={{item.page}}&sys_id={{item.sys_id}}" class="panel-body block height-100" onclick='window.GlideWebAnalytics.trackEvent("Service Catalog", "Popular Items", "Item Clicked");'>
+          <div>
+            <h3 class="h4 m-t-none m-b-xs text-overflow-ellipsis catalog-item-name" title="{{::item.name}}">{{::item.name}}</h3>
+            <img ng-src="{{::item.picture}}" ng-if="::item.picture" class="m-r-sm m-b-sm item-image pull-left" alt="" aria-hidden="true"/>
+            <div class="text-muted item-short-desc catalog-text-wrap">{{::item.short_description}}</div>
+          </div>
+        </a>
+      </div>
+      <div class="panel-footer b">
+        <a aria-label="${View Details} {{::item.name}}" href="{{::getItemHREF(item)}}" class="pull-left text-muted" ng-click="handleItemClick(item, $event)">
+          ${View Details}
+        </a>
+        <span ng-if="data.showPrices && item.hasPrice" class="pull-right item-price font-bold">{{::item.price}}</span> &nbsp;
+      </div>
+    </li>
+  </ul>
+</div>

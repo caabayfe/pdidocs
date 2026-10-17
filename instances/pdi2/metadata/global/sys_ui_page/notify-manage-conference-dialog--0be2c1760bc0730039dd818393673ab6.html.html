@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">	
+	<g:evaluate var="jvar_task_sys_id" jelly="true">
+		var nConfUtils = new NotifyConferenceUtils();
+		var data = nConfUtils.getSanitizedJSON(RP.getParameterValue('sysparm_data'));
+		var taskSysId = '';
+		if(!gs.nil(data.sysId))
+			taskSysId = data.sysId;
+		taskSysId;
+	</g:evaluate>
+	<g:evaluate var="jvar_task_conference_calls" jelly="true" object="true">
+		var confCalls = nConfUtils.getConferenceDetailsFromSourceId(jelly.jvar_task_sys_id);
+		confCalls;
+	</g:evaluate>
+	<g:evaluate var="jvar_task_conference_call_labels" object="true">
+		var labels = {};
+		var confGr = new GlideRecord('notify_conference_call');
+		confGr.initialize();
+		labels.number = confGr.number.getLabel();
+		labels.code = confGr.code.getLabel();
+		labels.description = confGr.description.getLabel();
+		labels;
+	</g:evaluate>
+	<g:evaluate var="jvar_task_conference_calls_string">
+		JSON.stringify(confCalls);
+	</g:evaluate>
+	<g:evaluate var="jvar_serviceProviderDetails">
+        var confUtils = new NotifyConferenceUtils();
+        var spDetails = confUtils.getServiceProviderDetails();
+        JSON.stringify(spDetails);
+    </g:evaluate>
+	<g:evaluate var="jvar_show_page">
+		var showPage = false;
+		for (var i = 0; i &lt; confCalls.length; i++) {
+			if (confCalls[i].joinConferenceAllowed || confCalls[i].addParticipantsAllowed || confCalls[i].endConferenceAllowed) {
+				showPage = true;
+				break;
+			}
+		}
+		showPage;
+    </g:evaluate>
+
+	<style>
+		.conference-calls-wrapper .conference-call {
+			padding: 10px 0px;
+			border-bottom: 1px solid #bdc0c4;
+			padding-bottom: 10px;
+		}
+		.conference-calls-wrapper .conference-call.header{
+			padding-top: 10px;
+			border-top: 1px solid #bdc0c4;
+		}
+		.conference-calls-wrapper .conference-call .conference-call-column {
+			padding: 0px 8px;
+		    word-break: break-word;
+		}
+		.conference-calls-wrapper .conference-call .conference-call-column.number a{
+			text-decoration: underline;
+		}
+		.conference-calls-wrapper .conference-call.header .conference-call-column.number a{
+			text-decoration: none !important;
+		}
+		.conference-calls-wrapper .conference-call.header .conference-call-column{
+			font-weight: bold;
+			font-size: 13px;
+		}
+		.no-overflow {
+			overflow: hidden;
+		}
+		#page_timing_div {
+			display: none !important;
+		}
+	</style>
+
+	<script>
+		var confCalls = ${NOESC:jvar_task_conference_calls_string};
+		var serviceProviderDetails = ${NOESC:jvar_serviceProviderDetails};
+	</script>
+	
+	<j:if test="${jvar_show_page == false}">
+		<div role="alert" class="outputmsg info notification notification-info">
+			<span class="outputmsg_text">
+				${gs.getMessage('You do not have access to this page')}
+			</span>
+		</div>	
+	</j:if>
+	<j:if test="${jvar_show_page == true}">
+		<div id="loading" style="display:none">
+			<div align="center">
+				<span class="icon-loading" style="height:50px;width:50px;font-size:50px" />
+			</div>
+		</div>
+		<div id="content" class="conference-calls-wrapper">
+			<j:if test="${jvar_task_conference_calls.length == 0}">
+				<div role="alert" class="outputmsg info notification notification-info">
+					<span class="outputmsg_text">
+						${gs.getMessage('No active conference calls exist for this task')}
+					</span>
+				</div>
+			</j:if>
+			<j:if test="${jvar_task_conference_calls.length > 0}">
+				<div class="conference-call header col-xs-12">
+					<div class="conference-call-column number col-xs-3">
+						${HTML:jvar_task_conference_call_labels.number}
+					</div>
+					<div class="conference-call-column col-xs-2">
+						${HTML:jvar_task_conference_call_labels.code}
+					</div>
+					<div class="conference-call-column col-xs-4">
+						${HTML:jvar_task_conference_call_labels.description}
+					</div>
+					<div class="conference-call-column col-xs-3">
+						${HTML:gs.getMessage('Actions')}
+					</div>
+					<div style="clear: both"></div>
+				</div>
+				<j:forEach items="${jvar_task_conference_calls}" var="jvar_task_conference_call">
+					<div class="conference-call col-xs-12">
+						<div class="conference-call-column number col-xs-3">
+							<a href="/${jvar_task_conference_call.link}" target="_blank">${jvar_task_conference_call.number}</a>
+						</div>
+						<div class="conference-call-column col-xs-2">
+							${HTML:jvar_task_conference_call.code}
+						</div>
+						<div class="conference-call-column col-xs-4">
+							${HTML:jvar_task_conference_call.description}
+						</div>
+						<j:if test="${jvar_task_conference_call.joinConferenceAllowed == true || jvar_task_conference_call.addParticipantsAllowed == true || jvar_task_conference_call.endConferenceAllowed == true}">
+							<div class="conference-call-column col-xs-3">
+							<j:if test="${jvar_task_conference_call.joinConferenceAllowed == true}">
+								<div id="join-conference-call">
+									<a href="javascript:void(0)" onClick="joinConferenceCall('${JS_STRING:jvar_task_conference_call.sysId}', '${JS_STRING:jvar_task_conference_call.serviceProvider}')">${gs.getMessage('Join Conference Call')}</a>
+								</div>
+							</j:if>
+							<j:if test="${jvar_task_conference_call.addParticipantsAllowed == true}">
+								<div>
+									<a href="javascript:void(0)" onClick="addParticipants('${JS_STRING:jvar_task_conference_call.sysId}')">${gs.getMessage('Add Participants')}</a>
+								</div>
+							</j:if>
+							<j:if test="${jvar_task_conference_call.endConferenceAllowed == true}">
+								<div>
+									<a href="javascript:void(0)" onClick="endConferenceCall('${JS_STRING:jvar_task_conference_call.sysId}', '${JS_STRING:jvar_task_conference_call.serviceProvider}')">${gs.getMessage('End Conference Call')}</a>
+								</div>
+							</j:if>
+						</div>
+						</j:if>
+					</div>
+				</j:forEach>
+			</j:if>
+		</div>
+		<div id="upgrade_error_message"
+				 class="alert alert-info text-center" style="margin: 15px; display:none" >
+				${gs.getMessage('Looks like NotifyOnTaskClient UI Script is customized. Please contact your System Administrator')}
+		</div>
+		<div class="clearfix"></div>
+		<div id="bottomMarker"></div>
+	</j:if>		
+</j:jelly>

@@ -1,0 +1,26 @@
+<g:ui_table>
+  <input type="HIDDEN" id="category" value="${RP.getWindowProperties().get('title')}"/>
+  <tr class="header">
+    <td></td>
+    <td>${gs.getMessage('Table')}</td> 
+    <td>${gs.getMessage('Count')}</td> 
+  </tr>
+  <g:evaluate>
+           var counts = new GlideAggregate('cmdb_ci');
+           counts.addAggregate('COUNT', 'sys_class_name');
+           counts.addQuery('category', '${RP.getWindowProperties().get('title')}');
+           counts.orderBy('sys_class_name');
+           counts.query();
+  </g:evaluate>
+  <j:while test="${counts.next()}">
+     <tr>
+         <td style="width: 16px"><img src="${gs.resolveIcon(counts.sys_class_name)}"/></td>
+         <td>
+	    <a class="linked"
+		href="${counts.sys_class_name}_list.do">${counts.sys_class_name.getDisplayValue()}
+	    </a>
+         </td>
+         <td>${counts.getAggregate('COUNT', 'sys_class_name')}</td>
+     </tr>
+  </j:while>
+</g:ui_table>

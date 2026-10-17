@@ -1,0 +1,1 @@
+ProbeResultsCache.getInstance().flushFullCache();

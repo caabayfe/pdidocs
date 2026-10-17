@@ -1,0 +1,63 @@
+_meta:
+  hash: 53d8e7e12eb0df06db3979f56d1fd2aad4dacf36189d4f614566882e32db5dab
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: josh.gerbasi
+  sys_created_on: 2014-07-03 17:43:36
+  sys_id: c18c5673c3e12100d8d4bea192d3aeaf
+  sys_mod_count: '62'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_c18c5673c3e12100d8d4bea192d3aeaf
+  sys_updated_by: josh.gerbasi
+  sys_updated_on: 2014-12-05 23:44:34
+active: 'true'
+name: findcat.sh
+probe: f3301ebfc3a12100d8d4bea192d3ae0a
+sys_name: findcat.sh
+sys_policy: ''
+value: |-
+  ppid=$1
+  config=$2
+
+  function find_config {
+      # If -Dweblogic.RootDirectory parameter is not given, try and find the domain directory
+      # By using the PPID of the process (which usually ties back to the startWeblogic.sh script)
+      if [ "$config" == "undefined" ]; then
+          full_path=`ps -p $ppid -o cmd= | awk '{print $2}'`
+          # $full_path will be null if the PPID ties back to the init process
+          if [ -n "$full_path" ]; then
+              if test -e $full_path; then
+                  cut_sh=`dirname $full_path`
+                  cut_bin=`dirname $cut_sh`
+                  final_path="$cut_bin/config/config.xml"
+                  if test -e $final_path; then
+                      cat $final_path
+                  else
+                      echo "$final_path is not a valid path. Could not find the config.xml file for this weblogic server." 1>&2
+                      return 1
+                  fi
+              else
+                  # This is the case when the current instance is a Managed Server 
+                  # and its PPID does not tie back to the startWeblogic.sh script. 
+                  # We should be grabbing the information from the related AdminServer 
+                  # so this will happen occasionally and is expected behavior.
+                  echo "This is not an AdminServer"
+              fi
+          else
+              echo "Could not find the config.xml file for this weblogic server, this server was probably started via NodeManager and not through a dedicated startup script." 1>&2
+              return 1
+          fi
+      else
+          if test -e "$config"; then
+              cat $config
+          else
+              echo "$config is not a valid path. Make sure that the -Dweblogic.RootDirectory parameter is set correctly." 1>&2
+              return 1
+          fi
+      fi
+  }
+
+  find_config
+value_script: ''

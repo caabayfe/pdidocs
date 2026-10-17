@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+<j:set var="jvar_n" value="show_map:${ref}"/>
+<j:set var="jvar_plugin" value="${pm.isRegistered('com.snc.keylines_bsm_map')}" />
+<a id="${jvar_n}" 
+  onclick="showMap('${jvar_n}')"
+  name="${jvar_n}" 
+  style="visibility: hidden"
+  onmouseover="popReferenceDiv(event, '${ref}', 'decoration_hover')" 
+  onmouseout="lockPopup(event)"
+   tabindex="0"
+>
+    <img border="0" src="images/icons/bsm2.gifx" title="${gs.getMessage('Open dependency views')}" alt="${gs.getMessage('Open dependency views')}"/>
+
+</a>
+<script>
+//
+// show link if populated, hide if not 
+//
+function onChange_cmdb_ci_bsm(element, original, changed, loading) {
+  var visibility = 'hidden';
+   if (changed.length > 0)
+    visibility = 'visible';
+
+  var e = gel('${jvar_n}');
+  e.style.visibility= visibility;
+}
+
+// show map if the sys_id is populated
+function showMap(name) {
+  var fieldName = name.split(':')[1];
+  var n = gel(fieldName); 
+  n = n.value; 
+  if (n.length == 0) {  
+   alert("Populate CI field first"); 
+  } else {
+    showBSMMap(n, fieldName); 
+  }
+}
+
+// generic show bsm map function for sys_id
+function showBSMMap(sys_id, fieldName) {
+  var url =  '';
+  if ("${jvar_plugin}" == "true")
+  	url += '$ngbsm.do?sysparm_nameofstack=bsm';
+  else
+  	url += 'bsm_map2.do?sysparm_nameofstack=bsm';
+  url += '&amp;amp;';
+  url += 'sysparm_attributes=table=cmdb_ci';
+  url += '&amp;amp;';
+  url += 'sysparm_nostack=true'; //PRB675289 - support 'back' correctly
+  url += '&amp;amp;';	
+  url += 'id=' + sys_id;
+  url += '&amp;amp;';
+  url += 'level=3';
+  url += '&amp;amp;';
+  url += 'ref=' + fieldName; 
+  url += '&amp;amp;';
+  url += 'ciview=';
+  url += '&amp;amp;';
+  url += 'restack=true';
+	
+  g_navigation.open(url, 'super_bsm_map');
+}
+
+// create a handler for each table in the array
+var a = ['incident',  'change_request', 'problem'];
+for (i = 0; i &amp;lt; a.length; i++) {
+  var h = new GlideEventHandler('onChange_' + a[i] + '_cmdb_ci_bsm', onChange_cmdb_ci_bsm, '${ref}');
+  g_event_handlers.push(h);
+}
+
+</script>
+</j:jelly> 

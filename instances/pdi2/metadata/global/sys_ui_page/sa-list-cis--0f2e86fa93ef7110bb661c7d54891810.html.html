@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+	<g:evaluate var="jvar_top_message" jelly="true">
+		var isOverflow = jelly.sysparm_overflow === 'true';
+
+		var mode = jelly.sysparm_mode; 
+		var seeMoreTable = (mode === 'tagged') ? 'cmdb_key_value' : 'svc_ci_assoc';
+
+		var limit = Math.floor(Number(gs.getProperty('sa.it_service.list_cis_max_count', 4000)) || 4000);
+
+		var msg = isOverflow ? 
+			gs.getMessageS(
+				'Limit of {0} CIs reached for this view. To view more, see {1} list.', 
+				[Number(limit).toString(), seeMoreTable]
+			) : '';
+
+		msg; 
+	</g:evaluate>
+
+	<j:if test="${!empty(jvar_top_message)}">
+		<p>
+			<div class="notification notification-info" role="alert" tabindex="0">
+				${HTML:jvar_top_message}
+			</div>
+		</p>
+	</j:if>
+
+    <g:list_default table="cmdb_ci" />
+		<g:evaluate jelly="true">
+			ListProperties.setHasTopNav(true);
+			ListProperties.setHasTitle(true);
+			ListProperties.setHasTitleContextMenu(true);
+			ListProperties.setHasFilter(true);
+			ListProperties.setHasBreadcrumbs(false);
+			ListProperties.setHasSearch(true);
+			ListProperties.setHasTopVCR(true);
+			ListProperties.setHasHeader(true);
+			ListProperties.setHasHeaderContextMenu(true);
+			ListProperties.setHasListMechanic(true);
+			ListProperties.setHasRowContextMenu(false);
+			ListProperties.setShowLinks(true);
+			ListProperties.setHasPopup(true);// for the "i" option
+			ListProperties.setShowEmpty(true);
+			ListProperties.setHasBottomNav(true);
+			ListProperties.setHasActions(false);
+			ListProperties.setHasBottomVCR(true);// for pagination
+			ListProperties.setCanChangeView(true);
+			ListProperties.setCanGroup(true);
+			ListProperties.setTitle(gs.getMessage('List CIs'));
+		</g:evaluate>
+    <g:inline template="list2_default.xml" />
+</j:jelly>

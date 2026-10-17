@@ -1,0 +1,1 @@
+new PwdEnrollSnapshotUtil().manageEnrollmentSnapshotScheduleJobForAProcess(current);

@@ -1,0 +1,68 @@
+<div class="oc-user-profile-container" ng-keydown="groupOnCallCtrl.onProfilePopoverKeyDown($event, roster)">
+	<span class="sr-only start-of-popover" tabindex="0" ng-keydown="groupOnCallCtrl.startOfPopoverKeyDown($event)">${gs.getMessage('Start of User Information')}</span>
+	<div id="oc-user-profile" class="oc-user-profile">
+		<div class="oc-avatar">
+			<div class="oc-widget-profile-avatar">
+				<div class="sn-widget-profile-avatar">
+					<div class="sn-avatar_lg sn-avatar_v2">
+						<div class="sn-avatar-container" aria-label="{{profile.user.name}}">
+							<span class="sn-avatar-initials">{{profile.user.initials}}</span>
+							<span class="sn-avatar-image" ng-style="getBackgroundStyle()"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="oc-user-name" aria-label="{{groupOnCallCtrl.form.userNameLabel}} {{profile.user.name}}">{{profile.user.name}}</div>
+			<div class="oc-user-details" ng-if="profile.isManager">{{form.manager}}</div>
+			<div class="oc-user-details" ng-if="!profile.isManager" aria-label="{{groupOnCallCtrl.form.userTitleLabel}} {{profile.user.title || form.notAvailable}}">{{profile.user.title || form.notAvailable}}</div>
+		</div>
+		<div class="oc-avatar-info-container">
+			<ul class="avatar-info">
+				<li class="icon icon-phone defaultCursor">
+					<span class="avatar-info-item oc-truncate" ng-if="!profile.user.contact_number" uib-tooltip="{{form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" aria-label="{{form.contactNumberLabel}} {{form.notAvailable}}">{{form.notAvailable}}</span>
+					<a href="tel:{{profile.user.contact_number}}"  ng-if="profile.user.contact_number" class="avatar-info-item oc-truncate" uib-tooltip="{{profile.user.contact_number}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" aria-label="{{form.contactNumberLabel}} {{profile.user.contact_number}}">{{profile.user.contact_number}}</a>
+				</li>
+				<li class="icon icon-slack pointerCursor" ng-if="groupOnCallCtrl.isSlackActive">
+					<span class="avatar-info-item oc-truncate" uib-tooltip="{{profile.user.email || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">
+						<a href="#" ng-click="openSlackApp(profile.user.sys_id)" aria-label="${gs.getMessage('Slack')} {{profile.user.email}}" ng-if="profile.user.email">{{profile.user.email}}</a>
+						<span aria-label="${gs.getMessage('Slack')} {{form.notAvailable}}" ng-if="!profile.user.email">{{form.notAvailable}}</span>
+					</span>
+				</li>
+				<li class="icon icon-teams pointerCursor" ng-if="groupOnCallCtrl.isTeamsActive">
+					<img alt="${gs.getMessage('Microsoft Teams')}" src="/images/Microsoft_Teams_48x48_black.png" width="64" height="64"/>
+					<span class="avatar-info-item oc-truncate" uib-tooltip="{{profile.user.email || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">
+						<a href="#" aria-label="${gs.getMessage('Microsoft Teams')} {{profile.user.email}}" ng-if="profile.user.email">{{profile.user.email}}</a>
+						<span aria-label="${gs.getMessage('Microsoft Teams')} {{form.notAvailable}}" ng-if="!profile.user.email">{{form.notAvailable}}</span>
+					</span>
+				</li>
+				<li class="icon icon-mail defaultCursor">
+					<span class="avatar-info-item oc-truncate" uib-tooltip="{{profile.user.email || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">
+						<a href="mailto:{{profile.user.email}}" ng-if="profile.user.email">{{profile.user.email}}</a>
+						<span ng-if="!profile.user.email">{{form.notAvailable}}</span>
+					</span>
+				</li>
+				<li class="icon icon-tree defaultCursor">
+					<span aria-label="{{form.groupLabel}} {{group.name || form.notAvailable}}" class="avatar-info-item oc-truncate" uib-tooltip="{{group.name || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">{{group.name || form.notAvailable}}</span>
+				</li>
+				<li class="icon icon-date-time defaultCursor">
+					<span aria-label="{{form.rotaLabel}} {{group.rota.name || form.notAvailable}}" class="avatar-info-item oc-truncate" uib-tooltip="{{group.rota.name || form.notAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false">{{group.rota.name || form.notAvailable}}</span>
+				</li>
+				<li ng-if="isChatEnabled()" class="oc-message-container">
+					<button id="direct-message-popover-trigger" ng-click="openDirectMessageConversation()" class="btn btn-primary oc-btn-message icon-collaboration"
+							aria-label="{{form.sendDirectMsg}}">
+						{{form.sendDirectMsg}}
+					</button>
+				</li>
+				<li ng-if="isNotifyCallAvailable(profile.user.contact_number)" class="oc-message-container call">
+					<button ng-click="callPerson($event, profile.user.contact_number, profile.user.sys_id)"
+							class="btn btn-default oc-btn-message icon-phone"
+							ng-class="{disabled: !isNotifyCallEnabled(profile.user.contact_number)}"
+							aria-label="${gs.getMessage('Start a call')}">
+						${gs.getMessage('Start a call')}
+					</button>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<span class="sr-only end-of-popover" tabindex="0" ng-keydown="groupOnCallCtrl.endOfPopoverKeyDown($event)">${gs.getMessage('End of User Information')}</span>
+</div>

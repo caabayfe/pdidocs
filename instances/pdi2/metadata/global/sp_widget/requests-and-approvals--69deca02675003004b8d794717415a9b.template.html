@@ -1,0 +1,117 @@
+<div class="panel panel-default" ng-if="$root.hasRequestsOrApprovals || $root.hasSavedCarts">
+    <div class="panel-heading pad-bottom">
+        <ul class="nav nav-tabs" style="border-bottom : 0px" role="tablist">
+            <li id="tab-my-requests" class="item" role="presentation" ng-click="changePanel('request')"
+                ng-keydown="switchTab($event, 'request')">
+                <div ng-class="{'sc-tab-div' : show_request}" class="request"
+                     ng-attr-tabindex="{{!show_request ? '-1' : 0}}" aria-selected="{{show_request}}"
+                     ng-attr-aria-controls="{{show_request ? 'tabpanel-my-requests' : undefined}}" role="tab">
+                    <span> ${My Requests} </span>
+                </div>
+            </li>
+            <li id="tab-my-approvals" ng-if="c.data.approvals.hasAny && c.data.showApprovals" class="item"
+                role="presentation" ng-click="changePanel('approval')" ng-keydown="switchTab($event, 'approval')">
+                <div ng-class="{'sc-tab-div' : !show_request}" class="approval"
+                     ng-attr-tabindex="{{show_request ? '-1' : 0}}" aria-selected="{{!show_request}}"
+                     ng-attr-aria-controls="{{!show_request ? 'tabpanel-my-approvals' : undefined}}" role="tab">
+                    <span> ${My Approvals} </span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Requests Panel -->
+    <div ng-if="show_request && c.data.request.hasAny == false " class="panel-body panels-container">
+        ${ You do not have any Requests }
+    </div>
+
+    <div id="tabpanel-my-requests" ng-if="show_request && c.data.request.hasAny == true"
+         class="panels-container list-group" role="tabpanel" aria-labelledby="tab-my-requests">
+        <span class="sr-only" role="heading" aria-level="2"> ${My Requests} </span>
+        <ul class="item-list-style-type-none" role="list">
+            <li class="list-group-item row" ng-repeat="item in c.data.request.req_list" style="margin:0px"
+                role="listitem">
+                <div class="col-xs-8" style="">
+                    <div>
+                        <a href="?id={{::item.url.id}}&table={{::item.url.table}}&sys_id={{::item.url.sys_id}}"
+                           aria-label="{{::item.display_field}} ${with request number} {{::item.task_number.display_value}}">
+                            <span role="heading" aria-level="3">{{::item.display_field}}</span>
+                        </a>
+                    </div>
+                    <small class="text-muted">
+                        <div ng-repeat="f in item.secondary_displays">
+                            <span>{{::f.display_value}}</span>
+                        </div>
+                    </small>
+                </div>
+                <div class="col-xs-4">
+                    <i class="fa fa-clock-o" aria-hidden="true"></i>
+                    <sn-time-ago timestamp="::item.updated_on"/>
+                </div>
+            </li>
+        </ul>
+        <div class="col-sm-12" ng-show="c.data.request.maximum_entries" style="padding:15px;text-align:center;">
+            <a href="?id=requests">${View All Requests}</a>
+        </div>
+    </div>
+
+
+    <!-- Approvals Panel -->
+    <div id="tabpanel-my-approvals" class="panels-container" ng-if="!show_request" role="tabpanel"
+         aria-labelledby="tab-my-approvals">
+        <span class="sr-only" role="heading" aria-level="2"> ${My Approvals} </span>
+        <ul class="item-list-style-type-none" role="list">
+            <li ng-repeat="approval in data.approvals.approval_list" class="sp-approval" role="listitem">
+                <div class="row approval-rows" style="margin:0px">
+                    <div class="col-sm-9">
+                        <div ng-if="approval.task.number || approval.task.short_description">
+                            <a ng-href="?id=approval&table=sysapproval_approver&sys_id={{::approval.sys_id}}"
+                               id="task_approval_{{::approval.sys_id}}" title="{{data.ViewApprovalPageMsg}}">
+                                <span role="heading" aria-level="3" ng-if="approval.task.number">{{::approval.task.number}}</span>
+                                <span ng-if="approval.task.number && approval.task.short_description"> - </span>
+                                <span ng-if="approval.task.short_description">{{::approval.task.short_description}}</span>
+                            </a>
+                        </div>
+                        <div ng-if="approval.task.opened_by"><label>${Requestor}</label> {{::approval.task.opened_by}}
+                        </div>
+                        <div ng-if="approval.task.approver"><label>${Approver}</label> {{::approval.task.approver}}
+                        </div>
+                        <div ng-if="approval.task.start_date"><label>${Start}</label> {{::approval.task.start_date}}
+                        </div>
+                        <div ng-if="approval.task.end_date"><label>${End}</label> {{::approval.task.end_date}}</div>
+                        <div ng-if="approval.task.quantity"><label>${Quantity}</label> {{::approval.task.quantity}}
+                        </div>
+                        <div ng-if="approval.task.price"><label>${Price}</label> {{::approval.task.price}}
+                            <span ng-if="approval.task.recurring_price"><label>${Recurring price}</label> {{::approval.task.recurring_price}} {{::approval.task.recurring_frequency}}</span>
+                            <label ng-if="approval.task.quantity && approval.task.quantity > 1"> ${each}</label>
+                        </div>
+                        <div ng-if="approval.items.length == 1">
+                            <div ng-repeat="item in approval.items">
+                                <sp-widget ng-if="item.variableSummarizerWidget"
+                                           widget="item.variableSummarizerWidget"></sp-widget>
+                            </div>
+                        </div>
+                        <sp-widget ng-if="approval.variableSummarizerWidget"
+                                   widget="approval.variableSummarizerWidget"></sp-widget>
+                    </div>
+                    <div class="col-sm-3">
+                        <button id="task_approve_button_{{::approval.sys_id}}" ng-if="approval.state == 'requested'"
+                                aria-label="${Approve} {{::approval.task.number}}" class="btn btn-primary btn-block"
+                                style="border-width:1px;" ng-click="approve(approval.sys_id);">${Approve}
+                        </button>
+                        <button id="task_reject_button_{{::approval.sys_id}}" ng-if="approval.state == 'requested'"
+                                aria-label="${Reject} {{::approval.task.number}}" class="btn btn-default btn-block"
+                                ng-click="reject(approval.sys_id);">${Reject}
+                        </button>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <div class="col-sm-12" ng-show="c.data.approvals.show_viewAll" style="padding:15px">
+            <a href="?id=approvals">
+                <center> ${View All Approvals}</center>
+            </a>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,3 @@
+function(controlData, responseValue) {
+    return '';
+}

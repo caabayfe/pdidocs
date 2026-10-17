@@ -1,0 +1,47 @@
+<div class="popular-topic-panel panel panel-default panel-wrapper b" ng-if="(isLoading || data.popularTopics && data.popularTopics.length > 0) || data.options.show_empty_state === 'true' || data.isNodeUnderHeavyLoad">
+  <div class="popular-topic-heading panel-heading b-b">
+    <h2  id="{{data.instanceId}}-widget-title" class="panel-title">{{data.widgetTitle}}</h2>
+  </div>
+  <div class="popular-topic-body-container" ng-if="isLoading">
+    <div class="skeleton-loader-wrapper">
+      <div class="skeleton-loader" ng-repeat = "item in [1,2]"></div>
+    </div>
+  </div>
+  <div class="popular-topic-panel-body" ng-if = "!isLoading">
+    <div class="popular-topic-empty-state" ng-if="data.options.show_empty_state === 'true' && (!data.popularTopics || data.popularTopics.length === 0) && !data.isNodeUnderHeavyLoad">
+      <p class="popular-topic-empty-text">
+        ${We don't have any popular topics to show you yet.}
+      </p>
+    </div>
+    <div class="popular-topic-empty-state" ng-if="data.isNodeUnderHeavyLoad">
+      <div class="degraded-icon">
+        <i class="fa fa-exclamation-triangle"></i>
+      </div>
+      <p class="popular-topic-empty-text">
+        ${We're currently experiencing heavy usage. Try again later.}
+      </p>
+    </div>
+    <div class="popular-topic-body-container"
+         ng-class="{'small': data.isSmall, 'no-icon': !data.icon, 'fixed': isFixed }" 
+         ng-if="data.popularTopics && data.popularTopics.length > 0 && !data.isNodeUnderHeavyLoad"
+         aria-labelledby="{{data.instanceId}}-widget-title"
+         role="region">
+
+      <div class="popular-topic-body" ng-class="getClass()" ng-style="getStyle()"
+           ng-repeat="topic in data.popularTopics">
+        <a class="popular-topic-link" ng-class="{'small': data.isSmall}" data-ng-attr-aria-label="{{topic.topic}}"
+           ng-href="{{topic.topicUrl}}" ng-keydown="c.keydownAction($event)">
+          <img ng-src="{{topic.icon}}" alt="" />
+          <div class="popular-topic-caption">
+            <span class = "popular-topic-title" data-toggle="tooltip" title="{{topic.topic}}">
+              {{topic.topic}}
+            </span>
+          </div>
+        </a>
+        <div ng-class="{'mesp-favorite': data.isMobileApp, 'small': data.isSmall}" class="popular-topic-favorite-container">
+          <sp-widget widget="topic.favoriteWidget"></sp-widget>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:evaluate var="jvar_guid" expression="gs.generateGUID(this);" />
+<j:set var="jvar_n" value="show_incidents_${jvar_guid}:${ref}"/>
+<g:reference_decoration id="${jvar_n}" field="${ref}" 
+  onclick="showRelatedList('${ref}'); "
+  title="${gs.getMessage('Show related incidents')}" image="images/icons/tasks.gifx" icon="icon-tree-right"/>
+
+<script>
+// show related list 
+// todo: should be part of the PopupWindow class
+// todo: needs new stack name
+function showRelatedList(reference) {
+	var s = reference.split('.');
+	// Get the field name which is always last
+  	var referenceField = s[s.length - 1];
+  	var v = g_form.getValue(reference);
+  	var w = new GlideDialogWindow('show_list');
+  	w.setTitle('Related incidents');
+  	w.setPreference('table', 'incident_list');
+  	w.setPreference('sysparm_view', 'default');
+  	w.setPreference('sysparm_query', referenceField + '=' + v);
+  	w.render();
+}
+
+</script>
+</j:jelly> 

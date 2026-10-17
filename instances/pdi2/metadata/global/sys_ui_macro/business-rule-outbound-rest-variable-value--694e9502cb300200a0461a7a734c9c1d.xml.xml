@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true" >
+		
+		var ancestors = new TableUtils(jelly.sysparm_table).getTables();
+		ancestors = ancestors.toString();
+		ancestors = ancestors.replace("[", "");
+		ancestors = ancestors.replace("]", "");
+		ancestors = ancestors.replace(" ", "");
+		
+		var field_list = new GlideRecord('sys_dictionary');
+		field_list.addQuery('name', 'IN', ancestors);
+		field_list.addQuery('internal_type', '!=', 'collection');
+		field_list.orderBy('element');
+		field_list.query();
+
+		var tableName = jelly.sysparm_table;
+	</g:evaluate>
+	<select id="${jvar_rest_var_hashed}_rest_var_select" class="form-control select2" >
+		<j:while test="${field_list.next()}">
+			<j:if test="${field_list.internal_type == 'reference'}">
+				<option value="${field_list.element}:${field_list.reference}:${field_list.getDisplayValue('reference')}">${field_list.column_label}</option>
+			</j:if>
+			<j:if test="${field_list.internal_type != 'reference'}">
+				<option value="${field_list.element}">${field_list.column_label}</option>
+			</j:if>
+		</j:while>
+		<option id="${jvar_rest_var_hashed}_showRelated_option" value="showRelated">Show Related Fields</option>
+	</select>
+</j:jelly>

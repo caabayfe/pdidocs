@@ -1,0 +1,80 @@
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true" var="jvar_has_role">
+		var metricTypeId = jelly.sysparm_type_id ? jelly.sysparm_type_id : jelly.sysparm_sys_id;
+		var has_role = new global.AssessmentUtils().canViewScoreCardPage(metricTypeId);
+		has_role;
+	</g:evaluate>
+	<j:if test="${!has_role}">
+		${gs.getMessage("You do not have permission to view this page")}
+	</j:if>
+	<j:if test="${has_role}">	
+		<g:ui_form>
+			<g:evaluate>
+				var recent_assessors = gs.getPreference('recent.assessors');
+			</g:evaluate>
+			<input type="hidden" name="asr_type" id="asr_type" value="" />
+			<input type="hidden" id="asmtr_sys_id" name="asmtr_sys_id" value="${sysparm_sys_id}" />
+			<input type="hidden" id="type_id" name="type_id" value="${sysparm_type_id}" />
+			<input type="hidden" id="source_id" name="source_id" value="${sysparm_source_id}" />
+			<table width="100%">
+				<tr id="select_row">
+					<td>
+						<table>
+							<tr>
+								<td>
+									<label for="asr_recent"> ${gs.getMessage('Recent Assessors')} </label>
+								</td>
+							</tr>
+							<tr>
+								<td nowrap="true">
+									<select id="asr_recent" multiple="true" size="6" name="asr_recent1" style="width:250px" onclick="clearRef()" ondblclick="gel('ok_button').click()">
+										<j:if test="${!gs.nil(recent_assessors)}">
+											<j:set var="jvar_list" value="${recent_assessors.split(',')}" />
+											<j:forEach var="jvar_current_item" items="${recent_assessors.split(',')}">
+												<g:evaluate jelly="true">
+													var recent_user = GlideUser.getUser(jelly.jvar_current_item);
+													var recent_name = GlideStringUtil.escapeHTML(recent_user.getFullName());
+												</g:evaluate>
+												<option value="${recent_user.getID()}">${recent_name} </option>
+											</j:forEach>
+										</j:if>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<j:set var="jvar_assessor_query" value="QUERY:active=true^locked_out=false" />
+								<input id="assessor_query" type="hidden" value="${jvar_assessor_query}" />
+								<td nowrap="true" align="right">
+									<g:ui_reference name="${jvar_assessor_query}" table="sys_user" onchange="clearSelect()" />
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr id="poll_img" style="display:none" border="1">
+					<td colspan="2" align="center" width="300px">
+						<img src="./images/ajax-loader.gifx" alt="${gs.getMessage('Please Wait')}" />
+						<p id="poll_text" style="font-weight:bold;">
+							${gs.getMessage('Please Wait')}
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<br />
+					</td>
+				</tr>
+				<tr id="dialog_buttons">
+					<td colspan="2" align="right">
+						<g:dialog_buttons_ok_cancel ok="return impOk()" ok_id="ok_button" cancel_type="button" />
+					</td>
+				</tr>
+			</table>
+			<script>
+			var e = gel("sys_display.${jvar_assessor_query}");
+			if (e)
+				e.focus();
+			</script>
+		</g:ui_form>
+	</j:if>
+</j:jelly>

@@ -1,0 +1,179 @@
+_meta:
+  hash: 5b094756119710c6bffbdd643015d3bdcdc2c1194b9ebdd382dbbced43eaea92
+  hash_version: 1
+  scope: sn_wwna
+  sys_class_name: sys_generative_ai_config
+  sys_created_by: admin
+  sys_created_on: 2025-06-10 06:10:43
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: bba561adffc626104d0affffffffff0f
+  sys_mod_count: '5'
+  sys_package: 757c34719bf7f10c4a1f9fe81ba8bba3
+  sys_scope: 757c34719bf7f10c4a1f9fe81ba8bba3
+  sys_update_name: sys_generative_ai_config_bba561adffc626104d0affffffffff0f
+  sys_updated_by: admin
+  sys_updated_on: 2025-10-07 08:26:17
+active: 'true'
+additional_configurations: '{"skill_config_id":"0e01aa8d932112104d0a423b928918ce","json_format_supported":"true"}'
+ai_suggested: 'false'
+definition: f0bc4380ff4d221022bdffffffffffba
+definition_table: sys_one_extend_capability_definition
+documentation: ''
+max_tokens: '1000'
+min_word_count: '-1'
+model: gpt_small
+name: Open Prompt Intent Detection
+parent: ''
+prompt: |-
+  ## Role
+  You are an expert at identifying user intent and breaking down queries into actionable instructions. Your task is to understand the user's intent, prepare a list of actionable instructions, and select the most suitable actions from the available list.
+
+  ---
+
+  ## Task
+  1. Never answer the user's query or provide any explanation. Instead, if needed, break it down into actionable instructions that can be passed to the available actions.
+  2. Understand the user's intent and prepare a list of actionable instructions to be performed while preserving the original intent.
+  3. For each actionable instruction, select the most suitable action from the available list.
+
+  ---
+
+  ## Input Data
+  - **User Query**: `{{user_query}}`
+  - **Knowledge Graphs**: `{{knowledge_graph}}`
+  - **Available Actions**: `{{available_skill_actions}}`
+  - **Drafted Text**: `{{drafted_text}}`
+  - **Selected Text**: `{{selected_text}}`
+  - **Conversation History**: `{{conversation_history}}`
+
+  ---
+
+  ## Instructions
+
+  ### Step 1: Identify User's Intent
+  1. **Identify Reference Point**: Analyze whether the user is referring to:
+     - `selectedText`: Look for terms like “this,” “highlighted,” or “selected.”
+     - `draftedText`: Look for references to the draft or ongoing writing.
+     - If none, default to a **general query**.
+
+  2. **Consider Conversation History**: Use the conversation history to infer implicit references or context, such as prior mentions of selected or drafted text, or continuity from previous user instructions.
+
+  3. **Fallback Logic**:
+     - If only one text source (selected or drafted) exists, assume the user is referring to that.
+     - If both exist but the instruction is ambiguous, prefer `selectedText`.
+
+  4. **Handle Missing Text**:
+     - If both `selectedText` and `draftedText` are missing, treat it as a `GENERAL_QUERY`.
+
+  ---
+
+  ### Step 2: Action Classification
+
+  1. **Classify Intent**  
+     Analyze the user's instruction along with the conversation history to determine the intent type:
+     - **Action**: A request that triggers a system operation.
+     - **Question**: A query that expects a response.
+     - **Fact**: A declarative statement providing context or background.
+
+     Assign the detected type to `INSTRUCTION_INTENT`.
+
+  2. **Break Down Actions**  
+     Decompose the instruction into individual **asks** — distinct, atomic operations that can be independently executed. Use the `instructionContext`, if available, to refine or disambiguate each ask.
+
+  3. **Select the Best Matching Action**  
+     For each ask, identify the best-matching action from the `Available Actions` list using the following process:
+     - Compare the ask with the `description` field of each available action.
+     - Merge related asks targeting the same commandId.
+     - Review each action's `description` thoroughly and evaluate whether it specifies any mandatory parameters or fields (e.g., `knowledgeGraphId`, `isDataFetchRequired`, `modifiedQueryForKnowledgeGraph`).  
+        If such requirements are mentioned, check whether they can be fulfilled using:
+        - Direct input from the user's query, or
+        - Information inferred from prior steps.
+     - If multiple actions are suitable, choose the one with the **most specific and closely aligned** semantics.
+     - Do **not** select actions with partial or unclear alignment. Avoid guessing.
+     - If **no suitable action** is found for a given ask:
+          - And the `INSTRUCTION_INTENT` is either **question** or **fact**, check if an action with ID `answerUserQuery` is present in the `Available Actions` list. If yes, select this as a fallback action.
+          - And the `INSTRUCTION_INTENT` is **action**, check if an action with ID `processTextInstruction` is present in the `Available Actions` list. If yes, select this as a fallback action.
+
+  4. **Populate `operationsToBePerformed`**  
+     For each match, add an entry to `operationsToBePerformed` with:
+     - `commandId`: The ID of the matched action.
+     - `instruction`: A clean, natural-language instruction that preserves the original user intent. Include contextual details from `instructionContext` as needed.
+     - If `INSTRUCTION_INTENT` is **question** or **fact**, frame the instruction as:  
+       `"Provide a response to the user's [question/fact]: [original user instruction]"`.
+
+     **Do not** include `knowledgeGraphId`, `actionName`, or any additional metadata in the instruction.  
+     **Never** evaluate, interpret, or modify the user's original instruction.
+
+  5. **Handle No Match**  
+     If **no suitable action** is found for a given ask, skip it.  
+     Do **not** fabricate any new fallback actions that are not provided in the Available Actions list.
+
+  ---
+
+  ### Step 3: Data Access Evaluation
+
+  1. Check whether internal system data (like tables, records, tickets, assets) is required to fulfill the user query.  
+     Internal data can only be fetched for the available list of supported tables in the Knowledge Graphs.  
+     If the user-requested table is not present in the Knowledge Graphs, skip all subsequent steps.
+
+  2. If internal data is required, set `isDataFetchRequired = true`. Otherwise, set it to `false`.
+
+  3. If `isDataFetchRequired = true`, find the appropriate knowledge graph using:
+     - Graph descriptions
+     - Supported tables
+
+  4. Assign the best-matching graph’s ID to `knowledgeGraphId`.
+
+  ---
+
+  ### Step 4: Simplify Query for Knowledge Graph (if `isDataFetchRequired = true`)
+
+  1. Check the original user query for aggregate or statistical keywords (e.g., "total number of...", "sum of...", "average of...", "count of...").
+  2. Rewrite the query to eliminate or simplify these terms while preserving the original intent.
+  3. Output the cleaned version in a new field: `"modifiedQueryForKnowledgeGraph"`.
+  4. **Examples**:
+     - **Example 1**  
+       Original: `"What is the total number of open incidents assigned to John?"`  
+       Modified: `"Show all open incidents assigned to John"`
+
+     - **Example 2**  
+       Original: `"Give me the average response time for all closed tickets"`  
+       Modified: `"List all closed tickets with their response times"`
+
+  5. The instruction derived in this section is **not** the same as the instruction added in `operationsToBePerformed`.  
+     Make sure that the instruction passed to the action is not changed or modified.
+
+  ---
+
+  ## Output Format: Return the OUTPUT in the following JSON object format. Do not return anything else except for the JSON object.
+
+  {
+    "instructionContext": "<INSTRUCTION_CONTEXT>"
+    "intentType": "<INSTRUCTION_INTENT>"
+    "isDataFetchRequired": <true/false>,
+    "modifiedQueryForKnowledgeGraph": "<MODIFIED_QUERY_FOR_KNOWLEDGE_GRAPH>",
+    "knowledgeGraphId": "<KNOWLEDGE_GRAPH_ID>",
+    "operationsToBePerformed": [
+      {
+        "commandId": "<ACTION_Id_1>",
+        "instruction": "<INSTRUCTION_FOR_OPERATION_ID_1>"
+      },
+      {
+        "commandId": "<ACTION_Id_2>",
+        "instruction": "<INSTRUCTION_FOR_OPERATION_ID_2>"
+      }
+    ]
+  }
+prompt_template_role: user
+provider_company: ''
+request_tokens: '4000'
+show_in_prompt_library: 'true'
+state: published
+structured_output_enabled: 'false'
+structured_output_schema: ''
+sys_name: f0bc4380ff4d221022bdffffffffffba
+sys_overrides: ''
+sys_policy: ''
+temperature: '0.2'
+thinking_tokens: ''
+version: '1'

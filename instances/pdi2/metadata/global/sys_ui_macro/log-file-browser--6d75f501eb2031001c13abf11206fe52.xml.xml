@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j2:set var="jvar_br" value="&lt;br/&gt;" />
+	<g:evaluate var="jvar_hasParameters">
+		  // make sure we have value variables in case they were not passed in as params
+		  if (typeof time_diff == 'undefined')
+			 var time_diff = 0;
+	
+		  if (typeof end_time == 'undefined')
+			 var end_time = '';
+	
+		  if (typeof max_rows == 'undefined')
+			 var max_rows = 0;
+	
+		  if (typeof level == 'undefined')
+			 var level = '';
+	
+		  if (typeof filter_session == 'undefined')
+			 var filter_session = '';
+	
+		  if (typeof message == 'undefined')
+			 var message = '';
+	
+		  if (typeof filter_thread == 'undefined')
+			 var filter_thread = '';
+	
+		  if (typeof omit_workers == 'undefined')
+			 var omit_workers = 'false';
+	
+	   if (typeof start_time == 'undefined')
+		  false;
+	   else
+		  true;
+	</g:evaluate>
+	
+	<j:if test="${jvar_hasParameters == 'false'}">
+		<g2:evaluate var="jvar_today" jelly="true">
+           var now = "";
+           now = gs.nowDateTime();
+           var endTime = gs.action.getGlideURI().get("end_time");
+           end_time = (endTime == null) ? now : endTime;
+           var startTime = gs.action.getGlideURI().get("start_time");
+           start_time = (startTime == null) ? now : startTime;
+           var maxRows = gs.action.getGlideURI().get("max_rows");
+           max_rows = (maxRows == null) ? 1000 : maxRows;
+           var filterSession = gs.action.getGlideURI().get("filter_session");
+           filter_session = (filterSession == null) ? '' : filterSession;
+        </g2:evaluate>
+	</j:if>
+	
+	<g:ui_form id="logForm" form_class="form-horizontal">
+		<nav class="navbar navbar-default">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<h2 class="form_header navbar-title">
+						${gs.getMessage('Enter parameters for log file entries to browse')}
+					</h2>
+				</div>
+			</div>
+		</nav>
+		
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label for="start_time" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('Start time')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					<g:ui_date_time name="start_time" value="$[start_time]"/>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="end_time" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('End time')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					 <g:ui_date_time name="end_time" value="$[end_time]"/>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="level" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('Level')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					 <select id="level" name="level" onchange="remember_select_level(this)" class="form-control">
+						<option value="4">${gs.getMessage('All')}</option>
+						<option value="5">${gs.getMessage('Trace')}</option>
+						<option value="3">${gs.getMessage('Debug')}</option>
+						<option value="0">${gs.getMessage('Info')}</option>
+						<option value="1">${gs.getMessage('Warning')}</option>
+						<option value="2">${gs.getMessage('Error')}</option>
+						<option value="6">${gs.getMessage('Fatal')}</option>
+					 </select>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="max_rows" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('Max rows')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					 <input id="max_rows" name="max_rows" size="15" value="$[max_rows]" class="form-control"/>
+				</div>
+			</div>
+		</div>
+		
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label for="filter_session" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('Session Id')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					 <input id="filter_session" name="filter_session" value="$[JS:filter_session]" class="form-control"/>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="message" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('Message')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					 <input id="message" name="message" size="32" value="$[message]" class="form-control"/>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="filter_thread" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('Thread Name')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					 <input id="filter_thread" name="filter_thread" size="32" value="$[filter_thread]" class="form-control"/>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="omit_workers" class="col-sm-12 col-md-4 col-lg-4 control-label">
+					${gs.getMessage('Omit workers')}
+				</label>
+				
+				<div class="col-xs-10 col-sm-9 col-md-5 col-lg-5 form-field input_controls">
+					<j2:if test="$[omit_workers == 'true']">
+						 <input type="checkbox" id="omit_workers" name="omit_workers" checked="" value="true"/>
+					</j2:if>
+					<j2:if test="$[omit_workers != 'true']">
+						 <input type="checkbox" id="omit_workers" name="omit_workers" value="true"/>
+					</j2:if>
+				</div>
+			</div>
+			
+		</div>
+		
+		<div id="submit_buttons" class="col-xs-12">
+			<button type="submit" id="submitButton" onClick="submitLogBrowse()" class="btn btn-primary" style="margin: 1px 4px;">
+				${gs.getMessage('Submit')}
+			</button>
+			<a id="secs5" role="button" onclick="secsBack(5)" class="web" style="margin-left: 8px;" title="${gs.getMessage('Fetch most recent {0} seconds of log file entries', '5')}">${gs.getMessage('{0} secs', '5')}</a>
+			<a id="secs15" role="button" onclick="secsBack(15)" class="web" style="margin-left: 8px;" title="${gs.getMessage('Fetch most recent {0} seconds of log file entries', '15')}">${gs.getMessage('{0} secs', '15')}</a>
+			<a id="secs30" role="button" onclick="secsBack(30)" class="web" style="margin-left: 8px;" title="${gs.getMessage('Fetch most recent {0} seconds of log file entries', '30')}">${gs.getMessage('{0} secs', '30')}</a>
+			<a id="secs60" role="button" onclick="secsBack(60)" class="web" style="margin-left: 8px;" title="${gs.getMessage('Fetch most recent minute of log file entries')}">${gs.getMessage('One min')}</a>
+			<a id="secs300" role="button" onclick="secsBack(300)" class="web" style="margin-left: 8px;" title="${gs.getMessage('Fetch most recent {0} minutes of log file entries', '5')}">${gs.getMessage('Five mins')}</a>
+		</div>
+			
+		<input type="hidden" id="match_session" name="match_session" value="true" />
+		<input type="hidden" id="match_level" name="match_level" value="$[level]" />
+	</g:ui_form>
+	
+	<j:if test="${jvar_hasParameters == 'true'}">
+	
+	   <g2:evaluate var="jvar_log_open">
+	
+		  var logFile =  new GlideLogFileReader();
+		  if (time_diff) {
+			 logFile.setTimeRange(start_time, time_diff);
+		  } else {
+			 logFile.setStartTime(start_time);
+			 if (end_time) {
+				logFile.setEndTime(end_time);
+				}
+		  }
+	
+		  if (max_rows)
+			 logFile.setMaxRows(max_rows);
+	
+		  var session_message = "";
+		  if (typeof filter_session == 'undefined' || filter_session == '') 
+			 filter_session = 'null';
+	
+		  if (typeof match_session == 'undefined') 
+			 match_session = '';
+	
+		  logFile.setSession(filter_session);
+		  logFile.setMatchSession(match_session);
+		  logFile.setLevel(level);
+		  logFile.setMessage(message);
+		  logFile.setThread(filter_thread);
+		  logFile.setOmitWorkers(omit_workers);
+		  var system_start_time = logFile.getStartTime();
+		  var system_end_time = logFile.getEndTime();
+		  logFile.open();
+	   </g2:evaluate>
+	
+	   <div class="col-xs-12" id="logOutput" style="padding-top: 8px">
+	
+	   <j2:if test="$[jvar_log_open == false]">
+			  <font size="+1" color="red"><b>${gs.getMessage('Unable to open log file')} $[logFile.getShortLogFileName()]</b></font><br/>
+	   </j2:if>
+	
+	   <j2:if test="$[jvar_log_open == true]">
+		<table width="100%" border="1" cellspacing="1">
+			<tr class="header">
+				<th>${gs.getMessage('Timestamp')}</th>
+				<th>${gs.getMessage('Level')}</th>
+				<th>${gs.getMessage('Thread name')}</th>
+							<th>${gs.getMessage('Session Id')}</th>
+				<th>${gs.getMessage('Message')}</th>
+			</tr>
+		
+			<j2:while test="$[logFile.next()]">
+							<g2:evaluate>
+							</g2:evaluate>
+				<g2:evaluate var="jvar_time">
+					var tstamp = logFile.getValue('timestamp');
+					if (tstamp) {
+					   var parts = tstamp.split(' ');
+					   tstamp = parts[1];
+					}
+					tstamp;
+							</g2:evaluate>
+	
+				<g2:evaluate var="jvar_level">
+					var level = logFile.getValue('level');
+					if (level == '0')
+						level = gs.getMessage('Info');
+					else if (level == '1')
+						level = gs.getMessage('Warning');
+					else if (level == '2')
+						level = gs.getMessage('Error');
+					else if (level == '3')
+						level = gs.getMessage('Debug');
+					else if (level == '5')
+						level = gs.getMessage('Trace');
+					else if (level == '6')
+						level = gs.getMessage('Fatal');
+					level;
+				</g2:evaluate>
+	
+				<g2:evaluate var="jvar_session_id">
+					logFile.getValue('session_id');
+				</g2:evaluate>
+	
+							<g2:evaluate var="jvar_session_highlight" jelly="true">	
+									   var highlight = "";
+									   if (jelly.jvar_session_id == filter_session)
+										  highlight = "background-color: #ffffcc";
+									   highlight;
+							</g2:evaluate>
+	
+				<g2:evaluate var="jvar_message">
+					logFile.getValueHtmlEscaped('message') + "";
+				</g2:evaluate>
+	
+				<tr style="vertical-align:top">
+									<td nowrap="true">$[jvar_time].$[logFile.getValue('millis')]</td>
+									<td>$[jvar_level]</td>	
+					<td>$[logFile.getValue('thread_name')]</td>
+									<td style="$[jvar_session_highlight]">$[jvar_session_id]</td>
+									<td><g2:no_escape>$[jvar_message]</g2:no_escape></td>	
+				</tr>
+	
+			</j2:while>
+			
+			<g2:evaluate var="jvar_ignore">
+				logFile.close();
+			</g2:evaluate>
+		</table>
+	   </j2:if>
+	   </div>
+	</j:if>
+	<div class="col-xs-12" id="logWait" style="display:none">
+	   <img border="0" src="images/loading_anim4.gif"/>$[SP]${gs.getMessage('Searching log files')}
+	</div>
+</j:jelly>

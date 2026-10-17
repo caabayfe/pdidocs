@@ -1,0 +1,65 @@
+_meta:
+  hash: 91e5a044e7cf56001f335977829489f9b906cfb1681c90e44f7e57578dabb439
+  hash_version: 1
+  scope: global
+  sys_class_name: sysevent_email_template
+  sys_created_by: glide.maint
+  sys_created_on: 2006-06-20 15:07:25
+  sys_id: f1fb4a87c0a8011b01f86e79d14b0990
+  sys_mod_count: '33'
+  sys_package: 30f4fa7b8c5503100a22deb6dd2b4e2c
+  sys_scope: global
+  sys_update_name: sysevent_email_template_f1fb4a87c0a8011b01f86e79d14b0990
+  sys_updated_by: admin
+  sys_updated_on: 2016-02-28 08:15:30
+collection: sysapproval_approver
+email_layout: 1410041f3b0b2200c869c2c703efc41e
+message: |-
+  Short Description: ${sysapproval.short_description}
+  Priority: ${sysapproval.priority}
+  Requested For: ${sysapproval.requested_for}
+  Requested By: ${sysapproval.opened_by}
+  Total Price: ${sysapproval.price}
+  <hr/>
+  <mail_script>
+    template.print("Summary of Requested items:\n");  
+    var item = new GlideRecord("sc_req_item");
+    item.addQuery("request", current.sysapproval);
+    item.query();
+    while(item.next()) {
+        template.print(item.number + ":  " + item.quantity + " X " + item.cat_item.getDisplayValue() + " at " + item.price.getDisplayValue() + " each \n");
+        template.print("    Options:\n");
+        var keys = new Array();
+        var set = new GlideappVariablePoolQuestionSet();
+        set.setRequestID(item.sys_id);
+        set.load();
+        var vs = set.getFlatQuestions();
+        for (var i=0; i < vs.size(); i++) {
+          if(vs.get(i).getLabel() != '') {
+             template.space(4);
+             template.print('     ' +  vs.get(i).getLabel() + " = " + vs.get(i).getDisplayValue() + "\n");  
+          }
+        }
+    }
+  </mail_script>
+  Comments:
+  ${sysapproval.description}
+  <hr/>
+  ${mailto:mailto.approval}
+  <hr/>
+  ${mailto:mailto.rejection}
+  <hr/>
+  Approval Activity:
+  ${mail_script:approval_activity}
+  <hr />
+  Click here to view Approval Request: ${URI}
+  Click here to view ${sysapproval.sys_class_name}:  ${sysapproval.URI}
+message_html: ''
+message_list: ''
+message_text: ''
+name: request.itil.approve.role
+sms_alternate: ''
+subject: ${sysapproval.sys_class_name} ${sysapproval} Approval Request
+sys_name: request.itil.approve.role
+sys_policy: ''
+sys_version: ''

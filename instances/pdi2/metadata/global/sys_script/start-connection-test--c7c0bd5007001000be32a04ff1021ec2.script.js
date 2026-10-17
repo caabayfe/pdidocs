@@ -1,0 +1,1 @@
+SncConnectionTest.runTest(current);

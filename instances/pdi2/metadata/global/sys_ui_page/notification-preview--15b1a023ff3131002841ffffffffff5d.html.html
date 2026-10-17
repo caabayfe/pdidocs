@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null">
+    <g2:evaluate var="jvar_show_preview" jelly="true">
+        var showPreview;
+        if (gs.getProperty("glide.notification.preview_notification.allow_all") == 'true') {
+        	showPreview = true;
+        } else {
+        	var notificationGr = new GlideRecordSecure("sysevent_email_action");
+        	showPreview = notificationGr.get(jelly.sysparm_notification_id) $[AND] notificationGr.canWrite();
+        }
+        showPreview;
+    </g2:evaluate>
+    <j2:if test="$[jvar_show_preview]">
+        <g:inline template="notification_preview.xml" />
+    </j2:if>
+	<j2:if test="$[!jvar_show_preview]">
+		<div class="notification notification-info">
+			${gs.getMessage("This notification record does not exist or the user does not have write access to preview this notification.")}
+		</div>
+	</j2:if>
+</j:jelly>

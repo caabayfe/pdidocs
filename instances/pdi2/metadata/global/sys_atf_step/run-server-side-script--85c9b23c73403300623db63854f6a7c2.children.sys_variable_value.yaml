@@ -1,0 +1,158 @@
+- document: sys_atf_step
+  document_key: 85c9b23c73403300623db63854f6a7c2
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:14:37
+  sys_id: 2cd9f23c73403300623db63854f6a777
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-03-05 12:14:37
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777
+- document: sys_atf_step
+  document_key: 85c9b23c73403300623db63854f6a7c2
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2019-03-05 12:14:37
+  sys_id: ecd9f23c73403300623db63854f6a777
+  sys_mod_count: '10'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2019-05-30 05:56:24
+  value: |-
+    // Validating existing valid solutions upon instance upgrade
+    (function(outputs, steps, stepResult, assertEqual) {
+    	// Exit test if no predictions with active solutions found
+    	if (steps("7da9b23c73403300623db63854f6a732").record_id == "") {
+    		stepResult.setOutputMessage("No active classification solutions with old predictions found.");
+    		return true;
+    	}
+    	//Make upto 10 api call for each active solution
+    	var username = "";
+    	var password = "";
+    	var pass = true;
+    	var validSols = steps("7da9b23c73403300623db63854f6a732").record_id.split(",");
+    	var failedPred = "";
+    	//Get username and password from basic auth table
+    	var authProfile = new GlideRecord("sys_auth_profile_basic");
+    	authProfile.addQuery("name","ml_atf");
+    	authProfile.query();
+    	if (authProfile.next()) {
+    		username = authProfile.username;
+    		password = authProfile.password.getDecryptedValue();
+    	}
+    	else {
+    		stepResult.setOutputMessage("Create a basic auth profile in Basic Auth Configurations (sys_auth_profile_basic) table with name as \"ml_atf\" to proceed with the test");
+    		return false;
+    	}
+    	for (var i = 0; i < validSols.length; i++) {
+    		var Solutions = new GlideRecord("ml_solution");
+    		Solutions.get(validSols[i]);
+    		
+    		var oldPred = GlideRecord("ml_predictor_results");
+    		oldPred.addQuery("solution",Solutions.getUniqueValue());
+    		oldPred.query();
+    		var count = 0;
+    		//Asserting on outcome of upto 10 Api calls
+    		while (oldPred.next() && count < 5) {
+    			count++;
+    			if(!oldPred.predicted_input_value_names){
+    				gs.info("Skipping test because the input feild is empty");
+    				continue;
+    			}
+    			// I/p O/p key values of previous prediction
+    			var pred_input_vlue_name = oldPred.predicted_input_value_names.split(',');
+    			var pred_opt_vlue_name = oldPred.predicted_output_value_name;
+    			var pred_input_vlue = oldPred.predicted_input_values.split('||');
+    			var pred_opt_vlue = oldPred.predicted_output_value.split(',')[0];
+    			if(pred_input_vlue_name.length != pred_input_vlue.length){
+    				pred_input_vlue = oldPred.predicted_input_values.split(',');
+    				if(pred_input_vlue_name.length != pred_input_vlue.length){
+    					gs.info("Skipping test because the input field parameters are not matching with trained parameters");
+    					continue;
+    				}
+    			}
+    			gs.info("");
+    			var solName = Solutions.solution_name + '    v' + Solutions.version;
+    			var totaldash = 110 - solName.length;
+    			gs.info("- ".repeat(totaldash/2) + solName + "- ".repeat(totaldash/2));
+    			gs.info("");
+    			//Getting table name on which prediction was made
+    			var table = GlideRecord("sys_db_object");
+    			table.addQuery("name",oldPred.getValue('predicted_table'));
+    			table.query();
+    			var tableName = oldPred.predicted_table;
+    			if (table.next() )
+    				tableName = table.label;
+
+    			gs.info("Starting Upgrade Test");
+    			gs.info("Model trained on - " + Solutions.input_fields + " of " + tableName + " table");
+    			gs.info("Model predicts - "  + Solutions.output_field + " of " + tableName + " table");
+    			gs.info("");
+    			gs.info("Previous prediction");
+    			gs.info("Given input -> ");
+
+    			var inp_str = '?';
+    			for (var j = 0; j < pred_input_vlue_name.length; j++) {
+    				var tmp = concatInp(pred_input_vlue_name[j],pred_input_vlue[j]);
+    				gs.info(tmp);
+    				inp_str += tmp + '&';
+    			}
+    			gs.info("Predicted output -> ");
+    			gs.info(concatInp(pred_opt_vlue_name,pred_opt_vlue));
+    			//Constructing REST API
+    			gs.info("Making Rest API call using same input");
+    			inp_str = inp_str.slice(0,-1);
+    			//Read from "glide.servlet.uri" property
+    			var url = gs.getProperty("glide.servlet.uri") + "api/now/agent_intelligence/solution/" + Solutions.solution_name + "/prediction" + inp_str;
+    			var uri = encodeURI(url);
+    			gs.info(uri);
+    			r = new sn_ws.RESTMessageV2();
+    			r.setHttpMethod('get');
+    			r.setEndpoint(uri);
+    			r.setRequestHeader("Authorization","BASIC " + GlideStringUtil.base64Encode(username+":"+password));
+    			r.setRequestHeader('Accept','application/json');
+    			r.setRequestHeader("Content-Type", "application/json");
+    			try {
+    				response = r.executeAsync();	
+    				response.waitForResponse(300);
+    			}
+    			catch (err) {
+    				gs.info("Error caused while excecuting request");
+    			}
+    			responseBody = response.getBody();
+    			status = response.getStatusCode();
+
+    			if (status != 200) {
+    				pass = false;
+    				gs.info("Response_Status REST: " +status);
+    				failedPred += "Prediction failed for \"" + Solutions.solution_name + "\"  ->  Output Status : Unable to process the request \"" + '\"\n';
+    				continue;
+    			}
+
+    			gs.log("getBody_Response REST: " +responseBody);
+    			gs.log("Response_Status REST: " +status);
+    			//Parsing response output
+    			var mydata = new JSON().decode(responseBody);
+    			var outcomeStatus = mydata.result.output[0].outcomeArr[0].output;
+    			var outcome = mydata.result.output[0].outcomeArr[0].ClassName;
+    			if (outcomeStatus === "failure")
+    				outcome = mydata.result.output[0].outcomeArr[0].output_msg;
+    			gs.info("Outcome : " + outcome);
+    			//Asserting
+    			if (outcome != pred_opt_vlue) {
+    				failedPred += "Prediction failed for \"" + Solutions.solution_name + "\"  -> Actual output : \"" + pred_opt_vlue + "\", Predicted output : \"" + outcome + '\"\n';
+    				pass = false;
+    			}
+    		}
+    	}
+    	stepResult.setOutputMessage("Making Api calls for previously used active solutions.\n" + failedPred);
+    	return pass;
+    	function concatInp(key,value){
+    		return key + '=' + value;
+    	}
+    })(outputs, steps, stepResult, assertEqual);
+  variable: 989d9e235324220002c6435723dc3484

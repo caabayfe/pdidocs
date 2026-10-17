@@ -1,0 +1,22 @@
+(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+	var restHandler, result, stepId, setupId, data;
+	
+	try {
+		setupId = request.pathParams.setup_id;
+		stepId = request.pathParams.step_id;
+		restHandler = new SNHelpSetupRestHandler();
+		data = request.body.data;
+		result = restHandler.upsertSetupStep(setupId, stepId, data);
+		
+		response.setStatus(result.status);
+		
+		if(result.data)
+			response.setBody(result.data);
+		else
+			response.setBody({error: result.message});
+	} catch (ex) {
+		response.setStatus(500);
+		response.setBody({error: "Internal Server Error"});
+	}
+	
+})(request, response);

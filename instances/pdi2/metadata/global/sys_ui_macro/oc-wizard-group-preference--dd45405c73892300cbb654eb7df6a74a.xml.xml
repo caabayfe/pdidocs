@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+    <script>
+	(function() {
+		var refreshIntervalId;
+        window.groupPreferenceOnLoad = function(iframe) {
+            if (iframe.contentWindow.location.href.indexOf('on_call_group_preference.do') != -1) {
+                var iframeDocument = iframe.contentWindow.document;
+				var height = iframeDocument.body.scrollHeight;
+                iframe.style.height = height + 'px';
+                var editCSS = iframeDocument.createElement('style');
+                editCSS.innerHTML = ".section_header_content_no_scroll {overflow: hidden;} #page_timing_div, .form_action_button_container{display: none}";
+                iframeDocument.body.appendChild(editCSS);
+				var $groupIcon = iframeDocument.getElementById('on_call_group_preference.rota_managers_edit').querySelector('.icon-user-group');
+				if($groupIcon)
+					$groupIcon.parentElement.remove();
+				refreshIntervalId = setInterval(function() {
+	  				var $glidePopup = iframeDocument.querySelector('.glide-popup');
+	  				if($glidePopup &amp;&amp; iframe.style.height == height + 'px')
+	  					iframe.style.height = (height + $glidePopup.scrollHeight) + 'px';
+	  				else if(!$glidePopup &amp;&amp; iframe.style.height != height + 'px')
+	  					iframe.style.height = height + 'px';
+	  			}, 600);
+				iframe.contentWindow.g_form.setValue('group', window.g_form.getValue('group'));
+				// Set the modified values, if caming back from next or previous tabs.
+				if(window.g_form.getValue('group_preferences_modified') == 'true') {
+					iframe.contentWindow.g_form.setValue('rota_managers',  window.g_form.getValue('rota_managers'));
+					iframe.contentWindow.g_form.setValue('pto_approval_config',  window.g_form.getValue('pto_approval_config'));
+					iframe.contentWindow.g_form.setValue('allow_rota_overlap',  window.g_form.getValue('allow_rota_overlap'));
+					iframe.contentWindow.g_form.setValue('escalation_rule_rota_overlap',  window.g_form.getValue('escalation_rule_rota_overlap'));
+				}
+            } else
+	  			clearInterval(refreshIntervalId);
+        };
+	})();
+    </script>
+
+    <style>
+        #on-call-group-preference {
+            min-height: 375px;
+        }
+    </style>
+
+    <iframe id="on-call-group-preference" frameBorder="0" width="100%" scrolling="no" onload="groupPreferenceOnLoad(this);"></iframe>
+
+
+</j:jelly>

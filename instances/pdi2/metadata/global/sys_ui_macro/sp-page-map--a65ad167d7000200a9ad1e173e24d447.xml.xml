@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j2:if test="$[!current.isNewRecord()]">
+		<style>
+			div.contx._$[current.sys_id]        { background-color: #eee; border: 1px solid black; padding: 8px; margin-left: -8px; }
+			div.rowx._$[current.sys_id]        { background-color: #eee; border: 1px solid black; padding: 8px; margin-left: -8px; }
+			div.colx._$[current.sys_id]        { background-color: #eee; border: 1px solid black; padding: 8px; margin-left: -8px; }
+			div.rectx._$[current.sys_id]        { background-color: #eee; border: 1px solid black; padding: 8px; margin-left: -1px; }
+			a._$[current.sys_id]          { font-weight: bold;      }
+			span.xxx                      { display: none;          }
+			span._$[current.sys_id]       { display: inline;        }
+		</style>
+		
+		<g2:evaluate>
+			var pageGR = new SPPageMapHelper().getPageGR(current);
+		</g2:evaluate>
+
+		<j2:if test="$[pageGR != null]">
+			<g2:evaluate var="jvar_containers">
+				var cont = new GlideRecord("sp_container");
+				cont.addQuery("sp_page", pageGR.sys_id);
+				cont.orderBy("order");
+				cont.query();
+				cont;
+			</g2:evaluate>
+			<div id="sp-map-tree" style="padding-left:8px">
+				<div style="font-size:1.4em;padding-bottom:12px;">
+					<a href="/sp_page.do?sys_id=$[pageGR.sys_id]">Page: $[pageGR.title]</a>
+				</div>
+				<j2:while test="$[cont.next()]">
+					<div class="contx _$[cont.sys_id]" style="padding-bottom:12px;">
+						<a class="_$[cont.sys_id]" href="/sp_container.do?sys_id=$[cont.sys_id]">$[cont.name]</a>
+						<span class="xxx _$[cont.sys_id]" style="padding-left:12px;">{--------------</span>
+						<div style="padding-left:18px">
+							<g2:evaluate>
+								var row = new GlideRecord("sp_row");
+								row.addQuery("sp_container", cont.sys_id);
+								row.orderBy("order");
+								row.query();
+								row;
+							</g2:evaluate>
+							<j2:while test="$[row.next()]">
+								<div class="rowx _$[row.sys_id]" style="padding-bottom:12px">
+									<a class="_$[row.sys_id]" href="/sp_row.do?sys_id=$[row.sys_id]">Row $[row.order]</a>
+									<span class="xxx _$[row.sys_id]" style="padding-left:12px;">{--------------</span>
+									<div style="padding-left:18px">
+										<g2:evaluate>
+											var col = new GlideRecord("sp_column");
+											col.addQuery("sp_row", row.sys_id);
+											col.orderBy("order");
+											col.query();
+											col;
+										</g2:evaluate>
+										<j2:while test="$[col.next()]">
+											<div class="colx _$[col.sys_id]" style="padding-bottom:12px">
+												<a class="_$[col.sys_id]" href="/sp_column.do?sys_id=$[col.sys_id]">Column $[col.order]</a>
+												<span class="xxx _$[col.sys_id]" style="padding-left:12px;">{--------------</span>
+												<div style="padding-left:18px">
+													<g2:evaluate>
+														var row2 = new GlideRecord("sp_row");
+														row2.addQuery("sp_column", col.sys_id);
+														row2.orderBy("order");
+														row2.query();
+														row2;
+													</g2:evaluate>
+													<j2:while test="$[row2.next()]">
+														<div class="rowx _$[row2.sys_id]" style="padding-bottom:12px">
+															<a class="_$[row2.sys_id]" href="/sp_row.do?sys_id=$[row2.sys_id]">Nested Row $[row2.order]</a>
+															<span class="xxx _$[row2.sys_id]" style="padding-left:12px;">{--------------</span>
+															<div style="padding-left:18px">
+																<g2:evaluate>
+																	var col2 = new GlideRecord("sp_column");
+																	col2.addQuery("sp_row", row2.sys_id);
+																	col2.orderBy("order");
+																	col2.query();
+																	col2;
+																</g2:evaluate>
+																<j2:while test="$[col2.next()]">
+																	<div class="colx _$[col2.sys_id]" style="padding-bottom:12px">
+																		<a class="_$[col2.sys_id]" href="/sp_column.do?sys_id=$[col2.sys_id]">Column $[col2.order]</a>
+																		<span class="xxx _$[col2.sys_id]" style="padding-left:12px;">{--------------</span>
+																		<div style="padding-left:18px">
+																			<g2:evaluate>
+																				var row3 = new GlideRecord("sp_row");
+																				row3.addQuery("sp_column", col2.sys_id);
+																				row3.orderBy("order");
+																				row3.query();
+																				row3;
+																			</g2:evaluate>
+																			<j2:while test="$[row3.next()]">
+																				<div class="rowx _$[row3.sys_id]" style="padding-bottom:12px">
+																					<a class="_$[row3.sys_id]" href="/sp_row.do?sys_id=$[row3.sys_id]">Nested Row $[row3.order]</a>
+																					<span class="xxx _$[row3.sys_id]" style="padding-left:12px;">{--------------</span>
+																					<div style="padding-left:18px">
+																						<g2:evaluate>
+																							var col3 = new GlideRecord("sp_column");
+																							col3.addQuery("sp_row", row3.sys_id);
+																							col3.orderBy("order");
+																							col3.query();
+																							col3;
+																						</g2:evaluate>
+																						<j2:while test="$[col3.next()]">
+																							<div class="colx _$[col3.sys_id]" style="padding-bottom:12px">
+																								<a class="_$[col3.sys_id]" href="/sp_column.do?sys_id=$[col3.sys_id]">Column $[col3.order]</a>
+																								<span class="xxx _$[col3.sys_id]" style="padding-left:12px;">{--------------</span>
+																								<div style="padding-left:18px">
+																									<g2:evaluate>
+																										var rect3 = new GlideRecord("sp_instance");
+																										rect3.addQuery("sp_column", col3.sys_id);
+																										rect3.orderBy("order");
+																										rect3.query();
+																										rect3;
+																									</g2:evaluate>
+																									<j2:while test="$[rect3.next()]">
+																										<div class="rectx _$[rect3.sys_id]" style="padding-left: 18px">
+																											<a href="/sp_instance.do?sys_id=$[rect3.sys_id]">$[new GlideTableDescriptor.get(rect3.sys_class_name).getED().getLabel()]</a>: $[rect3.title]
+																											$[SP](<a href="sp_widget.do?sys_id=$[rect3.sp_widget.sys_id]">$[rect3.sp_widget.name]</a>)
+																										</div>
+																									</j2:while>
+																								</div>
+																							</div>
+
+																						</j2:while>
+																					</div>
+																				</div>
+
+																			</j2:while>
+																			<g2:evaluate>
+																				var rect2 = new GlideRecord("sp_instance");
+																				rect2.addQuery("sp_column", col2.sys_id);
+																				rect2.orderBy("order");
+																				rect2.query();
+																				rect2;
+																			</g2:evaluate>
+																			<j2:while test="$[rect2.next()]">
+																				<div class="rectx _$[rect2.sys_id]" style="padding-left: 18px">
+																					<a href="/sp_instance.do?sys_id=$[rect2.sys_id]">$[new GlideTableDescriptor.get(rect2.sys_class_name).getED().getLabel()]</a>: $[rect2.title]
+																					$[SP](<a href="sp_widget.do?sys_id=$[rect2.sp_widget.sys_id]">$[rect2.sp_widget.name]</a>)
+																				</div>
+																			</j2:while>
+																		</div>
+																	</div>
+
+																</j2:while>
+															</div>
+														</div>
+
+													</j2:while>
+													<g2:evaluate>
+														var rect = new GlideRecord("sp_instance");
+														rect.addQuery("sp_column", col.sys_id);
+														rect.orderBy("order");
+														rect.query();
+														rect;
+													</g2:evaluate>
+													<j2:while test="$[rect.next()]">
+														<div class="rectx _$[rect.sys_id]" style="padding-left: 18px">
+															<a href="/sp_instance.do?sys_id=$[rect.sys_id]">$[new GlideTableDescriptor.get(rect.sys_class_name).getED().getLabel()]</a>: $[rect.title]
+															$[SP](<a href="sp_widget.do?sys_id=$[rect.sp_widget.sys_id]">$[rect.sp_widget.name]</a>)
+														</div>
+													</j2:while>
+												</div>
+											</div>
+
+										</j2:while>
+									</div>
+								</div>
+
+							</j2:while>
+						</div>
+					</div>
+
+				</j2:while>
+			</div>
+		</j2:if>
+	</j2:if>
+</j:jelly>

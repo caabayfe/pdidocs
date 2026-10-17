@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_show_template_bar_property_name" value="glide.ui.show_template_bar.${ref}"/>
+	<g:evaluate jelly="true" var="jvar_show_template_bar" expression="gs.getProperty(jelly.jvar_show_template_bar_property_name, 'true')"/>
+
+	<j2:if test="$[gs.getProperty('glide.ui.doctype') != 'true' || gs.getSession().getProperty('device_type') != 'doctype' ]">
+		<j2:if test="$[!RP.isPrint()]">
+			<j2:if test="$[empty(jvar_templates)]">
+				<g2:evaluate var="jvar_templates" jelly="true" object="true">
+					var tu = new TemplateUtil();
+					var gr = tu.getApplicable(${ref}.getTableName());
+					gr.getRowCount();
+				</g2:evaluate>
+			</j2:if>
+
+			<script>
+				var mTemplate = new GwtContextMenu('context_templatesub${jvar_section_id}');
+				mTemplate.clear();
+				var mApplyTemplates = new GwtContextMenu('context_applytemplatesub${jvar_section_id}');
+				mApplyTemplates.clear();
+			</script>
+			<input type="hidden" name="selected_template" id="selected_template" onchange="applyTemplate(this.value)"/>
+			<input type="hidden" name="sys_display.selected_template" id="sys_display.selected_template"/>
+			<j2:if test="$[jvar_templates > 0 ]">
+				<g2:evaluate var="jvar_show_list" jelly="true">
+					jelly.jvar_templates > parseInt(gs.getProperty('glide.template.max_context', '15'));
+				</g2:evaluate>
+
+				<j2:if test="$[jvar_show_list]">
+					<script>
+						mTemplate.addHref("${gs.getMessage('Apply Template')}", "openTemplateSelector()");
+
+						function openTemplateSelector() {
+							reflistOpen('selected_template', 'not', 'sys_template', null, null, null, "sys_idINjavascript:getApplicableTemplates('$[${ref}.getTableName()]')");
+						}
+					</script>
+				</j2:if>
+
+				<j2:if test="$[!jvar_show_list]">
+					<j2:if test="$[empty(jvar_templates_gr)]">
+						<g2:evaluate var="jvar_templates_gr" jelly="true" object="true">
+							if (templates_list == null) {
+								var templates_list = new GlideChoiceList();
+								var tt = GetTemplatesList.getGlideRecord(${ref}.getTableName());
+								while (tt.nextRecord())
+									templates_list.add(tt.getValue('sys_id'), tt.getValue('name'));
+							}
+							templates_list;
+						</g2:evaluate>
+					</j2:if>
+					<j2:if test="$[!jvar_templates_gr.isEmpty()]">
+						<j2:forEach items="$[jvar_templates_gr]" var="jvar_template">
+							<script>
+								mApplyTemplates.addHref("$[jvar_template.getLabel()]", "applyTemplate('$[jvar_template.getValue()]')");
+							</script>
+						</j2:forEach>
+						<script>
+							mTemplate.addMenu("${gs.getMessage('Apply Template')}", mApplyTemplates);
+						</script>
+					</j2:if>
+				</j2:if>
+			</j2:if>
+			<j2:if test="$[${ref}.isNewRecord() == false]">
+				<j2:if test="$[jvar_session.hasRole('template_editor')]">
+					<input type="hidden" name="sysverb_save_as_template" id="sysverb_save_as_template"/>
+					<script>
+						mTemplate.addHref("${gs.getMessage('Save as Template')}", "TemplateRecord.save(document.getElementById('sysverb_save_as_template'))");
+					</script>
+					<j2:if test="$[jvar_session.hasRole('admin')]">
+						<input type="hidden" name="sysverb_save_all_as_template" id="sysverb_save_all_as_template"/>
+						<script>
+							mTemplate.addHref("${gs.getMessage('Save All as Template')}", "TemplateRecord.save(document.getElementById('sysverb_save_all_as_template'))");
+						</script>
+					</j2:if>
+				</j2:if>
+			</j2:if>
+			<g2:evaluate var="jvar_personalize_templates" expression="gs.hasRole('template_editor,template_editor_group,template_editor_global')"/>
+			<j2:if test="$[jvar_personalize_templates == true ]">
+				<script>
+					mTemplate.addHref("${gs.getMessage('Edit Templates')}", "showList('sys_template', 'table.active', '${ref}.true');");
+				</script>
+			</j2:if>
+			<j2:if test="$[jvar_personalize_templates == true || jvar_templates > 0 ]">
+				<script>gcm.addMenu("${gs.getMessage('Templates')}", mTemplate);</script>
+
+			</j2:if>
+		</j2:if>
+	</j2:if>
+	<j2:if test="$[gs.getProperty('glide.ui.doctype') == 'true' &amp;&amp; gs.getSession().getProperty('device_type') == 'doctype' &amp;&amp; gs.getUser().getPreference('use.concourse') != 'true']">
+		<script>
+			<j:if test="${jvar_show_template_bar == 'true'}">
+				gcm.addHref("${gs.getMessage('Show/Hide Template Bar')}", "CustomEvent.fire('templateToggle')");
+			</j:if>
+		</script>
+	</j2:if>
+</j:jelly>

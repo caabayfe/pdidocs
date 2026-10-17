@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+
+  <g:evaluate var="jvar_table" jelly="true">
+    var table = "";
+    if (typeof jelly.sysparm_table !== "undefined")
+      table = jelly.sysparm_table;
+
+    table;
+  </g:evaluate>
+
+  <g:ui_form onsubmit="return checkSubmit();">
+    <input type="hidden" name="sysparm_referring_url" value="${sysparm_referring_url}" />
+    <input type="hidden" id="table_name" name="table_name" />
+    <input type="hidden" id="field_name" name="field_name" />
+  
+    <table border="0" class="wide">
+      <tr>
+        <td>
+          <g:ui_header>${gs.getMessage('Personalize Choices')}</g:ui_header>
+      	</td>
+      </tr>
+      
+      <tr>
+        <td>
+          <span style="color:#666666;">${gs.getMessage('Personalize Choices Form Description')}</span>
+      	</td>
+      </tr>
+      
+      <tr>
+        <td>
+          <!-- Generate table options -->
+          <g:ui_choice_input_field id="table_name_choice" name="table_name_choice" for="table_name_choice" label="${gs.getMessage('Table')}" mandatory="true" onchange="refreshFieldList()">
+            <j:if test="${jvar_table == ''}">
+              <option value="none">${gs.getMessage('-- None --')}</option>
+            </j:if>
+            
+            <g:evaluate jelly="true">
+              var gr = new GlideRecord('sys_dictionary');
+              gr.addNullQuery('element');
+              gr.addNotNullQuery('name');
+              gr.addQuery('attributes', 'DOES NOT CONTAIN', 'update_synch');
+              gr.addJoinQuery('sys_choice', 'name', 'name');
+              gr.orderBy('name');
+              gr.setWorkflow(false);
+              gr.query();
+            </g:evaluate>
+
+            <j:while test="${gr.next()}">
+              <g:evaluate var="jvar_can_access" jelly="true">
+                GlideTableDescriptor.get(gr.name).canRead();
+              </g:evaluate>
+
+              <j:if test="${jvar_can_access == 'true'}">
+                <g:evaluate var="jvar_selected" jelly="true">
+                  jelly.jvar_table == gr.name;
+                </g:evaluate>
+                
+                <j:choose>
+                  <j:when test="${jvar_selected == 'true'}">
+                    <option selected="selected" value="${gr.name}">${GlideTableDescriptor.get(gr.name).getLabel()} [${gr.name}]</option>
+                  </j:when>
+                  <j:otherwise>
+                    <option value="${gr.name}">${GlideTableDescriptor.get(gr.name).getLabel()} [${gr.name}]</option>
+                  </j:otherwise>
+                </j:choose>
+              </j:if>
+            </j:while>
+          </g:ui_choice_input_field>
+        </td>
+      </tr>
+      
+      <j:if test="${jvar_table != ''}">
+        <tr>
+          <td>
+            <!-- Generate field options -->
+            <g:ui_choice_input_field id="field_name_choice" name="field_name_choice" for="field_name_choice" label="${gs.getMessage('Field')}" mandatory="true" onchange="updateTableAndFieldNameForRedirect()">
+                <option value="none">${gs.getMessage('-- None --')}</option>
+                
+                <g:evaluate jelly="true">
+                  var gr = new GlideRecord('sys_dictionary');
+                  gr.addQuery('name', jelly.jvar_table);
+                  gr.addQuery('internal_type', '!=', 'collection');
+                  gr.query();
+                </g:evaluate>
+                
+                <j:while test="${gr.next()}">
+                  <g:evaluate var="jvar_has_choices" jelly="true">
+                    var has_choices = false;
+                    var choices = new GlideRecord('sys_choice');
+                    choices.addQuery('name', gr.name);
+                    choices.addQuery('element', gr.element);
+                    choices.query();
+                    if (choices.next())
+                      has_choices = true;
+                      
+                    has_choices;
+                  </g:evaluate>
+                  
+                  <j:if test="${jvar_has_choices == 'true'}">
+                    <g:evaluate var="jvar_field_label">
+                      var field_label = gr.column_label;
+                      var grf = new GlideRecord('sys_documentation');
+                      grf.addQuery('name', gr.name);
+                      grf.addQuery('element', gr.element);
+                      grf.query();
+
+                      if (grf.next())
+                        field_label = grf.label;
+
+                      field_label;
+                    </g:evaluate>
+                    <option value="${gr.element}">${jvar_field_label}</option>
+                  </j:if>
+                </j:while>
+               
+            </g:ui_choice_input_field>
+          </td>
+        </tr>
+      </j:if>
+      
+      <tr>
+        <td>
+          <g:dialog_button id="personalize_form_button" type="submit">${gs.getMessage('Next')}</g:dialog_button>
+        </td>
+      </tr>
+      
+    </table>
+  </g:ui_form>
+</j:jelly>

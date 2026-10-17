@@ -1,0 +1,155 @@
+<div class="panel panel-{{::c.options.color}} b" ng-if="c.data.isValid">
+  <div class="panel-heading bg-primary">
+    <div class="panel-title" style="cursor: default">
+			  {{c.data.title}}
+      <div class="btn-group pull-right" style="top:-2px;" role="group" aria-label="${Segmented controls}" ng-if="c.data.myTaskCount>0 && c.data.show == 'case'">
+        <button  class="btn btn-primary btn-sm" ng-click="data.filters = ''"  ng-class="{'segment-selected': c.data.filters == ''}">${All tasks}</button>
+        <button  class="btn btn-primary btn-sm" ng-click="data.filters = {assigned_to:c.data.user}" ng-class="{'segment-selected': c.data.filters != ''}">${My tasks}<span class="badge">${{{data.myTaskCount}}}</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="list-group list-group-root hide-x-overflow" ng-if="c.data.show == 'case'">
+    <div class="list-group-item">
+      <div id="{{data.parent.sys_id}}" class="caseContainer" ng-class="{'current-selection': data.selectedTask == data.parent.sys_id || !c.data.current}">
+        <div>
+          <a href="javascript:void(0)" data-toggle="collapse" data-target="#children" ng-click="toggleIcon($event)">
+            <i alt="${Hide child tasks}" class="fa fa-fw fa-2x fa-caret-down pull-left media-expander" ng-if="data.list.length > 0"/>
+          </a>
+        </div>
+        <a ng-click="c.onClick($event, data.parent, data.parent.sys_id, {})" href="javascript:void(0)">
+          <div class="media-body">
+            <div ng-switch on="data.parent.display_field.type" ng-class="{'l-h-40': !data.parent.secondary_fields.length}">
+              <span class="translated-html" ng-switch-when="translated_html" ng-bind-html="data.parent.display_field.value"></span>
+              <div ng-switch-default>{{data.parent.display_field.display_value}}</div>
+            </div>
+            <small class="text-muted" ng-repeat="f in data.parent.secondary_fields">
+              <span ng-if="!$first"> • </span>
+              <span ng-switch="f.type" title="{{::f.label}}">
+                <span ng-switch-when="glide_date">
+                  <sn-time-ago timestamp="::f.value" />
+                </span>
+                <span ng-switch-when="glide_date_time">
+                  <sn-time-ago timestamp="::f.value" />
+                </span>
+                <span ng-if="f.display_value" ng-switch-default="">{{f.label}} {{f.display_value}}</span>
+                <span ng-if="!f.display_value" ng-switch-default="">${Unassigned}</span>
+              </span>
+            </small>
+	          <span ng-if="data.parent.image_field" class="state-icon" >
+  	          <i title={{data.parent.image_title}} class="{{data.parent.image_field}}"/>
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div id='children' ng-if="c.data.list.length > 0" class="list-group collapse in" >
+      <div  ng-if="c.data.list.length > 0" ng-repeat="item in c.data.list | filter:filterChildTasks:item track by item.sys_id" class="list-group-item">
+        <div id="{{item.sys_id}}" class="caseContainer" ng-class="{'current-selection': c.data.selectedTask == item.sys_id, 'parent': item.children.length > 0}">
+          <div>
+            <a href="javascript:void(0)" data-toggle="collapse" data-target="#{{item.sys_id}}-children" ng-click="toggleIcon($event)">
+              <i alt="${Show child tasks}" class="fa fa-fw fa-2x fa-caret-right pull-left media-expander" ng-if="item.children.length > 0"/>
+         	  </a>
+          </div>
+          <a ng-click="c.onClick($event, item, item.sys_id, {})" href="javascript:void(0)">
+            <div class="media-body">
+              <div ng-switch on="item.display_field.type" ng-class="{'l-h-40': !item.secondary_fields.length}">
+                 <span class="translated-html" ng-switch-when="translated_html" ng-bind-html="item.display_field.value"></span>
+                 <div ng-switch-default>{{item.display_field.display_value}}</div>
+              </div>
+              <small class="text-muted" ng-repeat="f in item.secondary_fields">
+                <span ng-if="!$first"> • </span>
+                <span ng-switch="f.type" title="{{::f.label}}">
+                   <span ng-switch-when="glide_date">
+                      <sn-time-ago timestamp="::f.value" />
+                   </span>
+                   <span ng-switch-when="glide_date_time">
+                      <sn-time-ago timestamp="::f.value" />
+                   </span>
+                   <span ng-if="f.display_value" ng-switch-default="">{{f.label}} {{f.display_value}}</span>
+                   <span ng-if="!f.display_value" ng-switch-default="">${Unassigned}</span>
+                </span>
+              </small>
+		          <span ng-if="item.image_field" class="state-icon" >
+  	            <i title={{item.image_title}} class="{{item.image_field}}"/>
+	            </span>
+            </div>
+           </a>
+        </div>
+        <!---------Child Cases-------->
+        <div id="{{item.sys_id}}-children" ng-if="item.children.length > 0" class="list-group collapse">
+          <div  ng-if="item.children.length > 0" ng-repeat="child in item.children | filter:filterChildTasks:child track by child.sys_id" class="list-group-item"  >
+            <div id="{{child.sys_id}}" class="caseContainer" ng-class="{'current-selection': c.data.selectedTask == child.sys_id}">
+              <a ng-click="c.onClick($event, child, child.sys_id, {})" href="javascript:void(0)" >
+       					<div class="media-body">
+                  <div ng-switch on="child.display_field.type" ng-class="{'l-h-40': !child.secondary_fields.length}">
+                    <span class="translated-html" ng-switch-when="translated_html" ng-bind-html="child.display_field.value"></span>
+                    <div ng-switch-default>{{child.display_field.display_value}}</div>
+                  </div>
+                  <small class="text-muted" ng-repeat="f in child.secondary_fields">
+                    <span ng-if="!$first"> • </span>
+                    <span ng-switch="f.type" title="{{::f.label}}">
+                      <span ng-switch-when="glide_date">
+                        <sn-time-ago timestamp="::f.value" />
+                      </span>
+                      <span ng-switch-when="glide_date_time">
+                        <sn-time-ago timestamp="::f.value" />
+                      </span>
+                      <span ng-if="f.display_value" ng-switch-default="">{{f.label}} {{f.display_value}}</span>
+                      <span ng-if="!f.display_value" ng-switch-default="">${Unassigned}</span>
+                    </span>
+                  </small>
+                </div>		          
+                <span ng-if="child.image_field" class="state-icon" >
+  		            <i title={{child.image_title}} class="{{child.image_field}}"/>
+	            	</span>
+              </a>
+            </div>
+          </div>
+        </div>
+         <!---------End Child Cases----------------->
+      </div>
+    </div>
+  </div>
+  
+  <!--------- Handle myTasks ----------------->
+	<div class="list-group list-group-root hide-x-overflow" ng-if="c.data.show == 'mytasks'">
+      <div  ng-if="c.data.list.length > 0" ng-repeat="item in c.data.list" class="list-group-item" >
+        <div id="{{item.sys_id}}" class="caseContainer" ng-class="{'current-selection': c.data.selectedTask == item.sys_id}">
+          <a href="javascript:void(0)" data-toggle="collapse" data-target="#{{item.sys_id}}-children" ng-click="toggleIcon($event)">
+            <i alt="${Show child tasks}" class="fa fa-fw fa-chevron-right pull-left m-r" ng-if="item.children.length > 0"/>
+       	  </a>
+          <a ng-click="c.onClick($event, item, item.sys_id, {})" href="javascript:void(0)">
+            <div class="media-body">
+                <div ng-switch on="item.display_field.type" ng-class="{'l-h-40': !item.secondary_fields.length}">
+                   <span class="translated-html" ng-switch-when="translated_html" ng-bind-html="item.display_field.value"></span>
+                   <div ng-switch-default>{{item.display_field.display_value}}</div>
+                </div>
+               <div>
+                 <small class="text-muted" ng-repeat="f in item.secondary_fields">
+                   <span ng-if="!$first"> • </span>
+                   <span ng-switch="f.type" title="{{::f.label}}">
+                      <span ng-switch-when="glide_date">
+                         <sn-time-ago timestamp="::f.value" />
+                      </span>
+                      <span ng-switch-when="glide_date_time">
+                         <sn-time-ago timestamp="::f.value" />
+                      </span>
+                      <span ng-if="f.display_value" ng-switch-default="">{{f.label}} {{f.display_value}}</span>
+                      <span ng-if="!f.display_value" ng-switch-default="">${Unassigned}</span>
+                   </span>
+                </small>
+              </div>
+            </div>
+            <div ng-if="item.image_field" class="state-icon pull-right" ng-class="{'current-selection-icon': c.data.selectedTask == item.sys_id}">
+              <i title={{item.image_title}} class="{{item.image_field}}"/>
+            </div>
+           </a>
+        </div>
+    </div>
+  </div>
+</div>
+<div style="min-height:100px" ng-if="!c.data.isValid"> 
+  <h4>
+    ${Record not found} 
+  </h4>
+</div>

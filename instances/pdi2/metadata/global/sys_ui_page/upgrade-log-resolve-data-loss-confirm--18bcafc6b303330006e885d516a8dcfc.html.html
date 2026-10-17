@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<j:set var="jvar_delObjList" value="${sysparm_del_obj_list}"/>
+	<style>
+		.data_loss_table thead tr th,
+		.data_loss_table tbody tr td {
+			padding-left: 15px;
+		}
+		.data_loss_table tbody tr td a {
+			text-decoration: none;
+			color: #278efc;
+		}
+	</style>
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="icon icon-alert-triangle pull-left" style="font-size:35px; margin: 0px 15px 0px 15px;" />
+			<span style="font-weight: bold; font-size: 15px;">${gs.getMessage('Warning')}</span>
+			<p>${gs.getMessage('If you revert to this version, the system will automatically delete all data stored in the tables and columns that are defined in this Update:')}</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-12">
+			<!-- display related objects table -->
+			<table class="table data_loss_table">
+				<thead>
+					<tr>
+						<j:if test="${jvar_delObjList.split(':').size() == 1}">
+							<th>${gs.getMessage('Table')}</th>
+						</j:if>
+						<j:if test="${jvar_delObjList.split(':').size() == 2}">
+							<th>${gs.getMessage('Table')}</th><th>${gs.getMessage('Field')}</th>
+						</j:if>
+						<j:if test="${jvar_delObjList.split(':').size() == 3}">
+							<th>${gs.getMessage('Variable')}</th>
+						</j:if>
+					</tr>
+				</thead>
+				<tbody class="pre-scrollable" style="max-height: 150px">
+						<tr>
+							<j:forEach items="${jvar_delObjList.split(':')}" var="jvar_obj" indexVar="jvar_i">
+								<j:if test="${jvar_i != 2}">
+									<td>${jvar_obj}</td>
+								</j:if>
+							</j:forEach>
+						</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-12">
+			${gs.getMessage('Reverting this record may trigger cascade deletions. For example, deleting a table also deletes associated columns and the data in them. The only way to recover the data will be to restore it from backup, which is slow and complex.')}
+		</div>
+	</div>
+<div class="modal-footer" id="to_move_up">
+	<div class="row">
+		<div class="col-sm-12">
+			<g:dialog_buttons_ok_cancel ok="return okToDestroyData()" cancel="return cancel()" ok_type="button"
+										ok_style_class="btn btn-destructive" cancel_type="button"
+										ok_text="${gs.getMessage('Proceed with Revert')}" />
+		</div>
+	</div>
+	</div>
+</j:jelly>

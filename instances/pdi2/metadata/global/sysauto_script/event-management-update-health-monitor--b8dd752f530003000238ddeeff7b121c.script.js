@@ -1,0 +1,1 @@
+new EvtMgmtHealthHandleMonitors().handleMonitors("update");

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:evaluate var="sysparm_request_id">gs.getSession().getProperty('sysparm_request_id');</g:evaluate>
+  
+<!-- ACTUAL PAGE STARTS HERE -->
+	
+<g:macro_invoke macro="$pwd_reset_stylesheet"/>
+<g:requires name="scripts/lib/jquery_includes.js" includes="true"/>
+
+<g:if_polaris>
+	<g:then>
+		<g:inline template="polarisberg_output.xml"/>
+	</g:then>
+	<g:else>
+		<g:requires name="styles/heisenberg/heisenberg_all.css" includes="true"/>
+	</g:else>
+</g:if_polaris>
+
+<center role="alert">
+  <div class="pwd-notification-box" style="text-align:center">
+    <i class="icon-error pwd-icon pwd-icon-error"/>
+    <h1 class="pwd-title">${gs.getMessage("Password Enrollment Error")}</h1>
+
+    <g:set_if var="jvar_error_exp" test="${empty(sysparm_error)}" true="${gs.getSession().getProperty('sysparm_error')}" false=""/>
+    <g:set_if var="jvar_error" test="${empty(sysparm_error)}" true="${gs.getSession().getProperty('sysparm_error')}" false="${sysparm_error}"/>
+
+    <j:if test="${empty(jvar_error)}">
+      <h2 class="pwd-subtitle">${gs.getMessage('General error, contact service desk for assistance.')}</h2>
+    </j:if>
+
+    <j:if test="${!empty(jvar_error)}">
+      <j:choose>
+        <j:when test="${jvar_error == 'no_enrollment'}">
+          <h2 class="pwd-subtitle">${gs.getMessage("There are no pending enrollments for you at this time")}</h2>
+        </j:when>
+
+        <j:otherwise>
+          <h2 class="pwd-subtitle">${jvar_error}</h2>
+        </j:otherwise>
+      </j:choose>
+    </j:if>
+  </div>
+</center>
+</j:jelly>

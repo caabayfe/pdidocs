@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null">
+	<j:if test="${gs.getProperty('glide.sys.domain.enabled')=='true' || gs.getProperty('glide.sys.domain.partitioning')=='true' ||
+gs.getProperty('glide.sys.domain.delegated_administration')=='true'}">
+		<j:set var="jvar_id" value="domain_reference"/>
+		<!-- Add a domain changer -->
+		<script language="javascript" src="scripts/DomainPicker.jsx?v=${gs.getProperty('glide.builddate')}"/>
+		<span id="gsft_${jvar_id}" style="display: inline-block;">
+
+			<j:set var="jvar_onchange" value="dp.changeChoice();"/>
+			<label for="${jvar_id}">${gs.getMessage('Domain')}<j2:if test="$[GlideMobileExtensions.getDeviceType() != 'doctype']">:</j2:if></label>$[SP]
+
+			<input id="sysparm_domain" value="picker" type="HIDDEN" name="sysparm_domain"></input>
+
+			<g:ui_reference id="${jvar_id}" name="${jvar_id}"
+							table="${GlideDomainSupport.getDomainTable();}"
+							value="${gs.getUser().getDomainID();}"
+							displayValue="${gs.getUser().getDomainDisplayValue();}"
+							show_popup="false"/>
+			<span style="margin-left:2px"></span>
+			<a title="${gs.getMessage('Reset to default Domain')}" onclick="dp.setDefaultDomain();return false;">
+				<j2:if test="$[GlideMobileExtensions.getDeviceType() == 'doctype']">
+					<i class="icon-refresh icon-lg">
+						<span class="sr-only">
+							${gs.getMessage('Reset to default Domain')}
+						</span>
+					</i>
+				</j2:if>
+				<j2:if test="$[GlideMobileExtensions.getDeviceType() != 'doctype']">
+					<img src="images/icons/refresh.gifx" border="0" width="16"
+						height="16" alt="${gs.getMessage('Reset to default Domain')}"/>
+				</j2:if>
+			</a>
+			<script language="javascript">
+				var dp = new DomainPicker("${jvar_id}", "itil", "DomainReference","Domain");
+			</script>
+		</span>
+	</j:if>
+</j:jelly>

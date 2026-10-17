@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:macro refreshfunc=""/>
+  <script language="JavaScript" SRC="scripts/classes/GwtWindowList.jsx?v=${gs.getProperty('glide.builddate')}" />
+  <script language="JavaScript" SRC="scripts/classes/GwtSelectTable.jsx?v=${gs.getProperty('glide.builddate')}" />
+  <table border="0" cellspacing="2" cellpadding="0" width="100%" height="100%">
+    <tr>
+      <td width="20%" dropzone="true">
+        <g:gwt_select_list name="source_fields_left" dropzone="true" readonly="true" style="height:200px; width:100%; overflow:auto; border:1px solid #999"/>
+      </td>
+      <td width="10%" align="center" style="vertical-align:middle;">
+         <!-- add / remove buttons -->
+         <g:ui_select_list_addremove_control name="source_fields" selecttable="selectTableSource" leftzone="source_fields_leftzone" rightzone="source_fields_rightzone"/>
+      </td>
+
+      <td width="40%" dropzone="true">
+       <div style="overflow: auto; height:200px; border:1px solid #999">
+        <!-- NOTE: Target DIVs need to have a position (absolute or relative) specified in order for drag and drop to work. -->
+        <g:gwt_select_list name="source_fields_right" style="position: relative; overflow:hidden; border:0px; float:left; width: 50%"/>
+
+        <!-- 49% compensates for the IE float drop problem http://www.google.com/search?q=IE+float+drop -->
+        <!-- NOTE: Target DIVs need to have a position (absolute or relative) specified in order for drag and drop to work. -->
+        <g:gwt_select_list name="target_fields_right" style="position:  relative; overflow:hidden; border:0px; float:right; width: 49%"/>
+       </div>
+      </td>
+
+      <td width="10%" align="center" style="vertical-align:middle;">
+         <!-- add / remove buttons -->
+         <g:ui_select_list_addremove_control name="target_fields" selecttable="selectTableTarget" leftzone="target_fields_rightzone" rightzone="target_fields_leftzone" move_left_button_label="Add" move_right_button_label="Remove"/>
+      </td>
+
+      <td width="20%" dropzone="true">
+        <g:gwt_select_list name="target_fields_left" dropzone="true" unique="true" style="height:200px; width:100%; overflow:auto; border:1px solid #999"/>
+      </td>
+    </tr>
+  </table>
+      <script>
+
+        var selectTableSource = new GwtSelectTable('source');
+        selectTableSource.setMultiSelect(true);
+
+        var e = gel('source_fields_left');
+        selectTableSource.addZone(e, 0, 1);
+
+        e = gel('source_fields_right');
+        selectTableSource.addZone(e, 0, 2);
+
+        var source_fields_leftzone = selectTableSource.getList('source_fields_left');
+        var source_fields_rightzone = selectTableSource.getList('source_fields_right');
+        populateSource('${sysparm_source_table}', source_fields_leftzone, false);
+
+        selectTableSource.on("aftercopy", refresh);
+        selectTableSource.on("afterdrag", refresh);
+        selectTableSource.on("afterremove", refresh);
+
+        var selectTableTarget = new GwtSelectTable('target');
+        selectTableTarget.setMultiSelect(true);
+
+        var e2 = gel('target_fields_left');
+        selectTableTarget.addZone(e2, 0, 4);
+
+        e2 = gel('target_fields_right');
+        selectTableTarget.addZone(e2, 0, 3);
+
+        var target_fields_leftzone = selectTableTarget.getList('target_fields_left');
+        var target_fields_rightzone = selectTableTarget.getList('target_fields_right');
+        populateSource('${sysparm_target_table}', target_fields_leftzone, true);
+
+        selectTableTarget.on("aftermove", refresh);
+        selectTableTarget.on("afterdrag", refresh);
+        selectTableTarget.on("afterremove", refresh);
+
+        selectTableSource.setDblClickTarget('source_fields_left', 'source_fields_right');
+        selectTableSource.setDblClickTarget('source_fields_right', 'source_fields_left');
+        selectTableTarget.setDblClickTarget('target_fields_left', 'target_fields_right');
+        selectTableTarget.setDblClickTarget('target_fields_right', 'target_fields_left');
+        
+        function populateSource(table, zone, disallow_sys_fields) {
+          var t = new Table(table); 
+          var els = t.getElements(); 
+          for (var i = 0; i != els.length; i++) {
+            var el = els[i];
+            if (disallow_sys_fields) {
+              if(el.name.indexOf('sys_') == 0)
+                  continue;
+            }
+
+            if (el.label.length > 30)
+              el.label = el.label.substring(0, 27) + "...";
+
+            zone.add(el.label, el.name);
+          }
+        }
+
+        function refresh() {
+          var el = gel('show_mapped');
+          if (el.value == "mapped") 
+            ${jvar_refreshfunc};
+        }
+
+        function hideMoveToLeftButton(name) {
+          var el = gel(name + '_move_left_text');
+          el.style.display="none";
+
+          el = gel(name + '_move_left_button');
+          el.style.display="none";
+
+          el = gel(name + '_move_right_text');
+          el.style.display="";
+
+          el = gel(name + '_move_right_button');
+          el.style.display="";
+        }
+
+        function hideMoveToRightButton(name) {
+          var el = gel(name + '_move_right_text');
+          el.style.display="none";
+
+          el = gel(name + '_move_right_button');
+          el.style.display="none";
+
+          el = gel(name + '_move_left_text');
+          el.style.display="";
+
+          el = gel(name + '_move_left_button');
+          el.style.display="";
+        }
+
+      </script>
+</j:jelly>

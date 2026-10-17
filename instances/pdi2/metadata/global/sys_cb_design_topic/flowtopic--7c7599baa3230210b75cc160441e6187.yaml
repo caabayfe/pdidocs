@@ -1,0 +1,777 @@
+_meta:
+  hash: 84c9c6f966feda03fcf1b13f2da76d55021a525d2d2004c0d8496812c37d9a06
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2024-07-25 23:24:04
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 7c7599baa3230210b75cc160441e6187
+  sys_mod_count: '35'
+  sys_package: 0a73779783fb8710292aca75eeaad3f0
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_7c7599baa3230210b75cc160441e6187
+  sys_updated_by: admin
+  sys_updated_on: 2026-08-27 17:15:40
+compiled_topic: 347599baa3230210b75cc160441e6181
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"064911070e484c298dee58cf0bd83504","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"064911070e484c298dee58cf0bd83504"}],"goals":[{"name":"primary","trigger_id":"064911070e484c298dee58cf0bd83504","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"224f9350e89147fcbfbe538026e9dd27","name":"Start","expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"5d8e967ac03f49cb8985e8be536f14d2","name":"End","expert_mode":false},{"type":"LibraryCall","library_topic_name":"Language Switch Control","library_topic_id":"60ce473853b230103296ddeeff7b1211","library_topic_is_template":false,"parameter-mappings":[],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"answer","main_topic_mapped_variable_name":"answer"}],"header_card_fields":[],"input_parameters_mode":"dynamic","output_parameters_mode":"dynamic","id":"cf9fd9a53a7c4bc184bbcfcca60e4c35","name":"Language Switch Control","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    var confirmation = String(vaInputs.language_switch_confirmation || '''').toLowerCase();\n    var answer = String(vaInputs.answer || '''').toLowerCase();\n\n    var proceed = (answer !== ''no'' && confirmation !== ''no'');\n\n    return proceed;\n})()\n})()"},"id":"1c65c6a00c814c3b93e2fceaaa94b162","name":"Yes","expert_mode":false},{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n     var confirmation = String(vaInputs.language_switch_confirmation || '''').toLowerCase();\n     var answer = String(vaInputs.answer || '''').toLowerCase();\n\n     var declined = (confirmation === ''no'' || answer === ''no'');\n\n     return declined;\n})()\n})()"},"id":"670768cb39d84a96a9b915d8fdcebca9","name":"No","expert_mode":false}],"id":"6addb345f77048ac8c6b9dec6291049f","goal_id":"primary","expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Device Type - not mweb","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    /* Return true or false to indicate the branch condition''s applicability.\n       For example:\n\n       var applies = vaInputs.first_name == ''Bill'' ? true : false;\n       return applies;\n    */\n    return vaContext.deviceType != ''mweb'';;\n})()\n})()"},"id":"65bfa491280347a7be78cb8e1ccbc12c","name":"Device Type - not mweb","expert_mode":false},{"type":"Branch","label":"Device Type - mweb","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaContext.deviceType == ''mweb'';\n})()\n})()"},"id":"0d3f5091794c4ac2af60d632f89baa45","name":"Device Type - mweb","expert_mode":false}],"id":"94cd05595f6f4afda00775bfde398216","goal_id":"primary","expert_mode":false},{"type":"LibraryCall","library_topic_name":"Data Collector","library_topic_id":"4c19933e4322211006650464dbb8f22d","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"definition","value":{"type":"String","mode":"script","value":"(function execute() {\n        var config = {\n            configuration: {\"purpose\":\"{{0}}\",\"inputs\":[{\"name\":\"switch_language\",\"type\":\"boolean\",\"discoverable\":true,\"description\":\"Boolean control to confirm whether the user wants to switch the language of their conversation.\",\"skipMode\":\"''simple''\",\"skipCondition\":\"\\\"\\\"\",\"message\":\"(function(vaVars, vaInputs) {return (function execute() {\\n    var language = ''English'';\\n    var languageGR = new GlideRecord(''sys_language'');\\n    if (languageGR.isValid()) {\\n      languageGR.addQuery(''id'', vaVars.global_runtime_detected_language);\\n      languageGR.query();\\n    \\n      if(languageGR.next()) {\\n          language = languageGR.getValue(''name'');\\n      }\\n    }\\n\\n    var detectedLanguageCode = vaVars.global_runtime_detected_language;\\n    var requesterLanguage = gs.getMessageLang(language, vaContext.getRequesterLang());\\n    var translatedLanguage = gs.getMessageLang(language, detectedLanguageCode);\\n\\n    return ''LangSwitchConfirmationMessage:'' + gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', vaContext.getRequesterLang(), requesterLanguage) + ''\\\\n\\\\n'' +\\n        gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', detectedLanguageCode, translatedLanguage);\\n})()\\n;})(_taskVaVars[{{4}}], _taskVaInputs[{{5}}])\",\"helpText\":\"false\",\"applicability\":\"\",\"validation\":\"\"}],\"instructions\":\"{{1}}\",\"advanced_parameters\":\"{{2}}\",\"callingTask\":\"{{3}}\",\"scopeName\":\"\",\"confirm_summary\":false,\"slots\":[{\"name\":\"language_switch_confirmation\",\"type\":\"reference\",\"discoverable\":true,\"description\":\"Dynamic choice picker control with Yes/No values to confirm whether the user wants to switch the language of their conversation.\",\"validation\":\"\",\"message\":\"(function(vaVars, vaInputs) {return (function execute() {\\n    var label = gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', vaContext.getRequesterLang(), vaVars.requesterLanguage);\\n    var translatedLabel = gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', vaVars.global_runtime_detected_language, vaVars.translatedLanguage);\\n    return ''LangSwitchConfirmationMessage:''+ label + ''\\\\n\\\\n''+ translatedLabel;\\n})()\\n;})(_taskVaVars[{{6}}], _taskVaInputs[{{7}}])\",\"choiceMode\":\"''script''\",\"script\":\"(function(vaVars, vaInputs) {return (function execute() { \\n    \\n    var yes = gs.getMessageLang(''Yes'', vaContext.getRequesterLang()) + '' | '' +  gs.getMessageLang(''Yes'', vaVars.global_runtime_detected_language);\\n    var no = gs.getMessageLang(''No'', vaContext.getRequesterLang()) + '' | '' +  gs.getMessageLang(''No'', vaVars.global_runtime_detected_language);\\n\\n    var options = [];\\n    options.push({ ''value'': ''Yes'', ''label'': yes, ''render_style'': ''data''});\\n    options.push({ ''value'': ''No'', ''label'': no, ''render_style'': ''data''});\\n    return options;\\n})()\\n;})(_taskVaVars[{{8}}], _taskVaInputs[{{9}}])\",\"multipleSelect\":\"false\",\"autoSelect\":\"true\"}],\"applicability\":\"\",\"classificationOverrides\":[]}\n        };\n        return JSON.stringify(config);\n    })()"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"inputs","metadata":{"type":"String","list":true,"items":[{"type":"String","mode":"string","value":"Collect user input"},{"type":"String","mode":"string","value":""},{"type":"String","mode":"string","value":""},{"type":"String","mode":"script","value":"(function() { return vaSystem.getConversationTaskId()})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"}],"use_items":true}}],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"outputs","main_topic_mapped_variable_name":"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output"}],"header_card_fields":[],"input_parameters_mode":"dynamic","output_parameters_mode":"dynamic","id":"4aa25441b5214f50937787f9c53e53bc","name":"Switch Language","goal_id":"primary","expert_mode":false,"variableIds":["2f5fb5d0cd3847778ac4d3f92fd869fa"]},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"No","expression":{"type":"Applicability","mode":"query","value":"switch_language="},"id":"cc15a3ff9cfd4fa483c7b977c47291d5","name":"No","expert_mode":false},{"type":"Branch","label":"Yes","expression":{"type":"Applicability","mode":"query","value":"switch_language=true"},"id":"929be10b41c34dbaa1151e30140ebf9d","name":"Yes","expert_mode":false}],"id":"bacaf374c9c142bcb9a157044542d3a7","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    gs.info(''Virtual Agent Pre Topic Discovery Topic changing the global_requester_session_language to '' + vaVars.global_runtime_detected_language);\n    vaVars.global_requester_session_language = vaVars.global_runtime_detected_language;\n})()","id":"24c219e1ad1543e6b45020878cbe7e48","name":"Update Session Requester Language","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {    \n    var args = vaVars.global_skill_discovery_args;\n\n    if (!args) {\n        args = {};\n    }\n    \n    var confirmation = String(vaInputs.language_switch_confirmation || '''').toLowerCase();\n    var answer = String(vaInputs.answer || '''').toLowerCase();\n    var switchLanguage = (vaInputs.switch_language === true ||\n                        String(vaInputs.switch_language).toLowerCase() === ''true'');\n\n    var userResponse = (answer !== ''no'' || confirmation !== ''no'' || switchLanguage);\n\n    args[''user_response''] = userResponse ? ''true'' : ''false'';\n  \n    vaSystem.executeSkillDiscoveryWithArgs(vaVars.global_utterance, args);\n})()","id":"8c7bbdbef860497da0f69c48396820ab","name":"Skill Discovery","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.original_requester_language_code = vaVars.global_requester_session_language;\n})()\n","id":"0d33e6eeb2224467a28cc7eb92f93fc3","name":"Save Original Requester Language Code","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaSystem.sendSwitchLanguageActionMessage(vaVars.global_requester_session_language, vaVars.original_requester_language_code);\n})()\n","id":"d7eb0cbd0b814c72b95b254e0b68ad07","name":"Send Switch Language Action Message","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_skip_translating_next_message = true;\n})()\n","id":"d698df2cf15c406284965ab416ccdb27","name":"enable global translation skip flag","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_skip_translating_next_message = false;\n})()\n","id":"3ce7ea36df4f4ef098eff765e1056f84","name":"disable global translation skip flag","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    \n  vaVars.experience = '''';\n\n  var portal = vaContext.portal;\n  if (portal) {\n      var portalGr = new GlideRecord(''sp_portal'');\n      portalGr.addQuery(''url_suffix'', portal);\n      portalGr.setLimit(1);\n      portalGr.query();\n  \n      if (portalGr.next()) {\n          var documentId = portalGr.getUniqueValue();\n\n          var channelGr = new GlideRecord(''sys_now_assist_deployment_channel'');\n          channelGr.addQuery(''document_table'', ''sp_portal'');\n          channelGr.addQuery(''document_id'', documentId);\n          channelGr.addActiveQuery();\n          channelGr.setLimit(1);\n          channelGr.query();\n  \n          if (channelGr.next()) {\n              vaVars.experience = channelGr.getValue(''experience'') || '''';\n          }\n      }\n  }\n})()\n","id":"f644255fd68a4fafa1bfcc5033e33055","name":"set experience","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Standard Chat","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.experience != ''self_service_dialog'' && vaVars.experience != ''self_service'';\n})()\n})()"},"id":"9640de73450246bea46e8f9369b561ea","name":"Standard Chat","expert_mode":false},{"type":"Branch","label":"Enhanced Chat","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return vaVars.experience == ''self_service_dialog'' || vaVars.experience == ''self_service'';\n})()\n})()"},"id":"2cf08ec9f9634159843656785634e507","name":"Enhanced Chat","expert_mode":false}],"id":"ced7dd0a56e24665883f28650fc446ba","goal_id":"primary","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n  var detectedLang = vaVars.global_runtime_detected_language;\n\n  var languageName = (function() {\n      if (detectedLang) {\n          var languageGR = new GlideRecord(''sys_language'');\n          if (languageGR.isValid()) {\n              languageGR.addQuery(''id'', detectedLang);\n              languageGR.setLimit(1);\n              languageGR.query();\n\n              if (languageGR.next()) {\n                  return languageGR.getValue(''name'') || ''English'';\n              }\n          }\n      }\n      return ''English'';\n  })();\n\n  vaVars.requesterLanguage = gs.getMessageLang(languageName, vaContext.getRequesterLang());\n  vaVars.translatedLanguage = gs.getMessageLang(languageName, detectedLang);\n    \n})()\n","id":"e00f444f042d48bcb7b3f0325cc4f88f","name":"set variables","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"LibraryCall","library_topic_name":"Data Collector","library_topic_id":"4c19933e4322211006650464dbb8f22d","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"definition","value":{"type":"String","mode":"script","value":"(function execute() {\n        var config = {\n            configuration: {\"purpose\":\"{{0}}\",\"inputs\":[{\"name\":\"language_switch_confirmation\",\"type\":\"reference\",\"discoverable\":true,\"description\":\"Dynamic choice picker control with Yes/No values to confirm whether the user wants to switch the language of their conversation.\",\"skipMode\":\"''simple''\",\"skipCondition\":\"\\\"\\\"\",\"message\":\"(function(vaVars, vaInputs) {return (function execute() {\\n    var label = gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', vaContext.getRequesterLang(), vaVars.requesterLanguage);\\n    var translatedLabel = gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', vaVars.global_runtime_detected_language, vaVars.translatedLanguage);\\n    return ''LangSwitchConfirmationMessage:''+ label + ''\\\\n\\\\n''+ translatedLabel;\\n})()\\n;})(_taskVaVars[{{4}}], _taskVaInputs[{{5}}])\",\"helpText\":\"false\",\"choiceMode\":\"''script''\",\"script\":\"(function(vaVars, vaInputs) {return (function execute() { \\n    \\n    var yes = gs.getMessageLang(''Yes'', vaContext.getRequesterLang()) + '' | '' +  gs.getMessageLang(''Yes'', vaVars.global_runtime_detected_language);\\n    var no = gs.getMessageLang(''No'', vaContext.getRequesterLang()) + '' | '' +  gs.getMessageLang(''No'', vaVars.global_runtime_detected_language);\\n\\n    var options = [];\\n    options.push({ ''value'': ''Yes'', ''label'': yes, ''render_style'': ''data''});\\n    options.push({ ''value'': ''No'', ''label'': no, ''render_style'': ''data''});\\n    return options;\\n})()\\n;})(_taskVaVars[{{6}}], _taskVaInputs[{{7}}])\",\"multipleSelect\":\"false\",\"autoSelect\":\"true\",\"applicability\":\"\",\"validation\":\"\"}],\"instructions\":\"{{1}}\",\"advanced_parameters\":\"{{2}}\",\"callingTask\":\"{{3}}\",\"scopeName\":\"Global\",\"confirm_summary\":false,\"slots\":[{\"name\":\"switch_language\",\"type\":\"boolean\",\"discoverable\":true,\"description\":\"Boolean control to confirm whether the user wants to switch the language of their conversation.\",\"validation\":\"\",\"message\":\"(function(vaVars, vaInputs) {return (function execute() {\\n    var language = ''English'';\\n    var languageGR = new GlideRecord(''sys_language'');\\n    if (languageGR.isValid()) {\\n      languageGR.addQuery(''id'', vaVars.global_runtime_detected_language);\\n      languageGR.query();\\n    \\n      if(languageGR.next()) {\\n          language = languageGR.getValue(''name'');\\n      }\\n    }\\n\\n    var detectedLanguageCode = vaVars.global_runtime_detected_language;\\n    var requesterLanguage = gs.getMessageLang(language, vaContext.getRequesterLang());\\n    var translatedLanguage = gs.getMessageLang(language, detectedLanguageCode);\\n\\n    return ''LangSwitchConfirmationMessage:'' + gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', vaContext.getRequesterLang(), requesterLanguage) + ''\\\\n\\\\n'' +\\n        gs.getMessageLang(''I have detected you are typing in {0}. Would you like to continue the conversation in {0}?'', detectedLanguageCode, translatedLanguage);\\n})()\\n;})(_taskVaVars[{{8}}], _taskVaInputs[{{9}}])\"}],\"applicability\":\"\",\"classificationOverrides\":[]}\n        };\n        return JSON.stringify(config);\n    })()"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"inputs","metadata":{"type":"String","list":true,"items":[{"type":"String","mode":"string","value":"Collect user input"},{"type":"String","mode":"string","value":""},{"type":"String","mode":"string","value":""},{"type":"String","mode":"script","value":"(function() { return vaSystem.getConversationTaskId()})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"},{"type":"String","mode":"script","value":"(function() { return JSON.stringify(vaSystem.getConversationTaskId())})()"}],"use_items":true}}],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"outputs","main_topic_mapped_variable_name":"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output"}],"header_card_fields":[],"input_parameters_mode":"dynamic","output_parameters_mode":"dynamic","id":"25e5921c8fdd4deb96e3c1c330ea111b","name":"Language Switch Confirmation","goal_id":"primary","expert_mode":false,"variableIds":["36d5bd20a68e4f1ea8e4c3c465a8e2f1"]},{"type":"ScriptedAction","script":"(function execute() {\n                    var mappings = {\"switch_language\":\"switch_language\",\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\":\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\"};\n                    var output = JSON.parse(vaInputs[''ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output'']);\n                    var variables = {\"user\":{\"category\":\"vaInputs\",\"id\":\"7eceaa3472084b3ea44ef1e8997eb820\",\"label\":\"User\",\"name\":\"user\",\"table\":\"sys_user\",\"varType\":\"reference\"},\"answer\":{\"id\":\"d2e00cf15ccf460d8309c28e8f887247\",\"name\":\"answer\",\"label\":\"Answer\",\"defaultValue\":\"answer\",\"varType\":\"string\",\"category\":\"vaInputs\",\"metadata\":{\"libraryMappingType\":\"output\"},\"preventDisable\":true,\"nodeId\":\"cf9fd9a53a7c4bc184bbcfcca60e4c35\",\"isHidden\":false},\"isNowAssist\":{\"id\":\"3cfb1a3a892e496885236a4f77ba4322\",\"value\":{\"mode\":\"script\",\"value\":\"(function execute() {\\n    return vaSystem.isNowAssist();\\n})()\\n\"},\"name\":\"isNowAssist\",\"label\":\"isNowAssist\",\"varType\":\"script\",\"category\":\"vaVars\"},\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\":{\"id\":\"ec87ad26df5f4721aca182d62b3a818d\",\"name\":\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\",\"label\":\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\",\"isReferenceable\":false,\"varType\":\"string\",\"category\":\"vaInputs\",\"metadata\":{\"libraryMappingType\":\"output\"}},\"switch_language\":{\"id\":\"2f5fb5d0cd3847778ac4d3f92fd869fa\",\"varType\":\"boolean\",\"category\":\"vaInputs\",\"label\":\"Switch Language\",\"name\":\"switch_language\",\"choices\":[{\"label\":\"\",\"value\":\"\"},{\"label\":\"\",\"value\":\"\"}],\"mode\":\"\",\"table\":\"\",\"aiInput\":true,\"inputId\":0,\"nodeId\":\"4aa25441b5214f50937787f9c53e53bc\",\"isHidden\":false,\"description\":\"Boolean control to confirm whether the user wants to switch the language of their conversation.\"},\"original_requester_language_code\":{\"id\":\"69b36f511131418eafbe663a25ad5998\",\"value\":{\"value\":\"\",\"mode\":\"simple\"},\"name\":\"original_requester_language_code\",\"label\":\"original_requester_language_code\",\"varType\":\"script\",\"category\":\"vaVars\"},\"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\":{\"id\":\"ee8b42dd9a4341dc8fbd7111882c81ff\",\"name\":\"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\",\"label\":\"Ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\",\"isReferenceable\":false,\"varType\":\"string\",\"category\":\"vaInputs\",\"metadata\":{\"libraryMappingType\":\"output\"}},\"language_switch_confirmation\":{\"id\":\"36d5bd20a68e4f1ea8e4c3c465a8e2f1\",\"varType\":\"reference\",\"category\":\"vaInputs\",\"label\":\"Language Switch Confirmation\",\"name\":\"language_switch_confirmation\",\"choices\":[{\"label\":\"\",\"value\":\"\"},{\"label\":\"\",\"value\":\"\"}],\"mode\":\"glide_record\",\"table\":\"\",\"aiInput\":true,\"inputId\":0,\"nodeId\":\"25e5921c8fdd4deb96e3c1c330ea111b\",\"isHidden\":false,\"description\":\"Dynamic choice picker control with Yes/No values to confirm whether the user wants to switch the language of their conversation.\"}}\n                    Object.keys(output).forEach(function(key) {\n                        var mappedKey = mappings[key];\n                        if (!vaInputs[mappedKey]) {vaInputs.initialize(mappedKey);}\n                        var isMultiSelect = variables[mappedKey] && variables[mappedKey].varType === ''array.reference'';\n                        if (isMultiSelect) {vaInputs[mappedKey] = output[key] ? JSON.parse(output[key]) : '''';}\n                        else {vaInputs[mappedKey] = output[key];}\n                    });\n                })()","id":"1d3ff87ba58548d8addd5504f7cf329f","name":"4aa25441b5214f50937787f9c53e53bc_ai_data_collector_output_handler","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n                    var mappings = {\"language_switch_confirmation\":\"language_switch_confirmation\",\"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\":\"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\"};\n                    var output = JSON.parse(vaInputs[''ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output'']);\n                    var variables = {\"user\":{\"category\":\"vaInputs\",\"id\":\"7eceaa3472084b3ea44ef1e8997eb820\",\"label\":\"User\",\"name\":\"user\",\"table\":\"sys_user\",\"varType\":\"reference\"},\"answer\":{\"id\":\"d2e00cf15ccf460d8309c28e8f887247\",\"name\":\"answer\",\"label\":\"Answer\",\"defaultValue\":\"answer\",\"varType\":\"string\",\"category\":\"vaInputs\",\"metadata\":{\"libraryMappingType\":\"output\"},\"preventDisable\":true,\"nodeId\":\"cf9fd9a53a7c4bc184bbcfcca60e4c35\",\"isHidden\":false},\"isNowAssist\":{\"id\":\"3cfb1a3a892e496885236a4f77ba4322\",\"value\":{\"mode\":\"script\",\"value\":\"(function execute() {\\n    return vaSystem.isNowAssist();\\n})()\\n\"},\"name\":\"isNowAssist\",\"label\":\"isNowAssist\",\"varType\":\"script\",\"category\":\"vaVars\"},\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\":{\"id\":\"ec87ad26df5f4721aca182d62b3a818d\",\"name\":\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\",\"label\":\"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output\",\"isReferenceable\":false,\"varType\":\"string\",\"category\":\"vaInputs\",\"metadata\":{\"libraryMappingType\":\"output\"}},\"switch_language\":{\"id\":\"2f5fb5d0cd3847778ac4d3f92fd869fa\",\"varType\":\"boolean\",\"category\":\"vaInputs\",\"label\":\"Switch Language\",\"name\":\"switch_language\",\"choices\":[{\"label\":\"\",\"value\":\"\"},{\"label\":\"\",\"value\":\"\"}],\"mode\":\"\",\"table\":\"\",\"aiInput\":true,\"inputId\":0,\"nodeId\":\"4aa25441b5214f50937787f9c53e53bc\",\"isHidden\":false,\"description\":\"Boolean control to confirm whether the user wants to switch the language of their conversation.\"},\"original_requester_language_code\":{\"id\":\"69b36f511131418eafbe663a25ad5998\",\"value\":{\"value\":\"\",\"mode\":\"simple\"},\"name\":\"original_requester_language_code\",\"label\":\"original_requester_language_code\",\"varType\":\"script\",\"category\":\"vaVars\"},\"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\":{\"id\":\"ee8b42dd9a4341dc8fbd7111882c81ff\",\"name\":\"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\",\"label\":\"Ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output\",\"isReferenceable\":false,\"varType\":\"string\",\"category\":\"vaInputs\",\"metadata\":{\"libraryMappingType\":\"output\"}},\"language_switch_confirmation\":{\"id\":\"36d5bd20a68e4f1ea8e4c3c465a8e2f1\",\"varType\":\"reference\",\"category\":\"vaInputs\",\"label\":\"Language Switch Confirmation\",\"name\":\"language_switch_confirmation\",\"choices\":[{\"label\":\"\",\"value\":\"\"},{\"label\":\"\",\"value\":\"\"}],\"mode\":\"glide_record\",\"table\":\"\",\"aiInput\":true,\"inputId\":0,\"nodeId\":\"25e5921c8fdd4deb96e3c1c330ea111b\",\"isHidden\":false,\"description\":\"Dynamic choice picker control with Yes/No values to confirm whether the user wants to switch the language of their conversation.\"}}\n                    Object.keys(output).forEach(function(key) {\n                        var mappedKey = mappings[key];\n                        if (!vaInputs[mappedKey]) {vaInputs.initialize(mappedKey);}\n                        var isMultiSelect = variables[mappedKey] && variables[mappedKey].varType === ''array.reference'';\n                        if (isMultiSelect) {vaInputs[mappedKey] = output[key] ? JSON.parse(output[key]) : '''';}\n                        else {vaInputs[mappedKey] = output[key];}\n                    });\n                })()","id":"81cd628176d043a8b587663ab0057711","name":"25e5921c8fdd4deb96e3c1c330ea111b_ai_data_collector_output_handler","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false}],"edges":[{"type":"Edge","source_node_id":"bacaf374c9c142bcb9a157044542d3a7","target_node_id":"8c7bbdbef860497da0f69c48396820ab","branch_id":"cc15a3ff9cfd4fa483c7b977c47291d5","id":"72730f5ab1b64f4aa2e9d5bf9cfe5a84","name":"cc15a3ff9cfd4fa483c7b977c47291d5"},{"type":"Edge","source_node_id":"6addb345f77048ac8c6b9dec6291049f","target_node_id":"24c219e1ad1543e6b45020878cbe7e48","branch_id":"1c65c6a00c814c3b93e2fceaaa94b162","id":"64945ff6f51c43658e258e3575d356af","name":"1c65c6a00c814c3b93e2fceaaa94b162"},{"type":"Edge","source_node_id":"cf9fd9a53a7c4bc184bbcfcca60e4c35","target_node_id":"6addb345f77048ac8c6b9dec6291049f","id":"8546d2e14d2c452faa42eab62fb157d5"},{"type":"Edge","source_node_id":"6addb345f77048ac8c6b9dec6291049f","target_node_id":"8c7bbdbef860497da0f69c48396820ab","branch_id":"670768cb39d84a96a9b915d8fdcebca9","id":"61987c218958411c9a0a9b68a2e5f2a9","name":"670768cb39d84a96a9b915d8fdcebca9"},{"type":"Edge","source_node_id":"bacaf374c9c142bcb9a157044542d3a7","target_node_id":"24c219e1ad1543e6b45020878cbe7e48","branch_id":"929be10b41c34dbaa1151e30140ebf9d","id":"16ece2e3f8cd4740bcff84cf93efcea6","name":"929be10b41c34dbaa1151e30140ebf9d"},{"type":"Edge","source_node_id":"8c7bbdbef860497da0f69c48396820ab","target_node_id":"5d8e967ac03f49cb8985e8be536f14d2","id":"5e6cd8f7ed004e38b66e2aa7bb5f5a35"},{"type":"Edge","source_node_id":"224f9350e89147fcbfbe538026e9dd27","target_node_id":"0d33e6eeb2224467a28cc7eb92f93fc3","id":"5f3cd04634854cb083c4e05017a8421c"},{"type":"Edge","source_node_id":"0d33e6eeb2224467a28cc7eb92f93fc3","target_node_id":"94cd05595f6f4afda00775bfde398216","id":"e604da8a7d9e4b35abdfae0f03cbac89"},{"type":"Edge","source_node_id":"24c219e1ad1543e6b45020878cbe7e48","target_node_id":"d7eb0cbd0b814c72b95b254e0b68ad07","id":"53377c97300043539d9dcaf468a204cd"},{"type":"Edge","source_node_id":"d7eb0cbd0b814c72b95b254e0b68ad07","target_node_id":"8c7bbdbef860497da0f69c48396820ab","id":"40036cda1f4043b3804b1b807c633065"},{"type":"Edge","source_node_id":"94cd05595f6f4afda00775bfde398216","target_node_id":"d698df2cf15c406284965ab416ccdb27","branch_id":"65bfa491280347a7be78cb8e1ccbc12c","id":"e4ed4b51d91346ab8b192d0f21f26b8e","name":"65bfa491280347a7be78cb8e1ccbc12c"},{"type":"Edge","source_node_id":"d698df2cf15c406284965ab416ccdb27","target_node_id":"4aa25441b5214f50937787f9c53e53bc","id":"a545b04a37a34e76a2abbab03ef3b04b"},{"type":"Edge","source_node_id":"4aa25441b5214f50937787f9c53e53bc","target_node_id":"1d3ff87ba58548d8addd5504f7cf329f","id":"ed8284535a6d4406997b0dc9da11c4ca"},{"type":"Edge","source_node_id":"1d3ff87ba58548d8addd5504f7cf329f","target_node_id":"3ce7ea36df4f4ef098eff765e1056f84","id":"7c62cfc9fa6e4c7db4be83c3f08071d9"},{"type":"Edge","source_node_id":"3ce7ea36df4f4ef098eff765e1056f84","target_node_id":"bacaf374c9c142bcb9a157044542d3a7","id":"2e23c9e5cc104710b14f27f164753112"},{"type":"Edge","source_node_id":"94cd05595f6f4afda00775bfde398216","target_node_id":"f644255fd68a4fafa1bfcc5033e33055","branch_id":"0d3f5091794c4ac2af60d632f89baa45","id":"0f1c5a8506a3499fb621640ada5c9ecd","name":"0d3f5091794c4ac2af60d632f89baa45"},{"type":"Edge","source_node_id":"f644255fd68a4fafa1bfcc5033e33055","target_node_id":"ced7dd0a56e24665883f28650fc446ba","id":"03f2c34a58704a749d8a2fefbe700efc"},{"type":"Edge","source_node_id":"ced7dd0a56e24665883f28650fc446ba","target_node_id":"cf9fd9a53a7c4bc184bbcfcca60e4c35","branch_id":"9640de73450246bea46e8f9369b561ea","id":"8a22e1df773a42388f503c4b4d0011f5","name":"9640de73450246bea46e8f9369b561ea"},{"type":"Edge","source_node_id":"ced7dd0a56e24665883f28650fc446ba","target_node_id":"e00f444f042d48bcb7b3f0325cc4f88f","branch_id":"2cf08ec9f9634159843656785634e507","id":"f0e4556b92574e6fb0a03f7150b7b58d","name":"2cf08ec9f9634159843656785634e507"},{"type":"Edge","source_node_id":"e00f444f042d48bcb7b3f0325cc4f88f","target_node_id":"25e5921c8fdd4deb96e3c1c330ea111b","id":"6104eefc31c14fe89d955f688f887ba3"},{"type":"Edge","source_node_id":"25e5921c8fdd4deb96e3c1c330ea111b","target_node_id":"81cd628176d043a8b587663ab0057711","id":"6162f0f7c9114dd985262128bb567180"},{"type":"Edge","source_node_id":"81cd628176d043a8b587663ab0057711","target_node_id":"6addb345f77048ac8c6b9dec6291049f","id":"4cf2ba36de584ffe85cfe00d9c3b398b"}],"id":"primary"}],"script_variables":[{"type":"String","name":"isNowAssist","value":{"type":"String","mode":"script","value":"(function execute() {\n    return vaSystem.isNowAssist();\n})()\n"},"list":false,"id":"3cfb1a3a892e496885236a4f77ba4322","formatType":"text","secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"original_requester_language_code","value":{"type":"String","mode":"string"},"list":false,"id":"69b36f511131418eafbe663a25ad5998","formatType":"text","secure":false,"sensitive":false,"aiInput":false}],"glide_variables":[{"type":"Reference","table":"sys_user","auto_select":false,"id":"7eceaa3472084b3ea44ef1e8997eb820","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"answer","list":false,"id":"d2e00cf15ccf460d8309c28e8f887247","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output","list":false,"id":"ec87ad26df5f4721aca182d62b3a818d","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false},{"type":"True/False","id":"2f5fb5d0cd3847778ac4d3f92fd869fa","name":"switch_language","description":"Boolean control to confirm whether the user wants to switch the language of their conversation.","formatType":"text","secure":false,"sensitive":false,"aiInput":true,"list":false},{"type":"String","name":"ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output","list":false,"id":"ee8b42dd9a4341dc8fbd7111882c81ff","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false},{"type":"Choice","choices":[],"id":"36d5bd20a68e4f1ea8e4c3c465a8e2f1","name":"language_switch_confirmation","description":"Dynamic choice picker control with Yes/No values to confirm whether the user wants to switch the language of their conversation.","formatType":"text","secure":false,"sensitive":false,"aiInput":true,"list":false,"table":""}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":["public"],"scope":"global","domain":"global","topic_type":"STANDARD","channels":[],"dialog_acts_enabled":false,"id":"9fc49d7aa3230210b75cc160441e618d","name":"Pre Skill Discovery","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"description":"Topic to handle operations like language detection prior to going into skill discovery","model_type":"llm","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"Pre Skill Discovery","library":false,"csTopicId":"347599baa3230210b75cc160441e6181","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 9fc49d7aa3230210b75cc160441e618d
+graph: |-
+  {
+    "graph_api_version": "1.0.84",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "224f9350e89147fcbfbe538026e9dd27": {
+            "id": "224f9350e89147fcbfbe538026e9dd27",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "5d8e967ac03f49cb8985e8be536f14d2": {
+            "id": "5d8e967ac03f49cb8985e8be536f14d2",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "mode": "simple",
+              "value": ""
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "cf9fd9a53a7c4bc184bbcfcca60e4c35": {
+            "id": "cf9fd9a53a7c4bc184bbcfcca60e4c35",
+            "stepType": "CustomControl",
+            "name": "Language Switch Control",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "reusableTopicChoice": "Language Switch Control",
+            "reusableTopicId": "60ce473853b230103296ddeeff7b1211",
+            "inputs": {},
+            "outputs": [
+              {
+                "id": "d2e00cf15ccf460d8309c28e8f887247",
+                "value": "answer",
+                "mapping": "answer",
+                "preventDisable": true
+              }
+            ],
+            "variableIds": [
+              "d2e00cf15ccf460d8309c28e8f887247"
+            ],
+            "outdatedNote": false,
+            "loading": false,
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "6addb345f77048ac8c6b9dec6291049f": {
+            "id": "6addb345f77048ac8c6b9dec6291049f",
+            "stepType": "Decision",
+            "name": "Decision",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "94cd05595f6f4afda00775bfde398216": {
+            "id": "94cd05595f6f4afda00775bfde398216",
+            "stepType": "Decision",
+            "name": "Decision",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "4aa25441b5214f50937787f9c53e53bc": {
+            "id": "4aa25441b5214f50937787f9c53e53bc",
+            "stepType": "StandaloneAIBooleanPrompt",
+            "name": "Switch Language",
+            "purpose": {
+              "value": "",
+              "mode": "simple"
+            },
+            "instructions": {
+              "value": "",
+              "mode": "simple"
+            },
+            "inputs": [
+              {
+                "itemId": "7ad4f4e13c4f43c3b76ab2e475779e10",
+                "displayName": "Switch Language",
+                "name": "switch_language",
+                "description": "Boolean control to confirm whether the user wants to switch the language of their conversation.",
+                "type": "boolean",
+                "variableId": "2f5fb5d0cd3847778ac4d3f92fd869fa",
+                "choices": [
+                  {
+                    "label": "",
+                    "value": ""
+                  },
+                  {
+                    "label": "",
+                    "value": ""
+                  }
+                ],
+                "mode": "",
+                "script": "",
+                "condition": {
+                  "value": "",
+                  "mode": "glide_query"
+                },
+                "stepType": "BooleanPrompt",
+                "enforcePrompt": true,
+                "skippable": {
+                  "value": "",
+                  "mode": "query"
+                },
+                "applicability": {
+                  "value": "",
+                  "mode": "query"
+                },
+                "promptMessage": {
+                  "value": "(function execute() {\n    var language = 'English';\n    var languageGR = new GlideRecord('sys_language');\n    if (languageGR.isValid()) {\n      languageGR.addQuery('id', vaVars.global_runtime_detected_language);\n      languageGR.query();\n    \n      if(languageGR.next()) {\n          language = languageGR.getValue('name');\n      }\n    }\n\n    var detectedLanguageCode = vaVars.global_runtime_detected_language;\n    var requesterLanguage = gs.getMessageLang(language, vaContext.getRequesterLang());\n    var translatedLanguage = gs.getMessageLang(language, detectedLanguageCode);\n\n    return 'LangSwitchConfirmationMessage:' + gs.getMessageLang('I have detected you are typing in {0}. Would you like to continue the conversation in {0}?', vaContext.getRequesterLang(), requesterLanguage) + '\\n\\n' +\n        gs.getMessageLang('I have detected you are typing in {0}. Would you like to continue the conversation in {0}?', detectedLanguageCode, translatedLanguage);\n})()\n",
+                  "mode": "script"
+                },
+                "inputType": {
+                  "format": "Text",
+                  "script": ""
+                },
+                "isMultipleSelect": false,
+                "discoverable": true,
+                "dynamicDescription": {
+                  "value": "",
+                  "mode": "simple"
+                },
+                "validation": "",
+                "autoSelect": true,
+                "hasCardHeader": false,
+                "cardMetadata": {
+                  "mode": "card",
+                  "metadataScript": "",
+                  "cardTemplate": "",
+                  "cardFields": {},
+                  "cardDefinition": {}
+                },
+                "helpText": false,
+                "helpTextMessage": {
+                  "value": "",
+                  "mode": "simple"
+                }
+              }
+            ],
+            "outputs": [],
+            "advanced_parameters": "",
+            "confirmSummary": false,
+            "useSlots": false,
+            "slots": "",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "hiddenVariableIds": [
+              "ec87ad26df5f4721aca182d62b3a818d"
+            ],
+            "hiddenVariableNames": [
+              "ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output"
+            ],
+            "standalone": true,
+            "variableIds": [
+              "2f5fb5d0cd3847778ac4d3f92fd869fa"
+            ],
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            },
+            "classificationEnabled": false,
+            "classificationOverrides": []
+          },
+          "bacaf374c9c142bcb9a157044542d3a7": {
+            "id": "bacaf374c9c142bcb9a157044542d3a7",
+            "stepType": "Decision",
+            "name": "Decision",
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "24c219e1ad1543e6b45020878cbe7e48": {
+            "id": "24c219e1ad1543e6b45020878cbe7e48",
+            "name": "Update Session Requester Language",
+            "script": "(function execute() {\n    gs.info('Virtual Agent Pre Topic Discovery Topic changing the global_requester_session_language to ' + vaVars.global_runtime_detected_language);\n    vaVars.global_requester_session_language = vaVars.global_runtime_detected_language;\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "8c7bbdbef860497da0f69c48396820ab": {
+            "id": "8c7bbdbef860497da0f69c48396820ab",
+            "name": "Skill Discovery",
+            "script": "(function execute() {    \n    var args = vaVars.global_skill_discovery_args;\n\n    if (!args) {\n        args = {};\n    }\n    \n    var confirmation = String(vaInputs.language_switch_confirmation || '').toLowerCase();\n    var answer = String(vaInputs.answer || '').toLowerCase();\n    var switchLanguage = (vaInputs.switch_language === true ||\n                        String(vaInputs.switch_language).toLowerCase() === 'true');\n\n    var userResponse = (answer !== 'no' || confirmation !== 'no' || switchLanguage);\n\n    args['user_response'] = userResponse ? 'true' : 'false';\n  \n    vaSystem.executeSkillDiscoveryWithArgs(vaVars.global_utterance, args);\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "0d33e6eeb2224467a28cc7eb92f93fc3": {
+            "id": "0d33e6eeb2224467a28cc7eb92f93fc3",
+            "name": "Save Original Requester Language Code",
+            "script": "(function execute() {\n    vaVars.original_requester_language_code = vaVars.global_requester_session_language;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "d7eb0cbd0b814c72b95b254e0b68ad07": {
+            "id": "d7eb0cbd0b814c72b95b254e0b68ad07",
+            "name": "Send Switch Language Action Message",
+            "script": "(function execute() {\n    vaSystem.sendSwitchLanguageActionMessage(vaVars.global_requester_session_language, vaVars.original_requester_language_code);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "cardMetadata": {
+              "mode": "card",
+              "metadataScript": "",
+              "cardTemplate": "",
+              "cardFields": {},
+              "cardDefinition": {}
+            }
+          },
+          "d698df2cf15c406284965ab416ccdb27": {
+            "id": "d698df2cf15c406284965ab416ccdb27",
+            "name": "enable global translation skip flag",
+            "script": "(function execute() {\n    vaVars.global_skip_translating_next_message = true;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "3ce7ea36df4f4ef098eff765e1056f84": {
+            "id": "3ce7ea36df4f4ef098eff765e1056f84",
+            "name": "disable global translation skip flag",
+            "script": "(function execute() {\n    vaVars.global_skip_translating_next_message = false;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "f644255fd68a4fafa1bfcc5033e33055": {
+            "id": "f644255fd68a4fafa1bfcc5033e33055",
+            "name": "set experience",
+            "script": "(function execute() {\n    \n  vaVars.experience = '';\n\n  var portal = vaContext.portal;\n  if (portal) {\n      var portalGr = new GlideRecord('sp_portal');\n      portalGr.addQuery('url_suffix', portal);\n      portalGr.setLimit(1);\n      portalGr.query();\n  \n      if (portalGr.next()) {\n          var documentId = portalGr.getUniqueValue();\n\n          var channelGr = new GlideRecord('sys_now_assist_deployment_channel');\n          channelGr.addQuery('document_table', 'sp_portal');\n          channelGr.addQuery('document_id', documentId);\n          channelGr.addActiveQuery();\n          channelGr.setLimit(1);\n          channelGr.query();\n  \n          if (channelGr.next()) {\n              vaVars.experience = channelGr.getValue('experience') || '';\n          }\n      }\n  }\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "ced7dd0a56e24665883f28650fc446ba": {
+            "id": "ced7dd0a56e24665883f28650fc446ba",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "e00f444f042d48bcb7b3f0325cc4f88f": {
+            "id": "e00f444f042d48bcb7b3f0325cc4f88f",
+            "name": "set variables",
+            "script": "(function execute() {\n  var detectedLang = vaVars.global_runtime_detected_language;\n\n  var languageName = (function() {\n      if (detectedLang) {\n          var languageGR = new GlideRecord('sys_language');\n          if (languageGR.isValid()) {\n              languageGR.addQuery('id', detectedLang);\n              languageGR.setLimit(1);\n              languageGR.query();\n\n              if (languageGR.next()) {\n                  return languageGR.getValue('name') || 'English';\n              }\n          }\n      }\n      return 'English';\n  })();\n\n  vaVars.requesterLanguage = gs.getMessageLang(languageName, vaContext.getRequesterLang());\n  vaVars.translatedLanguage = gs.getMessageLang(languageName, detectedLang);\n    \n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "25e5921c8fdd4deb96e3c1c330ea111b": {
+            "id": "25e5921c8fdd4deb96e3c1c330ea111b",
+            "stepType": "StandaloneAIReferenceChoicePrompt",
+            "name": "Language Switch Confirmation",
+            "purpose": {
+              "value": "",
+              "mode": "simple"
+            },
+            "instructions": {
+              "value": "",
+              "mode": "simple"
+            },
+            "inputs": [
+              {
+                "itemId": "71370ec5c5614193a63c1ec5700c23e0",
+                "displayName": "Language Switch Confirmation",
+                "name": "language_switch_confirmation",
+                "description": "Dynamic choice picker control with Yes/No values to confirm whether the user wants to switch the language of their conversation.",
+                "discoverable": true,
+                "dynamicDescription": {
+                  "value": "",
+                  "mode": "simple"
+                },
+                "type": "reference",
+                "variableId": "36d5bd20a68e4f1ea8e4c3c465a8e2f1",
+                "choices": [
+                  {
+                    "label": "",
+                    "value": ""
+                  },
+                  {
+                    "label": "",
+                    "value": ""
+                  }
+                ],
+                "mode": "external",
+                "script": "(function execute() { \n    \n    var yes = gs.getMessageLang('Yes', vaContext.getRequesterLang()) + ' | ' +  gs.getMessageLang('Yes', vaVars.global_runtime_detected_language);\n    var no = gs.getMessageLang('No', vaContext.getRequesterLang()) + ' | ' +  gs.getMessageLang('No', vaVars.global_runtime_detected_language);\n\n    var options = [];\n    options.push({ 'value': 'Yes', 'label': yes, 'render_style': 'data'});\n    options.push({ 'value': 'No', 'label': no, 'render_style': 'data'});\n    return options;\n})()\n",
+                "condition": {
+                  "value": "(function execute() { \n    \n    var yes = gs.getMessageLang('Yes', vaContext.getRequesterLang()) + ' | ' +  gs.getMessageLang('Yes', vaVars.global_runtime_detected_language);\n    var no = gs.getMessageLang('No', vaContext.getRequesterLang()) + ' | ' +  gs.getMessageLang('No', vaVars.global_runtime_detected_language);\n\n    var options = [];\n    options.push({ 'value': 'Yes', 'label': yes, 'render_style': 'data'});\n    options.push({ 'value': 'No', 'label': no, 'render_style': 'data'});\n    return options;\n})()\n",
+                  "mode": "external_script"
+                },
+                "stepType": "ReferenceChoicePrompt",
+                "enforcePrompt": true,
+                "helpText": false,
+                "skippable": {
+                  "value": "",
+                  "mode": "query"
+                },
+                "applicability": {
+                  "value": "",
+                  "mode": "query"
+                },
+                "promptMessage": {
+                  "value": "(function execute() {\n    var label = gs.getMessageLang('I have detected you are typing in {0}. Would you like to continue the conversation in {0}?', vaContext.getRequesterLang(), vaVars.requesterLanguage);\n    var translatedLabel = gs.getMessageLang('I have detected you are typing in {0}. Would you like to continue the conversation in {0}?', vaVars.global_runtime_detected_language, vaVars.translatedLanguage);\n    return 'LangSwitchConfirmationMessage:'+ label + '\\n\\n'+ translatedLabel;\n})()\n",
+                  "mode": "script"
+                },
+                "helpTextMessage": {
+                  "value": "",
+                  "mode": "simple"
+                },
+                "inputType": {
+                  "format": "Text",
+                  "script": ""
+                },
+                "isMultipleSelect": false,
+                "validation": "",
+                "autoSelect": true,
+                "hasCardHeader": false,
+                "cardMetadata": {
+                  "mode": "card",
+                  "metadataScript": "",
+                  "cardTemplate": "",
+                  "cardFields": {},
+                  "cardDefinition": {}
+                }
+              }
+            ],
+            "outputs": [],
+            "advanced_parameters": "",
+            "confirmSummary": false,
+            "useSlots": false,
+            "slots": "",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "hiddenVariableIds": [
+              "ee8b42dd9a4341dc8fbd7111882c81ff"
+            ],
+            "hiddenVariableNames": [
+              "ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output"
+            ],
+            "classificationEnabled": false,
+            "classificationOverrides": [],
+            "standalone": true,
+            "variableIds": [
+              "36d5bd20a68e4f1ea8e4c3c465a8e2f1"
+            ]
+          }
+        },
+        "edges": [
+          {
+            "id": "72730f5ab1b64f4aa2e9d5bf9cfe5a84",
+            "edgeType": "Branch",
+            "source": "bacaf374c9c142bcb9a157044542d3a7",
+            "target": "8c7bbdbef860497da0f69c48396820ab",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.switch_language=",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "64945ff6f51c43658e258e3575d356af",
+            "edgeType": "Branch",
+            "source": "6addb345f77048ac8c6b9dec6291049f",
+            "target": "24c219e1ad1543e6b45020878cbe7e48",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var confirmation = String(vaInputs.language_switch_confirmation || '').toLowerCase();\n    var answer = String(vaInputs.answer || '').toLowerCase();\n\n    var proceed = (answer !== 'no' && confirmation !== 'no');\n\n    return proceed;\n})()\n"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "8546d2e14d2c452faa42eab62fb157d5",
+            "edgeType": "Edge",
+            "source": "cf9fd9a53a7c4bc184bbcfcca60e4c35",
+            "target": "6addb345f77048ac8c6b9dec6291049f",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "61987c218958411c9a0a9b68a2e5f2a9",
+            "edgeType": "Branch",
+            "source": "6addb345f77048ac8c6b9dec6291049f",
+            "target": "8c7bbdbef860497da0f69c48396820ab",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n     var confirmation = String(vaInputs.language_switch_confirmation || '').toLowerCase();\n     var answer = String(vaInputs.answer || '').toLowerCase();\n\n     var declined = (confirmation === 'no' || answer === 'no');\n\n     return declined;\n})()\n"
+            },
+            "label": "No"
+          },
+          {
+            "id": "16ece2e3f8cd4740bcff84cf93efcea6",
+            "edgeType": "Branch",
+            "source": "bacaf374c9c142bcb9a157044542d3a7",
+            "target": "24c219e1ad1543e6b45020878cbe7e48",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.switch_language=true",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "5e6cd8f7ed004e38b66e2aa7bb5f5a35",
+            "edgeType": "Edge",
+            "source": "8c7bbdbef860497da0f69c48396820ab",
+            "target": "5d8e967ac03f49cb8985e8be536f14d2",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "5f3cd04634854cb083c4e05017a8421c",
+            "edgeType": "Edge",
+            "source": "224f9350e89147fcbfbe538026e9dd27",
+            "target": "0d33e6eeb2224467a28cc7eb92f93fc3",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e604da8a7d9e4b35abdfae0f03cbac89",
+            "edgeType": "Edge",
+            "source": "0d33e6eeb2224467a28cc7eb92f93fc3",
+            "target": "94cd05595f6f4afda00775bfde398216",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "53377c97300043539d9dcaf468a204cd",
+            "edgeType": "Edge",
+            "source": "24c219e1ad1543e6b45020878cbe7e48",
+            "target": "d7eb0cbd0b814c72b95b254e0b68ad07",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "40036cda1f4043b3804b1b807c633065",
+            "edgeType": "Edge",
+            "source": "d7eb0cbd0b814c72b95b254e0b68ad07",
+            "target": "8c7bbdbef860497da0f69c48396820ab",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e4ed4b51d91346ab8b192d0f21f26b8e",
+            "edgeType": "Branch",
+            "source": "94cd05595f6f4afda00775bfde398216",
+            "target": "d698df2cf15c406284965ab416ccdb27",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    /* Return true or false to indicate the branch condition's applicability.\n       For example:\n\n       var applies = vaInputs.first_name == 'Bill' ? true : false;\n       return applies;\n    */\n    return vaContext.deviceType != 'mweb';;\n})()\n"
+            },
+            "label": "Device Type - not mweb"
+          },
+          {
+            "id": "a545b04a37a34e76a2abbab03ef3b04b",
+            "edgeType": "Edge",
+            "source": "d698df2cf15c406284965ab416ccdb27",
+            "target": "4aa25441b5214f50937787f9c53e53bc",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "73b849d556f44259be5746f391284c9a",
+            "edgeType": "Edge",
+            "source": "4aa25441b5214f50937787f9c53e53bc",
+            "target": "3ce7ea36df4f4ef098eff765e1056f84",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "2e23c9e5cc104710b14f27f164753112",
+            "edgeType": "Edge",
+            "source": "3ce7ea36df4f4ef098eff765e1056f84",
+            "target": "bacaf374c9c142bcb9a157044542d3a7",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0f1c5a8506a3499fb621640ada5c9ecd",
+            "edgeType": "Branch",
+            "source": "94cd05595f6f4afda00775bfde398216",
+            "target": "f644255fd68a4fafa1bfcc5033e33055",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaContext.deviceType == 'mweb';\n})()\n"
+            },
+            "label": "Device Type - mweb"
+          },
+          {
+            "id": "03f2c34a58704a749d8a2fefbe700efc",
+            "edgeType": "Edge",
+            "source": "f644255fd68a4fafa1bfcc5033e33055",
+            "target": "ced7dd0a56e24665883f28650fc446ba",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "8a22e1df773a42388f503c4b4d0011f5",
+            "edgeType": "Branch",
+            "source": "ced7dd0a56e24665883f28650fc446ba",
+            "target": "cf9fd9a53a7c4bc184bbcfcca60e4c35",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.experience != 'self_service_dialog' && vaVars.experience != 'self_service';\n})()\n"
+            },
+            "label": "Standard Chat"
+          },
+          {
+            "id": "f0e4556b92574e6fb0a03f7150b7b58d",
+            "edgeType": "Branch",
+            "source": "ced7dd0a56e24665883f28650fc446ba",
+            "target": "e00f444f042d48bcb7b3f0325cc4f88f",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaVars.experience == 'self_service_dialog' || vaVars.experience == 'self_service';\n})()\n"
+            },
+            "label": "Enhanced Chat"
+          },
+          {
+            "id": "6104eefc31c14fe89d955f688f887ba3",
+            "edgeType": "Edge",
+            "source": "e00f444f042d48bcb7b3f0325cc4f88f",
+            "target": "25e5921c8fdd4deb96e3c1c330ea111b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "2a02973e72c0436aa08e69aa042afa9a",
+            "edgeType": "Edge",
+            "source": "25e5921c8fdd4deb96e3c1c330ea111b",
+            "target": "6addb345f77048ac8c6b9dec6291049f",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "7eceaa3472084b3ea44ef1e8997eb820": {
+        "category": "vaInputs",
+        "id": "7eceaa3472084b3ea44ef1e8997eb820",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "d2e00cf15ccf460d8309c28e8f887247": {
+        "id": "d2e00cf15ccf460d8309c28e8f887247",
+        "name": "answer",
+        "label": "Answer",
+        "defaultValue": "answer",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "cf9fd9a53a7c4bc184bbcfcca60e4c35",
+        "isHidden": false
+      },
+      "3cfb1a3a892e496885236a4f77ba4322": {
+        "id": "3cfb1a3a892e496885236a4f77ba4322",
+        "value": {
+          "mode": "script",
+          "value": "(function execute() {\n    return vaSystem.isNowAssist();\n})()\n"
+        },
+        "name": "isNowAssist",
+        "label": "isNowAssist",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "ec87ad26df5f4721aca182d62b3a818d": {
+        "id": "ec87ad26df5f4721aca182d62b3a818d",
+        "name": "ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output",
+        "label": "ai_data_collector_4aa25441b5214f50937787f9c53e53bc_output",
+        "isReferenceable": false,
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        }
+      },
+      "2f5fb5d0cd3847778ac4d3f92fd869fa": {
+        "id": "2f5fb5d0cd3847778ac4d3f92fd869fa",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "label": "Switch Language",
+        "name": "switch_language",
+        "choices": [
+          {
+            "label": "",
+            "value": ""
+          },
+          {
+            "label": "",
+            "value": ""
+          }
+        ],
+        "mode": "",
+        "table": "",
+        "aiInput": true,
+        "inputId": 0,
+        "nodeId": "4aa25441b5214f50937787f9c53e53bc",
+        "isHidden": false,
+        "description": "Boolean control to confirm whether the user wants to switch the language of their conversation."
+      },
+      "69b36f511131418eafbe663a25ad5998": {
+        "id": "69b36f511131418eafbe663a25ad5998",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "original_requester_language_code",
+        "label": "original_requester_language_code",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "ee8b42dd9a4341dc8fbd7111882c81ff": {
+        "id": "ee8b42dd9a4341dc8fbd7111882c81ff",
+        "name": "ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output",
+        "label": "Ai_data_collector_25e5921c8fdd4deb96e3c1c330ea111b_output",
+        "isReferenceable": false,
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        }
+      },
+      "36d5bd20a68e4f1ea8e4c3c465a8e2f1": {
+        "id": "36d5bd20a68e4f1ea8e4c3c465a8e2f1",
+        "varType": "reference",
+        "category": "vaInputs",
+        "label": "Language Switch Confirmation",
+        "name": "language_switch_confirmation",
+        "choices": [
+          {
+            "label": "",
+            "value": ""
+          },
+          {
+            "label": "",
+            "value": ""
+          }
+        ],
+        "mode": "glide_record",
+        "table": "",
+        "aiInput": true,
+        "inputId": 0,
+        "nodeId": "25e5921c8fdd4deb96e3c1c330ea111b",
+        "isHidden": false,
+        "description": "Dynamic choice picker control with Yes/No values to confirm whether the user wants to switch the language of their conversation."
+      }
+    }
+  }
+name: Pre Skill Discovery
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

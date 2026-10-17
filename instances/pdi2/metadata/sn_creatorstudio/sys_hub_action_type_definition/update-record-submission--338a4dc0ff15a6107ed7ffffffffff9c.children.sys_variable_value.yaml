@@ -1,0 +1,166 @@
+- document: sys_hub_step_instance
+  document_key: df3cc944ff15a6107ed7ffffffffffcc
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-29 05:41:35
+  sys_id: 233c0d44ff15a6107ed7ffffffffff6d
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-05-06 08:03:20
+  value: |-
+    (function execute(inputs, outputs) {
+        /**
+         * Get field choices for a table and field
+         * @param {string} tableName
+         * @param {string} fieldName
+         * @returns {Array<string>} - Valid choice values
+         */
+        const getFieldChoices = (tableName, fieldName) => {
+            const choices = new GlideChoiceList();
+            const choiceList = choices.getChoiceList(tableName, fieldName);
+
+            let validChoices = [];
+            for (let i = 0; i < choiceList.getSize(); i++) {
+                validChoices.push(choiceList.getChoice(i).getValue());
+            }
+            return validChoices;
+        };
+
+        /**
+         * Validates that a field value is non-empty and among valid choices
+         * Assumes caller has already checked that fieldName is in mustValidateFields
+         * @param {string} tableName
+         * @param {string} fieldName
+         * @param {string} fieldValue
+         * @throws {Error} if validation fails
+         */
+        const validateChoiceField = (tableName, fieldName, fieldValue) => {
+            if (!fieldValue) {
+                throw new Error(gs.getMessage(
+                    "The '{0}' field cannot be empty.", [fieldName]
+                ));
+            }
+            
+            const validChoices = getFieldChoices(tableName, fieldName);
+
+            if (!validChoices.includes(fieldValue)) {
+                throw new Error(gs.getMessage(
+                    "The '{0}' field value is invalid.", [fieldName]
+                ));
+            }
+        };
+
+
+        try {
+            const { table: tableName, record_id: recordId, fields_to_update: fieldsToUpdateCsv } = inputs;
+
+            if (!tableName || !recordId) {
+                throw new Error(gs.getMessage('Table name or record ID is missing.'));
+            }
+
+            const record = new GlideRecordSecure(tableName);
+            if (!record.get(recordId)) {
+                throw new Error(gs.getMessage(
+                    'Record with sys_id [{0}] not found in table [{1}].',
+                    [recordId, tableName]
+                ));
+            }
+
+            if (!fieldsToUpdateCsv?.trim()) {
+                outputs.status = 200;
+                outputs.recordupdated = false;
+                outputs.message = gs.getMessage('No fields specified for update.');
+                return;
+            }
+
+            const fieldsToUpdate = fieldsToUpdateCsv.split(',').map(field => field.trim());
+            const mustValidateFields = ['state', 'priority'];
+            const expectedFields = ['state', 'priority', 'short_description', 'description'];
+
+            for (const fieldName of fieldsToUpdate) {
+                if (!expectedFields.includes(fieldName) || !record.isValidField(fieldName)) {
+                    throw new Error(gs.getMessage(
+                        "Invalid field specified for update: '{0}'.", [fieldName]
+                    ));
+                }
+
+                const fieldValue = inputs[fieldName] || "";
+
+                if (mustValidateFields.includes(fieldName)) {
+                    validateChoiceField(tableName, fieldName, fieldValue);
+                }
+
+                record.setValue(fieldName, fieldValue);
+            }
+
+            const updated = record.update();
+            outputs.status = 200;
+            outputs.recordupdated = Boolean(updated);
+            outputs.message = updated
+                ? gs.getMessage('Record updated successfully.')
+                : gs.getMessage('Record update failed.');
+
+        } catch (error) {
+            outputs.status = 400;
+            outputs.recordupdated = false;
+            outputs.message = gs.getMessage(
+                'Error during record update: {0}', [error.message]
+            );
+        }
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: 338a4dc0ff15a6107ed7ffffffffff9c
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-29 05:41:35
+  sys_id: 673c0d44ff15a6107ed7ffffffffff94
+  sys_mod_count: '6'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-05-12 11:41:09
+  value: '{"version":"1.0","complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"mapped\":\"{}\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"mapped\":\"{}\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"serializationFormat":"JSON"}'
+  variable: a33c0d44ff15a6107ed7ffffffffff72
+- document: sys_hub_step_instance
+  document_key: df3cc944ff15a6107ed7ffffffffffcc
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-29 05:41:35
+  sys_id: 6f3c0d44ff15a6107ed7ffffffffff6c
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-29 05:41:35
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: 338a4dc0ff15a6107ed7ffffffffff9c
+  order: '3'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-29 05:41:35
+  sys_id: a33c0d44ff15a6107ed7ffffffffff94
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-29 05:41:35
+  value: '0'
+  variable: a73c0d44ff15a6107ed7ffffffffff86
+- document: sys_hub_action_type_definition
+  document_key: 338a4dc0ff15a6107ed7ffffffffff9c
+  order: '4'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2025-04-29 05:41:35
+  sys_id: ef3c0d44ff15a6107ed7ffffffffff93
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2025-04-29 05:41:35
+  value: '0'
+  variable: eb3c0d44ff15a6107ed7ffffffffff8b

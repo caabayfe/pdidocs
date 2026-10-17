@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:inline template="snc_notify_webrtc_ui_inline" />
+	<g:evaluate var="jvar_notify_number" jelly="true">
+		gs.getProperty(jelly.jvar_number_ppty, '')
+	</g:evaluate>
+	<script>
+		(function () {
+		var notifyWebRtcNumber = "${JS_STRING:jvar_notify_number}";
+		angular.module("${JS_STRING:jvar_app_name}").factory("notifyCallService", function ($window, $rootScope) {
+			'use strict';
+
+			var isNotifyOnline = false;
+			var isSetupValid = false;
+			var nClient;
+			function notifyCall($event, phoneNumber, userId) {
+				if (nClient $[AND] isNotifyOnline) {
+					$event.preventDefault();
+					nClient.call(phoneNumber, userId);
+				}
+			}
+			function notifyAllProxies() {
+				angular.element('iframe').each(function (){
+					var f = this.contentWindow.g_notifyCallServiceProxy_update;
+					if (f)
+						f();
+				});
+			}
+
+			if (!$window.SNC)
+				$window.SNC = {};
+
+			if ($window.SNC $[AND] $window.SNC.NotifyClientUi $[AND] notifyWebRtcNumber) { // If Notify is installed then only
+				nClient = new $window.SNC.NotifyClientUi(notifyWebRtcNumber);
+				nClient.enableIncomingCallUi("${JS_STRING:jvar_incoming_call_ui}" === "true");
+				nClient.init(function (isSuccessful) {
+					if (isSuccessful) {
+						isSetupValid = true;
+						nClient.addEventListener($window.SNC.Notify.STD_EVENTS.ONLINE, function () {
+							isNotifyOnline = true;
+							$rootScope.$digest();
+							notifyAllProxies();
+						});
+						nClient.addEventListener($window.SNC.Notify.STD_EVENTS.OFFLINE, function () {
+							isNotifyOnline = false;
+							$rootScope.$digest();
+							notifyAllProxies();
+						});
+					}
+				}, true);
+			}
+
+			$window.SNC.g_notifyCallService = { // This is publicly exposed service so that start call buttons inside
+												// iframed modals too can access this and start a call on the host page.
+				isAvailable: function (number) {
+					if (!number)
+						return false;
+					return isSetupValid;
+				},
+				isOnline: function (number) {
+					if (!number)
+						return false;
+					return isNotifyOnline;
+				},
+				call: function (evt, number, userId) {
+					notifyCall(evt, number, userId);
+				},
+				registerCloseHandler: function (f) {
+					if (nClient)
+						return nClient.addEventListener($window.SNC.NotifyClientUi.EVENTS.WINDOW_CLOSED, f);
+				}
+			};
+			return $window.SNC.g_notifyCallService;
+		});
+		}());
+	</script>
+	
+</j:jelly>

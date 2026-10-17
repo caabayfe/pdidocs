@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:requires name="scripts/js_includes_catalog.js" includes="true"/>
+  <g:evaluate var="jvar_theme">
+	var theme = gs.getPreference('glide.css.theme.ui16');
+	if (null == theme){
+		var company = gs.getUser().getCompanyRecord();
+		if (null != company)
+			theme = company.getValue("theme");
+	}
+	theme;
+  </g:evaluate>
+  <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true" params="theme=${jvar_theme}"/>
+  <g:if_polaris>
+    <g:then>
+      <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true" params="theme=${jvar_theme}"/>
+    </g:then>
+  </g:if_polaris>
+  <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}"/>
+  <g:if_polaris>
+    <g:then>
+      <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="false" params="theme=${jvar_theme}"/>
+    </g:then>
+  </g:if_polaris>
+  <g:inline template="sc_sanitize.xml"/>
+  <g:inline template="sc_request_parent_message.xml"/>
+  <g:inline template="glide_weba_header.xml" />
+  <input type="HIDDEN" id="sysparm_no_checkout" value="$[sysparm_no_checkout]"/>	
+	 <g2:evaluate var="jvar_cart_item">
+      sc_cart = (GlideappCart.getCartForRhino()).getGlideRecord();
+      sc_cart_item = new GlideRecord('sc_cart_item');
+      sc_cart_item.addQuery('cart', sc_cart.sys_id);
+      sc_cart_item.query();
+   </g2:evaluate>
+
+   <g:evaluate jelly="true">
+       var cartContinueShopTargetKey = GlideappCatalogURLGenerator.getBrowsingContextTargetKey();
+       var cartContinueShopTargetValue = GlideappCatalogURLGenerator.getBrowsingContextTarget();
+   </g:evaluate>
+   <j2:if test="$[!(typeof cartContinueShopTargetValue == 'undefined' || cartContinueShopTargetValue == null || cartContinueShopTargetValue == '')]">
+       <input type="HIDDEN" id="${cartContinueShopTargetKey}" value="${cartContinueShopTargetValue}" />
+   </j2:if>
+   <g:evaluate jelly="true">
+     cartContinueShopKey = GlideappCatalogURLGenerator.getBrowsingContextCategorySysID();
+     cartContinueShopValue = GlideappCatalogURLGenerator.getContinueShoppingUrl(catalog, catalog_view);
+   </g:evaluate>  
+   <j:if test="${!(typeof cartContinueShopValue == 'undefined' || cartContinueShopValue == null || cartContinueShopValue == '')}">
+     <input type="HIDDEN" id="${cartContinueShopKey}" value="${cartContinueShopValue}" /> 
+   </j:if>
+                	
+  <g:evaluate jelly="true">
+     var catalog = jelly.sysparm_catalog + "";
+     var catalog_view = jelly.sysparm_catalog_view + "";
+     var view = jelly.sysparm_view + "";
+     var category = jelly.sysparm_parent + "";
+     var category_obj = GlideappCategory.get(category)
+     var category_img = category_obj.getHomepageImageSRC();
+     var category_title = category_obj.getTitle();
+     var category_description = category_obj.getDescription();
+	 var category_authorized = gs.hasRole('catalog_admin') || category_obj.canView();
+
+     var re = /^[0-9A-Fa-f]{32}$/g;
+     if (JSUtil.nil(catalog.match(re)))
+        catalog = "";
+     if (JSUtil.nil(category.match(re)))
+        view = ""; 
+     var rev = /^[0-9A-Za-z_]+$/g;
+     if (JSUtil.nil(view.match(rev)))
+        view = "";
+     if (JSUtil.nil(catalog_view.match(rev)))
+        catalog_view = "";
+
+     if (!catalog ${AMP}${AMP} category != null ${AMP}${AMP} category != "") {
+         catalog = GlideappCategory.get(category).getCatalog();
+         jelly.sysparm_catalog = catalog;
+     }
+
+     if ((catalog_view == null || catalog_view == "") ${AMP}${AMP} catalog != null ${AMP}${AMP} catalog != "") {
+         catalog_view = SNC.Catalog.get(catalog).getDefaultView();
+         jelly.sysparm_catalog_view = catalog_view;
+     }
+
+     var temp_catalog_view = GlideappCatalogURLGenerator.getCatalogViewForHome(catalog, catalog_view, view);
+     var temp_catalog = GlideappCatalogURLGenerator.getCatalogForHome(catalog, catalog_view, view);
+     catalog_view = temp_catalog_view;
+     catalog = temp_catalog;
+     view = catalog_view;
+     
+  </g:evaluate>
+	
+  <j:if test="${new GlideappScriptHelper().isUI16Enabled()}">
+    <script>
+	  catalogHistory.setHistory('$[HTML,JS:category_title]', catalogHistory.getPageUrl());
+    </script>
+  </j:if>
+
+  <input type="HIDDEN" id="sysparm_catalog" value="${sysparm_catalog}"/>
+  <input type="HIDDEN" id="sysparm_catalog_view" value="${sysparm_catalog_view}"/>
+  <j:set var="sysparm_catalog" value="${catalog}"/>
+  <j:set var="sysparm_catalog_view" value="${catalog_view}"/>
+  <j:set var="sysparm_view" value="${view}"/>
+  <j:set var="sysparm_parent" value="${category}"/>
+  <j2:set var="sysparm_catalog" value="${catalog}"/>
+  <j2:set var="sysparm_catalog_view" value="${catalog_view}"/>
+  <j2:set var="sysparm_view" value="${view}"/>
+  <j2:set var="sysparm_parent" value="${category}"/>
+
+  <j:set var="jvar_is_catalog" value="${true}"/>
+  <j:if test="${category_authorized == true}">
+	  <j2:if test="$[sysparm_headless != 'true']">
+		<g2:evaluate var="show_mini_wish_list_cart" jelly="true">
+			var show_mini_wish_list_cart = new SNC.ServiceCatalogLayoutService().useSCLayout(); 
+			if (show_mini_wish_list_cart)
+				show_mini_wish_list_cart = new global.GlobalServiceCatalogUtil().isWishListEnabled(jelly.sysparm_catalog);
+			var reqParentID = jelly.RP.getParameterValue("sysparm_parent_sys_id")
+			if (JSUtil.notNil(reqParentID))
+				show_mini_wish_list_cart = false;
+			show_mini_wish_list_cart
+		</g2:evaluate>
+	  <table border="0" cellpadding="0" width="100%" cellspacing="0" role="region" aria-label="${gs.getMessage('Category Header')}">
+		<g2:sc_header useAddButton="false" 
+						search="$[sysparm_search]" 
+						catalog="$[sysparm_catalog]"
+						view="$[sysparm_view]"
+						catalogView="$[sysparm_catalog_view]" 
+						processingHint="$[sysparm_processing_hint]" 
+						category="$[sysparm_parent]"
+						noCheckout="$[sysparm_no_checkout]" 
+						isSearch="false"
+						isBrowse="true"
+						isItem="false"
+						useSearch="true"
+						ignore="false"
+						st="false"
+						currentRow="$[sysparm_current_row]"
+						baseForm="$[sysparm_base_form]"
+					  showMiniWishlistcart="$[show_mini_wish_list_cart]"/>
+	  </table>
+	</j2:if>
+
+  <div>	
+    <j2:if test="$[gs.getProperty('com.glide.servicecatalog.view_includes_category_descriptions', true) == 'true']">
+     <div id="category_description" style="padding-top: 10px;">
+     <table role="presentation">
+        <tr>
+           <j2:if test="${category_img != ''}">
+              <td style="vertical-align: top; padding-left: 10px; padding-bottom: 10px;">
+                 <img style="width: 75px; height: 75px;" src="${category_img}" alt="$[HTML:category_title]" aria-hidden="true"/>
+              </td>
+           </j2:if>
+           <td style="padding-left: 10px; padding-bottom: 10px; padding-right: 10px;">
+             <h1 data-form-title = "$[HTML:category_title]">
+             $[HTML:category_title]
+             </h1>
+             <span>$[HTML:category_description]</span>
+           </td>
+        </tr>
+      </table>
+     </div>
+    </j2:if> 
+     
+   
+
+
+	 <table cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse;" role="presentation">
+	   <tr>
+		 <td style="width: 100%; vertical-align: top;"> 		
+		<table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%;" role="region" aria-label="${gs.getMessage('Category Items')}">
+		  <g2:com.glideapp.servicecatalog_category hint="${JS:sysparm_processing_hint}" category="${sysparm_parent}" catalog="${sysparm_catalog}" catalogview="${sysparm_catalog_view}" />
+		</table>
+		 </td>
+		 <j2:if test="$[sysparm_cartless != 'true']">
+			 <j2:if test="$[!SNC.CatalogCMS.isCMSSite()]">
+				<j2:if test="$[GlideappCart.getCartForRhino().isEmpty()]">
+				   <j2:set var="jvar_cart_style" value="display:none" />
+				</j2:if>
+			 </j2:if>
+		  </j2:if>
+		  <j2:if test="$[sysparm_cartless == 'true']">
+			 <j2:set var="jvar_cart_style" value="display:none" />
+		  </j2:if>
+		  <j2:set var="jvar_use_cart_layouts" value="$[gs.getProperty('glide.sc.use_cart_layouts', 'false') == 'true']" />
+		  <td style="vertical-align: top; border-collapse: collapse; $[jvar_cart_style];">
+			<table cellpadding="0" cellspacing="0" class="sc_cart_table" role="region" aria-labelledby="shopping_cart_title">     
+			   <j2:if test="$[!jvar_use_cart_layouts]">
+				 <tr>
+				   <td id="cart">
+					 <script language="javascript">
+					   var g_cart = null;
+					   function scCartOnLoad() {    
+						 g_cart = new SCCart(); 
+						 g_cart.addCartContent();    
+						 g_cart.getWithBackButton();
+					   }
+					   addLoadEvent(scCartOnLoad);   
+					 </script>
+				   </td>
+				 </tr>
+			   </j2:if>
+			   <j2:if test="$[jvar_use_cart_layouts]">
+				 <tr>
+				   <td id="cart_v2_cell">
+					 <g2:catalog_cart_v2 />
+				   </td>
+				 </tr>
+			   </j2:if>
+			 </table>
+		  </td>
+	   </tr>
+	 </table>
+	</div>	  
+  </j:if>
+  <j:if test="${category_authorized != true}">
+		${gs.getMessage('Not Authorized')}
+  </j:if>
+  <g:inline template="catalog_web_analytics.xml" />
+</j:jelly>

@@ -1,0 +1,151 @@
+<div class="default-focus-outline" id="overview-widget_{{c.data.userId}}">
+  <div ng-if="!data.hasUserProfile" class="panel panel-default">
+    <div class="panel-body wrapper-lg">
+      <p>${User profile not found}</p>
+    </div>
+  </div>
+  <div ng-if="data.hasUserProfile">
+    <div class="overview-container" ng-if="data.sections && data.sections.length > 0 && !data.isMobile">
+      <div class="panel-heading b-b">
+        <h2 class="panel-title">{{c.data.widgetTitle}}</h2> 
+        <div>
+          <sp-widget widget="data.publicProfileWidget"></sp-widget>
+        </div>
+      </div>
+      <div ng-if="!data.isMobile">
+        <section class="section section-{{section.layout}}" id="section_{{section.sysId}}" ng-repeat="section in data.sections track by $index">
+          <div ng-if="section.isCollapsible">
+            <a href="javascript:void(0)" class="section-header" ng-click="c.toggleSectionView(section)" aria-label="{{!section.showExpanded ? '${Show section}' : '${Hide section}'}} {{::section.name}}" ng-if="(c.collapsibleSectionCount > 1) || (c.collapsibleSectionCount == 1 && section.isCollapsible == true)">
+                <h3 class="section-title">{{::section.name}}</h3>
+                <i data-toggle="tooltip" data-placement="top" data-container="body" data-title="${Expand/Collapse}" class="fa accordion-icon expand-icon" ng-class="section.showExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+            </a>
+            <div ng-if="c.collapsibleSectionCount == 1 && section.isCollapsible == false ">
+              <div class="section-header">
+                <h3 class="section-title">{{::section.name}}</h3>
+              </div>
+            </div>
+          </div>
+          <div class="section-container" id="section_container_{{section.sysId}}">
+            <div ng-if="section.showExpanded" class="field" id="field_{{field.sysId}}" ng-repeat="field in section.fields">
+              <div id="field_container_{{field.sysId}}" class="field-container" ng-if="!field.isEditable">
+                <span class="field-icon">
+                  <i ng-if="field.icon && field.icon !== 'empty'" class="fa fa-{{::field.icon}}"></i>
+                </span>
+                <div class="label-value-pair" id="label_value_pair_{{field.sysId}}">
+                  <span class="field-label">{{::field.fieldLabel}}</span>
+                  <a href="{{field.tag}}" target="{{field.target}}" class="field-value brand-primary" ng-if="field.tag && field.fieldValue" aria-label="{{field.ariaLabel}}">
+                    {{::field.fieldValue}}
+                  </a>
+                  <span class="field-value text-primary" ng-if="!field.tag && field.fieldValue">{{::field.fieldValue}}</span>
+                  <span class="field-value text-muted" ng-if="!field.fieldValue">{{::c.data.messages.emptyFieldMsg}}</span>
+                </div>
+              </div>
+              <!--Render when user can edit the fields-->
+              <div class="editable-fields" ng-if="field.isEditable">
+                <!--State1: Field has no existing data-->
+                <div ng-if="!field.fieldValue && !field.isEditing">
+                  <a id="field_add_value_{{field.sysId}}" aria-label="Add a {{field.fieldLabel}}" href="javascript:void(0)" ng-click="c.editField(field)">
+                    <span id="field_icon_{{field.sysId}}" class="field-icon">
+                      <i class="fa fa-plus-circle"></i>
+                    </span>
+                    <span id="field_label_{{field.sysId}}">${Add a {{::field.fieldLabel | lowercase}}}</span>
+                  </a>
+                </div>
+                <!--State2: Field has some existing data-->
+                <div class="field-container" ng-if="field.fieldValue && !field.isEditing">
+                  <span id="field_icon_{{field.sysId}}" class="field-icon">
+                    <i ng-if="field.icon && field.icon !== 'empty'" class="fa fa-{{::field.icon}}"></i>
+                  </span>
+                  <div class="label-value-pair" id="label_value_pair_{{field.sysId}}">
+                    <span id="field_label_{{field.sysId}}" class="field-label">{{::field.fieldLabel}}</span>
+                    <div class="field-value-container">
+                      <span id="field_value_{{field.sysId}}" class="field-value text-primary" ng-if="field.fieldValue">{{::field.fieldValue}}</span>
+                      <a href="{{field.url}}" class="field-value brand-primary" ng-if="field.url && field.fieldValue">
+                        {{::field.fieldValue}}</a>
+                      <a aria-label="Edit a {{field.fieldLabel}}" id="edit_icon_{{field.sysId}}" class="edit-button" ng-click="c.editField(field)" href="javascript:void(0)" data-toggle="tooltip" data-placement="top" data-container="body" data-title="${Edit a {{::field.fieldLabel | lowercase}}}">
+                        <i class="edit-icon fa fa-pencil"></i>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <!--State3: User tries to edit the field by clicking edit button from state1/state2-->
+                <div class="field-container" ng-show="field.isEditing">
+                  <div class="label-value-pair" id="label_value_pair_{{field.sysId}}">
+                    <div class="edit-field-label-container">
+                      <span ng-if="!field.fieldValue" id="field_label_{{field.sysId}}" class="edit-field-label">${Add a {{::field.fieldLabel | lowercase}}}</span>
+                      <span ng-if="field.fieldValue" id="field_label_{{field.sysId}}" class="edit-field-label">${Edit a {{::field.fieldLabel | lowercase}}}</span>
+                      <div ng-if="field.fieldType=='string'">
+                        <span class="max-char-hint">${(Max {{::field.maxlength}} characters)}</span>
+                      </div>
+                    </div>
+                    <div id="field_input_{{field.sysId}}" class="input-fields">
+                      <div ng-if="field.fieldType=='string'" class="input-text">
+                        <input type="text" aria-label="Enter value for {{field.fieldLabel}}" role="textbox" autocomplete="off" class="input-text form-control ng-valid" maxlength={{field.maxlength}} ng-model="field.data" ng-init="field.data=field.fieldValue" />
+                      </div>
+                      <div ng-if="field.fieldType=='textarea' && field.fieldName != 'short_bio'" class="input-text">
+                        <textarea aria-label="Enter value for {{field.fieldLabel}}" rows="4" ng-class="field.data.length > field.maxlength? 'text-border' : ''" data-type="textarea" role="textbox" autocomplete="off" class="textarea form-control ng-valid" ng-model="field.data" ng-init="field.data=field.fieldValue" ng-trim="false">{{field.data}}</textarea>
+                      </div>
+                      <div ng-if="field.fieldType=='textarea' && field.fieldName == 'short_bio'" class="input-text editor-wrap">
+                        <div ng-class="field.data.length > field.maxlength? 'text-border' : 'editor-pristine'" data-type="textarea" autocomplete="off" class="textarea quill-editor form-control ng-valid" ng-init="field.data=field.fieldValue" ng-trim="false">{{field.data}}</div>
+                      </div>
+                      <div ng-if="field.fieldType=='choice'" class="input-text">
+                        <select aria-label="Select value for {{field.fieldLabel}}" class="select form-control" ng-init="field.data=field.options[field.choiceIndex]" ng-model="field.data" ng-options="item as item.label for item in field.options" ng-change="c.updateFieldVisibility(field)" />
+                        <span class="type-boolean">
+                          <label class="public-visibility-check" ng-if="field.hasOwnProperty('isPublic')">
+                            <input type="checkbox" ng-init="field.inputVisibility=field.isPublic" ng-model="field.inputVisibility" ng-checked="field.inputVisibility" aria-label="Make it public" ng-disabled="!field.data.value" />
+                            <span class="boolean-control ng-binding">{{::c.data.messages.makePublic}}</span>
+                          </label>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="edit-container">
+                      <div class="char-limit-container" ng-if="field.fieldType=='textarea'">
+                        <span class="characters" ng-if="field.data.length <= field.maxlength" data-ng-bind-template="{{field.maxlength - (!field.data?0 : field.data.length)}} {{c.data.messages.charactersLeft}}">
+                        </span>
+                        <span class="warning-message" ng-if="field.data.length > field.maxlength" data-ng-bind-template="{{(!field.data?0 : field.data.length) - field.maxlength}} {{c.data.messages.charactersOver}}"></span>
+                      </div>
+                      <div class="edit-action-container">
+                        <button aria-label="Cancel editing {{field.fieldLabel}}" id="cancel" ng-click="c.cancelEdit(field)" class="edit-action btn btn-default ng-binding ng-scope">{{::c.data.messages.cancel}}</button>
+                        <button aria-label="Save {{field.fieldLabel}}" ng-disabled="field.data.length > field.maxlength" ng-class="field.data.length > field.maxlength? 'disabled-button' : ''" id="save" ng-click="c.saveField(field)" class="edit-action btn btn-primary ng-binding ng-scope">{{::c.data.messages.save}}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div ng-if="section.endSection && c.collapsibleSectionCount > 1" class="divider"></div>
+        </section>
+      </div>
+    </div>
+    <div class="overview-container" ng-if="data.isMobile && data.mobileSections && data.mobileSections.length > 0">
+        <div>
+          <sp-widget widget="data.publicProfileWidget"></sp-widget>
+        </div>
+        <section class="section-mobile section-{{section.layout}}" id="section_{{section.sysId}}" ng-repeat="section in data.mobileSections track by $index">
+          <div class="section-header">
+            <h4 class="section-title" ng-if="!section.hideSectionName">{{section.name}}</h4>
+          </div>
+          <div class="field-container" id="field_container_{{section.sysId}}">
+            <div class="field" id="field_{{field.sysId}}" ng-repeat="field in section.fields">
+              <span class="label-value-pair" id="label_value_pair_{{field.sysId}}">
+                <span class="field-label">{{::field.fieldLabel}}</span>
+                <a href="{{field.url}}" class="field-value brand-primary" ng-if="field.url && field.fieldValue">
+                  {{::field.fieldValue}}
+                </a>
+                <span class="field-value text-primary" ng-if="!field.url && field.fieldValue">{{::field.fieldValue}}</span>
+                <span class="field-value text-muted empty-mobile-field" ng-if="!field.fieldValue"></span>
+              </span>
+            </div>
+          </div>
+          <div class="divider"></div>
+        </section>
+      </div>
+    <div class="overview-container mobile-empty-state" ng-if="data.isMobile && (data.mobileSections.length == 0)">
+      <img src="empty_mobile.svg" />
+      <div class="empty-state-text">
+        {{data.messages.emptyMobileState}}
+      </div>
+    </div>
+	</div>
+</div>

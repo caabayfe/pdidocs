@@ -1,0 +1,239 @@
+<div>
+  <div ng-if="!data.canRead && !data.isNewRecord">
+    ${Requested record not found}
+  </div>
+  <div ng-if="data.canRead && !data.isNewRecord" class="panel panel-{{options.color}} b ticket_conversation">
+    <div class="panel-body">
+      <div ng-if="data.hasReadableJournalField">
+        <form ng-submit="postEntry(data.journalEntry)" class="padding" id="sand">
+          <div ng-show="data.hasWritableJournalField && !data.read_only" class="flex-item" ng-if="data.rich_text_editor">
+            <sp-tiny class="flex-element" mentions="data.at_mentions" attachment-guid = "c.data.sys_id" record-Table-Name= "c.data.table" tool-Bar="c.data.toolBar" ng-model="data.journalEntry"  aria-label="{{getPlaceholder()}}" ng-model='data.journalEntry' ng-model-options='{debounce: 250}' ng-attr-placeholder="{{getPlaceholder()}}" autocomplete="off" ng-change="userTyping(data.journalEntry)" >
+            </sp-tiny>
+          <div ng-if="data.rich_text_editor" class="flex-rich-dir" ng-if="!data.read_only">
+            <div class="panel-title-icons flex-rich">
+              <ul role="none">
+                <li>
+                  <button href ng-show="data.showLocationIcon && data.canWrite && !data.read_only" class="panel-button btn btn-link" ng-click="checkInLocation()" title="{{data.checkInLocMsg}}">
+                    <span class="glyphicon glyphicon-globe"></span>
+                  </button>
+                </li>
+                <li>
+                  <button href class="panel-button btn btn-link" ng-show="isNative && !data.read_only" ng-click="scanBarcode()" title="{{data.scanBarcodeMsg}}">
+                    <span class="glyphicon glyphicon-barcode"></span>
+                  </button>
+                </li>
+                <li ng-if="::(!(data.hideAttachmentBtn === 'true')  && !data.read_only)"><sp-attachment-button ng-if="::data.canWrite && data.canAttach" modal="true"></sp-attachment-button></li>
+              </ul>
+            </div>
+            <input type="submit" class="btn btn-primary" style="min-width: 80px;" value="{{data.btnLabel}}" aria-label="{{data.btnLabel}}" ng-disabled="data.isPosting"/>
+          </div>
+         </div>
+          <div class="flex-item" ng-show="data.hasWritableJournalField && !data.read_only" ng-if="!data.rich_text_editor" style="position: relative;">
+          <label ng-if="::(data.showActivityNotesLabel === 'true')" for="post-input" id="activity-label">{{data.primaryJournalField.label}}</label>
+          <span class="journal-field-indicator" ng-style="({'background-color': data.useSecondaryJournalField ? data.secondaryJournalField.color : data.primaryJournalField.color})"></span>
+            <textarea ng-keypress="keyPress($event)" sn-resize-height="trim" rows="1" id="post-input"
+                      class="form-control no-resize overflow-hidden flex" cols="170" ng-model='data.journalEntry'
+                      ng-model-options='{debounce: 250}' ng-attr-placeholder="{{getPlaceholder()}}"
+                      ng-attr-aria-labelledby="{{data.showActivityNotesLabel === 'true' ? 'activity-label' : undefined}}"  autocomplete="off"
+                      ng-change="userTyping(data.journalEntry)"
+                      title="{{getPlaceholder()}}" data-toggle="tooltip" data-placement="top"></textarea>
+            <div class="flex-dir" ng-if="!data.read_only">
+              <input type="submit" class="btn btn-primary post-btn" value="{{data.btnLabel}}" aria-label="{{data.btnLabel}}" ng-disabled="data.isPosting" ng-if="!data.read_only"/>
+          <div class="panel-title-icons btn-li">
+              <ul role="none">
+                <li>
+                  <button href ng-show="data.showLocationIcon && data.canWrite && !data.read_only" class="panel-button btn btn-link" ng-click="checkInLocation()" title="{{data.checkInLocMsg}}">
+                    <span class="glyphicon glyphicon-globe"></span>
+                  </button>
+                </li>
+                <li>
+                  <button href class="panel-button btn btn-link" ng-show="isNative && !data.read_only" ng-click="scanBarcode()" title="{{data.scanBarcodeMsg}}">
+                    <span class="glyphicon glyphicon-barcode"></span>
+                  </button>
+                </li>
+                <li ng-if="::(!(data.hideAttachmentBtn === 'true')  && !data.read_only)"><sp-attachment-button ng-if="::data.canWrite && data.canAttach" modal="true"></sp-attachment-button></li>
+              </ul>
+            </div>
+            </div>
+          </div>
+
+          <div ng-if="::(data.secondaryJournalField && data.secondaryJournalField.can_write)" class="margin-right-desktop" align="right">
+            <label>
+              <input type="checkbox" ng-model="::data.useSecondaryJournalField" ng-change="updateFormWithJournalFields()"/>
+              <span> {{::data.secondaryJournalField.label}}</span>
+            </label>
+          </div>
+        </form>
+
+        <ul class="list-group m-b-none" ng-if="typing.length > 0">
+          <li class="list-group-item user-typing m-t" ng-repeat="u in typing">${{{::u.user_display_name}} is typing}</li>
+        </ul>
+        <ul class="list-group m-b-none m-t" ng-if="msg">
+          <li class="list-group-item user-typing" role="status">{{msg}}</li>
+        </ul>
+        <div class="timeline-container padder-t-md padding-container">
+		<div class="activity-filter-container" ng-if="::showFilterIcon()">
+		    <button class="btn btn-icon btn-default filter-btn" ng-click="c.toggleFilter()" aria-label="${Filter Activity}" data-placement="bottom" data-toggle="tooltip" data-original-title="${Filter Activity}" aria-haspopup="dialog" aria-expanded="{{c.showFilter}}" aria-controls="filterPopover">
+			  <i class="fa fa-filter" aria-hidden="true"></i>
+			</button>
+			<div id="filterPopover" class="filter-popover" ng-show="c.showFilter" role="dialog" aria-label="Filter Activity dialog" tabindex="-1">
+			  <div class="filter-arrow"></div>
+			  <div class="filter-header">${Filter Activity}</div>
+			  <div class="filter-options">
+				<label class="filter-option" ng-repeat="filter in c.filters track by filter.key" for="filter_{{filter.key}}">
+                    <input type="checkbox" id="filter_{{filter.key}}" ng-model="filter.active" ng-change="c.updateFilter(filter)" />
+                    {{filter.label}}
+                </label>
+			  </div>
+			</div>
+		</div>
+          <ul role="list" class="timeline" aria-label="${Ticket history}">
+            <li class="timeline-item timeline-inverted"  ng-repeat="e in c.filteredActivities" ng-if="c.hasVisibleChangeEntries(e)">
+              <div class="timeline-badge">
+                <sn-avatar-once ng-if="e.login_name == 'System' && !hasLiveProfile(e.user_sys_id)" primary="data.systemUser" class="avatar-large" show-presence="false" enable-context-menu="false"></sn-avatar-once>
+                <sn-avatar-once ng-if="hasLiveProfile(e.user_sys_id)" primary="getLiveProfileByUserId(e.user_sys_id)" class="avatar-large" show-presence="true" enable-context-menu="false"></sn-avatar-once>
+              </div>
+              <div class="timeline-panel">
+                <div class="timeline-panel-inner" ng-style="::{'border-color': getFieldColor(e.element)}">
+                  <div class="timeline-heading">
+                    <div class="timeline-title h4">{{::e.name}}
+                      <span class = "time-text pull-right hide-mobile">
+                        <small class="text-muted">
+                          <span class="glyphicon glyphicon-time" aria-hidden="true" tabindex="-1"></span>
+                          <sn-time-ago timestamp="::e.sys_created_on"></sn-time-ago>
+                        </small>
+                        <i ng-if="::(e.field_label || e.type=='changes')" class="fa fa-circle text-muted" aria-hidden="true"></i>
+                        <small class = "text-muted journal-type" ng-if="::(e.type=='journal')">{{::e.field_label}}</small>
+                        <small class = "text-muted journal-type" ng-if="::(e.type=='changes')">${Field changes}</small>
+                        <span ng-if= "::((e.type == 'journal') && data.isTranslationEnabled)">
+                          <small class="text-muted translation-delimiter">•</small>
+                          <span class="translate-wrap">
+                            <i class="text-muted translation-icon icon-translation"></i>
+                            <a class="translate-link" href="javascript:void(0)" ng-click="translateText(e, false)">{{::data.translation.translateLinkMsg}}</a>
+                          </span>
+                        </span>
+                      </span>
+                    </div>
+                    <p class = "time-text show-mobile">
+                      <small class="text-muted">
+                        <span class="glyphicon glyphicon-time" aria-hidden="true" tabindex="-1"></span>
+                        <sn-time-ago timestamp="::e.sys_created_on"></sn-time-ago>
+                      </small>
+                      <i ng-if="::(e.field_label || e.type=='changes')" class="fa fa-circle text-muted" aria-hidden="true"></i>
+                      	<small class = "text-muted journal-type" ng-if="::(e.type=='journal')">{{::e.field_label}}</small>
+                        <small class = "text-muted journal-type" ng-if="::(e.type=='changes')">${Field changes}</small>
+                        <span ng-if= "::((e.type == 'journal') && data.isTranslationEnabled)">
+                          <small class="text-muted translation-delimiter">•</small>
+                          <span class="translate-wrap">
+                            <i class="text-muted translation-icon icon-translation"></i>
+                            <a class="translate-link" href="javascript:void(0)" ng-click="translateText(e, false)">{{::data.translation.translateLinkMsg}}</a>
+                          </span>
+                        </span>
+                    </p>
+                  </div>
+                  <div class="timeline-body">
+                    <div ng-if="::(e.type == 'journal')">
+                      <p ng-if="!e.is_truncated" ng-bind-html="::sanitizeHtmlContent(e.value)"></p>
+                      <p ng-if="e.is_truncated" ng-bind-html="sanitizeHtmlContent(e.value)"></p>
+                      <a ng-if="e.is_truncated" href="javascript:void(0)" role="button" aria-label="${Click here to see all text}" ng-click="seeAllText(e)">${See all text}</a>
+                    </div>
+                    <div ng-if="::(e.type == 'changes')">
+                      <table style="border-spacing: 10px; border-collapse: separate;">
+                        <tr ng-repeat="entry in e.change_entries track by entry.sys_id" ng-if="entry.show_in_ui !== false">
+                          <td><b>{{::entry.field_label}}</b></td>
+                          <td>{{::entry.value}}
+                            <span ng-if="entry.old_value">${was} {{::entry.old_value}}</span>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <div ng-if="::(e.element == 'attachment')">
+                      <a ng-if="(e.attachment.state == 'available' && e.attachment.thumbnail_path)" target="_blank" href="/sys_attachment.do?view=true&sys_id={{::e.attachment.sys_id}}" title="{{data.downloadAttachmentMsg}} {{::e.attachment.file_name}}" tabindex="-1">
+                        <img alt="" ng-src="/{{::e.attachment.path}}?t=medium" class="img-responsive"/>
+                      </a>
+                      <a ng-if="((e.attachment.state == '' || e.attachment.state == 'pending' || e.attachment.state == 'available_conditionally') && e.attachment.thumbnail_path)" ng-click="scanAttachment(e.attachment)" href="javascript:void(0)"  title="{{data.downloadAttachmentMsg}} {{::e.attachment.file_name}}" tabindex="-1">
+                        <img alt="" ng-src="/{{::e.attachment.path}}?t=medium" class="img-responsive"/>
+                      </a>
+                      <div>
+                        <div ng-if="(e.attachment.state == 'available')">
+                          <a href="/sys_attachment.do?sys_id={{::e.attachment.sys_id}}" target="_blank" title="{{data.downloadAttachmentMsg}} {{::e.attachment.file_name}}"><strong>{{e.attachment.file_name}}</strong></a><br/>
+                          {{::e.attachment.size}}
+                        </div>
+                        <div ng-if="(e.attachment.state == 'not_available')">
+                          <span title="{{dataViewMsg}}" class="not_available">{{e.attachment.file_name}}</span><br/>
+                          <span class="error">{{::data.scanFailedMsg}}</span>
+                        </div>
+                        <div ng-if="(e.attachment.state == '' || e.attachment.state == 'pending' || e.attachment.state == 'available_conditionally')">
+                          <a href="javascript:void(0)" ng-click="scanAttachment(e.attachment)" title="{{data.downloadAttachmentMsg}} {{::e.attachment.file_name}}"><strong>{{::e.attachment.file_name}}</strong></a><br/>
+                          {{::e.attachment.size}}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div ng-if="e.showTranslation" class="translation-container">
+                    <div ng-if="e.isTranslationInProgress">
+                      <i class="translation-icon icon-translation"></i>
+                      <span aria-live="polite">{{::data.translation.translationProgressMsg}}</span>
+                    </div>
+                    <div ng-if="e.isTranslationSuccess">
+                      <i class="translation-icon icon-translation"></i>
+                      <a class="translate-link" href="javascript:void(0)" ng-click="toggleTranslation(e)">{{e.toggleMsg}}</a>
+                      <span class="translation-delimiter">•</span>
+                      <span class="translation-credits">{{e.credits}}</span>
+                      <p ng-if="e.showDetails" class="translation-message" ng-bind-html="::sanitizeHtmlContent(e.translatedText)"></p>
+                    </div>
+                    <div ng-if="e.isTranslationError">
+                      <i class="translation-icon icon-translation"></i>
+                      {{e.translatedText}}
+                      <a ng-if="e.tryAgain" href="javascript:void(0)" class="translate-link" ng-click="translateText(e, true)">{{::data.translation.tryAgainMsg}}</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+			<li role="listitem" class="timeline-item timeline-inverted"  aria-label="{{data.stream.user_full_name}}">
+              <div class="timeline-badge">
+                <sn-avatar-once ng-if="data.initUser" primary="data.initUser" class="avatar-large" show-presence="false" enable-context-menu="false"></sn-avatar-once>
+                <sn-avatar-once ng-if="hasLiveProfile(data.stream.user_sys_id) && !data.initUser" primary="getLiveProfileByUserId(data.stream.user_sys_id)" class="avatar-large" show-presence="false" enable-context-menu="false"></sn-avatar-once>
+              </div>
+              <div class="timeline-panel timeline-panel-first-item">
+                <div class="timeline-heading">
+                  <div ng-if="data.urCreatedBy" class="timeline-title h4">{{::data.urCreatedBy}}
+                    <span class="pull-right hide-mobile">
+                      <small class="text-muted">
+                        <span class="glyphicon glyphicon-time" aria-hidden="true" tabindex="-1"></span>
+                        <sn-time-ago timestamp="data.created_on"></sn-time-ago>
+                      </small>
+                    </span>
+                  </div>
+                  <div ng-if="!data.urCreatedBy" class="timeline-title h4">{{data.stream.user_full_name}}
+                    <span class="pull-right hide-mobile">
+                      <small class="text-muted">
+                        <span class="glyphicon glyphicon-time" aria-hidden="true" tabindex="-1"></span>
+                        <sn-time-ago timestamp="data.created_on"></sn-time-ago>
+                      </small>
+                    </span>
+                  </div>
+                  <p class="show-mobile">
+                    <small class="text-muted">
+                      <span class="glyphicon glyphicon-time" aria-hidden="true" tabindex="-1"></span>
+                      <sn-time-ago timestamp="data.created_on"></sn-time-ago>
+                    </small>
+                  </p>
+                </div>
+                <div class="timeline-body">
+                  <p>{{::data.number.display_value}} ${Created}</p>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+      <div ng-if="!data.hasReadableJournalField">
+        {{options.no_readable_journal_field_message}}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,67 @@
+<div class="selectable-line-panel">
+  <div ng-if="data.lines_data.filterConfig" class="filter-container">
+      <sn-choice-list sn-model="c.filter" sn-options="c.filterOptions" sn-value-field="value" sn-text-field="label"
+         sn-items="c.filterValues" sn-on-change="onFilterChange(selectedValue)">
+</sn-choice-list>
+  </div>
+<div class="data-table">
+   <div ng-if="data.lines_data.columns.length" class="header row">
+      <div ng-if="c.showSelectAll" class="col-xs-4 row-value checkbox-col">
+         <input id="select-all" aria-label="${Select all}" type="checkbox"
+            ng-model="c.selectAllChecked" ng-change="selectAll(selectAllChecked)">
+      </div>
+      <span ng-if="c.showSelectAll" class="fixed-label visible-xs-block">${Select All}</span>
+      <div class="row-flex">
+         <div ng-repeat="column in c.columns" id="column-label-{{$index}}" class="data-column hidden-xs"
+            style="min-width:{{100/c.columns.length}}%">{{c.columnMap[column]}}</div>
+      </div>
+   </div>
+   <div ng-if="!c.filteredLines.length" class="no-result-container">
+      <i class="fa fa-folder-open" aria-hidden="true"></i>
+      <span class="message">${No items}</span>
+   </div>
+   <div ng-repeat="lineData in c.filteredLines" ng-value="{{$index}}" class="row">
+      <div>
+         <div class="panel-heading">
+            <div aria-expanded="{{lineData.isExpanded}}">
+               <div class="row-value checkbox-col col-xs-4" ng-if="data.lines_data.selectable && !!c.selectableLines.length">
+                  <input aria-label="${Select line}" type="checkbox" ng-if="(lineData.selectable==undefined || lineData.selectable)"
+                     ng-model="selectedLines[lineData.sys_id]" ng-change="selectLine(lineData.sys_id)" />
+               </div>
+               <div class="row-flex">
+                  <div ng-repeat="attribute in c.columns"
+                     class="column col-sm-2 {{$index==0?'col-xs-10 first-column':''}}"
+                     style="min-width:{{100/c.columns.length}}%">
+                     <span aria-label="${Expand line}" tabindex="0" ng-if="$index==0 && lineData.additionalData"
+                        ng-click="lineData.isExpanded = !lineData.isExpanded" class="expand-chevron"
+                        data-toggle="collapse" data-target="#panel_{{lineData.sys_id}}">
+                        <i class="fa fa-chevron-right pull-down {{lineData.isExpanded?'expanded':''}}"></i>
+                     </span>
+
+                     <div class="row-value">
+                        <span ng-if="$index!=0"
+                           class="visible-xs-block variable-label mobile-header">{{c.columnMap[attribute]}}</span>
+                        <span class="{{lineData.rowData[attribute].color}}">{{lineData.rowData[attribute].value}}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="variables-panel">
+               <div ng-if="lineData.additionalData" id="panel_{{lineData.sys_id}}"
+                  class="variables-panel {{lineData.additionalData?(lineData.isExpanded?'collapse in':'collapse'):''}}">
+                  <div class="panel-body">
+                     <div ng-repeat="variable in lineData.additionalData" class="col-sm-4 col-xs-6">
+                        <span class="variable-label text-muted">{{variable.label}}</span>
+                        <div class="row-value">
+                           <span ng-if="!variable.link" class="pre-wrap">{{variable.value}}</span>
+                           <span ng-if="variable.link" class="pre-wrap"><a href="{{variable.link}}">{{variable.value}}<i
+                                    class="link-icon fa fa-external-link"></i></a></span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+   </div>

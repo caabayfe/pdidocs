@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+		var showIntroSection = jelly.jvar_sc_intro_text == 'true' ||
+			jelly.jvar_sc_order_placed_date == 'true' ||
+			jelly.jvar_sc_request_number == 'true' ||
+			jelly.jvar_sc_bookmark_request == 'true' ||
+			jelly.jvar_sc_delivery_details == 'true';
+		if (JSUtil.nil(jelly.jvar_sc_request.getRequestNumber()))
+			showIntroSection = false;
+		showIntroSection;
+	</g:evaluate>
+	<j:if test="${showIntroSection}">
+		<div id="sc_order_status_intro_text" class="order_summary">
+			<!-- Confirmation message where appropriate -->
+			<j:if test="${jvar_sc_intro_text == 'true' and jvar_new_request == 'true'}">
+				<g:sc_message classes="outputmsg_image" img="images/outputmsg_success_24.gifx" type="success" title="${gs.getMessage('Thank you, your request has been submitted')}" />
+			</j:if>
+			<g2:evaluate jelly="true">
+				var navRedirect = GlideappCatalogURLGenerator.getNavRedirectURL();
+				navRedirect;
+			</g2:evaluate>
+			<g2:evaluate jelly="true">
+				var checkoutUrl = GlideappCatalogURLGenerator.getCheckoutURL(jelly.sysparm_sys_id, jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+				var targetFrame = "";
+				if (SNC.CatalogCMS.isCMSSite())
+					targetFrame = "gsft_main";
+			</g2:evaluate>
+			<g2:evaluate jelly="true">
+				var requestUrl = GlideappCatalogURLGenerator.getRequestPage(jelly.sysparm_sys_id, jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+				requestUrl;
+			</g2:evaluate>
+			<div style="font-size: 5px">$[SP]</div>
+			<dl class="dl-horizontal sc-dl-horizontal">
+			<j:if test="${jvar_sc_order_placed_date == 'true'}">
+				<dt>${gs.getMessage('Order Placed')}:$[SP]</dt>
+				<dd>
+					<b>${jvar_sc_request.getOpenedAt()}</b>
+					$[SP]$[SP]
+				</dd>
+			</j:if>
+			<j:if test="${jvar_sc_request_number == 'true'}">
+				<dt>${gs.getMessage('Request Number')}:$[SP]</dt>
+				<!-- Disables request number link if user has no access -->
+				<dd>
+					<a id="requesturl" class="linked requestItemUrl" href="$[requestUrl]">
+						<b>${jvar_sc_request.getRequestNumber()}</b>
+					</a>
+					<j:if test="${jvar_sc_bookmark_request == 'true'}">
+						$[SP]$[SP]
+						<a id="permalink" class="linked" style="color:#003366;" target="$[targetFrame]" title="${gs.getMessage('bookmark_link_help_note')}" href="$[checkoutUrl]">
+							${gs.getMessage('Bookmark request')}
+						</a>
+					</j:if>
+				</dd>
+			</j:if>
+			<j:if test="${jvar_sc_delivery_details == 'true'}">
+				<dt>${gs.getMessage('catalog_estimated_complete')}$[SP]</dt>
+				<dd>
+					<strong>
+						<span id="delivery_date" />
+					</strong>
+					<script type="text/javascript">
+						addLoadEvent(function(){
+							document.getElementById("delivery_date").innerHTML = '${jvar_sc_request.getLongestDueDate()}';
+						});
+					</script>
+				</dd>
+			</j:if>
+		</div>
+	</j:if>
+</j:jelly>

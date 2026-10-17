@@ -1,0 +1,1 @@
+SNC.QueryBuilderTableCleanScript.cleanAllQBResultTables();

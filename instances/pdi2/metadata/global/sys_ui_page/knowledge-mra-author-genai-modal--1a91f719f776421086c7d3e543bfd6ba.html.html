@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <link href="08796c922f1e3a14e9ed523bcfa4e32b.cssdbx?v=${gs.getProperty('glide.builddate')}" type="text/css" rel="stylesheet"/>
+    <style>
+        .modal-footer {
+            align: right;
+            padding-right: 14px !important;
+        }
+
+        .sparkle-icon::before {
+            font-size: 24px !important;
+            color: RGB(var(--now-messaging_icon--primary-ai--color, var(--now-color--secondary-1, 67, 69, 166)));
+            margin-right: 2px;
+        }
+
+        .modal-title{
+			color:RGB(var(--now-color_text--primary,var(--now-color_alert--moderate-3,67,69,166)));
+		}
+
+        .footer-button {
+            min-width: 5em;
+            margin-left: 8px !important;
+        }
+
+		.modal-header {
+            display: none;
+        }
+    </style>
+    <g:evaluate jelly="true" object="true">
+        var templateName = RP.getWindowProperties().get('sysparm_template_name');
+        var api = new sn_km_gen_ai.KMSearchService();
+        var filters = api.getAvailableFilters(templateName);
+        var filterarr =[];
+        for(filter in filters){
+        var filterObj = filters[filter];
+        filterObj.search_profile_id = filter;
+        filterarr.push(filterObj);
+        }
+        filterarr.sort(function(filtera, filterb){return filtera.search_profile.order - filterb.search_profile.order});
+        var similarTasklistId = "similar_tasks_list";
+    </g:evaluate>
+    <g:evaluate var="jvar_table" jelly="true">
+        var table="v_st_km_genai_mra_similar_task";
+        table;
+    </g:evaluate>
+    <g:evaluate var="jvar_query" jelly="true">
+        var query="sys_idIN";
+        query;
+    </g:evaluate>
+	<div>
+        <span class="modal-title h4">${gs.getMessage("Search for tasks to draft this article - Select up to 5 to help in the creation of article")}</span>
+		<span><button data-dismiss="GlideModal" aria-label="${gs.getMessage('Close')}" title="" class="btn btn-icon close icon-cross" id="knowledge_mra_author_genAI_modal_closemodal" onclick="cancel()" data-original-title="${gs.getMessage('Close')}"><span class="sr-only">${gs.getMessage('Close')}</span></button><br /><br/></span>
+	</div>
+    <div class="modal-body">
+		
+        <div class="mb-3">
+            <div class="row">
+                <div class="col-sm-4">
+
+                    <select name="dropdown" class="form-control" id="dropdown" aria-label="${gs.getMessage('Search Context List. Choose a search context to search')}">
+                        <j:forEach var="jvar_filter" items="${filterarr}">
+                            <option value="${jvar_filter.search_profile_id}">${jvar_filter.search_profile.label}</option>
+                        </j:forEach>
+                    </select>
+                </div>
+                
+                <div class="col-sm-6">
+                    <input id="searchText" type="text" class="form-control" placeholder="${gs.getMessage('Search from tasks...')}" aria-label="${gs.getMessage('search from tasks')}" aria-describedby="basic-addon1" />
+                </div>
+
+                
+
+                <div class="col-sm-2">
+                    <button id="searchButton" class="btn btn-primary" onclick="search()">${gs.getMessage('Search')}</button>
+                </div>
+            </div>
+        </div>
+        <div id="task_list">
+            <g:inline template="knowledge_mra_list_genAI" />
+        </div>
+
+    </div>
+    <footer class="modal-footer">
+        <button class="btn btn-default footer-button" onclick="cancel()" id="cancel-generate-article-btn">${gs.getMessage('Cancel')}</button>
+        <button class="btn btn-primary footer-button ai-button" onclick="generateFromGenAIButtonHandler()" id="create-button-tasks">
+            <span class="icon-sn-sparkmoji-logo-outline sparkle-icon-on-button"></span>
+            ${gs.getMessage('Continue with selected tasks')}</button>
+    </footer>
+
+</j:jelly>

@@ -1,0 +1,109 @@
+<div ng-init="details = data.details.widgetCustDetails">
+  
+<div ng-if="details.category == 1">
+  ${Base system widget with no modifications, including widgets with instance options set.}<br/>
+  <a href="/api/now/v1/context_doc_url/CSHelp:diagnostic-tool" target="_blank">  ${Learn more}</a>
+</div>
+<div ng-if="details.category == 2">
+  ${Widget that you cloned from a base system widget.} 
+  <a href="/api/now/v1/context_doc_url/CSHelp:diagnostic-tool" target="_blank">  ${Learn more}</a>
+</div>
+<div ng-if="details.category == 3">
+  ${Widget that you created from scratch.}
+  <a href="/api/now/v1/context_doc_url/CSHelp:diagnostic-tool" target="_blank">  ${Learn more}</a>
+</div>
+<div ng-if="details.category == 4">
+  ${Base system widget that you configured in one of the following ways:}<br/>
+  <ul>
+    <li>${Modified the widget code directly}</li>
+    <li>${Modified widget dependencies, ng-templates, or angular providers}</li>
+  </ul>
+  <a href="/api/now/v1/context_doc_url/CSHelp:diagnostic-tool" target="_blank">  ${Learn more}</a>
+</div>
+<br/>  
+<div class="modal-diagnostics-wrapper" role="table">
+  
+    <div class="row" role="row">
+        <div class="col-md-5 header" role="columnheader">
+            ${Name}
+        </div>
+        <div class="col-md-7 content" role="cell">
+            {{details.name}}
+        </div>
+    </div>
+
+    <div class="row" ng-if="details.category == 2" role="row">
+        <div class="col-md-5 header" role="columnheader">
+            ${Base Widget}
+        </div>
+        <div class="col-md-7 content" role="cell">
+            {{details.parentLabel}}
+        </div>
+    </div>
+  
+    <div class="row" role="row">
+        <div class="col-md-5 header" role="columnheader">
+            ${Dependencies}
+        </div>
+        <div class="col-md-7 content" role="cell">
+            <div ng-if="!details.dependencies || details.dependencies.length === 0"> ${None} </div>
+            <!-- Multiple dependencies -->
+            <ul ng-if="details.dependencies.length > 1">
+            <li ng-repeat="dependency in details.dependencies" ng-class="{'dependency-modified': dependency.isM2MCustomized || dependency.isRecordCustomized}">
+                <a href="/sp_dependency.do?sys_id={{dependency.sys_id}}" target="_blank"> {{dependency.name}} </a>
+            </li>
+            </ul>
+            <!-- Single dependency -->
+            <div ng-if="details.dependencies.length === 1" ng-class="{'dependency-modified': details.dependencies[0].isM2MCustomized || details.dependencies[0].isRecordCustomized}">
+            <a href="/sp_dependency.do?sys_id={{details.dependencies[0].sys_id}}" target="_blank"> {{details.dependencies[0].name}} </a>
+            </div>
+        </div>
+    </div>
+  
+    <div class="row" role="row">
+        <div class="col-md-5 header" role="columnheader">
+            ${Angular providers}
+        </div>
+        <div class="col-md-7 content" role="cell">
+            <div ng-if="!details.providers || details.providers.length === 0"> ${None} </div>
+            <!-- Multiple -->
+            <ul ng-if="details.providers.length > 1">
+            <li ng-repeat="provider in details.providers"
+                ng-class="{'provider-modified': provider.isM2MCustomized || provider.isRecordCustomized}">
+                <a href="/sp_angular_provider.do?sys_id={{provider.sys_id}}" target="_blank">{{provider.name}}</a>
+                <a ng-if="provider.isRecordCustomized && provider.baselineSysId"
+                href="/merge_form_select_version_ro.do?sysparm_hide_back_btn=true&sysparm_version1={{provider.baselineSysId}}&sysparm_version2={{provider.currentSysId}}" target="_blank"> [${Compare}] </a>
+            </li>
+            </ul>
+            <!-- Single -->
+            <div ng-if="details.providers.length === 1" ng-class="{'provider-modified': details.providers[0].isM2MCustomized || details.providers[0].isRecordCustomized}">
+            <a href="/sp_angular_provider.do?sys_id={{details.providers[0].sys_id}}" target="_blank">{{details.providers[0].name}}</a>
+            <a ng-if="details.providers[0].isRecordCustomized && details.providers[0].baselineSysId"
+                href="/merge_form_select_version_ro.do?sysparm_hide_back_btn=true&sysparm_version1={{details.providers[0].baselineSysId}}&sysparm_version2={{details.providers[0].currentSysId}}" target="_blank"> [${Compare}] </a>
+            </div>
+        </div>
+    </div>
+  
+    <div class="row last-row" role="row">
+        <div class="col-md-5 header" role="columnheader">
+            ${Angular templates}
+        </div>
+        <div class="col-md-7 content" role="cell">
+            <div ng-if="!details.templates || details.templates.length === 0"> ${None} </div>
+            <!-- Multiple -->
+            <ul ng-if="details.templates.length > 1">
+            <li ng-repeat="tmpl in details.templates"
+                ng-class="{'template-modified': tmpl.isRecordCustomized}">
+                <a href="/sp_ng_template.do?sys_id={{tmpl.sys_id}}" target="_blank">{{tmpl.id}}</a>
+                <a ng-if="tmpl.isRecordCustomized && tmpl.baselineSysId" href="/merge_form_select_version_ro.do?sysparm_hide_back_btn=true&sysparm_version1={{tmpl.baselineSysId}}&sysparm_version2={{tmpl.currentSysId}}" target="_blank"> [${Compare}] </a>
+            </li>
+            </ul>
+            <!-- Single -->
+            <div ng-if="details.templates.length === 1"
+                ng-class="{'template-modified': details.templates[0].isRecordCustomized}">
+            <a href="/sp_ng_template.do?sys_id={{details.templates[0].sys_id}}" target="_blank">{{details.templates[0].id}}</a>
+                <a ng-if="details.templates[0].isRecordCustomized && details.templates[0].baselineSysId" href="/merge_form_select_version_ro.do?sysparm_hide_back_btn=true&sysparm_version1={{details.templates[0].baselineSysId}}&sysparm_version2={{details.templates[0].currentSysId}}" target="_blank"> [${Compare}] </a>
+            </div>
+        </div>
+     </div>
+</div>

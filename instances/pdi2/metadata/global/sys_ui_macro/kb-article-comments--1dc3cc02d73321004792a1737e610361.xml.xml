@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:inline template="ie_checker.xml" />
+	<j2:if test="$[show_user_feedback]">
+		<g2:evaluate var="jvar_comments_total">
+			var fbs = new GlideRecord("kb_feedback");
+			fbs.addNotNullQuery("comments");
+			fbs.addQuery("article",'$[JS:knowledgeRecord.sys_id]');
+			fbs.query();
+			fbs.getRowCount();
+		</g2:evaluate>
+		<div id="user_feedback_div_show" class="kb_link kb-user-feedback" aria-label="${gs.getMessage('Show all user comments')}" style="display:none" tabindex="0" role="button">
+			<span class="pointerhand">${gs.getMessage('Show comments')}</span>
+		</div>
+		<div id="user_feedback_div_hide" class="kb_link kb-user-feedback" aria-label="${gs.getMessage('Hide all user comments')}" tabindex="0" role="button">
+			<span class="pointerhand">${gs.getMessage('Hide comments')}</span>
+		</div>
+	</j2:if>
+
+	<div id="kbCommentsAndLiveFeedDisplay" class="snc-comments-live-feed-cntnr">
+		<g2:evaluate var="jvar_comments_total">
+			var fbs = new GlideRecord("kb_feedback");
+			fbs.addNotNullQuery("comments");
+			fbs.addQuery("article",'$[JS:knowledgeRecord.sys_id]');
+			fbs.query();
+			fbs.getRowCount();
+		</g2:evaluate>
+
+		<!-- we need to check for doc type , tablet -->
+		<g:evaluate var="jvar_is_doctype" expression="GlideMobileExtensions.getDeviceType() == 'doctype' || GlideMobileExtensions.getDeviceType() == 'tablet' " />
+
+		<j:choose>
+			<j:when test="${gs.getProperty('glide.knowman.use_live_feed', 'false') == 'true' &amp;&amp;gs.isLoggedIn()}">
+				<j:if test="${kbViewInfo.showKBFeedback}">
+					<j:if test="${jvar_is_doctype}">
+					   <j2:if test="$[jvar_isMSIE7|| jvar_isMSIE8 ||jvar_isMSIE9]">
+							 <g:inline template="kb_view_feedback" />
+						 </j2:if>
+						 <j2:if test="$[!(jvar_isMSIE7|| jvar_isMSIE8 ||jvar_isMSIE9)]">
+							  <g:inline template="kb_livefeed" />
+						</j2:if>
+					</j:if>
+					<j:if test="${!jvar_is_doctype}">
+						<g:inline template="kb_view_feedback" />
+					</j:if>
+				</j:if>
+			</j:when>
+			<j:otherwise>
+				<div class="snc-kb-layout">
+					<j:if test="${kbViewInfo.showKBFeedback}">
+						<g:inline template="kb_view_feedback" />
+					</j:if>
+				</div>
+			</j:otherwise>
+		</j:choose>
+	</div>
+</j:jelly>

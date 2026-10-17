@@ -1,0 +1,395 @@
+_meta:
+  hash: 5666be617fae71ac987cbf9afc564106ee1980b157d3d35187ff9a9510c75344
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2025-11-14 22:22:02
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 3e95a5d8ff113210710cffffffffff02
+  sys_mod_count: '130'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_3e95a5d8ff113210710cffffffffff02
+  sys_updated_by: admin
+  sys_updated_on: 2026-08-25 16:10:28
+compiled_topic: ba9565d8ff113210710cfffffffffff2
+design_definition: '{"type":"FlowTopic","triggers":[{"type":"Trigger","name":"3e35aa295a804746895c1ae176fe21a9","triggerType":"request","applicability":{"type":"Applicability","mode":"script","value":"true"},"id":"3e35aa295a804746895c1ae176fe21a9"}],"goals":[{"name":"primary","trigger_id":"3e35aa295a804746895c1ae176fe21a9","nodes":[{"type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","mode":"string","value":""},"id":"5ebc8e8d931a4a68b53f9e362331717f","name":"Start","expert_mode":false},{"type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","mode":"string","value":""},"id":"100fe92959ef4f8a9729090f351bbdb8","name":"End","expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    vaSystem.switchTopicById(topicToolInfo.topicId);\n})()\n\n","id":"863790e2737c40e181b359988bc43113","name":"Execute Topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    var skillSelectionMessage = \"\";\n   \t /*\n     Sends the skill picker control to the user\n\t @param skillSelectionMessage - the message to send before the picker\n\t @param args - optional arguments to further configure the skill picker. Supported options are:\n\t *                              hideSkillDetails: hides skill details in the skillSelectionMessage, defaults to false\n\t *                              hidePromotedTopics: hides promoted topics from the skill picker, defaults to false\n\t *                              hideShowMeEverything: hides show me everything button from the skill picker, defaults to false\n     */\n    vaSystem.sendSkillPickerControl(skillSelectionMessage, {\"hideSkillDetails\": true, \"hidePromotedTopics\": true, \"hideShowMeEverything\": true});\n})()\n\n// (function execute() {\n//     vaSystem.switchTopic(''_off_glide_home_'', ''RESUME'', true);\n// })()\n\n","id":"3158eb8d91a047f4bab0e66a9e6477f6","name":"_empty_skill_picker_","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"ScriptedAction","script":"(function execute() {\n    if (gs.nil(vaVars.global_context_off_glide_topic_tool_execution_info)) {\n        return;\n    }\n\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    var skillId = topicToolInfo.skillId;\n    var skillName = \"\";\n    var skillDescription = \"\";\n    if (!gs.nil(skillId)) {\n        var skillDetails = sn_one_extend.OneExtendUtil.getSkillDetails(skillId);\n        skillName = skillDetails.name;\n        skillDescription = skillDetails.description;\n    }\n\n    var topicInputVars = [];\n    var topicGR = new GlideRecord(\"sys_cs_topic\");\n    topicGR.get(topicToolInfo.topicId);\n    var inputVarsJson = topicGR.getValue(\"input_variables\");\n    if (!gs.nil(inputVarsJson)) {\n        var inputVars = JSON.parse(inputVarsJson);\n        var maxNumberOfEntities = gs.getProperty(''com.glide.cs.genai.discovery.limits.skill.slots'', 20);\n        for (var i = 0; i < inputVars.length && i < maxNumberOfEntities; i++) {\n            var input = {\n                \"name\": inputVars[i].name,\n                \"description\": inputVars[i].description,\n                \"type\": inputVars[i].datatype\n            };\n            topicInputVars.push(input);\n\n            switch (input.type) {\n                case \"String\":\n                    input.type = \"string\";\n                    break;\n                case \"date_time\":\n                case \"Datetime\":\n                    input.type = inputVars[i].dataTypeFormat;\n                    break;\n                case \"choice\":\n                    input.choices = inputVars[i].choices;\n                    break;\n                case \"ID\":\n                    input.type = \"choice\";\n                    input.choices = inputVars[i].choices;\n                    break;\n                case \"boolean\":\n                case \"Boolean\":\n                    input.type = \"boolean\";\n                    break;\n                case \"Picture\":\n                    input.type = \"reference\";\n                    break;\n                case \"reference\":\n                case \"Reference\":\n                    input.type = inputVars[i].list ? \"array.reference\" : \"reference\";\n                    break;\n                default:\n                    input.type = \"string\";\n            }\n        }\n    }\n    vaVars.definition = JSON.stringify({\n        ''inputs'': topicInputVars,\n        ''skill_name'': skillName,\n        ''skill_description'': skillDescription\n    });\n})()","id":"55e722c254b244f48769a92dcbdb6c3e","name":"Get inputs from topic","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"LibraryCall","library_topic_name":"Slot Fill Discovery","library_topic_id":"59212c337f8452107880df6d9c866577","library_topic_is_template":false,"parameter-mappings":[{"parameter-name":"definition","value":{"type":"String","mode":"string","value":"{{vaVars.definition}}"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"iscatalog","value":{"type":"String","mode":"string","value":"false"},"metadata":{"type":"True/False","list":false,"items":[],"use_items":false}},{"parameter-name":"utterance","value":{"type":"String","mode":"script","value":"(function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    return topicToolInfo.utterance;\n})()"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"additional_attributes","value":{"type":"String","mode":"string","value":""},"metadata":{"type":"String","list":false,"items":[],"use_items":false}},{"parameter-name":"context_inclusion_rule","value":{"type":"String","mode":"string","value":"DEFAULT"},"metadata":{"type":"String","list":false,"items":[],"use_items":false}}],"return-value-mappings":[{"main_topic_variable_namespace":"vaInputs","library_topic_return_parameter_name":"slot_fill_values","main_topic_mapped_variable_name":"slot_fill_values"}],"header_card_fields":[],"input_parameters_mode":"dynamic","output_parameters_mode":"dynamic","output_parameter_variable":"","id":"62079cf4cfdb409a8e5ad543d053d038","name":"Slot Fill Discovery","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"input_parameters_script":""},{"type":"ScriptedAction","script":"(function execute() {\n\tvar definition;\n\tvar collectedByName = {};\n\n\t// collect slots from LLM slotfill call\n\ttry {\n\t\tdefinition = JSON.parse(vaVars.definition);\n\t\tif (!gs.nil(vaInputs.slot_fill_values)) {\n\t\t\tvar response = JSON.parse(vaInputs.slot_fill_values.getValue())[0];\n\t\t\tvar results = JSON.parse(response.response).result;\n\n\t\t\tresults.forEach(function(result) {\n\t\t\t\tif (result.value) {\n\t\t\t\t\tcollectedByName[result.name] = {name: result.name, value: result.value.toString()};\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\t} catch (e) {\n\t\tgs.info(\"Exception after Unified skill slotfill llm call, \" + e.toString() + ''\\n'' + JSON.stringify(e));\n\t}\n\n\t// merge in slots from AO topic tool info, overriding same-name entries from slot_fill_values\n\ttry {\n\t\tdefinition = definition || JSON.parse(vaVars.definition);\n\t\tvar topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n\t\tvar topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n\t\tif (topicToolInfo.topicSlots && topicToolInfo.topicSlots.length > 0) {\n\t\t\ttopicToolInfo.topicSlots.forEach(function(slot) {\n\t\t\t\tcollectedByName[slot.name] = slot;\n\t\t\t});\n\t\t}\n\t} catch (e) {\n\t\tgs.info(\"Exception filling topic tool slots from context, \" + e.toString() + ''\\n'' + JSON.stringify(e));\n\t}\n\t\n\tvar mergedSlots = Object.keys(collectedByName).map(function(key) {\n\t\treturn collectedByName[key];\n\t});\n\tif (definition) {\n\t\tvaSystem.setScoredEntities(definition.skill_name, mergedSlots);\n\t}\n})()","id":"8be32aea0f2f47e5bb3d3b8cf719cba7","name":"Set slot fill values","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"Topic","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    if (gs.nil(topicToolInfosArray)) {\n        return false;\n    }\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    return !gs.nil(topicToolInfo) && !gs.nil(topicToolInfo.topicId) && gs.nil(topicToolInfo.topicBlockInfoJson);\n})()\n})()"},"id":"b265f975c0394e378b0ea8aa91158dfe","name":"Topic","expert_mode":false},{"type":"Branch","label":"Topic Block","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    if (gs.nil(vaVars.global_context_off_glide_topic_tool_execution_info)) {\n        return;\n    }\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    return !gs.nil(topicToolInfo) && !gs.nil(topicToolInfo.topicBlockInfoJson);\n})()\n})()"},"id":"1a51017d9d674d2fa4bbd13d90bf480d","name":"Topic Block","expert_mode":false}],"id":"269176f8e4f7447eb7f84f9f35913a27","goal_id":"primary","expert_mode":false},{"type":"LibraryCall","library_topic_name":"","library_topic_id":"","library_topic_is_template":true,"dynamic_topic_block_name":{"type":"String","mode":"script","value":"(function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    var tbInfo = JSON.parse(topicToolInfo.topicBlockInfoJson);\n    return tbInfo.name;\n})()\n"},"parameter-mappings":[],"return-value-mappings":[],"header_card_fields":[],"input_parameters_mode":"script","output_parameters_mode":"script","output_parameter_variable":"tb_outputs","id":"b20275f1d2b840bb9ce8a5bd34f40e55","name":"Execute Topic Block","goal_id":"primary","applicability":{"type":"Applicability","mode":"script","value":"true"},"expert_mode":false,"input_parameters_script":"(function execute() {\n    /*  Return the input mappings of the topic block to run. Should be the ''parameter-name'' : ''value'' key/value pair .\n        For example:\n\n        var fordInputs = { ''car_make'' : ''ford'' };\n\n        var toyotaInputs = { ''car_make'': ''toyota'' };\n\n        switch (vaVars.car_make) {\n            case ''Ford'':\n                return fordInputs;\n            case ''Toyota'':\n                return toyotaInputs;\n            default:\n                return {};\n        }\n    */\n\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    var tbInfo = JSON.parse(topicToolInfo.topicBlockInfoJson);\n    return tbInfo.inputs;\n})()\n"},{"type":"Decision","name":"Decision","branches":[{"type":"Branch","label":"not nested","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return true;// !varVars.global_nested_off_glide_topic_tool_execution;\n})()\n})()"},"id":"65096f776686481086b70d3e678d0795","name":"not nested","expert_mode":false},{"type":"Branch","label":"nested","expression":{"type":"Applicability","mode":"script","value":"(function() { return (function execute() {\n    return false; //varVars.global_nested_off_glide_topic_tool_execution;\n})()\n})()"},"id":"08a9d410f53d45fb9c3316dbc410fd40","name":"nested","expert_mode":false}],"id":"48f62eb3a5504f7cb308b73f4705116b","goal_id":"primary","expert_mode":false}],"edges":[{"type":"Edge","source_node_id":"5ebc8e8d931a4a68b53f9e362331717f","target_node_id":"269176f8e4f7447eb7f84f9f35913a27","id":"0071594f434a4bf1ac50596f4629690b"},{"type":"Edge","source_node_id":"b20275f1d2b840bb9ce8a5bd34f40e55","target_node_id":"3158eb8d91a047f4bab0e66a9e6477f6","id":"28d0f2ebde7c4f648a85382620e5672f"},{"type":"Edge","source_node_id":"3158eb8d91a047f4bab0e66a9e6477f6","target_node_id":"100fe92959ef4f8a9729090f351bbdb8","id":"978c6da6e9864b8ebafef1afdc156a11"},{"type":"Edge","source_node_id":"55e722c254b244f48769a92dcbdb6c3e","target_node_id":"62079cf4cfdb409a8e5ad543d053d038","id":"c018a043d8fe46d0af35bc759c9660d1"},{"type":"Edge","source_node_id":"62079cf4cfdb409a8e5ad543d053d038","target_node_id":"8be32aea0f2f47e5bb3d3b8cf719cba7","id":"b7f7d1589e08467b96d69546d19fce3d"},{"type":"Edge","source_node_id":"8be32aea0f2f47e5bb3d3b8cf719cba7","target_node_id":"863790e2737c40e181b359988bc43113","id":"f49b081a2bb94b8daa0a85971d4c3932"},{"type":"Edge","source_node_id":"269176f8e4f7447eb7f84f9f35913a27","target_node_id":"55e722c254b244f48769a92dcbdb6c3e","branch_id":"b265f975c0394e378b0ea8aa91158dfe","id":"547b34fe9efd4b2895e45681d014b252","name":"b265f975c0394e378b0ea8aa91158dfe"},{"type":"Edge","source_node_id":"269176f8e4f7447eb7f84f9f35913a27","target_node_id":"b20275f1d2b840bb9ce8a5bd34f40e55","branch_id":"1a51017d9d674d2fa4bbd13d90bf480d","id":"ae6f564551624483a40e053181765d6e","name":"1a51017d9d674d2fa4bbd13d90bf480d"},{"type":"Edge","source_node_id":"863790e2737c40e181b359988bc43113","target_node_id":"48f62eb3a5504f7cb308b73f4705116b","id":"8350bba6845f457d8a1db8f4e2b748fa"},{"type":"Edge","source_node_id":"48f62eb3a5504f7cb308b73f4705116b","target_node_id":"3158eb8d91a047f4bab0e66a9e6477f6","branch_id":"65096f776686481086b70d3e678d0795","id":"a3a4ab87117e4baea93e577d6491912b","name":"65096f776686481086b70d3e678d0795"},{"type":"Edge","source_node_id":"48f62eb3a5504f7cb308b73f4705116b","target_node_id":"100fe92959ef4f8a9729090f351bbdb8","branch_id":"08a9d410f53d45fb9c3316dbc410fd40","id":"2b2f04019ed843fdaeb5b72f0edef960","name":"08a9d410f53d45fb9c3316dbc410fd40"}],"id":"primary"}],"script_variables":[{"type":"String","name":"definition","value":{"type":"String","mode":"string"},"list":false,"id":"f017a3535e5045f2adda6a868b1d86e2","formatType":"text","secure":false,"sensitive":false,"aiInput":false}],"glide_variables":[{"type":"Reference","table":"sys_user","auto_select":false,"id":"21f62b728a764f9eb2f7e57aa1723d5b","name":"user","formatType":"text","secure":false,"sensitive":false,"aiInput":false,"list":false},{"type":"String","name":"slot_fill_values","list":false,"id":"305f91e672db45288cbafb7483add337","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false},{"type":"String","name":"tb_outputs","list":false,"id":"fbe2a4cc1abd4c0494a55a8ecbcb25de","formatType":"text","metadata":{"libraryMappingType":"output"},"secure":false,"sensitive":false,"aiInput":false}],"applicability":{"type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","domain":"global","topic_type":"STANDARD","channels":[],"dialog_acts_enabled":false,"id":"7b8561d8ff113210710cffffffffff6f","name":"_off_glide_agent_topic_tool_executor_","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":false,"autopilot_topic":false,"design_categories":[{"name":null,"visible":false,"sysId":"b1dfd7c254103300fa9b212481c502cb"}],"triggerable_by_notification":false,"description":"Services request from the off-glide Agentic Orchestrator to execute agent tools that are topic-based.","model_type":"llm","foundational":false,"modify_confirmation_enabled":false,"context_profiles":[],"title":"_off_glide_agent_topic_tool_executor_","library":false,"csTopicId":"ba9565d8ff113210710cfffffffffff2","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: 7b8561d8ff113210710cffffffffff6f
+graph: |-
+  {
+    "graph_api_version": "1.0.84",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "5ebc8e8d931a4a68b53f9e362331717f": {
+            "id": "5ebc8e8d931a4a68b53f9e362331717f",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "value": "",
+              "mode": "simple"
+            }
+          },
+          "100fe92959ef4f8a9729090f351bbdb8": {
+            "id": "100fe92959ef4f8a9729090f351bbdb8",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            }
+          },
+          "863790e2737c40e181b359988bc43113": {
+            "id": "863790e2737c40e181b359988bc43113",
+            "name": "Execute Topic",
+            "script": "(function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    vaSystem.switchTopicById(topicToolInfo.topicId);\n})()\n\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "3158eb8d91a047f4bab0e66a9e6477f6": {
+            "id": "3158eb8d91a047f4bab0e66a9e6477f6",
+            "name": "_empty_skill_picker_",
+            "script": "(function execute() {\n    var skillSelectionMessage = \"\";\n   \t /*\n     Sends the skill picker control to the user\n\t @param skillSelectionMessage - the message to send before the picker\n\t @param args - optional arguments to further configure the skill picker. Supported options are:\n\t *                              hideSkillDetails: hides skill details in the skillSelectionMessage, defaults to false\n\t *                              hidePromotedTopics: hides promoted topics from the skill picker, defaults to false\n\t *                              hideShowMeEverything: hides show me everything button from the skill picker, defaults to false\n     */\n    vaSystem.sendSkillPickerControl(skillSelectionMessage, {\"hideSkillDetails\": true, \"hidePromotedTopics\": true, \"hideShowMeEverything\": true});\n})()\n\n// (function execute() {\n//     vaSystem.switchTopic('_off_glide_home_', 'RESUME', true);\n// })()\n\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "55e722c254b244f48769a92dcbdb6c3e": {
+            "id": "55e722c254b244f48769a92dcbdb6c3e",
+            "name": "Get inputs from topic",
+            "script": "(function execute() {\n    if (gs.nil(vaVars.global_context_off_glide_topic_tool_execution_info)) {\n        return;\n    }\n\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    var skillId = topicToolInfo.skillId;\n    var skillName = \"\";\n    var skillDescription = \"\";\n    if (!gs.nil(skillId)) {\n        var skillDetails = sn_one_extend.OneExtendUtil.getSkillDetails(skillId);\n        skillName = skillDetails.name;\n        skillDescription = skillDetails.description;\n    }\n\n    var topicInputVars = [];\n    var topicGR = new GlideRecord(\"sys_cs_topic\");\n    topicGR.get(topicToolInfo.topicId);\n    var inputVarsJson = topicGR.getValue(\"input_variables\");\n    if (!gs.nil(inputVarsJson)) {\n        var inputVars = JSON.parse(inputVarsJson);\n        var maxNumberOfEntities = gs.getProperty('com.glide.cs.genai.discovery.limits.skill.slots', 20);\n        for (var i = 0; i < inputVars.length && i < maxNumberOfEntities; i++) {\n            var input = {\n                \"name\": inputVars[i].name,\n                \"description\": inputVars[i].description,\n                \"type\": inputVars[i].datatype\n            };\n            topicInputVars.push(input);\n\n            switch (input.type) {\n                case \"String\":\n                    input.type = \"string\";\n                    break;\n                case \"date_time\":\n                case \"Datetime\":\n                    input.type = inputVars[i].dataTypeFormat;\n                    break;\n                case \"choice\":\n                    input.choices = inputVars[i].choices;\n                    break;\n                case \"ID\":\n                    input.type = \"choice\";\n                    input.choices = inputVars[i].choices;\n                    break;\n                case \"boolean\":\n                case \"Boolean\":\n                    input.type = \"boolean\";\n                    break;\n                case \"Picture\":\n                    input.type = \"reference\";\n                    break;\n                case \"reference\":\n                case \"Reference\":\n                    input.type = inputVars[i].list ? \"array.reference\" : \"reference\";\n                    break;\n                default:\n                    input.type = \"string\";\n            }\n        }\n    }\n    vaVars.definition = JSON.stringify({\n        'inputs': topicInputVars,\n        'skill_name': skillName,\n        'skill_description': skillDescription\n    });\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "62079cf4cfdb409a8e5ad543d053d038": {
+            "id": "62079cf4cfdb409a8e5ad543d053d038",
+            "stepType": "ReusableTopic",
+            "name": "Slot Fill Discovery",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "useTemplateTopic": false,
+            "reusableTopicChoice": "Slot Fill Discovery",
+            "reusableTopicId": "59212c337f8452107880df6d9c866577",
+            "inputs": {
+              "definition": {
+                "value": [
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "text": ""
+                      },
+                      {
+                        "type": "datapill",
+                        "dataPill": {
+                          "value": "{{vaVars.definition}}",
+                          "displayValue": "Script Variables➛definition"
+                        },
+                        "children": [
+                          {
+                            "text": ""
+                          }
+                        ]
+                      },
+                      {
+                        "text": ""
+                      }
+                    ]
+                  }
+                ],
+                "mode": "string",
+                "type": "String"
+              },
+              "iscatalog": {
+                "value": "false",
+                "mode": "simple",
+                "type": "True/False"
+              },
+              "utterance": {
+                "value": "(function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    return topicToolInfo.utterance;\n})()",
+                "mode": "script",
+                "type": "String"
+              },
+              "additional_attributes": {
+                "value": "",
+                "mode": "simple",
+                "type": "String"
+              },
+              "context_inclusion_rule": {
+                "value": "DEFAULT",
+                "mode": "simple",
+                "type": "String"
+              }
+            },
+            "outputs": [
+              {
+                "id": "305f91e672db45288cbafb7483add337",
+                "value": "slot_fill_values",
+                "mapping": "slot_fill_values",
+                "preventDisable": true
+              }
+            ],
+            "variableIds": [
+              "305f91e672db45288cbafb7483add337"
+            ],
+            "dynamicTopicBlockName": {
+              "value": "",
+              "mode": "simple"
+            },
+            "inputDynamicModal": {},
+            "outputDynamicModal": {},
+            "outdatedNote": false,
+            "loading": false,
+            "inputParametersMode": "dynamic",
+            "inputParameterScript": "",
+            "outputParametersMode": "dynamic",
+            "outputParameterVariable": "",
+            "outputParameterId": "cb51247018bf4c199867f02aa39e8d17"
+          },
+          "8be32aea0f2f47e5bb3d3b8cf719cba7": {
+            "id": "8be32aea0f2f47e5bb3d3b8cf719cba7",
+            "name": "Set slot fill values",
+            "script": "(function execute() {\n\tvar definition;\n\tvar collectedByName = {};\n\n\t// collect slots from LLM slotfill call\n\ttry {\n\t\tdefinition = JSON.parse(vaVars.definition);\n\t\tif (!gs.nil(vaInputs.slot_fill_values)) {\n\t\t\tvar response = JSON.parse(vaInputs.slot_fill_values.getValue())[0];\n\t\t\tvar results = JSON.parse(response.response).result;\n\n\t\t\tresults.forEach(function(result) {\n\t\t\t\tif (result.value) {\n\t\t\t\t\tcollectedByName[result.name] = {name: result.name, value: result.value.toString()};\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\t} catch (e) {\n\t\tgs.info(\"Exception after Unified skill slotfill llm call, \" + e.toString() + '\\n' + JSON.stringify(e));\n\t}\n\n\t// merge in slots from AO topic tool info, overriding same-name entries from slot_fill_values\n\ttry {\n\t\tdefinition = definition || JSON.parse(vaVars.definition);\n\t\tvar topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n\t\tvar topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n\t\tif (topicToolInfo.topicSlots && topicToolInfo.topicSlots.length > 0) {\n\t\t\ttopicToolInfo.topicSlots.forEach(function(slot) {\n\t\t\t\tcollectedByName[slot.name] = slot;\n\t\t\t});\n\t\t}\n\t} catch (e) {\n\t\tgs.info(\"Exception filling topic tool slots from context, \" + e.toString() + '\\n' + JSON.stringify(e));\n\t}\n\t\n\tvar mergedSlots = Object.keys(collectedByName).map(function(key) {\n\t\treturn collectedByName[key];\n\t});\n\tif (definition) {\n\t\tvaSystem.setScoredEntities(definition.skill_name, mergedSlots);\n\t}\n})()",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "269176f8e4f7447eb7f84f9f35913a27": {
+            "id": "269176f8e4f7447eb7f84f9f35913a27",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "b20275f1d2b840bb9ce8a5bd34f40e55": {
+            "id": "b20275f1d2b840bb9ce8a5bd34f40e55",
+            "stepType": "ReusableTopic",
+            "name": "Execute Topic Block",
+            "fields": [],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "useTemplateTopic": true,
+            "inputParametersMode": "script",
+            "outputParametersMode": "script",
+            "inputParameterScript": "(function execute() {\n    /*  Return the input mappings of the topic block to run. Should be the 'parameter-name' : 'value' key/value pair .\n        For example:\n\n        var fordInputs = { 'car_make' : 'ford' };\n\n        var toyotaInputs = { 'car_make': 'toyota' };\n\n        switch (vaVars.car_make) {\n            case 'Ford':\n                return fordInputs;\n            case 'Toyota':\n                return toyotaInputs;\n            default:\n                return {};\n        }\n    */\n\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    var tbInfo = JSON.parse(topicToolInfo.topicBlockInfoJson);\n    return tbInfo.inputs;\n})()\n",
+            "outputParameterVariable": "tb_outputs",
+            "outputParameterId": "fbe2a4cc1abd4c0494a55a8ecbcb25de",
+            "reusableTopicChoice": "",
+            "reusableTopicId": "",
+            "inputs": {},
+            "outputs": [],
+            "outdatedNote": false,
+            "variableIds": [
+              "fbe2a4cc1abd4c0494a55a8ecbcb25de"
+            ],
+            "loading": false,
+            "dynamicTopicBlockName": {
+              "value": "(function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    var tbInfo = JSON.parse(topicToolInfo.topicBlockInfoJson);\n    return tbInfo.name;\n})()\n",
+              "mode": "script"
+            },
+            "inputDynamicModal": {},
+            "outputDynamicModal": {}
+          },
+          "48f62eb3a5504f7cb308b73f4705116b": {
+            "id": "48f62eb3a5504f7cb308b73f4705116b",
+            "stepType": "Decision",
+            "name": "Decision"
+          }
+        },
+        "edges": [
+          {
+            "id": "0071594f434a4bf1ac50596f4629690b",
+            "edgeType": "Edge",
+            "source": "5ebc8e8d931a4a68b53f9e362331717f",
+            "target": "269176f8e4f7447eb7f84f9f35913a27",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "28d0f2ebde7c4f648a85382620e5672f",
+            "edgeType": "Edge",
+            "source": "b20275f1d2b840bb9ce8a5bd34f40e55",
+            "target": "3158eb8d91a047f4bab0e66a9e6477f6",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "978c6da6e9864b8ebafef1afdc156a11",
+            "edgeType": "Edge",
+            "source": "3158eb8d91a047f4bab0e66a9e6477f6",
+            "target": "100fe92959ef4f8a9729090f351bbdb8",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "c018a043d8fe46d0af35bc759c9660d1",
+            "edgeType": "Edge",
+            "source": "55e722c254b244f48769a92dcbdb6c3e",
+            "target": "62079cf4cfdb409a8e5ad543d053d038",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "b7f7d1589e08467b96d69546d19fce3d",
+            "edgeType": "Edge",
+            "source": "62079cf4cfdb409a8e5ad543d053d038",
+            "target": "8be32aea0f2f47e5bb3d3b8cf719cba7",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f49b081a2bb94b8daa0a85971d4c3932",
+            "edgeType": "Edge",
+            "source": "8be32aea0f2f47e5bb3d3b8cf719cba7",
+            "target": "863790e2737c40e181b359988bc43113",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "547b34fe9efd4b2895e45681d014b252",
+            "edgeType": "Branch",
+            "source": "269176f8e4f7447eb7f84f9f35913a27",
+            "target": "55e722c254b244f48769a92dcbdb6c3e",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    if (gs.nil(topicToolInfosArray)) {\n        return false;\n    }\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    return !gs.nil(topicToolInfo) && !gs.nil(topicToolInfo.topicId) && gs.nil(topicToolInfo.topicBlockInfoJson);\n})()\n"
+            },
+            "label": "Topic"
+          },
+          {
+            "id": "ae6f564551624483a40e053181765d6e",
+            "edgeType": "Branch",
+            "source": "269176f8e4f7447eb7f84f9f35913a27",
+            "target": "b20275f1d2b840bb9ce8a5bd34f40e55",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    if (gs.nil(vaVars.global_context_off_glide_topic_tool_execution_info)) {\n        return;\n    }\n    var topicToolInfosArray = JSON.parse(vaVars.global_context_off_glide_topic_tool_execution_info);\n    var topicToolInfo = topicToolInfosArray[topicToolInfosArray.length - 1];\n    return !gs.nil(topicToolInfo) && !gs.nil(topicToolInfo.topicBlockInfoJson);\n})()\n"
+            },
+            "label": "Topic Block"
+          },
+          {
+            "id": "8350bba6845f457d8a1db8f4e2b748fa",
+            "edgeType": "Edge",
+            "source": "863790e2737c40e181b359988bc43113",
+            "target": "48f62eb3a5504f7cb308b73f4705116b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "a3a4ab87117e4baea93e577d6491912b",
+            "edgeType": "Branch",
+            "source": "48f62eb3a5504f7cb308b73f4705116b",
+            "target": "3158eb8d91a047f4bab0e66a9e6477f6",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return true;// !varVars.global_nested_off_glide_topic_tool_execution;\n})()\n"
+            },
+            "label": "not nested"
+          },
+          {
+            "id": "2b2f04019ed843fdaeb5b72f0edef960",
+            "edgeType": "Branch",
+            "source": "48f62eb3a5504f7cb308b73f4705116b",
+            "target": "100fe92959ef4f8a9729090f351bbdb8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    return false; //varVars.global_nested_off_glide_topic_tool_execution;\n})()\n"
+            },
+            "label": "nested"
+          }
+        ]
+      }
+    },
+    "variables": {
+      "21f62b728a764f9eb2f7e57aa1723d5b": {
+        "category": "vaInputs",
+        "id": "21f62b728a764f9eb2f7e57aa1723d5b",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "f017a3535e5045f2adda6a868b1d86e2": {
+        "id": "f017a3535e5045f2adda6a868b1d86e2",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "definition",
+        "label": "definition",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "305f91e672db45288cbafb7483add337": {
+        "id": "305f91e672db45288cbafb7483add337",
+        "name": "slot_fill_values",
+        "label": "Slot_fill_values",
+        "defaultValue": "slot_fill_values",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "preventDisable": true,
+        "nodeId": "62079cf4cfdb409a8e5ad543d053d038",
+        "isHidden": false
+      },
+      "fbe2a4cc1abd4c0494a55a8ecbcb25de": {
+        "id": "fbe2a4cc1abd4c0494a55a8ecbcb25de",
+        "name": "tb_outputs",
+        "label": "Tb_outputs",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "output"
+        },
+        "secure": false,
+        "nodeId": "b20275f1d2b840bb9ce8a5bd34f40e55",
+        "isHidden": false
+      }
+    }
+  }
+name: _off_glide_agent_topic_tool_executor_
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

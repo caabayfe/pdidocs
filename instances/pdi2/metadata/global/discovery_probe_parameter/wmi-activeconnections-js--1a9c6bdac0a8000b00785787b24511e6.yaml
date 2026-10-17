@@ -1,0 +1,149 @@
+_meta:
+  hash: 002702b668271503aa71342659a281abcaeda8080b7547ca599604c5aadf35ad
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: glide.maint
+  sys_created_on: 2007-09-18 21:53:39
+  sys_id: 1a9c6bdac0a8000b00785787b24511e6
+  sys_mod_count: '33'
+  sys_package: 1be5b27b8c9503100a22deb6dd2b4ea3
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_1a9c6bdac0a8000b00785787b24511e6
+  sys_updated_by: moiz.alibhayani
+  sys_updated_on: 2022-01-11 13:57:17
+active: 'true'
+name: WMI_ActiveConnections.js
+probe: 1a9c233dc0a8000b005c58d007c94a03
+sys_name: WMI_ActiveConnections.js
+sys_policy: ''
+value: |2-
+    /**********************************************
+     * Use Service-now.com WMIAPI to gather stats
+     * This script requires the admin share (admin$) enabled and point to the windows system directory (like \WINDOWS or \WINNT).
+    ***********************************************/
+    var CMD_RETRIES = 3;
+    var FOR_READING = 1;
+    var OUTPUT_FILE = "netstat_output.txt";
+    var DEBUG = false;
+    var MAX_TIMEOUT = 60000; //60 seconds; This timeout dictates how long each command can run.
+
+    var scanner = getScanner();
+    if (scanner) 
+        var output = run();
+
+    scanner.appendToRoot("output", output);
+
+    /*******************************************
+     * Function definitions
+     ******************************************/
+    function run() {
+        var sysDir = "C:\\WINDOWS\\system32";
+        sysDir = setSystemDirectory(scanner.fetchTable("Win32_OperatingSystem"));
+
+        // Running the netstat command and pipe the output to a file and read the file back... 
+        // the "2>&1" redirect both stdout and stderr to the file
+        executeCommand(sysDir + "\\cmd.exe /c netstat.exe -ano > %SystemRoot%\\temp\\" + OUTPUT_FILE + " 2>&1");
+        var output = readFile(OUTPUT_FILE);
+
+        // check if the output is actually connections, or the netstat usage page is shown...
+        if (output.indexOf("NETSTAT") > -1) {
+  	  // Most likely the -o option is not supported on a 2000. Re-run and log it.
+            displayWarningOnOption(output);
+            executeCommand(sysDir + "\\cmd.exe /c netstat.exe -anp TCP > %SystemRoot%\\temp\\" + OUTPUT_FILE + " 2>&1");
+            output = readFile(OUTPUT_FILE);
+        }
+        //Clean up the temp file created...
+        executeCommand(sysDir + "\\cmd.exe /c del %SystemRoot%\\temp\\" + OUTPUT_FILE);
+
+        return output;
+    }
+
+    function setSystemDirectory(items) {
+        for(var i = 0; i < items.length; i++) {
+            var item = items[i];
+            sysDir = item.SystemDirectory;
+        }
+
+        return sysDir;
+    }
+
+    function executeCommand(command) {
+        for(var i = 0; i < CMD_RETRIES; i++) {
+            var oProcess = GetObject('winmgmts:\\\\' + gCurrentMachine + '\\root\\CIMV2:Win32_Process')
+            var oMethod = oProcess.Methods_.Item("Create");
+            var oInParam = oMethod.InParameters.SpawnInstance_();
+            oInParam.CommandLine = command;
+
+            var oOutParam = oProcess.ExecMethod_(oMethod.Name, oInParam);
+            var retValue = oOutParam.ReturnValue;
+            var pid = oOutParam.ProcessID;
+  	  debug("Running command: " + command);
+            debug("The return value is " + retValue);
+            debug("The process ID is " + pid);
+
+            //If the command returns successfully, let's get out of here...
+        	  if (retValue == 0)  
+                break;
+         }
+         
+         waitForProcessComplete(pid); 
+     }
+
+    function readFile(fileName) {
+        var fileObj = new ActiveXObject("Scripting.FileSystemObject");
+        try {
+            var objTextFile = fileObj.OpenTextFile("\\\\" + gCurrentMachine + "\\admin$\\temp\\" + fileName, FOR_READING);
+            var output = objTextFile.ReadAll();
+            objTextFile.close();
+        } catch (e) {
+            return "Exception in readFile: " + e.message;
+        }
+
+        return output;
+    }
+
+    function waitForProcessComplete(pid) {
+        var myDate = new Date();
+        myDate.setTime(myDate.getTime()+MAX_TIMEOUT)
+
+        while (processExists(pid) == true && ((new Date()) < myDate)) 
+             WScript.Sleep(100);
+    }
+
+    function processExists(pid) {
+        try {
+            var wql = "SELECT * FROM Win32_Process WHERE ProcessId=" + pid;
+  	  debug("Running wql query: " + wql);
+            var procs = GetObject('WinMgmts:\\\\' + gCurrentMachine + "\\root\\CIMV2").ExecQuery(wql);
+            for (var en = new Enumerator(procs); !en.atEnd(); en.moveNext())
+                return true;
+
+            return false;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function displayWarningOnOption(output) {
+        var options = ["-a", "-n", "-o", "-p"];
+        for (var i=0; i<options.length; i++) {
+            var warning = "";
+            var option = options[i];
+            if (output.indexOf(option) > -1)
+                continue;
+
+            warning = "'" + option + "' is not supported on the version of the netstat.";
+            if (option == "-o")
+                warning += " Without the '-o' option, connections do not have process IDs associated them.";
+    
+            if (warning != "")
+                scanner.addWarning(warning); 
+        }
+    }
+   
+    function debug(msg) {
+         if (DEBUG == true)
+             WScript.echo(msg);
+    }
+value_script: ''

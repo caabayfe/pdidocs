@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+  <g:requires name="scripts/js_includes_catalog.js" includes="true"/>
+  <g:evaluate var="jvar_theme">
+	var theme = gs.getPreference('glide.css.theme.ui16');
+	if (null == theme){
+		var company = gs.getUser().getCompanyRecord();
+		if (null != company)
+			theme = company.getValue("theme");
+	}
+	theme;
+  </g:evaluate>
+  <g:requires name="styles/${new CatalogCssSelector().getVariableCss()}" includes="true" params="theme=${jvar_theme}"/>
+  <g:if_polaris>
+    <g:then>
+      <g:requires name="styles/${new CatalogCssSelector().getPolarisVariableCss()}" includes="true" params="theme=${jvar_theme}"/>
+    </g:then>
+  </g:if_polaris>
+  <g:requires name="styles/${new CatalogCssSelector().getCatalogCss()}" includes="false" params="theme=${jvar_theme}"/>
+  <g:if_polaris>
+    <g:then>
+      <g:requires name="styles/${new CatalogCssSelector().getPolarisCatalogCss()}" includes="false" params="theme=${jvar_theme}"/>
+    </g:then>
+  </g:if_polaris>
+  <j:set var="jvar_two_step" value="true" />	 	
+  <g:inline template="sc_sanitize.xml"/>
+  <g:inline template="sc_request_parent_message.xml"/>
+  <g:inline template="glide_weba_header.xml" />
+  <form method="POST" action="service_catalog.do" name="service_catalog.do" id="sc_cart.do">
+	<g:com.glideapp.servicecatalog_cart target="cart_view_two_step" prices="true" />
+  </form>
+
+  <!-- comma separated list of fields that are supported for onChange client scripts -->	
+  <j2:set var="jvar_p2flow_all_visible_fields" value="requested_for" />
+  <g:client_script tableName="sc_cart" type="phase1" />
+  <g2:client_script tableName="sc_cart" file="$[jvar_cart.getGlideRecord()]" />
+  <g:inline template="catalog_web_analytics.xml" />
+</j:jelly>

@@ -1,0 +1,2 @@
+
+			 var gr = new GlideRecord("sys_dictionary"); gr.addEncodedQuery("reference=sys_flow_context^elementLIKEcontext^nameINsc_cat_item_review_flow_context_mtom,sc_req_item,sc_service_fulfillment_step_data,sys_flow_plan_context_binding,var__m_sys_flow_step_definition_output_779583e053020300f5bf435723dc342b,var__m_sys_hub_flow_logic_variable_5ede711653223300414eddeeff7b1256"); gr.reference_cascade_rule = 'none'; gr.setWorkflow(false); gr.updateMultiple();

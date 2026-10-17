@@ -1,0 +1,141 @@
+_meta:
+  hash: 676d414cc8f533e236c3e52679795481c0fd6a9a1167d777819588d22a1e61a1
+  hash_version: 1
+  scope: sn_vsc
+  sys_class_name: scan_script_only_check
+  sys_created_by: admin
+  sys_created_on: 2025-01-17 01:57:05
+  sys_id: 4186cfcf770b5210c2123a91fa5a9952
+  sys_mod_count: '9'
+  sys_package: a51d46e3f2014110366b10017c5ba675
+  sys_scope: a51d46e3f2014110366b10017c5ba675
+  sys_update_name: scan_script_only_check_4186cfcf770b5210c2123a91fa5a9952
+  sys_updated_by: admin
+  sys_updated_on: 2025-08-04 21:17:57
+active: 'true'
+category: security
+description: |-
+  Control the behavior of application data residing in master tables outside the application. When these properties have a value of true, only the application-specific ACLs are evaluated for access to the application data residing in these tables. Not all applications are designed to work in this configuration or use a System Property [sys_properties] record for this purpose.
+
+  These system properties use the glide.enforce_security_scope.<scope> naming format. For example, use the glide.enforce_security_scope.sn_hr_sp property for the Employee Center Core (sn_hr_sp) scope. The following application scopes contain this property:
+  - sn_doc
+  - sn_egd_act
+  - sn_egd_core
+  - sn_egd_goals
+  - sn_em
+  - sn_gsm
+  - sn_gsm_info_req
+  - sn_gsm_lic_prmt
+  - sn_gsm_lic_prmt_ex
+  - sn_gsm_soc_bnfts
+  - sn_hc_professional
+  - sn_hr_agent_ws
+  - sn_hr_ai_agents
+  - sn_hr_awa
+  - sn_hr_core
+  - sn_hr_ef
+  - sn_hr_er
+  - sn_hr_gen_ai
+  - sn_hr_hc
+  - sn_hr_le
+  - sn_hr_le_ent
+  - sn_hr_mii_base
+  - sn_hr_na_galileo
+  - sn_hr_pad
+  - sn_hr_pj
+  - sn_hr_sp
+  - sn_hr_va
+  - sn_hr_ws
+  - sn_imt_health_test
+  - sn_imt_tracing
+  - sn_imt_vaccine
+  - sn_ja
+  - sn_jny
+  - sn_lg_contracts
+  - sn_lg_matter
+  - sn_lg_ops
+  - sn_opp_market
+  - sn_professional
+  - sn_svc_appl_info
+  - sn_svc_appl_pgm_mg
+  - sn_talent_aia
+  - sn_uni_req
+  - sn_uni_task
+
+  When the properties do not have a value of 'true', the ACLs on the master table will still be evaluated for access, potentially allowing unauthorized or undesired access to application data.
+documentation_url: /api/now/v1/context_doc_url/sc-enforce-application-specific-acls-only-for-application-data
+finding_type: scan_finding
+name: Enforce Application Specific ACLs Only for Application Data
+priority: '3'
+resolution_details: |-
+  For each application installed with the glide.enforce_security_scope property in the System Properties [sys_properties] table, (for example, glide.enforce_security_scope.sn_hr_core), ensure the property value is set to true.
+
+  These properties can only be modified by the scoped administrator for the specific application. If a sys_properties record does not exist for the given application and respective property, it must be created.
+
+  Use this script can to find which properties need to be updated or created on the instance:
+
+   var properties = [
+          'glide.enforce_security_scope.sn_uni_task',
+          'glide.enforce_security_scope.sn_uni_req',
+          'glide.enforce_security_scope.sn_svc_appl_info',
+          'glide.enforce_security_scope.sn_professional',
+          'glide.enforce_security_scope.sn_opp_market',
+          'glide.enforce_security_scope.sn_lg_ops',
+          'glide.enforce_security_scope.sn_lg_matter',
+          'glide.enforce_security_scope.sn_lg_contracts',
+          'glide.enforce_security_scope.sn_jny',
+          'glide.enforce_security_scope.sn_ja',
+          'glide.enforce_security_scope.sn_imt_vaccine',
+          'glide.enforce_security_scope.sn_imt_tracing',
+          'glide.enforce_security_scope.sn_imt_health_test',
+          'glide.enforce_security_scope.sn_hr_ws',
+          'glide.enforce_security_scope.sn_hr_va',
+          'glide.enforce_security_scope.sn_hr_sp',
+          'glide.enforce_security_scope.sn_hr_pj',
+          'glide.enforce_security_scope.sn_hr_pad',
+          'glide.enforce_security_scope.sn_hr_mii_base',
+          'glide.enforce_security_scope.sn_hr_le',
+          'glide.enforce_security_scope.sn_hr_le_ent',
+          'glide.enforce_security_scope.sn_hr_hc',
+          'glide.enforce_security_scope.sn_hr_gen_ai',
+          'glide.enforce_security_scope.sn_hr_er',
+          'glide.enforce_security_scope.sn_hr_ef',
+          'glide.enforce_security_scope.sn_hr_core',
+          'glide.enforce_security_scope.sn_hr_awa',
+          'glide.enforce_security_scope.sn_hr_agent_ws',
+          'glide.enforce_security_scope.sn_hc_professional',
+          'glide.enforce_security_scope.sn_gsm_soc_bnfts',
+          'glide.enforce_security_scope.sn_gsm_lic_prmt_ex',
+          'glide.enforce_security_scope.sn_gsm_lic_prmt',
+          'glide.enforce_security_scope.sn_gsm_info_req',
+          'glide.enforce_security_scope.sn_gsm',
+          'glide.enforce_security_scope.sn_em',
+          'glide.enforce_security_scope.sn_egd_goals',
+          'glide.enforce_security_scope.sn_egd_core',
+          'glide.enforce_security_scope.sn_egd_act',
+          'glide.enforce_security_scope.sn_doc',
+          'glide.enforce_security_scope.sn_talent_aia',
+          'glide.enforce_security_scope.sn_hr_na_galileo',
+          'glide.enforce_security_scope.sn_svc_appl_pgm_mg',
+          'glide.enforce_security_scope.sn_hr_ai_agents',
+          'glide.enforce_security_scope.sn_hr_mii_base'
+      ];
+   
+      var pm = new GlidePluginManager();
+
+      for (var i = 0; i < properties.length; i++) {
+          var property = properties[i];
+          var application = property.split('.')[2];
+          var propertyValue = gs.getProperty(property, 'false');
+
+          if (pm.isActive(application) && propertyValue.toLowerCase() != 'true') {
+              gs.print(property);
+          }
+      }
+run_condition: ''
+score_max: '100'
+score_min: '0'
+score_scale: '1'
+short_description: Enforce Application Specific ACLs Only for Application Data
+sys_name: Enforce Application Specific ACLs Only for Application Data
+sys_policy: read

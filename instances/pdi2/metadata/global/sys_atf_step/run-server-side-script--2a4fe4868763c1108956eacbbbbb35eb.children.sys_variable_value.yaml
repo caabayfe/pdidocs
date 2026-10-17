@@ -1,0 +1,120 @@
+- document: sys_atf_step
+  document_key: 2a4fe4868763c1108956eacbbbbb35eb
+  order: '100'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-05-20 03:58:09
+  sys_id: 137f2c868763c1108956eacbbbbb3540
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-05-20 03:58:09
+  value: '3.1'
+  variable: 42f2564b73031300440211d8faf6a777
+- document: sys_atf_step
+  document_key: 2a4fe4868763c1108956eacbbbbb35eb
+  order: '200'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-05-20 03:58:09
+  sys_id: 1b7f2c868763c1108956eacbbbbb3540
+  sys_mod_count: '17'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2023-12-17 13:31:24
+  value: |2-
+     var gr = new GlideRecord("em_event");
+     
+        var num1 = new GlideDateTime().getNumericValue();
+     
+        gr.setValue("source", 'SRC1');
+        gr.setValue("message_key", num1);
+        gr.setValue("severity", 1);
+        gr.setValue("description", 'description_Manual_Parent_(ATF)');
+        gr.setValue("maintenance", "false");
+        gr.insert();
+        gs.sleep(10000);
+     
+        var num2 = new GlideDateTime().getNumericValue();
+     
+        gr.setValue("source", 'SRC1');
+        gr.setValue("message_key", num2);
+        gr.setValue("severity", 2);
+        gr.setValue("description", 'description_Manual_Secondary_(ATF)');
+        gr.setValue("maintenance", "false");
+        gr.insert();
+     
+        gs.sleep(1000);
+     
+     
+        var grAlert = new GlideRecord("em_alert");
+     
+        grAlert.addQuery("message_key", num1);
+     
+        var found = false;
+        for (var i = 0; i < 100 && !found; i++){
+     
+            grAlert.query();
+            gs.sleep(1000);
+     
+            var sysIdParent = 0;
+            while (grAlert.next()) {
+                found = true;
+                sysIdParent = grAlert.getValue("sys_id");
+            }
+     
+        }
+     
+        grAlert = new GlideRecord("em_alert"); // do not delete , the second query get stuck
+     
+        grAlert.addQuery("message_key", num2);
+     
+        found = false;
+        for ( i = 0; i < 100 && !found; i++){
+     
+            grAlert.query();
+            gs.sleep(1000);
+     
+            while (grAlert.next()) {
+                found = true;
+                grAlert.setValue("parent", sysIdParent);
+                grAlert.update();
+            }
+        }
+     
+        grAlert = new GlideRecord("em_alert");
+     
+        grAlert.addQuery("message_key", num1);
+        found = false;
+        for ( i = 0; i < 100 && !found; i++){
+     
+            grAlert.query();
+            gs.sleep(1000);
+     
+            var correlationGroup = '0';
+            while (grAlert.next()) {
+                correlationGroup = grAlert.getValue("correlation_group");
+                if(correlationGroup =='1'){
+                    found = true;
+                }
+            }
+        }
+     
+        grAlert = new GlideRecord("em_alert");
+     
+        grAlert.addQuery("message_key", num2);
+        found = false;
+        for ( i = 0; i < 100 && !found; i++){
+     
+            grAlert.query();
+            gs.sleep(1000);
+     
+            correlationGroup = '0';
+            while (grAlert.next()) {
+                correlationGroup = grAlert.getValue("correlation_group");
+                if(correlationGroup =='2'){
+                    found = true;
+                }
+            }
+        }
+  variable: 989d9e235324220002c6435723dc3484

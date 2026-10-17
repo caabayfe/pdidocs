@@ -1,0 +1,87 @@
+_meta:
+  hash: 6d80816e6d192aba99415b1de2a4f357643bfa2858f482f59a8cacc3b7643c04
+  hash_version: 1
+  scope: global
+  sys_class_name: discovery_probe_parameter
+  sys_created_by: admin
+  sys_created_on: 2014-06-06 17:43:12
+  sys_id: 4ea95b0b37012100dcd48c00dfbe5d41
+  sys_mod_count: '20'
+  sys_package: d0ddf983837f4310292aca75eeaad34e
+  sys_scope: global
+  sys_update_name: discovery_probe_parameter_4ea95b0b37012100dcd48c00dfbe5d41
+  sys_updated_by: tim.broberg
+  sys_updated_on: 2015-11-23 17:47:50
+active: 'true'
+name: storage.bash
+probe: 6320a3c40a0a030c007aba13a2583b81
+sys_name: storage.bash
+sys_policy: ''
+value: |-
+  #!/bin/bash
+  # Executes various commands to retrieve disk and file system information.
+
+  echo "[[==PROBE:iostat==]]"
+  # Enumerate storage devices
+
+  iostat -Enr
+
+  echo "[[==PROBE:prtvtoc==]]"
+  # Gather partition information for each disk
+
+  storage_device_ids=$(iostat -En | awk '/^c/ { print $1 }')
+  for storage_device_id in $storage_device_ids ; do
+      prtvtocCmd='${sudo:prtvtoc}'
+      $prtvtocCmd /dev/rdsk/${storage_device_id}s2
+  done
+
+  echo "[[==PROBE:diff_iostat==]]"
+  # Create a map between Linux device IDs and Solaris device IDs
+
+  diff <(iostat -E) <(iostat -En) | awk '/^(<|>)/ { print $2 }'
+
+  echo "[[==PROBE:zpool_list==]]"
+  # List ZFS pool members
+
+  zpool list
+
+  echo "[[==PROBE:zpool_status==]]"
+  # List ZFS pools
+
+  zpool status | awk '$1 == "NAME", $1 == ""'
+
+  echo '[[==PROBE:df==]]'
+  # Probe for file systems
+
+  df -k
+
+  FCINFO=/usr/sbin/fcinfo
+  if [ -f $FCINFO ]; then
+  echo '[[==PROBE:fcinfo_hba==]]'
+  # Collect corresponding information for hha and its ports
+
+  ${sudo:fcinfo hba-port}
+
+
+  echo '[[==PROBE:fcinfo_target==]]'
+  # Collect remote_ports and LUNs are seen by every port on hba
+
+  PORTWWN=`${sudo:fcinfo hba-port} | grep 'Port WWN' | cut -d ":" -f 2`
+  for port in $PORTWWN; do
+  echo '**Remote ports for:' $port
+  ${sudo:fcinfo remote-port -sl -p $port}
+  done
+  fi
+
+  echo "[[==PROBE:sys_iscsi_initiator==]]"
+  # Get our iSCSI initiator
+  ${sudo:iscsiadm list initiator-node} | grep 'Initiator node name'
+
+  echo '[[==PROBE:iscsi_session==]]'
+  # Probe for iSCSI sessions
+
+  iscsiadmCmd='${sudo:iscsiadm list target -S}'
+  $iscsiadmCmd | nawk '/Target:/ { print "iscsiSession:" ; print "  targetIqn: " $2 } /LUN:/ { print "  device: " ; print "    lun: " $2 } /OS Device Name:/ { cmd = "basename " $4; cmd | getline deviceId ; close(cmd) ; print "    id: " deviceId }'
+
+  exit 0
+value_script: ''

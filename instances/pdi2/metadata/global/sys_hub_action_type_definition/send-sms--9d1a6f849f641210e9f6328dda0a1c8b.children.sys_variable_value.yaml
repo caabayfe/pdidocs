@@ -1,0 +1,114 @@
+- document: sys_hub_action_type_definition
+  document_key: 9d1a6f849f641210e9f6328dda0a1c8b
+  order: '1'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-05 14:13:12
+  sys_id: 092ae3c49f641210e9f6328dda0a1c5e
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-05 14:13:12
+  value: '{"version":"1.0","complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"serializationFormat":"JSON"}'
+  variable: 7c2aef849f641210e9f6328dda0a1c58
+- document: sys_hub_step_instance
+  document_key: 3b98fed89f681210e9f6328dda0a1c38
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-06 05:15:21
+  sys_id: 7798fed89f681210e9f6328dda0a1c62
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-06 05:15:21
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: 9d1a6f849f641210e9f6328dda0a1c8b
+  order: '2'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-05 14:13:12
+  sys_id: 8d2ae3c49f641210e9f6328dda0a1c5d
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-05 14:13:12
+  value: '0'
+  variable: 852ae3c49f641210e9f6328dda0a1c53
+- document: sys_hub_step_instance
+  document_key: 3b98fed89f681210e9f6328dda0a1c38
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2024-09-06 05:15:21
+  sys_id: bf98fed89f681210e9f6328dda0a1c62
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2024-09-10 12:41:50
+  value: |-
+    (function execute(inputs, outputs) {
+        // ... code ...
+        var notifyNumberGr = inputs.send_from;
+        var sendTo = inputs.send_to;
+        var sendToGroup = inputs.send_to_group;
+        var message = inputs.message;
+        var numbers = inputs.numbers;
+        var source = inputs.record_id;
+        var sendToIds = [];
+        var sendToGroupIds = [];
+        var users = [];
+        var groups = [];
+        
+
+        var notifyUtils = new NotifyUtil();
+        var notify = new SNC.Notify();
+
+        if (sendTo && sendTo instanceof GlideRecord) {
+            while (sendTo.next()) {
+                sendToIds.push(sendTo.getUniqueValue());
+            }
+        }
+
+        if (sendToGroup && sendToGroup instanceof GlideRecord) {
+            while (sendToGroup.next()) {
+                sendToGroupIds.push(sendToGroup.getUniqueValue());
+            }
+        }
+
+        users = notifyUtils.appendUniquely(users, sendToIds + '');
+        groups = notifyUtils.appendUniquely(groups, sendToGroupIds + '');
+        numbers = notifyUtils.getUniquePhoneNumbersForUsersAndGroups(numbers, users, groups, notifyUtils.numberType.sms);
+
+        if (!notifyNumberGr || !notifyNumberGr.isValid()) {
+            throw new Error(gs.getMessage('No such Notify Phone Number'));
+        }
+
+        if (!notifyUtils.isOutgoingSMSCapableNumber(notifyNumberGr.getValue('number'))) {
+            throw new Error(gs.getMessage("The Notify Number does not support outbound SMS messages"));
+        }
+
+        if (source && source instanceof GlideRecord) {
+            notify.sendBulkSMS(notifyNumberGr.getValue('number'), numbers, message, source);
+        } else {
+            notify.sendBulkSMS(notifyNumberGr.getValue('number'), numbers, message);
+        }
+
+
+        var errors = this.notifyUtils.getErrors();
+        // get API errors (if any)
+        if (this.notify.hasErrors()) {
+            var iter = this.notify.getErrors().iterator();
+            while (iter.hasNext()) {
+                errors.push(j2js(iter.next()));
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error(errors.join(', '));
+        }
+
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b

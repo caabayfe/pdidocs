@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+<g:evaluate var="jvar_isTableValid" jelly="true" expression="GlideTableDescriptor.isValid(jelly.sysparm_rules_table)" />
+<j:switch on="${jvar_isTableValid}">
+	<j:case value="false">
+		<div class="notification notification-error">
+			${gs.getMessage("The table name")}, ${sysparm_rules_table}, ${gs.getMessage("is not valid")}
+		</div>
+	</j:case>
+	<j:default>
+		<script>
+			addLoadEvent( function() {
+				var tabs = new GlideTabs2("tabs2_list", gel("rules_span"), 0, '');
+				tabs.activate();
+				show("rules_span");
+			});
+		</script>
+		<g:inline template="tabs2.xml" />
+		<j:set var="jvar_list_type" value="cardboard" />
+
+		<div class="navbar">
+			<div class="container-fluid">
+				<div class="navbar-title no_menu">
+					${jvar_board_type} ${gs.getMessage("Configurations for")} $[SP]<strong>${sysparm_rules_label}</strong>
+				</div>
+			</div>
+		</div>
+
+		<!-- tabstrip for related lists -->
+		<div class="container-fluid">
+			<span class="tabs2_strip" id="tabs2_list"></span>
+		</div>
+
+		<!--
+			Start with the lists not displayed so that we do not impact the page scroll position - gets shown in
+			the onLoad event below
+		-->
+		<span id="rules_span" class="container-fluid">
+			<j:if test="${!RP.isPortal()}">
+				<j:set var="jvar_use_name_for_list_id" value="true" />
+			</j:if>
+
+			<g:call function="personalize_all_list.xml" table="sys_script" source="${sysparm_rules_table}" table_field="collection"/>
+			<g:call function="personalize_all_list.xml" table="sys_script_client" source="${sysparm_rules_table}" table_field="table"/>
+			<g:call function="personalize_all_list.xml" table="sys_dictionary" source="${sysparm_rules_table}" table_field="name"/>
+			<g:call function="personalize_all_list.xml" table="sys_dictionary_override" source="${sysparm_rules_table}" table_field="name"/>
+			<g:call function="personalize_all_list.xml" table="sysevent_email_action" source="${sysparm_rules_table}" table_field="collection"/>
+			<g:call function="personalize_all_list.xml" table="sys_ui_action" source="${sysparm_rules_table}" table_field="table"/>
+			<g:call function="personalize_all_list.xml" table="sys_security_acl" source="${sysparm_rules_table}"/>
+			<g:call function="personalize_all_list.xml" table="sys_ui_policy" source="${sysparm_rules_table}" table_field="table"/>
+			<g:call function="personalize_all_list.xml" table="sys_data_policy2" source="${sysparm_rules_table}" table_field="model_table"/>
+			<g:call function="personalize_all_list.xml" table="sys_ui_style" source="${sysparm_rules_table}" table_field="name"/>
+			<g:call function="personalize_all_list.xml" table="sysrule_view" source="${sysparm_rules_table}" table_field="table"/>
+
+			<!-- flows must call scriptable helper method to get specific sys ids -->
+			<j:if test="${GlidePluginManager.getInstalledPlugin('com.glide.hub.designer_backend.model') != null}">
+				<g:evaluate var="jvar_flow_sys_ids" jelly="true" expression="sn_flow.AssociatedFlows.getFlows(jelly.sysparm_rules_table)" />
+				<g:call function="personalize_all_list.xml" table="sys_hub_flow" source="${jvar_flow_sys_ids}" table_field="sys_id" />
+			</j:if>
+
+			<!-- emit g_user support -->
+			<g2:client_script type="user" />
+		</span>
+	</j:default>
+</j:switch>
+</j:jelly>

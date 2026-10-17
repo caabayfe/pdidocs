@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="jvar_isConfIdNil">
+		var confUtils = new NotifyConferenceUtils();
+		var data = confUtils.getSanitizedJSON(RP.getParameterValue('sysparm_data'));
+		JSUtil.nil(data.confId);
+	</g:evaluate>
+	<g:evaluate var="jvar_data">
+		if (data)
+			JSON.stringify(data);
+		else
+			'{}';
+	</g:evaluate>
+	<g:evaluate var="jvar_isSMS">
+		data.isSMS;
+	</g:evaluate>
+	<g:evaluate var="jvar_showOkToDismissMessage">
+		var showOkToDismissMessage = gs.getProperty('glide.notify.send_sms_show_ok_to_dismiss_message', 'false');
+		showOkToDismissMessage;
+	</g:evaluate>
+	<g:evaluate var="jvar_showConferenceTitle">
+		data.showConferenceTitle;
+	</g:evaluate>
+	<g:evaluate var="jvar_conferenceTitle">
+		new NotifyUtil().getConferenceTitle(data);
+	</g:evaluate>
+	<j:if test="${!jvar_isSMS}">
+		<g:evaluate var="jvar_serviceProviderDetails">
+			var spDetails = confUtils.getServiceProviderDetails();
+			JSON.stringify(spDetails);
+		</g:evaluate>
+		<g:evaluate var="jvar_serviceProviderName">
+			if (data.confId)
+				confUtils.getServiceProviderNameFromConfId(data.confId);
+			else
+				'';
+		</g:evaluate>
+		<g:evaluate var="jvar_isNotifyConferenceConfiguredProperly">
+			var confUtils = new NotifyConferenceUtils();
+			confUtils.hasFullyConfiguredConferenceAvailable();
+		</g:evaluate>
+		<g:evaluate var="jvar_show_page">
+			var showPage = false, gr;
+			if (data.table ${AND} data.sysId) {
+				gr = new GlideRecord(data.table);
+				if (gr.get(data.sysId))
+					showPage = new NotifyUtil().isConferenceLeader(gr);
+			} else if (data.confId) {
+				gr = new GlideRecord('notify_conference_call');
+				if (gr.get(data.confId))
+					showPage = confUtils.canJoinFromConfGR(gr);
+			}
+			showPage;
+		</g:evaluate>
+		<script>
+			var currentConfSPName = '${JS_STRING:jvar_serviceProviderName}';
+			var isNotifyConferenceConfiguredProperly = '${JS_STRING: jvar_isNotifyConferenceConfiguredProperly}';
+		</script>
+	</j:if>
+	<j:if test="${jvar_isSMS}">
+		<g:evaluate var="jvar_serviceProviderDetails">
+			'{}';
+		</g:evaluate>
+		<g:evaluate var="jvar_show_page">
+			var showPage = false, gr;
+			if (data.table ${AND} data.sysId) {
+				gr = new GlideRecord(data.table);
+				if (gr.get(data.sysId))
+					showPage = new NotifyUtil().isActionAllowed('sendSms', gr);
+			}
+			showPage;
+		</g:evaluate>
+	</j:if>
+	<g:evaluate var="jvar_notifyNumbersAndProviders">
+		if(JSUtil.nil(data.table) || JSUtil.nil(data.sysId))
+            JSON.stringify({});
+		else
+			JSON.stringify(new NotifyUtil().getOrderedListOfNotifyNumbersAndProviders(data.table, data.sysId, data.notifyGroupSelector));
+	</g:evaluate>
+	<g:evaluate var="jvar_optionalMessage">
+		if (!gs.nil(data.confId))
+			new NotifyUtil().getConferenceDescription(data.confId);
+		else
+			'';
+	</g:evaluate>
+	<g:evaluate var="jvar_max_sms_len">
+		var maxLength =  gs.getProperty('glide.notify.sms.max_characters', 1600);
+		maxLength;
+	</g:evaluate>
+	<j2:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]"/>
+	<link href="9c1788140f203300f9b1cb6afa767e55.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	<j2:if test="${GlideAccessibility.isEnabled()}">
+		<link href="8e96bb220fb03300f9b1cb6afa767e82.cssdbx?v=${gs.getProperty('glide.builddate')}&amp;theme=$[jvar_theme]" rel="stylesheet" type="text/css" />
+	</j2:if>
+
+	<style>
+		.slushbucket .glide-list select {
+			height: 200px !important;
+			max-width: none !important;
+		}
+		#page_timing_div {
+			display: none;
+		}
+		#content {
+			padding-inline-start: 0;
+			padding-inline-end: 0;
+		}
+		.-polaris .slush-container {
+			padding-inline-start: var(--now-global-space--md);
+			padding-inline-end: var(--now-global-space--md);
+		}
+		.add_participant_msg {
+			padding-top: 5%;
+			padding-left: 17%;
+		}
+		.select2-search-choice-close {
+			display: none !important
+		}
+		.valid-participant {
+			color: #000;
+		}
+		.-polaris .valid-participant {
+			color: var(--now-color_text--primary, var(--now-color--neutral-0, 255, 255, 255));
+		}
+		.invalid-participant {
+            		color: #c83c36;
+        	}
+        	.-polaris .invalid-participant {
+            		color: RGB(var(--now-color_alert--critical-2, 200, 60, 54));
+        	}
+		.add-selected {
+			width: 0px;
+		}
+		.service-provider-selector {
+			width: 91.6%;
+		}
+		.-polaris .service-provider-selector {
+			width: 92%;
+		}
+		.item-selector {
+			width: 47.2%;
+		}
+		.-polaris .item-selector {
+			width: 49.5%;
+		}
+
+	</style>
+	<script>
+		var data= ${NOESC:jvar_data};
+		var isNoConference =  '${JS_STRING:jvar_isConfIdNil}';
+		var numberAndProviderResponse = JSON.parse("${JS:jvar_notifyNumbersAndProviders}");
+		var optionalMessage = '${JS_STRING:jvar_optionalMessage}';
+		var isSmsModal = '${JS_STRING:jvar_isSMS}';
+		var showOkToDismissMessage =  '${JS_STRING:jvar_showOkToDismissMessage}' === 'true';
+		var smsMaxLength = '${JS_STRING:jvar_max_sms_len}';
+		var conferenceTitle = '${JS_STRING:jvar_conferenceTitle}';
+		var serviceProviderDetails = ${NOESC:jvar_serviceProviderDetails};
+		var isNotifyUpgraded = false;
+		if(typeof NotifyOnTaskClient.updateServiceProviderDetails == 'function') {
+			NotifyOnTaskClient.updateServiceProviderDetails(serviceProviderDetails);
+			isNotifyUpgraded = true;
+		}
+		var i18n_translations = {
+			"{0} - {1} is already in the conference call": "${gs.getMessage('{0} - {1} is already in the conference call')}",
+  		"{0} - {1} is already selected": "${gs.getMessage('{0} - {1} is already selected')}",
+			"{0} characters remaining of {1} characters": "${gs.getMessage('{0} characters remaining of {1} characters')}",
+			"Please fill valid user": "${gs.getMessage('Please fill valid user')}",
+			"Please fill valid group": "${gs.getMessage('Please fill valid group')}",
+			"Please fill valid phone number": "${gs.getMessage('Please fill valid phone number')}",
+			"Please fill valid email": "${gs.getMessage('Please fill valid email')}",
+			"Given user already in call": "${gs.getMessage('Given user already in call')}",
+			"{0} is already in the conference call": "${gs.getMessage('{0} is already in the conference call')}",
+			"Given phone number is already in call": "${gs.getMessage('Given phone number is already in call')}",
+			"Selected phone number is already in call": "${gs.getMessage('Selected phone number is already in call')}",
+			"Given phone number is not valid": "${gs.getMessage('Given phone number is not valid')}",
+			"Given email id is not valid": "${gs.getMessage('Given email id is not valid')}",
+			"Invalid choice of participants": "${gs.getMessage('Invalid choice of participants')}",
+			"Notify is not properly configured. Please contact your system administrator.": "${gs.getMessage('Notify is not properly configured. Please contact your system administrator.')}",
+			"This number is already selected": "${gs.getMessage('This number is already selected')}",
+			"{0} is already selected": "${gs.getMessage('{0} is already selected')}",
+			"Group you added has already been selected": "${gs.getMessage('Group you added has already been selected')}",
+			"One or more users of the Group you added has already been selected": "${gs.getMessage('One or more users of the Group you added has already been selected')}",
+				"One or more of the users you added has already been selected": "${gs.getMessage('One or more of the users you added has already been selected')}",
+		"Invalid number": "${gs.getMessage('Invalid number')}",
+		"There are no members for the group you selected for this time": "${gs.getMessage('There are no members for the group you selected for this time')}",
+		"No text message to send": "${gs.getMessage('No text message to send')}",
+		"* {0}": "${gs.getMessage('* {0}')}",
+		"Your request has been submitted. You can close the dialog and resume your work or wait here to check for any errors." : "${gs.getMessage('Your request has been submitted. You can close the dialog and resume your work or wait here to check for any errors.')}",
+		"Please provide a title to start the meeting.": "${gs.getMessage('Please provide a title to start the meeting.')}"
+		}
+
+	</script>
+	<j:if test="${jvar_show_page == false}">
+		<div role="alert" class="outputmsg info notification notification-info">
+			<span class="outputmsg_text">
+				${gs.getMessage('You do not have access to this page')}
+			</span>
+		</div>
+	</j:if>
+	<j:if test="${jvar_show_page == true}">
+		<form>
+			<div id="loading" style="display:none">
+				<div style="height:100px" />
+				<div align="center">
+					<span class="icon-loading icon-lg" />
+				</div>
+				<div style="height:100px" />
+			</div>
+			<div id="content" class="section-content">
+				<j:if test="${jvar_isConfIdNil}">
+					<div class="selection_panel clearfix form-group">
+						<j:if test="${!jvar_isSMS}">
+							<label class="col-xs-9">
+								<span>${gs.getMessage("Conference bridge")}</span>
+							</label>
+						</j:if>
+						<j:if test="${jvar_isSMS}">
+							<label class="col-xs-9">
+								<span>${gs.getMessage("From number")}</span>
+							</label>
+						</j:if>
+						<div class="input-group-select col-xs-9 service-provider-selector">
+							<select aria-label="${gs.getMessage('Service provider')}" id="serviceProviderSelector" onchange="onServiceProviderChanged(this.value)">
+							</select>
+						</div>
+					</div>
+				</j:if>
+				<div class="selection_panel clearfix form-group">
+					<label for="item_selector" class="col-xs-9">
+						<j:if test="${!jvar_isSMS}">
+							<span>${gs.getMessage("Add participants")}</span>
+						</j:if>
+						<j:if test="${jvar_isSMS}">
+							<span>${gs.getMessage("Add recipients")}</span>
+						</j:if>
+					</label>
+					<div class="input-group-select col-xs-4">
+						<select id="item_selector" class="form-control" onChange="showSelection(this)">
+							<option value="user" selected="selected">${gs.getMessage("User")}</option>
+							<option value="group">${gs.getMessage("Group")}</option>
+							<option value="mobile">${gs.getMessage("Phone")}</option>
+							<option value="email">${gs.getMessage("Email")}</option>
+						</select>
+					</div>
+					<div id="user" class="col-xs-5 item-selector">
+						<g:ui_reference name="ref_sys_users" table="sys_user" columns="email" query="active=true" show_popup="false" onchange="inputValueChanged('ref_sys_users')"/>
+					</div>
+					<div id="group" class="col-xs-5 item-selector" style="display:none">
+						<g:ui_reference name="ref_sys_groups" table="sys_user_group" query="active=true" show_popup="false" onchange="inputValueChanged('ref_sys_groups')" />
+					</div>
+					<div id="mobile" class="col-xs-5 item-selector" style="display:none">
+						<g:requires position="last" inline="true" name="scripts/elements/element_phone_number_e164.js" />
+						<input id="notifynow_participant.phone_number" name="notifynow_participant.phone_number" class="form-control" value=""  aria-label="${gs.getMessage('Add Phone number')}" oninput="inputValueChanged('notifynow_participant.phone_number')" />
+					</div>
+					<div id="email" class="col-xs-5 item-selector" style="display:none">
+						<input id="notifynow_participant.email" name="notifynow_participant.email" class="form-control" value=""  aria-label="${gs.getMessage('Add Email')}" oninput="inputValueChanged('notifynow_participant.email')" />
+					</div>
+					<div class="col-xs-3 add-selected">
+						<button class="icon-add btn btn-default" aria-label="${gs.getMessage('Add to selected')}" id="add_to_selected" title="${gs.getMessage('Add to selected')}" onclick="addToSelected()" type="button" disabled="true"></button>
+					</div>
+				</div>
+				<div class="slush-container">
+					<!-- Include the 'ui_slushbucket' UI macro -->
+					<g:ui_slushbucket left_header="${gs.getMessage('Recommended')}" />
+				</div>
+				<div class="col-xs-12">
+					<b id="slush_selection"></b>
+				</div>
+				<div class="col-xs-12 form-group" style="display:none" id="invalidUserMessage">
+					<i>${gs.getMessage("Users displayed in red do not have a mobile phone number or email")}</i>
+				</div>
+				<div class="col-xs-12 form-group" style="display:none" id="invalidUserMessageMobile">
+					<i>${gs.getMessage("Users displayed with a (*) star do not have a mobile phone number or email")}</i>
+				</div>
+				<j:if test="${jvar_showConferenceTitle == true}">
+					<div class="selection_panel clearfix">
+						<j:if test="${!jvar_isSMS}">
+							<label class="col-xs-12">
+								<span>${gs.getMessage("Title")}</span>
+							</label>
+						</j:if>
+						<div class="input-group-select col-xs-12">
+							<input class="form-control" value="${jvar_conferenceTitle}" type="text" aria-label="${gs.getMessage('Title')}" disabled="true" id="conferenceTitle" maxlength='255'/>
+						</div>
+					</div>
+					<div class="col-xs-12 form-group">
+						<i id="title" class="chars-remaining-text help-block">${gs.getMessage('We recommend including the record number and describe what the conference is about')}</i>
+					</div>
+				</j:if>
+				<div class="selection_panel clearfix form-group">
+					<j:if test="${!jvar_isSMS}">
+						<label id ='noteMessageTelephony' class="col-xs-12" style="display:none">
+							<span>${gs.getMessage("Include a brief message for participants")}</span>
+						</label>
+						<label id ='noteMessageConference' class="col-xs-12" style="display:none">
+							<span>${gs.getMessage("Provide a brief description, this note will be stored in the conference record")}</span>
+						</label>
+						<div class="input-group-select col-xs-12">
+							<textarea aria-label="${gs.getMessage('Optional message')}" oninput="textCounter(this.value, 160);" name="textMessage" id="textMessage" maxlength='160' class="form-control message-area" style="resize:none; min-height:60px">
+							</textarea>
+						</div>
+					</j:if>
+					<j:if test="${jvar_isSMS}">
+						<label class="col-xs-12">
+							<span>${gs.getMessage("Message")}</span>
+						</label>
+						<div class="input-group-select col-xs-12">
+							<textarea aria-label="${gs.getMessage('Message')}" oninput="textCounter(this.value, ${jvar_max_sms_len});" name="textSms" id="textSms" maxlength="${jvar_max_sms_len}" class="form-control message-area" style="resize:none; min-height:60px">
+							</textarea>
+						</div>
+					</j:if>
+					<div class="col-xs-12 form-group">
+						<i id="counter" class="chars-remaining-text help-block"></i>
+					</div>
+				</div>
+				<div class="col-xs-12 clearfix form-group text-right">
+					<j:if test="${!jvar_isSMS}">
+						<j:if test="${!jvar_isConfIdNil}">
+							<g:dialog_buttons_ok_cancel ok_text ="${gs.getMessage('Add Participants')}" ok="return continueOK()" cancel="return continueCancel()" ok_type="button" cancel_type="button"
+														ok_title="${gs.getMessage('Add new participants to the current conference call')}" />
+						</j:if>
+						<j:if test="${jvar_isConfIdNil}">
+							<g:dialog_buttons_ok_cancel ok_text ="${gs.getMessage('Start')}" ok="return continueOK()" cancel="return continueCancel()" ok_type="button" cancel_type="button" />
+						</j:if>
+					</j:if>
+					<j:if test="${jvar_isSMS}">
+						<g:dialog_buttons_ok_cancel ok_text ="${gs.getMessage('Send SMS')}" ok="return continueOK()" cancel="return continueCancel()" ok_type="button" cancel_type="button" />
+					</j:if>
+				</div>
+			</div>
+			<div class="col-xs-12">
+				<div id="upgrade_error_message"
+					 class="alert alert-info text-center" style="display:none" >
+					${gs.getMessage('Looks like NotifyOnTaskClient UI Script is customized. Please contact your System Administrator')}
+				</div>
+			</div>
+			<div class="clearfix"></div>
+			<div id="bottomMarker"></div>
+		</form>
+	</j:if>
+</j:jelly>

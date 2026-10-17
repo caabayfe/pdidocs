@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <style type="text/css">
+        div.warning-msg-body { margin: 5px 5px 0px; }
+        div.warning-page { text-align:left; }
+        div.modal-alert { width: 600px; }
+        div.modal-content { line-height: normal; }
+    </style>
+    <div class="warning-page">
+        <br />
+        <j:set var="jvar_objList" value="${sysparm_delobj_list}" />
+        <g:evaluate var="jvar_showDeactivate" jelly="true">
+			var ocRotaCleaner = new OCRotaCleaner();
+			var gd = ocRotaCleaner.dateToGlideDate(jelly.sysparm_date);
+			var jvar_showDeactivate = ocRotaCleaner.isOnOrAfterCurrentDate(gd) || gs.hasRole('rota_admin');
+			jvar_showDeactivate
+		</g:evaluate>
+        <g:evaluate var="jvar_msg" jelly="true">
+        	var jvar_msg = "";
+			var ocRotaCleaner = new OCRotaCleaner();
+			var gd = ocRotaCleaner.dateToGlideDate(jelly.sysparm_date);
+			if (jvar_showDeactivate)
+				jvar_msg = gs.getMessage("Click Deactivate to confirm that you want to remove all support schedules after {0}", gd.getDisplayValue());
+			else
+				jvar_msg = gs.getMessage("You cannot deactivate the Shift on {0} because it is in the past", gd.getDisplayValue());
+        	jvar_msg;
+        </g:evaluate>
+        <div class="warning-msg">
+            ${jvar_msg}
+        </div>
+        <br />
+        <j:choose>
+        	<j:when test="${jvar_showDeactivate == 'true'}">
+        		<div align="right" class="modal-footer">
+            		<g:dialog_buttons_ok_cancel 
+						ok="return ok()" 
+						ok_style_class="btn btn-destructive"
+						ok_text="${gs.getMessage('Deactivate')}" 
+						cancel="return cancel()" 
+						ok_type="button" 
+						cancel_type="button" />
+        		</div>
+        	</j:when>
+			<j:otherwise></j:otherwise>
+		</j:choose>
+    </div>
+    <script>
+        document.getElementById("ok_button").focus();
+    </script>
+</j:jelly>

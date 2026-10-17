@@ -1,0 +1,51 @@
+<div class="soc-card default-focus-outline" ng-click="openSchedule(schedule.sys_id.value, $event)" role="presentation" tabindex="-1">
+    <button type="button"
+		class="soc-card__trigger-button default-focus-outline"
+		ng-click="openSchedule(schedule.sys_id.value, $event)"
+		aria-label="{{schedule.name.display_value}}" 
+		aria-describedby="soc-pill-{{schedule.sys_id.value}} soc-description-{{schedule.sys_id.value}} soc-type-{{schedule.sys_id.value}}">
+	</button>
+    <div class="soc-card__accent-bar" />
+    <div ng-show="schedule.name.display_value" class="soc-card-component" id="{{schedule.sys_id.value}}">
+        <div class="soc-card__row">
+            <h2 class="soc-schedule-name soc-truncate" uib-tooltip="{{schedule.name.display_value}}" show-tooltip-on-text-overflow="" tooltip-class="soc-truncate-tooltip" tooltip-placement="auto top" tooltip-enable="false">
+                <span ng-bind-html="scheduleSoCCtrl.highlight(schedule.name.display_value, scheduleSoCCtrl.textSearch)"></span>
+            </h2>
+            <div class="soc-card__row__cell">
+                <button class="soc-card__button btn btn-icon soc-btn-color"
+					ng-click="tooltipIsOpen=false; scheduleSoCCtrl.togglePinned($event, schedule)"
+					ng-keypress="$event.stopPropagation();"
+					uib-tooltip="{{scheduleSoCCtrl.pinMessage(schedule)}}"
+					tooltip-placement="auto top"
+					tooltip-append-to-body="true"
+					tooltip-is-open="tooltipIsOpen"
+					tooltip-class="soc-truncate-tooltip"
+					ng-focus="tooltipIsOpen=true;"
+					ng-blur="tooltipIsOpen=false;">
+                    <img class="soc-card__button__icon icon-bucket" alt="{{scheduleSoCCtrl.pinMessage(schedule)}}" ng-src="styles/sn_chg_soc/thumbtack-{{scheduleSoCCtrl.isPinned(schedule.sys_id.value) ? 'fill': 'outline'}}.svg" />
+                </button>
+            </div>
+        </div>
+        <div class="soc-card__row soc-owner">
+            <div class="user-avatar-wrapper">
+				<div ng-if="isOwner(schedule)" class="user-avatar default-focus-outline" aria-label="{{schedule.owner.display_value}}">
+                    <div class="avatar-popover" uib-popover-template="scheduleSoCCtrl.getPopoverTemplate(schedule.owner.value)" popover-trigger="outsideClick" popover-is-open="scheduleSoCCtrl.openPopover(schedule)" popover-placement="auto right-top right" popover-animation="true" popover-append-to-body="true">
+                    </div>
+                    <sn-user-avatar profile="scheduleSoCCtrl.getProfile(schedule.owner.value)" enable-presence="true" enable-context-menu="false" disable-popover="true" />
+                </div>
+                <div ng-if="!isOwner(schedule)" class="user-avatar default-focus-outline" ng-click="scheduleSoCCtrl.togglePopover($event, schedule)" ng-keydown="scheduleSoCCtrl.togglePopover($event, schedule)" aria-label="{{scheduleSoCCtrl.popoverAriaLabel(schedule)}}">
+                    <div class="avatar-popover" uib-popover-template="scheduleSoCCtrl.getPopoverTemplate(schedule.owner.value)" popover-trigger="outsideClick" popover-is-open="scheduleSoCCtrl.openPopover(schedule)" popover-placement="auto right-top right" popover-animation="true" popover-append-to-body="true">
+                    </div>
+                    <sn-user-avatar profile="scheduleSoCCtrl.getProfile(schedule.owner.value)" enable-presence="true" enable-context-menu="false" disable-popover="true" />
+                </div>
+                <div class="avatar-info">
+                    <div class="user-name">
+                        <span ng-bind-html="scheduleSoCCtrl.highlight(schedule.owner.display_value, scheduleSoCCtrl.textSearch)"></span>
+                    </div>
+                    <div class="info">{{scheduleSoCCtrl.getSummary(schedule)}}</div>
+                </div>
+            </div>
+        </div>
+        <div style="clear: both"></div>
+    </div>
+</div>

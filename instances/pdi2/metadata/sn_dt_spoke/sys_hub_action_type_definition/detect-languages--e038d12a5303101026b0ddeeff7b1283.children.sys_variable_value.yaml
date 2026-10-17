@@ -1,0 +1,122 @@
+- document: sys_hub_step_instance
+  document_key: 6d5d756a5343101026b0ddeeff7b1289
+  order: '600'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-07 13:50:24
+  sys_id: 795d756a5343101026b0ddeeff7b12cb
+  sys_mod_count: '6'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-08-09 14:00:00
+  value: |-
+    function getDetections(detectedResponse) {
+        var detections = [];
+        for (var i = 0; i < detectedResponse.detections.length; i++) {
+            var detection = {};
+            detection["isError"] = detectedResponse.detections[i].isError;
+            if (detectedResponse.detections[i].isError) {
+                detection["error_code"] = detectedResponse.detections[i].code;
+                detection["error_message"] = detectedResponse.detections[i].message;
+            }
+            else {
+                detection["detected_language"] = detectedResponse.detections[i].detectedLanguage;
+                detection["alternatives"] = detectedResponse.detections[i].alternatives;
+            }
+            detections.push(detection);
+        }
+        return detections;
+    }
+    (function execute(inputs, outputs) {
+        var translator;
+        if (inputs.translator) {
+            translator = inputs.translator;
+        }
+        var event = {
+            "source": "DT Spoke"
+        };
+        if (inputs.source) {
+            event.eventName = inputs.source;
+        }
+        
+        var texts = inputs.texts;
+        try {
+            var detectedResponse = sn_dt_api.DynamicTranslation.getDetectedLanguages(texts, {
+                "translator": translator,
+                "event": event
+            });
+            outputs.detections = getDetections(detectedResponse);
+            outputs.translator = detectedResponse.translator;
+            outputs.status = detectedResponse.status;
+        } catch (error) {
+            outputs.status = 'Error';
+            outputs.error_code = '40051';
+            outputs.error_message = gs.getMessage('Unknown error occured');
+            if (error.message) {
+                if (error.message === '"sn_dt_api" is not defined.') {
+                    outputs.error_code = '40001';
+                    outputs.error_message = gs.getMessage('Dynamic Translation plugin is not installed');
+                } else {
+                    var errorDetails = JSON.parse(error.message);
+                    outputs.error_code = errorDetails.code;
+                    outputs.error_message = errorDetails.message;
+                    if (errorDetails.detections) {
+                        outputs.detections = getDetections(errorDetails);
+                    }
+                }
+            }
+        }
+    })(inputs, outputs);
+  variable: 71aa7f6647032200b4fad7527c9a719b
+- document: sys_hub_action_type_definition
+  document_key: e038d12a5303101026b0ddeeff7b1283
+  order: '3'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-07 13:50:24
+  sys_id: b95d756a5343101026b0ddeeff7b12f6
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-07 13:50:24
+  value: ''
+  variable: b95d756a5343101026b0ddeeff7b12de
+- document: sys_hub_action_type_definition
+  document_key: e038d12a5303101026b0ddeeff7b1283
+  order: '6'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-08-02 16:56:16
+  sys_id: be37e00677011110271f07c77b5a999f
+  sys_mod_count: '2'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-08-10 06:40:45
+  value: '{"serializationFormat":"JSON","complexObjectSchema":{"FlowDesigner:FDACTIONSTATUS":{"code":"Integer","code.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"Integer\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"integer\",\"default_value\":\"\",\"label\":\"Code\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"1\",\"max_length\":\"40\"}"},"message":"String","message.$field_facets":{"SimpleMapFacet":"{\"uiTypeLabel\":\"String\",\"read_only\":\"false\",\"hint\":\"\",\"uiType\":\"string\",\"default_value\":\"\",\"label\":\"Message\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"order\":\"2\",\"max_length\":\"4000\"}"}},"FlowDesigner:FDACTIONSTATUS.$type_facets":{"SimpleMapFacet":"{\"default_value\":\"\",\"label\":\"Action Status\",\"action_error_output\":\"true\",\"mandatory\":\"false\",\"uiUniqueId\":\"4adfb7bc-9d67-498d-88d0-8d6c3d584fed\",\"uiTypeLabel\":\"Object\",\"co_type_name\":\"FDACTIONSTATUS\",\"element_mapping_provider\":\"com.glide.flow_design.action.data.FlowDesignVariableMapper\",\"read_only\":\"false\",\"hint\":null,\"uiType\":\"object\",\"order\":\"1\",\"max_length\":\"65000\"}"}},"complexObject":{"code":{"$cv":{"$c":"java.lang.String","$v":""}},"message":{"$cv":{"$c":"java.lang.String","$v":""}}},"version":"1.0"}'
+  variable: fa37e00677011110271f07c77b5a9993
+- document: sys_hub_step_instance
+  document_key: 6d5d756a5343101026b0ddeeff7b1289
+  order: '400'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2020-09-07 14:00:37
+  sys_id: ebafb9aa5343101026b0ddeeff7b1205
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2020-09-07 14:00:37
+  value: 35aa573fd7802200bdbaee5b5e610375
+  variable: f5e56d79b3101300176b051a16a8dce4
+- document: sys_hub_action_type_definition
+  document_key: e038d12a5303101026b0ddeeff7b1283
+  order: '7'
+  sys_class_name: sys_variable_value
+  sys_created_by: admin
+  sys_created_on: 2022-08-02 16:56:16
+  sys_id: fa37e00677011110271f07c77b5a999f
+  sys_mod_count: '0'
+  sys_tags: ''
+  sys_updated_by: admin
+  sys_updated_on: 2022-08-02 16:56:16
+  value: '0'
+  variable: f237e00677011110271f07c77b5a9997

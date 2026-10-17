@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div id="snc_notify_ph_screen">
+		<j:if test="${empty(jvar_theme)}">
+			<j:set var="jvar_theme" value="$[gs.getPreference(new GlideThemeUtil().getThemeVersion())]"/>
+		</j:if>
+		<g:requires name="/styles/sn_notify_webrtc_ui.css" includes="true" params="c=$[gs.getProperty('css.version')]_$[GlideCacheManager.getFlushStamp('csscsscsscache')]&amp;theme=${jvar_theme}" />
+		<!-- Must include jQuery & /styles/heisenberg/heisenberg_all.css yourself -->
+		<script>
+			(function () {
+				'use strict';
+				if (!window.SNC)
+					window.SNC = {NotifyUi:{}};
+				if (!SNC.NotifyUi)
+					SNC.NotifyUi = {};
+				window.SNC.NotifyUi.MSG = {
+					"Initializing...": "${JS_STRING:gs.getMessage('Initializing...')}",
+					"Mute": "${JS_STRING:gs.getMessage('Mute')}",
+					"Unmute": "${JS_STRING:gs.getMessage('Unmute')}",
+					"Back online": "${JS_STRING:gs.getMessage('Back online')}",
+					"Disconnected from network": "${JS_STRING:gs.getMessage('Disconnected from network')}",
+					"Call connecting...": "${JS_STRING:gs.getMessage('Call connecting...')}",
+					"Call in progress": "${JS_STRING:gs.getMessage('Call in progress')}",
+					"Calling...": "${JS_STRING:gs.getMessage('Calling...')}",
+					"Call ended": "${JS_STRING:gs.getMessage('Call ended')}",
+					"Incoming call from...": "${JS_STRING:gs.getMessage('Incoming call from...')}",
+					"Call cancelled": "${JS_STRING:gs.getMessage('Call cancelled')}",
+					"Someone": "${JS_STRING:gs.getMessage('Someone')}",
+					"Access to microphone is denied": "${JS_STRING:gs.getMessage('Access to microphone is denied')}",
+					"Close": "${JS_STRING:gs.getMessage('Close')}"
+				};
+				if (!window.GlideAjax) {
+					window.nowapi = {};
+					var script = document.createElement('script');
+					script.setAttribute('src', '/scripts/classes/nowapi/GlideAjax.js');
+					script.addEventListener('load', function() {
+						SNC.Notify._defineNow();
+					});
+					document.head.appendChild(script);
+				}
+			}());
+		</script>
+		<g:requires name="scripts/js_includes_notify_webrtc_ui.js" includes="true" />
+		<div class="webrtc-alert-container"></div>
+		<dialog class="class_screen" style="display:none;" id="snc_notify_call_screen">
+			<header>
+				<h1 id="snc_notify_call_status">${gs.getMessage('Initializing...')}</h1>
+			</header>
+			<main>
+				<section class="center_guide">
+					<img id="snc_notify_avatar_pic" src="" alt="${gs.getMessage('User profile image')}" class="avatar pic" />
+					<div id="snc_notify_avatar_initials" class="avatar initials"><span class="sr-only">${gs.getMessage('Person initials')}</span><span class="text"></span></div>
+					<div id="snc_notify_avatar_unknown" class="avatar unknown" aria-label="${gs.getMessage('Unknown person')}"><span class="icon-user-selected"></span></div>
+					<article>
+						<h2 class="primary detail" id="snc_notify_row1">- -</h2>
+						<div class="secondary detail" id="snc_notify_row2">-</div>
+						<div class="secondary detail" id="snc_notify_row3">-</div>
+					</article>
+				</section>
+				<section class="center_guide extra" id="snc_notify_call_duration">
+					<time class="secondary detail">
+						<span class="hr">0</span>
+						<span>:</span>
+						<span class="min">00</span>
+						<span>:</span>
+						<span class="sec">00</span>
+					</time>
+				</section>
+				<section class="center_guide extra" id="snc_notify_mute_icon">
+					<div><i class="notify_icon-mic mute-icon"></i></div>
+				</section>
+			</main>
+			<footer>
+			<div class="two dialog-footer" id="snc_notify_in_call_footer">
+				<div><button id="snc_notify_mute_btn" class="btn btn-default first">${gs.getMessage('Unmute')}</button></div><button id="snc_notify_end_btn" class="btn btn-danger last">${gs.getMessage('End Call')}</button>
+				</div>
+			<div class="one dialog-footer" id="snc_notify_calling_footer">
+				<button id="snc_notify_cancel_btn" class="btn btn-danger first last">${gs.getMessage('Cancel')}</button>
+				</div>
+			<div class="two dialog-footer" id="snc_notify_incoming_call_footer">
+				<div><button id="snc_notify_reject_btn" class="btn btn-default first">${gs.getMessage('Reject')}</button></div><button id="snc_notify_accept_btn" class="btn btn-primary last">${gs.getMessage('Accept')}</button>
+				</div>
+			</footer>
+		</dialog>
+	</div>
+</j:jelly>

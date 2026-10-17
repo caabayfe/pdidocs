@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide">
+
+	<g:evaluate var="jvar_filter_global_role" expression="gs.hasRole('filter_global')" />
+	<g:evaluate var="jvar_filter_group_role" expression="gs.hasRole('filter_group')" />
+	<g:evaluate var="jvar_filter_admin_role" expression="gs.hasRole('filter_admin')" />
+
+	<div id="{{uid}}gcond_filters" class="ng-filter-widget">
+		<now-message key="Add Sort" value="${gs.getMessage('Add Sort')}" />
+		<now-message key="Toggle Sort" value="${gs.getMessage('Toggle Sort')}" />
+
+		<g:inline template="sn_filter_i18n.xml" />
+		<div class="change-model-filter-condition">
+			<div class="change-model-filter-main">
+				<div class="filter-header" ng-if="!filterConfig.hideHeader">
+					<button data-placement="right" type="button" ng-if="filterConfig.sortFilter" ng-disabled="showSortSection()" id="{{uid}}-sort-filter-button" class="btn btn-default pull-left sn-filter-tooltip" ng-click="toggleSort()" title="${gs.getMessage('Toggle sort')}">
+						${gs.getMessage('Add Sort')}
+					</button>
+					<button type="button" ng-if="filterConfig.testFilter" id="{{uid}}-test-filter-button" class="btn btn-default pull-left sn-filter-tooltip" ng-click="testFilter()" title="${gs.getMessage('See how many results this query will return')}">
+						${gs.getMessage('upper_preview')}
+					</button>
+					<p ng-if="filterConfig.testFilter &amp;&amp; count" class="test-results-text pull-left">
+						<a ng-href="/{{ table }}_list.do?sysparm_query={{ filterConfig.encodedQuery }}" aria-live="polite" class="btn btn-link" target="_blank">
+							${gs.getMessage('{{count}} records match condition')}
+						</a>
+					</p>
+					<span ng-if="filterConfig.testFilter" class="nav-divider"></span>
+				</div>
+				<div class="filter-hr no-margin" ng-if="!filterConfig.hideHeader"></div>
+					<sn-filter-predicate base-table="{{table}}"
+										 table-label="{{tableLabel}}"
+										 filter-config="filterConfig"
+										 ng-if="queryMap.predicates[0]"
+										 predicate="queryMap.predicates[0]"
+										 table="table"
+										 uid="uid"
+										 >
+					</sn-filter-predicate>
+					<sn-filter-predicate base-table="{{table}}"
+										 table-label="{{tableLabel}}"
+										 filter-config="filterConfig"
+										 ng-if="queryMap.predicates[1] &#038;&#038; !initializing &#038;&#038; filterConfig.relatedListQueryConditions "
+										 predicate="queryMap.predicates[1]"
+										 table="queryMap.predicates[1].comparison.table"
+										 uid="uid"
+										 >
+					</sn-filter-predicate>
+				<chg-model-sort-filter-widget field-list="{{filterConfig.fieldList.join(',')}}" />
+			</div>
+		</div>
+	</div>
+</j:jelly>

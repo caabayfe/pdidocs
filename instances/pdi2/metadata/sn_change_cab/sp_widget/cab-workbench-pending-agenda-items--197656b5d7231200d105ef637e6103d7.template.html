@@ -1,0 +1,135 @@
+<div id="pending-agenda-item-widget" class="panel panel-default" role="region" tabindex="0" aria-label="${Agenda Items Widget}" accessibility="{{meeting.accessible}}">
+    <div class="panel-heading heading widget-heading heading-border" ng-class="{'heading-inactive': meeting.viewingCurrent()}">
+      <div class="flex">
+      	<label for="cab-pending-agenda-filter" class="sr-only">${Agenda list filter}</label>
+        <select id="cab-pending-agenda-filter" class="sn-select-basic expand" ng-model="selectedItem" ng-init="selectedItem = CAB.PENDING" ng-disabled="page.loading" tabindex="0">
+          	<option value="{{::CAB.PENDING}}">{{::c.data.i18n.filter[CAB.PENDING]}}</option>
+         	<option value="{{::CAB.ALL}}">{{::c.data.i18n.filter[CAB.ALL]}}</option>
+          	<option value="{{::CAB.MINE}}">{{::c.data.i18n.filter[CAB.MINE]}}</option>
+          	<option value="{{::CAB.APPROVED}}">{{::c.data.i18n.filter[CAB.APPROVED]}}</option>
+          	<option value="{{::CAB.COMPLETE}}">{{::c.data.i18n.filter[CAB.COMPLETE]}}</option>
+      	</select>
+      	<div class="btn-group" role="navigation" >
+         	<button class="btn btn-primary btn-sm"
+                    id="btn-prev-page"
+                    ng-disabled="page.loading || !page.prev.available()"
+                    ng-click="page.prev.onClick($event)"
+                    focus-this="page.prev.hasFocus"
+                    aria-label="{{::c.data.i18n.paging.prev}}"
+                    hint="{{::c.data.i18n.paging.prev}}"
+                    uib-tooltip="{{::c.data.i18n.paging.prev}}"
+                    tooltip-placement="bottom" tooltip-append-to-body="true"><i aria-hidden="true" class="fa fa-chevron-left paging-icon"></i></button>
+          	<button class="btn btn-primary btn-sm btn-top"
+                    id="btn-first-page"
+                    ng-disabled="page.loading || !page.prev.available()"
+                    ng-click="page.top.onClick($event)"
+                    aria-label="{{::c.data.i18n.paging.top}}"
+                    hint="{{::c.data.i18n.paging.top}}"
+                    uib-tooltip="{{::c.data.i18n.paging.top}}"
+                    tooltip-placement="bottom" tooltip-append-to-body="true"><i aria-hidden="true" class="fa fa-chevron-up paging-icon"></i></button>
+            <button class="btn btn-primary btn-sm"
+                    id="btn-next-page"
+                    ng-disabled="page.loading || !page.next.available()"
+                    ng-click="page.next.onClick($event)"
+                    focus-this="page.next.hasFocus"
+                    aria-label="{{::c.data.i18n.paging.next}}"
+                    hint="{{::c.data.i18n.paging.next}}"
+                    uib-tooltip="{{::c.data.i18n.paging.next}}"
+                    tooltip-placement="bottom" tooltip-append-to-body="true"><i aria-hidden="true" class="fa fa-chevron-right paging-icon"></i></button>
+  		</div>
+      </div>
+    </div>
+    <div class="panel-body pending-items-list" role="list" tabindex = "0" aria-label="${Agenda items list}">
+        <div class="row info-row agenda-item-row" ng-repeat="item in page.items track by item.sys_id.value">
+            <div ng-class="{'agenda-item-halo': meeting.viewing(item)}">
+                <div ng-if="agendaItem.canReadTask(item)"
+                    class="agenda-item"
+                    ng-class="meeting.viewing(item) ? 'agenda-item-big' : 'agenda-item-small'"
+                    role="listitem"
+             		tabindex="0"
+             		ng-attr-id="{{::'agenda_item_' + item.sys_id.value}}"
+            		ng-mousedown="agendaItem.show(item, $first)"
+                    ng-keypress="agendaItem.onKeypress($event, item, $first)"
+                    ng-attr-aria-label="{{aria.stateDesc(item)}}">
+                    <div class="col-xs-9 agenda-item-detail">
+                        <div>
+                            <div class="tasknumber">{{::item.task.display_value}}</div>
+                            <div class="description"><sn-cab-line-clamp text="{{::item.task.record.short_description.display_value}}" max-lines="2"/></div>
+                            <table class="agenda-task-detail">
+                                <tr>
+                                    <td>${Assignment group}</td>
+                                    <td class="single-line-clamp">{{::item.task.record.assignment_group.display_value}}</td>
+                                </tr>
+                                <tr>
+                                    <td>${Assigned to}</td>
+                                    <td class="single-line-clamp">{{::item.task.record.assigned_to.display_value}}</td>
+                                </tr>
+                                <tr>
+                                    <td>${State}</td>
+                                    <td>{{item.task.record.state.display_value}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div ng-if="!meeting.canceled()" class="agenda-link-control">
+                            <div>
+                                <button
+                                   ng-attr-aria-label="{{::aria.notifyDesc(item)}}"
+                                   class="btn btn-default btn-sm notifyme item-action-button"
+                                   ng-if="agendaItem.notifyMe.availableFor(item)"
+                                   ng-click="agendaItem.notifyMe.onClick($event, item)">
+                                    <i class="notifymeicon icon-notification-bell"></i>${Notify me}</button>
+                                <button
+                                   class="btn btn-default btn-sm item-action-button"
+                                   ng-attr-aria-label="{{::aria.promoteDesc(item)}}"
+                                   ng-if="(($first && page.num > 0) || !$first) && agendaItem.promote.availableFor(item)"
+                                   ng-click="agendaItem.promote.onClick($event, item)">${Promote}</button>
+                              	<button
+                                   class="btn btn-default btn-sm item-action-button"
+                                   ng-attr-aria-label="{{::aria.restoreDesc(item)}}"
+                                   ng-if="agendaItem.restore.availableFor(item)"
+                                   ng-click="agendaItem.restore.onClick($event, item)">${Restore}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3 donutprogress">
+                        <div ng-if="item.state.value != CAB.PAUSED" style="width: 46px; margin: 0 auto;">
+                            <sn-donut-timer x-aria-parent-label="{{::aria.timerDesc(item) || '${Unknown Agenda item}'}}" name="{{item.sys_id.value}}" duration="{{item.alotted_time.value_ms}}" elapsed="{{item.elapsed_time.value_ms}}" size="46px" show-duration-before-start="true"></sn-donut-timer>
+                        </div>
+                        <div ng-if="item.state.value == 'paused'" style="position: relative; width: 46px; height: 46px; margin: 0 auto;">
+                            <div class="timer-paused-centered">
+                                <div class="paused-timer-scaled-text">${Paused}</div>
+                            </div>
+                            <div class="timer-paused">
+                            </div>
+                        </div>
+
+                        <div class="agenda-change-decision" ng-if="item.decision.value == CAB.APPROVED || item.decision.value == CAB.PREAPPROVED">
+                            ${Approved}
+                        </div>
+                        <div class="agenda-change-decision" ng-if="item.decision.value == CAB.REJECTED">
+                            ${Rejected}
+                        </div>
+                    </div>
+                </div>
+                <div ng-if="!agendaItem.canReadTask(item)"
+                    class="agenda-item agenda-item-small"
+                    role="listitem"
+             		tabindex="0"
+             		ng-attr-id="{{::'agenda_item_' + item.sys_id.value}}"
+            		ng-click="agendaItem.show(item, $first)"
+                    ng-attr-aria-label="{{aria.stateDesc(item)}}">
+                    <div class="col-xs-9 agenda-item-detail" style="padding-top: 6%">
+                        <div>
+                          <div><sn-cab-line-clamp text="${You are not allowed to view this Agenda Item}" max-lines="2"/></div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3 donutprogress">
+                        <div style="height: 100%; width: 46px; margin: 0 auto;">
+                          <sn-donut-timer name="{{::item.sys_id.value}}" duration="{{item.alotted_time.value_ms}}" elapsed="{{item.elapsed_time.value_ms}}" size="46px" show-duration-before-start="true"></sn-donut-timer>
+                      	</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

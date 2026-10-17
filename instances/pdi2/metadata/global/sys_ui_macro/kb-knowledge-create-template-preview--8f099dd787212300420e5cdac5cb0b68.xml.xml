@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<div class="kb-preview-message" ng-if="!selectedKB || !selectedTemplate || fields.length==0">
+		<p class="message-bold">
+			<strong ng-if="!selectedKB">${gs.getMessage('No knowledge base selected.')}</strong>
+			<strong ng-if="selectedKB">${gs.getMessage('No article template selected.')}</strong>
+		</p>
+		<p ng-if="!selectedKB" class="message-light">
+			${gs.getMessage('Get started by selecting a knowledge base to see all available article templates.')}
+		</p>
+		<p ng-if="selectedKB" class="message-light">
+			${gs.getMessage('Select an article template to see a preview.')}
+		</p>
+	</div>
+	<div class="kb-preview-content" ng-if="selectedTemplate ${AND} fields.length>0" tabindex="0">
+		<article>
+			<section ng-repeat="field in fields" style="{{field.field_style}}">
+				<h3 ng-if="!field.collapsible" style="{{field.heading_style}}">
+					{{field.field}}
+					<span class="type-def">({{field.type}})</span>
+				</h3>
+				<header tabindex="0" class="collapsible-title" ng-if="field.collapsible" ng-click="toggleSection(field)">
+					<h3 ng-if="field.collapsible" tabindex="-1" style="{{field.heading_style}}">
+						{{field.field}}
+						<span class="type-def">({{field.type}})</span>
+					</h3>
+					<i class="icon-chevron-up rotate" tabindex="-1" ng-class="{'down': field.collapsed}"/>
+				</header>
+				<section id="{{field.column}}" ng-if="field.preview_text!=null" ng-class="::{'hide-section': field.collapsed}">
+					<p ng-bind-html="field.preview_text"></p>
+				</section>
+				
+				<section id="{{field.column}}" ng-if="field.preview_text==null &amp;&amp; (field.type=='HTML' || field.type=='String')" ng-class="::{'hide-section': field.collapsed}">
+					<p ng-init="text = getRandomText()">{{text}}</p>
+				</section>
+				<section id="{{field.column}}" ng-if="field.preview_text==null &amp;&amp; (field.type=='Date' || field.type=='Date Time')" ng-class="::{'hide-section': field.collapsed}">
+					<p ng-if="field.type=='Date Time'">{{getDate(true)}}</p>
+					<p ng-if="field.type=='Date'">{{getDate(false)}}</p>
+				</section>
+				<section id="{{field.column}}" ng-if="field.preview_text==null &amp;&amp; field.type=='Integer' " ng-class="::{'hide-section': field.collapsed}">
+					<p ng-init="number = getRandomNumber()">{{number}}</p>
+				</section>
+			</section>
+		</article>
+	</div>
+</j:jelly>

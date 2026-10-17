@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate var="jvar_canAccessPage" jelly="true">
+        var gr = new GlideRecord('sn_rtbi_report_template');
+        gr.get('${sysparm_report_id}');
+        var canAccessPage = gr.canRead();
+		canAccessPage; 
+	 </g:evaluate>
+	<style type="text/css">	
+		#info_message {
+			vertical-align:bottom;
+			left:20px;
+			font-style: italic;
+			display: block;
+			color: #4BD762;
+			text-align: left;
+			width: 60%;
+		}
+		
+		#content_id {
+			margin-right: auto;
+			margin-left: auto;
+			margin-top: 20px;
+			overflow-y: auto;
+			overflow-x: auto;
+			padding-right: 5px;
+		}
+		#dialog_footer {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+	</style>
+<j:if test="${!canAccessPage}">
+	<div class="alert alert-danger" role="alert">
+		  ${gs.getMessage('Access denied due to security constraints')}
+	</div>
+</j:if>	
+<j:if test="${canAccessPage}">	
+	<g:evaluate var="jvar_table" jelly="true">
+		var table = "sys_user";
+        table;
+    </g:evaluate>
+    <g:evaluate var="jvar_table_label" jelly="true">
+        var gr = new GlideRecord('${jvar_table}');
+        var tableLabel = gr.getClassDisplayValue();
+        tableLabel;
+    </g:evaluate>
+    <g:ui_form>
+        <input type="hidden" id="rtbi_report_id" name="rtbi_report_id" value="${sysparm_report_id}" />
+        <input type="hidden" id="table" name="table" value="${jvar_table}" />
+		
+        <table width="96%">
+            <tr>
+                <td><label>${jvar_table_label}</label></td>
+                <td><g:ui_reference name="target_record" label="${jvar_table_label}" table="${jvar_table}" onchange="onTargetChange()" /></td>
+            </tr>
+        </table>
+        <div contenteditable="false" id='content_id'></div>
+        <div id="dialog_footer" class="modal-footer">
+	     <span id = 'info_message' >${gs.getMessage('Content and its appearance may differ in PDF than what is shown here. Please click "Preview as PDF" to preview PDF')}</span>
+            <button id="generate_button" class="btn btn-primary" onClick="return onGeneratePreview();">
+                ${gs.getMessage('Preview as PDF')}
+            </button>
+            <button id="cancel_button" class="btn btn-default" onClick="return onCancel();">
+                ${gs.getMessage('Cancel')}
+            </button>
+        </div>
+        <canvas id="typedCanvas" style="display:none;"></canvas>
+    </g:ui_form>
+</j:if>	
+</j:jelly>

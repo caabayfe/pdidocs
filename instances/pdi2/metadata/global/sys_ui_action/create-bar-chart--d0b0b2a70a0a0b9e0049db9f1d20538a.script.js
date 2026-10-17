@@ -1,0 +1,10 @@
+   var url = new GlideURL('sys_report_summary_chart.do');
+   url.set('sysparm_chart_type', 'bar');
+   url.set('sysparm_chart_width', '1200');
+   url.set('sysparm_chart_height', '450');
+   url.set('sysparm_chart_summary_id', current.sys_id);
+   url.set('sysparm_other_threshold', '30');
+   url.set('sysparm_chart_no_others', 'true');
+   url.set('sysparm_chart_field', current.field);
+   var urlText = url.toString() + "";
+   gs.setRedirect(urlText);

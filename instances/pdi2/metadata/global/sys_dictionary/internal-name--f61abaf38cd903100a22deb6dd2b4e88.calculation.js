@@ -1,0 +1,1 @@
+answer = (function() { var scope = current.sys_scope.scope; if (scope.nil()) scope = 'global'; if (!current.name.nil()) { var internalName = current.name; internalName = internalName.replace(/\s+/g, '_'); return scope + '_' + internalName; } return ''; })();

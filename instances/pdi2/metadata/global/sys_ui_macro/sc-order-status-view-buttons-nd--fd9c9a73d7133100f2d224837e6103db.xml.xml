@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+    <g:evaluate jelly="true">
+        var continueShoppingOnClickAction = GlideappCatalogURLGenerator.getContinueShoppingAction(jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+        var cancelRequestAction = GlideappCatalogURLGenerator.getCancelRequestAction(jelly.sysparm_catalog, jelly.sysparm_catalog_view, jelly.jvar_sc_request.getID(), gs.getSessionToken());
+        var backToCatalogAction = GlideappCatalogURLGenerator.getHomeAction(jelly.sysparm_catalog, jelly.sysparm_catalog_view, "");
+    </g:evaluate>
+    <div class="catalog_button_container catalog_button_footer" style="padding-top: 10px;">
+        <table cellpadding="0" cellspacing="0" style="border-collapse: collapse">
+            <tr>
+                <j:if test="${jvar_sc_back_catalog_button == 'true' and jvar_new_request != 'false'}">
+                    <td>
+                        <g:sc_button img="" classes="request_catalog_button back_to_catalog" id="back_to_catalog" onclick="${backToCatalogAction}"
+                            label="${jvar_sc_back_catalog_label}" title="${jvar_sc_back_catalog_label}" />
+                    </td>
+                </j:if>
+                <j:if test="${jvar_sc_continue_shopping_button == 'true'}">
+                    <td>
+                        <g:sc_button img="" classes="request_catalog_button header_button continue_shopping" id="continue_shopping"
+                            onclick="${continueShoppingOnClickAction}" label="${jvar_sc_continue_shopping_label}" title="${jvar_sc_continue_shopping_label}" />
+                    </td>
+                </j:if>
+                <j:if test="${jvar_sc_cancel_request_button == 'true' || gs.getProperty('glide.sc.checkout.cancel') == 'true'}">
+                    <g2:set_if var="jvar_condition" test="$[gs.getProperty('glide.sc.checkout.cancel.condition') == '']"
+                        true="true" false="$[gs.getProperty('glide.sc.checkout.cancel.condition')]" />
+                    <g2:evaluate var="sc_request"
+                        expression="var gr = new GlideRecord('sc_request'); gr.get('${jvar_sc_request.getID()}'); var sc_request = gr; sc_request.putCurrent();sc_request;" />
+                    <g2:evaluate>sc_request.popCurrent();</g2:evaluate>
+                    <j2:if test="$[jvar_condition]">
+                        <td>
+                            <g:sc_button img="" classes="request_catalog_button header_button cancel_request" id="cancel_request"
+                                onclick="${cancelRequestAction}" label="${jvar_sc_cancel_request_label}" title="${jvar_sc_cancel_request_label}" />
+                        </td>
+                    </j2:if>
+                </j:if>
+                <td style="width: 100%; text-align: right;">
+                    <j:if test="${jvar_sc_home_button == 'true'}">
+                        <g:evaluate>
+                            var homeOnClickAction = "location.assign('home.do'); return false;";
+                            if (SNC.CatalogCMS.isCMSSite())
+                            homeOnClickAction = "top." + homeOnClickAction;
+                        </g:evaluate>
+                        <g:sc_button img="" classes="request_catalog_button header_button redirect_home" id="redirect_home"
+                            onclick="${homeOnClickAction}" label="${jvar_sc_home_label}" title="${jvar_sc_home_label}" />
+                    </j:if>
+                </td>
+            </tr>
+        </table>
+    </div>
+</j:jelly>

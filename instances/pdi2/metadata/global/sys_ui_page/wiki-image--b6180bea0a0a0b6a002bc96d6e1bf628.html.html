@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+   <g2:evaluate var="jvar_image_exists">
+      // This GlideRecord call *cannot* use GlideRecordSecure - all users are allowed to see
+      // images stored in db_image via URL /image_name.ext by design, regardless of db_image ACLs
+      var imageGR = new GlideRecord("db_image");
+      var can_create_image = imageGR.canCreate();
+      var exists = imageGR.get('name','${JS:jvar_image_name}');
+      exists;
+   </g2:evaluate>
+
+   <g2:evaluate jelly="true">
+      var imageInstance = new GlideRecordSecure(jelly.jvar_table_name);
+      imageInstance.addQuery(jelly.jvar_field_name, 'CONTAINS', jelly.jvar_image_name);
+      imageInstance.query();
+   </g2:evaluate>
+
+   <!-- Cache static messages -->
+   <g:messages>
+      Replace Image...
+      The following knowledge base articles link to this image:
+      Upload Image...
+   </g:messages>
+
+   <!-- Evaluate and cache dynamic messages -->
+   <g:evaluate jelly="true">
+      var messages = {
+         'image_header': gs.getMessage('Image: {0}', jelly.jvar_image_name),
+         'image_dne': gs.getMessage('{0} does not exist.', jelly.jvar_image_name)
+      };
+   </g:evaluate>
+
+   <div>
+      <h2 style="padding-left: 5px; padding-bottom: 8px; border-bottom: 1px solid #D0D0D0;">${messages.image_header}</h2>
+   </div>
+
+   <j2:if test="$[jvar_image_exists == 'true']">
+      <div style="padding-left:12px;" id="imageInfo">
+         <img style="padding-left: 4px" src="${jvar_image_name}?${JS:String(new Date().getTime())}" alt="${jvar_image_name}" />
+      </div>
+      <j2:if test="$[can_create_image]">
+        <br/>
+        <ul>
+           <a style="color:blue" href="javascript:uploadOrReplaceImage();"><li>${gs.getMessage("Replace Image...")}</li></a>
+        </ul>
+      </j2:if>
+   </j2:if>
+
+   <j2:if test="$[jvar_image_exists != 'true']">
+      <div id='imageInfo'>${messages.image_dne}</div>
+      <j2:if test="$[can_create_image]">
+        <br/>
+        <ul>
+           <a style="color: blue" href="javascript:uploadOrReplaceImage();"><li>${gs.getMessage("Upload Image...")}</li></a>
+        </ul>
+      </j2:if>
+   </j2:if>
+
+   <j2:if test="$[jvar_image_refs == true]">
+      <h2 style="padding-left: 5px; border-bottom: 1px solid #D0D0D0; padding-top: 3px;">Links</h2>
+      <p>${gs.getMessage("The following knowledge base articles link to this image:")}</p>
+      <div>
+         <j2:while test="$[imageInstance.next()]">
+            <g2:evaluate var="jvar_wiki_image_title" jelly="true">
+               imageInstance.getValue(jelly.jvar_dependent_field);
+            </g2:evaluate>
+            <ul>
+               <a style="color:blue" href="wiki_page.do?title=$[HTML:jvar_wiki_image_title]&amp;sysparm_field=$[jvar_table_name].$[jvar_dependent_field]"> <li>$[jvar_wiki_image_title]</li> </a>
+            </ul>
+         </j2:while>
+      </div>
+   </j2:if>
+
+   <script>
+      function uploadOrReplaceImage() {
+         var imageSysID;
+         var grDI = new GlideRecord('db_image');
+         grDI.addQuery('name', '${JS:jvar_image_name}');
+         grDI.query();
+         if (!grDI.next()) {
+            grDI.setValue('name', '${JS:jvar_image_name}');
+            imageSysID = grDI.insert();
+         } else {
+            imageSysID = grDI.getValue("sys_id");
+         }
+
+         var url = new GlideURL('user_image.do');
+         url.addParam('sysparm_sys_id', imageSysID);
+         url.addParam('sysparm_fieldname', 'image');
+         url.addParam('sysparm_table', 'db_image');
+         url.addParam('sysparm_redirect', window.location.href);
+         window.location = url.getURL();
+      }
+   </script>
+</j:jelly>

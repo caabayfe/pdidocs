@@ -1,0 +1,1 @@
+sn_batch_install.BatchInstallAPI.markBatchAsRolledBack(event.instance);

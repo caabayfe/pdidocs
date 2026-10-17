@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate var="storeUrl" object="true" jelly="true">
+		var storeUrl = ATFUtil.getTestGeneratorAndCloudRunnerAppStorePageUrl();
+	</g:evaluate>
+	<g:evaluate>
+		var testSysId = RP.getWindowProperties().get('test_sys_id');
+		var testSuiteSysId = RP.getWindowProperties().get('test_suite_sys_id');
+		var previousSuiteResultSysId = RP.getWindowProperties().get('previous_suite_result_sys_id');
+		var tableName = RP.getWindowProperties().get('table_name');
+		var newStepFormTitle = RP.getWindowProperties().get('new_step_form_title');
+		var stepQuery = RP.getWindowProperties().get('step_query');
+		var isPausingEnabled = RP.getWindowProperties().get('is_pausing_enabled') == 'true';
+		var isPerformanceRun = RP.getWindowProperties().get('performance_run') == 'true';
+		var captureNodeLogs = RP.getWindowProperties().get('capture_node_logs') == 'true';
+
+		var runButtonText = "Run Test";
+		var headerMessage;
+		if (testSuiteSysId) {
+			if (previousSuiteResultSysId)
+				runButtonText = "Re-run Failed Tests";
+			else
+				runButtonText = "Run Test Suite";
+			headerMessage;
+		}
+
+		var newBrowserId = gs.generateGUID(this);
+
+		// Check if there are any UI steps in the test
+		var need_browser = false;
+		if (testSysId)
+			need_browser = sn_atf.AutomatedTestingFramework.doesTestHaveUISteps(testSysId);
+
+		// Check if there are any UI steps in the test suite
+		if (testSuiteSysId) {
+			// if previousSuiteResultSysId, a suite is being re-run so check if previous result had failures that were ui tests
+			if (previousSuiteResultSysId)
+				need_browser = sn_atf.AutomatedTestingFramework.doesRerunSuiteHaveUITests(testSuiteSysId, previousSuiteResultSysId);
+			else
+				need_browser = sn_atf.AutomatedTestingFramework.doesSuiteHaveUITests(testSuiteSysId);
+		}
+
+		var onlyRunInCloud = false;
+		if (isPerformanceRun)
+			onlyRunInCloud = true;
+
+		if (gs.hasRole("maint") ${AMP}${AMP} GlideProperties.getBoolean('sn_atf.performance.enable_browser_picker', false))
+			onlyRunInCloud = false;
+
+		var sessionId = new GlideChecksum(gs.getSessionID()).getMD5();
+	</g:evaluate>
+	<g:requires name="styles/atfPickABrowser.css"/>
+	<g2:requires name="scripts/PickABrowser/PickABrowserUtil.js"/>
+	<script>
+		// If no browser needs to be picked and it isn't breakpoints mode or a performance run, just run the test immediately
+		if (!$[need_browser] && !$[isPausingEnabled] && !$[isPerformanceRun]) {
+			GlideModal.get().destroy();
+			if ("$[testSysId]" != "") {
+				(new PickABrowserUtil()).runUserTest("$[testSysId]", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, $[captureNodeLogs]);
+				sendATFEvent('Run Test clicked');
+			} else if ("$[testSuiteSysId]" != "") {
+				if ("$[previousSuiteResultSysId]" != "") {
+					(new PickABrowserUtil()).runTestSuite("$[testSuiteSysId]", undefined, undefined, "$[previousSuiteResultSysId]", undefined, undefined, undefined, undefined, $[captureNodeLogs]);
+					sendATFEvent('Re-run Test Suite clicked');
+				} else {
+					(new PickABrowserUtil()).runTestSuite("$[testSuiteSysId]", undefined, undefined, undefined, undefined, undefined, undefined, undefined, $[captureNodeLogs]);
+					sendATFEvent('Run Test Suite clicked');
+				}
+			}
+		} else if ($[need_browser]) {
+			var msgInnerHTML = document.getElementById('manageTestRunnerMessageWithLink').innerHTML;
+			msgInnerHTML = msgInnerHTML.replace(/&lt;/g, '\u003c');
+			msgInnerHTML = msgInnerHTML.replace(/&gt;/g, '\u003e');
+			var h = document.getElementById('placeMessageWithLinkHere');
+			h.innerHTML = msgInnerHTML;
+
+			// unescape links in the cloud runner option label if it's there (it doesn't appear on the "Debug Test" version of the modal)
+			var cloudRunnerLabel = document.getElementById('cloud-runner-label');
+			if (cloudRunnerLabel) {
+				var cloudRunnerLabelHTML = cloudRunnerLabel.innerHTML;
+				cloudRunnerLabelHTML = cloudRunnerLabelHTML.replace(/&lt;/g, '\u003c');
+				cloudRunnerLabelHTML = cloudRunnerLabelHTML.replace(/&gt;/g, '\u003e');
+				cloudRunnerLabel.innerHTML = cloudRunnerLabelHTML;
+			}
+		}
+
+		function sendATFEvent(eventName) {
+			if (GlideWebAnalytics && GlideWebAnalytics.trackEvent) {
+				try {
+					GlideWebAnalytics.trackEvent('com.glide.automated_testing_framework', 'Execution', eventName);
+				} catch (e) {
+					console.log('Failed to send ATF execution event: ' + eventName);
+					console.log(e);
+				}
+			}
+		}
+		</script>
+	<g2:evaluate jelly="true">
+		// Display an entry for each test runner opened by this user and is currently online
+		// This is used in the j2 tag below to render the html
+
+		// These test runners are displayed with "current session"
+		var existingRunner = new GlideRecordSecure("sys_atf_agent");
+		existingRunner.addQuery("user", gs.getUserID());
+		existingRunner.addQuery("status", "online");
+		existingRunner.addQuery("session_id", sessionId);
+		existingRunner.addQuery("type", "manual");
+		existingRunner.addQuery("is_cloud_runner", false);
+		existingRunner.orderBy("browser_name");
+		existingRunner.query();
+
+		// These test runners are displayed without "current session"
+		var otherSessionRunner = new GlideRecordSecure("sys_atf_agent");
+		otherSessionRunner.addQuery("user", gs.getUserID());
+		otherSessionRunner.addQuery("status", "online");
+		otherSessionRunner.addQuery("session_id", "!=", sessionId);
+		otherSessionRunner.addQuery("type", "manual");
+		otherSessionRunner.addQuery("is_cloud_runner", false);
+		otherSessionRunner.orderBy("browser_name");
+		otherSessionRunner.query();
+	</g2:evaluate>
+	<j2:set var="jvar_checked" value="true"/>
+
+	<!-- Render the form if the step has any UI steps and needs a browser, or if the pausing feature is enabled, or the current run is a performance run -->
+	<j2:if test="$[need_browser || isPausingEnabled || isPerformanceRun]">
+		<textarea style="display:none;" id="manageTestRunnerMessageWithLink">${ALLOW_JELLY:gs.getMessage("pick_a_browser_message")}</textarea>
+		<div>
+
+			<j2:if test="$[isPerformanceRun]">
+				<div class="headerMessage">
+					${gs.getMessage('ATF:Performance Test Notice')}
+				</div>
+			</j2:if>
+
+			<!-- If this test needs a browser, render the browser picker -->
+			<j2:if test="$[need_browser]">
+				<div id="placeMessageWithLinkHere" class="headerMessage">
+				</div>
+				<table class="testRunnerTable">
+					<j2:if test="$[!onlyRunInCloud]">
+						<j2:if test="$[existingRunner.getRowCount() == 0]">
+							<tr>
+								<td class="testRunnerCell">
+									<div class="input-group-radio">
+										<input id="${newBrowserId}" class="radio" type="radio" name="pickABrowser" value="newBrowser" checked="true" aria-label="${gs.getMessage('Start a new test runner')}" sessionId="${sessionId}"></input>
+										<label for="${newBrowserId}" class="radio-label testRunnerRadioLabel">
+											<div>${gs.getMessage('Start a new test runner')}</div>
+										</label>
+									</div>
+								</td>
+							</tr>
+							<j2:set var="jvar_checked" value="false"/>
+						</j2:if>
+						<j2:while test="$[existingRunner.next()]">
+							<g2:evaluate jelly="true">
+								var browserDisplayString = gs.getMessage('atfPickABrowser_{0} ({1} {2}) ({3})', [existingRunner.browser_version, existingRunner.os_name, existingRunner.os_version, gs.getMessage('Current session')]);
+							</g2:evaluate>
+							<g2:evaluate jelly="true">
+								var browserInfoVoiceOver = gs.getMessage('{0} {1} running on {2} {3}, in your current session', [existingRunner.browser_name, existingRunner.browser_version, existingRunner.os_name, existingRunner.os_version]);
+							</g2:evaluate>
+							<g2:set_if test="$[existingRunner.browser_name == '' || existingRunner.browser_version == '' || existingRunner.os_name == '' || existingRunner.os_version == '']"
+									   var="jvar_user_agent_voiceover" true="$[existingRunner.user_agent]" false="$[browserInfoVoiceOver]"/>
+							<!-- Render tooltip only when the browser cannot be fully identified -->
+							<g2:set_if test="$[existingRunner.browser_name == '' || existingRunner.browser_version == '' || existingRunner.os_name == '' || existingRunner.os_version == '']"
+									   var="jvar_user_agent_tooltip" true="$[existingRunner.user_agent]" false=""/>
+							<tr class="$[existingRunner.sys_id]">
+								<td class="testRunnerCell">
+									<div class="input-group-radio" title="$[jvar_user_agent_tooltip]">
+										<j2:choose>
+											<j2:when test="$[jvar_checked]">
+												<input id="$[existingRunner.sys_id]" class="radio" type="radio" name="pickABrowser" value="$[existingRunner.sys_id]" checked="true" aria-label="$[jvar_user_agent_voiceover]" sessionId="$[existingRunner.session_id]"></input>
+												<j2:set var="jvar_checked" value="false"/>
+											</j2:when>
+											<j2:otherwise>
+												<input id="$[existingRunner.sys_id]" class="radio" type="radio" name="pickABrowser" value="$[existingRunner.sys_id]" aria-label="$[jvar_user_agent_voiceover]" sessionId="$[existingRunner.session_id]"></input>
+											</j2:otherwise>
+										</j2:choose>
+										<label for="$[existingRunner.sys_id]" class="radio-label testRunnerRadioLabel">
+											<div>$[existingRunner.browser_name]<br/><span class="testRunnerSubText">$[browserDisplayString]</span></div>
+										</label>
+									</div>
+								</td>
+							</tr>
+							<span class="sr-only">$[jvar_user_agent_tooltip]</span>
+						</j2:while>
+						<j2:while test="$[otherSessionRunner.next()]">
+							<g2:evaluate jelly="true">
+								var browserDisplayString = gs.getMessage('atfPickABrowser_{0} ({1} {2})', [otherSessionRunner.browser_version, otherSessionRunner.os_name, otherSessionRunner.os_version]);
+							</g2:evaluate>
+							<g2:evaluate jelly="true">
+								var browserInfoVoiceOver = gs.getMessage('{0} {1} running on {2} {3}', [otherSessionRunner.browser_name, otherSessionRunner.browser_version, otherSessionRunner.os_name, otherSessionRunner.os_version]);
+							</g2:evaluate>
+							<g2:set_if test="$[sessionId == otherSessionRunner.session_id]" var="jvar_this_session" true="($[gs.getMessage('Current session')])" false=""/>
+							<g2:set_if test="$[otherSessionRunner.browser_name == '' || otherSessionRunner.browser_version == '' || otherSessionRunner.os_name == '' || otherSessionRunner.os_version == '']"
+									   var="jvar_user_agent_voiceover" true="$[otherSessionRunner.user_agent]" false="$[browserInfoVoiceOver]"/>
+							<!-- Render tooltip only when the browser cannot be fully determined -->
+							<g2:set_if test="$[otherSessionRunner.browser_name == '' || otherSessionRunner.browser_version == '' || otherSessionRunner.os_name == '' || otherSessionRunner.os_version == '']"
+									   var="jvar_user_agent_tooltip" true="$[otherSessionRunner.user_agent]" false=""/>
+							<tr class="$[otherSessionRunner.sys_id]">
+								<td class="testRunnerCell">
+									<div class="input-group-radio" title="$[jvar_user_agent_tooltip]">
+										<input id="$[otherSessionRunner.sys_id]" class="radio" type="radio" name="pickABrowser" value="$[otherSessionRunner.sys_id]" aria-label="$[jvar_user_agent_voiceover]" sessionId="$[otherSessionRunner.session_id]"></input>
+										<label for="$[otherSessionRunner.sys_id]" class="radio-label testRunnerRadioLabel">
+											<div>$[otherSessionRunner.browser_name]<br/><span class="testRunnerSubText">$[browserDisplayString]</span></div>
+										</label>
+									</div>
+								</td>
+							</tr>
+							<span class="sr-only">$[jvar_user_agent_tooltip]</span>
+						</j2:while>
+					</j2:if>
+					<!-- Cloud runner option is not available for Debug tests/Debug suites or if atf_cloud_runner.radio_visible is false -->
+					<j2:if test="$[!isPausingEnabled &amp;&amp; GlideProperties.get('atf_cloud_runner.radio_visible', true)]">
+					    <g2:evaluate jelly="true">
+							var isCloudRunnerAppInstalled = pm.isActive('sn_atf_tg') == true;
+							var isCloudRunnerVersionPerfValid = sn_atf.PerformanceAPI.isCloudRunnerActiveAndSupportsPerformance() == true;
+							var isCloudRunnerUsernameSet = !!GlideProperties.get('sn_atf_tg.username');
+							var isCloudRunnerOptionEnabled = (isCloudRunnerAppInstalled $[AMP]$[AMP] isCloudRunnerUsernameSet $[AMP]$[AMP] !isPerformanceRun) ||
+								(isCloudRunnerAppInstalled $[AMP]$[AMP] isCloudRunnerUsernameSet $[AMP]$[AMP] isCloudRunnerVersionPerfValid); 
+							var isAdmin = gs.hasRole('admin');
+						</g2:evaluate>
+
+						<tr>
+							<td class="testRunnerCell">
+								<div class="input-group-radio">
+									<!-- Render the Cloud Runner radio button -->
+									<j2:choose>
+										<j2:when test="$[isCloudRunnerOptionEnabled]">
+											<!-- Render the Cloud runner option enabled -->
+											<input id="useCloudRunner" class="radio" type="radio" name="pickABrowser" value="cloud" aria-label="${gs.getMessage('Use Cloud Runner')}" sessionId="cloud"></input>
+										</j2:when>
+										<j2:otherwise>
+											<!-- Render the Cloud runner option disabled -->
+											<input id="useCloudRunner" class="radio" type="radio" name="pickABrowser" value="cloud" aria-label="${gs.getMessage('Use Cloud Runner')}" sessionId="cloud" disabled="disabled"></input>
+										</j2:otherwise>
+									</j2:choose>
+									<!-- Render the label for the Cloud Runner radio button -->
+									<label for="useCloudRunner" class="radio-label testRunnerRadioLabel" id="cloud-runner-label">
+										<!-- if the app is not installed show a link to docs  -->
+										<j2:if test="$[!isCloudRunnerAppInstalled]">
+											<g2:no_escape>
+												${gs.getMessage('ATF_TG:install_app', 'href="' + storeUrl + '" style="display: contents;" target="_blank"')}
+											</g2:no_escape>
+										</j2:if>
+										<!-- if the app is installed, the user is an admin and the username is not set, show a link to the set-user-credentials page -->
+										<j2:if test="$[isCloudRunnerAppInstalled &amp;&amp; !isCloudRunnerUsernameSet &amp;&amp; isAdmin]">
+											<g2:no_escape>
+												${gs.getMessage('ATF_TG:admin_setup_user', 'href="/now/sn_atf_tg/set-user-credentials" target="_blank" onclick="GlideModal.prototype.get(\'atf_pick_a_browser\').destroy()"')}
+											</g2:no_escape>
+										</j2:if>
+										<j2:if test="$[isCloudRunnerAppInstalled &amp;&amp; isCloudRunnerUsernameSet &amp;&amp; isPerformanceRun &amp;&amp; !isCloudRunnerVersionPerfValid]">
+											<g2:no_escape>
+												${gs.getMessage('ATF:invalid_perf_cloud_runner_version', 'href="' + storeUrl + '" style="display: contents;" target="_blank"')}
+											</g2:no_escape>
+										</j2:if>
+										<!-- if the app is installed, the user is NOT an admin and the username is not set, tell the user to contact an admin -->
+										<j2:if test="$[isCloudRunnerAppInstalled &amp;&amp; !isCloudRunnerUsernameSet &amp;&amp; !isAdmin]">
+											${gs.getMessage('ATF_TG:non_admin_setup_user')}
+										</j2:if>
+										<!-- default: the cloud runner option is enabled -->
+										<j2:if test="$[isCloudRunnerOptionEnabled &amp;&amp; !isPerformanceRun || isCloudRunnerOptionEnabled &amp;&amp; isCloudRunnerVersionPerfValid]">
+											${gs.getMessage('ATF_TG:cloud_runner')}
+										</j2:if>
+									</label>
+								</div>
+							</td>
+						</tr>
+					</j2:if>
+				</table>
+			</j2:if>
+
+			<!-- If this test is being run with pausing enabled, render the checkbox for pausing before rollback -->
+			<j2:if test="$[isPausingEnabled]">
+				<span class="input-group-checkbox testRunnerCell" title="${gs.getMessage('ATF:Pause before rollback_hint')}">
+					<input id="pauseBeforeRollback" type="checkbox" class="checkbox"></input>
+					<label for="pauseBeforeRollback" class="checkbox-label">${gs.getMessage('ATF:Pause before rollback')}</label>
+				</span>
+			</j2:if>
+
+			<!-- If this test is a performance run, render the checkbox for acknowledging sys_trigger pause -->
+			<j2:if test="$[isPerformanceRun]">
+				<span class="input-group-checkbox testRunnerCell" title="${gs.getMessage('ATF:perf_pause_acknowledge_hint')}">
+					<input id="perfPauseAcknowledged" type="checkbox" class="checkbox"></input>
+					<label for="perfPauseAcknowledged" class="checkbox-label">
+						<b>${gs.getMessage('ATF:perf_pause_acknowledge_message')}</b>
+					</label>
+				</span>
+				<script>
+					var perfPauseCheckbox = document.getElementById("perfPauseAcknowledged");
+					var cloudRunnerButton = document.getElementById("useCloudRunner");
+					var runButton = document.getElementById("run_button");
+					runButton.disabled = true;
+					
+					perfPauseCheckbox.addEventListener("change", function() {
+						if (this.checked $[AMP]$[AMP] ($[!need_browser] || cloudRunnerButton.checked || $[!onlyRunInCloud]))
+							runButton.disabled = false;
+						else
+							runButton.disabled = true;
+					});
+
+					if (cloudRunnerButton != null) {
+						cloudRunnerButton.addEventListener("change", function() {
+							if ((this.checked || $[!onlyRunInCloud]) $[AMP]$[AMP] perfPauseCheckbox.checked)
+								runButton.disabled = false;
+							else
+								runButton.disabled = true;
+						});
+					}
+				</script>
+			</j2:if>
+
+			<!-- The Run Test and Cancel buttons should always be rendered -->
+			<footer align="right" class="modal-footer" style="padding: 0;">
+				<button class="btn btn-default" onClick="GlideModal.get().destroy()"> ${gs.getMessage('Cancel')}</button>
+				<button class="btn btn-primary" id="run_button" onClick="pickABrowserUtil.runTest('$[testSysId]', '$[testSuiteSysId]', GlideModal.get(), '$[previousSuiteResultSysId]', '$[tableName]', '$[newStepFormTitle]', '$[stepQuery]', $[need_browser], $[isPausingEnabled], $[isPerformanceRun], $[captureNodeLogs])">
+					${gs.getMessage(runButtonText)}
+				</button>
+			</footer>
+		</div>
+	</j2:if>
+</j:jelly>

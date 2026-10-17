@@ -1,0 +1,29 @@
+_meta:
+  hash: bc55d7b6fa93436e6bbe67b4df76fe1cb895dffd3d1f0e5124721c649616eb29
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_fix
+  sys_created_by: admin
+  sys_created_on: 2024-01-31 22:00:24
+  sys_id: 5f676e4a2d000210abd9de53f28b1a1c
+  sys_mod_count: '4'
+  sys_package: 3fe9ba338cd903100a22deb6dd2b4e7c
+  sys_scope: global
+  sys_update_name: sys_script_fix_5f676e4a2d000210abd9de53f28b1a1c
+  sys_updated_by: admin
+  sys_updated_on: 2024-02-27 07:04:38
+before: 'false'
+description: |-
+  There is another app Pattern Designer which was released before PAD and it also has a User Role called 'pd_admin' with a different sysId. When both apps are installed, the platform merges Contained Roles records referencing 'pd_admin' from both apps under a single 'pd_admin' User Role, which ever 'pd_admin' User Role existed on the system first. This creates a security issue. For example if both apps are installed and PAD was installed first, then users who were given the 'pd_admin' role only for accessing PAD will now be able to access Pattern Designer APIs.
+
+  This Fix Script addresses two issues:
+
+  - If only PAD is installed, swap users with 'pd_admin' role with the new 'playbook.admin' role, then delete the 'pd_admin' User Role.
+  - If both Pattern Designer and PAD are installed, give users with 'pd_admin' role the new role 'playbook.admin'. We will communicate to our customers that it will be up to them to decide which roles to keep for each user,  'pd_admin'  or 'playbook.admin', or both.
+
+  Existing sys_user_role_contains records referencing 'pd_admin' will be marked with action="DELETE" and new ones referencing 'playbook.admin' will be created in order to ensure the 'pd_admin' role will no longer contain any PAD roles, regardless which app was installed first.
+name: Remove pd_admin conditionally
+record_for_rollback: 'true'
+sys_name: Remove pd_admin conditionally
+sys_policy: read
+unloadable: 'false'

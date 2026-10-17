@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+		<g:evaluate>
+			var delivery = new GlideRecord('service_offering');
+			delivery.addQuery('parent', cmdb_ci_service.sys_id);
+			delivery.orderBy('order');
+			delivery.orderBy('location');
+			delivery.query();
+		</g:evaluate>
+	
+<div class="list_div" style="background-color: #FFF;">
+	<table cellspacing="0" cellpadding="0" border="0" width="100%">
+		<tr style="background-color: transparent">
+			<td style="line-height:12px;">
+				<div style="background-color=#FFF;">
+					
+				<j:while test="${delivery.next()}">
+				
+					<div class="catalog_specs_card" >
+						<div class="catalog_detail_h1"><h4 style="margin-top:2px; margin-bottom:2px;">${delivery.name.getDisplayValue()}</h4>
+							<span class="catalog_status_caption">${delivery.operational_status.getDisplayValue()}</span>
+						</div>
+						<div class="catalog_specs_detail">
+							<table width="100%" border="0" cellspacing="2" cellpadding="5">
+							  <tr>
+							    <td class="catalog_specs_label">${gs.getMessage('Location')}:</td>
+							    <td class="catalog_specs_value">${delivery.location.getDisplayValue()}</td>
+							  </tr>
+							  <tr>
+							    <td class="catalog_specs_label">${gs.getMessage('Manager')}:</td>
+							    <td class="catalog_specs_value" style="vertical-align:top; font-weight: bold;">${delivery.managed_by.getDisplayValue()}</td>
+							  </tr>
+							  <tr>
+							    <td class="catalog_specs_label">${gs.getMessage('Tech Contact')}:</td>
+							    <td class="catalog_specs_value" style="vertical-align:top; font-weight: bold;">${delivery.technical_contact.getDisplayValue()}</td>
+							  </tr>
+							  <tr>
+							    <td class="catalog_specs_label">${gs.getMessage('Billed')} ${delivery.billing.getDisplayValue()}:</td>
+							    <td class="catalog_specs_value" style="vertical-align:top; font-weight: bold;">
+									<j:choose>
+										<j:when test="${gs.getProperty('glide.i18n.single_currency')}">
+											$[delivery.price.getSessionDisplayValue()]
+										</j:when>
+										<j:otherwise>
+											${delivery.price.getCurrencyDisplayValue()}<!--$[SP]<span class="font_smaller">[${delivery.price.getReferenceDisplayValue()}]</span>-->
+										</j:otherwise>
+									</j:choose>
+									
+									<j:if test="${delivery.parent.price_model == 'per_unit'}">
+										<span class="catalog_status_caption">${gs.getMessage('per')}${SP}${delivery.parent.price_unit}</span>
+									</j:if>
+							    </td>
+							  </tr>
+							</table>
+						</div>
+						<div class="catalog_commitments">
+							<g:call function="servicecatalog_commit.xml" service_offering="${delivery.sys_id}"/>
+						</div>
+	
+					</div>
+
+				</j:while>	
+					<script>
+						addLoadEvent(sizeCards);
+						
+						function sizeCards() {
+							var el = $(document.body).select('.catalog_specs_card');
+							var largestHeight = 0;
+							for (var i = 0; i != el.length; i++) {
+								if (el[i].offsetHeight > largestHeight)
+									largestHeight = el[i].offsetHeight;
+							}
+						
+							for (var i = 0; i != el.length; i++)
+								el[i].style.height = largestHeight + 'px';
+						}
+					</script>
+					<div style="clear:both;"></div>
+				</div>
+			</td>	
+		</tr>
+	</table>
+</div>
+</j:jelly>

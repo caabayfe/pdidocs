@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="true" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null">
+	<g:include_script src="AddRelationship.jsdbx" />
+	<table class="wide" cellspacing="0" cellpadding="0">
+		
+		<j2:set var="jvar_item_id" value="$[sysparm_collectionID]" />
+        <g2:set_if var="jvar_changeset_id" test="$[empty(sysparm_changeset)]" true="" false="$[sysparm_changeset]" />
+        <g2:set_if var="jvar_propose_change" test="$[empty(sysparm_propose_change)]" true="" false="$[sysparm_propose_change]" />
+		<g2:set_if var="jvar_mode" test="$[empty(sysparm_mode)]" true="form" false="$[sysparm_mode]" />
+				
+		<g2:evaluate jelly="true">
+			var base_item = new GlideRecord('cmdb_ci');
+			base_item.get(jelly.jvar_item_id);
+		</g2:evaluate>
+		<input type="HIDDEN" id="item_name" value="$[HTML:base_item.name]" />
+		<input type="HIDDEN" id="rel_type" value="$[sysparm_collectionType]" />
+		<tr class="header">
+			<td colspan="2">
+				<table cellspacing="0" cellpadding="0">
+					<tr class="header">
+						<td>
+							<a onclick="history.go(-1);">
+								<img height="16" width="16" src="images/green_back.gifx" title="${gs.getMessage('Back')}" alt="${gs.getMessage('Back')}" style="cursor:hand; margin: 0px; margin-left: 4px; margin-top: 3px; margin-bottom: 3px;"/>
+							</a>
+							
+						</td>
+						<td> $[SP]${gs.getMessage('Define Relationships for')} $[HTML:base_item.name] ($[HTML:base_item.sys_class_name.getDisplayValue()]) </td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td width="10px"/>
+			<td>
+				<table>
+					<tr>
+						<td class="label">
+                                                    <label for="available_select">${gs.getMessage('Available Relationships')}</label>
+                                                </td>
+						<td/>
+					</tr>
+					<tr>
+						<td>
+							<SELECT id="available_select" size="10" style="width:300px">
+								<option value="loading">${gs.getMessage('Loading...')}</option>
+							</SELECT>
+						</td>
+						<td valign="top">
+							<g2:evaluate var="jvar_allow_show_all">
+								var prop = gs.getProperty('glide.ecmdb.all_relationship_role', 'itil_admin');
+								gs.hasRole(prop) || gs.hasRole("sn_cmdb_admin');
+							</g2:evaluate>
+							
+							<j2:if test="$[jvar_allow_show_all]">
+								<div>
+								        <input type="checkbox" id="show_all_relationships" />
+                                                                        <label for="show_all_relationships">${gs.getMessage('Show all relationships')}</label>
+                                                               </div>
+								<div>
+									<hr />
+								</div>
+							</j2:if>
+							<div>
+								<input type="checkbox" id="hide_ci_relationships" />
+                                                                <label for="hide_ci_relationships">${gs.getMessage('Hide CI relationships')}</label>
+							</div>
+							<div>
+								<input type="checkbox" id="hide_user_relationships" />
+                                                                <label for="hide_user_relationships">${gs.getMessage('Hide user relationships')}</label>
+							</div>
+							<div>
+								<input type="checkbox" id="hide_group_relationships" />
+                                                                <label for="hide_group_relationships">${gs.getMessage('Hide group relationships')}</label>
+							</div>
+							
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2"><hr/></td>
+		</tr>
+		<tr style="display:none" id="loading_span">
+			<td colspan="2">
+				<img src="./images/ajax-loader.gifx" alt="${gs.getMessage('Loading...')}" />
+				<br/>
+				${gs.getMessage('Loading...')}
+			</td>
+		</tr>
+		<tr style="display:none" id="no_rel_possible">
+			<td colspan="2">
+				${gs.getMessage('No relationships available')}
+			</td>
+		</tr>
+		<tr style="visibility:hidden" id="relationship_slushbucket">
+			<td colspan="2">
+				<j:set var="jvar_collection_key" value="not_important"/>
+				<j:set var="jvar_collection_related_file" value="cmdb_ci"/>
+				<g:evaluate var="jvar_display_col2" expression="gs.getDisplayColumn('cmdb_ci')"/>
+				<j:set var="jvar_suppress_buttons" value="true"/>
+				<j:set var="jvar_m2m_select_0" value="select_0"/>
+				<j:set var="jvar_m2m_select_1" value="select_1"/>
+				<j:set var="jvar_m2m_lcodes_0" value="lcodes_0"/>
+				<j:set var="jvar_m2m_lcodes_1" value="lcodes_1"/>
+				<j:set var="jvar_list_entries" value=""/>
+				<j:set var="jvar_include_apply" value="true" />
+				<j:set var="jvar_on_sel_change" value="onSelectionChange('${jvar_m2m_select_1}')"/>
+                                <j:set var="jvar_quick_filters" value="true" />
+                                <j:set var="jvar_quick_filter_list" value="cmdb_ci,sys_user,sys_user_group" />
+                                <j:set var="jvar_no_preload" value="true" />
+				<script>
+							function onSelectionChange(select) {
+						        if (typeof (g_add_relationships) != 'undefined')
+					              g_add_relationships.selChange();       
+							}
+						</script>
+				<g:inline template="sys_m2m_body.xml" />
+		
+				<div style="padding-left:3px">
+					<div id="rel_changed" style="color:grey;visibility:hidden"/>
+				</div>
+			</td>
+		</tr>
+		
+	</table>
+	<j2:if test="$[jvar_mode == 'dialog']">
+		<script>
+			// make a global variable in this scope of the bsm map
+			g_bsmMap = parent.bsmMap;
+			
+			function focusAndRedraw(node) {
+					node.diagram.setParam('id', node.getID());
+			   node.diagram.setParam('table', node.getData('ci_type'));
+			   node.diagram.setParam('sticky_nodes', '');
+			   node.diagram.id = node.getID();
+			   node.diagram.load();
+			   
+			   node.diagram.getContainer().scrollTop = 0;
+			   node.diagram.getContainer().scrollLeft = 0;
+			   
+			   node.diagram.setParam('node_ids', '');	
+			}
+			 
+			function redrawParent() {
+					   var bsm = g_bsmMap;
+					   var node_id = '$[jvar_item_id]';
+					   var node = bsm.getNode(node_id);
+					   focusAndRedraw(node);
+			}
+			
+			addUnloadEvent( function() { if (g_add_relationships.madeChanges) redrawParent() });
+		</script>
+	</j2:if>
+	<script>
+		addLoadEvent(function() { g_add_relationships = new AddRelationship('$[JS:jvar_item_id]', '$[JS:jvar_changeset_id]', '$[JS:jvar_propose_change]'); g_add_relationships.init() } );
+		addUnloadEvent(function() { g_add_relationships.destroy()});
+	</script>
+	
+</j:jelly>

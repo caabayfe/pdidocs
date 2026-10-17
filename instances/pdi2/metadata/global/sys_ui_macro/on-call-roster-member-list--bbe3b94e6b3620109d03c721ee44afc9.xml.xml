@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g2:evaluate var="jvar_rosters" jelly="true" object="true">
+	    var rotaSysId = ${jvar_ref_table}.rota;
+		var rosters = new OnCallMemberUtils().getRostersWithMembers(rotaSysId);
+		rosters;
+	</g2:evaluate>
+
+	<style>
+		.roster-wrapper {
+			padding-bottom: 10px;
+		}
+		.roster-wrapper .roster.header{
+		    background: #e6e8ea;
+			padding-top: 5px;
+			border-top: 1px solid #bdc0c4;
+		}
+		.roster-wrapper .roster-member {
+			border-bottom: 1px solid #bdc0c4;
+			padding-bottom: 5px;
+		}
+		.roster-wrapper .column {
+			padding: 0px 13px;
+		    word-break: break-word;
+		}
+		.roster-wrapper .roster.header .column{
+			font-weight: bold;
+			font-size: 13px;
+		}
+	</style>
+
+	<div class="rosters-wrapper">
+		<j2:if test="$[jvar_rosters.length == 0]">
+			<div role="alert" class="outputmsg info notification notification-info">
+				<span class="outputmsg_text">
+					$[gs.getMessage('No rosters exist with shift')]
+				</span>
+			</div>
+		</j2:if>
+		<j2:if test="$[jvar_rosters.length != 0]">
+			<b>$[gs.getMessage('Note: Showing active members')]</b>
+		</j2:if>
+		<j2:forEach items="$[jvar_rosters]" var="jvar_roster">
+
+			<div class="roster-wrapper">
+				<h4>$[jvar_roster.name]</h4>
+				<div class="roster header col-xs-12">
+					<div class="column number col-xs-2">
+						$[gs.getMessage('Name')]
+					</div>
+					<div class="column col-xs-2">
+						$[gs.getMessage('Order')]
+					</div>
+					<div class="column col-xs-2">
+						$[gs.getMessage('From')]
+					</div>
+					<div class="column col-xs-2">
+						$[gs.getMessage('To')]
+					</div>
+					<div style="clear: both"></div>
+				</div>
+				<j2:forEach items="$[jvar_roster.members]" var="jvar_member">
+				<div class="roster-member  col-xs-12" data-from="$[jvar_member.from]"  data-to="$[jvar_member.to]">
+						<div class="column col-xs-2">
+							$[jvar_member.name]
+						</div>
+						<div class="column col-xs-2">
+							$[jvar_member.order]
+						</div>
+						<div class="column col-xs-2">
+							$[jvar_member.from]
+						</div>
+						<div class="column col-xs-2">
+							$[jvar_member.to]
+						</div>
+					<div style="clear: both"></div>
+				</div>
+				</j2:forEach>
+				<div style="clear: both"></div>
+			</div>
+
+			</j2:forEach>
+
+	</div>
+	<script>
+		function onChangeDate(ctrl, oldValue, newValue) {
+			var selDate = new Date(newValue);
+		     document.querySelectorAll('.roster-member').forEach(function($member){
+					$member.style.display = "block";
+		 			var from = $member.getAttribute('data-from');
+					var to = $member.getAttribute('data-to');
+					if (from $[AND] new Date(from).getTime() &amp;gt; selDate.getTime())
+							$member.style.display = "none";	
+					if (to $[AND] new Date(to).getTime() &amp;lt; selDate.getTime())
+							$member.style.display = "none";	
+			});
+		}
+		g_event_handlers.push(new GlideEventHandler('onChange_on_call_add_member.from_date', onChangeDate, 'on_call_add_member.from_date'));
+		g_event_handlers.push(new GlideEventHandler('onChange_on_call_remove_member.from_date', onChangeDate, 'on_call_remove_member.from_date'));
+		g_event_handlers.push(new GlideEventHandler('onChange_on_call_swap_member.from_date', onChangeDate, 'on_call_swap_member.from_date'));
+	</script>
+</j:jelly>

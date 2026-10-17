@@ -1,0 +1,1 @@
+gs.hasRole("admin");

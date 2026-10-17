@@ -1,0 +1,6 @@
+// first we add a query condition that will never be matched, just to give us a base to build 'or' conditions on...
+var qc = current.addNullQuery('sys_id');
+
+// then we add our 'or' conditions...
+qc.addOrCondition('parent', parent.sys_id);
+qc.addOrCondition('child', parent.sys_id);

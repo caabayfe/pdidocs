@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns="http://www.w3.org/1999/xhtml" xmlns:j="jelly:core" xmlns:g="glide" xmlns:g2="null" xmlns:j2="null">
+    <html style="font-size:16px;">
+
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=2.0, maximum-scale=2.0, user-scalable=0">
+        </meta>
+        <script>
+            window.g_ck = '$[gs.getSession().getSessionToken()]';
+        </script>
+        <script type="module">
+            import("/uxasset/externals/@devsnc/library-uxf/index.jsdbx?sysparm_use_cache_buster=true");
+            import('/uxasset/externals/@servicenow/uxa-commons-connected/index.jsdbx');
+            /*
+            	NOTE: This is required for tooltips. The Object.values method is overridden by proto.js included on the UI page,
+            	which returns incorrect results when an array is passed.
+            */
+            Object.values = function(object) {
+                if (Array.isArray(object)) {
+                    return object;
+                }
+                var results = [];
+                for (var property in object) {
+                    if (object.hasOwnProperty(property)) {
+                        results.push(object[property]);
+                    }
+                }
+                return results;
+            };
+        </script>
+        <style type="text/css">
+            body {
+                margin: 0;
+            }
+            #page_timing_div {
+                display: none !important;
+            }
+        </style>
+    </head>
+
+    <body class="-polaris" style="padding: 0">
+        <script type="module">
+            (function() {
+                function getDefaultProps() {
+                    const props = new URLSearchParams(window.location.search);
+                    return {
+                        pageId: props.get('pageId') || window.parent.NOW.page_id || window.parent.NOW.starting_page_id,
+                        applicationId: props.get('applicationId') || window.parent.NOW.portal_id,
+                        showHeader: true
+                    }
+                }
+
+                function toggleLoader(showLoader) {
+                    window.parent.postMessage({
+                        fromSource: 'uxa',
+                        showLoader: showLoader
+                    }, window.origin);
+                }
+                const props = getDefaultProps();
+
+                let overlayElement = null;
+
+                // Function to create the overlay component
+                function createOverlay() {
+                    if (overlayElement?.parentNode) {
+                        overlayElement.parentNode.removeChild(overlayElement);
+                    }
+
+                    overlayElement = document.createElement('sn-uxa-analytics-overlay');
+
+                    overlayElement.pageId = props.pageId;
+                    overlayElement.applicationId = props.applicationId;
+                    overlayElement.showHeader = props.showHeader;
+
+                    overlayElement.addEventListener('SEISMIC_COMPONENT_CONNECTED', function() {
+                        toggleLoader(false);
+                    })
+
+                    document.body.appendChild(overlayElement);
+                }
+
+                // Listen for messages to dynamically update pageId (or other props)
+                window.addEventListener('message', function(event) {
+                    if (event.origin !== window.origin) return;
+                    if (event.data.fromSource !== 'uxa') return;
+
+                    if (event.data.pageId) {
+                        props.pageId = event.data.pageId;
+
+                        if (overlayElement) {
+                            overlayElement.pageId = props.pageId;
+                        }
+                    }
+                });
+
+                // Initialize overlay after DOM is ready
+                document.addEventListener('DOMContentLoaded', function() {
+                    createOverlay();
+                });
+            })();
+        </script>
+    </body>
+
+    </html>
+</j:jelly>

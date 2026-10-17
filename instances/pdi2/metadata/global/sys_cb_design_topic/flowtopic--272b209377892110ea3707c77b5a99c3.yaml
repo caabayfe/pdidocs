@@ -1,0 +1,1077 @@
+_meta:
+  hash: acb0f2331c8608e3ca3964dcc844e170590da581d317304546500d5fa9fdc113
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_cb_design_topic
+  sys_created_by: admin
+  sys_created_on: 2023-02-21 10:37:04
+  sys_domain: global
+  sys_domain_path: /
+  sys_id: 272b209377892110ea3707c77b5a99c3
+  sys_mod_count: '28'
+  sys_package: 19bd727f8c5d03100a22deb6dd2b4ee4
+  sys_scope: global
+  sys_update_name: sys_cb_design_topic_272b209377892110ea3707c77b5a99c3
+  sys_updated_by: admin
+  sys_updated_on: 2023-04-05 11:38:40
+compiled_topic: 6f2b209377892110ea3707c77b5a99be
+design_definition: '{"type":"FlowTopic","type":"FlowTopic","triggers":[{"type":"Trigger","name":"ba2eb5c7cabc4d34a56dd568e899bff2","triggerType":"request","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"id":"ba2eb5c7cabc4d34a56dd568e899bff2"}],"goals":[{"name":"primary","trigger_id":"ba2eb5c7cabc4d34a56dd568e899bff2","nodes":[{"type":"StartGoal","type":"StartGoal","goal_id":"primary","greeting_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"b7d00116b42449afb4929effec6d6afc","name":"Start"},{"type":"TerminateGoal","type":"TerminateGoal","goal_id":"primary","confirmation_msg":{"type":"String","type":"String","mode":"string","value":""},"id":"ca75d6035e914bb8888781804e09c6d0","name":"End"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"b9cd5e5164004a318469d2557ba9b2ae","message":{"type":"String","type":"String","mode":"string","value":"{{vaInputs.prompt}}"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.allow_user_to_skip.getValue();\n})()\n"},"id":"7c62fb66347f480cbc5f949fe0136078","name":"files","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_file_upload_count_limit = vaInputs.max_file_count.getValue();\n    vaVars.global_file_upload_size_limit = vaInputs.max_file_size.getValue();\n})()\n","id":"5fbf237d20454ac4a96ec045b81c4c74","name":"set variables","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    var uploaded_list = [];\n    var uploadFailed_list = [];\n    var fileControl = vaInputs.allow_all_file_types.getValue() ? vaInputs.files : vaInputs.files_image_only;\n    var successStatus = [\"available\", null]; // null state when scan is disabled\n    for(var index=0; index<fileControl.getFiles().length; index++) {\n        var file = fileControl.getFiles()[index];\n        var attachment = {\n            \"contentType\": file.contentType,\n            \"fileName\": file.fileName, \n            \"value\": file.value,\n            \"message\" : file.message,\n            \"contentType\" : file.contentType,\n            \"scanState\" : file.scanState,\n            \"fileSize\" : file.fileSize\n        };\n        if (successStatus.indexOf(file.scanState) != -1) {\n            uploaded_list.push(attachment);\n        } else {\n           uploadFailed_list.push(attachment);\n        }\n    }\n\n    vaVars.final_list = JSON.stringify(uploaded_list);\n    vaVars.failed_list = JSON.stringify(uploadFailed_list);\n})()\n","id":"263f2c5b888a415db1e54e17a2767b2d","name":"Filter Attachments","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Some Attachment Download failed","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var applies =  JSON.parse(vaVars.failed_list).length > 0\n    return applies;\n})()\n"},"id":"4832af2b62ce4313a713c6a6e49f561f","name":"Some Attachment Download failed"},{"type":"Branch","type":"Branch","label":"None failed","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var applies = JSON.parse(vaVars.failed_list).length <= 0\n    return applies;\n})()\n"},"id":"12a7725b0eb149f6a4ea0d0ed36eeba0","name":"None failed"}],"id":"eb8de8637597492d9b7355684702f871","goal_id":"primary"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"9cddbc2c9d4c48769cd8816e1e27bec6","message":{"type":"String","type":"String","mode":"string","value":"{{vaInputs.try_again_message}}"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return true;\n})()\n"},"id":"a5554936e8c148ae8b0370a369fdff00","name":"Reupload attachment","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    var message = gs.getProperty(\"com.glide.cs.general.multi_file_upload_failed_for_msg\");\n    return message;\n})()\n"}],"id":"10fa1ef93ad74dfcbb330321b89052e8","name":"Upload failed for message","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    vaVars.failed_list = \"\";\n    var uploaded_list = JSON.parse(vaVars.final_list);\n    var uploadFailed_list = [];\n    var fileControl = vaInputs.allow_all_file_types.getValue() ? vaInputs.reupload_attachment : vaInputs.reupload_attachment_image_only;\n    var successStatus = [\"available\", null]; // null state when scan is disabled\n    for(var index=0; index<fileControl.getFiles().length; index++) {\n        var file = fileControl.getFiles()[index];\n        var attachment = {\n            \"contentType\": file.contentType,\n            \"fileName\": file.fileName, \n            \"value\": file.value,\n            \"message\" : file.message,\n            \"contentType\" : file.contentType,\n            \"scanState\" : file.scanState,\n            \"fileSize\" : file.fileSize\n        };\n        gs.info(\"test file: \"+ JSON.stringify(attachment));\n        if (successStatus.indexOf(file.scanState) != -1) {\n            uploaded_list.push(attachment);\n        } else {\n           uploadFailed_list.push(attachment);\n        }\n    }\n    vaVars.failed_message_count = 0;\n    vaVars.final_list = JSON.stringify(uploaded_list);\n    vaVars.failed_list = JSON.stringify(uploadFailed_list);\n})()\n","id":"8e053c58fcb345a7ae1062b969683023","name":"Save reuploaded attachments","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"reupload skipped","branches":[{"type":"Branch","type":"Branch","label":"NO","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"reupload_attachmentISNOTEMPTY^ORvaInputs.reupload_attachment_image_onlyISNOTEMPTY"},"id":"46800ead578040d0af0aa4c404045f50","name":"NO"},{"type":"Branch","type":"Branch","label":"Yes","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"reupload_attachmentISEMPTY^reupload_attachment_image_onlyISEMPTY"},"id":"d0b0ca7b857f468c87e7969793483e9d","name":"Yes"}],"id":"12ea619f21f3427aa960e360d3440a67","goal_id":"primary"},{"type":"TextOutputPrompt","type":"TextOutputPrompt","value":[{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    var failed = JSON.parse(vaVars.failed_list);\n    var message = failed[vaVars.failed_message_count -1 ].message;\n    return message;\n})()\n"}],"id":"218b60ce2f744f01a798076ff4a9495e","name":"Failed message","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"secure":false},{"type":"Decision","type":"Decision","name":"Attachment upload failed message","branches":[{"type":"Branch","type":"Branch","label":"Send more message","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var failed = JSON.parse(vaVars.failed_list);\n    var failed_list_length = failed.length;\n    if (vaVars.failed_message_count >= failed_list_length)\n       return false;\n    else \n       return true;\n})()\n"},"id":"58489fdda6ce4c79b5a9a9a6d306822e","name":"Send more message"},{"type":"Branch","type":"Branch","label":"No More message","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var failed = JSON.parse(vaVars.failed_list);\n    var failed_list_length = failed.length;\n    if(vaVars.failed_message_count >= failed_list_length)\n    return true;\n    else \n    return false;\n})()\n"},"id":"c124d4efe73f47d79a2ee92d65c526c1","name":"No More message"}],"id":"84c8921a6c60414aa1f0e4d8106f2be9","goal_id":"primary"},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n   var temp = vaVars.failed_message_count +1;\n    vaVars.failed_message_count = temp;\n})()\n","id":"6684bd1e2dac46cd87cf95d1b6be7d54","name":"increase counter","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"Skip","branches":[{"type":"Branch","type":"Branch","label":"No","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"filesISNOTEMPTY^ORvaInputs.files_image_onlyISNOTEMPTY"},"id":"73405294e5184bee94cdbc1e5302c5d0","name":"No"},{"type":"Branch","type":"Branch","label":"Yes","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"filesISEMPTY^files_image_onlyISEMPTY"},"id":"cbf106cfc61c410f9ddc1cb067f7797c","name":"Yes"}],"id":"f13130227e834abdaf13baabc2aaf80e","goal_id":"primary"},{"type":"Decision","type":"Decision","name":"Decision","branches":[{"type":"Branch","type":"Branch","label":"Some failed","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var failedListSize = JSON.parse(vaVars.failed_list).length;\n    if (failedListSize <= 0)\n       return false;\n    else \n       return true;\n})()\n"},"id":"427ef57c75ed450686d8864295bbbe8e","name":"Some failed"},{"type":"Branch","type":"Branch","label":"All Success","expression":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    var failedListSize = JSON.parse(vaVars.failed_list).length;\n    if (failedListSize <= 0)\n       return true;\n    else\n       return false\n})()\n"},"id":"352f6b027a4c496e8fac77c8eb63c002","name":"All Success"}],"id":"ac266968a1da4355ab51e032af1dd212","goal_id":"primary"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"8994c0dbfc374eabba184624877fb08f","message":{"type":"String","type":"String","mode":"string","value":"{{vaInputs.user_confirmation_to_repload_msg}}"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"false"},"id":"0cbc2fb456d340d98c017bae3a73ad6a","name":"ask to reupload","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"User wants to reupload","branches":[{"type":"Branch","type":"Branch","label":"No","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"ask_to_reupload="},"id":"7a5c9c4b401d4f28a607d9cf71fc72d6","name":"No"},{"type":"Branch","type":"Branch","label":"Yes","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"ask_to_reupload=true"},"id":"0c9b105bd7f840f98289e9deb53e3968","name":"Yes"}],"id":"495cb6a069084c2399d41ec77bb5c1a5","goal_id":"primary"},{"type":"Decision","type":"Decision","name":"FileType","branches":[{"type":"Branch","type":"Branch","label":"Allow all types","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"allow_all_file_types=true"},"id":"f69177628b314f3a8253415286200971","name":"Allow all types"},{"type":"Branch","type":"Branch","label":"Allow image only","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"allow_all_file_types="},"id":"4096d62d1c8749ab9b8e78437f6c1c84","name":"Allow image only"}],"id":"3cb4aded10774e3c8c54641a912e364b","goal_id":"primary"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"95c2b5da639f4cfc8972689839ba9a06","message":{"type":"String","type":"String","mode":"string","value":"{{vaInputs.prompt}}"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return vaInputs.allow_user_to_skip.getValue();\n})()\n"},"id":"d88b3276ce7b4021977abe66f40962c7","name":"files image only","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"Decision","type":"Decision","name":"FileType","branches":[{"type":"Branch","type":"Branch","label":"Allow all types","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"allow_all_file_types=true"},"id":"6d6f09c4762740e097383207b85ef259","name":"Allow all types"},{"type":"Branch","type":"Branch","label":"Allow Image only","expression":{"type":"Applicability","type":"Applicability","mode":"query","value":"allow_all_file_types=false"},"id":"6d20ceb3c76340c6a705566679cfd3bb","name":"Allow Image only"}],"id":"fb61efca7e0f4c28af45d57672f4275a","goal_id":"primary"},{"type":"InputPrompt","type":"InputPrompt","variable_id":"40ae209357e743759b89cac258fe041d","message":{"type":"String","type":"String","mode":"string","value":"{{vaInputs.try_again_message}}"},"nlu_entity_binding":{"type":"NLUEntityBinding","allow_text_input":false,"use_confirmation_prompt":true},"skippable":{"type":"Applicability","type":"Applicability","mode":"script","value":"(function execute() {\n    return true;\n})()\n"},"id":"c7c1c5db53c04526929a47c35d1c4636","name":"Reupload attachment image only","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}},{"type":"ScriptedAction","type":"ScriptedAction","script":"(function execute() {\n    vaVars.global_file_upload_count_limit = ''0'';\n    vaVars.global_file_upload_size_limit = ''0'';\n})()\n","id":"00357471349046e281d539dab0a1c655","name":"Set Context variables","goal_id":"primary","applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"}}],"edges":[{"type":"Edge","source_node_id":"a5554936e8c148ae8b0370a369fdff00","target_node_id":"12ea619f21f3427aa960e360d3440a67","id":"e467032358f84321b054d3a6d895a248"},{"type":"Edge","source_node_id":"eb8de8637597492d9b7355684702f871","target_node_id":"10fa1ef93ad74dfcbb330321b89052e8","branch_id":"4832af2b62ce4313a713c6a6e49f561f","id":"8edcb408bf434882983758a0ae3bc828","name":"4832af2b62ce4313a713c6a6e49f561f"},{"type":"Edge","source_node_id":"7c62fb66347f480cbc5f949fe0136078","target_node_id":"f13130227e834abdaf13baabc2aaf80e","id":"7b1acafc0a3a4ef780b6177daaeb68c9"},{"type":"Edge","source_node_id":"eb8de8637597492d9b7355684702f871","target_node_id":"00357471349046e281d539dab0a1c655","branch_id":"12a7725b0eb149f6a4ea0d0ed36eeba0","id":"0856371d1ef64d15826ba1c9a3a7962b","name":"12a7725b0eb149f6a4ea0d0ed36eeba0"},{"type":"Edge","source_node_id":"b7d00116b42449afb4929effec6d6afc","target_node_id":"5fbf237d20454ac4a96ec045b81c4c74","id":"45439bd696874661a5614ff07a7b8d8d"},{"type":"Edge","source_node_id":"263f2c5b888a415db1e54e17a2767b2d","target_node_id":"eb8de8637597492d9b7355684702f871","id":"34da5a0a35fc4bae8b062cee23917d8c"},{"type":"Edge","source_node_id":"12ea619f21f3427aa960e360d3440a67","target_node_id":"8e053c58fcb345a7ae1062b969683023","branch_id":"46800ead578040d0af0aa4c404045f50","id":"69c23804e82f48c5928608a532f27706","name":"46800ead578040d0af0aa4c404045f50"},{"type":"Edge","source_node_id":"12ea619f21f3427aa960e360d3440a67","target_node_id":"00357471349046e281d539dab0a1c655","branch_id":"d0b0ca7b857f468c87e7969793483e9d","id":"381f97e3a5e44adf8fdb5a385450d861","name":"d0b0ca7b857f468c87e7969793483e9d"},{"type":"Edge","source_node_id":"218b60ce2f744f01a798076ff4a9495e","target_node_id":"84c8921a6c60414aa1f0e4d8106f2be9","id":"48441724d2ea442db9c488aaf16855b0"},{"type":"Edge","source_node_id":"84c8921a6c60414aa1f0e4d8106f2be9","target_node_id":"6684bd1e2dac46cd87cf95d1b6be7d54","branch_id":"58489fdda6ce4c79b5a9a9a6d306822e","id":"9ad1dcb5729049a582c9b2c603a53acf","name":"58489fdda6ce4c79b5a9a9a6d306822e"},{"type":"Edge","source_node_id":"10fa1ef93ad74dfcbb330321b89052e8","target_node_id":"6684bd1e2dac46cd87cf95d1b6be7d54","id":"26d5a7dbc4f847a2a348dc4a6aa6652e"},{"type":"Edge","source_node_id":"6684bd1e2dac46cd87cf95d1b6be7d54","target_node_id":"218b60ce2f744f01a798076ff4a9495e","id":"6bd34bf0356d43a4926baad40a8166ac"},{"type":"Edge","source_node_id":"f13130227e834abdaf13baabc2aaf80e","target_node_id":"263f2c5b888a415db1e54e17a2767b2d","branch_id":"73405294e5184bee94cdbc1e5302c5d0","id":"f6e3a1b55f0f498bbb911ef181793313","name":"73405294e5184bee94cdbc1e5302c5d0"},{"type":"Edge","source_node_id":"8e053c58fcb345a7ae1062b969683023","target_node_id":"ac266968a1da4355ab51e032af1dd212","id":"ad24d0b9eb6f430383314b079c4e59a6"},{"type":"Edge","source_node_id":"ac266968a1da4355ab51e032af1dd212","target_node_id":"10fa1ef93ad74dfcbb330321b89052e8","branch_id":"427ef57c75ed450686d8864295bbbe8e","id":"af95c2f1b846483c967e2c77edf7a736","name":"427ef57c75ed450686d8864295bbbe8e"},{"type":"Edge","source_node_id":"ac266968a1da4355ab51e032af1dd212","target_node_id":"00357471349046e281d539dab0a1c655","branch_id":"352f6b027a4c496e8fac77c8eb63c002","id":"2d17eaf01b2f4942b9dc69341e62a505","name":"352f6b027a4c496e8fac77c8eb63c002"},{"type":"Edge","source_node_id":"84c8921a6c60414aa1f0e4d8106f2be9","target_node_id":"0cbc2fb456d340d98c017bae3a73ad6a","branch_id":"c124d4efe73f47d79a2ee92d65c526c1","id":"d2ec2977c8604a319ee5169d14af0d45","name":"c124d4efe73f47d79a2ee92d65c526c1"},{"type":"Edge","source_node_id":"0cbc2fb456d340d98c017bae3a73ad6a","target_node_id":"495cb6a069084c2399d41ec77bb5c1a5","id":"28efac18c92d4a798a2bd539cecde168"},{"type":"Edge","source_node_id":"495cb6a069084c2399d41ec77bb5c1a5","target_node_id":"00357471349046e281d539dab0a1c655","branch_id":"7a5c9c4b401d4f28a607d9cf71fc72d6","id":"f8081444c502452bbf4ab620b3226db1","name":"7a5c9c4b401d4f28a607d9cf71fc72d6"},{"type":"Edge","source_node_id":"5fbf237d20454ac4a96ec045b81c4c74","target_node_id":"3cb4aded10774e3c8c54641a912e364b","id":"341b1ef836284e3283c63d52e9edc925"},{"type":"Edge","source_node_id":"3cb4aded10774e3c8c54641a912e364b","target_node_id":"7c62fb66347f480cbc5f949fe0136078","branch_id":"f69177628b314f3a8253415286200971","id":"53335eb6049d4f16b041ba6ad8837229","name":"f69177628b314f3a8253415286200971"},{"type":"Edge","source_node_id":"3cb4aded10774e3c8c54641a912e364b","target_node_id":"d88b3276ce7b4021977abe66f40962c7","branch_id":"4096d62d1c8749ab9b8e78437f6c1c84","id":"ae67db77d1a24ba8927b45d8cde81e62","name":"4096d62d1c8749ab9b8e78437f6c1c84"},{"type":"Edge","source_node_id":"d88b3276ce7b4021977abe66f40962c7","target_node_id":"f13130227e834abdaf13baabc2aaf80e","id":"47a1f6b8409b484699170ffe1faa5ccf"},{"type":"Edge","source_node_id":"495cb6a069084c2399d41ec77bb5c1a5","target_node_id":"fb61efca7e0f4c28af45d57672f4275a","branch_id":"0c9b105bd7f840f98289e9deb53e3968","id":"e5a972b333cd404dbe497a647cd9dd07","name":"0c9b105bd7f840f98289e9deb53e3968"},{"type":"Edge","source_node_id":"fb61efca7e0f4c28af45d57672f4275a","target_node_id":"a5554936e8c148ae8b0370a369fdff00","branch_id":"6d6f09c4762740e097383207b85ef259","id":"8ab81b9a167049a3831f7268a472d083","name":"6d6f09c4762740e097383207b85ef259"},{"type":"Edge","source_node_id":"fb61efca7e0f4c28af45d57672f4275a","target_node_id":"c7c1c5db53c04526929a47c35d1c4636","branch_id":"6d20ceb3c76340c6a705566679cfd3bb","id":"8c8c1ec1d0ee490484326e325f4d807e","name":"6d20ceb3c76340c6a705566679cfd3bb"},{"type":"Edge","source_node_id":"c7c1c5db53c04526929a47c35d1c4636","target_node_id":"12ea619f21f3427aa960e360d3440a67","id":"fcfb5ce0a5214eba96985469465bc2d4"},{"type":"Edge","source_node_id":"f13130227e834abdaf13baabc2aaf80e","target_node_id":"00357471349046e281d539dab0a1c655","branch_id":"cbf106cfc61c410f9ddc1cb067f7797c","id":"61abde98750c483cb0b57c57f072dc40","name":"cbf106cfc61c410f9ddc1cb067f7797c"},{"type":"Edge","source_node_id":"00357471349046e281d539dab0a1c655","target_node_id":"ca75d6035e914bb8888781804e09c6d0","id":"4a5f83e962224e15bea1af9006194b81"}],"id":"primary"}],"script_variables":[{"type":"VariableDto","type":"String","name":"max_file_count","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"16c1f07c62044b60904e436ec37e6f7d","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"max_file_size","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"fa0efe7917f6404396f10e40dabe631a","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"max_retry_count","value":{"type":"String","type":"String","mode":"string","value":"1"},"list":false,"id":"c1add054385747b8b817334711afb3ee","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"final_list","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"d486be030e70474994df141a375bef7d","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"failed_list","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"fc38540b2de340709d1f716c23e0b5fe","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"retry_attempts_left","value":{"type":"String","type":"String","mode":"string"},"list":false,"id":"a81c70c0743a4f1096cfa40bcfda9b4a","formatType":"text","secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"failed_message_count","value":{"type":"String","type":"String","mode":"string","value":"0"},"list":false,"id":"7870c050634f456eaae0660b7f9a4c81","formatType":"text","secure":false,"sensitive":false}],"glide_variables":[{"type":"Reference","type":"Reference","table":"sys_user","id":"current-user","name":"user","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"File","type":"File","id":"b9cd5e5164004a318469d2557ba9b2ae","name":"files","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"prompt","list":false,"id":"5472efa7417d4e649cfb0995a9f14799","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"True/False","type":"True/False","id":"5dd6352d90df45959af53803fb02bdaf","name":"allow_user_to_skip","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"max_file_count","list":false,"id":"8a2ffc0953564a87900dc8ce6cafadad","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"VariableDto","type":"String","name":"max_file_size","list":false,"id":"0b075eb449d14a2ba92f569572c785e6","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"File","type":"File","id":"9cddbc2c9d4c48769cd8816e1e27bec6","name":"reupload_attachment","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"try_again_message","list":false,"id":"6278561a1c3644b58a3d1aed68d2a7e0","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"True/False","type":"True/False","id":"8994c0dbfc374eabba184624877fb08f","name":"ask_to_reupload","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"VariableDto","type":"String","name":"user_confirmation_to_repload_msg","list":false,"id":"313f21dfba794ed49882efdd2118bd8b","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false},{"type":"True/False","type":"True/False","id":"ecdf0ee3f44b46b6970b03b2c235891f","name":"allow_all_file_types","formatType":"text","metadata":{"libraryMappingType":"input"},"secure":false,"sensitive":false,"list":false},{"type":"Image","type":"Image","id":"95c2b5da639f4cfc8972689839ba9a06","name":"files_image_only","formatType":"text","secure":false,"sensitive":false,"list":false},{"type":"Image","type":"Image","id":"40ae209357e743759b89cac258fe041d","name":"reupload_attachment_image_only","formatType":"text","secure":false,"sensitive":false,"list":false}],"applicability":{"type":"Applicability","type":"Applicability","mode":"script","value":"true"},"roles":[],"scope":"global","library-usage":{"type":"Library","input-parameters":[{"name":"prompt","label":"prompt","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"5472efa7417d4e649cfb0995a9f14799","type":"String"},{"name":"allow_user_to_skip","label":"allow_user_to_skip","default-value":"false","required":false,"metadata":{"type":"True/False","list":false,"items":[],"use_items":false},"id":"5dd6352d90df45959af53803fb02bdaf","type":"True/False"},{"name":"max_file_count","label":"max_file_count","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"8a2ffc0953564a87900dc8ce6cafadad","type":"String"},{"name":"max_file_size","label":"max_file_size","default-value":"\"\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"0b075eb449d14a2ba92f569572c785e6","type":"String","hint":"Max file size in MB (accept only integer value)"},{"name":"try_again_message","label":"try_again_message","default-value":"\"Please try uploading again.\"","required":false,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"6278561a1c3644b58a3d1aed68d2a7e0","type":"String"},{"name":"user_confirmation_to_repload_msg","label":"user_confirmation_to_repload_msg","default-value":"\"\"","required":true,"metadata":{"type":"String","list":false,"items":[],"use_items":false},"id":"313f21dfba794ed49882efdd2118bd8b","type":"String"},{"name":"allow_all_file_types","label":"allow_all_file_types","default-value":"true","required":false,"metadata":{"type":"True/False","list":false,"items":[],"use_items":false},"id":"ecdf0ee3f44b46b6970b03b2c235891f","type":"True/False"}],"return-values-mapping":[{"name":"files","label":"files","value":{"type":"String","type":"String","mode":"script","value":"(function execute() {\n    /* return ''a default value''; */\n    return vaVars.final_list;\n})()\n"}}]},"domain":"global","topic_type":"TOPIC_BLOCK","channels":[],"dialog_acts_enabled":false,"id":"f1103e2577812110ea3707c77b5a99a2","name":"Multi File Upload","key_phrases":[],"nlu_provider":"","nlu_model":"","nlu_model_label":"","nlu_intent":"","nlu_intent_label":"","flexible_conversation_switching":true,"autopilot_topic":false,"design_categories":[],"triggerable_by_notification":false,"modify_confirmation_enabled":false,"library":true,"csTopicId":"6f2b209377892110ea3707c77b5a99be","readOnly":false,"nluMapping":"[]"}'
+design_topic_id: f1103e2577812110ea3707c77b5a99a2
+graph: |-
+  {
+    "graph_api_version": "1.0.45",
+    "goals": {
+      "primary": {
+        "id": "primary",
+        "trigger": {
+          "type": "primary"
+        },
+        "name": "primary",
+        "applicability": "",
+        "description": "",
+        "nodes": {
+          "b7d00116b42449afb4929effec6d6afc": {
+            "id": "b7d00116b42449afb4929effec6d6afc",
+            "stepType": "Start",
+            "name": "Start",
+            "greetingResponse": {
+              "mode": "simple",
+              "value": ""
+            },
+            "parameters": [
+              {
+                "type": "String",
+                "value": "",
+                "id": "5472efa7417d4e649cfb0995a9f14799",
+                "name": "prompt",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "True/False",
+                "value": "false",
+                "id": "5dd6352d90df45959af53803fb02bdaf",
+                "name": "allow_user_to_skip",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "8a2ffc0953564a87900dc8ce6cafadad",
+                "name": "max_file_count",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "0b075eb449d14a2ba92f569572c785e6",
+                "name": "max_file_size",
+                "hint": "Max file size in MB (accept only integer value)",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "Please try uploading again.",
+                "id": "6278561a1c3644b58a3d1aed68d2a7e0",
+                "name": "try_again_message",
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "String",
+                "value": "",
+                "id": "313f21dfba794ed49882efdd2118bd8b",
+                "name": "user_confirmation_to_repload_msg",
+                "required": true,
+                "referenced": true,
+                "disabled": true
+              },
+              {
+                "type": "True/False",
+                "value": "true",
+                "id": "ecdf0ee3f44b46b6970b03b2c235891f",
+                "name": "allow_all_file_types",
+                "referenced": false
+              }
+            ],
+            "variableIds": [
+              "5472efa7417d4e649cfb0995a9f14799",
+              "5dd6352d90df45959af53803fb02bdaf",
+              "8a2ffc0953564a87900dc8ce6cafadad",
+              "0b075eb449d14a2ba92f569572c785e6",
+              "6278561a1c3644b58a3d1aed68d2a7e0",
+              "313f21dfba794ed49882efdd2118bd8b",
+              "ecdf0ee3f44b46b6970b03b2c235891f"
+            ]
+          },
+          "ca75d6035e914bb8888781804e09c6d0": {
+            "id": "ca75d6035e914bb8888781804e09c6d0",
+            "stepType": "TerminateGoal",
+            "name": "End",
+            "confirmationMessage": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "outputVariables": [
+              {
+                "key": "files",
+                "value": "(function execute() {\n    /* return 'a default value'; */\n    return vaVars.final_list;\n})()\n",
+                "mode": "script",
+                "disabled": true,
+                "cannotBeDeleted": true,
+                "alertMessage": "You cannot delete this parameter because other calling topics use it.",
+                "additionalInfoUrl": "/sys_cs_topic_library_usage_list.do?sysparm_query=library_cs_topic_id=6f2b209377892110ea3707c77b5a99be%5Ecalling_cs_topic_idIN619b289377892110ea3707c77b5a996b",
+                "additionalInfoLabel": "See calling topics"
+              }
+            ]
+          },
+          "7c62fb66347f480cbc5f949fe0136078": {
+            "id": "7c62fb66347f480cbc5f949fe0136078",
+            "stepType": "FilePrompt",
+            "name": "files",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "type": "datapill",
+                      "dataPill": {
+                        "value": "{{vaInputs.prompt}}",
+                        "displayValue": "Input Variables➛Prompt"
+                      },
+                      "children": [
+                        {
+                          "text": ""
+                        }
+                      ]
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.allow_user_to_skip.getValue();\n})()\n"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "b9cd5e5164004a318469d2557ba9b2ae"
+          },
+          "5fbf237d20454ac4a96ec045b81c4c74": {
+            "id": "5fbf237d20454ac4a96ec045b81c4c74",
+            "name": "set variables",
+            "script": "(function execute() {\n    vaVars.global_file_upload_count_limit = vaInputs.max_file_count.getValue();\n    vaVars.global_file_upload_size_limit = vaInputs.max_file_size.getValue();\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "263f2c5b888a415db1e54e17a2767b2d": {
+            "id": "263f2c5b888a415db1e54e17a2767b2d",
+            "name": "Filter Attachments",
+            "script": "(function execute() {\n    var uploaded_list = [];\n    var uploadFailed_list = [];\n    var fileControl = vaInputs.allow_all_file_types.getValue() ? vaInputs.files : vaInputs.files_image_only;\n    var successStatus = [\"available\", null]; // null state when scan is disabled\n    for(var index=0; index<fileControl.getFiles().length; index++) {\n        var file = fileControl.getFiles()[index];\n        var attachment = {\n            \"contentType\": file.contentType,\n            \"fileName\": file.fileName, \n            \"value\": file.value,\n            \"message\" : file.message,\n            \"contentType\" : file.contentType,\n            \"scanState\" : file.scanState,\n            \"fileSize\" : file.fileSize\n        };\n        if (successStatus.indexOf(file.scanState) != -1) {\n            uploaded_list.push(attachment);\n        } else {\n           uploadFailed_list.push(attachment);\n        }\n    }\n\n    vaVars.final_list = JSON.stringify(uploaded_list);\n    vaVars.failed_list = JSON.stringify(uploadFailed_list);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "eb8de8637597492d9b7355684702f871": {
+            "id": "eb8de8637597492d9b7355684702f871",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "a5554936e8c148ae8b0370a369fdff00": {
+            "id": "a5554936e8c148ae8b0370a369fdff00",
+            "stepType": "FilePrompt",
+            "name": "Reupload attachment",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "type": "datapill",
+                      "dataPill": {
+                        "value": "{{vaInputs.try_again_message}}",
+                        "displayValue": "Input Variables➛Try_again_message"
+                      },
+                      "children": [
+                        {
+                          "text": ""
+                        }
+                      ]
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    return true;\n})()\n"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "9cddbc2c9d4c48769cd8816e1e27bec6"
+          },
+          "10fa1ef93ad74dfcbb330321b89052e8": {
+            "id": "10fa1ef93ad74dfcbb330321b89052e8",
+            "stepType": "TextOutput",
+            "name": "Upload failed for message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var message = gs.getProperty(\"com.glide.cs.general.multi_file_upload_failed_for_msg\");\n    return message;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "8e053c58fcb345a7ae1062b969683023": {
+            "id": "8e053c58fcb345a7ae1062b969683023",
+            "name": "Save reuploaded attachments",
+            "script": "(function execute() {\n    vaVars.failed_list = \"\";\n    var uploaded_list = JSON.parse(vaVars.final_list);\n    var uploadFailed_list = [];\n    var fileControl = vaInputs.allow_all_file_types.getValue() ? vaInputs.reupload_attachment : vaInputs.reupload_attachment_image_only;\n    var successStatus = [\"available\", null]; // null state when scan is disabled\n    for(var index=0; index<fileControl.getFiles().length; index++) {\n        var file = fileControl.getFiles()[index];\n        var attachment = {\n            \"contentType\": file.contentType,\n            \"fileName\": file.fileName, \n            \"value\": file.value,\n            \"message\" : file.message,\n            \"contentType\" : file.contentType,\n            \"scanState\" : file.scanState,\n            \"fileSize\" : file.fileSize\n        };\n        gs.info(\"test file: \"+ JSON.stringify(attachment));\n        if (successStatus.indexOf(file.scanState) != -1) {\n            uploaded_list.push(attachment);\n        } else {\n           uploadFailed_list.push(attachment);\n        }\n    }\n    vaVars.failed_message_count = 0;\n    vaVars.final_list = JSON.stringify(uploaded_list);\n    vaVars.failed_list = JSON.stringify(uploadFailed_list);\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "12ea619f21f3427aa960e360d3440a67": {
+            "id": "12ea619f21f3427aa960e360d3440a67",
+            "stepType": "Decision",
+            "name": "reupload skipped"
+          },
+          "218b60ce2f744f01a798076ff4a9495e": {
+            "id": "218b60ce2f744f01a798076ff4a9495e",
+            "stepType": "TextOutput",
+            "name": "Failed message",
+            "secure": false,
+            "value": [
+              {
+                "value": "(function execute() {\n    var failed = JSON.parse(vaVars.failed_list);\n    var message = failed[vaVars.failed_message_count -1 ].message;\n    return message;\n})()\n",
+                "mode": "script"
+              }
+            ],
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "84c8921a6c60414aa1f0e4d8106f2be9": {
+            "id": "84c8921a6c60414aa1f0e4d8106f2be9",
+            "stepType": "Decision",
+            "name": "Attachment upload failed message"
+          },
+          "6684bd1e2dac46cd87cf95d1b6be7d54": {
+            "id": "6684bd1e2dac46cd87cf95d1b6be7d54",
+            "name": "increase counter",
+            "script": "(function execute() {\n   var temp = vaVars.failed_message_count +1;\n    vaVars.failed_message_count = temp;\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          },
+          "f13130227e834abdaf13baabc2aaf80e": {
+            "id": "f13130227e834abdaf13baabc2aaf80e",
+            "stepType": "Decision",
+            "name": "Skip"
+          },
+          "ac266968a1da4355ab51e032af1dd212": {
+            "id": "ac266968a1da4355ab51e032af1dd212",
+            "stepType": "Decision",
+            "name": "Decision"
+          },
+          "0cbc2fb456d340d98c017bae3a73ad6a": {
+            "id": "0cbc2fb456d340d98c017bae3a73ad6a",
+            "stepType": "BooleanPrompt",
+            "name": "ask to reupload",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "type": "datapill",
+                      "dataPill": {
+                        "value": "{{vaInputs.user_confirmation_to_repload_msg}}",
+                        "displayValue": "Input Variables➛User_confirmation_to_repload_msg"
+                      },
+                      "children": [
+                        {
+                          "text": ""
+                        }
+                      ]
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "value": "",
+              "mode": "query"
+            },
+            "defaultValue": {
+              "value": "",
+              "mode": "simple"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "8994c0dbfc374eabba184624877fb08f",
+            "routes": {}
+          },
+          "495cb6a069084c2399d41ec77bb5c1a5": {
+            "id": "495cb6a069084c2399d41ec77bb5c1a5",
+            "stepType": "Decision",
+            "name": "User wants to reupload"
+          },
+          "3cb4aded10774e3c8c54641a912e364b": {
+            "id": "3cb4aded10774e3c8c54641a912e364b",
+            "stepType": "Decision",
+            "name": "FileType"
+          },
+          "d88b3276ce7b4021977abe66f40962c7": {
+            "id": "d88b3276ce7b4021977abe66f40962c7",
+            "stepType": "FilePrompt",
+            "name": "files image only",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "type": "datapill",
+                      "dataPill": {
+                        "value": "{{vaInputs.prompt}}",
+                        "displayValue": "Input Variables➛Prompt"
+                      },
+                      "children": [
+                        {
+                          "text": ""
+                        }
+                      ]
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    return vaInputs.allow_user_to_skip.getValue();\n})()\n"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "95c2b5da639f4cfc8972689839ba9a06"
+          },
+          "fb61efca7e0f4c28af45d57672f4275a": {
+            "id": "fb61efca7e0f4c28af45d57672f4275a",
+            "stepType": "Decision",
+            "name": "FileType"
+          },
+          "c7c1c5db53c04526929a47c35d1c4636": {
+            "id": "c7c1c5db53c04526929a47c35d1c4636",
+            "stepType": "FilePrompt",
+            "name": "Reupload attachment image only",
+            "prompt": {
+              "value": [
+                {
+                  "type": "paragraph",
+                  "children": [
+                    {
+                      "text": ""
+                    },
+                    {
+                      "type": "datapill",
+                      "dataPill": {
+                        "value": "{{vaInputs.try_again_message}}",
+                        "displayValue": "Input Variables➛Try_again_message"
+                      },
+                      "children": [
+                        {
+                          "text": ""
+                        }
+                      ]
+                    },
+                    {
+                      "text": ""
+                    }
+                  ]
+                }
+              ],
+              "mode": "simple"
+            },
+            "confirmMessage": {
+              "value": "",
+              "mode": "simple"
+            },
+            "acknowledgeMsg": {
+              "value": "",
+              "mode": "simple"
+            },
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            },
+            "skippable": {
+              "mode": "script",
+              "value": "(function execute() {\n    return true;\n})()\n"
+            },
+            "withNluUserInput": false,
+            "skipIfFulfilled": false,
+            "variableId": "40ae209357e743759b89cac258fe041d"
+          },
+          "00357471349046e281d539dab0a1c655": {
+            "id": "00357471349046e281d539dab0a1c655",
+            "name": "Set Context variables",
+            "script": "(function execute() {\n    vaVars.global_file_upload_count_limit = '0';\n    vaVars.global_file_upload_size_limit = '0';\n})()\n",
+            "stepType": "ScriptAction",
+            "applicability": {
+              "value": "",
+              "mode": "query"
+            }
+          }
+        },
+        "edges": [
+          {
+            "id": "e467032358f84321b054d3a6d895a248",
+            "edgeType": "Edge",
+            "source": "a5554936e8c148ae8b0370a369fdff00",
+            "target": "12ea619f21f3427aa960e360d3440a67",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "8edcb408bf434882983758a0ae3bc828",
+            "edgeType": "Branch",
+            "source": "eb8de8637597492d9b7355684702f871",
+            "target": "10fa1ef93ad74dfcbb330321b89052e8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var applies =  JSON.parse(vaVars.failed_list).length > 0\n    return applies;\n})()\n"
+            },
+            "label": "Some Attachment Download failed"
+          },
+          {
+            "id": "7b1acafc0a3a4ef780b6177daaeb68c9",
+            "edgeType": "Edge",
+            "source": "7c62fb66347f480cbc5f949fe0136078",
+            "target": "f13130227e834abdaf13baabc2aaf80e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "0856371d1ef64d15826ba1c9a3a7962b",
+            "edgeType": "Branch",
+            "source": "eb8de8637597492d9b7355684702f871",
+            "target": "00357471349046e281d539dab0a1c655",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var applies = JSON.parse(vaVars.failed_list).length <= 0\n    return applies;\n})()\n"
+            },
+            "label": "None failed"
+          },
+          {
+            "id": "45439bd696874661a5614ff07a7b8d8d",
+            "edgeType": "Edge",
+            "source": "b7d00116b42449afb4929effec6d6afc",
+            "target": "5fbf237d20454ac4a96ec045b81c4c74",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "34da5a0a35fc4bae8b062cee23917d8c",
+            "edgeType": "Edge",
+            "source": "263f2c5b888a415db1e54e17a2767b2d",
+            "target": "eb8de8637597492d9b7355684702f871",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "69c23804e82f48c5928608a532f27706",
+            "edgeType": "Branch",
+            "source": "12ea619f21f3427aa960e360d3440a67",
+            "target": "8e053c58fcb345a7ae1062b969683023",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.reupload_attachmentISNOTEMPTY^ORvaInputs.reupload_attachment_image_onlyISNOTEMPTY",
+              "mode": "query"
+            },
+            "label": "NO"
+          },
+          {
+            "id": "381f97e3a5e44adf8fdb5a385450d861",
+            "edgeType": "Branch",
+            "source": "12ea619f21f3427aa960e360d3440a67",
+            "target": "00357471349046e281d539dab0a1c655",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.reupload_attachmentISEMPTY^vaInputs.reupload_attachment_image_onlyISEMPTY",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "48441724d2ea442db9c488aaf16855b0",
+            "edgeType": "Edge",
+            "source": "218b60ce2f744f01a798076ff4a9495e",
+            "target": "84c8921a6c60414aa1f0e4d8106f2be9",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "9ad1dcb5729049a582c9b2c603a53acf",
+            "edgeType": "Branch",
+            "source": "84c8921a6c60414aa1f0e4d8106f2be9",
+            "target": "6684bd1e2dac46cd87cf95d1b6be7d54",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var failed = JSON.parse(vaVars.failed_list);\n    var failed_list_length = failed.length;\n    if (vaVars.failed_message_count >= failed_list_length)\n       return false;\n    else \n       return true;\n})()\n"
+            },
+            "label": "Send more message"
+          },
+          {
+            "id": "26d5a7dbc4f847a2a348dc4a6aa6652e",
+            "edgeType": "Edge",
+            "source": "10fa1ef93ad74dfcbb330321b89052e8",
+            "target": "6684bd1e2dac46cd87cf95d1b6be7d54",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "6bd34bf0356d43a4926baad40a8166ac",
+            "edgeType": "Edge",
+            "source": "6684bd1e2dac46cd87cf95d1b6be7d54",
+            "target": "218b60ce2f744f01a798076ff4a9495e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f6e3a1b55f0f498bbb911ef181793313",
+            "edgeType": "Branch",
+            "source": "f13130227e834abdaf13baabc2aaf80e",
+            "target": "263f2c5b888a415db1e54e17a2767b2d",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.filesISNOTEMPTY^ORvaInputs.files_image_onlyISNOTEMPTY",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "ad24d0b9eb6f430383314b079c4e59a6",
+            "edgeType": "Edge",
+            "source": "8e053c58fcb345a7ae1062b969683023",
+            "target": "ac266968a1da4355ab51e032af1dd212",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "af95c2f1b846483c967e2c77edf7a736",
+            "edgeType": "Branch",
+            "source": "ac266968a1da4355ab51e032af1dd212",
+            "target": "10fa1ef93ad74dfcbb330321b89052e8",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var failedListSize = JSON.parse(vaVars.failed_list).length;\n    if (failedListSize <= 0)\n       return false;\n    else \n       return true;\n})()\n"
+            },
+            "label": "Some failed"
+          },
+          {
+            "id": "2d17eaf01b2f4942b9dc69341e62a505",
+            "edgeType": "Branch",
+            "source": "ac266968a1da4355ab51e032af1dd212",
+            "target": "00357471349046e281d539dab0a1c655",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var failedListSize = JSON.parse(vaVars.failed_list).length;\n    if (failedListSize <= 0)\n       return true;\n    else\n       return false\n})()\n"
+            },
+            "label": "All Success"
+          },
+          {
+            "id": "d2ec2977c8604a319ee5169d14af0d45",
+            "edgeType": "Branch",
+            "source": "84c8921a6c60414aa1f0e4d8106f2be9",
+            "target": "0cbc2fb456d340d98c017bae3a73ad6a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "mode": "script",
+              "value": "(function execute() {\n    var failed = JSON.parse(vaVars.failed_list);\n    var failed_list_length = failed.length;\n    if(vaVars.failed_message_count >= failed_list_length)\n    return true;\n    else \n    return false;\n})()\n"
+            },
+            "label": "No More message"
+          },
+          {
+            "id": "28efac18c92d4a798a2bd539cecde168",
+            "edgeType": "Edge",
+            "source": "0cbc2fb456d340d98c017bae3a73ad6a",
+            "target": "495cb6a069084c2399d41ec77bb5c1a5",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "f8081444c502452bbf4ab620b3226db1",
+            "edgeType": "Branch",
+            "source": "495cb6a069084c2399d41ec77bb5c1a5",
+            "target": "00357471349046e281d539dab0a1c655",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.ask_to_reupload=",
+              "mode": "query"
+            },
+            "label": "No"
+          },
+          {
+            "id": "341b1ef836284e3283c63d52e9edc925",
+            "edgeType": "Edge",
+            "source": "5fbf237d20454ac4a96ec045b81c4c74",
+            "target": "3cb4aded10774e3c8c54641a912e364b",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "53335eb6049d4f16b041ba6ad8837229",
+            "edgeType": "Branch",
+            "source": "3cb4aded10774e3c8c54641a912e364b",
+            "target": "7c62fb66347f480cbc5f949fe0136078",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.allow_all_file_types=true",
+              "mode": "query"
+            },
+            "label": "Allow all types"
+          },
+          {
+            "id": "ae67db77d1a24ba8927b45d8cde81e62",
+            "edgeType": "Branch",
+            "source": "3cb4aded10774e3c8c54641a912e364b",
+            "target": "d88b3276ce7b4021977abe66f40962c7",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.allow_all_file_types=",
+              "mode": "query"
+            },
+            "label": "Allow image only"
+          },
+          {
+            "id": "47a1f6b8409b484699170ffe1faa5ccf",
+            "edgeType": "Edge",
+            "source": "d88b3276ce7b4021977abe66f40962c7",
+            "target": "f13130227e834abdaf13baabc2aaf80e",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "e5a972b333cd404dbe497a647cd9dd07",
+            "edgeType": "Branch",
+            "source": "495cb6a069084c2399d41ec77bb5c1a5",
+            "target": "fb61efca7e0f4c28af45d57672f4275a",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.ask_to_reupload=true",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "8ab81b9a167049a3831f7268a472d083",
+            "edgeType": "Branch",
+            "source": "fb61efca7e0f4c28af45d57672f4275a",
+            "target": "a5554936e8c148ae8b0370a369fdff00",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.allow_all_file_types=true",
+              "mode": "query"
+            },
+            "label": "Allow all types"
+          },
+          {
+            "id": "8c8c1ec1d0ee490484326e325f4d807e",
+            "edgeType": "Branch",
+            "source": "fb61efca7e0f4c28af45d57672f4275a",
+            "target": "c7c1c5db53c04526929a47c35d1c4636",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.allow_all_file_types=false",
+              "mode": "query"
+            },
+            "label": "Allow Image only"
+          },
+          {
+            "id": "fcfb5ce0a5214eba96985469465bc2d4",
+            "edgeType": "Edge",
+            "source": "c7c1c5db53c04526929a47c35d1c4636",
+            "target": "12ea619f21f3427aa960e360d3440a67",
+            "sourcePort": "",
+            "targetPort": ""
+          },
+          {
+            "id": "61abde98750c483cb0b57c57f072dc40",
+            "edgeType": "Branch",
+            "source": "f13130227e834abdaf13baabc2aaf80e",
+            "target": "00357471349046e281d539dab0a1c655",
+            "sourcePort": "",
+            "targetPort": "",
+            "expression": {
+              "value": "vaInputs.filesISEMPTY^vaInputs.files_image_onlyISEMPTY",
+              "mode": "query"
+            },
+            "label": "Yes"
+          },
+          {
+            "id": "4a5f83e962224e15bea1af9006194b81",
+            "edgeType": "Edge",
+            "source": "00357471349046e281d539dab0a1c655",
+            "target": "ca75d6035e914bb8888781804e09c6d0",
+            "sourcePort": "",
+            "targetPort": ""
+          }
+        ]
+      }
+    },
+    "variables": {
+      "current-user": {
+        "category": "vaInputs",
+        "id": "current-user",
+        "label": "User",
+        "name": "user",
+        "table": "sys_user",
+        "varType": "reference"
+      },
+      "b9cd5e5164004a318469d2557ba9b2ae": {
+        "id": "b9cd5e5164004a318469d2557ba9b2ae",
+        "name": "files",
+        "label": "Files",
+        "varType": "file",
+        "secure": false,
+        "category": "vaInputs",
+        "nodeId": "7c62fb66347f480cbc5f949fe0136078",
+        "isHidden": false
+      },
+      "5472efa7417d4e649cfb0995a9f14799": {
+        "id": "5472efa7417d4e649cfb0995a9f14799",
+        "name": "prompt",
+        "label": "Prompt",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b7d00116b42449afb4929effec6d6afc",
+        "isHidden": false
+      },
+      "5dd6352d90df45959af53803fb02bdaf": {
+        "id": "5dd6352d90df45959af53803fb02bdaf",
+        "name": "allow_user_to_skip",
+        "label": "Allow_user_to_skip",
+        "defaultValue": "false",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b7d00116b42449afb4929effec6d6afc",
+        "isHidden": false
+      },
+      "8a2ffc0953564a87900dc8ce6cafadad": {
+        "id": "8a2ffc0953564a87900dc8ce6cafadad",
+        "name": "max_file_count",
+        "label": "Max_file_count",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b7d00116b42449afb4929effec6d6afc",
+        "isHidden": false
+      },
+      "0b075eb449d14a2ba92f569572c785e6": {
+        "id": "0b075eb449d14a2ba92f569572c785e6",
+        "name": "max_file_size",
+        "label": "Max_file_size",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b7d00116b42449afb4929effec6d6afc",
+        "isHidden": false
+      },
+      "16c1f07c62044b60904e436ec37e6f7d": {
+        "id": "16c1f07c62044b60904e436ec37e6f7d",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "max_file_count",
+        "label": "max_file_count",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "fa0efe7917f6404396f10e40dabe631a": {
+        "id": "fa0efe7917f6404396f10e40dabe631a",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "max_file_size",
+        "label": "max_file_size",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "c1add054385747b8b817334711afb3ee": {
+        "id": "c1add054385747b8b817334711afb3ee",
+        "value": {
+          "mode": "simple",
+          "value": "1"
+        },
+        "name": "max_retry_count",
+        "label": "max_retry_count",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "d486be030e70474994df141a375bef7d": {
+        "id": "d486be030e70474994df141a375bef7d",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "final_list",
+        "label": "final_list",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "fc38540b2de340709d1f716c23e0b5fe": {
+        "id": "fc38540b2de340709d1f716c23e0b5fe",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "failed_list",
+        "label": "failed_list",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "9cddbc2c9d4c48769cd8816e1e27bec6": {
+        "id": "9cddbc2c9d4c48769cd8816e1e27bec6",
+        "name": "reupload_attachment",
+        "label": "Reupload Attachment",
+        "varType": "file",
+        "secure": false,
+        "category": "vaInputs",
+        "nodeId": "a5554936e8c148ae8b0370a369fdff00",
+        "isHidden": false
+      },
+      "a81c70c0743a4f1096cfa40bcfda9b4a": {
+        "id": "a81c70c0743a4f1096cfa40bcfda9b4a",
+        "value": {
+          "value": "",
+          "mode": "simple"
+        },
+        "name": "retry_attempts_left",
+        "label": "retry_attempts_left",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "6278561a1c3644b58a3d1aed68d2a7e0": {
+        "id": "6278561a1c3644b58a3d1aed68d2a7e0",
+        "name": "try_again_message",
+        "label": "Try_again_message",
+        "defaultValue": "Please try uploading again.",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b7d00116b42449afb4929effec6d6afc",
+        "isHidden": false
+      },
+      "7870c050634f456eaae0660b7f9a4c81": {
+        "id": "7870c050634f456eaae0660b7f9a4c81",
+        "value": {
+          "mode": "simple",
+          "value": "0"
+        },
+        "name": "failed_message_count",
+        "label": "failed_message_count",
+        "varType": "script",
+        "category": "vaVars"
+      },
+      "8994c0dbfc374eabba184624877fb08f": {
+        "id": "8994c0dbfc374eabba184624877fb08f",
+        "name": "ask_to_reupload",
+        "label": "Ask To Reupload",
+        "varType": "boolean",
+        "secure": false,
+        "category": "vaInputs",
+        "nodeId": "0cbc2fb456d340d98c017bae3a73ad6a",
+        "isHidden": false
+      },
+      "313f21dfba794ed49882efdd2118bd8b": {
+        "id": "313f21dfba794ed49882efdd2118bd8b",
+        "name": "user_confirmation_to_repload_msg",
+        "label": "User_confirmation_to_repload_msg",
+        "defaultValue": "",
+        "varType": "string",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b7d00116b42449afb4929effec6d6afc",
+        "isHidden": false
+      },
+      "ecdf0ee3f44b46b6970b03b2c235891f": {
+        "id": "ecdf0ee3f44b46b6970b03b2c235891f",
+        "name": "allow_all_file_types",
+        "label": "Allow_all_file_types",
+        "defaultValue": "true",
+        "varType": "boolean",
+        "category": "vaInputs",
+        "metadata": {
+          "libraryMappingType": "input"
+        },
+        "nodeId": "b7d00116b42449afb4929effec6d6afc",
+        "isHidden": false
+      },
+      "95c2b5da639f4cfc8972689839ba9a06": {
+        "id": "95c2b5da639f4cfc8972689839ba9a06",
+        "name": "files_image_only",
+        "label": "Files Image Only",
+        "varType": "image",
+        "secure": false,
+        "category": "vaInputs",
+        "nodeId": "d88b3276ce7b4021977abe66f40962c7",
+        "isHidden": false
+      },
+      "40ae209357e743759b89cac258fe041d": {
+        "id": "40ae209357e743759b89cac258fe041d",
+        "name": "reupload_attachment_image_only",
+        "label": "Reupload Attachment Image Only",
+        "varType": "image",
+        "secure": false,
+        "category": "vaInputs",
+        "nodeId": "c7c1c5db53c04526929a47c35d1c4636",
+        "isHidden": false
+      }
+    }
+  }
+name: Multi File Upload
+sys_name: FlowTopic
+sys_policy: ''
+type: FlowTopic

@@ -1,0 +1,65 @@
+_meta:
+  hash: c2a1a5cdd209f66297b77bf8e73f3f0ce97d29f6f81eb253348f601bc4571b40
+  hash_version: 1
+  scope: global
+  sys_class_name: sys_script_include
+  sys_created_by: james.grinter
+  sys_created_on: 2011-01-26 10:25:57
+  sys_id: c1bc1dc90a0a2c391faa7cf7cc1cb267
+  sys_mod_count: '46'
+  sys_package: e200be338c1103100a22deb6dd2b4e9a
+  sys_scope: global
+  sys_update_name: sys_script_include_c1bc1dc90a0a2c391faa7cf7cc1cb267
+  sys_updated_by: admin
+  sys_updated_on: 2015-09-24 00:46:54
+access: package_private
+active: 'true'
+api_name: global.Mutex
+caller_access: ''
+client_callable: 'false'
+description: |-
+  API to Acquire a database-based, system-wide, named mutex
+          & Release the mutex after use
+
+  This is appropriate for a Mutex that protects a resource with a predictable, regular name.
+  (cf. SelfCleaningMutex, which is more appropriate for a Mutex that locks an arbitrary resource with an
+  'unpredictable' name.)
+
+  Caveats: The mutex is stored system-wide, in the database, so there is a performance 'cost' to using it.
+                 therefore do not acquire and release inside a tight loop!
+                 The Mutex Name is the "scope" of the mutex, and can be anything appropriate, though there are 
+                 conventions in use in some parts of the system, e.g.  the [table name].
+
+  Status of Interface: Evolving, subject to change.
+
+  // Example usage:
+  var MY_MUTEX = '<<<--My Mutex Name-->>>';
+  ...
+
+  // Easiest, if you have a single function or method that needs to be restricted to one execution at a time:
+  // call myFunction(), in "this" scope, with arguments: (myFunctionArgument1, myFunctionArgument2, ...)
+  // myFunction can also be an anonymous function defined inline.
+  var returnValue = Mutex.enterCriticalSection( MY_MUTEX, this, myFunction, myFunctionArgument1, myFunctionArgument2, ... );
+
+  // Alternate: more complex way, manually create the mutex object:
+  var myMutex = new Mutex(MY_MUTEX);
+
+  // optional
+  myMutex.setSpinWait(200);     // time to wait between attempts, in ms
+  myMutex.setMaxSpins(125); // maximum number of times to try
+
+  // get the mutex, and then enter the critical section
+  // use 'finally', to make sure that the mutex is always released.
+  if (myMutex.get())
+     try {
+        // enter critical section
+        ...
+     }
+     finally {
+        myMutex.release();
+     }
+mobile_callable: 'false'
+name: Mutex
+sandbox_callable: 'false'
+sys_name: Mutex
+sys_policy: ''

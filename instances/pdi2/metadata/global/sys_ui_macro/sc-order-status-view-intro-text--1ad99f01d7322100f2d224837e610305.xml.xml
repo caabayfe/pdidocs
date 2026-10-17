@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:evaluate jelly="true">
+		var showIntroSection = jelly.jvar_sc_intro_text == 'true' ||
+			jelly.jvar_sc_order_placed_date == 'true' ||
+			jelly.jvar_sc_request_number == 'true' ||
+			jelly.jvar_sc_bookmark_request == 'true' ||
+			jelly.jvar_sc_delivery_details == 'true';
+		if (JSUtil.nil(jelly.jvar_sc_request.getRequestNumber()))
+			showIntroSection = false;
+		showIntroSection;
+	</g:evaluate>
+	<!-- Checks if user has access to request table -->
+	<g:evaluate var="jvar_allow" jelly="true">
+		jelly.jvar_allow = !GlideUtil.isExpressInstance() ||
+						   (gs.hasRole("admin") ||
+							gs.hasRole("itil") ||
+							gs.hasRole("sn_request_write") ||
+							gs.hasRole("itil_admin") ||
+							gs.hasRole("knowledge_manager"));
+	</g:evaluate>
+	<j:if test="${showIntroSection}">
+		<div id="sc_order_status_intro_text" class="order_summary">
+			<!-- Confirmation message where appropriate -->
+			<j:if test="${jvar_sc_intro_text == 'true' and jvar_new_request == 'true'}">
+				<g:sc_message classes="outputmsg_image" img="images/outputmsg_success_24.gifx" type="success" title="${gs.getMessage('Thank you, your request has been submitted')}" />
+			</j:if>
+			<g2:evaluate jelly="true">
+				var navRedirect = GlideappCatalogURLGenerator.getNavRedirectURL();
+				navRedirect;
+			</g2:evaluate>
+			<g2:evaluate jelly="true">
+				var checkoutUrl = GlideappCatalogURLGenerator.getCheckoutURL(jelly.sysparm_sys_id, jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+				var targetFrame = "";
+				if (SNC.CatalogCMS.isCMSSite())
+					targetFrame = "gsft_main";
+			</g2:evaluate>
+			<j2:set var="jvar_universal_request_id" value="${jvar_sc_request.getUniversalRequestID()}" />
+			<g2:evaluate jelly="true">
+				var requestUrl = GlideappCatalogURLGenerator.getRequestPage(jelly.sysparm_sys_id, jelly.sysparm_catalog, jelly.sysparm_catalog_view);
+				requestUrl;
+			</g2:evaluate>
+			<g2:evaluate jelly="true">
+				var universalRequestUrl = "";
+				if (jelly.jvar_universal_request_id)
+					universalRequestUrl = GlideappCatalogURLGenerator.getUniversalRequestPage(jelly.jvar_universal_request_id);
+				universalRequestUrl;
+			</g2:evaluate>
+			<div style="font-size: 5px">$[SP]</div>
+			<dl class="dl-horizontal sc-dl-horizontal">
+				<j:if test="${jvar_sc_order_placed_date == 'true'}">
+					<dt>${gs.getMessage('Order Placed')}:$[SP]</dt>
+					<dd>
+						<b>${jvar_sc_request.getOpenedAt()}</b>
+						$[SP]$[SP]
+					</dd>
+				</j:if>
+				<j:if test="${jvar_sc_request_number == 'true'}">
+					<dt>${gs.getMessage('Request Number')}:$[SP]</dt>
+					<!-- Disables request number link if user has no access -->
+					<dd>
+						<j:choose>
+							<j:when test="${jvar_allow == 'true'}">
+								<a id="requesturl" class="linked requestItemUrl" href="$[requestUrl]">
+									<b>${jvar_sc_request.getRequestNumber()}</b>
+								</a>
+							</j:when>
+							<j:otherwise>
+								<b>${jvar_sc_request.getRequestNumber()}</b>
+							</j:otherwise>
+						</j:choose>
+						<j:if test="${jvar_sc_bookmark_request == 'true'}">
+							<g2:sc_bookmark requestId="${sysparm_sys_id}" targetFrame="$[targetFrame]" checkoutUrl="$[checkoutUrl]"/>
+						</j:if>
+					</dd>
+					<j:if test="${jvar_sc_request.getUniversalRequestNumber() ne ''}">
+						<dt>${gs.getMessage('Universal Request Number')}:$[SP]</dt>
+						<!-- Disables request number link if user has no access -->
+						<dd>
+							<j:choose>
+								<j:when test="${jvar_allow == 'true'}">
+									<a id="universalRequestUrl" class="linked requestItemUrl" href="$[universalRequestUrl]">
+										<b>${jvar_sc_request.getUniversalRequestNumber()}</b>
+									</a>
+								</j:when>
+								<j:otherwise>
+									<b>${jvar_sc_request.getUniversalRequestNumber()}</b>
+								</j:otherwise>
+							</j:choose>
+						</dd>
+					</j:if>
+				</j:if>
+				<j:if test="${jvar_sc_delivery_details == 'true'}">
+					<dt>${gs.getMessage('catalog_estimated_complete')}$[SP]</dt>
+					<dd>
+						<strong>
+							<span id="delivery_date" />
+						</strong>
+						<script type="text/javascript">
+							addLoadEvent(function(){
+								document.getElementById("delivery_date").innerHTML = '${jvar_sc_request.getLongestDueDate()}';
+							});
+						</script>
+					</dd>
+				</j:if>
+			</dl>
+		</div>
+	</j:if>
+</j:jelly>

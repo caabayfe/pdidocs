@@ -1,0 +1,1 @@
+SncAppsAccess.createTableAcls(current, previous);

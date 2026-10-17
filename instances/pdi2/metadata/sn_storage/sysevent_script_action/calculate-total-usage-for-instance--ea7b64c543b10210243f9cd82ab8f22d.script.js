@@ -1,0 +1,2 @@
+
+new CloudStorageProcessor().calculateTotalUsage();

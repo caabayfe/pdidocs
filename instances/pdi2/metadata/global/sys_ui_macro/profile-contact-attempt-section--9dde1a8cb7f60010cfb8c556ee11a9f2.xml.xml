@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script type="text/ng-template" id="oc_user_contact_prefereces.html">
+		<div class="user-pref-attempts" id="oc-user-contact-preference" role="tabpanel" aria-labelledby="oc-preference-tab">
+			<div class="contact-prefs-message" ng-if="!isEscalationLevelComplete()">{{startTimeMessage}}</div>
+			<div class="contact-pref-user-container" style="display: flex;align-items: center;">
+				<div class="contact-pref-user-name contact-pref-user-name-truncate" uib-tooltip="{{userPreferenceExtraDetails.userName}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{userPreferenceExtraDetails.userName}}</div>
+				<i class="icon icon-info" uib-tooltip="This is a delegated user. Delegator: {{userPreferenceExtraDetails.delegatorName}}" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="true" ng-if="userPreferenceExtraDetails.delegatorName" tooltip-append-to-body="true"></i>
+			</div>
+			<div class="contact-pref-roster-name">{{userPreferenceExtraDetails.rosterName}}</div>
+			<div class="oc-attempt-wrapper" ng-class="{active: contactAttempt.status === 'active'}" ng-repeat="contactAttempt in contactPreferenceDetails track by $index">
+				<div class="vertical-line" ng-class="contactAttempt.status === 'complete' ? 'complete' : 'pending'"></div>
+				<div ng-class="contactAttempt.status != 'pending' ? 'oc-attempt-level-live' : 'oc-attempt-level-pending'">
+					<span class="oc-attempt-number" role="img" aria-label="${gs.getMessage('Contact Attempt {0}', '{{contactAttempt.attempt}}')}">{{contactAttempt.attempt}}</span>
+				</div>
+				<div class="oc-attempt-details preference-source oc-attempt-details-header">
+					<span ng-if="contactAttempt.status != 'pending'">${gs.getMessage('Contacted on:')}</span>
+					<span class="oc-contact-attempt-estimate" ng-if="contactAttempt.status == 'pending'">${gs.getMessage('Contact estimate:')}</span>
+					<span class="oc-live-esc-step-active" ng-if="contactAttempt.status &amp;&amp; contactAttempt.status == 'active'">${gs.getMessage('Current')}</span>
+					<span class="oc-live-esc-step-pending" ng-if="contactAttempt.status &amp;&amp; contactAttempt.status == 'pending'" uib-tooltip="${gs.getMessage('Pending')}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">${gs.getMessage('Pending')}</span>
+					<span class="oc-live-esc-step-estimate" ng-if="contactAttempt.status == 'pending' &amp;&amp; contactAttempt.fetch_time">{{contactAttempt.fetch_time}}</span>
+				</div>
+				<div ng-if="contactAttempt.communications" ng-repeat="comm in contactAttempt.communications track by $index">
+					<div class="oc-attempt-details" ng-if="comm.communication_type.value != 'conference_escalation' || $index == 0">
+						<span class="type-icon" ng-class="comm.communication_type.value == 'email' ? 'icon-mail' : comm.communication_type.value == 'voice' ? 'icon-phone' : comm.communication_type.value == 'sms' ? 'icon-collaboration' : comm.communication_type.value == 'task' ? 'icon-work-note' : comm.communication_type.value == 'slack' ? 'icon-slack' : comm.communication_type.value == 'mobile_notification' ? 'icon-mobile' : comm.communication_type.value == 'teams' ? 'icon-microsoft-teams' : comm.communication_type.value == 'conference_escalation' ? 'icon-conference-room-outline' : 'icon-comment'" role="img" aria-label="{{comm.communication_type.display_value}}"></span>
+						<span ng-if="!contactAttempt.status || contactAttempt.status != 'active'">
+							<span class="oc-past-contacted-at text-completed truncate-comm-type"  ng-class="comm.status &amp;&amp; comm.status.value === 'failed'?'not-available':''" ng-if="!comm.isDummy" uib-tooltip="{{comm.contacted_at || dataNotAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">						
+							<span ng-class="comm.status &amp;&amp; comm.status.value === 'failed'?'oc-contact-icon-level':''" >{{comm.contacted_at || dataNotAvailable}}</span>
+							<span class="type-icon icon-error-circle state-error" ng-if="comm.status &amp;&amp; comm.status.value === 'failed'" uib-tooltip="${gs.getMessage('Failed to contact via {0}', '{{comm.contacted_at || comm.communication_type.display_value}}')}" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="true" tooltip-append-to-body="true" role="img" aria-label="${gs.getMessage('Failed to contact via {0}', '{{comm.communication_type.display_value}}')}"/>
+							</span>
+							<span class="oc-past-contacted-at text-completed" ng-if="comm.isDummy">{{comm.display_message}}</span>
+							<span class="oc-past-contacted-at text-completed oc-date-attempted" >{{comm.attempted_at.display_value}}</span>
+						</span>
+						<!-- For active contact attempts in live escalation-->
+						<span class="" ng-if="contactAttempt.status &amp;&amp; contactAttempt.status != 'complete'">
+							<span   class="oc-past-contacted-at truncate-comm-type" uib-tooltip="{{comm.contacted_at || dataNotAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">
+								<span class="text-completed">{{comm.contacted_at || dataNotAvailable}}</span>
+							</span>
+							<span class="oc-past-contacted-at text-completed oc-date-attempted">{{comm.attempted_at.display_value}}</span>
+						</span>
+						
+						<div class="oc-comm-response" ng-if="comm.response">
+							<span class="response text-completed" ng-class="comm.response_type === 'accepted' ? 'success' : 'error'" uib-tooltip="${gs.getMessage('{0}', '{{comm.response.display_value}}')}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">{{comm.response.display_value}}</span>
+							<span class="responded-at text-completed" ng-class="comm.response_type === 'accepted' ? 'success' : 'error'">{{comm.responded_at.display_value}}</span>
+						</div>
+					</div>
+				</div>
+				
+				<!-- For pending contact attempts in live escalation-->
+				<div class="oc-attempt-details" ng-if="contactAttempt.contact_preferences" ng-repeat="preference in contactAttempt.contact_preferences track by $index">
+					<span class="type-icon" ng-class="preference.type == 'email' ? 'icon-mail' : preference.type == 'voice' ? 'icon-phone' : preference.type == 'sms' ? 'icon-collaboration' : preference.type == 'task' ? 'icon-work-note' : preference.type == 'slack' ? 'icon-slack' : preference.type == 'mobile_notification' ? 'icon-mobile' : preference.type == 'teams' ? 'icon-microsoft-teams' : preference.type == 'conference_escalation' ? 'icon-conference-room-outline' : 'icon-comment'"> </span>
+					<span ng-if="preference.type != 'mobile_notification'" uib-tooltip="{{preference[typeMap[preference.type].valueField] || dataNotAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">
+						<span class="oc-comm-type">{{preference[typeMap[preference.type].valueField] ? preference[typeMap[preference.type].valueField] : typeMap[preference.type] ? dataNotAvailable : preference.type}}</span>
+					</span>
+					<span ng-if="preference.type == 'mobile_notification'" uib-tooltip="{{typeMap[preference.type].label || dataNotAvailable}}" show-tooltip-on-text-overflow="" tooltip-class="oc-truncate-tooltip" tooltip-placement="bottom" tooltip-enable="false" tooltip-append-to-body="true">
+						<span class="oc-comm-type">{{typeMap[preference.type].label || dataNotAvailable}}</span>
+					</span>
+				</div>
+				<div class="oc-attempt-details" ng-if="contactAttempt.contact_preferences &amp;&amp; contactAttempt.contact_preferences.length === 0">
+					<span class="oc-comm-type">{{dataNotAvailable}}</span>
+				</div>
+			</div>
+			<div class="oc-attempt-wrapper">
+				<div ng-class="isEscalationLevelComplete() ? 'oc-attempt-level-live' : 'oc-attempt-level-pending'">
+				</div>
+				<div class="oc-attempt-details">
+					<span class="preference-end">${gs.getMessage('End')}</span>
+				</div>
+			</div>
+		</div>
+	</script>
+	<div class="oc-heading-right col-sm-6 oc-audience-profile-wrapper">
+		<div class="oc-headings" ng-if="getAdditionalMembers(escalationAudiences) > 1">
+			<div class="right-section-heading oc-level-members-wrapper">
+				<div class="sn-oc-shift-members-avatar" ng-class="{'active': member.user &amp;&amp; member.user.sys_id &amp;&amp; member.user.sys_id == profile.profileData.user.sys_id}" ng-repeat="member in escalationAudiences.userDetails track by $index">
+					<div class="sn-oc-member-avatar oc-profile-avatar-container" ng-click="updateProfileDetails(member, profile.profileTypeMap.user)">
+						<div class="sn-avatar-container" aria-label="{{member.user.name}}">
+							<span class="sn-avatar-initials">{{member.user.initials}}</span>
+							<span class="sn-avatar-image" ng-style="getBackgroundStyle(member)"></span>
+						</div>
+					</div>
+				</div>
+				<div class="sn-oc-shift-members-avatar oc-audience-avatar" ng-class="{'active': member.sys_id &amp;&amp; member.sys_id == profile.profileData.sys_id}" ng-repeat="member in escalationAudiences.groupDetails track by $index">
+					<div class="sn-oc-member-avatar oc-profile-avatar-container" ng-click="updateProfileDetails(member, profile.profileTypeMap.group)">
+						<div class="sn-avatar-container" aria-label="{{member.name.value}}">
+							<span class="sn-avatar-initials">{{member.initials}}</span>
+							<span class="sn-avatar-image"></span>
+						</div>
+					</div>
+				</div>
+				<div class="sn-oc-shift-members-avatar oc-audience-avatar" ng-class="{'active': member.sys_id &amp;&amp; member.sys_id == profile.profileData.sys_id}" ng-repeat="member in escalationAudiences.deviceDetails track by $index">
+					<div class="sn-oc-member-avatar oc-profile-avatar-container" ng-click="updateProfileDetails(member, profile.profileTypeMap.device)">
+						<div class="sn-avatar-container" aria-label="{{member.name.value}}">
+							<span class="sn-avatar-initials">{{member.initials}}</span>
+							<span class="sn-avatar-image"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="right-section">
+			<div class="oc-modal-header-row" >
+				<div class="sn-navhub right-section-tab-container" ng-class="{'remove-border-top': getAdditionalMembers(escalationAudiences) > 1}">
+					<ul ng-if="!isContactInfoLoading &amp;&amp; showContactInformation()" class="sn-navhub-content profile-pref-tabs" role="tablist" id="profile-pref-tab-container">
+						<li class="btn sn-navhub-btn sn-navhub-btn_text" id="oc-profile-tab" role="tab" aria-controls="oc-user-profile" ng-attr-tabindex="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0] ? 0 : -1}}" aria-selected="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0] ? true : false}}" ng-class="{'state-active': profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0]}" ng-click="tabClickHandler(profilePreferenceTabConfig, 0)" ng-keyup="arrowPressHandler($event, profilePreferenceTabConfig)">${gs.getMessage('Profile')}</li>
+						<li class="btn sn-navhub-btn sn-navhub-btn_text" id="oc-preference-tab" role="tab" aria-controls="oc-user-contact-preference" ng-attr-tabindex="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1] ? 0 : -1}}" aria-selected="{{profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1] ? true : false}}" ng-class="{'state-active': profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1]}" ng-click="tabClickHandler(profilePreferenceTabConfig, 1)" ng-keyup="arrowPressHandler($event,profilePreferenceTabConfig)">${gs.getMessage('Contact Information')}</li>
+					</ul>
+					<div class="right-section-heading oc-profile-header oc-align-profile-header">
+						<h2 ng-if="!isContactInfoLoading &amp;&amp; !showContactInformation() &amp;&amp; profile.selectedProfile">${gs.getMessage('Profile')}</h2>
+					</div>
+				</div>
+			</div>
+			<div class="profile-preference-wrapper" ng-class="{'right-section-height': getAdditionalMembers(escalationAudiences) > 1}" ng-if="!isContactInfoLoading &amp;&amp; profile.selectedProfile &amp;&amp; response.status === responseType.success">
+				<sn-oncall-audience-profile selected-profile="{{profile.selectedProfile}}" profile-map="profile.profileTypeMap" audience-detail="profile.profileData" group-details="modalInstanceCtrl.groupDetails" ng-if="profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[0]" on-click="changeEscalation"/>
+				<div ng-if="showContactInformation()">
+				<sn-user-contact-preference contact-preference-details="userContactAttempts" user-preference-extra-details="userPreferenceExtraDetails" escalation-level="selectedEscalationLevel" ng-if="profilePreferenceTabConfig.selectedTab == profilePreferenceTabConfig.tabs[1]"/>
+				</div>
+			</div>
+			<div ng-if="isContactInfoLoading" class="oc-user-preference-loading">
+				<i class="icon-loading"></i>
+			</div>
+			<div ng-if="!isContactInfoLoading &amp;&amp; hasNoEscalatee()" class="oc-esc-no-escalatee">
+				<span ng-if="selectedEscalationLevel.status === 'complete'">${gs.getMessage('No Escalatees were notified in this step')}</span>
+				<span ng-if="selectedEscalationLevel.status !== 'complete'">${gs.getMessage('No Escalatees will be notified in this step')}</span>
+			</div>
+		</div>
+	</div>
+</j:jelly>

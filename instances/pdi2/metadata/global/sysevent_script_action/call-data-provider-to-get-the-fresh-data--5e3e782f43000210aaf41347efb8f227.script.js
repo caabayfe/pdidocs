@@ -1,0 +1,1 @@
+new AnalyticsCachePrefetchAPI(current).reload();

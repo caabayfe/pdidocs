@@ -1,0 +1,76 @@
+<div class="wrapper" >
+  <div ng-if="!c.data.isCatalogSubmitted">
+    <div class="text-md mar-top-5 mar-bot-5 font-weight-500">
+        <i class='fa fa-bullhorn'></i>
+        <span class="mar-left-5">${Was this helpful?}</span>
+    </div>
+    <fieldset role="radiogroup" class="mar-top-15 mar-bot-5">
+      <legend class="text-secondary font-weight-500" id="div_rec_help_heading">${Did our recommendations help resolve your issue?}</legend>
+      <div class="form-inline">
+        <input id="helpful" type="radio" class="radio" name="aisHelpful" ng-model="c.aisHelpful" value="{{c.data.aisFeedBack.HELPFUL}}" aria-required="true" aria-describedby="div_rec_help_heading"/>
+        <label for="helpful" class="radio-label label-color">${Yes, they were helpful}</label>
+      </div>
+      <div class="form-inline">
+        <input id="not_Helpful" type="radio" class="radio" name="aisHelpful" ng-model="c.aisHelpful" value="{{c.data.aisFeedBack.NOT_HELPFUL}}" aria-required="true" aria-describedby="div_rec_help_heading" ng-click="resetAISResult()"/>
+        <label for="not_Helpful" class="radio-label label-color">${No, need more help}</label>
+      </div>
+    </fieldset>
+    <div ng-if="c.aisHelpful == c.data.aisFeedBack.HELPFUL">
+        <div class="text-secondary mar-top-15 mar-bot-5 font-weight-500" id="div_select_rec_heading">
+            ${Select any recommendations that helped}
+        </div>
+        <div role="list">
+            <div ng-repeat="item in c.data.aisResultList" class="form-inline" role="listitem">
+                <input id="item_{{item.id}}" type="checkbox" class="checkbox" name="chkAISResult" value="{{item.id}}" ng-checked="item.feedbackType == c.data.aisFeedBack.HELPFUL" ng-attr-aria-describedby="{{$first ? 'div_select_rec_heading' : undefined}}"/>
+                <label for="item_{{item.id}}" class="checkbox-label label-color">{{item.title}}</label>
+            </div>
+        </div>
+    </div>
+    <div ng-if="c.aisHelpful == c.data.aisFeedBack.HELPFUL" role="radiogroup">
+        <div class="text-secondary mar-top-15 mar-bot-5 font-weight-500" id="div_close_req_heading">
+           <span class="mar-right-5 color-red" aria-hidden="true">*</span>${May we close your request?}
+        </div>
+        <div class="form-inline">
+           <input id="close_request" type="radio" class="radio" name="closeRequest" ng-model="c.closeRequest" value="{{c.data.closeRequestChoices.CLOSE_REQUEST}}" aria-required="true" aria-describedby="div_close_req_heading"/>
+           <label for="close_request" class="radio-label label-color">${Yes, close this request}</label>
+        </div>
+        <div class="form-inline" >
+            <input id="keep_open" type="radio" class="radio" name="closeRequest" ng-model="c.closeRequest" value="{{c.data.closeRequestChoices.KEEP_OPEN}}" aria-required="true"/>
+            <label for="keep_open" class="radio-label label-color">${No, keep it open}</label>
+        </div>
+    </div>
+    <div ng-if="c.aisHelpful == c.data.aisFeedBack.NOT_HELPFUL || c.closeRequest == c.data.closeRequestChoices.KEEP_OPEN">
+        <div id="div_addn_cmt_heading" class="text-secondary mar-top-15 mar-bot-5 font-weight-500">
+          ${Additional comments?}
+        <i class="fa fa-question-circle padder-xs" data-toggle="tooltip" data-original-title="${Your comments will also be published to this request's activity feed.}">
+        </i>
+        </div>
+        <textarea id="txt_comment" class="txtComment" ng-model="c.additionalComment" aria-labelledby="div_addn_cmt_heading" aria-description="${Your comments will also be published to this request's activity feed.}" maxlength="4000"></textarea>
+    </div>
+    <div class="mar-top-15 mar-bot-5">
+        <button class="btn btn-primary" ng-disabled="!(c.aisHelpful == c.data.aisFeedBack.NOT_HELPFUL || !isNull(c.closeRequest))" ng-click="submitFeedback()">
+          ${Submit}
+        </button>
+    </div>
+  </div>
+  <div ng-if="c.data.isCatalogSubmitted" >
+    <div class="text-md mar-top-5 mar-bot-5 font-weight-500">
+        <i class='fa fa-bullhorn'></i>
+        <span class="mar-left-5">${Recommendation feedback}</span>
+    </div>
+    <div id="div_select_rec_heading" class="text-secondary mar-top-15 mar-bot-5 font-weight-500">
+    	${Select the recommendations that helped you with your request}
+    </div>
+    <div role="list">
+        <div ng-repeat="item in c.data.aisResultList" class="form-inline" role="listitem">
+            <input id="item_{{item.id}}" type="checkbox" class="checkbox" ng-checked="item.feedbackType == c.data.aisFeedBack.HELPFUL" name="chkAISResult" value="{{item.id}}" ng-attr-aria-describedby="{{$first ? 'div_select_rec_heading' : undefined}}"/>
+            <label for="item_{{item.id}}" class="checkbox-label label-color">{{item.title}}</label>
+        </div>
+    </div>
+    <div class="mar-top-15 mar-bot-5">
+        <button class="btn btn-primary" ng-click="submitFeedbackAndCloseRequest()">
+          ${Submit and close request}
+        </button>
+    </div>
+  </div> 
+</div>

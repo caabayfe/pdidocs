@@ -1,0 +1,40 @@
+<g:ui_form>
+	<style>
+		.message {
+			text-align: "left";
+		}
+	</style>
+	<g:evaluate var="jvar_table_name" object="true" jelly="true" expression="RP.getParameterValue('sysparm_table_name')" />
+	<g:evaluate var="jvar_condition" object="true" jelly="true" expression="RP.getParameterValue('sysparm_condition')" />
+	<g:evaluate var="jvar_sysid" object="true" jelly="true" expression="RP.getParameterValue('sysparm_sysid')" />
+	<g:evaluate var="jvar_count" object="true">
+		var table = RP.getParameterValue('sysparm_table_name');
+		var query = RP.getParameterValue('sysparm_condition');
+		var isEmployeeProfileJobRunning = new ep_generateEmployeeProfileUtil().isEmployeeProfileGenerationJobRunning();
+	</g:evaluate>
+	<input type="hidden" id="table_name" name="table_name" value="${jvar_table_name}" />
+	<input type="hidden" id="condition" name="condition" value="${jvar_condition}" />
+	<input type="hidden" id="sysid" name="sysid" value="${jvar_sysid}" />
+	<input type="hidden" id="cancelled" name="cancelled" value="false"/>	
+	
+	<j:if test="${!isEmployeeProfileJobRunning}">
+		<div class="message">
+			<br/>
+			${gs.getMessage("This will create employee profiles. Are you sure you want to continue?")}
+			<br />
+		</div>
+		<div align="right" class="modal-footer">
+			<g:dialog_buttons_ok_cancel ok="return proceed();" ok_text="${gs.getMessage('Proceed')}" cancel="cancel();"/>
+		</div>
+	</j:if>
+	
+	<j:if test="${isEmployeeProfileJobRunning}">
+		<div class="message">
+			<br/>
+			${gs.getMessage("Employee profiles are being created. Thank you for your patience.")}
+		</div>
+		<div align="right" class="modal-footer">
+			<button class="btn btn-primary" onclick="cancel();">${gs.getMessage("Ok")}</button>
+		</div>
+	</j:if>
+</g:ui_form>

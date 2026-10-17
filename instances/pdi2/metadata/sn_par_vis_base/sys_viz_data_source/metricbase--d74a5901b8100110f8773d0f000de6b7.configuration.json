@@ -1,0 +1,48 @@
+{
+  "idField": "table",
+  "icon": "serverbox-clock-outline",
+  "order": 300,
+  "isReadOnly": false,
+  "useSeriesLabels": true,
+  "dataApiEndpoint": "/api/now/v1/metric/ui/ui_builder/data_metricbase",
+  "retrieveSourcesOnInit": true,
+  "retrieveSourcesQuery": "query($start: Int, $count: Int, $searchQuery: String) {\n     \t\t AppPARConfig_Query {\n\t\t\t\tresults: metricBases(start: $start, count: $count, nameContains: $searchQuery) {\n\t\t\t\tvalues {\n\t\t\t\t\tid: name\n\t\t\t\t\tlabel\n\t\t\t\t}\n\t\t\t\tresult\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+  "groupByOptions": {
+    "fetchAPI": {
+      "query": "AppPARConfig_Query {\n\t\t\t\t\t\t\tfieldDefinitions(fields: $fields) {\n\t\t\t\t\t\t\t\tvalue {\n\t\t\t\t\t\t\t\t\ttableName\n\t\t\t\t\t\t\t\t\tfield {\n\t\t\t\t\t\t\t\t\t\tlabel\n\t\t\t\t\t\t\t\t\t\tid: fullName\n\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\tresult\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\tresult\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t",
+      "requestVariables": {
+        "fields": {
+          "graphQLType": "String!",
+          "getValue": "({ groupBys, dataSource }) => {const fields = groupBys.map((groupBy) => ({tableName: groupBy.dataSource?.table || dataSource.table,fieldName: groupBy.field,}));return JSON.stringify(fields);}"
+        }
+      },
+      "valuesPath": "data.AppPARConfig_Query.fieldDefinitions.value",
+      "individualValuePath": "field",
+      "customPaths": [
+        "tableName"
+      ]
+    }
+  },
+  "sourceDetailsPath": "data.AppPARConfig_Query.metricBaseDetails",
+  "sourceType": "java",
+  "retrieveSourcesResultPath": "payload.data.AppPARConfig_Query.results.values",
+  "getRetrieveSourcesSearchArgument": "(searchQuery) => {return { searchQuery };}",
+  "getSourceSelectedPayload": "(id, type) => ({sourceType: type,table: id,})",
+  "recentSourceMutationName": "recentDynamic",
+  "recentSourceMutationArgument": "id",
+  "configurationComponent": "sn-par-table-configuration",
+  "getDefaultConfigurationProps": "({ table, sourceType, filterQuery }) => {return {sourceType,table,filterQuery,previewFilterQuery: filterQuery,isExpanded: true,isEditMode: !filterQuery,showCustomConditions: !!filterQuery,};}",
+  "temporaryConfigurationProps": [
+    "previewFilterQuery",
+    "isExpanded",
+    "isEditMode",
+    "showCustomConditions"
+  ],
+  "dataCategories": [
+    "trend"
+  ],
+  "preferredVisualizations": [
+    "aba8630dc2ccc9b3c1774af1b6820696"
+  ],
+  "additionalGroupByLabelProviderClassName": "com.snc.par.multivis.service.contextdata.additionalgroupby.MetricbaseAdditionalGroupByLabelProvider"
+}

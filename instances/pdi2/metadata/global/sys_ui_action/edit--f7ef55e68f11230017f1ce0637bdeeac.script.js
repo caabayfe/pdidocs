@@ -1,0 +1,15 @@
+var uri = action.getGlideURI();
+var sn = new SNSubscriptionUtils();
+customTables = sn.getValidTablesByAllotment(uri.get('sysparm_collectionID'));
+var path = uri.getFileFromPath();
+uri.set('sysparm_m2m_ref', 'ua_custom_table_inventory');
+uri.set('sysparm_stack', 'no');
+uri.set('sysparm_collection', 'license_details');
+uri.set('sysparm_collectionID', uri.get('sysparm_collectionID'));
+uri.set('sysparm_collection_key', 'license');
+uri.set('sysparm_collection_label', 'Custom Tables Inventory');
+uri.set('sysparm_collection_related_file', 'ua_custom_table_inventory');
+uri.set('sysparm_form_type', 'o2m');
+uri.set('jvar_no_filter', 'true');
+uri.set('sysparm_query', 'sys_idIN'+customTables);
+action.setRedirectURL(uri.toString('sys_m2m_template.do'));

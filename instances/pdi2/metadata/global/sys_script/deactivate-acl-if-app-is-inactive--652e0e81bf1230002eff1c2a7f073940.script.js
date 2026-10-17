@@ -1,0 +1,1 @@
+SNC.Apps.changeActiveStateForItem(current);

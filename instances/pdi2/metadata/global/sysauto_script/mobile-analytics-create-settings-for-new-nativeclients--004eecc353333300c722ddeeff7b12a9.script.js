@@ -1,0 +1,1 @@
+sn_mobile_analytics.MobileAnalytics.createSettingsForNewNativeClients();

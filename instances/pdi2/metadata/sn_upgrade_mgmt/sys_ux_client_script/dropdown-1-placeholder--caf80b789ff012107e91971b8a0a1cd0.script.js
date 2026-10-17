@@ -1,0 +1,8 @@
+/**
+  * @param {params} params
+  * @param {api} params.api
+  * @param {TransformApiHelpers} params.helpers
+  */
+function evaluateProperty({api, helpers}) {
+	return helpers.translateSync("{0}",api?.item?.value?.versions?.[0]?.label || "Select version");
+}

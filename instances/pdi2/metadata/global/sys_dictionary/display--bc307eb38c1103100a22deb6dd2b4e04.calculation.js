@@ -1,0 +1,1 @@
+'background-color:'+current.color

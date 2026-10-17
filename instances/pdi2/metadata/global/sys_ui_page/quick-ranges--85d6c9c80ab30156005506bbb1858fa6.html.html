@@ -1,0 +1,60 @@
+	<g:evaluate var="jvar_is_workspace">
+		RP.getParameterValue('sysparm_workspace') == 'true';		
+	</g:evaluate>
+	<g:evaluate var="jvar_mr_id">
+		var mr_id = ${jvar_is_workspace} ? RP.getParameterValue('sysparm_mr_id') : "${RP.getWindowProperties().get('mr_id')}";
+   		mr_id;
+	</g:evaluate>
+	<g:evaluate var="jvar_mr_table">
+		var mr_table =  ${jvar_is_workspace} ? RP.getParameterValue('sysparm_mr_table') : "${RP.getWindowProperties().get('mr_table')}";
+		mr_table;
+	</g:evaluate>
+	<div class="popup_dialog">
+		<div class="popup_dialog_description">
+			<p>${gs.getMessage("Enter comma-separated IPv4 address ranges, IPv4 networks, or individual IPs describing the ranges you would like to add.  For example:")}</p>
+			<p class="example" >
+				10.0.1.0/24,10.0.2.1-10.0.2.15,10.0.3.176,10.0.3.222,2001::100,2600:1bdc::fffe
+			</p>
+			<p>
+				${gs.getMessage("Specifies an IP network with valid IPv4 addresses between 10.0.1.1 and 10.0.1.254 inclusive, an IPv4 address range from 10.0.2.1 to 10.0.2.15 inclusive, individual IPv4 addresses 10.0.3.176 and 10.0.3.222 and individual IPv6 addresses 2001::100 and 2600:1bdc::fffe.")}
+			</p>
+			<p><b>
+				${gs.getMessage("IPv6 address ranges and networks are not supported and will simply be ignored.")}
+			</b></p>
+			<p><b>
+				${gs.getMessage("Any entries you make that cannot be interpreted will simply be ignored.")}
+			</b></p>
+		</div>
+		<textarea name="ranges" id="ranges" aria-label="${gs.getMessage('Enter comma-separated IPv4 address ranges, IPv4 networks, or individual IPs describing the ranges you would like to add. ')}" value="${gs.getSession().getProperty('lotc_url');}"/><br/><br/>
+		<button data-test-id="make_ranges" class="button" onclick="onMakeRanges();" type="submit" name="mr_butt">${gs.getMessage("Make Ranges")}</button>
+		<button onclick="onInvCancel();" type="submit" name="cancel_butt">${gs.getMessage("Cancel")}</button>
+	</div>
+<script>
+	var isWorkspace = '${JS_STRING:isWorkspace}';
+	var e = gel("ranges");
+	if (e)
+		e.focus();
+
+	function onInvCancel() {
+		if (isWorkspace == 'false')
+			dlog.destroy();
+		else
+			window.location.href = window.location.href;
+	}
+
+	function onMakeRanges() {
+		var ga = new GlideAjax('QuickRanges');
+		ga.addParam('sysparm_name', 'onMakeRanges');
+		ga.addParam('sysparm_ranges', gel('ranges').value);
+		ga.addParam('sysparm_mr_id', '${mr_id}');
+		ga.addParam('sysparm_mr_table', '${mr_table}');
+		ga.getXMLWait();
+		if (isWorkspace == 'false') {
+			dlog.destroy();
+			self.location = '${mr_table}.do?sysparm_query=sys_id=${mr_id}';
+		} else {
+			window.parent.postMessage({});
+			window.location.href = window.location.href;
+		}
+	}
+</script>
