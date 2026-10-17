@@ -29,7 +29,7 @@ team, with shared pages each reader sees in their own version.
 
 | | |
 |---|---|
-| Process | Incident management: 1 end-user role and 4 operator roles, 6 states, 10 capabilities |
+| Processes | Incident, major incident, problem, change, request and CMDB (100 pages, 705 evidence items) |
 | Understand (shared) | overview, lifecycle, priority and deadlines, who is told what, glossary |
 | Use (Employee Center, email, phone) | report, follow, confirm the fix or reopen |
 | Operate (Service Operations Workspace, classic form) | log, prioritise, assign, work, resolve, close/reopen/cancel, escalate |
@@ -158,6 +158,26 @@ Open questions:
 3. **Fulfilment gaps**: items tied to inactive execution plans, a demo price-approval flow on eight
    service items, legacy workflows not in the mirror, and nine items with no fulfilment.
 4. **Duplicate emails**: two *Request Rejected* notifications on the same change.
+
+## Configuration management (CMDB) (2026-10-17)
+
+`processes/cmdb/`: 3 shared pages, 1 end-user page (picking the affected service), 4 operator
+pages (choose the CI, see what depends on it, keep CIs right, watch quality) and 4 configure
+pages. Incident's *Log* page links to it.
+
+Answered on screen: the CMDB Workspace (Home, My Work, CMDB 360, Insights, Management; "CMDB
+Health Dashboard jobs haven't been run"); 37 CIs have a Support group, **none** has a Change
+Group, and **no server** has a Support group.
+
+Open questions:
+
+1. **Routing by CI barely works**: fill Support group and Change Group on CIs, or incidents and
+   changes won't route themselves.
+2. **itil edits CIs**: anyone with itil can create, edit and delete CIs; the platform's job that
+   limits this to CMDB roles hasn't been run.
+3. **No discovery**: nothing keeps CIs current (no Discovery, no Service Graph connectors).
+4. **Health is off**: the score jobs are inactive.
+5. **Data Manager**: no attestation, retirement or certification policies.
 
 ## The mirror
 

@@ -83,7 +83,8 @@ for the queue); **Create New** opens an empty form.
    | Password Reset | (none) |
 
 5. In **Impact**, the **Configuration item**: the device, application or service affected. Choosing it can fill the
-   support team for you (see *Assign an incident*).
+   support team for you (see *Assign an incident* and
+   [Choose the right configuration item](see:cmdb/choose-ci)).
 6. **Impact** and **Urgency**: see *Set the priority*. The **Priority** fills in by itself.
 7. **Short description**: one line a colleague understands without opening the incident, such as
    *"VPN disconnects every 5 minutes from home"*. **Caller** and **Short description** are
