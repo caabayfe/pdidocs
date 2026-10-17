@@ -7,18 +7,23 @@ order: 1
 roles:
   - id: caller
     name: Caller
+    audience: user
     description: anyone who reports that something is not working, for themselves or someone else
   - id: agent
     name: Service desk agent
+    audience: operator
     description: logs, sorts, prioritises and routes incidents, often while on the phone with the caller
   - id: resolver
     name: Resolver
+    audience: operator
     description: a member of a support team who investigates and fixes the incident
   - id: team-lead
     name: Team lead
+    audience: operator
     description: a support lead with extra rights, such as closing incidents on a caller's behalf
   - id: major-incident-manager
     name: Major incident manager
+    audience: operator
     description: takes charge when one problem hits many people or a critical service
 lifecycle:
   - state: New
@@ -33,14 +38,16 @@ lifecycle:
     meaning: finished; it can no longer be reopened
   - state: Canceled
     meaning: not needed after all (for example a duplicate logged by mistake)
+understand: [overview, lifecycle, priority-and-deadlines, who-is-told, glossary]
+tables: [incident, task_sla, incident_task]
 capabilities:
   - id: report
     title: Report an incident
-    summary: Tell IT what is wrong, from the portal, by email or by phone.
+    summary: Tell IT what is wrong, from Employee Center, Virtual Agent, by email or by phone.
     roles: [caller]
   - id: follow
     title: Follow your incident
-    summary: See where it is, answer questions, add information, and confirm the fix.
+    summary: See where it is, answer the service desk's questions and add information.
     roles: [caller]
   - id: log
     title: Log and categorise an incident
@@ -61,11 +68,18 @@ capabilities:
   - id: resolve
     title: Resolve an incident
     summary: Record the fix so the caller is told and can confirm it.
-    roles: [resolver, caller]
+    roles: [resolver]
+    counterpart: confirm
+  - id: confirm
+    title: Confirm the fix, or reopen
+    summary: Say whether the fix works; close it, or reopen it with what is still wrong.
+    roles: [caller]
+    counterpart: resolve
+    configure: close
   - id: close
-    title: Close or reopen an incident
-    summary: Finish an incident once the fix is confirmed, or reopen it when it is not.
-    roles: [caller, resolver, team-lead]
+    title: Close, reopen or cancel an incident
+    summary: Finish an incident once the fix is confirmed, reopen it when it is not, or cancel one logged by mistake.
+    roles: [resolver, team-lead]
   - id: escalate
     title: Escalate and link related work
     summary: Raise a major incident, or create a change, a request or a child incident from an incident.
