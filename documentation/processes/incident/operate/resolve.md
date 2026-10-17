@@ -22,6 +22,28 @@ evidence:
     how: read Incident resolved
     result: emails the caller that the incident was resolved
     hash: 0a29cfd91220c1341af6b005a02c3c4a0101ab6cf06225293763356b72f60e87
+  E05:
+    record: sys_declarative_action_assignment/127dba4b77733010e35c06e57b5a9949
+    how: read the workspace action Resolve
+    result: primary header button; opens a Resolve dialog and sets the state to Resolved
+    hash: a775657bb79f7d419decdd8fd483dc56fdb6ebf618ac824e6b5da8628044e121
+  E06:
+    record: sys_ui_section/90285cf453c131102f10ddeeff7b12bf
+    children: sys_ui_element
+    how: read the Resolve dialog's form section
+    result: resolution code, resolution notes, and parent incident
+    hash: 3499675d1e7552960a467747a1b75b7d0347419173bb33f2acb0c775a262a998
+  E07:
+    record: sys_ui_policy/b3dbdcf853c131102f10ddeeff7b12f4
+    how: read Show and make Parent incident mandatory if Resolution code is Duplicate
+    result: Duplicate needs a parent incident
+    hash: b8952dc61276b84bf6d047fa993f3ddb504669691160058e6579411fa33203eb
+  E08:
+    record: sys_db_object/b0e4363b8c5503100a22deb6dd2b4e97
+    children: sys_choice
+    how: read the resolution code choices
+    result: ten codes, Duplicate to Workaround provided
+    hash: 438604df7c0701185679ccf5f78a95effda35ae621060096b2ab78a53ec5cac2
 ---
 ## When to resolve
 
@@ -30,13 +52,18 @@ you're only waiting for confirmation, resolve it; don't leave it In Progress.
 
 ## Resolve it
 
-1. Open the incident and press **Resolve**. [E01]
-2. Fill in the two fields that appear in **Resolution Information**: [E02]
+1. Open the incident in the workspace and press **Resolve** in its header. [E05]
+2. In the **Resolve** dialog, fill in: [E06]
    - **Resolution code**: what kind of fix it was;
    - **Resolution notes**: what you did, in words the caller understands. They read this.
-3. Save. The incident is **Resolved**, and the caller is emailed. [E04]
+3. Press **Resolve**. The incident is **Resolved**, and the caller is emailed. [E04]
+
+*Classic form:* press **Resolve**, then fill the same two fields in **Resolution Information**
+and save. [E01] [E02]
 
 ## Choosing the resolution code
+
+The codes [E08]:
 
 | Code | When |
 |---|---|
@@ -47,14 +74,14 @@ you're only waiting for confirmation, resolve it; don't leave it In Progress.
 | **Resolved by change** | a change fixed it (link it) |
 | **Resolved by problem** | a problem fix solved it (link it) |
 | **Resolved by request** | the caller needed a request instead (link it) |
-| **Duplicate** | another incident covers it (link it as parent) |
+| **Duplicate** | another incident covers it: the dialog then asks for the **Parent incident** [E07] |
 | **Known error** | a known error article describes it; **attach the article first** [E03] |
 | **No resolution provided** | it can't be fixed, and the caller agrees to stop |
 
 ## What happens next
 
 The caller has time to confirm or reopen. Then the incident is closed, by the caller, a team
-lead, or automatically after a few days (see *Close or reopen an incident*). Child incidents are
+lead, or automatically after a few days (see *Close, reopen or cancel an incident*). Child incidents are
 resolved with their parent.
 
 ## Tips

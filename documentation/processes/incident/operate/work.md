@@ -32,6 +32,12 @@ evidence:
     how: read Update Incident when Problem closes
     result: incidents On Hold - Awaiting Problem are resolved when the problem is fixed
     hash: 79e29d77e4e35595e57cc10caba2d772119cbbe0fc18a4751582359604a95070
+  E07:
+    record: sys_ui_section/4059739977453010dc2c885d9f5a9911
+    children: sys_ui_element
+    how: read the workspace form's Notes section
+    result: work notes, additional comments, the activity stream, actions taken
+    hash: 2adf9dd40253048e69440d4fbe30041cb4bd56e1c625d15f8edc82ee3b817837
 ---
 ## Talk to the right audience
 
@@ -40,6 +46,7 @@ evidence:
 | **Additional comments** | the caller (emailed) and the team [E03] | questions to the caller, progress they should know |
 | **Work notes** | support teams only [E04] | findings, what you tried, hand-over notes |
 
+In the workspace both are in the form's **Notes** section, above the activity stream. [E07]
 Keep the caller informed in plain words. Keep the detail for the work notes.
 
 ## When you have to wait

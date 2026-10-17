@@ -17,6 +17,16 @@ evidence:
     how: read Create Child Incident
     result: available when child incidents are enabled on the instance
     hash: 4a07e14e2ccd4b8a49bbe930c908dd040f1e50112ab736e28390d5907a6c4286
+  E04:
+    record: sys_ux_form_action_layout_group/99308efac7213010d7e818b1c7c26091
+    how: read the workspace header's Create menu
+    result: Create outage, problem, request, incident task, change request, child incident, knowledge
+    hash: c8eb5d30f7c219d180377df6f16303d1eb8ec6b7ab2e83dc42d10b43c4cf057d
+  E05:
+    record: sys_ui_action/d40103f13b10030050bec9bb34efc4d5
+    how: read Promote to Major Incident
+    result: form menu; major_incident_manager only; set up for workspaces
+    hash: 14eec9407c051830a0511c05d1da1232c8329e97289303b17016aa70b4429086
 ---
 ## When it's bigger than one incident: major incidents
 
@@ -25,7 +35,8 @@ gets a dedicated manager, a response team and regular communication.
 
 ### Agents and resolvers: propose it
 
-1. Open the incident and choose **Propose Major Incident** (in the form's menu). [E01]
+1. Open the incident and choose **Propose Major Incident**. [E01] On the classic form it is in the
+   form's menu; in the workspace, look in the header's overflow menu.
 2. Say why: who is affected, what doesn't work, since when.
 3. The incident becomes a **major incident candidate**. Its team is emailed, and major incident
    managers see it in their list of candidates.
@@ -38,7 +49,7 @@ to be sure: the major incident manager decides.
 From **Incident › Major Incidents › Candidates**, open the candidate and choose: [E02]
 
 - **Promote to Major Incident** (or **Create Major Incident**, depending on how your instance is
-  set up) to start the major incident response;
+  set up) to start the major incident response; [E05]
 - **Reject Major Incident Candidate** when it's an ordinary incident.
 
 Once accepted, use **View Workbench** to run the response: timeline, communications and the
@@ -52,14 +63,20 @@ with it.
 
 ## Create related work from an incident
 
-From the incident's form menu:
+In the workspace, use the **Create** menu in the incident's header: **Create outage**, **Create
+problem**, **Create request**, **Create incident task**, **Create change request**, **Create child
+incident** and **Create knowledge**. [E04] **Copy Incident** is in the overflow menu.
 
 | Action | Use it when |
 |---|---|
-| **Create Change Request** / **Create Emergency Change** | the fix needs a change to a system |
-| **Create Request** | the caller needs something new, not a repair |
-| **Create Child Incident** | part of the work must be tracked separately [E03] |
+| **Create change request** | the fix needs a change to a system |
+| **Create problem** | the cause needs investigating beyond this incident |
+| **Create request** | the caller needs something new, not a repair |
+| **Create child incident** / **Create incident task** | part of the work must be tracked separately [E03] |
 | **Copy Incident** | another caller has the same issue (if enabled) |
+
+*Classic form:* the same actions are in the form's menu (**Create Change Request**, **Create
+Emergency Change**, **Create Request**, **Create Child Incident**, **Copy Incident**).
 
 The new record is linked to the incident, so the caller's incident shows what it waits for.
 

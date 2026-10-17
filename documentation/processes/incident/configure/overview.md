@@ -76,7 +76,7 @@ legacy field `incident_state` mirrors `state` both ways. [E03]
 Response SLAs start when a group is assigned and stop when the incident has an assignee and has
 left New; they do not pause. [E09] Resolution SLAs stop only at Closed and pause while On Hold -
 Awaiting Caller or Resolved. [E10] The full table is on the
-[work configuration page](work.technical.html).
+[work configuration page](work.html).
 
 ## Open questions {label=OPEN-QUESTION}
 

@@ -1,5 +1,5 @@
 ---
-title: Close or reopen an incident
+title: Close, reopen or cancel an incident
 reviewed: 2026-10-17
 evidence:
   E01:
@@ -17,14 +17,28 @@ evidence:
     how: read incident autoclose
     result: Resolved incidents not updated for a set number of days are closed automatically
     hash: 60153d464b676eb654bc1347776d9c4ca6b7347e57954cb7d8a0dfbf4eaea129
+  E04:
+    record: sys_ux_form_action_layout/e28e161b534130108b91ddeeff7b1229
+    how: read the workspace's incident header buttons
+    result: Assign to me, Close, Resolve, Reopen, a Create menu, and more in the overflow
+    hash: 6aaac5eb90654c413ff7e6240b5d2c0fd67d8cc7973321754589141411f3b7a0
+  E05:
+    record: sys_declarative_action_assignment/05194d0f533152102e4bddeeff7b1298
+    field: client_script
+    how: read the workspace action Reopen
+    result: a Reopen dialog with Additional comments (Customer visible), mandatory
+    hash: 3c46c8deed0175d33530dfff49fef052332b717e39b2831082f89ba0b3c150ed
 ---
 ## Closing
+
+In the workspace, **Close** and **Reopen** are buttons in the incident's header, shown when they
+apply. [E04]
 
 An incident is **Closed** when everyone agrees it's done. After that it can't be changed or
 reopened.
 
-- **Caller**: press **Close** on a resolved incident (on the portal or the form) when the fix
-  works. [E01]
+- **Caller**: presses **Close** on a resolved incident in Employee Center when the fix works.
+  [E01]
 - **Team lead**: you can close any resolved incident, and you're the only ones who can choose
   *Closed* in the state list. [E01]
 - **Resolvers**: you can't close another person's incident. Resolve it and let the caller confirm.
@@ -36,8 +50,9 @@ When it is closed, the caller gets an email and may receive a short survey.
 
 If the fix didn't work, a **resolved** incident can be reopened:
 
-1. Open the incident and press **Reopen**. [E02]
-2. Write in *Additional comments* what is still wrong (required).
+1. Open the incident and press **Reopen** in its header. [E04] [E02]
+2. In the **Reopen** dialog, write in *Additional comments (Customer visible)* what is still
+   wrong (required). [E05]
 3. It goes back to **In Progress** for the same team. The resolution fields are cleared.
 
 The caller can also reopen from the portal, or by replying to the resolution email with

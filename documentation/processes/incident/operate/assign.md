@@ -22,11 +22,38 @@ evidence:
     how: read Assign to me (list menu)
     result: for agents who are members of the incident's group; fills the group when you belong to exactly one
     hash: 4019b27e8dffe97775c2071bd80e2602eb48e6897b31e62b1490fa13f918509c
+  E05:
+    record: sys_ux_list/d22afad6c3013010965e070e9140dd90
+    how: read the workspace list Unassigned
+    result: open incidents with nobody assigned
+    hash: 8fa294da9c2a619ef00bb322f2e00cf17fbb0eeb8eb63101ef6de11f8ce25522
+  E06:
+    record: sys_ui_action/8513fcd0773b301027aae297cd5a9968
+    how: read Assign to me for the workspace
+    result: a header button on the incident in the workspace
+    hash: 1013cca37d22631f0ae734115f526063ee178a8df4ff7496cf05302af64e66bc
+  E07:
+    record: sys_declarative_action_assignment/a9d63636ff30011027aaf9a7cddcbdc8
+    how: read the list action Assign to me
+    result: Assign to me on the workspace's lists
+    hash: cced1a340ab4379d95705c1ec8fdbe481d96180fc5018540ab6fd429e7dc873d
+  E08:
+    record: sys_ux_list/0d6786ea0b023010bac9818393673a8f
+    how: read the workspace list Assigned to your group
+    result: 'Tasks › Assigned to your group: your groups'' open work not assigned to you'
+    hash: 441afcbf90b0bba673127841091c69d5b05f30182768964ed2180bbf50c35981
+  E09:
+    record: sys_ui_section/4459739977453010dc2c885d9f5a9910
+    children: sys_ui_element
+    how: read the workspace form's Assignment section
+    result: Assignment group, Assigned to
+    hash: 8928bba95a1a65b480e274291619252e66efc2f916a2a7323e1b019f6769d0df
 ---
 ## Who gets the incident
 
 Every incident needs a **team** (*Assignment group*) and, once someone takes it, a **person**
-(*Assigned to*) from that team.
+(*Assigned to*) from that team. In the workspace both are in the form's **Assignment** section.
+[E09]
 
 {{animation:incasg}}
 
@@ -36,9 +63,12 @@ Every incident needs a **team** (*Assignment group*) and, once someone takes it,
 
 ## Take an incident
 
-From **Incident › Open - Unassigned** (or your team's queue), right-click the incident and
-choose **Assign to me** (in the agent workspace, open it and press **Assign to me**). You must be a member of the
-incident's team. If it has no team and you belong to only one, your team is filled in. [E04]
+In the workspace, open **Incidents › Unassigned** [E05], or **Tasks › Assigned to your group** for
+your team's queue [E08]. Select the incident and choose **Assign to me** in the list [E07], or open
+it and press **Assign to me** in its header [E06]. You must be a member of the incident's team.
+
+*Classic form:* **Incident › Open - Unassigned**, then right-click and **Assign to me**. If the
+incident has no team and you belong to only one, your team is filled in. [E04]
 
 As soon as a **New** incident has someone assigned, it moves to **In Progress**. [E03] You get
 an email that it was assigned to you.

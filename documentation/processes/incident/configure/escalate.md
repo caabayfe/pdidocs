@@ -85,6 +85,10 @@ Emergency change [E09], change request [E10], request [E11], child incident [E12
    Incident* do managers see?
 2. The major incident management group property is redacted: which team receives major
    incidents?
-3. There is no *Create Problem* action on incident in the mirror (only on interaction). How do
-   resolvers raise a problem from an incident?
+3. The workspace's **Create** menu offers *Create problem* (form action
+   `sys_ux_form_action/eb60cefac7213010d7e818b1c7c26035`), but the UI action behind it
+   (`sys_ui_action/2f43c471c0a8006400a07440e49924c2`) and the *Create change request* declarative
+   action (`20aec8ab233230101488dc1756bf6557`) are not in the mirror. Confirm both work on screen.
+5. *Propose* and *Promote* are set up for workspaces but are not items of the workspace header
+   layout. Confirm where they appear in the Service Operations Workspace.
 4. Are child incidents and copy enabled? Both depend on redacted properties.
