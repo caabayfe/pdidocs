@@ -57,31 +57,75 @@ evidence:
     how: read glide.sc.enable.save_as_draft.portal.esc
     result: true
     hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
+  E10:
+    seen:
+      by: 'Claude (snagentic session, impersonating Abel Tuter)'
+      on: 2026-10-17
+      where: 'Employee Center › Request DocuSign access'
+    how: 'opened the item page, submitted nothing'
+    result: '"* Indicates required"; Requested for filled with the employee; a Required information box beside Save as Draft and Submit lists Business justification'
+  E11:
+    record: sysevent_email_action/0b4ae8c0b462b410f87755e926c386c2
+    field: subject
+    how: read Request was opened
+    result: 'Request ${number} was created'
+    hash: 4408ae146a1e8b21286997ce05f2cb00d464b2dca9d0da3366db9443acdd7a09
 ---
-## Find the item
+Ordering takes a minute: open the item, answer its questions, order, confirm. You then get a
+request number and an email, and the request appears in **My Requests**.
 
-Search Employee Center for what you need (*laptop*, *Adobe*, *access*), or browse the topics on the
-home page. Some common items have a quick link, such as **Request Standing Desk**. [E08]
+## Before you start
+
+- Find the item: search for it, browse a topic, or use a quick link such as **Request Standing
+  Desk** (see [Find what you need](see:find)). [E08]
+- Check its **Price** and **Delivery Time** on its page. [E01]
+- For a new colleague, use the **New Hire** bundle instead (see [Find what you need](see:find)).
 
 ## Order it
 
 {{animation:reqorder}}
 
-The item's page shows its price, the **Delivery Time** and its questions. For the *Standard
-Laptop*, for example: optional software to add, and anything else you need. [E01]
+1. **Open the item.** Its page shows the description, the price, the **Delivery Time** and its
+   questions. The *Standard Laptop*, for example, shows *$1,100.00 + $100.00 Annually*, *9 Days*,
+   and asks which optional software to add and anything else you need. [E01]
+2. **Answer the questions.** Required ones have a red asterisk. Until they're answered, the
+   **Required information** box beside the button lists what's missing. [E10] Set **Quantity** if
+   you need more than one. [E01]
+3. **Press Order Now.** Some items say **Submit** or **Request** instead. [E01] [E06] There is no
+   cart: each order is one item. [E02]
+4. **Confirm.** The **Order Confirmation** window shows who it's for and lets you add **Delivery
+   Information** and **Special Instructions**, such as the room where it should go. Confirm to
+   order. [E03] [E04]
 
-1. Answer the questions; set **Quantity** if you need more than one.
-2. Press **Order Now** (some items say **Submit** or **Request**). [E01] [E06] There is no cart:
-   each order is one item. [E02]
-3. Confirm in **Order Confirmation**; add delivery details or special instructions if useful.
-   [E03] [E04]
+| On the item page | What it does |
+|---|---|
+| **Order Now** / **Submit** / **Request** | starts the order; you confirm in the next window [E04] |
+| **Save as Draft** | keeps your answers under *My Requests › Drafts*, to finish later [E09] [E01] |
+| the heart | adds the item to **My favorites** |
 
-**Save as Draft** keeps it under *My Requests › Drafts* to finish later. [E09] [E01]
+## What happens next
 
-You land on your request's status: its number (REQ…), what you ordered, the expected delivery and
-its stage. [E07]
+You land on your request's status page: its number (REQ…), what you ordered, the expected
+delivery date and its stage. [E07] You also get the email *"Request REQ… was created"*. [E11] If
+the item needs approval, it waits for your manager first (see [Who approves](see:approvals)).
+Follow it in **My Requests**: see [Your request's statuses and emails](see:statuses).
 
 ## For someone else
 
-At checkout you can't change who the order is for. [E05] Items that are often for someone else
-ask for it as a question, such as **Requested for** on access requests. [E06]
+At checkout you can't change who the order is for: it's for you. [E05] Items that are often for
+someone else ask it as a question, such as **Requested for** on *Request DocuSign access*, already
+filled with your name. [E06] [E10] Change it there before you submit.
+
+## Tips
+
+- Not ready? **Save as Draft**, and finish it later from **My Requests › Drafts**.
+- Write useful **Special Instructions**: where to deliver, when you are in, who can receive it.
+- Order one thing per request: each order is one item anyway, and each is followed on its own.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| find an item | [Find what you need](see:find) |
+| know what the statuses and emails mean | [Your request's statuses and emails](see:statuses) |
+| add information after ordering | [Follow your request](see:follow) |

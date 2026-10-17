@@ -35,27 +35,60 @@ evidence:
     how: read Update Approval Request
     result: a reply from you with approve or reject in the subject decides
     hash: e0cd4afae7104bafe04a27e16d4f4992a5ec28c7604f1773498fc99e4ea2f901
+  E07:
+    seen:
+      by: 'Claude (snagentic session, impersonating Abel Tuter)'
+      on: 2026-10-17
+      where: 'Employee Center › My Tasks'
+    how: 'opened the page'
+    result: 'Open and Completed; "You don''t have any tasks right now."'
+  E08:
+    record: sn_hr_sp_todos_config/a9f7af0f238f23007e45ff5e17bf65d3
+    how: read the to-do configuration for completed approvals
+    result: approvals you already answered are kept under Completed
+    hash: b4fffbfa583637946145c8ac80f794c3fa939d55f9c62fc58a20d1c2be734b48
 ---
+When someone in your team orders an item that needs a manager's or a department head's approval,
+it waits for you. Your answer decides whether it goes to the teams who deliver it.
+
 ## When you're asked
 
-You're asked when someone in your team orders an item that needs a manager's approval, or a
-department head's. You get an email *"… needs your approval"*. [E05]
+You get an email *"… needs your approval"* [E05], and the approval appears in **My Tasks** in
+Employee Center. [E01]
 
 ## Approve in Employee Center
 
 {{animation:requappr}}
 
-1. Open **My Tasks**.
-2. The order shows as **Approve Request**: the item, who it's for, its price and quantity. [E01]
-   [E02]
-3. Press **Approve**, or write why and press **Reject**: a rejection needs a reason. [E03] [E04]
+1. Open **My Tasks** at the top of Employee Center. **Open** lists what waits for you. [E07]
+2. Each order shows as **Approve Request**, with the item, who it's for, its price and quantity.
+   [E01] [E02]
+3. Decide:
+
+| You press | What you must give | What happens |
+|---|---|---|
+| **Approve** | nothing | the item goes to the next approval, or to the teams who deliver it |
+| **Reject** | a reason in the comments box [E03] [E04] | the request is closed and the requester gets *"… was Rejected"* |
+
+Your answered approvals stay under **Completed**. [E08]
 
 ## By email
 
 Reply to the approval email with *approve* or *reject* in the subject, and your reason in the
-body. [E06]
+body. [E06] Only your own reply counts.
 
-## What happens next
+## What to check before you approve
 
-When approved, the item goes to the next approval or to the fulfilment teams; when rejected, the
-request is closed and the requester is told.
+- Is it needed for the work, and is the price right for it?
+- Is it for the right person? Look at who it's for, not only who ordered.
+- Is the quantity right?
+
+If you're unsure, reject with your question as the reason: the requester can order again with
+the answer.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| know when I'm asked to approve | [Who approves](see:approvals) |
+| approve a change instead | [Approve a change](see:change/approve) |

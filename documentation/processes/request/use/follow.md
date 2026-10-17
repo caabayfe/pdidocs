@@ -46,23 +46,66 @@ evidence:
     how: read glide.sc.checkout.cancel
     result: 'false'
     hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E09:
+    seen:
+      by: 'Claude (snagentic session, impersonating Abel Tuter)'
+      on: 2026-10-17
+      where: 'Employee Center › My Requests'
+    how: 'opened the page'
+    result: 'tabs Submitted requests and Drafts; View Open requests or Closed requests; Search open requests'
+  E10:
+    record: sysevent_email_action/78243e8877323010f088a0e89e5a9969
+    field: subject
+    how: read Comment left on request
+    result: 'Comment added to request ${number}'
+    hash: d18ff37f439d6a0d4eadf9db4a64cd6d71d9afab8f5116c9e599208ea2ddf009
 ---
+Once you've ordered, **My Requests** shows where every order is. Open an item to see its stage,
+your answers, and the conversation with the team.
+
 ## Find it
 
 {{animation:requfollow}}
 
-Open **My Requests**: **Submitted requests** lists your requests with their state; switch **View**
-to see closed ones. [E01] [E02] **Drafts** holds what you saved for later. [E01]
+1. Choose **My Requests** at the top of Employee Center. [E09]
+2. **Submitted requests** lists your requests with their state. Switch **View** to *Closed
+   requests* to see finished ones, or search them. [E09] [E01] [E02] You see the requests you
+   ordered and the ones ordered for you. [E02]
+3. **Drafts** holds what you saved for later. [E01]
+4. Open an item. You see:
 
-Open an item to see its **stage**, the price and quantity [E03], your answers under **Additional
-Details** [E04], and the **Activity** with the team. [E05]
+| On the item's page | What it tells you |
+|---|---|
+| **Stage** | where it is now: approval, fulfilment, delivery [E03] |
+| **Price** and **Quantity** | what was ordered, with any yearly cost [E03] |
+| **Additional Details** | your answers to the item's questions [E04] |
+| **Activity** | the conversation with the team [E05] |
+
+What each state and stage means: [Your request's statuses and emails](see:statuses).
 
 ## Add information
 
-Write in the **Activity** tab, or reply to an email about the item. [E05] [E07] A closed item
-can't take comments. [E06]
+- Write in the item's **Activity** tab and send it. [E05]
+- Or reply to any email about the item: your reply is added to its Activity. [E07]
+- When the team writes to you, you get *"Comment added to request …"* with their message. [E10]
+
+A closed item can't take comments. [E06] If you still need something, order again or report an
+incident.
 
 ## Cancel {label=OPEN-QUESTION}
 
-Employee Center offers no **Cancel** on a request or item. [E03] [E08] To cancel, ask the service
-desk on the item's Activity tab, before it is delivered.
+Employee Center offers no **Cancel** on a request or an item. [E03] [E08] To cancel, write on the
+item's Activity tab that you no longer need it, before it's delivered.
+
+## Tips
+
+- Answer questions from the team quickly: an item waiting for your answer doesn't move.
+- Look at the stage before asking: *Backordered*, for example, means it's waiting for stock.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| understand a state or an email | [Your request's statuses and emails](see:statuses) |
+| order something else | [Find what you need](see:find) |
+| report a problem with what I received | [Report an incident](see:incident/report) |
