@@ -26,8 +26,8 @@ evidence:
   E05:
     record: sys_script/5da5ffd4870023000e3dd61e36cb0b6a
     field: script
-    how: read Link Problem with Primary KE article
-    result: saving the article sets it as the problem's primary known error article
+    how: read Link Problem with Primary KE article (after insert of a known error article)
+    result: 'creating the article sets it as the problem''s primary known error article; message "Known Error article … created"'
     hash: b6fbb01664218d399b2e0160f6a65d0c50c58bca3d42590ce548a294c8b15ee0
   E06:
     record: sysevent_script_action/888ecda493131210c3bbf04e64891829
@@ -38,7 +38,7 @@ evidence:
   E07:
     record: sys_properties/4cfa4d79874023000e3dd61e36cb0b7b
     how: read problem.knowledgebase.known_error_article
-    result: value not in the mirror
+    result: 'the sys_id of the knowledge base for known error articles; read role problem_manager; value withheld'
     hash: 69ade68cce8af4c5af24e02c8866e88e1e64ff0a184ece4d3425ce0cbceccdec
   E08:
     seen:
@@ -52,19 +52,34 @@ evidence:
 
 {{animation:prbwork}}
 
-Write the **Workaround** in *Analysis Information*, save, then choose **Communicate Workaround**
-(Related Links or the form menu). [E01] Each linked incident still open gets the work note
-*"Workaround shared from PRB…"*. [E02] It is internal: tell callers yourself where it applies.
+On the **classic problem form**:
+
+1. Write the **Workaround** in the *Analysis Information* section and save. [E01]
+2. Choose **Communicate Workaround** (related link or form menu). You see *"Workaround
+   communicated"*. [E01]
+3. Each linked incident still open gets the work note *"Workaround shared from PRB…: …"* with your
+   text. [E02]
+
+The note is internal: tell callers yourself where the workaround applies to them.
 
 ## Publish a known error
 
-Choose **Create Known Error article**. [E03] [E08] The article starts with the problem statement,
-description, cause notes and workaround. [E04] Publish it through knowledge as usual; once saved,
-it becomes the problem's **Primary Known Error article** [E05] and linked incidents get a work note
-naming it. [E06]
+1. Choose **Create Known Error article** (related link or form menu). [E03] [E08] A new article
+   opens, already filled with the problem statement, description, cause notes and workaround. [E04]
+2. Complete it and save. You see *"Known Error article … created"*; it becomes the problem's
+   **Primary Known Error article**. [E05]
+3. Linked incidents get the work note *"Known Error article created against PRB…: KB…"*. [E06]
+4. Publish the article through knowledge as usual.
 
-### Which knowledge base {label=OPEN-QUESTION}
+## What happens next
 
-The knowledge base for known errors is a property whose value isn't in the mirror [E07], and who
-can read it is set by user criteria the mirror doesn't hold. Check whether employees see known
-errors in Employee Center.
+Keep the workaround current while the cause is worked on; when the fix is ready, see
+[Fix and resolve](see:fix). Attaching the article to other incidents links them to this problem
+(see [Link incidents to a problem](see:link)).
+
+### Which knowledge base, and who reads it {label=OPEN-QUESTION}
+
+Known error articles go to the knowledge base named in `problem.knowledgebase.known_error_article`,
+whose value only problem managers can read. [E07] Platform team: confirm which knowledge base it
+is and whether its user criteria let employees find known errors in Employee Center. If they do,
+employees could be pointed to them while they wait.

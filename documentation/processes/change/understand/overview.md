@@ -32,15 +32,16 @@ stops changes from breaking what works, and tells people when something is plann
 | Kind | Use it for | Approval |
 |---|---|---|
 | **Standard** | routine work done the same way every time, from a template | pre-approved |
-| **Normal** | everything else, planned in advance | technical, then management or the CAB |
-| **Emergency** | something that must be done now to restore or protect a service | the CAB, quickly |
+| **Normal** | everything else, planned in advance | the team doing it, then its manager or the change advisory board (CAB) |
+| **Emergency** | something that must be done now to restore or protect a service | the CAB |
 
 [E01] Most changes are **Normal**, the default. [E02]
 
 ### What it means for you {for=user}
 
-You meet change management when you are asked to **approve** a change, as a manager or service
-owner: see [Approve a change](see:approve).
+You meet change management when you are asked to **approve** a change: as a member of the team
+doing it, as that team's manager, or as a member of the CAB. See [Approve a change](see:approve)
+and [Who approves](see:approvals).
 
 ### Where you start {for=operator}
 

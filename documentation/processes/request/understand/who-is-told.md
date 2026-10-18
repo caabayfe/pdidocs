@@ -55,7 +55,6 @@ evidence:
 | The request is created | *"Request … was created"* [E01] | |
 | An approval is needed | | the approver: *"… needs your approval"* [E07] |
 | It is approved or rejected | *"… was approved"* or *"… was Rejected"* [E02] [E03] | |
-| A catalog task is assigned | | the fulfiller, or the team [E08] [E09] |
 | Someone comments on an item | *"Comment added to request …"* [E06] | |
 | An item is delivered | *"Your requested … is being delivered"* [E04] | |
 | The request is complete | *"Request … was completed"* [E05] | |
@@ -65,5 +64,8 @@ evidence:
 Reply to an item's email to add information to it.
 
 ### For the team {for=operator}
+
+When a catalog task is assigned, the assignee gets *"Task … has been assigned to you"*, or the
+group when nobody is assigned. [E08] [E09]
 
 Comments on an item reach the requester; use work notes for the team.

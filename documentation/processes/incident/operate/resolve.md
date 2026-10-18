@@ -80,17 +80,17 @@ The codes [E08]:
 | **Workaround provided** | the caller can work, the root cause remains |
 | **User error** | it worked as designed; you showed the caller how |
 | **Resolved by caller** | the caller fixed it themselves |
-| **Resolved by change** | a change fixed it (link it) |
-| **Resolved by problem** | a problem fix solved it (link it) |
-| **Resolved by request** | the caller needed a request instead (link it) |
+| **Resolved by change** | a change fixed it (link it; see [Raise a change](see:change/raise)) |
+| **Resolved by problem** | a problem fix solved it (link it; see [Link incidents to a problem](see:problem/link)) |
+| **Resolved by request** | the caller needed a request instead (link it; see [Order on someone's behalf](see:request/on-behalf)) |
 | **Duplicate** | another incident covers it: the dialog then asks for the **Parent incident** [E07] |
-| **Known error** | a known error article describes it; **attach the article first** [E03] |
+| **Known error** | a known error article describes it; **attach the article first** [E03]; see [Share a workaround and known error](see:problem/workaround) |
 | **No resolution provided** | it can't be fixed, and the caller agrees to stop |
 
 ## What happens next
 
 The caller has time to confirm or reopen. Then the incident is closed, by the caller, a team
-lead, or automatically after 7 days (see *Close, reopen or cancel an incident*). Child incidents are
+lead, or automatically after 7 days (see [Close, reopen or cancel an incident](see:close)). Child incidents are
 resolved with their parent.
 
 ## Tips

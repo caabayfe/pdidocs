@@ -48,7 +48,7 @@ problems.
 ## Let it route the work
 
 If the ticket has no assignment group yet, choosing a CI fills it from the CI's **Support group**
-(on a change, its **Change Group**). [E03] On pdi2 few CIs have one and none has a change group, so
+(on a change, its **Change Group**). [E03] Few CIs here have one and none has a change group, so
 check the group and set it yourself when it stays empty. [E06]
 
 The icons beside the field open the CI's map and its other open tickets. [E02]

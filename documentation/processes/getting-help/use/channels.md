@@ -25,7 +25,7 @@ evidence:
   E04:
     record: sys_cs_live_agent_setup/f0acbc4c5f091300e6333654de7313c8
     how: read Chat Setup
-    result: 'live agent chat enabled, agents answer in the Service Operations Workspace, no queues; when nobody is free it says "There are no agents available at the moment."'
+    result: 'live agent chat enabled, agents would answer in the Service Operations Workspace, but no queue is set for IT, HR, customer service or global; when nobody is free it says "There are no agents available at the moment."'
     hash: 63495161dd36f00ef81d59a5e3bc0fc53291b3cfd1e251908710f0d4f1ebbe51
   E05:
     record: sys_properties/39aba1d1531301101fdbddeeff7b125e
@@ -79,7 +79,7 @@ evidence:
   E14:
     record: sys_db_object/b0e4363b8c5503100a22deb6dd2b4e97
     how: read the incident channel choices
-    result: chat, walk-in, virtual agent, email, phone and self-service are recorded
+    result: chat, walk-in, virtual agent, email, phone and self-service can be recorded on an incident
     hash: bb73c1002bb30dd75f1fff3a219ddd7c08ebc3d39bd65efdb8f63595ed73f743
   E15:
     record: sys_cs_channel/8ca0544053d110102f40ddeeff7b12be
@@ -92,7 +92,7 @@ evidence:
     result: 'Call Support (Daily 5AM - 11 PM) 1-800-555-5555, a placeholder'
     hash: fa4fce748e825961d50b57b25cdb298f055756a0ee441e398047f6abd5f17819
 ---
-On pdi2 you can reach IT in four ways: **Employee Center**, **chat**, **email** and **phone**.
+You can reach IT in four ways: **Employee Center**, **chat**, **email** and **phone**.
 Whichever you use, you get the same thing back: a numbered ticket, an email confirming it, and
 the same place to follow it, **My Requests** in Employee Center.
 
@@ -103,11 +103,12 @@ the same place to follow it, **My Requests** in Employee Center.
 | Way | Use it when | How | What you get back |
 |---|---|---|---|
 | **Employee Center** | almost always: something isn't working, you need something, you want to see where things stand | open Employee Center [E01], search or choose a topic | an INC or REQ number on screen, and an email [E12] [E13] |
-| **Chat** | you have a quick question, or don't know where to start | the chat button at the bottom right of every Employee Center page [E03] | answers from the Virtual Agent, Now Support |
+| **Chat** | you have a quick question | the chat button at the bottom right of every Employee Center page [E03] | answers from the Virtual Agent, Now Support [E05] |
 | **Email** | you are away from Employee Center | send an email to the IT service desk | an incident from your email, and an email with its number [E06] [E12] |
 | **Phone** | you can't work at all and it's urgent | **+1-200-120-2020**, 9am to 5pm PST [E02] | the service desk logs it with you on the call; you get the same email |
 
-Teams, Slack, text messages and a walk-up desk aren't set up on pdi2. [E15] [E14]
+There's no walk-up desk to visit: **Get support** lists only the phone. [E02] Teams, Slack and
+text messages aren't set up. [E15]
 
 ## Employee Center
 
@@ -124,20 +125,21 @@ you need](see:request/find).
 3. Type your question in your own words, or press **Show me everything** to see what it can help
    with.
 
-The Virtual Agent answers first. [E05] It can pass you to a person, but on pdi2 no agent team is
-set up to take chats, so you will most likely see *"There are no agents available at the
-moment."* [E04] Then use Employee Center or the phone.
+The Virtual Agent answers your questions. [E05] Nobody from the service desk answers chats yet,
+so the chat can't put you through to a person. [E04] To report a problem or ask for something,
+use Employee Center or the phone.
 
 ### What the Virtual Agent can do {label=OPEN-QUESTION}
 
-pdi2's Virtual Agent has no topics of its own for IT tickets, such as reporting a problem or
-checking a request's status. Ask it, and check on screen what it offers, before relying on it
-for more than questions.
+The Virtual Agent has no topics of its own for IT tickets, such as reporting a problem or
+checking a request's status, and it offers *Live Agent Support* although no chat queue is set
+up. [E04] Decide whether to set up a queue for the service desk, or to remove that topic, and
+which ticket topics employees need.
 
 ## Email
 
 - **A new email becomes an incident.** Your subject becomes its title and your message its first
-  comment, and you are its caller. [E06] Write the subject as you would a title: *"VPN
+  comment, and the incident is yours. [E06] Write the subject as you would a title: *"VPN
   disconnects every 5 minutes"*.
 - **Forwarding works too.** Forward an error message you received; the incident is yours. [E07]
 - **Reply instead of writing again.** Replying to an email about your incident or request adds
@@ -149,8 +151,8 @@ for more than questions.
 
 ### The service desk's address {label=OPEN-QUESTION}
 
-The address that receives these emails isn't in the configuration snagentic reads. [E11] Ask
-the platform team to publish it here.
+Publish the service desk's email address here, and on the incident's *Report an incident* page.
+The address that receives these emails isn't in the configuration snagentic reads. [E11]
 
 ## Phone
 
@@ -160,9 +162,14 @@ the number it gives you, and follow it in My Requests.
 
 ### Two numbers {label=OPEN-QUESTION}
 
-The chat's support options list a different number, *Call Support (Daily 5AM - 11 PM)
-1-800-555-5555*, which looks like a placeholder. [E16] Until it is corrected, use the number in
-**Get support**.
+Correct the chat's support options: they list *Call Support (Daily 5AM - 11 PM) 1-800-555-5555*,
+which looks like a placeholder [E16], while **Get support** gives +1-200-120-2020, 9am to 5pm
+PST. [E02]
+
+### A walk-up desk {label=OPEN-QUESTION}
+
+The service desk can record *Walk-in* as an incident's channel [E14], but no walk-up desk is
+published for employees. If there is one, add where it is and when it is open.
 
 ## What happens next
 
@@ -174,8 +181,8 @@ Every way leads to the same ticket. You follow it in **My Requests**, answer que
 
 - One problem, one ticket. If you already reported it, reply to its emails or add to it in My
   Requests instead of reporting it again.
-- Not sure whether it's broken or something new? Use chat, or search Employee Center: the
-  results show both the forms to report problems and the items you can order.
+- Not sure whether it's broken or something new? Search Employee Center: the results show both
+  the forms to report problems and the items you can order.
 
 ## I want to…
 

@@ -51,20 +51,88 @@ evidence:
       where: 'Communication Plan Definitions list, table incident'
     how: 'opened the list'
     result: 'No records to display'
+  E10:
+    record: sys_ux_form_action_layout_item/90f84734a37002101509d63f26fcda6c
+    how: read the workspace incident header item
+    result: 'label "Create new communication", in the overflow menu'
+    hash: c0e30936377e4622d6351c5c4bf377f5d9c6a1d81b9875f089e864819d22555b
+  E11:
+    record: sys_ux_macroponent/ae81738d53ad71109194ddeeff7b1205
+    how: read Adhoc Communication modal SNC (the page the route open-new-communication opens)
+    result: 'texts "Create new communication", "Select when you would like to send your communication, add channels, and add recipients.", Short description, Now, Later, Frequency, One time, Recurring, Due in (minutes), Channels, Recipients, Clear all, Cancel, "You will be taken to start the communication and will be reminded for the next update as it gets due"'
+    hash: 5bcfaa4248f946c2bab471134d1524483f5ba4b324c9d7c858aebcce51566ae5
+  E12:
+    record: sys_ux_client_script/905704555321b1109194ddeeff7b1274
+    field: script
+    how: read save or compose label
+    result: 'the button reads "Compose communication" for Now and "Save" for Later'
+    hash: c392969f7fca5c14715302917d6357ca8f940b0ec30ea935aa3bfb935bb5cb7b
+  E13:
+    record: sys_ux_client_script/105704555321b1109194ddeeff7b1274
+    field: script
+    how: read save or compose disabled
+    result: enabled only with a short description, a channel, a recipient and a frequency; Later also needs Due in above 0
+    hash: 807e84229e14253bfc3c42285c6ecd18e78078d9b2810b52d83ed3e54cc9ae4b
+  E14:
+    record: sys_ux_client_script/505704555321b1109194ddeeff7b1274
+    field: script
+    how: read save compose handler
+    result: 'creates the communication plan and task; Later shows "New communication successfully created and added to the Upcoming section."; Now opens the communication to compose'
+    hash: cd5b711cbbc9b99143789b87a9a63603298ba521ff5c11e39ad5e887b30e26c0
+  E15:
+    record: sys_ux_client_script/7291f38d53ad71109194ddeeff7b1227
+    field: script
+    how: read build channels choice list
+    result: offers only available channels, never a bridge (conference)
+    hash: 9aa807969f15fee6448339ae6ca0bb07fc44a515b48497fd51ac2457768d6b05
+  E16:
+    record: sys_script_include/1d5e72985310130009170ef5d5dc343b
+    field: script
+    how: read CommunicationManagementChannelSmsConfigSNC
+    result: SMS is available only when Notify is enabled or a Notify number is set
+    hash: 3c7affa4cdb665a13801725f421ecc37f2ab13bf31007f62a6dc19ca2a33ca88
+  E17:
+    record: sys_ui_action/66869b0273581300cab854eb7df6a727
+    how: read Compose (communication task, related link)
+    result: opens the task communication dialog for the task's record
+    hash: 50aa1c5f54b2967f48d76ed5523036e551d7bde1a8884d1e96e3a45770414379
 ---
-## Communication plans
+## Communications
 
-A **communication plan** on the major incident holds the **communication tasks**: the initial
-notification, updates and the resolution notice, each for business or technical readers. Plans
-attach to the incident from their definitions (**Major Incidents › Communication Plan
-Definitions**). [E08] pdi2 has **none** for incidents [E09], so start each communication yourself.
+A communication on a major incident is a **communication task**: one message (or a series of
+updates) to a set of recipients through a channel. Plans can attach tasks automatically from their
+definitions (**Major Incidents › Communication Plan Definitions**) [E08], but there is **no**
+definition for incidents [E09], so you start each communication yourself.
+
+Only communication managers and major incident managers can do it: the action needs the role
+`ia_admin`, which those roles contain. [E01] [E02]
 
 ## Send a communication
 
 {{animation:mimcomm}}
 
-In the workspace, choose **Create new communication** in the incident's ⋯ menu. It is offered to
-communication managers and major incident managers, not to every agent. [E01] [E02]
+1. In the Service Operations Workspace, open the major incident, open the ⋯ menu in its header and
+   choose **Create new communication**. [E01] [E10] The dialog **Create new communication** opens:
+   *"Select when you would like to send your communication, add channels, and add recipients."*
+   [E11]
+2. Fill **Short description**: the subject of this communication. [E11]
+3. Choose when: **Now** to write it straight away, or **Later** to schedule it. Choose the
+   **Frequency**: **One time** or **Recurring**, and for a reminder, **Due in (minutes)**. [E11]
+4. Under **Channels**, pick how it goes out, usually email. SMS appears only when Notify is set
+   up, and Notify is switched off here [E07] [E16]; a conference bridge is never offered in this
+   dialog. [E15]
+5. Under **Recipients**, search and add people or groups; **Clear all** empties the list. [E11]
+6. Press **Compose communication** (with *Now*) or **Save** (with *Later*). The button stays
+   disabled until the short description, a channel, a recipient and the frequency are set; *Later*
+   also needs **Due in**. [E12] [E13]
+
+With *Now*, the communication opens for you to write and send. With *Later*, you see *"New
+communication successfully created and added to the Upcoming section."* [E14]
+
+On the classic interface, open the communication task and choose the related link **Compose**
+to write and send it. [E17]
+
+## What to write
 
 Emails start from templates:
 
@@ -75,5 +143,11 @@ Emails start from templates:
 | Resolution Communication (Business) | *Recovered Service - …* [E05] |
 
 The technical templates add the business impact, the groups involved, the conference details and
-the actions taken. Recipients are put in **blind copy**. [E06] SMS and conference calls through
-Notify are switched off on pdi2. [E07]
+the actions taken. Recipients are put in **blind copy**, so they don't see each other. [E06]
+
+## What happens next
+
+Send updates as the response progresses (a *Recurring* communication reminds you when the next
+one is due [E11]) and the resolution notice when you [resolve the major incident](see:review).
+Callers of linked incidents also get every **Additional comment** you write on the major incident
+(see [Link the other reports](see:link)).

@@ -18,20 +18,33 @@ evidence:
     result: '"What application password do you need reset?", a service, mandatory'
     hash: 9359406d0e853f3556272296e268ada928ae4e506fd0c8bde5fce11a6d4190a5
 ---
+Some forms ask which application or service you mean, so that IT knows what is affected.
+
 ## When you're asked
 
 {{animation:cmdbpick}}
 
-Some forms ask which application or service you mean, so your report reaches the team that runs
-it:
+1. On **Report Outage**, **Report Performance Problem** or **Password Reset**, you see a
+   question such as *What application is down/unavailable?* It must be answered. [E01] [E02] [E03]
+2. Start typing the name of the application or service. A list of matches appears.
+3. Pick the one you mean from the list.
 
-| Form | It asks |
+The forms themselves are described in [Report an incident](see:incident/report).
+
+## What happens next
+
+The service desk sees what you picked on your incident, which helps it send your report to the
+team that looks after it.
+
+## Tips
+
+- Pick only one: if several applications are affected, name the others in the description.
+- Can't find it? Choose the closest one and say what you mean in the description; the service
+  desk will correct it.
+
+## I want to…
+
+| I want to… | Go to |
 |---|---|
-| **Report Outage** | *What application is down/unavailable?* [E01] |
-| **Report Performance Problem** | *What application is experiencing performance problems?* [E02] |
-| **Password Reset** | *What application password do you need reset?* [E03] |
-
-Start typing its name and pick it from the list. If you can't find it, choose the closest one and
-say what you mean in the description; the service desk will correct it.
-
-See [Report an incident](see:incident/report).
+| report something that isn't working | [Report an incident](see:incident/report) |
+| know which way to contact IT | [Ways to get help](see:getting-help/channels) |

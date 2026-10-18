@@ -37,21 +37,22 @@ Each incident gets a number starting with **INC**. Quote it whenever you talk ab
 
 1. Someone reports it, on the portal, by email or by phone.
 2. The service desk records it, decides how urgent it is, and sends it to the right support team.
-3. A person in that team works on it, and asks the caller when they need something.
-4. When it is fixed, it is **resolved**, and the caller confirms or reopens it.
+3. A person in that team works on it, and asks the person who reported it when they need
+   something.
+4. When it is fixed, it is **resolved**, and the person who reported it confirms or reopens it.
 5. Once confirmed, or after 7 days without an answer, it is **closed**. [E04]
 
 ## Where you start {for=user}
 
-You report and follow your incidents in **Employee Center**: **Help center › Technology services ›
-Create Incident** to report one, and **My Requests** to see where they are. [E01] You can also
-email the service desk, or call it.
+You report and follow your incidents in **Employee Center**: search for **Create Incident** to
+report one, and open **My Requests** to see where they are. [E01] You can also email the service
+desk, or call it.
 
 The pages of this guide for you:
 
-- *Report an incident*: from the portal, by email or by phone.
-- *Follow your incident*: see where it is, answer questions, add information.
-- *Confirm the fix, or reopen*: say whether it works.
+- [Report an incident](see:report): from the portal, by email or by phone.
+- [Follow your incident](see:follow): see where it is, answer questions, add information.
+- [Confirm the fix, or reopen](see:confirm): say whether it works.
 
 ## Where you start {for=operator}
 

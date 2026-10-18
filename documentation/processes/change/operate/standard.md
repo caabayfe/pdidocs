@@ -15,7 +15,7 @@ evidence:
   E03:
     record: std_change_properties/527b5dafff700200b18affffffffff89
     how: read main_config
-    result: required on a standard change; short description, description, implementation, backout and test plans, assignment group, justification, risk and impact analysis
+    result: 'required on a standard change: short description, description, implementation, backout and test plans, assignment group, justification, risk and impact analysis; copied from the template, with description and the plans read-only'
     hash: 39349662e87a24e6a9754fc75197244e1e0993e6499babda257baea940e4b41a
   E04:
     record: sys_hub_flow/e89e3ade731310108ef62d2b04f6a744
@@ -44,6 +44,11 @@ evidence:
       where: 'Change › Create New'
     how: 'read the cards'
     result: 'standard changes Add network switch to datacenter cabinet, Reboot Windows Server, Decommission local office Domain Controller, Change VLAN on a Cisco switchport, Clear BGP sessions on a Cisco router, Replace printer toner'
+  E09:
+    record: sys_hub_flow/665e4a627723021013d4aeb4bb5a994c
+    how: read the flow Change - Standard - Proposal
+    result: on a standard change proposal, asks the group Change Management for approval
+    hash: e8ef68fa363ca6bd58f0d90402152a5ad945510a3242fcea6d35d2037cb70ae9
 ---
 ## What's available
 
@@ -63,12 +68,20 @@ Standard changes are routine work done the same way every time, already approved
 
 {{animation:chgstd}}
 
-Choose it, complete the required fields (description, the plans, the assignment group, the
-justification and the risk analysis) [E03], and submit. It is approved at once [E04] and goes to
+Choose it. The description and the implementation, backout and test plans come from the template
+and are read-only; make sure the required **Short description**, **Assignment group**,
+**Justification** and **Risk and impact analysis** are filled [E03], and submit. It is approved at once [E04] and goes to
 *Scheduled*: carry on with [Schedule and implement](see:implement).
 
 ## Propose a new one
 
 When you do the same normal change often, propose it as a standard: **Propose a Standard Change
 Template** from a change's menu [E05], or the catalog item **Propose a new Standard Change
-Template**. [E06] The change manager approves proposals.
+Template**. [E06] The **Change Management** group approves proposals. [E09]
+
+## Tips
+
+- Look for a standard change before raising a normal one: it needs no approval. [E04]
+- The plans come prefilled from the template and can't be edited: if they don't fit, raise a
+  normal change instead. [E03]
+- Don't use *Replace printer toner*: it is a test template. [E07]

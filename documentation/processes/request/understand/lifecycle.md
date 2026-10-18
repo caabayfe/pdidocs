@@ -26,7 +26,15 @@ evidence:
     result: approved → Approved; rejected → Closed Rejected
     hash: 5e7881782fe467f61290d5816d1fb33828e0f7a6c22394add429efebcef399cd
 ---
-## The request
+A request is ordered, approved if it needs to be, delivered, then closed. Each thing in it moves
+on its own.
+
+## What you see {for=user}
+
+In **My Requests** each request shows its state, and each thing you ordered shows its stage. What
+each state, stage and email means: [Your request's statuses and emails](see:statuses).
+
+## The request {for=operator}
 
 | State | What it means |
 |---|---|
@@ -39,15 +47,11 @@ evidence:
 
 [E01] [E04] It closes by itself when all its items are closed. [E03]
 
-## Each item's stage
+## Each item's stage {for=operator}
 
 Each requested item shows a **stage**, such as *Manager Approval*, *Dept. Head Approval*, *Order
 Fulfillment*, *Backordered*, *Deployment* and *Completed*. [E02] The stages come from the item's
 fulfilment, so they differ between items.
-
-### What you see {for=user}
-
-In **My Requests** each request shows its state; opening an item shows its stage.
 
 ### What moves it {for=operator}
 

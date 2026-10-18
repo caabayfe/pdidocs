@@ -17,12 +17,13 @@ evidence:
     record: sys_declarative_action_assignment/650cc0dc77620210c9ee78dabd5a99b7
     field: client_script
     how: read Create request (incident)
-    result: opens the catalog from the incident
+    result: 'saves the incident, then g_service_catalog.openCatalogItem with sysparm_parent_table incident and sysparm_parent_sys_id; passes no requested for'
     hash: c86bf554da2e1e0d899ceba5148b7ff4bf6c894486ea11e53b2ab8c63cb3ae5e
 ---
 ## Requested for {label=OPEN-QUESTION}
 
 With no roles listed and the default *deny* [E01] [E02], nobody can change *Requested for* at
 checkout. The roles property was changed on 2025-08-20: was emptying it intended? *Create
-request* opens the catalog from the incident [E03]; check how it sets the person the request is
-for.
+request* only saves the incident and opens the catalog with the incident as parent; it passes no
+*Requested for*. [E03] Check on a test order whether the workspace catalog takes the incident's
+caller, or whether such requests end up for the agent.

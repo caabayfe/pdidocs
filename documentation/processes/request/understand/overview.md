@@ -25,14 +25,11 @@ worked is broken, that's an incident (see [Report an incident](see:incident/repo
 
 ## How it goes
 
-1. You **order** an item from the catalog. You get a **request** (REQ…) holding one **requested
-   item** (RITM…) per thing you ordered.
-2. Some items need **approval**, usually your manager's.
-3. Fulfilment teams work **catalog tasks** to deliver it.
-4. When the items are delivered, the request closes.
-
-Most hardware and many access items follow this path: manager, then department head, then the
-fulfilment teams. [E02]
+1. You **order** an item from the catalog. You get a **request** (REQ…) listing each thing you
+   ordered (RITM…).
+2. Some items need **approval**, usually from the manager of the person it's for. [E02]
+3. The IT teams prepare and deliver it.
+4. When everything is delivered, the request closes.
 
 ### What it means for you {for=user}
 
@@ -41,5 +38,7 @@ Requests** (see [Follow your request](see:follow)). [E01]
 
 ### Where you start {for=operator}
 
+Most hardware and many access items follow *Service Catalog item request*: manager approval,
+department head approval, then **catalog tasks** for Procurement and Field Services. [E02]
 Fulfillers work in the Service Operations Workspace, **Catalog tasks › Assigned to you** or
 **Assigned to your groups**. [E03] See [Fulfil catalog tasks](see:fulfil).

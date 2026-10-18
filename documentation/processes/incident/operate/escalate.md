@@ -67,7 +67,7 @@ evidence:
     result: 'true'
     hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
 ---
-## When it's bigger than one incident: major incidents {label=CHANGED}
+## When it's bigger than one incident: major incidents
 
 {{animation:incesc}}
 
@@ -77,13 +77,13 @@ dedicated manager, a response team and regular communication; the full guide is
 
 - **Propose it** on the classic form's menu with **Propose Major Incident**; the workspace
   doesn't offer it. [E01] [E07] [E08] See [Propose a major incident](see:major-incident/propose).
-- A major incident manager **promotes** it (on pdi2 the candidate itself becomes the major
+- A major incident manager **promotes** it (here the candidate itself becomes the major
   incident) or **rejects** it. [E02] [E05] [E09] See
   [Promote or reject a candidate](see:major-incident/decide).
 - **Link** every other report of the same failure to it: they follow it and are resolved with it.
   See [Link the other reports](see:major-incident/link).
 
-## Create related work from an incident {label=CORRECTED}
+## Create related work from an incident
 
 In the workspace, press **Create incident task**, or open the drop-down beside it for **Create
 outage**, **Create request** and **Create child incident**. [E04] [E06] **Copy Incident** is in the
@@ -98,7 +98,7 @@ overflow menu (⋯). [E07] Copying and child incidents are switched on. [E10] [E
 
 *Classic form:* the same actions are in the form's menu. [E08]
 
-### Raising a problem or a change {label=CHANGED}
+### Raising a problem or a change
 
 There is no **Create problem** or **Create change request** on either screen. [E06] [E08] Create
 the problem from **Problem › Create New** and set it in the incident's **Related Records › Problem**

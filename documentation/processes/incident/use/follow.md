@@ -59,35 +59,71 @@ evidence:
       where: 'Employee Center › My Requests'
     how: 'opened the page'
     result: 'tabs Submitted requests and Drafts; View Open requests; columns Request, State, Updated'
+  E12:
+    record: sysevent_in_email_action/498e10410a0a0b4b007c8c7f63531747
+    how: read Update Incident (BP), type reply
+    result: a reply to an email about an incident is added to that incident as a comment
+    hash: 92b32d15bde5bd99fae5ed3c8dd9770a585acb7d8b0f1d55ddf8db95747a6563
+  E13:
+    record: contract_sla/35420982d732220035ae23c7ce610393
+    how: read the fix deadline's pause condition
+    result: the fix deadline pauses while On Hold - Awaiting Caller
+    hash: 6157ef1df804d16a5907062d37e4c485a8acec29cf19eaeb923f59159f793aa9
+  E14:
+    record: sysevent_email_action/0d51edbac0a80164006963b000ff644e
+    how: read Incident commented for ITIL
+    result: when a message is added, the people on the incident's watch list get an email
+    hash: ecec6a1dd01c138dea1edebef3ec94633b3cec7d96633ce71e68d1d70de5ed25
 ---
+See where your incident is, answer the service desk's questions and add information.
+
 ## Find your incidents
 
 {{animation:incfollow}}
 
-In Employee Center, choose **My Requests** at the top of the page. [E01] Your incidents are listed
-under **Submitted requests** with their title, number, priority and state; switch **View** from
-*Open requests* to see closed ones. [E11] You see the incidents you reported and the ones someone
-opened for you. [E02] [E03]
-
-Choose one to open its page. It shows where it is (the state), the urgency, what it is about, and
-who is working on it. [E04]
+1. In Employee Center, choose **My Requests** at the top of the page. [E01]
+2. Your incidents are listed under **Submitted requests** with their title, number, priority and
+   state. Switch **View** from *Open requests* to *Closed requests* to see closed ones. [E11] You
+   see the incidents you reported and the ones someone opened for you. [E02] [E03]
+3. Choose one to open its page. It shows where it is (the state), the urgency, what it is about,
+   and who is working on it. [E04]
 
 ## Answer a question or add information
 
-Open the incident and use the **Activity** tab: type in *Type your message here...* and press
-**Send**. [E05] [E07] You can also reply to any email about the incident. Add screenshots or files
-in the **Attachments** tab. [E06]
+1. Open the incident and choose the **Activity** tab. [E05]
+2. Type in *Type your message here...* and press **Send**. [E07] Your message is added to the
+   incident.
+3. To add screenshots or files, use the **Attachments** tab. [E06]
+
+You can also reply to any email about the incident: your reply is added to it. [E12]
 
 When the service desk is waiting for you, the incident is **On Hold**. Your reply puts it back to
-**In Progress**, and the clock starts again. [E08]
-
-When the service desk writes to you, you get an email *"Comment added to …"* with their message.
-[E09]
+**In Progress** [E08], and the clock on its deadline starts again. [E13]
 
 ## Fixed it yourself?
 
 Press **Resolve** on the incident's page. The service desk sees that you solved it. [E10]
 
-## Add a colleague
+## Keep a colleague informed
 
-Ask the service desk to add a colleague to the **watch list**, so they get the same updates.
+Ask the service desk to add a colleague to your incident. They then get an email each time a
+message is added. [E14]
+
+## What happens next
+
+When the service desk writes to you, you get an email *"Comment added to …"* with their message.
+[E09] When it is fixed, you get an email to confirm it: see
+[Confirm the fix, or reopen](see:confirm).
+
+## Tips
+
+- Answer questions soon: while the service desk waits for you, your incident waits too.
+- Reply in the same incident instead of reporting it again, so everything stays in one place.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| report another problem | [Report an incident](see:report) |
+| say whether the fix works | [Confirm the fix, or reopen](see:confirm) |
+| know which emails I get | [Who is told what](see:who-is-told) |

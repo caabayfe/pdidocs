@@ -2,16 +2,6 @@
 title: Report an incident
 reviewed: 2026-10-17
 evidence:
-  E01:
-    record: sn_ex_sp_portal_extensible_navigation_item/d3488bc9c8087250f877a26e237175c6
-    how: read the Employee Center side navigation
-    result: the menu item "Help center", with the topic "Technology services" under it
-    hash: 94d5b82ba7812b6c317744d1507d6078f52279bcfb5f6a8debfd8880cab06298
-  E02:
-    record: topic/06d3df67c3053010069aec4b7d40dd70
-    how: read the topic Technology services
-    result: 'described as "Technical support for your personal devices and shared workplace equipment"; holds Create Incident, Report Outage, Report Performance Problem'
-    hash: 87ccae2566e5f3f410b17ff5768ae116b3974a1af159a6655210436017bcfea1
   E03:
     record: sc_cat_item_producer/3f1dd0320a0a0b99000a53f7604a2ef9
     how: read the Create Incident record producer, its script and redirect
@@ -83,26 +73,69 @@ evidence:
       where: 'Employee Center › chat button › Show me everything'
     how: 'opened the chat window and listed its topics'
     result: 'Now Support (Virtual Agent) offers one topic, Live Agent Support'
+  E16:
+    seen:
+      by: 'Claude (snagentic session, impersonating Abel Tuter)'
+      on: 2026-10-17
+      where: 'Employee Center › Get support'
+    how: 'opened Get support as an employee'
+    result: 'Contact us: +1-200-120-2020 (Available 9am to 5pm PST)'
+  E17:
+    record: sys_cs_live_agent_setup/f0acbc4c5f091300e6333654de7313c8
+    how: read Chat Setup
+    result: 'live agent chat enabled, but no queue for IT, HR, customer service or global; when nobody is free it says "There are no agents available at the moment."'
+    hash: 63495161dd36f00ef81d59a5e3bc0fc53291b3cfd1e251908710f0d4f1ebbe51
+  E18:
+    record: sc_cat_item_producer/3f1dd0320a0a0b99000a53f7604a2ef9
+    field: no_attachment_v2
+    how: read whether Create Incident hides attachments
+    result: false; attachments can be added
+    hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E19:
+    record: sc_cat_item_producer/3f1dd0320a0a0b99000a53f7604a2ef9
+    field: no_save_as_draft
+    how: read whether Create Incident hides Save as Draft
+    result: false; the form can be saved as a draft
+    hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E20:
+    record: sys_db_object/b0e4363b8c5503100a22deb6dd2b4e97
+    children: sys_choice
+    how: read the incident's Channel choices
+    result: Phone, Email, Walk-in, Chat, Self-service and Virtual Agent can be recorded
+    hash: 438604df7c0701185679ccf5f78a95effda35ae621060096b2ab78a53ec5cac2
+  E21:
+    record: sysevent_email_action/fc78e05653a6301001b2ddeeff7b128d
+    how: read Comment left on incident
+    result: when the service desk writes to the caller, the caller gets an email "Comment added to …"
+    hash: d097069e0b8fbd39394376644766e8aa8a70426cb0bf04e7baed8585f52a7272
+  E22:
+    record: sysevent_email_action/4d505448e5aeb410f8777565f90b2f13
+    how: read Incident resolved
+    result: the caller gets an email "… was resolved"
+    hash: 0a29cfd91220c1341af6b005a02c3c4a0101ab6cf06225293763356b72f60e87
 ---
+Report something that used to work and doesn't, or gets in your way. You get a number starting
+with **INC** and an email, and you follow it in **My Requests**.
+
 ## Before you start
 
 - Is it an incident? Something that used to work and doesn't, or gets in your way. To ask for
-  something new (access, software, equipment), use the catalog instead.
+  something new (access, software, equipment), use the catalog instead: see
+  [Find what you need](see:request/find).
 - Have the details ready: what you were doing, what you expected, what happened, any error
   message (a screenshot helps), and since when.
 
 ## In Employee Center (recommended)
 
 1. In the search box at the top of Employee Center, search for **Create Incident**, and open it.
-   [E13] (It belongs to the topic *Technology services* under **Help center** [E01] [E02], but
-   the topic page doesn't list it; search finds it.)
+   It doesn't appear when you browse the topics; search finds it. [E13]
 2. The form **Create Incident** opens. [E03]
 3. Answer **Urgency**: how much this stops you working right now. [E04]
 4. Describe the issue in **Please describe your issue below**. Start with a short summary: the
    first 80 characters become the incident's title, for example *"Outlook crashes when I open
    attachments"*. [E05] [E03]
-5. Attach screenshots under **Add attachments** if you have them, and press **Submit**. (**Save
-   as Draft** keeps it for later.)
+5. Attach screenshots if you have them. [E18] Press **Submit**. (**Save as Draft** keeps it for
+   later. [E19])
 
 You land on your new incident, with its number (it starts with **INC**), and you get an email
 *"Incident … was created"* with a link back to it. [E03] [E11]
@@ -120,40 +153,72 @@ an incident too.
 | **Report Performance Problem** | an application is slow | which application, and whether everything or one task is slow [E07] |
 | **Password Reset** (under *Access issues*) | you are locked out of an application | whose password, which application, how to send the new one [E08] |
 
-### Get support {label=NEW}
+When a form asks which application you mean, see
+[Say which service is affected](see:cmdb/pick-service).
 
-The menu's **Get support** opens a window with two options [E12] [E14]:
+### Get support
 
-- **Request password reset**, when you are locked out;
-- **Contact us**: the service desk's phone, **+1-200-120-2020**, available 9am to 5pm PST.
+**Get support** in the menu on the left shows the service desk's phone number,
+**+1-200-120-2020**, available 9am to 5pm PST. [E12] [E16]
 
-### Chat {label=NEW}
+### Chat
 
-The chat button at the bottom right opens **Now Support**, the virtual agent. On this portal it
-offers one topic, *Live Agent Support*: use it to reach a person. [E15] It doesn't report incidents
-for you; use *Create Incident* for that.
+The chat button at the bottom right opens **Now Support**, the Virtual Agent. It answers
+questions, but it doesn't report incidents for you, and nobody from the service desk answers
+chats yet. [E15] [E17] Use **Create Incident** to report a problem.
+
+### Get support shows more to administrators {label=OPEN-QUESTION}
+
+Signed in as an administrator, **Get support** also shows **Request password reset** [E14]; an
+employee sees only the phone number. [E16] Decide whether employees should see the password
+reset card.
+
+### Chat promises a person {label=OPEN-QUESTION}
+
+The chat offers one topic, *Live Agent Support* [E15], but no chat queue is set up, so people are
+told *"There are no agents available at the moment."* [E17] Set up a queue or remove the topic.
 
 ## By email
 
-Write to the service desk mailbox. The **subject** becomes the incident's title and the **body**
-its first message; you are the caller. Mark the email **high importance** only when you really
-can't work: it makes the incident as urgent as it can be. [E09]
+Write to the service desk. The **subject** becomes the incident's title and the **body** its first
+message, and the incident is yours. Mark the email **high importance** only when you really can't
+work: it makes the incident as urgent as it can be. [E09]
 
 To add to an incident you already have, **reply** to one of its emails. Your reply lands on the
 same incident instead of creating a new one. [E10]
 
-## By phone or in person
+### The service desk's email address {label=OPEN-QUESTION}
 
-Call the service desk on **+1-200-120-2020** (9am to 5pm PST) [E14], or visit it. The agent logs the incident with you and gives you the number.
+Publish the service desk's email address on this page: the address that receives these emails
+isn't in the configuration snagentic reads.
+
+## By phone
+
+Call the service desk on **+1-200-120-2020** (9am to 5pm PST). [E16] The person who answers
+records the incident while you talk [E20], and you get the same email *"Incident … was created"*
+with its number. [E11]
 
 ## What happens next
 
-- The service desk sorts your incident and sends it to a support team.
-- You're told when someone writes to you, when it is resolved and when it is closed (see *Who is
-  told what*).
-- How fast depends on its priority (see *Priority and deadlines*).
+- A support team works on your incident. When they need something from you, or have news, you
+  get an email with their message. [E21]
+- When it is fixed, you get an email saying it was resolved, and you confirm the fix or reopen it.
+  [E22]
+- How fast depends on how urgent it is: see [Priority and deadlines](see:priority-and-deadlines).
+  Which emails you get is in [Who is told what](see:who-is-told).
 
 ## Tips
 
 - One issue per incident. Two problems in one incident slow both down.
 - Report it even if colleagues have the same problem: the number of people affected matters.
+- Already reported it? Reply to its emails or add to it in **My Requests** instead of reporting it
+  again.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| see where my incident is, or add information | [Follow your incident](see:follow) |
+| say whether the fix works | [Confirm the fix, or reopen](see:confirm) |
+| ask for something new | [Find what you need](see:request/find) |
+| choose another way to contact IT | [Ways to get help](see:getting-help/channels) |

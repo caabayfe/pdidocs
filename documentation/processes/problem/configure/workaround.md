@@ -27,9 +27,10 @@ evidence:
     hash: f2ac194bd0f688ac30715b171e4e4775e7694db7255315dca6f1eab0eb016b4c
   E05:
     record: sys_script/5da5ffd4870023000e3dd61e36cb0b6a
-    how: read Link Problem with Primary KE article
-    result: sets the primary known error article
-    hash: eeea3b80613ec18f1e7af703dd7e07aaf6508ae29cc41a58c91b0892f62b48f4
+    field: script
+    how: read Link Problem with Primary KE article (kb_template_known_error_article, after insert, order 100, source is a problem)
+    result: 'sets problem.primary_known_error_article to the new article and shows "Known Error article … created"'
+    hash: b6fbb01664218d399b2e0160f6a65d0c50c58bca3d42590ce548a294c8b15ee0
   E06:
     record: sys_script/877c97b80a0a3c740147ca0a46126576
     field: script
@@ -45,5 +46,5 @@ targets resolved *Known error* incidents and, with the property set, also writes
 
 ## Known error articles
 
-The table map creates the article [E04]; saving it links it back. [E05] The legacy rule *Problem
+The table map creates the article [E04]; inserting it links it back to the problem as its primary article. [E05] The legacy rule *Problem
 Create Knowledge* is active but can never fire. [E06]

@@ -15,10 +15,9 @@ evidence:
     hash: 9108e266319b4395cc9c1712431253ff5baf46153934eb4db2d7fc4816b3c214
   E03:
     record: sys_script/27453ac6b73610102d2fbc16de11a937
-    field: script
-    how: read Populate Assignment Group based on CI/SO
-    result: before insert and update, order 100; support_group for incident and problem, assignment_group for change
-    hash: 0e3a958914d0876724533ef5bbe26decbf83e5305e020f9e5a2edcf725aa487c
+    how: read Populate Assignment Group based on CI/SO, its filter, condition and script
+    result: before insert and update, order 100; only when group and assignee are empty and the CI or offering changes from empty; condition skips unauthorized change requests; support_group for incident and problem, assignment_group for change
+    hash: c862798729dd0aa29d354614c6d0615e575d3b6347f2f777c060654cde079661
   E04:
     record: sysrule_assignment/5f516f38675432004792adab9485efce
     how: read the assignment rule Database Problem
@@ -29,4 +28,5 @@ evidence:
 
 The CI lookup excludes offerings and unusable states [E01]; no principal-class filter is set. [E02]
 Routing from the CI fills the group from `support_group` or, for changes, `assignment_group` (the
-*Change Group*). [E03] Two assignment rules route problems by CI class. [E04]
+*Change Group*), only when the group and assignee are empty and the CI is first set, and never for
+unauthorized change requests. [E03] Two assignment rules route problems by CI class. [E04]

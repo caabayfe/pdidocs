@@ -47,11 +47,15 @@ evidence:
 | Its state changes | the requester, every time [E04] |
 | It is assigned | the assignee [E05] |
 | It is put on or taken off hold | the requester [E06] |
-| An unauthorized change is detected on a CI | the CI's owners and the assignee [E07] |
 
 ### What reaches you {for=user}
 
 The approval request email; you can answer it by reply (see [Approve a change](see:approve)).
+
+### Unauthorized changes {for=operator}
+
+When a change nobody approved is detected on a configuration item (CI), the CI's owners and the
+assignee are emailed. [E07]
 
 ### Expect many {for=operator}
 

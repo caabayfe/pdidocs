@@ -15,7 +15,11 @@ evidence:
     result: incidents and problems hide CIs in operational states not allowed for new tasks
     hash: fb29844c2ed2602a3fab55d939a18eca34518a7f8a0a36f797fc2fad4a4e3f7c
 ---
-## Two statuses
+## What you notice {for=user}
+
+Applications and services that are no longer in use don't appear when you pick one. [E02]
+
+## Two statuses {for=operator}
 
 | Status | What it says | Values |
 |---|---|---|
@@ -24,11 +28,7 @@ evidence:
 
 [E01]
 
-### What you notice {for=user}
-
-Retired applications and services don't appear when you pick one.
-
-### Why it matters {for=operator}
+### Why it matters
 
 Incidents and problems can't name a CI whose state doesn't allow new work, such as a retired one.
 [E02] Keep the statuses right, or the CI you need won't be offered.

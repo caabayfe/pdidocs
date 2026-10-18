@@ -16,8 +16,8 @@ evidence:
   E03:
     record: sys_script/b6dae9e15317101034d1ddeeff7b1278
     field: script
-    how: 'read Change Model: Check State Transition'
-    result: governs changes with a model
+    how: 'read Change Model: Check State Transition (before, order 100, on changes with a model whose state changes)'
+    result: 'refuses a transition the model doesn''t allow: "Change model ''{0}'' prevented state transition from {1} to {2}", naming the failed transition conditions'
     hash: d3b37e4e63f6440f9f305b9946112dd1858f2771f5e3d31b091815d53d85347e
   E04:
     record: sys_script/f3fbe0d8cb200200d71cb9c0c24c9c93
@@ -65,6 +65,24 @@ evidence:
     how: read com.snc.change_management.enforce_data_requirements
     result: true
     hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
+  E12:
+    record: sys_script/104bb387b733130034d1da23ee11a9e9
+    field: script
+    how: read Mandatory Assignment Group (before insert and update, order 900)
+    result: 'when enforce_data_requirements is true, on a change with no model, not New or Canceled, without an assignment group: "Assignment group is mandatory for in-progress Change Requests", aborts'
+    hash: c502581059b056cb509c7924aae003ef0cadd31e92207e60ec73a571c314f2ac
+  E13:
+    record: sys_script/5529c11bb773130034d1da23ee11a95a
+    field: script
+    how: read Prevent Type change to Standard (before update, order 900)
+    result: 'when enforce_data_requirements is true and the type changes to standard: "Type cannot be changed to standard for Change Requests", aborts'
+    hash: 8d1fb3749bc623d2a72079a693c9a64badc5b621636c963a6b94e54c279eea6d
+  E14:
+    record: sys_script/ef0aee13373221003e7d40ed9dbe5dd0
+    field: script
+    how: read Planned Start/End Date validation (before insert and update, order 100)
+    result: 'when both planned dates are set: refuses an end before the start ("{0} must be after {1}") and an end more than 50 years after the start'
+    hash: 82c4f1e52c70cbf6313ac509a553e7d06b67b50606ebf6ba99e7dee97cb85fbe
 ---
 ## Models
 
@@ -72,6 +90,17 @@ Six change models are active; *Normal* is the default. [E02] With a model, *Chan
 State Transition* polices the states [E03]; the legacy state model only covers changes without a
 model. [E04] Create New opens the Next Experience page. [E01] Data requirements (mandatory fields per
 state, read-only fields) are enforced. [E11]
+
+## Server-side checks on save
+
+| Rule | When, order | Condition | Message, and the save is refused |
+|---|---|---|---|
+| **Planned Start/End Date validation** | before insert and update, 100 | both planned dates set | *"Planned end date must be after Planned start date"*, or the end is more than 50 years after the start [E14] |
+| **Mandatory Assignment Group** | before insert and update, 900 | data requirements on [E11], no model, state not New or Canceled, no assignment group | *"Assignment group is mandatory for in-progress Change Requests"* [E12] |
+| **Prevent Type change to Standard** | before update, 900 | data requirements on [E11], type changes to standard | *"Type cannot be changed to standard for Change Requests"* [E13] |
+
+The assignment group rule only covers changes without a model; on modelled changes the form policy
+asks for the group from *Assess* on (see [Raise a change](see:raise)).
 
 ## Risk
 

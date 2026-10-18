@@ -4,16 +4,14 @@ reviewed: 2026-10-17
 evidence:
   E01:
     record: sys_script/27453ac6b73610102d2fbc16de11a937
-    field: script
-    how: read the script (rule on task, before insert and update, order 100)
-    result: incident and problem use support_group of the CI or else the service offering; change uses assignment_group; only when group and assignee are empty and CI or offering changes from empty
-    hash: 0e3a958914d0876724533ef5bbe26decbf83e5305e020f9e5a2edcf725aa487c
+    how: read the filter, condition and script (rule on task, before insert and update, order 100)
+    result: incident and problem use support_group of the CI or else the service offering; change uses assignment_group; only when group and assignee are empty and CI or offering changes from empty; condition skips unauthorized change requests (sys_class_name change_request and unauthorized true)
+    hash: c862798729dd0aa29d354614c6d0615e575d3b6347f2f777c060654cde079661
   E02:
     record: sys_script/6a2e9d1453e80010833addeeff7b124f
-    field: script
-    how: read the script (before insert and update, order 100)
-    result: queries sys_user_grmember; aborts with "Assigned to user {0} must be member of Assignment group {1}"
-    hash: 9f31d0dbd6b934ea9eb65ec0d60f743202e360572543e22cdad5a59544b2f73a
+    how: read the script and its filter (before insert and update, order 100)
+    result: filter assigned_toISNOTEMPTY^assignment_groupVALCHANGES^assignment_groupISNOTEMPTY; queries sys_user_grmember; aborts with "Assigned to user {0} must be member of Assignment group {1}"; a change of assigned_to alone is not checked
+    hash: b41fef5642903ef5b4c95a14b9424211b8b06437bf74e7ea0508635c53128b02
   E03:
     record: sys_script/6fab2e470a0007045931f2a692878933
     how: read the rule (before insert and update, order 1100)
@@ -65,8 +63,8 @@ evidence:
 
 | Order | Rule | Effect |
 |---|---|---|
-| 100 | Populate Assignment Group based on CI/SO (on task) [E01] | group from the CI's or offering's support group |
-| 100 | Abort changes on group [E02] | assignee must belong to the group |
+| 100 | Populate Assignment Group based on CI/SO (on task) [E01] | group from the CI's or offering's support group, when group and assignee are empty and the CI or offering is first set; not for unauthorized change requests |
+| 100 | Abort changes on group [E02] | when the group changes to a value and an assignee is set, the assignee must belong to the group; changing only the assignee isn't checked server-side |
 | 1100 | Incident State Active on Assignment [E03] | New + assignee → In Progress |
 
 On the form, changing the group clears a non-member assignee. [E06] Only `itil` or

@@ -11,7 +11,7 @@ evidence:
     record: sys_script_include/a1b5e796531232000600e26b88dc3472
     field: script
     how: read canCloseIncident and canReopenIncident
-    result: close needs Resolved and itil_admin or the caller (major incident manager for accepted major incidents); reopen needs Resolved, not an accepted major incident, and itil, sn_incident_write, caller or opener
+    result: close needs Resolved and itil_admin, or the caller; for an accepted major incident (MIM plugin active), only the caller if they have any role, or major_incident_manager; reopen needs Resolved, not an accepted major incident, and itil, sn_incident_write, caller or opener
     hash: ffcaf34fa9847d8197f844f13f50d9cecdb73af98017c5d0871ec60750488aa8
   E03:
     record: sys_script_client/38c58af84657628200aeb11d8295f42c
@@ -42,7 +42,7 @@ evidence:
   E08:
     record: sys_properties/d5c62446c0a8011800cdf450892cec2d
     how: read glide.ui.autoclose.time and its value
-    result: integer days, 0 disables; write role incident_manager; value redacted in the mirror
+    result: value 7; integer days, 0 disables; read and write role incident_manager
     hash: 725d4f6c5c070aeeeeb21e1c2c0e6fed5512550900291b3eabd95b2a5014acf9
   E09:
     record: sys_script/bf3f8917c0a8016400a867dc0794e8ad
@@ -65,10 +65,35 @@ evidence:
     how: read IncidentSNC.reopen (email path)
     result: Resolved → In Progress with a work note; Closed → a new incident cloned for the sender
     hash: f941f9b9d0b7125a163b79f9dbeb850bdb35f6c9ee396538deeabd67519c8d58
+  E13:
+    record: sys_security_acl/a3128bf78c5143100a22deb6dd2b4eaf
+    how: read the incident delete ACL and its role (sys_security_acl_role af128bf78c5143100a22deb6dd2b4eaf)
+    result: allow delete, role itil_admin, admin overrides
+    hash: 7a76bf6f75c55edf13a5207fb8b503c8edb82762bcdceb5d3b79ada8f37967f6
+  E14:
+    record: sys_security_acl/f519b31a9d330210f877faf15ee3ece8
+    how: read the second incident delete ACL
+    result: deny delete unless the user satisfies the security attribute UserIsAuthenticated
+    hash: e872fea85a0c26aff6763cacc55879d5846f15c4b1effa6040b350bb0a35bfbe
+  E15:
+    record: sys_security_acl/80a7a096c0a8016662c872762163bbdc
+    how: read the incident create ACL, its description and script
+    result: allow create for role snc_internal when the script returns true; with the MIM plugin, an incident whose major_incident_state is accepted can only be created by major_incident_manager
+    hash: fadee1d960d2279a7fe706cf8973e668f9b4076590a60be4c90e642ec494ec1c
+  E16:
+    record: sys_security_acl/bf877f969d330210f877faf15ee3ec15
+    how: read the second incident create ACL
+    result: deny create unless the user satisfies the security attribute UserIsAuthenticated
+    hash: e98e6546bd5dd3d1dbda1b7b146d43b07e0f4b12eddf60202f02ec7a0faf92c4
 ---
 ## Permissions
 
-Close [E01] [E02]; only `itil_admin` sees *Closed* in the state list [E03]; reopen [E04] [E02].
+| Action | Allowed when | Record |
+|---|---|---|
+| Close | Resolved, and the user has `itil_admin` or is the caller | [E01] [E02] |
+| Close, accepted major incident | the caller only if they have any role, or `major_incident_manager` (or `itil_admin`) | [E02] |
+| *Closed* in the state list | `itil_admin` only | [E03] |
+| Reopen | Resolved, not an accepted major incident; `itil`, `sn_incident_write`, the caller or the opener | [E04] [E02] |
 
 ## Effects
 
@@ -80,11 +105,23 @@ Close [E01] [E02]; only `itil_admin` sees *Closed* in the state list [E03]; reop
 | Close | caller emailed | [E11] |
 | Email "please reopen" | resolved: reopened; closed: new incident | [E12] |
 
-## Auto close {label=CORRECTED}
+## Auto close
 
 The auto close rule [E07] closes resolved incidents not updated for `glide.ui.autoclose.time`
-days [E08]: **7** on pdi2. The mirror keeps typed property values since snagentic 2.1 (ADR-0034).
-The scheduled job that runs the rule isn't mirrored, so how often it runs is still unknown.
+days [E08]: **7**. Only `incident_manager` can read or change the property. [E08] The scheduled
+job that runs the rule isn't in the configuration snagentic reads, so how often it runs is still
+unknown.
+
+## Create and delete (ACLs)
+
+| Operation | Who | Record |
+|---|---|---|
+| Create | role `snc_internal` (any internal user); an incident already in *accepted* major incident state only by `major_incident_manager` | [E15] |
+| Create | denied unless the user is authenticated | [E16] |
+| Delete | role `itil_admin` only (admins override) | [E13] |
+| Delete | denied unless the user is authenticated | [E14] |
+
+Nobody with only `itil` can delete an incident: resolve it as *Duplicate* instead.
 
 ## Finding {label=OPEN-QUESTION}
 

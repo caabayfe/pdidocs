@@ -33,12 +33,6 @@ evidence:
     how: read the read ACLs on cmdb_ci_outage
     result: every one needs a role (itil, service_viewer, …)
     hash: 6444165c305e8a87ac90330bafe3758886f3af15afb3fb053e8ee6c279463a14
-  E07:
-    record: sys_properties/f4202de587dea110de52a64d0ebb35c3
-    field: value
-    how: read com.snc.iam.default_email_recipient_field
-    result: bcc
-    hash: a9b8efc5a481ac393e6fad94441247d18cc508a740ea59b83fc31cae7db4eb48
   E08:
     seen:
       by: 'Claude (snagentic session, signed in as admin)'
@@ -46,35 +40,80 @@ evidence:
       where: 'Employee Center home › System status quick link'
     how: 'followed the link'
     result: 'opens ?id=services_status: Current Status, Planned Maintenance, Status History'
+  E09:
+    record: sp_widget/065ce522d7001200a9addd173e24d46a
+    field: template
+    how: read the Planned Maintenance widget
+    result: 'planned outages "over the next 5 days"; "No service maintenance is planned over the next 5 days" when there are none'
+    hash: bd6e2ad98253e2966adc0c5788cfc71ccade65eb6b65b16e4cf8300e314b586b
+  E10:
+    record: sp_widget/1e699082d7001200a9addd173e24d4e3
+    field: template
+    how: read the Current Status widget
+    result: 'shows "No system is reporting an issue" when it finds no outage it can read'
+    hash: fc87af0bc18ecf576acd9cfbf161d6710b798f1df088a19e6348ba83abef8622
 ---
 ## When many people have the same problem
 
 {{animation:mimfollow}}
 
-Report it as usual, even if colleagues already have (see [Report an incident](see:incident/report)).
-When the service desk sees one failure behind many reports, it runs a **major incident** and
-links the reports to it. Nothing changes on your side: you keep your own incident number.
+When a failure stops many people at once, such as email down for everyone or an application
+nobody can open, the service desk runs one response for all of them, called a **major incident**.
+This page says what you see while that response lasts.
 
-## What you see on your incident
+## Before you start
 
-Your incident's page in Employee Center looks the same: it doesn't name the major incident. [E01]
-In its **Activity** tab you see updates the team posts for everyone affected, starting with
-*"Comment copied from Parent Incident:"*, and you get an email *"Comment added to …"* for each. [E02]
-[E03]
+- Report the problem as usual, even if colleagues already have (see
+  [Report an incident](see:incident/report)). Each report helps the team see how wide the
+  failure is.
+- Keep your own incident number: nothing changes on your side when your report becomes part of
+  the bigger response.
 
-When the failure is fixed, your incident is resolved with it: the activity says *"Resolved based
+## Follow it
+
+1. Open your incident in Employee Center. Its page looks the same as before: it doesn't name the
+   bigger response. [E01]
+2. Read its **Activity** tab. The team's updates for everyone affected appear there, starting with
+   *"Comment copied from Parent Incident:"*. [E02]
+3. Check your email: for each update you get *"Comment added to …"* with your incident number.
+   [E03]
+4. For news about services, open the **System status** quick link on the Employee Center home
+   page. It shows the **Current Status** of services, the **Planned Maintenance** over the next
+   5 days and the **Status History**. [E05] [E08] [E09]
+
+## What happens next
+
+When the failure is fixed, your incident is resolved with it. Its activity says *"Resolved based
 on resolution of Parent Incident."* and you get the usual *"… was resolved"* email. [E02] [E04]
-If it still doesn't work for you, reopen it as usual (see
-[Confirm the fix, or reopen](see:incident/confirm)).
 
-## System status {label=OPEN-QUESTION}
+## Emails you get
 
-Employee Center's quick link **System status** opens a page with the **Current Status** of
-services, **Planned Maintenance** for the next five days and the **Status History**. [E05] [E08] On pdi2 the outage data behind it is readable only with a
-support role [E06], so as an employee you may see *"No system is reporting an issue"* even during
-an outage. Check this as an employee before relying on the page.
+| When | Email |
+|---|---|
+| The team posts an update for everyone affected | *"Comment added to …"* [E03] |
+| The failure is fixed and your incident is resolved | *"… was resolved"* [E04] |
 
-## Announcements to all users
+## Tips
 
-During a major incident the team may also send a communication to users; it comes by email, with
-recipients in blind copy. [E07]
+- Don't report the same failure twice: add what you see to your existing incident's
+  **Activity** instead.
+- If it still doesn't work for you after the fix, reopen your incident (see
+  [Confirm the fix, or reopen](see:incident/confirm)).
+- If the System status page says nothing is wrong while you still can't work, follow your
+  incident's updates: they come from the team working on the failure.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| report the problem | [Report an incident](see:incident/report) |
+| follow my own incident | [Follow your incident](see:incident/follow) |
+| reopen it after the fix | [Confirm the fix, or reopen](see:incident/confirm) |
+| reach IT another way | [Ways to get help](see:getting-help/channels) |
+
+### Can employees read the System status page? {label=OPEN-QUESTION}
+
+The outage records behind **System status** are readable only with a support role
+[E06], so an employee may see *"No system is reporting an issue"* even
+during an outage. [E10] Platform team: sign in as an employee during an outage and confirm what the page
+shows, then decide whether employees should be pointed to it.

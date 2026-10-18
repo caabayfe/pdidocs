@@ -85,9 +85,9 @@ for the queue); **Create New** opens an empty form.
    | Password Reset | (none) |
 
 5. In **Impact**, the **Configuration item**: the device, application or service affected. Choosing it can fill the
-   support team for you (see *Assign an incident* and
+   support team for you (see [Assign an incident](see:assign) and
    [Choose the right configuration item](see:cmdb/choose-ci)).
-6. **Impact** and **Urgency**: see *Set the priority*. The **Priority** fills in by itself.
+6. **Impact** and **Urgency**: see [Set the priority](see:prioritise). The **Priority** fills in by itself.
 7. **Short description**: one line a colleague understands without opening the incident, such as
    *"VPN disconnects every 5 minutes from home"*. **Caller** and **Short description** are
    required. [E01]
@@ -97,10 +97,10 @@ for the queue); **Create New** opens an empty form.
 ## If you can fix it on the call
 
 Assign it to yourself, write what you did in the resolution notes, and resolve it straight away
-(see *Resolve an incident*). This is still worth logging: it shows how often things happen.
+(see [Resolve an incident](see:resolve)). This is still worth logging: it shows how often things happen.
 
 ## Tips
 
 - Search for open incidents with the same configuration item before you log a new one; it may
-  be part of something bigger (see *Escalate and link related work*).
+  be part of something bigger (see [Escalate and link related work](see:escalate)).
 - Write the short description for the next person, not for yourself.

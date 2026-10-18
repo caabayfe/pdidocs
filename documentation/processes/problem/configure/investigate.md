@@ -41,6 +41,27 @@ evidence:
     how: read problem.closed.can_create_tasks
     result: false
     hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E08:
+    record: sys_script/a7e06f3b531c23004247ddeeff7b1279
+    field: script
+    how: read Check related Problem Task closure (problem_task, after update, order 100, active changes to false)
+    result: queues problem.problem_tasks.closed when the problem has no active task left
+    hash: 3f2b410f6e9f594608770791a07f767cbed70eabffe9a5e90ad6e2fc2630cfd2
+  E09:
+    record: sys_ui_action/2ee7ab72539b13004247ddeeff7b1288
+    how: read Cancel (problem_task form button, order 600)
+    result: condition canWrite and ProblemTaskStateUtils.isAllowedToCancel; closes the task with close code canceled through ptask_cancel_dialog_view
+    hash: 7be3c18b342b91614b4720aa9284895d73058211213c24d03ce5e89995e4a53e
+  E10:
+    record: sys_ui_action/e2542b32539b13004247ddeeff7b12c4
+    how: read Re-Assess (problem_task form button, order 500)
+    result: condition ProblemTaskStateUtils.isAllowedToReAssess; sets the task back to Assess
+    hash: 89501bb85dde0add02d4dec77c152292459197718b9929ea0521873c4ed5537d
+  E11:
+    record: sysevent_email_action/c02410c8532c23004247ddeeff7b1284
+    how: read Problem Tasks closed
+    result: 'on problem.problem_tasks.closed, to assigned_to and work_notes_list; "… problem tasks are completed or canceled"'
+    hash: 8ba83cc1e3fb0608e4784ae23fc1d9600dd1a6930177a937d6221722324bd23d
 ---
 ## Transitions
 
@@ -52,3 +73,13 @@ New problem saved with one moves to Assess by itself. [E03]
 Task models are *General* and *Root Cause Analysis*. [E04] Completing or canceling a task needs
 `problem_task_analyst` [E05]; a completed root cause analysis needs a cause code [E06]. No task can
 be created on a closed problem. [E07]
+
+## Task actions and closure
+
+| Order | Record | When | Effect |
+|---|---|---|---|
+| 500 | Re-Assess (form button) [E10] | `isAllowedToReAssess` | back to Assess |
+| 600 | Cancel (form button) [E09] | `isAllowedToCancel`: Assess or Work in Progress | Closed, close code *canceled* |
+| after, 100 | Check related Problem Task closure [E08] | a task becomes inactive | when none is left, `problem.problem_tasks.closed` |
+
+The event sends *Problem Tasks closed* to the problem's assignee and work notes list. [E11]

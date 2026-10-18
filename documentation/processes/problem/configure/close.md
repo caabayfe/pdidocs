@@ -37,14 +37,52 @@ evidence:
     how: read problem.duplicate.records_to_move
     result: value not in the mirror
     hash: 1b5563d2a3c636b9b84bc332c962c023362cf1b11fa2f805ee7a700b4acccbac
+  E07:
+    record: sys_script/0f6e097087a313000e3dd61e36cb0b71
+    field: script
+    how: read Update fields on Re-analyzing a Problem (before update, order 110, state changes from Closed, Resolved or Fix in Progress to Root Cause Analysis)
+    result: from Resolved or Closed, stamps reopened at and by, increments reopen count, clears closed and resolved stamps, close notes and resolution code; always clears fix at and by
+    hash: e462d1fbdcaaabe9cb6c416e7115184041cedb7980673f6cf88e112cc56171b4
+  E08:
+    record: sys_script_include/f8b66716871313000e3dd61e36cb0b77
+    field: script
+    how: read ProblemStateUtilsSNC (canShowAcceptRisk, canMarkDuplicateOrCancel, canReAnalyze)
+    result: Accept Risk from Root Cause Analysis or Fix in Progress; Mark Duplicate and Cancel from Assess or Root Cause Analysis; Re-Analyze from Fix in Progress, Resolved, or Closed by the role in the matching property, never for a duplicate
+    hash: 8d690cd0a55837e341f6658b47c51560e80fffe2583333d73bbed9fa4a23668e
+  E09:
+    record: sys_ui_action/39d088a487a313000e3dd61e36cb0bc3
+    how: read Accept Risk (form button, order 190)
+    result: condition canWrite and canShowAcceptRisk; opens the accept_risk_dialog_form_view dialog when required fields are missing
+    hash: 108939f4eef5838b563ef26a23dce698675312dbf57b687e8cc9a8ff3867ea4d
+  E10:
+    record: sys_ui_action/e7ef379487a313000e3dd61e36cb0bde
+    how: read Cancel (problem form button, order 180)
+    result: condition canWrite and canMarkDuplicateOrCancel; closes with resolution code canceled through cancel_dialog_form_view
+    hash: d93e8718db5ac3a5b70b180e6c1d39403d7b6db0ac4e90f11752e4d0a2eeaebe
 ---
+## Actions
+
+| Order | Action | Condition | Result |
+|---|---|---|---|
+| 150 | Re-Analyze | `canReAnalyze` [E08] | Root Cause Analysis |
+| 160 | Mark Duplicate | `canMarkDuplicateOrCancel` [E08] | Closed, *Duplicate* |
+| 180 | Cancel [E10] | `canMarkDuplicateOrCancel` [E08] | Closed, *Canceled* |
+| 190 | Accept Risk [E09] | `canShowAcceptRisk` [E08] | Closed, *Risk Accepted* (the property moves it to Closed) [E01] |
+
 ## Accepting the risk
 
 Goes straight to Closed. [E01] Re-analyzing a canceled or risk-accepted problem needs the problem
 manager role [E02] [E03]; closed problems are read-only. [E04] The close fields are relabelled to
 match how it closed. [E05]
 
+## Re-analyzing
+
+**Update fields on Re-analyzing a Problem** (before, order 110) runs when the state moves back to
+Root Cause Analysis: from Resolved or Closed it records the reopening and clears the resolution
+fields, so the problem can be resolved again. [E07]
+
 ## Duplicates {label=OPEN-QUESTION}
 
-Which records move to the original when a problem is marked a duplicate comes from a property
-whose value isn't in the mirror. [E06]
+Which records move to the original when a problem is marked a duplicate comes from
+`problem.duplicate.records_to_move`, readable only by problem managers, and its value was
+withheld from the records read. [E06] Platform team: confirm which related records move.

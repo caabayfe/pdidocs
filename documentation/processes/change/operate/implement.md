@@ -43,6 +43,16 @@ evidence:
     how: read Update Conflicts
     result: checks for conflicts when the state, CI or dates change
     hash: c9284ed4578e417bee51b5daa29baf80a75ee993b9240855e643a3ca4a5a377c
+  E09:
+    record: sys_script/01c05fa25323101034d1ddeeff7b125a
+    how: 'read Change Model: Set work start (before, order 100)'
+    result: on Normal, Standard and Emergency changes moving to Implement, sets Actual start if empty
+    hash: 96528422452a992ffdf708215d7038696ecb77d613550510202a26818736e460
+  E10:
+    record: sys_script/0b0217e25323101034d1ddeeff7b1206
+    how: 'read Change Model: Set work end (before, order 100)'
+    result: on Normal, Standard and Emergency changes moving to Review, sets Actual end if empty
+    hash: 894a541709766e5ce036e1cf351c9b738f81642e4a284cc6c9a131fbf7fb86db
 ---
 ## Schedule
 
@@ -59,4 +69,12 @@ At the start of the window press **Implement**. [E02] The change gets two **chan
 Progress → Closed** and needs a close code and notes unless it is a planning task. [E04] [E06]
 Press **Close Task** when done; tasks can't be closed while the change is on hold. [E05]
 
-Record the actual start and end in the **Schedule** section.
+**Actual start** is filled in when the change moves to *Implement*, and **Actual end** when it
+moves to *Review*, unless you set them yourself first. [E09] [E10] Check them in the **Schedule**
+section if the work started or ended at another time.
+
+## Tips
+
+- Press **Implement** when the work really starts: it stamps the actual start. [E09]
+- Take the change off hold before closing its tasks. [E05]
+- Look at the **Conflicts** tab again after moving the dates. [E08]

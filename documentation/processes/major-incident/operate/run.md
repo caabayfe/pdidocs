@@ -41,32 +41,76 @@ evidence:
     how: read sow_email_notification_redirect
     result: false, so links in major incident emails open the classic workbench
     hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E08:
+    record: sys_ui_page/7b4bd5635f380300f51ca184ff466650
+    field: html
+    how: read the workbench page's Conference tab
+    result: the Conference tab shows only when the Notify conference call table exists (notifyInstalled)
+    hash: b5e33025e2dc3ba9739d42076bbc91b9f5d601efd4a5ee281fb478a3c26372bb
+  E09:
+    record: sys_properties/5a6d11fb87e833000e3dd61e36cb0b5c
+    field: value
+    how: read com.snc.iam.enable_notify
+    result: false
+    hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E10:
+    record: sys_script_include/bfcef2985310130009170ef5d5dc3453
+    field: script
+    how: read CommunicationManagementChannelConferenceConfigSNC
+    result: the conference channel is available only when Notify is enabled or a Notify number is set
+    hash: e069a049351676773dd8029cf3ca3da570c99189a6a7630da2a51c7ae6237d07
+  E11:
+    record: sysevent_email_action/06a3a735d7111200a9addd173e24d435
+    how: read Service Outage Start
+    result: to people subscribed to a service, when an outage of it begins
+    hash: 53184edbbbf0545d5ce49d46fd627aafc1e6aebf0d192dfdf9422493af7a490e
+  E12:
+    record: sp_widget/1e699082d7001200a9addd173e24d4e3
+    field: script
+    how: read the Employee Center Current Status widget
+    result: lists current outages from cmdb_ci_outage, with the viewer's read access
+    hash: 519b9b6a000ec5dc6d72c595906a3fb588ffa38452e962c5b860f6e09f27187a
 ---
 ## Find your major incidents
 
-**Major Incidents › Open** lists the active major incidents. [E03] On the form, the **Major
-Incident** section shows its state and who proposed and promoted it, and when. [E04] The
-workspace form has the same section. [E05]
+**Major Incidents › Open** (classic navigator) lists the active major incidents. [E03] On the
+classic form, the **Major Incident** section shows its state, who proposed and promoted it, and
+when; it also holds the **Business impact** and the cause. [E04] The workspace form has the same
+section without those two fields. [E05]
 
-## The workbench
+## Open the workbench
 
 {{animation:mimrun}}
 
-Press **View Workbench** on the major incident. [E01] It brings the response together: the
-**Summary**, **Communication**, a **Conference** bridge, **Participants**, **Child Incidents**,
-**Affected CIs** and **Impacted Services/CIs**, **Create Outage**, the **Email Log**, **Activity**
-and **Notes**. [E02] Links in major incident emails open it too. [E07]
+1. Open the major incident on the **classic form** and press **View Workbench**. [E01] In the
+   workspace the action is switched off. [E06]
+2. The workbench opens. It brings the response together: the **Summary**, **Communication**,
+   **Participants**, **Child Incidents**, **Affected CIs** and **Impacted Services/CIs**,
+   **Create Outage**, the **Email Log**, **Activity** and **Notes**. [E02]
 
-### From the workspace {label=OPEN-QUESTION}
+Links in major incident emails open the classic workbench too. [E07]
 
-In the Service Operations Workspace the workbench action is switched off, so open the workbench
-from the classic form. [E06] pdi2 has no major incident yet, so how the workbench looks there
-hasn't been checked on screen.
+## The conference bridge
+
+The workbench shows a **Conference** tab only when Notify conference calls are installed [E08],
+and Notify is switched off here [E09], so the conference channel isn't offered either. [E10] Hold
+the bridge in your usual meeting tool and post how to join in the **Work notes**.
 
 ## Keep the record useful
 
 - Keep **Business impact** current: it is what managers read first.
 - Log decisions and findings in **Work notes**; write to affected users in **Additional
   comments**, which reach every linked incident (see [Link the other reports](see:link)).
-- Record outages of services with **Create Outage**, so the status page and subscribers know
-  (see [Follow an outage](see:follow)).
+- Record outages of services with **Create Outage**. An outage record emails the service's
+  subscribers when it starts [E11] and appears on Employee Center's status page for those who can
+  read it [E12] (see [Follow an outage](see:follow)).
+
+## What happens next
+
+Keep people informed with [Communicate](see:communicate), and when the fix is confirmed,
+[Resolve, demote and review](see:review).
+
+### The workbench on screen {label=OPEN-QUESTION}
+
+No major incident exists yet, so nobody has checked on screen which workbench opens and how it
+looks. Platform team: open one on a test major incident and confirm the tabs listed above.

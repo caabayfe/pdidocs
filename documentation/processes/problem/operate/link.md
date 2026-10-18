@@ -43,7 +43,7 @@ evidence:
 {{animation:prblink}}
 
 Open each incident and set **Problem** in its **Related Records** section, on the classic form or
-in the workspace. [E01] [E02] The problem form doesn't list its incidents on pdi2, so link from the
+in the workspace. [E01] [E02] The problem form doesn't list its incidents, so link from the
 incident side. [E03]
 
 Only a problem coordinator can link a closed incident. [E06]

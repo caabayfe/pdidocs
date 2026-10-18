@@ -31,4 +31,4 @@ editing CIs?
 
 ## Data owners
 
-Ask CI owners to fill the **Support group** [E04] and Change Group: on pdi2 most CIs have neither.
+Ask CI owners to fill the **Support group** [E04] and Change Group: most CIs here have neither.

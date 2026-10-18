@@ -45,12 +45,12 @@ evidence:
   E09:
     record: contract_sla/d1524982d732220035ae23c7ce61035d
     how: read Priority 3 resolution (1 day)
-    result: 1 working day
+    result: 24 hours counted on the 8-5 weekdays schedule, about 3 working days; in the caller's time zone
     hash: e9682237f5365dd36c949d758a2fa0f6040699b162d339f23814bc2e34f2b710
   E10:
     record: contract_sla/b12a37e0d7322200f2d224837e6103ea
     how: read Priority 4 resolution (2 day)
-    result: 2 working days
+    result: 48 hours counted on the 8-5 weekdays schedule, about 5 to 6 working days; in the caller's time zone
     hash: d4c1db0aa4ada94efcaf85a61c26499799f2468f7f34828c6ebd44f0981435db
   E11:
     record: sc_cat_item_producer/3f1dd0320a0a0b99000a53f7604a2ef9
@@ -62,6 +62,12 @@ evidence:
     how: read Worknotes mandatory onChange of priority
     result: work notes are mandatory when the priority changes on an existing incident
     hash: 85e1e0ad4eb9c3abd45d92b342ccb970bc5edae319c7179f8ac28b106d849498
+  E13:
+    record: sysevent_in_email_action/3ccfeff5c611227a0180144333c87af9
+    field: script
+    how: read the inbound action Create Incident
+    result: an email with High importance sets impact 1 and urgency 1
+    hash: b1e9915d2c85acdfcc5a9a1e74bd8edc1506790b564ecb508e7ad28cd23614e7
 ---
 ## How urgent is it?
 
@@ -83,10 +89,16 @@ When you report an incident you choose only the **urgency**: how much it stops y
 now. [E11] The service desk judges the impact, for example when many colleagues report the same
 thing. Choose *High* only when you really can't work; it moves your incident ahead of others.
 
+By email it works differently: an email marked **High importance** sets both the impact and the
+urgency to the highest, so the incident becomes **1 - Critical**. [E13] Use it only when that is
+true.
+
 ### What you choose {for=operator}
 
 You set both **Impact** and **Urgency**; the **Priority** field fills in and is read-only. A caller
-on the portal sets only the urgency, so check the impact when you pick the incident up. When you
+on the portal sets only the urgency, so check the impact when you pick the incident up. An email
+marked **High importance** sets both to *High*, so it arrives as **1 - Critical**: check that it
+really is. [E13] When you
 change the priority of an existing incident, a work note saying why is required. [E12]
 
 {{animation:incprio}}
@@ -100,11 +112,11 @@ The priority sets two deadlines: a **first response** (someone has taken the inc
 |---|---|---|---|
 | 1 - Critical | 15 minutes [E03] | 1 hour [E07] | around the clock |
 | 2 - High | 1 hour [E04] | 8 hours [E08] | weekdays 8:00 to 17:00 |
-| 3 - Moderate | 4 hours [E05] | 1 working day [E09] | weekdays 8:00 to 17:00 |
-| 4 - Low | 8 hours [E06] | 2 working days [E10] | weekdays 8:00 to 17:00 |
+| 3 - Moderate | 4 hours [E05] | 24 working hours, about 3 working days [E09] | weekdays 8:00 to 17:00 |
+| 4 - Low | 8 hours [E06] | 48 working hours, about 5 to 6 working days [E10] | weekdays 8:00 to 17:00 |
 
-The fix deadline stops counting while the service desk is waiting for the caller, and while the
-incident is resolved waiting for confirmation. [E07]
+The fix deadline stops counting while the service desk is waiting for the person who reported
+it, and while the incident is resolved waiting for confirmation. [E07]
 
 ### What this means for you {for=user}
 
@@ -113,6 +125,7 @@ incident waits too.
 
 ### What this means for you {for=operator}
 
-The incident's deadlines are in its **Task SLAs** list. Waiting for a change, a problem or a vendor
-does **not** stop the fix deadline; only waiting for the caller does. The full list of SLA
-definitions, including group OLAs, is on the configuration page of *Work on an incident*.
+The incident's deadlines are in its **Task SLAs** list. Working hours are counted in the caller's
+time zone. [E09] [E10] Waiting for a change, a problem or a vendor
+does **not** stop the fix deadline; only waiting for the caller, and being resolved, do. [E07] The full list of SLA
+definitions, including group OLAs, is on [Working an incident - configuration](see:incident/configure/work).

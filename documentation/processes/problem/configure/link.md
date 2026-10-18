@@ -21,9 +21,10 @@ evidence:
     hash: 1c2d65c3e452fdcaee4a8dc239317d4c10f7c526a0b4e062efa0190421012715
   E04:
     record: sys_script/8e8cab430a0a3c7401c47494518a481a
-    how: read Update Problem Incident Count
-    result: keeps problem.related_incidents current
-    hash: 800beeeb5e028f6ba32605c04af2b48496c371936803a477c8f7f2339ef8b943
+    field: script
+    how: read Update Problem Incident Count (incident, after insert, update and delete, order 100, when problem_id changes)
+    result: recounts the incidents of the new and the previous problem into problem.related_incidents
+    hash: aa495d8ad4db7f3a88c979aa85d4fa3c5f8344bde319a923210b8f07068de9b7
   E05:
     record: sys_security_acl/a21542c7ffe47210549fffffffffffca
     how: read incident.problem_id write for closed incidents
@@ -46,7 +47,7 @@ evidence:
 
 The Default view lists `incident.problem_id` first [E01], but the form shows no Incidents list on
 screen. [E02] Its *Add* button depends on `com.snc.incident.link_to_task.problem`, whose value
-isn't in the mirror. [E03] Check the form's related lists and that property: without the list,
+is readable only by problem admins; its value was withheld from the records read. [E03] Check the form's related lists and that property: without the list,
 the coordinator can't see the linked incidents from the problem.
 
 ## How links behave

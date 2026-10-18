@@ -6,7 +6,7 @@ evidence:
     record: sys_script/2bc2f9b1c0a801640199f9eb0067326e
     field: script
     how: read the before-query rule incident query
-    result: without itil or sn_incident_read, interactive sessions see caller_id = me OR opened_by = me OR watch_list contains me
+    result: without itil or sn_incident_read, interactive sessions see caller_id = me OR opened_by = me OR watch_list contains me; not restricted at all for service_viewer, sn_sow_srm.srm_responder, and with their plugins active wm_ext_agent (sn_fsm_itsm_mng), sn_hamp.ham_user (com.sn_hamp), sn_ot_incident_read (com.sn_ot_inc_mgmt)
     hash: ad5e561c6e03bfd11c79d467397c72a763bb6d7e39e7929f893fea7c25750e72
   E02:
     record: sys_app_application/08771d0cc0a8016401f604303b94b999
@@ -46,8 +46,25 @@ evidence:
 ---
 ## What the caller sees
 
-Query restriction for non-agents. [E01] Self-Service menu modules. [E02] The self-service form
+Query restriction for non-agents: they see only incidents they are the caller of, opened, or
+watch. [E01] Self-Service menu modules. [E02] The self-service form
 view has comments but no work notes. [E03] The portal ticket page and its actions. [E04]
+
+### Roles that see every incident
+
+These roles skip the restriction and can read **all** incidents, without `itil` or
+`sn_incident_read` [E01]:
+
+| Role | Condition |
+|---|---|
+| `service_viewer` | always |
+| `sn_sow_srm.srm_responder` | always |
+| `wm_ext_agent` | plugin `sn_fsm_itsm_mng` active |
+| `sn_hamp.ham_user` | plugin `com.sn_hamp` active |
+| `sn_ot_incident_read` | plugin `com.sn_ot_inc_mgmt` active |
+
+Review who holds them: incidents can carry personal and security details. The restriction also
+applies only to interactive sessions; integrations and scripts aren't filtered by it. [E01]
 
 ## Caller interactions
 

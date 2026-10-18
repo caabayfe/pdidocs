@@ -60,7 +60,42 @@ evidence:
       where: 'classic change form, CHG0000036'
     how: 'read the tabs and buttons'
     result: 'tabs Planning, Schedule, Conflicts, Notes, Closure Information; buttons Request Approval, Update, Delete; Related Links Calculate Risk'
+  E11:
+    record: sys_ui_action/2f596102c0a8006400a40575087b60b2
+    field: script
+    how: read Create Normal Change (problem form menu)
+    result: 'creates a normal change with the problem''s short description, description, CI and priority, sets it as the problem''s change request, "Change {0} created", opens the change'
+    hash: 41c051453c928a8690592e9b2778a87517bb81a453bbcd82884db7a5370ea67a
+  E12:
+    record: sys_ui_action/ff73cfec533273005e32ddeeff7b1209
+    how: read Create Standard Change (problem form menu)
+    result: on the problem form menu
+    hash: bda97ba4a26daea8a7df545964487fbb405a48f4c22495eda938d08d4cbd67c9
+  E13:
+    record: sys_ui_action/728aad41c30202003d2ae219cdba8fcd
+    how: read Create Emergency Change (problem form menu)
+    result: on the problem form menu
+    hash: 84f4e982063961e245a193b1fc47bdab9fd67d346567f131915e87b0b4d21ac4
+  E14:
+    record: sys_ui_section/991fec850a0006417c9edda2d4e9c487
+    children: sys_ui_element
+    how: read the incident form's Related Records section
+    result: parent incident, problem, change request, caused by
+    hash: 526106c5de8d52363e7206a84285e6340d6a053bcea1c13b9525361fdf9964f7
+  E15:
+    record: sys_db_object/b0e4363b8c5503100a22deb6dd2b4e97
+    children: sys_choice
+    how: read the incident's resolution codes
+    result: includes Resolved by change
+    hash: 438604df7c0701185679ccf5f78a95effda35ae621060096b2ab78a53ec5cac2
 ---
+## Where it comes from
+
+| The change fixes… | Start from | Then |
+|---|---|---|
+| a **problem** | the problem's form menu: **Create Normal Change**, **Create Standard Change** or **Create Emergency Change** [E11] [E12] [E13] | the change opens with the problem's short description, description, CI and priority, and the message *"Change CHG… created"*; the problem points to it [E11]. See [Fix and resolve](see:problem/fix). |
+| an **incident** | **Change › Create New** (below) | set the change in the incident's **Related Records › Change request** [E14]; when the change has fixed it, resolve the incident with **Resolved by change** [E15]. See [Resolve an incident](see:incident/resolve). |
+
 ## Start it
 
 {{animation:chgraise}}
@@ -86,3 +121,10 @@ press it. [E07] A start less than three days away makes the risk *High*. [E08] T
 approves (see [Who approves](see:approvals)).
 
 Then request approval: [Get it approved](see:authorize).
+
+## Tips
+
+- Raising it from the problem copies the details and links both records: prefer it to a blank
+  change when a problem exists. [E11]
+- Fill the plans before pressing **Request Approval**: approvers read them. [E04]
+- Plan the start at least three days ahead, or the risk becomes *High*. [E08]

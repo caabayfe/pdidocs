@@ -25,12 +25,12 @@ evidence:
   E05:
     record: contract_sla/35420982d732220035ae23c7ce610393
     how: read Priority 1 resolution (1 hour)
-    result: the resolution deadline pauses while On Hold - Awaiting Caller and while Resolved
+    result: the resolution deadline pauses while On Hold - Awaiting Caller and while Resolved, and stops at Closed
     hash: 6157ef1df804d16a5907062d37e4c485a8acec29cf19eaeb923f59159f793aa9
   E06:
     record: sysevent_script_action/315aa414534123004247ddeeff7b1240
     how: read Update Incident when Problem closes
-    result: incidents On Hold - Awaiting Problem are resolved when the problem is fixed
+    result: "incidents On Hold - Awaiting Problem are resolved when the problem's resolution code is fix_applied; with risk_accepted they only get a work note"
     hash: 79e29d77e4e35595e57cc10caba2d772119cbbe0fc18a4751582359604a95070
   E07:
     record: sys_ui_section/4059739977453010dc2c885d9f5a9911
@@ -38,6 +38,21 @@ evidence:
     how: read the workspace form's Notes section
     result: work notes, additional comments, the activity stream, actions taken
     hash: 2adf9dd40253048e69440d4fbe30041cb4bd56e1c625d15f8edc82ee3b817837
+  E08:
+    record: sys_script_client/ed5392f3c3122200b6dcdfdc64d3ae96
+    how: read Worknotes mandatory onChange of priority
+    result: a work note is required when the priority of an existing incident changes
+    hash: 85e1e0ad4eb9c3abd45d92b342ccb970bc5edae319c7179f8ac28b106d849498
+  E09:
+    record: sys_script/ac79b245c31b220035ae3f52c1d3ae77
+    how: read Clear On Hold Reason
+    result: leaving On Hold clears the On hold reason
+    hash: 05bc25fd736b7f0fe3cef91e841f18031074ba38eb5caf397e0bb910bce78fd6
+  E10:
+    record: sys_script/162581e087133200b4ae6c5837cb0b1a
+    how: read Incident State Change to In Progress
+    result: a comment from the caller while On Hold - Awaiting Caller puts the incident back to In Progress
+    hash: f4a62fc198d894d826c0208e5e0e606e78139e16118c59d6c52e02bd8be29828
 ---
 ## Talk to the right audience
 
@@ -55,26 +70,31 @@ Set **State** to **On Hold** and choose the **On hold reason**. [E01]
 
 | Reason | Use it when | What happens |
 |---|---|---|
-| **Awaiting Caller** | you need information or a test from the caller | write your question in *Additional comments* (required) [E02]; the fix deadline stops; the caller's reply puts it back to *In Progress* |
-| **Awaiting Change** | the fix needs a planned change | link the change in *Related Records* |
-| **Awaiting Problem** | the cause is being worked on as a problem | link the problem; when it is fixed, the incident is resolved for you [E06] |
-| **Awaiting Vendor** | a supplier must act | note the vendor's reference in the work notes |
+| **Awaiting Caller** | you need information or a test from the caller | write your question in *Additional comments* (required) [E02]; the fix deadline stops [E05]; the caller's reply puts it back to *In Progress* [E10] |
+| **Awaiting Change** | the fix needs a planned change | link the change in *Related Records* (see [Raise a change](see:change/raise)); nothing takes it off hold for you when the change is done |
+| **Awaiting Problem** | the cause is being worked on as a problem | link the problem (see [Link incidents to a problem](see:problem/link)); when the problem is closed as *Fix applied*, the incident is resolved for you; if the problem team accepts the risk instead, you only get a work note and the incident stays on hold [E06] |
+| **Awaiting Vendor** | a supplier must act | note the vendor's reference in the work notes; nothing takes it off hold for you |
 
-When you take it off hold, set the state back to **In Progress**; the reason clears.
+Only *Awaiting Problem* ends by itself, and only for a fixed problem. [E06] For the other reasons,
+you take the incident off hold.
+
+When you take it off hold, set the state back to **In Progress**; the reason clears. [E09]
 
 ## Deadlines
 
 The incident shows its SLAs (the deadlines) in the **Task SLAs** list at the bottom of the form.
-Watch the **response** deadline (someone has taken it) and the **resolution** deadline (it is
-fixed and closed). The resolution deadline stops while you wait for the caller, and while the
-incident is resolved waiting for confirmation. Waiting for a change, a problem or a vendor does
-**not** stop it. [E05]
+Watch the **response** deadline (someone has taken it) and the **resolution** deadline. The
+resolution deadline pauses while you wait for the caller and from the moment you resolve the
+incident, and it completes when the incident closes. So it is met when you **resolve** the
+incident in time, as long as it isn't reopened. Waiting for a change, a problem or a vendor does
+**not** pause it. [E05]
 
 {{animation:inclife}}
 
 ## Changing the priority while you work
 
 If the impact or urgency changes, update them. You must add a work note explaining the change.
+[E08] See [Set the priority](see:prioritise).
 
 ## Tips
 

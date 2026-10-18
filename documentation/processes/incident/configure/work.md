@@ -26,7 +26,7 @@ evidence:
     record: sysevent_script_action/315aa414534123004247ddeeff7b1240
     field: script
     how: read the script action on problem.state_change
-    result: when the problem's resolution code is fix_applied or risk_accepted, resolves linked incidents on hold for Awaiting Problem
+    result: 'incidents with this problem_id, On Hold, hold reason 3 (Awaiting Problem): fix_applied resolves them (close code Resolved by problem, work note with the fix notes, event incident.resolved_by_problem); risk_accepted only adds a work note and queues incident.updated_by_problem'
     hash: 05ad6dee5b208584f1f5ea888e7cb64d0efa10da0a9cb80903a7db107fb633dd
   E06:
     record: sysevent_email_action/0d51edbac0a80164006963b000ff644e
@@ -67,27 +67,27 @@ evidence:
   E13:
     record: contract_sla/d1524982d732220035ae23c7ce61035d
     how: read Priority 3 resolution (1 day)
-    result: 1 day on 8-5 weekdays
+    result: duration 24 h counted on the 8-5 weekdays schedule (24 business hours, about 3 working days); time zone from the caller
     hash: e9682237f5365dd36c949d758a2fa0f6040699b162d339f23814bc2e34f2b710
   E14:
     record: contract_sla/b12a37e0d7322200f2d224837e6103ea
     how: read Priority 4 resolution (2 day)
-    result: 2 days on 8-5 weekdays
+    result: duration 48 h counted on the 8-5 weekdays schedule (48 business hours, about 5 to 6 working days); time zone from the caller
     hash: d4c1db0aa4ada94efcaf85a61c26499799f2468f7f34828c6ebd44f0981435db
   E15:
     record: contract_sla/ba320982d732220035ae23c7ce610347
     how: read Network group resolution (OLA)
-    result: 4 h, no schedule, for one network group
+    result: 4 h, no schedule, for one network group; retroactive false
     hash: 6849c0eec1ffe5b482cf495acc8d91437f2cda28ec7b8ab78dbc770b0f0f59bc
   E16:
     record: contract_sla/b222c582d732220035ae23c7ce6103a7
     how: read Database group resolution (P1 only, OLA)
-    result: 1 h, no schedule
+    result: 1 h, no schedule; retroactive false
     hash: 5cb4335dc3b645c084d6c989f13f40a3f7cd8bc37f8b5e8585d73b9abb5a1635
   E17:
     record: contract_sla/3b524982d732220035ae23c7ce6103e4
     how: read SAN 001 contract resolution (underpinning contract)
-    result: 3.5 h, for one CI
+    result: 3.5 h, for one CI; retroactive false
     hash: 2bdb2fd131cf6b8b6f5cc3ba0352a27192fac949838c7114c1e2a01eddb161b6
   E18:
     record: contract_sla/2ca94b74c3143200b6dcdfdc64d3ae93
@@ -103,17 +103,24 @@ evidence:
 ## On hold
 
 Reason mandatory [E01]; comments mandatory for Awaiting Caller [E02]; reason cleared when leaving
-On Hold [E03]; caller reply resumes [E04]; problem fix resolves [E05].
+On Hold [E03]; caller reply resumes [E04]. When a linked problem changes state [E05]:
+
+- resolution code `fix_applied`: incidents On Hold - Awaiting Problem are resolved (*Resolved by
+  problem*, the problem's fix notes as a work note);
+- resolution code `risk_accepted`: they only get a work note and the event
+  `incident.updated_by_problem`; they stay on hold.
+
+No business rule or script action found acts on Awaiting Change or Awaiting Vendor.
 
 Hold reasons: 1 Awaiting Caller, 5 Awaiting Change, 3 Awaiting Problem, 4 Awaiting Vendor.
 
 ## Notifications while working
 
-Comments to the caller (see the guide), to the assignee and watch list [E06], and the
+Comments to the caller (see [Who is told what](see:who-is-told)), to the assignee and watch list [E06], and the
 "state changed" notice when a caller's reply resumes the incident [E07]. Parent and child
 incidents share comments and work notes. [E08]
 
-## SLA definitions (all on incident, all active, retroactive)
+## SLA definitions (all on incident, all active)
 
 | SLA | Type | Duration | Schedule | Record |
 |---|---|---|---|---|
@@ -123,15 +130,20 @@ incidents share comments and work notes. [E08]
 | Priority 4 response | SLA | 8 h | 8-5 weekdays | [E11] |
 | Priority 1 resolution | SLA | 1 h | 24x7 | [E19] |
 | Priority 2 resolution | SLA | 8 h | 8-5 weekdays | [E12] |
-| Priority 3 resolution | SLA | 1 day | 8-5 weekdays | [E13] |
-| Priority 4 resolution | SLA | 2 days | 8-5 weekdays | [E14] |
+| Priority 3 resolution | SLA | 24 h (about 3 working days) | 8-5 weekdays | [E13] |
+| Priority 4 resolution | SLA | 48 h (about 5 to 6 working days) | 8-5 weekdays | [E14] |
 | Network group resolution | OLA | 4 h | 24x7 | [E15] |
 | Database group resolution (P1) | OLA | 1 h | 24x7 | [E16] |
 | SAN 001 contract resolution | UC | 3.5 h | 24x7 | [E17] |
 
 Response SLAs start once a group is assigned and stop when the incident has an assignee and has
 left New; they never pause. Resolution SLAs stop only at Closed and pause on Awaiting Caller and
-Resolved.
+Resolved. The eight priority SLAs are retroactive;
+the two OLAs and the underpinning contract aren't. [E15] [E16] [E17] Every definition takes its
+time zone from the caller's time zone. [E13] [E14]
+
+The durations count only schedule time: *Priority 3 resolution (1 day)* is 24 hours of the 8-5
+weekdays schedule, not one working day; the names understate the deadlines.
 
 ## Open questions {label=OPEN-QUESTION}
 

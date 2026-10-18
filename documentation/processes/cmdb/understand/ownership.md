@@ -31,7 +31,12 @@ evidence:
     how: 'filtered on the groups'
     result: '37 CIs have a Support group (web servers, services); none has a Change Group; no server has a Support group'
 ---
-## The fields that route work
+## For you {for=user}
+
+Nothing to do: IT records which team looks after each application and service, and uses it to
+send your report to the right people.
+
+## The fields that route work {for=operator}
 
 | Field | Who | Used for |
 |---|---|---|
@@ -39,11 +44,7 @@ evidence:
 | **Change Group** | the team that changes it | changes go to it [E02] [E04] |
 | **Owned by** | the person accountable for it | certification and attestation [E03] |
 
-### For you {for=user}
-
-Nothing to do: these decide which team gets your incident.
-
-### On pdi2 {for=operator}
+### How complete they are
 
 Only 37 CIs have a **Support group**, mostly web servers and services; **no server** has one, and
 **no CI** has a **Change Group**. [E05] So routing by CI rarely works: set the assignment group

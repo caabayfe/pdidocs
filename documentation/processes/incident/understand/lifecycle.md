@@ -49,8 +49,8 @@ Everyone sees the same state names, in the workspace, on the form and in Employe
 |---|---|
 | **New** | Reported; nobody is working on it yet. |
 | **In Progress** | Someone is assigned and working on it. |
-| **On Hold** | Waiting for something: the caller, a planned change, a fix for a wider problem, or a supplier. |
-| **Resolved** | The fix is in. The caller can confirm it or reopen it. |
+| **On Hold** | Waiting for something: the person who reported it, a planned change, a fix for a wider problem, or a supplier. |
+| **Resolved** | The fix is in. The person who reported it can confirm it or reopen it. |
 | **Closed** | Finished. It can no longer be reopened or changed. [E05] |
 | **Canceled** | Not needed after all, for example a duplicate logged by mistake. |
 
@@ -73,4 +73,4 @@ Everyone sees the same state names, in the workspace, on the form and in Employe
 | In Progress | Resolved | **Resolve**, with a resolution code and notes |
 | Resolved | In Progress | **Reopen**, by the caller or by you |
 | Resolved | Closed | **Close** by the caller or a team lead, or automatically after 7 days [E04] [E07] |
-| any open state | Canceled | set **State** to *Canceled*, where your role allows it |
+| any open state | Canceled | set **State** to *Canceled*; who should do it is still open (see [Close, reopen or cancel an incident](see:close)) |

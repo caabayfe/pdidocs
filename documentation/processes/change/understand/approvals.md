@@ -34,15 +34,28 @@ evidence:
       where: 'Change Approval Definition list'
     how: 'read the approval definitions'
     result: 'Assignment Group Approval (group), Assignment Group Manager Approval (user), CAB Approval (group)'
+  E07:
+    record: cab_definition/30b99b3d93a0220050bef157b67ffb2e
+    how: read Network CAB, the only CAB definition
+    result: 'adds normal and emergency changes with category Network and risk Very High, High or Moderate to its meetings'
+    hash: 43d3b34d595a2a0bd649719313bb13f402e0878b965ee6561af286dabd0c2590
+  E08:
+    record: sys_app_module/44925d15b701230034d1da23ee11a914
+    how: read the module Approval Definitions
+    result: a list of the change approval definitions
+    hash: 8db980bbfa1977f74cc4ff06b077eaf83e28968f607394d5c749bf58d4e56473
 ---
+The **change advisory board (CAB)** is the group that approves riskier and urgent changes.
+
 ## Who is asked, and when
 
 | Kind | When | Who approves |
 |---|---|---|
-| Normal | in Assess | the **team doing the change** (technical approval) [E01] |
-| Normal, low risk | in Authorize | the **team's manager**, unless they already approved [E02] |
-| Normal, moderate or high risk | in Authorize | the **CAB** [E03] |
-| Emergency | in Authorize | the **CAB** [E04] |
+| Normal | first | the **team doing the change** (technical approval) [E01] |
+| Normal, low risk | then | the **team's manager**, unless they already approved [E02] |
+| Normal, moderate or high risk, or no risk set | then | the **CAB** [E03] |
+| Normal, any risk, team without a manager | then | the **CAB** [E03] |
+| Emergency | | the **CAB** [E04] |
 | Standard | | nobody: pre-approved [E05] |
 
 The approvers come from three definitions: the team, its manager, and the CAB. [E06]
@@ -50,11 +63,26 @@ A rejection sends the change back.
 
 ### If you are asked {for=user}
 
-You're usually asked as the manager of the team making the change, or as a CAB member. See
-[Approve a change](see:approve).
+You're asked as a member of the team doing the change, as that team's manager, or as a member of
+the CAB. See [Approve a change](see:approve).
+
+### Where the CAB decides {for=operator}
+
+The technical approval is asked in **Assess**; the manager and CAB approvals in **Authorize**.
+[E01] [E02] [E03] The CAB approval is a group approval from the **CAB Approval** definition [E06]:
+its members decide it in **Approvals › My approvals** like any other approval (see [Approve as a
+technical approver](see:review-approval)). A CAB meeting is only added for changes a CAB
+definition picks up: on pdi2 only **Network CAB**, for normal and emergency *Network* changes of
+moderate risk or higher. [E07] So a moderate-risk *server* change is decided by the CAB Approval
+group's members directly, with no meeting (see [The change advisory board](see:cab)).
 
 ### How to get it approved quickly {for=operator}
 
 Set the **Risk** right (press *Calculate Risk*), fill the planning fields, and keep the
 assignment group's manager current: a group without a manager sends even low-risk changes to the
 CAB. [E03] See [Get it approved](see:authorize).
+
+### Which group is the CAB {label=OPEN-QUESTION}
+
+The approval definitions aren't in the mirror [E06], so the group behind **CAB Approval** and its
+members aren't verified: check them in the **Approval Definitions** module (search the navigator for it). [E08]

@@ -32,8 +32,8 @@ You choose the two; the **priority** fills in by itself and can't be typed. [E01
 
 ## Why it matters
 
-The priority sets the deadlines for the first response and for the fix (see *Priority and
-deadlines*). A priority 1 incident is watched around the clock.
+The priority sets the deadlines for the first response and for the fix (see [Priority and
+deadlines](see:priority-and-deadlines)). A priority 1 incident is watched around the clock.
 
 ## Changing the priority later
 

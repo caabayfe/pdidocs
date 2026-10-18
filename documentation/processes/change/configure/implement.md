@@ -30,15 +30,27 @@ evidence:
   E06:
     record: cmn_schedule_blackout/83cd9a930a0a2c3e6d4957fe9651c24d
     how: read Blackout Wednesdays (GMT)
-    result: demo blackout schedule
+    result: 'blackout schedule, applies to cmdb_ci with no condition (every CI), time zone GMT'
     hash: 7a4d3357ea726c9a6fad74a55f8db62d63b427738bfad079ea85c0d5d0de82db
+  E07:
+    record: sys_script/8747477a0a0a0b3e49e8ef8be4f6ddcc
+    field: script
+    how: read Outside Maintenance Schedule (before insert and update, order 100, active changes)
+    result: sets outside_maintenance_schedule from MaintenanceScheduleCalculator, checking the change against the schedules of its CI and affected CIs; aborts nothing
+    hash: 7d5037ba104c3a4c5b88491b14a531fc373f8d12e982c2fccfddb34db7f28948
 ---
 ## Tasks
 
 Implement runs a subflow that creates *Implementation* and *Post Implementation* tasks [E01] [E02].
 
+## Maintenance windows
+
+**Outside Maintenance Schedule** (before insert and update, order 100, on active changes) checks the
+planned window against the maintenance schedules of the change's CI and affected CIs and sets the
+*Outside maintenance schedule* flag. It only flags; it never refuses the save. [E07]
+
 ## Conflicts {label=OPEN-QUESTION}
 
 Conflicts are checked automatically on state, CI and date changes [E03]; the manual link is
-inactive. [E04] The conflict mode and its options aren't in the mirror [E05], and the blackout and
-maintenance schedules are demo data [E06]: check which windows are real.
+inactive. [E04] The conflict mode and its options aren't in the mirror [E05], and the blackout schedule
+*Blackout Wednesdays (GMT)* applies to every CI [E06]: check which windows are real.

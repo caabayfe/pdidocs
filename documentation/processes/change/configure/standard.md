@@ -5,7 +5,7 @@ evidence:
   E01:
     record: std_change_properties/527b5dafff700200b18affffffffff89
     how: read main_config
-    result: mandatory fields on standard changes and their tasks
+    result: 'mandatory: short description, description, implementation, backout and test plans, assignment group, justification, risk and impact analysis; tasks: short description and assignment group; read-only: description and the three plans'
     hash: 39349662e87a24e6a9754fc75197244e1e0993e6499babda257baea940e4b41a
   E02:
     record: sys_hub_flow/e89e3ade731310108ef62d2b04f6a744
@@ -31,14 +31,15 @@ evidence:
   E06:
     record: sys_hub_flow/665e4a627723021013d4aeb4bb5a994c
     how: read Change - Standard - Proposal
-    result: approves template proposals
+    result: asks the group Change Management to approve a standard change proposal
     hash: e8ef68fa363ca6bd58f0d90402152a5ad945510a3242fcea6d35d2037cb70ae9
 ---
 ## Templates and approval
 
 Standard changes are approved on creation by *Change - Standard* [E02], with the mandatory fields
 in the main configuration. [E01] Inactive templates can't be used [E03]; who sees a template is set
-by user criteria. [E05] Proposals are approved by *Change - Standard - Proposal*. [E06]
+by user criteria. [E05] Proposals are approved by the **Change Management** group, through
+*Change - Standard - Proposal*. [E06]
 
 ## An automated-test template {label=OPEN-QUESTION}
 

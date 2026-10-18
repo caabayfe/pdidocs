@@ -44,8 +44,20 @@ evidence:
   E08:
     record: sys_hub_flow/30f3d26187e92300e0ef0cf888cb0b91
     how: read Service Catalog item request
-    result: 'tasks "Please fulfill this order" (Procurement) and "Please deploy item to the user" (Field Services); a backorder path'
+    result: 'tasks "Please fulfill this order" (Procurement, "Pull from Stock or Order from Vendor if required. If the item has to be ordered, make sure to check the Backordered flag and specify the Estimated Delivery date.") and "Please deploy item to the user" (Field Services); when the item is backordered, stage Backordered and a task "Please close this task once the backordered item arrives"'
     hash: 7e4c924ae8f9da3ea0457d090b77e53a58e495b1cc6bbb64ef9f043b7d32201b
+  E09:
+    record: sys_db_object/1521b6f78c5103100a22deb6dd2b4e61
+    children: sys_choice
+    how: read the task state choices
+    result: Pending, Open, Work in Progress, Closed Complete, Closed Incomplete, Closed Skipped
+    hash: c114aabe62fc6262de0d9c018a6e23f242770950fa16a38a91f30ebc21fe3f7a
+  E10:
+    record: sys_ui_action/5bb04c2487001300e3010cf888cb0b5f
+    field: client_script_v2
+    how: read Close Task (workspace)
+    result: sets the state to Closed Complete (3) and saves
+    hash: 78c8d3230b85cbe6b948e4a491136999f4ecaefcbd9500a140b47d53377b1e6d
 ---
 ## Find your work
 
@@ -58,9 +70,49 @@ your groups** to pick up your team's. [E01] [E02] Most hardware goes first to **
 
 ## Work a task
 
-The task shows the requested item, who it's for, and the requester's answers to the item's
-questions. [E03] Record progress in **Work notes**. When it's done, press **Close Task**. [E04]
-[E06] Closing the last task lets the item complete.
+1. Open the task from the list. It shows the requested item, who it's for, and the requester's
+   answers to the item's questions. [E03]
+2. Set **State** to *Work in Progress* and record progress in **Work notes**. [E09] [E03]
+3. Finish it one of three ways:
 
+| You | How | The task becomes |
+|---|---|---|
+| did the work | press **Close Task** [E04] | *Closed Complete* [E10] [E06] |
+| can't do it | set **State** to *Closed Incomplete*, say why in **Work notes**, save | *Closed Incomplete* [E09] |
+| it isn't needed | set **State** to *Closed Skipped*, save | *Closed Skipped* [E09] |
+
+**Close Task** shows only while the task is open and not waiting for approval. [E04] Closing the
+last task lets the item complete.
+
+## Reassign it
+
+Change **Assignment group** (and clear **Assigned to**) in the workspace form, then save. [E03]
 *Classic form:* the catalog task form has no **Assignment group** field: reassign from the
 workspace. [E05]
+
+## When the item is out of stock
+
+On the Procurement task (*"Please fulfill this order"*), pull the item from stock or order it from
+the vendor. If it has to be ordered, open the requested item, tick **Backordered** and set the
+**Estimated Delivery** date, as the task's description says. [E08] The item then shows
+*Backordered*, and a task *"Please close this task once the backordered item arrives"* waits for
+you: close it when the item arrives. [E08]
+
+## What happens next
+
+When Procurement closes its task, Field Services gets *"Please deploy item to the user"*. [E08]
+When the last task is closed, the item completes and the request closes after its items (see [The
+life of a request](see:lifecycle)).
+
+## Tips
+
+- Pick from **Assigned to your groups** and set **Assigned to** to yourself before you start, so
+  nobody works it twice. [E02] [E03]
+- Read the requester's answers before you order: they say which options to add. [E03]
+- Problem with what was delivered? Ask them to report an incident (see
+  [Report an incident](see:incident/report)).
+
+### Closing incomplete {label=OPEN-QUESTION}
+
+What *Service Catalog item request* does with the item when a task is closed *Incomplete* or
+*Skipped* isn't verified: check on a test item before relying on it.

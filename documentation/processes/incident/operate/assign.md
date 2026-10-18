@@ -9,8 +9,8 @@ evidence:
     hash: c862798729dd0aa29d354614c6d0615e575d3b6347f2f777c060654cde079661
   E02:
     record: sys_script/6a2e9d1453e80010833addeeff7b124f
-    how: read Abort changes on group
-    result: the save is refused when the assignee is not a member of the group
+    how: read Abort changes on group and its condition
+    result: when Assigned to is not empty and the group changes to a non-empty value, the save is refused if the assignee is not a member of the group
     hash: b41fef5642903ef5b4c95a14b9424211b8b06437bf74e7ea0508635c53128b02
   E03:
     record: sys_script/6fab2e470a0007045931f2a692878933
@@ -48,6 +48,18 @@ evidence:
     how: read the workspace form's Assignment section
     result: Assignment group, Assigned to
     hash: 8928bba95a1a65b480e274291619252e66efc2f916a2a7323e1b019f6769d0df
+  E10:
+    seen:
+      by: 'Claude (snagentic session, signed in as admin)'
+      on: 2026-10-17
+      where: 'Configuration Items list'
+    how: 'filtered on the groups'
+    result: '37 CIs have a Support group (web servers, services); none has a Change Group; no server has a Support group'
+  E11:
+    record: sys_script_client/273386d1c3a32200b6dcdfdc64d3ae85
+    how: read Empty assigned_to on group change
+    result: on the form, changing the group clears Assigned to when that person isn't a member of the new group
+    hash: 0d337efc03ec7d61c451f19afa66ca69a32a8650065e52b13918df80bef5a14f
 ---
 ## Who gets the incident
 
@@ -57,8 +69,10 @@ Every incident needs a **team** (*Assignment group*) and, once someone takes it,
 
 {{animation:incasg}}
 
-- **The team often fills in by itself.** If you leave the group empty and choose a
-  configuration item or a service offering, the incident goes to the team that supports it. [E01]
+- **The team can fill in by itself, but here it rarely does.** If the group and *Assigned to* are
+  empty when you first choose a configuration item or a service offering, the incident goes to
+  the team that supports it. [E01] Only 37 configuration items have a support team, and no server
+  has one, so expect to choose the team yourself. [E10]
 - Otherwise, choose the **Assignment group** yourself. The team is notified.
 
 ## Take an incident
@@ -75,13 +89,18 @@ an email that it was assigned to you.
 
 ## Pass it to another team
 
-Change the **Assignment group**. The person in *Assigned to* is cleared if they aren't in the new
-team. Write a **work note** explaining why, so the next team doesn't start from zero.
+Change the **Assignment group**. On the form, the person in *Assigned to* is cleared if they
+aren't in the new team. [E11] Write a **work note** explaining why, so the next team doesn't start
+from zero.
 
 ## If the save is refused
 
-*"Assigned to user … must be member of Assignment group …"* means the person you chose is not
-in that team. [E02] Pick someone from the team, or clear *Assigned to* and let the team take it.
+*"Assigned to user … must be member of Assignment group …"* appears when you save a change of
+**Assignment group** while *Assigned to* holds someone who isn't in the new team. [E02] Pick someone from the team, or clear *Assigned
+to* and let the team take it.
+
+The check runs only when the group changes. Changing only *Assigned to* isn't checked when you
+save, so make sure the person belongs to the incident's team. [E02]
 
 ## Tips
 

@@ -10,7 +10,7 @@ evidence:
   E02:
     record: sys_hub_flow/1e1799df9f911210db9f618dfa0a1c70
     how: read Service Catalog Request
-    result: on every new request; approval over 1000
+    result: on every new request; approval when the price is over $1,000
     hash: f42c3095a91862f726125149a8b7a3f51591df6e201e102685d5c739a2af5b67
   E03:
     record: sys_properties/ab598cf30a2581024c8e144473f204c8
@@ -34,11 +34,24 @@ evidence:
     how: read Service Catalog Request Price Approval
     result: '"This flow is a demo fulfilment flow."; creates no tasks'
     hash: 25365d4e87cfe0fd97f7a90bbc2ebc86c48d22cb2e87e7eaa74b241f438782ca
+  E07:
+    record: sys_script/da911513c0a8010a00f6dcc71ea864bd
+    field: script
+    how: read Reject Parent (sc_task, after insert and update, order 100)
+    result: when a catalog task from an execution plan approval (sc_cat_item_dt_approval) is rejected and that approval is set to cancel on reject, sets the item's stage Request Cancelled and its approval rejected
+    hash: 2c29e1f2b9fd44885af1fd5c3acf7d5682792ef0cb5af6aecde29a61b654b231
 ---
 ## Engines
 
-The request flow handles the approval over 1000 [E02] (the legacy approval engine is off [E03]);
+The request flow handles the approval over $1,000 [E02] (the legacy approval engine is off [E03]);
 most items use *Service Catalog item request* [E01]. The request closes after its items. [E04]
+
+## Rejected task approvals
+
+**Reject Parent** (on catalog tasks, after insert and update, order 100) only covers tasks from
+legacy execution plan approvals: when such a task is rejected and its approval step is set to
+cancel on reject, the item gets the stage *Request Cancelled* and is rejected. [E07] Flow-based
+items don't use it.
 
 ## Gaps {label=OPEN-QUESTION}
 

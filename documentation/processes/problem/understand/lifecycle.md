@@ -38,6 +38,10 @@ evidence:
 ---
 ## The states
 
+A problem moves from being raised, through finding and fixing its cause, to being closed.
+
+### Each state {for=operator}
+
 | State | What it means |
 |---|---|
 | **New** | raised; nobody has looked at it yet |
@@ -51,8 +55,8 @@ evidence:
 
 ### What you notice {for=user}
 
-Nothing directly: problems are internal. Your incident shows *On Hold* while it waits, and is
-resolved when the problem's fix is in.
+Nothing directly: problems are internal to IT. Your incident shows *On Hold* while it waits, and
+is resolved when the fix is in. See [When a problem is behind your incident](see:affected).
 
 ### What moves it on {for=operator}
 
@@ -65,7 +69,7 @@ resolved when the problem's fix is in.
 | Resolved | Closed | **Complete** | |
 | Assess or RCA | Closed | **Mark Duplicate**, **Cancel** | the duplicate's original, or a reason |
 | RCA or Fix in Progress | Closed | **Accept Risk** | cause notes and a reason [E05] |
-| Fix in Progress, Resolved | Root Cause Analysis | **Re-Analyze** | from Closed only a problem manager [E06] |
+| Fix in Progress, Resolved or Closed | Root Cause Analysis | **Re-Analyze** | from Closed only a problem manager [E06] |
 
 When it closes, its resolution code says how: *Fix Applied*, *Risk Accepted*, *Canceled* or
 *Duplicate*. [E01]

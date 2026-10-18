@@ -38,21 +38,34 @@ evidence:
     how: read Copy Prb workaround to Inc work notes
     result: the workaround goes to linked incidents as a work note
     hash: 06bec9756037b072de4bd8987e71bfc15a76adbbd70b04eb5fc1f6f4c35e737d
+  E08:
+    record: sysevent_script_action/315aa414534123004247ddeeff7b1240
+    field: script
+    how: read Update Incident when Problem closes (on problem.state_change)
+    result: 'Fix Applied: incidents On Hold for Awaiting Problem are resolved; Risk Accepted: they only get the work note "Problem team has accepted the risk of not fixing this problem …"'
+    hash: 05ad6dee5b208584f1f5ea888e7cb64d0efa10da0a9cb80903a7db107fb633dd
 ---
-## Emails at each step
+## What reaches you {for=user}
+
+Only your incident's own emails, nothing about the problem itself:
+
+| When | Email |
+|---|---|
+| The fix is in and your incident is resolved | *"… was resolved"* [E06] |
+
+A way to keep working meanwhile goes to the support teams, not to you, so ask the service desk on
+your incident if one would help. [E07] See [When a problem is behind your incident](see:affected).
+
+## Emails at each step {for=operator}
 
 | When | The support team | Affected employees |
 |---|---|---|
 | A problem is assigned | the assignee, or the group [E01] [E02] | |
 | The last problem task is done | the assignee [E04] | |
 | A workaround or fix is communicated | a work note on each linked incident [E07] | |
-| The problem closes with its fix | each resolved incident's assignee [E05] | the caller's usual *"… was resolved"* [E06] |
-| The problem is closed | whoever opened it [E03] | |
-
-### What reaches you {for=user}
-
-Only your incident's own emails: nothing about the problem itself. Workarounds go to the support
-teams as internal notes, so ask the service desk if one would help you meanwhile.
+| The problem is resolved with *Fix Applied* | each resolved incident's assignee [E05] [E08] | the caller's usual *"… was resolved"* [E06] |
+| The risk is accepted | a work note on each waiting incident, no email [E08] | |
+| The problem is closed | whoever opened it: *"Your problem … has been closed"* [E03] | |
 
 ### What you send {for=operator}
 

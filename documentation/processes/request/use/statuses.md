@@ -77,9 +77,14 @@ evidence:
     how: read the requested item ticket configuration
     result: the item page shows the item, requested for, quantity, price, recurring price and stage
     hash: 7fb4eec1615ed5cff38a0698b98003f6e185522602bb7f98f2734292d60b2721
+  E15:
+    record: sys_hub_flow/d4a0864e87232300bdcf480688cb0bb1
+    how: read Requested Item Manager Approval, the first stage of Service Catalog item request (36 items)
+    result: asks requested_for.manager, the manager of the person the item is for
+    hash: 768ecdceeff520a77ca8ee1a4636521fe7c5bad41a0bc8bff7e33bfee2a130dd
 ---
 Every order has two levels. The **request** (REQ…) is your order as a whole, and it has a
-**state**. Each thing in it is a **requested item** (RITM…), and each item has a **stage** that
+**state**. Each thing you ordered (RITM…) is listed in it, and each has a **stage** that
 shows where it is on its way to you. You see the state in **My Requests** and the stage when you
 open an item. [E14]
 
@@ -94,7 +99,7 @@ open an item. [E14]
 | **Closed Complete** | everything was delivered | check you have it |
 | **Closed Incomplete** | it was closed without being finished | read the Activity to see why |
 | **Closed Cancelled** | it was canceled | order again if you still need it |
-| **Closed Rejected** | an approver said no | read the reason in the email; talk to your manager |
+| **Closed Rejected** | an approver said no | read the reason in the email; ask the approver if it isn't clear |
 
 [E01] The request closes by itself when all its items are closed. [E04]
 
@@ -122,15 +127,17 @@ Simpler items show **Waiting for Approval**, **Fulfillment** and **Delivery**. [
 
 The same updates appear under the **bell** in Employee Center. [E11]
 
-### Surveys {label=OPEN-QUESTION}
+### Request survey never sent {label=OPEN-QUESTION}
 
-A request survey email exists (*"Feedback makes us better"*, a one-minute survey) [E12], but on
-pdi2 surveys are only triggered for incidents, so you won't get one for a request. [E13]
+The notification *Request survey* (*"Feedback makes us better"*) exists [E12], but the only survey
+trigger condition is on `incident` [E13], so requesters never receive it. Add a trigger condition
+on `sc_request` if request feedback is wanted, or deactivate the notification.
 
 ## Tips
 
 - Only a number in the email? Its **View request** button opens it in Employee Center.
-- Waiting long in **Pending Approval**? Ask your manager, who approves most devices and access.
+- Waiting long for approval? Most devices and access items are approved first by the manager of
+  the person they're for [E15]: ask them.
 - To add information, reply to the email or write in the item's **Activity**: see [Follow your
   request](see:follow).
 

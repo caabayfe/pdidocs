@@ -162,8 +162,8 @@ for problems.
 - Mark items you order often with the heart: they appear in **My favorites** on the home page.
 - Read the article first: for many questions, **Recommended for you** or a search answers it
   faster than a ticket.
-- Can't find it? Use the chat, or report it as an incident and say what you need in your own
-  words.
+- Can't find it? Report it as an incident and say what you need in your own words: see
+  [Report an incident](see:incident/report).
 
 ## I want to…
 

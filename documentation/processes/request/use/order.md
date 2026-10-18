@@ -70,6 +70,11 @@ evidence:
     how: read Request was opened
     result: 'Request ${number} was created'
     hash: 4408ae146a1e8b21286997ce05f2cb00d464b2dca9d0da3366db9443acdd7a09
+  E12:
+    record: sys_hub_flow/d4a0864e87232300bdcf480688cb0bb1
+    how: read Requested Item Manager Approval, the first stage of Service Catalog item request (36 items)
+    result: asks requested_for.manager, the manager of the person the item is for
+    hash: 768ecdceeff520a77ca8ee1a4636521fe7c5bad41a0bc8bff7e33bfee2a130dd
 ---
 Ordering takes a minute: open the item, answer its questions, order, confirm. You then get a
 request number and an email, and the request appears in **My Requests**.
@@ -92,7 +97,8 @@ request number and an email, and the request appears in **My Requests**.
    **Required information** box beside the button lists what's missing. [E10] Set **Quantity** if
    you need more than one. [E01]
 3. **Press Order Now.** Some items say **Submit** or **Request** instead. [E01] [E06] There is no
-   cart: each order is one item. [E02]
+   cart: each order is one item. [E02] To order several items in one go, use a bundle such as
+   **New Hire** (see [Find what you need](see:find)).
 4. **Confirm.** The **Order Confirmation** window shows who it's for and lets you add **Delivery
    Information** and **Special Instructions**, such as the room where it should go. Confirm to
    order. [E03] [E04]
@@ -107,7 +113,8 @@ request number and an email, and the request appears in **My Requests**.
 
 You land on your request's status page: its number (REQ…), what you ordered, the expected
 delivery date and its stage. [E07] You also get the email *"Request REQ… was created"*. [E11] If
-the item needs approval, it waits for your manager first (see [Who approves](see:approvals)).
+the item needs approval, it waits first for the manager of the person it's for [E12] (see [Who
+approves](see:approvals)).
 Follow it in **My Requests**: see [Your request's statuses and emails](see:statuses).
 
 ## For someone else

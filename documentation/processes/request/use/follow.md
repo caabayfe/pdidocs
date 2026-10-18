@@ -92,10 +92,16 @@ What each state and stage means: [Your request's statuses and emails](see:status
 A closed item can't take comments. [E06] If you still need something, order again or report an
 incident.
 
-## Cancel {label=OPEN-QUESTION}
+## Cancel
 
-Employee Center offers no **Cancel** on a request or an item. [E03] [E08] To cancel, write on the
-item's Activity tab that you no longer need it, before it's delivered.
+To cancel, open the item and write in its **Activity** tab that you no longer need it, before it's
+delivered. [E05] The team then cancels it for you.
+
+### No Cancel button {label=OPEN-QUESTION}
+
+Employee Center offers no **Cancel** on a request or an item [E03] [E08], so employees can only ask
+in Activity. IT can cancel with **Cancel Request** (see [Manage a request](see:manage)). Decide
+whether employees should cancel themselves before fulfilment starts.
 
 ## Tips
 

@@ -55,6 +55,8 @@ evidence:
     result: '7 days'
     hash: 7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451
 ---
+When the service desk has fixed your incident, say whether it works: close it, or reopen it.
+
 ## When it is resolved
 
 {{animation:incconf}}
@@ -84,5 +86,19 @@ a closed incident's email does that for you: it creates a new incident. [E05])
 ## The short survey
 
 Every closed incident sends you a short survey by email, *"Feedback makes us better"*: how
-satisfied you are, on a scale of faces, and anything you'd like to tell IT. [E07] [E08] [E09] It
-takes a minute.
+satisfied you are with the service, from *Very Dissatisfied* to *Very Satisfied*, and anything
+you'd like to tell IT. [E07] [E08] [E09] It takes a minute.
+
+## Tips
+
+- Test the fix the way you normally work before you press **Close**.
+- Reopen rather than reporting a new incident while it is still resolved: the team keeps
+  everything it already knows.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| see where my incident is | [Follow your incident](see:follow) |
+| report a new problem | [Report an incident](see:report) |
+| know which emails I get | [Who is told what](see:who-is-told) |

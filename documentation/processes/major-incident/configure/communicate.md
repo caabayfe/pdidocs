@@ -15,8 +15,8 @@ evidence:
   E03:
     record: sys_script/1953a23e5b3b0300e3cc8e6541f91a3a
     field: script
-    how: read Attach Communication plans (task, async)
-    result: attaches plans whose definitions match the record
+    how: read Attach Communication plans (on task, async_always, insert and update, order 100)
+    result: runs only when CommunicationPlanEngine(current).canRun() is true, then calls attachPlans() for the record's definitions
     hash: d3481d01605405c79cff65ba17445cfbeb4af31b6edf772253b698fed91ef5fc
   E04:
     record: sys_script/a433f9d553701300d6fdddeeff7b121b
@@ -54,11 +54,24 @@ evidence:
       where: 'Communication Plan Definitions list, table incident'
     how: 'opened the list'
     result: 'No records to display'
+  E10:
+    record: sys_script_include/3048c6b65b3b0300e3cc8e6541f91aaf
+    field: script
+    how: read CommunicationPlanEngineSNC canRun
+    result: true only when an active, condition-based plan definition exists for the record's table (cached per table and domain)
+    hash: 0d752c2db8031d0ae72e7607d4ab79847061c83e13a0f1c2bbca85266ae253f5
+  E11:
+    record: sys_ux_client_script/505704555321b1109194ddeeff7b1274
+    field: script
+    how: read the Create new communication modal's save handler (sn_uib_tcm)
+    result: posts to /api/sn_comm_management/task_communication_management/adhoc/comm_plan, creating an ad hoc plan and task on the incident
+    hash: cd5b711cbbc9b99143789b87a9a63603298ba521ff5c11e39ad5e887b30e26c0
 ---
 ## Plans and tasks
 
-Plans are `incident_alert` [E01] with tasks in `incident_alert_task` [E02]. A business rule
-attaches plans whose definitions match the incident [E03]; a plan on an accepted major incident
+Plans are `incident_alert` [E01] with tasks in `incident_alert_task` [E02]. The async rule
+*Attach Communication plans* runs on every task save, but only acts when an active, condition-based
+plan definition exists for the table [E03] [E10]; a plan on an accepted major incident
 inherits its group and assignee. [E04] Closing the incident doesn't close its plans. [E08]
 
 ## Who may send
@@ -72,5 +85,6 @@ Emails go to blind copy [E06]; Notify (SMS, conference) is off. [E07]
 
 ## Plan definitions {label=CORRECTED}
 
-pdi2 has **no plan definition for incidents** [E09], so no plan attaches by itself: every
-communication is created by hand with *Create new communication*.
+There is **no plan definition for incidents** [E09], so no plan attaches by itself: every
+communication is created by hand with *Create new communication*, which creates an ad hoc plan and
+task through the communication management API. [E11]

@@ -28,8 +28,44 @@ evidence:
     how: read Revert to New
     result: Normal in Assess or Emergency in Authorize
     hash: 3795a50ebd18ee763fc84f3e59bf006a8a76ec391de9ae3b409902e46dd5c234
+  E06:
+    record: sys_script/0396ee215373130034d1ddeeff7b1224
+    field: script
+    how: read Mandatory Closure Information (before insert and update, order 900)
+    result: 'when enforce_data_requirements is true, the change has no model and the state is Closed: errors "Close code is mandatory when closing a Change Request" and "Close notes are mandatory when closing a Change Request", and refuses an invalid close code; only missing notes or an invalid code abort the save'
+    hash: 29270b2517beb690f28b85c99afd6705272d03004692c285852ce5b5c0ac4d50
+  E07:
+    record: sys_script/fac8cff1534123000999ddeeff7b126f
+    field: script
+    how: read Validate Close Code (before insert and update, order 901)
+    result: 'when enforce_data_requirements is true and the close code changes: refuses a code that isn''t a close_code choice, "Close code cannot be set to an invalid value: {0}"'
+    hash: f8899d54b6a15f1a310ec100a7357b790bb75102e57199f8794cbf2d31ab82f2
+  E08:
+    record: sys_properties/c56c6ddab733130034d1da23ee11a95c
+    field: value
+    how: read com.snc.change_management.enforce_data_requirements
+    result: 'true'
+    hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
 ---
 ## Closing
 
 Closing needs a code and notes [E04] and no open tasks [E01]; the change becomes inactive. [E03]
 Canceling cancels its tasks [E02]; *Revert to New* sends it back from approval. [E05]
+
+## Server-side checks
+
+Both rules run because *com.snc.change_management.enforce_data_requirements* is `true`. [E08]
+
+| Rule | When, order | Condition | Effect |
+|---|---|---|---|
+| **Mandatory Closure Information** | before insert and update, 900 | state is *Closed* and the change has **no model** | *"Close notes are mandatory when closing a Change Request"* aborts the save; a missing close code only shows *"Close code is mandatory…"* and doesn't abort; an invalid code aborts [E06] |
+| **Validate Close Code** | before insert and update, 901 | the close code changes | refuses a code that isn't one of the close code choices: *"Close code cannot be set to an invalid value: …"* [E07] |
+
+Changes with a model (all the usual ones) rely on the form policy and the model's state transitions
+for the close fields; only legacy changes without a model hit the closure rule. [E06] [E04]
+
+### A close code that isn't required {label=OPEN-QUESTION}
+
+In *Mandatory Closure Information* a missing close code sets the abort flag to false [E06]: on a
+change without a model, a save with notes but no code goes through with only an error message.
+Confirm whether that is intended before relying on it.

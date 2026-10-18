@@ -10,8 +10,8 @@ evidence:
     hash: 917e3d1c68b281ba6c81a50742086ef60a396d924b925e0c51b7051932a9e261
   E02:
     record: sys_ui_action/ad2f0767871203003582af1e36cb0b14
-    how: read Demote Major Incident
-    result: major incident managers, on an active major incident; asks for a reason
+    how: read Demote Major Incident (classic form context menu)
+    result: 'major incident managers, on an active major incident; dialog "Demote Major Incident" asks for a reason; then "… is no longer a major incident"'
     hash: 3de4700a2d6b8031519dee8186a0ceb31c349d39577b8dd090c960e2603c16ac
   E03:
     record: sys_ui_policy/76021c8473811300cab854eb7df6a783
@@ -32,12 +32,12 @@ evidence:
     hash: 6d6405c13a77c9eb2c5929da0670316992a8c8aeffe1596991e15f6934eaf1c3
   E06:
     record: sys_ui_action/95e143e25b701300e3cc8e6541f91a29
-    how: read Regenerate PIR Timeline
-    result: major incident managers, on a resolved major incident
+    how: read Regenerate PIR Timeline (classic form related link)
+    result: 'major incident managers, on a resolved major incident; "Timeline has been regenerated"'
     hash: 24da63a36fa471e8538739d91450cd641c8db00d92df96a66f55ee3a29db2e65
   E07:
     record: sys_ui_action/5d4a759f0b3013004034478d83673a43
-    how: read Preview PIR
+    how: read Preview PIR (classic form related link)
     result: opens the post incident report, with Download Report PDF
     hash: 660bab0e7a2e9cf0147c84fcb945690349122fd64b3bb6cb3e9593e736770e70
   E08:
@@ -70,15 +70,31 @@ reopened afterwards, so resolve it when the fix is confirmed. [E10]
 
 ## Demote it
 
-If it turns out not to be a major incident, choose **Demote Major Incident** and give the reason.
-[E02] It becomes an ordinary incident again.
+If it turns out not to be a major incident:
 
-## The post-incident review
+1. On the **classic form**, open the form's menu (☰ next to the title) and choose **Demote Major
+   Incident**. [E02]
+2. In the dialog **Demote Major Incident**, give the reason. You see *"… is no longer a major
+   incident"*. [E02]
 
-Once the major incident is resolved, the form shows the **Post Incident Report** section:
-**Overview**, **Findings** (what you learned) and **Timeline**. [E03] [E04] The timeline is filled
-from the activity when it is resolved [E05]; **Regenerate PIR Timeline** rebuilds it. [E06]
-**Preview PIR** opens the report, which you can download as a PDF. [E07]
+It becomes an ordinary incident again, and is worked as usual.
 
-In the workspace a **draft review** is created when the major incident is resolved [E08], to be
-published within **24 hours**. [E09]
+## The post-incident review (classic form)
+
+1. Once the major incident is resolved, the classic form shows the **Post Incident Report**
+   section: **Overview**, **Findings** (what you learned) and **Timeline**. [E03] [E04]
+2. The timeline is filled from the activity when it is resolved. [E05] If it is incomplete,
+   choose the related link **Regenerate PIR Timeline**: you see *"Timeline has been
+   regenerated"*. [E06]
+3. Choose the related link **Preview PIR** to open the report; **Download Report PDF** saves it.
+   [E07]
+
+## The review in the workspace
+
+In the Service Operations Workspace a **draft review** is created when the major incident is
+resolved [E08], to be published within **24 hours**. [E09]
+
+## What happens next
+
+Share the report with the people who took part, and raise a problem if the cause still needs
+removing (see [Raise a problem](see:problem/raise)).

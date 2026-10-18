@@ -20,7 +20,7 @@ evidence:
   E04:
     record: cab_definition/30b99b3d93a0220050bef157b67ffb2e
     how: read Network CAB
-    result: adds normal and emergency Network changes with risk High or higher-tier to its meetings
+    result: 'adds normal and emergency changes with category Network and risk Very High, High or Moderate to its meetings'
     hash: 43d3b34d595a2a0bd649719313bb13f402e0878b965ee6561af286dabd0c2590
   E05:
     record: sys_user_role/d2d83927eb32120034d1eeea1206fef9
@@ -34,9 +34,10 @@ evidence:
     hash: 37587f29c9b3528277cdc4d994bedcb35acb2ef644602c59d0279706481de191
   E07:
     record: sys_script/318cdc50d7302200d105ef637e610366
-    how: read Sync approval with agenda item
-    result: the change's approval and its agenda item decision stay in step
-    hash: 4b4df9e7f17d9fef9f8e95e7766954e6fe8f221de09b7b5c903e24a3cf0f028f
+    field: script
+    how: read Sync approval with agenda item (after update, when the change's approval changes to approved or rejected)
+    result: updates the agenda item's decision and adds the decision to the meeting notes
+    hash: 9e27810eb9b74b8c3fff6fd80275a9d00326d417f74905402c742a83723a8e5c
   E08:
     record: sys_properties/93d9fcc1b7d822100a11807cae11a995
     field: value
@@ -48,11 +49,19 @@ evidence:
     how: read Change › My CAB Meetings
     result: meetings you manage or sit on
     hash: 19005ad2142b6dc7efec3d492cb899b42e664c38a457e0d598515bea5c325d5b
+  E10:
+    record: sys_decision_question/10284a9db701230034d1da23ee11a9c1
+    how: read Requires CAB Approval (Normal Change Policy)
+    result: in Authorize with moderate, high or no risk, or a group without a manager, the CAB Approval definition
+    hash: 218626518664d74e741d7f64a8d163ed7e6136a2800d25f69c113cd1d4367ab9
 ---
 ## Who's on it
 
-A **CAB definition** says which changes go to a board and who sits on it; pdi2 has one, **Network
-CAB**, for network changes of higher risk. [E04] Its meetings are run by a **CAB manager** [E05];
+A **CAB definition** says which changes go to a board's meetings and who sits on it; pdi2 has one,
+**Network CAB**, for normal and emergency changes with category *Network* and risk *Moderate* or
+higher. [E04] Every other change that needs CAB approval (a moderate-risk server change, for
+example) gets the approval from the **CAB Approval** definition and is decided in **Approvals ›
+My approvals**, without a meeting [E10] (see [Who approves](see:approvals)). Its meetings are run by a **CAB manager** [E05];
 members are the board's people and groups, not a role.
 
 ## Before the meeting
@@ -66,8 +75,15 @@ Members get an invitation with a calendar attachment; answering it records wheth
 Open **Change › CAB Workbench** [E01]: the calendar, then the meeting. [E02] **My CAB Meetings**
 lists the ones you are on. [E09] For each change on the
 agenda the board can **Approve** or **Reject**, or move on with **Next**, **Pause** or **Demote**.
-[E03] The decision becomes the change's CAB approval. [E07] On pdi2 the meeting link opens the
+[E03] When the change's approval becomes approved or rejected, its agenda item's decision and the
+meeting notes follow. [E07] On pdi2 the meeting link opens the
 workspace's CAB meeting page. [E08]
+
+## Tips
+
+- Set the change's **Category** to *Network* when it is network work: only then is it put on the
+  Network CAB's agenda. [E04]
+- Members who can't attend answer the invitation with *Decline*, so the CAB manager knows. [E06]
 
 ### Not yet seen {label=OPEN-QUESTION}
 

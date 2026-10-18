@@ -32,13 +32,15 @@ evidence:
     how: 'read the process flow'
     result: 'New › Assess › Authorize › Scheduled › Implement › Review › Closed › Canceled'
 ---
-## The states
+A change is planned, approved, carried out at its planned time, then checked and closed.
+
+## The states {for=operator}
 
 | State | What it means |
 |---|---|
 | **New** | being planned |
 | **Assess** | the technical approvers are checking it |
-| **Authorize** | waiting for management or CAB approval |
+| **Authorize** | waiting for the manager's or the change advisory board's (CAB) approval |
 | **Scheduled** | approved; waiting for its window |
 | **Implement** | being carried out |
 | **Review** | done; the result is being checked |
@@ -48,12 +50,13 @@ evidence:
 [E01] [E05] Not every kind uses every state: an emergency change skips *Assess*, and a standard
 change skips *Assess* and *Authorize*. [E02] [E03]
 
-### What you notice {for=user}
+## What you notice {for=user}
 
-You're asked to approve while a change is in *Assess* or *Authorize*. Your answer moves it on, or
-stops it.
+A change is approved before it is carried out: first by the team doing it, then by its manager
+or the change advisory board (CAB). You're asked by email while it waits for you; your answer
+moves it on, or sends it back. See [Approve a change](see:approve).
 
-### What moves it on {for=operator}
+## What moves it on {for=operator}
 
 | Kind | Path |
 |---|---|

@@ -42,7 +42,7 @@ evidence:
 ## The workbench {label=OPEN-QUESTION}
 
 **View Workbench** [E01] opens `$major_incident_workbench.do`. Its components come from the store
-app *Major workbench components* (`sn_major_workbench`), which the mirror doesn't hold; the page in
-the mirror is the older one. [E03] In the workspace, the *View Workbench* form action is inactive
+app *Major workbench components* (`sn_major_workbench`), whose records weren't read; the page read is
+the older one. [E03] In the workspace, the *View Workbench* form action is inactive
 [E02]. Email links open the classic workbench because SOW redirection is off. [E06] Check on
 screen which workbench opens and what it shows.

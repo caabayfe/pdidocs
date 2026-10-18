@@ -5,7 +5,7 @@ evidence:
   E01:
     record: sys_hub_flow/011c5d579fd11210db9f618dfa0a1ce1
     how: read the subflow Request Management Approval
-    result: requests over 1000 need approval from a group; below, auto approved
+    result: 'condition "Price > $1,000?" on the request''s price (a currency input): over $1,000 asks a group for approval; otherwise approved automatically'
     hash: 6a2bf9df5bcde4821796803bc625bda2c55f7525b2e10a234388f121d60262e4
   E02:
     seen:
@@ -17,12 +17,12 @@ evidence:
   E03:
     record: sys_hub_flow/d4a0864e87232300bdcf480688cb0bb1
     how: read Requested Item Manager Approval
-    result: asks the requested-for person's manager
+    result: asks requested_for.manager, the manager of the person the item is for
     hash: 768ecdceeff520a77ca8ee1a4636521fe7c5bad41a0bc8bff7e33bfee2a130dd
   E04:
     record: sys_hub_flow/d8a9420287632300bdcf480688cb0bef
     how: read Requested Item Dept Head Approval
-    result: asks the department head
+    result: asks requested_for.department.dept_head, the head of that person's department
     hash: 7725f09a82b08ab534279fd3c2159d7893fd0e33d11f023ff21cddfa9ca796de
   E05:
     record: sys_hub_flow/8b7565139f151210db9f618dfa0a1c70
@@ -34,15 +34,20 @@ evidence:
 
 | What | When | Who approves |
 |---|---|---|
-| The whole request | its total is over 1000 | the group **Catalog Request Approvers > $1000** [E01] [E02] |
-| Most hardware and access items | always | the manager of the person it's for, then their **department head** [E03] [E04] |
+| The whole request | its total is more than $1,000 | an approval group [E01] |
+| Most devices and access items | always | the manager of the person it's for, then the head of that person's department [E03] [E04] |
 
-Below 1000 the request itself is approved automatically. [E01] Some service items use the price
-rule on the item instead. [E05]
+At $1,000 or less the request itself is approved automatically. [E01] Some service items use the
+price rule on the item instead. [E05]
 
 ### If you are asked {for=user}
 
-You're asked as a manager or department head: see [Approve a request](see:approve).
+You're asked as the manager of the person an item is for, or as the head of their department: see
+[Approve a request](see:approve).
+
+### The approval group {for=operator}
+
+The group the request approval asks is **Catalog Request Approvers > $1000**. [E02]
 
 ### Waiting on approval {for=operator}
 

@@ -53,7 +53,25 @@ evidence:
     result: proposed as a major incident → the assignment group
     hash: b2af98605566a97a63d5496aa44f7589c9e7d7c1920d015fcf3701287a4b3dde
 ---
-## Emails at each step
+## Emails you get {for=user}
+
+| When | The email you get |
+|---|---|
+| Your incident is created | *"Incident … was created"* [E01] |
+| The service desk writes to you | their message, *"Comment added to …"* [E02] |
+| It is resolved | that it was resolved, so you can confirm or reopen [E03] |
+| It is closed | that it was closed [E04] |
+
+### Which messages you see
+
+You see everything the service desk writes **to you**, by email and on the incident's page in
+Employee Center. [E02] The support team also keeps internal notes you don't see; they are about
+the investigation, not about you. [E08]
+
+Colleagues you ask the service desk to add to your incident get an email each time a message is
+added. [E07]
+
+## Emails at each step {for=operator}
 
 | When | The caller | The support team |
 |---|---|---|
@@ -66,16 +84,7 @@ evidence:
 | It is closed | that it was closed [E04] | |
 | It is proposed as a major incident | | the team [E10] |
 
-### Which messages you see {for=user}
-
-You see everything the service desk writes **to you**, by email and on the incident's page in
-Employee Center. The support team also keeps internal notes you don't see; they are about the
-investigation, not about you.
-
-Colleagues on the incident's watch list get the same emails you do. Ask the service desk to add
-someone.
-
-### Which messages the caller sees {for=operator}
+### Which messages the caller sees
 
 | Field | Who sees it |
 |---|---|
@@ -83,4 +92,4 @@ someone.
 | **Work notes** | the assignee and the work notes list only; never the caller [E08] |
 
 Write to the caller in *Additional comments*, in plain words. Keep findings, what you tried and
-hand-over notes in *Work notes*.
+hand-over notes in *Work notes*. See [Work on an incident](see:work).

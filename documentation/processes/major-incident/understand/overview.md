@@ -22,29 +22,27 @@ evidence:
 ---
 ## What a major incident is
 
-A **major incident** is one incident that stands for a failure hitting many people or a critical
-service: email is down for everyone, the network fails at a site, an application everyone needs
-is unavailable. Instead of many teams working many reports, one response is led by a **major
-incident manager**. [E03]
-
-## How it goes
-
-1. Someone on the service desk sees that an incident is bigger than one person, and **proposes**
-   it. It becomes a **candidate**.
-2. A major incident manager **promotes** it to a major incident, or **rejects** it. On pdi2 the
-   candidate itself becomes the major incident. [E01]
-3. The other reports of the same failure are **linked** to it as child incidents.
-4. The response runs from the **workbench**; people are kept informed through communication
-   plans.
-5. When the major incident is **resolved**, its child incidents are resolved with it. [E02] A
-   **post-incident review** records what happened and what to change.
+A **major incident** is one failure hitting many people or a critical service: email is down for
+everyone, the network fails at a site, an application everyone needs is unavailable. Instead of
+many teams working many reports, one response is led by a **major incident manager**. [E03]
 
 ### What it means for you {for=user}
 
 You don't have to do anything different. Report the problem as usual (see
-[Report an incident](see:incident/report)). If many people report the same failure, the service
-desk links your incident to the major incident: you get its updates, and your incident is
-resolved when the failure is fixed. See [Follow an outage](see:follow).
+[Report an incident](see:incident/report)). When many people report the same failure, the service
+desk connects your report to the one response: you get its updates on your own incident, and your
+incident is resolved when the failure is fixed. [E02] See [Follow an outage](see:follow).
+
+## How it goes {for=operator}
+
+1. Someone on the service desk sees that an incident is bigger than one person, and **proposes**
+   it. It becomes a **candidate**.
+2. A major incident manager **promotes** it to a major incident, or **rejects** it. Here the
+   creation mode is *promote*: the candidate itself becomes the major incident. [E01]
+3. The other reports of the same failure are **linked** to it as child incidents.
+4. The response runs from the **workbench**; stakeholders are kept informed with communications.
+5. When the major incident is **resolved**, its child incidents are resolved with it. [E02] A
+   **post-incident review** records what happened and what to change.
 
 ### Where you start {for=operator}
 

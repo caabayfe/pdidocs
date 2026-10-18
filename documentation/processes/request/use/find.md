@@ -66,7 +66,7 @@ evidence:
   E12:
     record: sys_hub_flow/011c5d579fd11210db9f618dfa0a1ce1
     how: read the subflow Request Management Approval
-    result: requests over 1000 need approval from a group; below, auto approved
+    result: 'condition "Price > $1,000?" on the request''s price (a currency input): over $1,000 asks a group for approval; otherwise approved automatically'
     hash: 6a2bf9df5bcde4821796803bc625bda2c55f7525b2e10a234388f121d60262e4
   E13:
     seen:
@@ -82,6 +82,21 @@ evidence:
       where: 'Employee Center › Request DocuSign access'
     how: 'opened the item page, submitted nothing'
     result: '"* Indicates required"; Requested for filled with the employee; Business justification required; a Required information box beside Save as Draft and Submit lists Business justification'
+  E15:
+    record: sys_hub_flow/30f3d26187e92300e0ef0cf888cb0b91
+    how: read the flow Service Catalog item request (used by 36 items, among them the laptops, phones and access items)
+    result: stages Manager Approval, Dept. Head Approval, then fulfilment
+    hash: 7e4c924ae8f9da3ea0457d090b77e53a58e495b1cc6bbb64ef9f043b7d32201b
+  E16:
+    record: sys_hub_flow/d4a0864e87232300bdcf480688cb0bb1
+    how: read Requested Item Manager Approval
+    result: asks requested_for.manager, the manager of the person the item is for
+    hash: 768ecdceeff520a77ca8ee1a4636521fe7c5bad41a0bc8bff7e33bfee2a130dd
+  E17:
+    record: sys_hub_flow/d8a9420287632300bdcf480688cb0bef
+    how: read Requested Item Dept Head Approval
+    result: asks requested_for.department.dept_head
+    hash: 7725f09a82b08ab534279fd3c2159d7893fd0e33d11f023ff21cddfa9ca796de
 ---
 The **catalog** is the list of everything IT can give you: devices, software, access and
 services. Each thing you can order is an **item**, with its own page, price and questions. You
@@ -131,7 +146,8 @@ If nothing fits, search for *non-standard* or ask in the chat.
 
 ## Bundles: order several things at once
 
-An **order guide** asks a few questions and then orders the right set of items for you.
+A **bundle** asks a few questions and then orders the right set of items for you in one go
+(see [Order something](see:order) for how ordering works).
 
 - **New Hire**: for a manager preparing for someone who joins. It asks the hiring manager, the
   team, whether they work remotely, the office, and the device and phone type. It always adds an
@@ -143,18 +159,15 @@ An **order guide** asks a few questions and then orders the right set of items f
 
 ## Before you order
 
-On an item's page, check three things [E11]:
+On an item's page, check its **Price**, its **Delivery Time** and its questions [E11] [E14]; [Order
+something](see:order) walks you through it.
 
-- **Price**: some items also show a yearly cost, such as *$1,100.00 + $100.00 Annually*.
-- **Delivery Time**: how long until you have it, such as *9 Days* for the Standard Laptop.
-- **The questions**: required ones have a red asterisk (*\* Indicates required*). Until they're
-  answered, a **Required information** box beside the order button lists what's missing, such as
-  *Business justification*. [E14]
+Who has to say yes depends on the item and the total:
 
-A request worth more than 1000 in total needs an extra approval; below that it's approved
-automatically. [E12] Many devices and access items are also approved by your manager.
-
-Then order it: [Order something](see:order).
+- a request worth more than **$1,000** in total needs one more approval; below that it's approved
+  automatically [E12];
+- most devices and access items are approved by the **manager of the person it's for**, then by
+  that person's **department head**. [E15] [E16] [E17]
 
 ## Tips
 

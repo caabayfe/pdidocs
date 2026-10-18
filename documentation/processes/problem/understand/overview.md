@@ -29,7 +29,13 @@ stop: a printer that fails every Monday, an application that crashes after each 
 cause is worked on, a **workaround** keeps people working; when it is fixed, the incidents waiting
 for it are resolved. [E01]
 
-## How it goes
+### What it means for you {for=user}
+
+You don't see problems; you see your incident. If it is waiting for a problem fix, the service desk
+puts it on hold and it is resolved when the fix is in: see
+[When a problem is behind your incident](see:affected).
+
+## How it goes {for=operator}
 
 1. Someone **raises** a problem and links the incidents that share the cause.
 2. A **problem coordinator** assesses it and confirms it; the **root cause analysis** follows,
@@ -38,12 +44,6 @@ for it are resolved. [E01]
 4. The **fix** is made, usually through a change; the problem is **resolved**, then **completed**.
 
 Every new problem follows the model *General*. [E02]
-
-### What it means for you {for=user}
-
-You don't see problems; you see your incident. If it is waiting for a problem fix, the service desk
-puts it on hold and it is resolved when the fix is in: see
-[When a problem is behind your incident](see:affected).
 
 ### Where you start {for=operator}
 

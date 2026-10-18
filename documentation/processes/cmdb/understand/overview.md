@@ -30,7 +30,13 @@ evidence:
     result: how configuration items depend on each other
     hash: e4566f108533014dfd3d88c071a8c597c7b31e99fd5c52771608ecebed2a25d7
 ---
-## Configuration items
+## What it is {for=user}
+
+IT keeps a record of what it runs: the services you use (email, payroll), the applications behind
+them, and the computers and network they run on. [E01] [E02] When you report a problem, you may be asked
+which application or service is affected: see [Say which service is affected](see:pick-service).
+
+## Configuration items {for=operator}
 
 The CMDB is the record of what IT runs. Each thing in it is a **CI** [E01]: a
 **service** people use (email, payroll) [E02], the **applications** behind it, the **servers**,
@@ -38,12 +44,7 @@ The CMDB is the record of what IT runs. Each thing in it is a **CI** [E01]: a
 linked by **relationships**: an application runs on a server, a service depends on an application.
 [E05]
 
-### What it means for you {for=user}
-
-When you report a problem, you may be asked which application or service is affected: see
-[Say which service is affected](see:pick-service).
-
-### Where you start {for=operator}
+### Where you start
 
 In the Service Operations Workspace, **CMDB** lists Applications, Cloud, Databases, Devices,
 Infrastructure gear, PC, Servers, Services and Others. [E03] The **CMDB Workspace** is for working on

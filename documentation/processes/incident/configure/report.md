@@ -44,7 +44,7 @@ evidence:
     record: sysevent_in_email_action/498e10410a0a0b4b007c8c7f63531747
     field: script
     how: read Update Incident (BP), type reply
-    result: adds the reply as a comment; "please reopen" in the subject calls Incident().reopen
+    result: adds the reply as a comment; "please reopen" in the subject calls Incident().reopen; assign and priority lines applied only for itil or sn_incident_write
     hash: 8e6863543e48e8bdba481e801b87f9f3d346d80fa323cb928defc05b6a453e89
   E09:
     record: sysevent_email_action/58e3c1d45322301001b2ddeeff7b1266
@@ -56,6 +56,11 @@ evidence:
     how: read the Report Outage producer (scope sn_ect)
     result: active, creates an incident, category Can We Help You?
     hash: 5448af60b7251fec431e98abbac90029b4397a330eceb19c570244a907eaaeac
+  E11:
+    record: dl_definition/302849102b031000de0aba36a3fd5631
+    how: read Priority Lookup
+    result: the priority is looked up from impact and urgency, on the form and on save
+    hash: 9ce013173c49e78eb1f7963690a52ff2fc96c9a822f4ab3bf778ab32b7c91735
 ---
 ## Entry points
 
@@ -63,18 +68,32 @@ evidence:
 |---|---|---|
 | Portal and classic catalog | Create Incident producer [E02] | Urgency and description mandatory; contact type self-service; title from the first 80 characters [E01] |
 | Service Portal tile | Get Help [E03] | Opens the *Can We Help You?* category |
-| Employee Center | default portal, suffix `esc` [E04] | Its own Get help menu isn't in the mirror (see below) |
+| Employee Center | default portal, suffix `esc` [E04] | *Get support* menu; seen on screen, see [Report an incident](see:incident/use/report) |
 | Classic New button | New [E05] | Non-agents are sent to the producer |
-| Email, new | Create Incident [E06] | Caller = sender, category *inquiry*, contact type email |
+| Email, new | Create Incident [E06] | Caller = sender, category *inquiry*, contact type email; see the security notes below |
 | Email, forwarded | Create Incident (Forwarded) [E07] | As above |
 | Email, reply | Update Incident (BP) [E08] | Comment on the existing incident; "please reopen" reopens |
 | Other producers | Report Outage [E10], Report Performance Problem, Password Reset | Ask a Question is inactive |
 
 The caller is emailed when the incident is created. [E09]
 
+## Email behaviours with security impact
+
+The inbound action *Create Incident* reads keywords and headers from any sender it accepts [E06]:
+
+| Input | Effect | Check |
+|---|---|---|
+| a line `assign: <user>` in the body | sets **Assigned to** on the new incident | none: any sender can choose the assignee [E06] |
+| email importance **High** | sets impact 1 and urgency 1, so priority **1 - Critical** | none: any sender can raise the highest priority [E06] [E11] |
+
+For replies, *Update Incident (BP)* applies `assign:` and `priority:` only when the sender has
+`itil` or `sn_incident_write`. [E08] Consider the same check on the new-email action, or removing
+these lines, so that a P1 can't be raised and an agent can't be targeted by anyone with mail
+access.
+
 ## Open questions {label=OPEN-QUESTION}
 
-1. Employee Center's *Get help* menu and how incidents appear under *My Requests* are not in the
-   mirror. Confirm the exact navigation labels on the portal before publishing step 1.
+1. The cards of Employee Center's *Get support* window come from tables snagentic doesn't read;
+   what employees see was checked on screen (see the employee page).
 2. Which mailbox address receives incident email is instance configuration (email accounts),
    not mirrored.

@@ -47,3 +47,11 @@ those fields show what the CI depends on and what depends on it. [E01] [E02]
 - **Impacted Services/CIs** lists the services hit. On a change it is refreshed from the affected
   CIs [E04]; on an incident use **Refresh Impacted Services** in the form menu, which leaves the
   affected CIs out. [E05] [E06]
+
+## Where you use it
+
+- On an incident, to see who else is hit before you set the impact: see
+  [Incident management](see:incident) and [Set the priority](see:incident/prioritise).
+- On a change, to judge its risk: see [Raise a change](see:change/raise).
+- In a major incident, to find every service that is down: see
+  [Run the response](see:major-incident/run).

@@ -67,7 +67,7 @@ so operators propose from the classic form. [E08]
 Every save of an active, non-child incident that isn't a candidate queues an evaluation [E05]; the
 script action runs the active trigger rules **as the user who saved**, in order, and the first
 match proposes or promotes. [E06] The rules are records of `major_incident_trigger_rule` [E07].
-pdi2 has **none** [E09], so every evaluation finds nothing: candidates are only proposed by
+There are **none** [E09], so every evaluation finds nothing: candidates are only proposed by
 hand.
 
-The event `incident.major_incident_state_changed` [E04] has no listener on pdi2.
+The event `incident.major_incident_state_changed` [E04] has no listener.

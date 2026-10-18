@@ -12,7 +12,7 @@ evidence:
     record: sysevent_script_action/315aa414534123004247ddeeff7b1240
     field: script
     how: read Update Incident when Problem closes
-    result: 'resolves incidents On Hold for Awaiting Problem when the fix is applied; notes "Related problem … closed."'
+    result: 'when the problem is resolved with Fix Applied, resolves its incidents On Hold for Awaiting Problem with "Related problem … closed."; with Risk Accepted, only adds an internal note'
     hash: 05ad6dee5b208584f1f5ea888e7cb64d0efa10da0a9cb80903a7db107fb633dd
   E03:
     record: sysevent_email_action/4d505448e5aeb410f8777565f90b2f13
@@ -31,16 +31,47 @@ evidence:
 {{animation:prbaffected}}
 
 Sometimes your incident can't be fixed on its own: the cause is bigger, and the service desk opens
-a **problem** to remove it. Your incident then shows **On Hold**, waiting for the problem. [E01]
-You don't need to do anything, and you keep your incident number.
+a **problem** to remove it. This page says what you see while you wait.
 
-## When the fix is in
+## Before you start
 
-When the problem is fixed, your incident is resolved by itself, with the note *"Related problem
-… closed."*, and you get the usual *"… was resolved"* email. [E02] [E03] If it still doesn't work
-for you, reopen it as usual (see [Confirm the fix, or reopen](see:incident/confirm)).
+- You don't need to do anything to start this: the service desk decides when an incident waits
+  for a problem.
+- Keep your incident number. Your incident stays yours; nothing new is opened in your name.
 
-## Meanwhile
+## Follow it
 
-A workaround found by the problem team reaches the support teams as an internal note, not you.
-[E04] If you need to keep working, ask on your incident whether there is a workaround.
+1. Open your incident in Employee Center. Its state shows **On Hold**, waiting for the problem.
+   [E01]
+2. Wait for the fix: you don't need to chase it.
+3. When the fix is in, your incident is resolved by itself: its activity says *"Related problem …
+   closed."* and you get the usual *"… was resolved"* email. [E02] [E03]
+
+## What happens next
+
+Try what didn't work. If it works, there is nothing more to do. If it still doesn't work for you,
+reopen your incident as usual (see [Confirm the fix, or reopen](see:incident/confirm)).
+
+If the team decides the cause isn't worth fixing, your incident isn't resolved by itself: the
+support team finishes it with you. [E02]
+
+## Emails you get
+
+| When | Email |
+|---|---|
+| The fix is in and your incident is resolved | *"… was resolved"* [E03] |
+
+## Tips
+
+- A way to keep working may exist before the fix: the support teams receive it, not you. [E04]
+  Ask on your incident whether there is one.
+- If the problem is getting worse for you, add what you see to your incident's **Activity**
+  rather than reporting a new incident.
+
+## I want to…
+
+| I want to… | Go to |
+|---|---|
+| follow my incident | [Follow your incident](see:incident/follow) |
+| reopen it after the fix | [Confirm the fix, or reopen](see:incident/confirm) |
+| report something new | [Report an incident](see:incident/report) |

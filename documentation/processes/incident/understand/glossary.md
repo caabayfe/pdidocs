@@ -8,20 +8,21 @@ reviewed: 2026-10-17
 |---|---|
 | **Incident** | Something that used to work and doesn't, or gets in the way of your work. Asking for something new is a **request**, not an incident. |
 | **Incident number** | The reference that starts with **INC**. Quote it whenever you talk to the service desk. |
-| **Caller** | The person the incident is for. The caller is kept informed and confirms the fix. |
 | **Priority** | How quickly it must be fixed, from *1 - Critical* to *4 - Low*. It follows from the impact and the urgency. |
 | **Urgency** | How soon it hurts: has work stopped, slowed, or can it wait? |
 | **Impact** | How many people, or how much of the business, is affected. |
-| **On Hold** | Waiting for something: the caller, a planned change, a fix for a wider problem, or a supplier. |
-| **Resolved** | The fix is in. The caller can confirm it or reopen the incident. |
+| **On Hold** | Waiting for something: the person who reported it, a planned change, a fix for a wider problem, or a supplier. |
+| **Resolved** | The fix is in. The person who reported it can confirm it or reopen the incident. |
 | **Closed** | Finished. A closed incident can't be reopened. |
-| **Watch list** | Colleagues who get the same updates as the caller. |
-| **SLA** | A deadline: one for the first response and one for the fix, set by the priority. |
+| **Watch list** | Colleagues kept informed: they get an email each time a message is added. |
+| **Deadline** | How soon someone must take the incident, and how soon it must be fixed. Both are set by the priority. |
 
 ## For the support team {for=operator}
 
 | Word | What it means |
 |---|---|
+| **Caller** | The person the incident is for. The caller is kept informed and confirms the fix. |
+| **SLA** | A deadline: one for the first response and one for the fix, set by the priority. |
 | **Assignment group** | The support team responsible for the incident. |
 | **Assigned to** | The person in that team working on it. |
 | **Additional comments** | Messages the caller sees. Writing one emails the caller. |

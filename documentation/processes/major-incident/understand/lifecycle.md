@@ -33,12 +33,12 @@ evidence:
 ---
 ## The states
 
-A major incident is still an incident, with the usual states (New, In Progress, Resolved…), and a
-second status on top: candidate, major incident, rejected or demoted.
+A major incident is still an incident, with the usual states (New, In Progress, Resolved…).
 
 ### The field {for=operator}
 
-The status is the field **Major incident state**. [E01]
+On top of the usual states it has a second status: candidate, major incident, rejected or
+demoted. The status is the field **Major incident state**. [E01]
 
 | Value | What it means |
 |---|---|
@@ -50,8 +50,8 @@ The status is the field **Major incident state**. [E01]
 
 ### What you notice {for=user}
 
-Nothing changes on your own incident's page. If your incident is linked to the major incident,
-its state follows the major incident's, and it is resolved when the failure is fixed.
+Nothing changes on your own incident's page. When your report is part of the response, its
+status moves with the response's, and it is resolved when the failure is fixed. See [Follow an outage](see:follow).
 
 ### Who moves it on {for=operator}
 
