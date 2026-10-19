@@ -113,6 +113,11 @@ evidence:
     how: read Incident resolved
     result: the caller gets an email "… was resolved"
     hash: 0a29cfd91220c1341af6b005a02c3c4a0101ab6cf06225293763356b72f60e87
+  E23:
+    record: sc_cat_item_user_criteria_mtom/ff642d5c7361230039517a5454f6a790
+    how: read who the Password Reset form is available for
+    result: Users with 'cmdb_read' Role only, a role IT staff have and employees don't
+    hash: 1e50b259aaa2a5e81dfd9de365ba49a6a7a990c79b38f0a0f3820d540f201086
 ---
 Report something that used to work and doesn't, or gets in your way. You get a number starting
 with **INC** and an email, and you follow it in **My Requests**.
@@ -151,10 +156,13 @@ an incident too.
 |---|---|---|
 | **Report Outage** | an application or service is down for you | which application, since when, what you see [E06] |
 | **Report Performance Problem** | an application is slow | which application, and whether everything or one task is slow [E07] |
-| **Password Reset** (under *Access issues*) | you are locked out of an application | whose password, which application, how to send the new one [E08] |
 
 When a form asks which application you mean, see
 [Say which service is affected](see:cmdb/pick-service).
+
+The **Password Reset** form (under *Access issues*) asks whose password, which application and
+how to send the new one [E08], but only IT staff can open it. [E23] To reset your own password,
+see [Reset or change your password](see:getting-help/password).
 
 ### Get support
 

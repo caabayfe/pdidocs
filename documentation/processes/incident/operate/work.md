@@ -159,6 +159,9 @@ incident, and it completes when the incident closes. So it is met when you **res
 incident in time, as long as it isn't reopened. Waiting for a change, a problem or a vendor does
 **not** pause it. [E05]
 
+Which timers the workspace shows, what starts, pauses and stops them, and who is warned:
+[Meet an incident's deadlines](see:meet-deadlines).
+
 {{animation:inclife}}
 
 ## Changing the priority while you work

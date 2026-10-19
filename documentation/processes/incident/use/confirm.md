@@ -89,6 +89,8 @@ Every closed incident sends you a short survey by email, *"Feedback makes us bet
 satisfied you are with the service, from *Very Dissatisfied* to *Very Satisfied*, and anything
 you'd like to tell IT. [E07] [E08] [E09] It takes a minute.
 
+What the survey asks and how to answer it: [Tell IT how it went](see:survey).
+
 ## Tips
 
 - Test the fix the way you normally work before you press **Close**.

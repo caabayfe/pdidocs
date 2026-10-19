@@ -97,6 +97,11 @@ evidence:
     how: read Requested Item Dept Head Approval
     result: asks requested_for.department.dept_head
     hash: 7725f09a82b08ab534279fd3c2159d7893fd0e33d11f023ff21cddfa9ca796de
+  E18:
+    record: sc_cat_item_user_criteria_mtom/ff642d5c7361230039517a5454f6a790
+    how: read who the Password Reset form is available for
+    result: Users with 'cmdb_read' Role only, a role IT staff have and employees don't
+    hash: 1e50b259aaa2a5e81dfd9de365ba49a6a7a990c79b38f0a0f3820d540f201086
 ---
 The **catalog** is the list of everything IT can give you: devices, software, access and
 services. Each thing you can order is an **item**, with its own page, price and questions. You
@@ -114,7 +119,8 @@ at once.
 
 Some forms in the catalog report problems rather than order things: **Create Incident**, **Report
 Outage**, **Report Performance Problem** and **Password Reset**. They create an incident, which
-you follow the same way. [E09] [E10]
+you follow the same way. [E09] [E10] Only IT staff see **Password Reset** [E18]; to reset your own
+password, see [Reset or change your password](see:getting-help/password).
 
 ## Search
 
