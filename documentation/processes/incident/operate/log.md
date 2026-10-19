@@ -51,6 +51,51 @@ evidence:
       where: 'classic incident form, INC0010023'
     how: 'read the field labels'
     result: 'contact type is labelled Channel'
+  E10:
+    record: sys_declarative_action_assignment/5c3f3dc877320210c9ee78dabd5a99f7
+    how: read the workspace action Copy Incident
+    result: 'roles itil or sn_incident_write; Service Operations Workspace views only; shown while IncidentUtils.isCopyIncidentEnabled() is true; no record condition, so in every state'
+    hash: 57d4336f6b20e0ca73682a4706b86ea574ea5cb97a239769bd4b2ac2cef9cef8
+  E11:
+    record: sys_ux_form_action_layout_item/bda14e3ec7213010d7e818b1c7c26031
+    how: read where the action is placed
+    result: overflow, so it is under More actions
+    hash: a8c02c6caab76348f7d0d74af4c54a8029a482ae8d98673804aa5b09ca0cfecf
+  E12:
+    record: sys_properties/8c2863d6531232000600e26b88dc3411
+    field: value
+    how: read com.snc.incident.copy.enable
+    result: "true: Copy Incident is switched on"
+    hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
+  E13:
+    record: sys_declarative_action_assignment/5c3f3dc877320210c9ee78dabd5a99f7
+    field: client_script
+    how: read what the action does on the screen
+    result: 'a "Copy Incident" dialog: "Create a new incident by copying the current incident. Specify a caller to proceed."; Caller (required); Include attachments only when the incident has attachments, ticked by the property; Copy; the new incident then opens'
+    hash: 2e41a584e553eaf68104d9a5646fb779d965ea879b108ba4e3b303f4be3e2eed
+  E14:
+    record: sys_script_include/0ebbe74fc7001010c24ae122c7c26009
+    field: script
+    how: read IncidentUtils2SNC.makeIncidentCopy
+    result: 'the copy is saved at once, with the chosen caller and the work note "This Incident is copied from INC…"; attachments and the configured related lists are copied after it is saved; it fails if you may not create incidents'
+    hash: faefebf8b632f587fb1dfad4fa5b1514bb7f52a9f63c0baed0d3fac3ed1fab05
+  E15:
+    record: sys_script_include/a1b5e796531232000600e26b88dc3472
+    field: script
+    how: read IncidentUtilsSNC, the fields to copy
+    result: 'default fields: short description, description, category, subcategory, impact, urgency, priority, configuration item, service, service offering, location, company, assignment group, caused by, parent incident, problem, change request; never copied: number, close code and notes, opened by and at, watch list, work notes list, additional assignees, knowledge, hold reason'
+    hash: ffcaf34fa9847d8197f844f13f50d9cecdb73af98017c5d0871ec60750488aa8
+  E16:
+    record: sys_properties/55e4b38c53e232000600e26b88dc3430
+    field: value
+    how: read com.snc.incident.copy.attach
+    result: "true: Include attachments is ticked by default"
+    hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
+  E17:
+    record: sys_properties/b644e8d7539232000600e26b88dc3402
+    how: read com.snc.incident.copy.related_lists
+    result: 'can copy Affected CIs, Impacted Services, Service Offerings and Business Applications; the value on pdi2 is not in the mirror'
+    hash: 96c625ff898ecce1be8e4b6b4bbbbb8262e841e27c14dcdf6101cdd59881756e
 ---
 ## Where you work
 
@@ -99,8 +144,47 @@ for the queue); **Create New** opens an empty form.
 Assign it to yourself, write what you did in the resolution notes, and resolve it straight away
 (see [Resolve an incident](see:resolve)). This is still worth logging: it shows how often things happen.
 
+## Copy an incident for another caller {label=NEW}
+
+{{animation:inccopy}}
+
+Use **Copy Incident** when a second person reports the same kind of issue and you want a new
+incident of their own without typing it all again. If it is the same outage affecting many
+people, link them to one incident instead (see [Escalate and link related work](see:escalate)).
+
+1. Open the incident in the workspace, open **More actions** and choose **Copy Incident**. [E11]
+2. The **Copy Incident** dialog asks for the **Caller** of the new incident: it is required. [E13]
+3. If the incident has attachments, **Include attachments** is shown, ticked. Untick it if the
+   new caller shouldn't get them. [E13] [E16]
+4. Choose **Copy**. The new incident is saved straight away and opens. [E13] [E14]
+
+What the new incident gets, with the standard settings [E15]:
+
+| Copied | Not copied |
+|---|---|
+| short description, description, category, subcategory, impact, urgency, priority, configuration item, service and service offering, location, company, assignment group, caused by, parent incident, problem and change request | number, state and resolution details, opened by and opened at, the assignee, the watch list, work notes and comments |
+
+The platform team can change the list. Attachments are copied when **Include attachments** is
+ticked. [E14] Some related lists (affected CIs, impacted services) can be copied too, if the
+platform team has set them. [E17]
+
+The new incident links back only through a work note, *"This Incident is copied from INC…"*. [E14]
+It is not a child of the original. Check the description and the assignment group before you
+work on it: they are the original's.
+
+Who sees the action: anyone with the **itil** or **sn_incident_write** role, on an incident in
+any state, including closed ones. [E10] It is switched on on pdi2. [E12]
+
 ## Tips
 
 - Search for open incidents with the same configuration item before you log a new one; it may
   be part of something bigger (see [Escalate and link related work](see:escalate)).
 - Write the short description for the next person, not for yourself.
+
+## Not yet seen {label=OPEN-QUESTION}
+
+1. Copy Incident was read from the mirror only; no walk has recorded its dialog yet. Does the
+   Caller field start empty, and does the new incident open in a new tab?
+2. Which fields does pdi2 really copy? The list can be changed, and its value isn't in the
+   mirror. [E15]
+3. Does the new caller get the usual "incident opened" email for a copy?
