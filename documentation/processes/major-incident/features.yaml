@@ -1,0 +1,182 @@
+# The features of major incident management (ADR-0040): every application `snagentic docs census
+# major-incident` finds, and what a walk of the classic form, the workbench and the Service
+# Operations Workspace should show, each with a decision. Major incidents live on the incident
+# table, so most of what the census finds is incident handling, documented in incident. Out-of-scope
+# and question decisions were proposed by the documentation agent on 2026-10-19 and wait for the
+# process owner's confirmation.
+features:
+  - id: core
+    title: Major incident lifecycle (propose, promote or reject, run, demote)
+    found:
+      - global
+      - sn_major_inc_mgmt
+    status: documented
+    capabilities: [propose, decide, run, review]
+  - id: link
+    title: Link the other reports (child incidents)
+    found:
+      - sn_sow_inc:Add
+      - sn_sow_inc:New
+      - sn_sow_inc:Remove ({{count}})
+      - sn_sow_inc:Hide Parent incident if it's a Major Incident
+      - global:Link to Major Incident
+      - global:Derive State value from Parent Incident
+      - global:Sync Child Incident State
+      - global:Update Child Incidents
+      - global:Child incident cannot be major incident
+      - global:Make Parent Incident field Read Only for Major Incidents
+    status: documented
+    capabilities: [link, follow]
+  - id: communication-plans
+    title: Communications (Create new communication, communication plans and tasks)
+    found:
+      - sn_comm_management
+      - sn_sow_inc:Open new communication modal
+      - global:Auto Assignment of ICP
+      - global:Auto Assignment of ICT
+      - global:ICP State Management
+      - global:Cascade Closure of ICPs
+      - global:Synch ICP and Comm Plan Field
+      - global:New IA Raised
+      - global:IA Actions Taken
+      - global:IA Cancelled
+      - global:IA Resolved Or Closed
+    status: documented
+    capabilities: [communicate, incident/communicate]
+    note: >-
+      The four IA notifications on communication plans (incident_alert) are active but name no
+      recipients; who-is-told doesn't list them. Confirm on the walk whether creating a
+      communication sends anything.
+  - id: add-channel
+    title: Add a channel to an existing communication task (workspace)
+    found: [sn_uib_tcm]
+    status: question
+    note: >-
+      Add communication channel works on communication tasks (incident_alert_task extends
+      comm_task). With Notify off only email exists, so is a channel ever added after a
+      communication is created?
+  - id: conference-sms
+    title: Conference bridge and SMS through Notify
+    found:
+      - sn_comm_management:Add Channel - Conference
+      - sn_comm_management:Add Channel - SMS
+      - sn_comm_management:Send SMS
+      - sn_comm_management:Join Conference Call
+      - sn_comm_management:End Conference Call
+      - sn_comm_management:Manage Conference Calls
+      - sn_comm_management:Initiate
+      - global:Initiate
+      - sn_sow_itsm_common:Send Sms
+      - global:Start Conference Call
+      - global:Join Conference Call
+      - global:End Conference Call
+      - global:Manage Conference Calls
+      - global:Send SMS
+      - global:SMS on new Incident Communication Plan
+      - global:Conference Call Allowed
+      - global:Conference Visibility
+    status: documented
+    capabilities: [run, communicate]
+    note: >-
+      Notify is off on pdi2 (glide.enable.notify_on_task false); the run and communicate pages say
+      so and tell the manager to hold the bridge in the usual meeting tool.
+  - id: live-feed
+    title: Live Feed on the major incident and its communication plans
+    found:
+      - sn_comm_management:Follow on Live Feed
+      - sn_comm_management:Show Live Feed
+      - global:Follow on Live Feed
+      - global:Show Live Feed
+    status: question
+    note: >-
+      The communication plan's Live Feed actions are inactive, and Show Live Feed on task appears
+      only outside the Next Experience UI. Does anyone follow a major incident on Live Feed?
+  - id: outages
+    title: Record a service outage (Create Outage)
+    found: [global:Create Outage]
+    status: documented
+    capabilities: [run, follow]
+  - id: post-incident-review
+    title: Post-incident report on the classic form (Preview PIR, Regenerate PIR Timeline)
+    found:
+      - sn_major_inc_mgmt:Preview PIR
+      - sn_major_inc_mgmt:Regenerate PIR Timeline
+      - global:View PIR Report
+      - global:Generate timeline
+      - global:PIR visibility
+      - global:PIR Visibility on State Change
+      - global:Make PIR section source incident fields read only
+      - global:Show Post Incident Report Section when state is resolved or closed and major incident state is accepted
+    status: documented
+    capabilities: [review]
+  - id: workspace-review
+    title: Post-incident review in the Service Operations Workspace (draft, co-authors, publish)
+    found:
+      - sn_sow_inc:Insert PIR Records On Resolved
+      - sn_sow_inc:sn_sow_inc_post_incident_review
+    status: todo
+    note: >-
+      The review page only says a draft is created on resolution and is due within 24 hours. The
+      workspace has its own Post Incident Report tab (resolved or closed accepted major incidents
+      with a review record) that the major incident manager, the assignee and co-authors can edit;
+      how to write, share and publish it isn't documented.
+  - id: trigger-rules
+    title: Major incident trigger rules (automatic proposal)
+    found:
+      - sn_sow_itsm_admin
+      - sn_major_inc_mgmt:Evaluate Major Incident Trigger Async
+    status: question
+    note: >-
+      No trigger rules exist on pdi2 (configure/propose explains how they would run), so candidates
+      are only proposed by hand. Do you want rules? If so, maintaining them in the Service
+      Operations Workspace admin (Activate, Copy, Deactivate, Delete) deserves a configure page.
+  - id: metadata-tools
+    title: Workflow Studio export and App Development source artifacts
+    found: [sn_workflow_studio, sn_glider]
+    status: out-of-scope
+    note: >-
+      They reach the process only because trigger rules are metadata records (sys_metadata);
+      nobody works a major incident with them.
+  - id: incident-handling
+    title: Incident handling on the major incident record
+    found:
+      - sn_sow_inc:Create Incident Task
+      - sn_sow_inc:Create child incident
+      - sn_sow_inc:Report Knowledge Gap
+      - sn_sow_inc:Copy Incident
+      - sn_sow_inc:Create Knowledge
+      - sn_sow_inc:Create request
+      - sn_sow_inc:Edit knowledge
+      - sn_sow_inc:Reopen
+      - sn_sow_inc:Resolve
+      - sn_sow_inc:Close interaction from incident
+      - sn_sow_inc:Hide active field for SOW
+      - sn_sow_inc:Hide notes section
+      - sn_sow_inc:Resolution details visibility on load
+      - sn_sow_inc:Resolution details visibility on state
+      - sn_sow_inc:Set Resolution notes for Parent Incident
+      - sn_sow_inc:Set Resolution notes for Resolution Code
+      - sn_sow_inc:(SOW) Make Parent Incident mandatory
+      - sn_sow_inc:(SOW-Incident-Overview) Make Parent Incident mandatory
+      - sn_sow_inc:Hide fields on SOW modal
+      - sn_sow_inc:Hide origin table and record on Incident form
+      - sn_sow_inc:Show and make Parent incident mandatory if Resolution code is Duplicate
+      - sn_sow_inc:Show and make Parent incident mandatory if Resolution code is Duplicate in SOW Summary Modal view
+      - sn_sow_itsm_common:Assign to me
+      - sn_sow_itsm_common:CI dependency view
+      - sn_sow_itsm_common:Service dependency view
+      - sn_sow_itsm_common:Service offering dependency view
+      - sn_itsm_workspace
+      - sn_sow_interaction
+      - sn_templated_snip
+      - sn_oe_sfs
+      - sn_sow_collab
+      - sn_sow_pwd_reset
+      - sn_sla_brkdwn
+    status: out-of-scope
+    note: Documented in incident.
+  - id: incident-only
+    title: Applications that reach the incident table but not the response
+    found: [sn_change_cab, sn_slm_atf, sn_em_tbac, sn_svc_err]
+    status: out-of-scope
+    note: Documented in incident (decided there as out-of-scope or a question).

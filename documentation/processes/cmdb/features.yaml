@@ -1,0 +1,152 @@
+# The features of configuration management (ADR-0040): every application `snagentic docs census
+# cmdb` finds, each with a decision. Out-of-scope and question decisions were proposed by the
+# documentation agent on 2026-10-19 and wait for the process owner's confirmation; no screen walk
+# has been done yet.
+features:
+  - id: core
+    title: Configuration items on tickets, their states, owners and dependencies
+    found:
+      - global
+    status: documented
+    capabilities: [pick-service, choose-ci, impact, maintain, quality]
+  - id: cmdb-workspace
+    title: CMDB Workspace (My work, Intelligent search, CMDB Health, certification)
+    found:
+      - sn_cmdb_ws
+      - global:Open in CMDB Workspace
+    seen:
+      by: Documentation agent, as admin
+      on: 2026-10-19
+      where: CMDB Workspace › Home, My Work, CMDB 360, Insights, Management; a service CI › Summary, Attributes, Tags, Resources, Activity, Relationships, Services and Offerings, Health
+    status: documented
+    capabilities: [maintain, quality]
+  - id: create-edit-cis
+    title: Create and bulk-edit CIs in the CMDB Workspace (Create CI, New, Edit)
+    found:
+      - sn_cmdb_ws:Create CI
+      - sn_cmdb_ws:New
+      - sn_cmdb_ws:Edit ({{count}})
+    status: todo
+    note: >-
+      List actions on cmdb_ci in the CMDB Workspace's action configuration. Create CI needs
+      cmdb_manual_ci_ire_access or sn_cmdb_editor; the pages say to keep CIs right but not how to
+      create one or change several at once.
+  - id: ci-page
+    title: Act from a CI's page in the CMDB Workspace (Create incident, Create change, Open dependency view)
+    found:
+      - sn_cmdb_pg_templts
+    seen:
+      by: Documentation agent, as admin
+      on: 2026-10-19
+      where: CMDB Workspace › a service CI (cmdb_ci_service) › header Open map; More actions › Configure attributes, Configure resources (no Create incident or Create change on this class)
+    status: todo
+    note: >-
+      Form buttons on the CMDB Workspace's CI page (view cmdb_workspace, one view rule per class).
+      Create incident needs sn_incident_write; Create change needs create access on change_request.
+      The impact page covers the dependency view from a ticket's field, not from the CI.
+  - id: affected-cis-incident
+    title: Add and remove affected CIs on an incident
+    found:
+      - sn_sow_inc
+    status: documented
+    capabilities: [impact, incident/see-impact]
+  - id: affected-cis-tasks
+    title: Add and remove affected CIs on changes and problems
+    found:
+      - sn_sow_itsm_common:Add
+      - sn_sow_itsm_common:Remove ({{count}})
+      - global:Add
+      - global:Remove ({{count}})
+    status: todo
+    note: >-
+      The same Add and Remove on Affected CIs in the Service Operations Workspace form, for any task
+      listed in com.snc.task.associate_ci; only the incident page explains them.
+  - id: subscribe
+    title: Subscribe to a CI (Subscribe, Unsubscribe)
+    found: [global:Subscribe, global:Unsubscribe]
+    status: question
+    note: >-
+      Subscribers are emailed when an incident affects the CI (incident/see-impact, Who is told).
+      Does anyone subscribe to CIs, so that this deserves its own steps?
+  - id: proposed-changes
+    title: Proposed CI changes from a change request
+    found:
+      - global:Proposed Change
+      - global:Save Proposed Change
+      - global:Save Proposed Delete
+    status: question
+    note: >-
+      Change implementers can propose CI and relationship changes from a change's Affected CIs,
+      applied when the change closes. Is this used, or are CIs edited directly?
+  - id: service-conversion
+    title: Classify services (Convert to business service, technology management service, service instance)
+    found:
+      - global:Convert to business service
+      - global:Convert to technology management service
+      - global:Convert to Service Instance
+      - global:Bulk Convert Service Instances
+    status: question
+    note: >-
+      Is the CMDB manager moving the services to the CSDM classes? Convert to Service Instance needs
+      app_service_admin.
+  - id: unverified-cis
+    title: Unverified CIs (Merge CI, Create Asset)
+    found: [global:Merge CI, global:Create Asset]
+    status: question
+    note: >-
+      Both appear only on unverified CIs. With nothing discovering CIs, do unverified CIs arise here,
+      and who merges them or creates their assets?
+  - id: query-builder
+    title: CMDB Query Builder saved results
+    found:
+      - sn_cmdb_ws:u_cmdb_qb_result_1859dc7fe9d74abd9844d8a3be7019d78c1705b0
+      - sn_cmdb_ws:u_cmdb_qb_result_917e91fecfba01ca08f922d6e68deae68a03c0dc
+      - sn_cmdb_ws:u_cmdb_qb_result_9a270798bac9295a427ea2f23828e832e265a7bb
+      - sn_cmdb_ws:u_cmdb_qb_result_b00b22494898682e88f2afc87b19e98790d548d6
+      - sn_cmdb_ws:u_cmdb_qb_result_d3bda2a94c2c358b33baadf23f7d36b956043856
+    status: question
+    note: >-
+      Five Query Builder result tables exist. Does someone run saved CMDB queries (for example for
+      reports), or are they left over from a trial?
+  - id: cmdb-360
+    title: CMDB 360 (multisource data)
+    found: [global:CMDB 360 Data Preview, sn_cmdb_pg_templts:View CMDB 360 Data]
+    status: out-of-scope
+    note: >-
+      Off on pdi2: glide.identification_engine.multisource_enabled is false and nothing discovers
+      CIs, so both actions are hidden.
+  - id: agent-workspace
+    title: CMDB in the legacy Agent Workspace
+    found: [sn_cmdb_workspace]
+    status: out-of-scope
+    note: Its forms, lists and actions belong to the Agent Workspace, which is inactive on pdi2.
+  - id: itam-workspace
+    title: New CI from the ITAM Workspace
+    found: [sn_itam_workspace]
+    status: out-of-scope
+    note: Asset management's workspace (view itam_workspace), not a documented process.
+  - id: itsm-workspace
+    title: New affected CI (ITSM workspace)
+    found: [sn_itsm_workspace]
+    status: out-of-scope
+    note: Its New on task_ci is excluded by its own declarative action exclusion, so it never shows.
+  - id: itom-licensing
+    title: ITOM licence counting
+    found: [sn_itom_license, sn_itom_licensing]
+    status: out-of-scope
+    note: Only tables that refer to CIs, for counting licensed CIs; nobody works with them.
+  - id: alert-simulation
+    title: Alert simulation sessions
+    found: [sn_em_tbac]
+    status: out-of-scope
+    note: Only tables that refer to CIs; whether alert simulation is used is asked in incident.
+  - id: automation-errors
+    title: Automation error messages
+    found: [sn_svc_err]
+    status: out-of-scope
+    note: Only a table that refers to CIs; whether automation errors are worked is asked in incident.
+  - id: noc-favorites
+    title: NOC favourites
+    found: [sn_nocpit]
+    status: out-of-scope
+    note: Only a table that refers to CIs (favourites in a network operations view).
