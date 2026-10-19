@@ -81,6 +81,43 @@ evidence:
     how: read Check related Problem Task closure (problem_task, after update, when active changes to false)
     result: queues problem.problem_tasks.closed when no active task is left on the problem
     hash: 3f2b410f6e9f594608770791a07f767cbed70eabffe9a5e90ad6e2fc2630cfd2
+  E16:
+    record: sys_ui_action/f01efa3753232010e3ccddeeff7b12f6
+    field: script
+    how: read Assign to me (problem list, right-click menu)
+    result: for problem coordinators; refuses a closed problem, no write access to Assigned to, or a user outside the group; does nothing if already yours
+    hash: 93b8f9b081b5aca599a05cb978c3447ab375199c7b55f3650855c737648b9f2e
+  E17:
+    record: sys_ui_action/6e909ae2532130103a65ddeeff7b12eb
+    field: script
+    how: read Assign to me (problem task list, right-click menu)
+    result: the same checks, for problem task analysts
+    hash: 93b8f9b081b5aca599a05cb978c3447ab375199c7b55f3650855c737648b9f2e
+  E18:
+    record: sys_script/5e0a54b0c7715010c24ae122c7c260f1
+    field: script
+    how: read Update Problem State to Assess (problem, before insert and update)
+    result: a New problem that has what the Assess dialog asks for, such as the assignee, moves to Assess
+    hash: 71bfed01224a6eda747b1fc083b209e6ed45114fccd0ab5b57cdb7a2af040c06
+  E19:
+    record: sysevent_email_action/6969cd0b4a36231200ca9e4bbf405a0b
+    field: send_self
+    how: read Problem assigned to me
+    result: 'false: not sent to the person who made the change'
+    hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E20:
+    record: sysevent_email_action/698bdac84a3623120032d9c4fdc8111c
+    field: send_self
+    how: read Problem Task assigned to me
+    result: 'false: not sent to the person who made the change'
+    hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
+  E21:
+    seen:
+      by: Documentation agent, as admin
+      on: 2026-10-19
+      where: Service Operations Workspace › problem (New), opened by its address
+    how: opened a problem in the workspace by its address, read-only
+    result: header Save; More actions › Create Outage, Delete; Related records › Affected CIs, Problem Tasks, Change Requests, Outages, Attached Knowledge
 ---
 All of this happens on the **classic problem form**.
 
@@ -93,6 +130,25 @@ All of this happens on the **classic problem form**.
 2. Check it is a real problem: does it recur, how many incidents, what impact? If it isn't one,
    see [Accept the risk, cancel or reopen](see:close).
 3. Press **Confirm**. The problem moves to **Root Cause Analysis**. [E02]
+
+## Take it yourself {label=NEW}
+
+To take a problem or a problem task without opening it, use the list.
+
+1. Open the classic **Problems** list (or the **Problem Tasks** list).
+2. Right-click the row and choose **Assign to me**. It works on one row at a time. [E16] [E17]
+
+You are put in **Assigned to** and the record is saved. [E16] A **New** problem then moves to
+**Assess**. [E18]
+
+- **Who sees it:** problem coordinators on problems, problem task analysts on problem tasks.
+  [E16] [E17]
+- **When it is refused:** *"You do not have permission to update assigned to"* if the record is
+  closed or you can't change **Assigned to**; *"Assigned to user … must be member of Assignment
+  group …"* if the record has a group you don't belong to. [E16] [E17]
+- Unlike on [incidents](see:incident/assign), it doesn't fill in a group for you: with no group, you are assigned with
+  none. Set the **Assignment group** on the form if your team needs to see it. [E16]
+- You get no *assigned to you* email, because you made the change yourself. [E19] [E20]
 
 ## Hand it over
 
@@ -127,3 +183,13 @@ When the last task closes, the problem's assignee and work notes list get *"… 
 completed or canceled"*. [E08] [E15] Then share the
 workaround ([Share a workaround and known error](see:workaround)) and plan the fix
 ([Fix and resolve](see:fix)).
+
+## Not yet seen {label=OPEN-QUESTION}
+
+1. **Assign to me** in the right-click menu of the problem and problem task lists was not opened
+   on screen; the steps follow the UI actions. [E16] [E17] Is it in the menu as described?
+2. On 2026-10-19 a problem was opened in the Service Operations Workspace by its address: it
+   showed **Save**, **More actions › Create Outage, Delete** and the related records **Affected
+   CIs**, **Problem Tasks**, **Change Requests**, **Outages** and **Attached Knowledge**. [E21]
+   This is only what was seen, not a way of working this page describes: should problems be
+   worked in the workspace, and so be documented there?

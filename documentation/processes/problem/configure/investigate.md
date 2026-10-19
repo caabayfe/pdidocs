@@ -62,6 +62,41 @@ evidence:
     how: read Problem Tasks closed
     result: 'on problem.problem_tasks.closed, to assigned_to and work_notes_list; "… problem tasks are completed or canceled"'
     hash: 8ba83cc1e3fb0608e4784ae23fc1d9600dd1a6930177a937d6221722324bd23d
+  E12:
+    record: sys_ui_action/f01efa3753232010e3ccddeeff7b12f6
+    how: read Assign to me on problem (action task_assign_to_me, list context menu, order 100)
+    result: condition problem_coordinator when com.snc.best_practice.problem.madrid is active, else itil; script refuses inactive records, no write on assigned_to, or a user outside the assignment group; sets assigned_to and updates only when it changes
+    hash: de3e3e2f9bda40b39a59fecaf2c59fa9bcc1f89c634c0a5e0e605556ae040840
+  E13:
+    record: sys_ui_action/6e909ae2532130103a65ddeeff7b12eb
+    how: read Assign to me on problem_task (action task_assign_to_me, list context menu, order 100)
+    result: the same script; condition problem_task_analyst when the Madrid plugin is active, else itil; no role record
+    hash: 6a52802ce4560f0f9f3852e0f326d9b9c9b845d0cb63dedb98d066f7ba6bddbc
+  E14:
+    record: sys_ui_action_role/5d1efa3753232010e3ccddeeff7b12c6
+    how: read the role of Assign to me on problem
+    result: itil
+    hash: edd7eb2ad2b7e18e65a5b05c7d869623f1c45540be7c73451ffe71b23e5259d2
+  E15:
+    record: sys_user_role_contains/c473c1f9538823004247ddeeff7b12c5
+    how: read the roles problem_coordinator contains
+    result: problem_coordinator contains itil
+    hash: 885dc5bb584f72becffaf375e7f82d0c2d13a6ba2b240d0bef8bbd6864517c53
+  E16:
+    record: sys_ui_action/4c1cfa36c611227501e6728036d9723b
+    how: read Assign to me on task (action task_assign_to_me)
+    result: condition current.canWrite(); sets assigned_to with no other check
+    hash: c776bf87cbbc45b580ea6684606224d4dab397d490280475e461a3dad2c2be3e
+  E17:
+    record: sysevent_email_action/6969cd0b4a36231200ca9e4bbf405a0b
+    how: read Problem assigned to me
+    result: assigned_to changes to a value; to assigned_to; send_self false
+    hash: 458529a0cdfb8c6a9226070e3854d1ba0bd8e24e7c0377161b3d8e179f6856a2
+  E18:
+    record: sysevent_email_action/698bdac84a3623120032d9c4fdc8111c
+    how: read Problem Task assigned to me
+    result: assigned_to changes to a value; to assigned_to; send_self false
+    hash: be30a4b2c5f342e0ad9dea96c2afe181e6f727e216e260437f9158e71a876201
 ---
 ## Transitions
 
@@ -83,3 +118,33 @@ be created on a closed problem. [E07]
 | after, 100 | Check related Problem Task closure [E08] | a task becomes inactive | when none is left, `problem.problem_tasks.closed` |
 
 The event sends *Problem Tasks closed* to the problem's assignee and work notes list. [E11]
+
+## Assign to me {label=NEW}
+
+Problem and problem task each have their own **Assign to me** with the action name
+`task_assign_to_me`, so they replace the one on task, which only checks `canWrite()`. [E12] [E13]
+[E16] Both are list context menu actions (right-click on a row), not list choices, so they act on
+one record at a time.
+
+| Table | Condition | Role record |
+|---|---|---|
+| problem [E12] | `problem_coordinator` when `com.snc.best_practice.problem.madrid` is active, else `itil` | `itil` [E14], which `problem_coordinator` contains [E15] |
+| problem_task [E13] | `problem_task_analyst` when the Madrid plugin is active, else `itil` | none |
+
+The Madrid problem best practice plugin is active on pdi2, so the coordinator and analyst roles
+apply.
+
+The script, the same on both tables [E12] [E13]:
+
+1. Refuses an inactive record or one where `assigned_to` can't be written: *"You do not have
+   permission to update assigned to"*.
+2. Refuses a user who isn't a member of a set `assignment_group`: *"Assigned to user {0} must be
+   member of Assignment group {1}"*.
+3. Otherwise, if the record isn't already the user's, sets `assigned_to` and updates it. Unlike the
+   incident action, it never fills `assignment_group`.
+
+It sets the field on the server, so the `assigned_to` reference qualifiers (problem coordinators,
+problem task analysts) don't apply; the conditions above do the same job. The update runs the
+problem's business rules, so a New problem moves to Assess. [E03] *Problem assigned to me* and
+*Problem Task assigned to me* have `send_self` false, so the user who assigns themselves gets no
+email. [E17] [E18]

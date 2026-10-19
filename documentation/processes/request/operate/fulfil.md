@@ -1,6 +1,6 @@
 ---
 title: Fulfil catalog tasks
-reviewed: 2026-10-17
+reviewed: 2026-10-19
 evidence:
   E01:
     record: sys_ux_list/b92df1a5530230104a06ddeeff7b12a4
@@ -58,6 +58,51 @@ evidence:
     how: read Close Task (workspace)
     result: sets the state to Closed Complete (3) and saves
     hash: 78c8d3230b85cbe6b948e4a491136999f4ecaefcbd9500a140b47d53377b1e6d
+  E11:
+    record: sys_ui_action/8513fcd0773b301027aae297cd5a9968
+    how: read Assign to me (sn_sow_itsm_common, table task) and its two sys_ui_action_view records
+    result: 'a workspace form button, shown on new and saved records, in the Service Operations Workspace views only; condition SOWITSMCommonUtils.canAssignToMe(current)'
+    hash: 1013cca37d22631f0ae734115f526063ee178a8df4ff7496cf05302af64e66bc
+  E12:
+    record: sys_script_include/31903c09c7f13010d7e818b1c7c2603d
+    field: script
+    how: read SOWITSMCommonUtilsSNC.canAssignToMe and _checkRolesForAssignment
+    result: 'on sc_task: the task is active (or new), you have itil or sn_request_write, you can write Assigned to, Assigned to is empty, and the assignment group is empty or you are a member of it'
+    hash: 65116c33f05808534f0e490b4a150f944c6317f8ca8130bfef5664310e40685f
+  E13:
+    record: sys_ui_action/8513fcd0773b301027aae297cd5a9968
+    field: client_script_v2
+    how: read what the button does
+    result: 'when the assignment group is empty and you belong to exactly one group, sets that group; then sets Assigned to to you and saves; a "Select Assignment Group" dialog appears only when the group is mandatory, empty and you belong to several groups'
+    hash: 37ee29255e26fd3b455b269904d2191825dbcf28efe396ec559ab135080479b0
+  E14:
+    record: sys_script_include/83d911b17763301027aae297cd5a993c
+    field: script
+    how: read SOWITSMCommonClientUtilsSNC.getMemberGroups
+    result: 'your active groups with no type or the itil type; with Workforce Optimization active and several groups, only your primary group'
+    hash: b5f2af9f1a8a652f524502ea9cc25038a03526b621df41259daf33b15b9501b0
+  E15:
+    record: sys_script_include/31903c09c7f13010d7e818b1c7c2603d
+    field: script
+    how: read SOWITSMCommonUtilsSNC.canAssignToMeOnList, the condition of the workspace list action Assign to me (sys_declarative_action_assignment a9d63636ff30011027aaf9a7cddcbdc8)
+    result: 'only problem, incident and change_request: workspace lists of catalog tasks have no Assign to me'
+    hash: 65116c33f05808534f0e490b4a150f944c6317f8ca8130bfef5664310e40685f
+  E16:
+    record: sysevent_email_action/039c7466c0a80102004f66ab6aa3e757
+    how: read Email assigned to (sc_task)
+    result: 'active; "Task ${number} has been assigned to you" to Assigned to when it changes; send to self off'
+    hash: b18dc7f294008300b75f2f40c17d6251fbe73d31686cf63fe4c499a36261fb30
+  E17:
+    record: sys_ui_action/4c1cfa36c611227501e6728036d9723b
+    how: read Assign to me (global, table task)
+    result: 'classic list context menu, condition current.canWrite(); sets Assigned to to you and saves, without checking the group'
+    hash: c776bf87cbbc45b580ea6684606224d4dab397d490280475e461a3dad2c2be3e
+  E18:
+    record: sys_script/c676425665596610f87741223d56ea09
+    field: script
+    how: read Abort changes on group (sc_task, before insert and update, when the group changes and Assigned to is set)
+    result: 'refuses the save with "Assigned to user … must be member of Assignment group …" when the assignee is not in the group'
+    hash: 05175f6e6c2af9f3689fe18e10b14921e9fbe6c7910fdd97c3fd2a28a6260a01
 ---
 ## Find your work
 
@@ -67,6 +112,29 @@ In the Service Operations Workspace, open **Catalog tasks › Assigned to you**,
 your groups** to pick up your team's. [E01] [E02] Most hardware goes first to **Procurement**
 (*"Please fulfill this order"*), then to **Field Services** (*"Please deploy item to the user"*).
 [E07] [E08]
+
+## Take a task: Assign to me {label=NEW}
+
+Before you start, make the task yours, so nobody works it twice.
+
+1. Open the catalog task in the workspace. **Assign to me** shows in the header while the task is
+   open, nobody is assigned to it, and its assignment group is empty or one of yours. You need
+   the `itil` or `sn_request_write` role. [E11] [E12]
+2. Press **Assign to me**. **Assigned to** becomes you and the task is saved. [E13]
+3. If the task had no assignment group and you belong to one group only, that group is set too.
+   If you belong to several, the group stays empty: set it yourself. [E13] [E14]
+
+What follows: nobody is emailed. The *"Task … has been assigned to you"* email isn't sent when
+you assign yourself. [E16]
+
+| Where | Assign to me |
+|---|---|
+| catalog task header, workspace | yes, as above [E11] |
+| catalog task lists, workspace | no: the list action covers incidents, problems and changes only [E15] |
+| classic list, right-click menu | yes, for anyone who can edit the task; it doesn't check the group [E17] |
+
+The membership check on save runs only when the group changes [E18], so from the classic list
+you can end up assigned to a task of a group you're not in. Use the workspace header instead.
 
 ## Work a task
 
@@ -106,8 +174,10 @@ life of a request](see:lifecycle)).
 
 ## Tips
 
-- Pick from **Assigned to your groups** and set **Assigned to** to yourself before you start, so
-  nobody works it twice. [E02] [E03]
+- Pick from **Assigned to your groups** and press **Assign to me** on the task before you start,
+  so nobody works it twice. [E02] [E11]
+- To work a task out with colleagues in real time, start a discussion (see
+  [Discuss a request with colleagues](see:request/discuss)).
 - Read the requester's answers before you order: they say which options to add. [E03]
 - Problem with what was delivered? Ask them to report an incident (see
   [Report an incident](see:incident/report)).
@@ -116,3 +186,10 @@ life of a request](see:lifecycle)).
 
 What *Service Catalog item request* does with the item when a task is closed *Incomplete* or
 *Skipped* isn't verified: check on a test item before relying on it.
+
+## Not yet seen {label=OPEN-QUESTION}
+
+1. **Assign to me** wasn't pressed on screen; the steps follow the button's script. [E13] Does it
+   show on pdi2's catalog tasks for a fulfiller with `itil`?
+2. Should the right-click **Assign to me** of the classic list, which skips the group check, be
+   left to fulfillers? [E17]

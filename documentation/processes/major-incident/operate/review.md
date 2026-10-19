@@ -1,6 +1,6 @@
 ---
 title: Resolve, demote and review
-reviewed: 2026-10-17
+reviewed: 2026-10-19
 evidence:
   E01:
     record: sys_script/8f61f1b00a0a3c7401aac471d27a2718
@@ -58,6 +58,130 @@ evidence:
     how: read IncidentUtilsSNC (canResolveIncident, canCloseIncident, canReopenIncident)
     result: the caller can't resolve their own major incident; it can't be reopened
     hash: ffcaf34fa9847d8197f844f13f50d9cecdb73af98017c5d0871ec60750488aa8
+  E11:
+    record: sys_ux_screen_condition/8d0c4d2d43463110f509038dd9b8f28d
+    field: script
+    how: read the condition of the Post Incident Report SNC screen
+    result: the tab shows on an incident you can read that is an accepted major incident, Resolved or Closed, and has a review record
+    hash: a13e2bc726ca3dcd66e3ed64a2d243fa53f6d718c13752da14b5e580b8e531bc
+  E12:
+    record: sys_embedded_tour_step/1ea6bb8ac3ee4610af3a59deb0013105
+    field: content
+    how: read the step of the guided tour Working with incident record page
+    result: '"Use the Post incident report tab to generate, configure, publish, and export a post incident report for a major incident after it''s resolved."'
+    hash: 71bf6322aa7390491faf2d49781e8e092a3b5997009bec2193be309f3678f5e7
+  E13:
+    record: sys_ux_macroponent/23223c8843313110f509038dd9b8f292
+    field: required_translations
+    how: read the labels of the Post Incident Report SNC page
+    result: 'Post incident report, Incident summary, Edit Report, Save Report, Incident response timings, Related records, Contributors, Edit Co-contributors, Timeline, Edit Timeline, Refresh Timeline, Add Timeline Event, Settings, Order of events, Event grouping, Group events within … of each other, Visibility settings, Show hidden events in edit view, Show timeline events in final report, Date & time format, Reset settings, Save Settings, Preview, SLA Breached!'
+    hash: 295d999093bd68d7182a025d2be27c129ca7a8d995fff7bfd453c921e6c72059
+  E14:
+    record: sys_script_include/27300d9993713110aa760658548918a3
+    field: script
+    how: read PIRManagerSNC.getPermissionsForUser
+    result: 'major incident managers, the assignee and co-authors can do everything (contributors only if they can read user roles); others who can edit the incident can change timeline settings and preview; others who can read it can only change timeline settings'
+    hash: 97e422680bc894e8727d4885b4ad51431f3e023f2333ec03344e801bf009186f
+  E15:
+    record: sys_script_include/9fa1e83393733110121e0658548918f5
+    field: script
+    how: read PostMajorIncidentSummarySNC.syncIncidentSummary
+    result: 'the draft starts with Summary (short description and description), Impact (business impact) and Resolution (resolution notes), "--" where empty'
+    hash: 562737111a16439c5078c875035a3b866b0c682a94fb291a626e6231c95b9d98
+  E16:
+    record: sys_script_include/27300d9993713110aa760658548918a3
+    field: script
+    how: read PIRManagerSNC.fetchIncidentRelatedData
+    result: 'Time to identify (opened to proposed, or promoted if never proposed), Time to respond (to promoted), Time to resolve (to resolved); related problem, change request and caused-by change; publish by = resolved + sn_sow_inc.pir.publish.hours; warning after 70 % of the time, critical at 100 %'
+    hash: 97e422680bc894e8727d4885b4ad51431f3e023f2333ec03344e801bf009186f
+  E17:
+    record: sys_ux_client_script/ec92ce9843393110f509038dd9b8f247
+    field: script
+    how: read alert_1/content
+    result: '"Publish post incident report by {0}.", then "PIR SLA {0} is approaching. Publish post incident report by {1}.", then "Publish post incident report as soon as possible."'
+    hash: 454b666b6119a1ed6c6c611cc73ce336f49bebcf3214da6b4cb148db40e9321b
+  E18:
+    record: sys_ux_client_script/67d2645243148a5061ef038dd9b8f215
+    field: script
+    how: read alert_banner/isHidden
+    result: the deadline banner shows only to those with every permission (canViewPirSlaBanner)
+    hash: 903c533a3daff8fc2a864e13aaf273f67fa0385175017b5a8ee22bb960e29522
+  E19:
+    record: sys_script_include/27300d9993713110aa760658548918a3
+    field: script
+    how: read PIRManagerSNC.createTimeLineEvents
+    result: 'events: incident created, proposed, accepted as major incident, resolved, closed; incident task created and closed; flagged activity entries; hand-added events are kept when the timeline is rebuilt, and so is each event''s hidden setting'
+    hash: 97e422680bc894e8727d4885b4ad51431f3e023f2333ec03344e801bf009186f
+  E20:
+    record: sys_script/bc0c8a6b53f742104a6eddeeff7b1205
+    field: script
+    how: read Add/Remove flagged events to PIR (sys_activity_supplemental)
+    result: 'flagging a work note or comment adds "{field}: {text} flagged by {name}" to the timeline; removing the flag removes it'
+    hash: f4250cae5390154b80d12e9d1305e006f8b6d00362942d9acaa9c6db96adfcd5
+  E21:
+    record: sys_ux_client_script/27dbc7bf53cc0210121e86f230e5e6ff
+    field: script
+    how: read button_iconic_9/isHidden
+    result: only hand-added events can be edited or deleted, by an author, while the report is a draft
+    hash: 84f26a45b1f00557ad26aadf209ef1ba0937d7e4461df800907b8aae823bbf34
+  E22:
+    record: sys_script_include/27300d9993713110aa760658548918a3
+    field: script
+    how: read PIRManagerSNC.getUsersWithResponsiblity
+    result: 'co-authors are chosen from active users with itil (sn_incident_write when the ITSM roles plugin is active), shown with their responsibility as a contact of the major incident''s communication plans'
+    hash: 97e422680bc894e8727d4885b4ad51431f3e023f2333ec03344e801bf009186f
+  E23:
+    record: sys_ux_client_script/f4c57edf936a3110aa7606585489189b
+    field: script
+    how: read mark_published/label
+    result: '"Mark published" on a draft, "Unpublish" once published'
+    hash: 910a797a9659dde9d872969e1e298c115455d4456be7b8d219604eca68f0fdbc
+  E24:
+    record: sys_script_include/27300d9993713110aa760658548918a3
+    field: script
+    how: read PIRManagerSNC.markPublish
+    result: '"Post incident report has been marked published." / "Post incident report has been marked unpublished."'
+    hash: 97e422680bc894e8727d4885b4ad51431f3e023f2333ec03344e801bf009186f
+  E25:
+    record: sys_ux_client_script/40daf29793aa3110aa7606585489182e
+    field: script
+    how: read edit_button/disabled
+    result: editing is switched off while the report is published
+    hash: 0cd89fb5e921b66f710c8bd0ec1ced6323a8ecaa64b424e0ba131ad0b82a7309
+  E26:
+    record: sys_ui_page/c0585f0b93a23110aa7606585489180c
+    field: html
+    how: read the labels of the post_incident_report page
+    result: 'Post Incident Report, PIR Status:, Incident ID, Priority, Opened, Resolved, Responder, Contributors, Incident summary, Incident response timings, Related Records, Timeline (only if "Show timeline events in final report"), All times in, Timezone:, Download'
+    hash: 4a6198f4610af3b5f1ca043fac6b52770df92a8f657dc93174412d7a4552778d
+  E27:
+    record: sys_ui_page/c0585f0b93a23110aa7606585489180c
+    field: client_script
+    how: read exportPDF
+    result: Download saves the report as a PDF, A4 portrait
+    hash: 94e4b1322b18a0fc2052fbb8fc693046604c58735a923b2abaaaa3f4601db458
+  E28:
+    record: sys_security_acl/04f8634b93e23110aa760658548918e6
+    how: read the ui_page ACL sn_sow_inc_post_incident_report and its roles
+    result: the preview page opens for itil and sn_incident_read
+    hash: fd602e61b76ce7508a442df9d7b709475f7fac7121257d8e3f588f8b9877f0fa
+  E29:
+    record: sn_sow_cfg_stg/3dfde9a4c37002106a4e40d83c40dd6a
+    field: value
+    how: read the default timeline settings (sn_sow_itsm_admin)
+    result: newest first, events within 5 minutes grouped, milestones shown
+    hash: 426f04183bd1dd2c2b00089f5512afc1d3fbb96d555e549ea64944cebeb808ad
+  E30:
+    record: sys_db_object/fb769607833b8310292aca75eeaad3de
+    how: searched the mirror for notifications, scheduled jobs and flows on sn_sow_inc_post_incident_review or the publish deadline
+    result: none; nobody is reminded by email
+    hash: 78a16edc6d57cca089fcae8a5164d6b681301b657a450b2989310f6b5d516e2b
+  E31:
+    record: sys_script/3126b8b4937e3110aa760658548918d8
+    field: script
+    how: read Update pir data - Incident task
+    result: when an incident task of a resolved or closed major incident changes, the timeline is rebuilt
+    hash: f342eb574ecd6eabd8cb3acaf8327e7ff1b16ce4aece42c9654888f537e2c3df
 ---
 ## Resolve it
 
@@ -94,7 +218,105 @@ It becomes an ordinary incident again, and is worked as usual.
 In the Service Operations Workspace a **draft review** is created when the major incident is
 resolved [E08], to be published within **24 hours**. [E09]
 
+## The Post incident report tab {label=NEW}
+
+{{animation:mimpir}}
+
+Use the **Post incident report** tab of the major incident to write the review, build its
+timeline, preview and download it, and publish it. [E12] The tab appears only when the major
+incident is **Resolved** or **Closed** and its draft review exists. [E11] On pdi2 there is no
+major incident yet, so nobody has seen this tab here.
+
+The tab has four parts: **Incident summary**, **Incident response timings**, **Related records**
+with **Contributors**, and the **Timeline**. [E13]
+
+## Who can do what {label=NEW}
+
+| Who | Can |
+|---|---|
+| **Major incident managers**, the major incident's **assignee** and its **co-authors** | edit the summary and the related records, add events, change the timeline, preview and download, publish; they also see the deadline banner [E14] [E18] |
+| Others who can edit the incident | change the timeline settings, preview and download [E14] |
+| Others who can only read the incident | change the timeline settings [E14] |
+
+Adding co-authors also needs the right to read users' roles. [E14] Ask a major incident manager
+if **Edit Co-contributors** is greyed out.
+
+## Write the report {label=NEW}
+
+1. Open the major incident in the workspace and choose the **Post incident report** tab. [E11]
+2. Read the banner: *"Publish post incident report by …"*. When 70 % of the time has gone it
+   becomes *"PIR SLA 24 hours is approaching …"*, and after the deadline *"Publish post incident
+   report as soon as possible."* [E16] [E17]
+3. Under **Incident summary**, choose **Edit Report**. The draft already holds three headings
+   taken from the incident: **Summary** (short description and description), **Impact**
+   (business impact) and **Resolution** (resolution notes). [E15] Complete them with what
+   happened, why, and what is being done so it doesn't happen again, and choose **Save Report**.
+   [E13]
+4. Check **Incident response timings**: how long it took to recognise the major incident, to
+   accept it, and to resolve it. [E16]
+5. Check **Related records**: the problem, the change that fixed it and the change that caused
+   it, as set on the incident. [E16]
+6. Under **Contributors**, choose **Edit Co-contributors** to add the people who help write the
+   report. You choose from support agents; anyone who was a contact on the communication plans
+   is shown with their responsibility. [E13] [E22] Co-authors get the same rights as you. [E14]
+
+The summary copies the incident only when the draft is created: later changes to the incident's
+resolution notes are not copied into it. [E15]
+
+## Build the timeline {label=NEW}
+
+The timeline is built for you from [E19]:
+
+- the milestones: incident created, proposed, accepted as a major incident, resolved, closed;
+- incident tasks created and closed;
+- entries of the activity stream that someone **flagged**: flag a work note while you work the
+  major incident and it appears here as *"Work notes: … flagged by …"*. [E20]
+
+Then, with **Edit Timeline**: [E13]
+
+1. **Hide** events that don't help the reader, or **Show** them again.
+2. **Add Timeline Event** for something the records don't show (a call, a decision): choose the
+   date and time and write a short description. Only these added events can be edited or
+   deleted, and only while the report is a draft. [E21]
+3. **Refresh Timeline** after late changes; your hidden events stay hidden and your added events
+   stay. [E19] The timeline is also refreshed when the incident or its tasks change. [E31]
+4. **Settings**: order of events, **Group events within** a few minutes **of each other**,
+   whether hidden or added events show while editing, **Show timeline events in final report**,
+   and the date and time format. **Reset settings** goes back to the defaults. [E13] On pdi2 the
+   defaults are newest first, grouped within 5 minutes. [E29]
+
+## Preview, download and publish {label=NEW}
+
+1. Choose **Preview**: the report opens as it will be shared, with its status, the incident's
+   number, priority, opened and resolved times, the responder, the contributors, the summary,
+   the timings, the related records and the timeline. [E13] [E26]
+2. Choose **Download** to save it as a PDF (A4). [E27] Support agents can open the preview.
+   [E28]
+3. When it is complete, choose **Mark published**. You see *"Post incident report has been marked
+   published."* [E23] [E24] The report can't be edited while it is published. [E25]
+4. To correct it, choose **Unpublish** (*"… marked unpublished."*), edit, and publish again.
+   [E23] [E24]
+
+Nobody is reminded by email: the deadline shows only in the tab's banner. [E30] [E18]
+
 ## What happens next
 
 Share the report with the people who took part, and raise a problem if the cause still needs
 removing (see [Raise a problem](see:problem/raise)).
+
+## Not yet seen {label=OPEN-QUESTION}
+
+pdi2 has no major incident, so none of the workspace review was seen on screen. The steps follow
+the page's labels and scripts. [E13]
+
+1. Does the **Post incident report** tab appear, under that name, once a major incident is
+   resolved, and where among the record's tabs?
+2. Which buttons does each part show (**Edit Report**, **Edit Co-contributors**, **Edit
+   Timeline**, **Preview**, **Mark published**), and where?
+3. How is an activity stream entry flagged in the workspace, and who can flag?
+4. Does saving co-authors work and confirm it? The scripts suggest it may report a failure; see
+   [the configuration](see:major-incident/configure/review).
+5. Which review is the one of record: the classic **Post Incident Report** section, or this tab?
+   Both exist side by side.
+6. Is 24 hours the right deadline, and should someone be reminded by email?
+
