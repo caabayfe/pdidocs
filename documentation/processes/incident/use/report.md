@@ -166,11 +166,11 @@ see [Reset or change your password](see:getting-help/password).
 
 The chat button at the bottom right opens **Now Support**, the Virtual Agent. It answers
 questions, but it doesn't report incidents for you, and nobody from the service desk answers
-chats yet. [E15] [E17] [Q41] Use **Create Incident** to report a problem.
+chats yet. [E15] [E17] [shared/Q14] Use **Create Incident** to report a problem.
 
 ## By email
 
-Write to the service desk. [Q57] The **subject** becomes the incident's title and the **body** its first
+Write to the service desk. [shared/Q18] The **subject** becomes the incident's title and the **body** its first
 message, and the incident is yours. Mark the email **high importance** only when you really can't
 work: it makes the incident as urgent as it can be. [E09]
 

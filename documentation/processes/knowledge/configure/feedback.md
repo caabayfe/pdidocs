@@ -219,7 +219,7 @@ In order:
    it has one, otherwise its **reviser** when it has one. [Q19]
 
 Gaps reported from a task (incident) have a parent, so they stay unassigned and are worked by
-knowledge admins, `knowledge_manager` and `knowledge_domain_expert`. [E10] [E11] With no assignee, they send no email. [E18] [Q05]
+knowledge admins, `knowledge_manager` and `knowledge_domain_expert`. [E10] [E11] With no assignee, they send no email. [E18] [shared/Q06]
 
 ## 4. The task's form {label=NEW}
 

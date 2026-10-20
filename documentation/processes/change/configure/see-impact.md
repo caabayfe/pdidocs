@@ -275,7 +275,7 @@ The three field actions are on `task`, so a change gets them with no change-spec
 offering dependency view** (`service_offering`), each shown when its field has a value, with no
 required role. [E01] [E02] [E03] Each opens the `unifiedmap` route rooted at the field's value,
 five levels deep. [E04] [E05] What the map shows is governed by CMDB read access. Whether change requesters may edit CMDB
-connections from the map, or only CMDB roles, is not decided yet. [Q08] The same records
+connections from the map, or only CMDB roles, is not decided yet. [shared/Q05] The same records
 are described for incidents in [Dependency views and impact lists](see:incident/see-impact).
 
 ## 2. The related lists {label=NEW}
@@ -306,7 +306,7 @@ detection checks every affected CI, so Affected CIs matters for scheduling as we
 | Classic form | Add banner button, *Add Affected CIs* / *Add Impacted Services/CIs* modals | as above; the services one without `canAddCI` [E18] [E19] |
 
 `com.snc.task.associate_ci` belongs to `sn_change_admin` and its value is redacted [E20]: check
-on the instance that `change_request` is in it. [Q17] These are the actions that cmdb's feature
+on the instance that `change_request` is in it. [shared/Q19] These are the actions that cmdb's feature
 *affected-cis-tasks* refers to; problems use the same records.
 
 `canAddCI` is true for any task but a change; for a change it asks `canModifyCI()`. [E21] That
@@ -333,7 +333,7 @@ changing. [E14] [E25] [E26]
 `manually_added` defaults to true, so services added by hand or by *Sync BS* survive every
 refresh. [E37] On the classic form, *Refresh Impacted Services* in the context menu runs the same
 refresh, shown only when `change_request` is in `com.snc.task.refresh_impacted_services`, an
-`sn_cmdb_admin` property whose value is redacted. [E38] [E39] [E35] [Q17] The Service Operations
+`sn_cmdb_admin` property whose value is redacted. [E38] [E39] [E35] [shared/Q19] The Service Operations
 Workspace has no refresh action for changes: the incident overview's is for incidents only.
 
 `svc_ci_assoc` links CIs to the application services they belong to; the script's own comment

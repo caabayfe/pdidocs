@@ -110,7 +110,7 @@ outcome in the **Work notes** of the task or item.
    requested item for the item, the request for the whole order. A discussion belongs to that
    one record. [E06]
 2. Open **Collaborate** in the side panel, choose **+**, then **Start Sidebar discussion**. [E01]
-   [E03] [E04] [E05] [Q15] Or use the **Sidebar discussions** icon in the header and **+ New
+   [E03] [E04] [E05] [shared/Q20] Or use the **Sidebar discussions** icon in the header and **+ New
    discussion**. [E02]
 3. Check the **Subject**: it starts as the record's short description. [E02]
 4. **Add participants** who can open the record. [E02] On a **request** the suggestions are its
@@ -125,7 +125,7 @@ outcome in the **Work notes** of the task or item.
 | Suggested participants | caller, assignee, on-call person [E07] | request: Opened by, Requested for, Assigned to and the on-call person; item and task: none [E07] |
 | Adding a group with on-call shifts | adds only who is on call [E08] | adds the whole group [E08] |
 | The person it's for | the caller can be added [E09] | can be added too [E09] |
-| Emails to that person | when added, and a daily digest of unread messages [E10] | **none**: no requester is set up for these tables [E10] [E11] [Q03] |
+| Emails to that person | when added, and a daily digest of unread messages [E10] | **none**: no requester is set up for these tables [E10] [E11] [shared/Q03] |
 | Mentions | push notification on the mobile app [E12] | the same [E12] |
 | Collaborate panel's chats | `itil` or `sn_incident_write` [E13] | `itil`; `sn_request_write` alone doesn't load them [E13] [Q02] |
 

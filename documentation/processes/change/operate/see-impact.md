@@ -178,13 +178,13 @@ The lists are on the change's **Related records**: **Affected CIs**, **Impacted 
 2. Choose the tree icon beside the field: **CI dependency view**, **Service dependency view** or
    **Service offering dependency view**. It appears only when the field has a value, and needs no
    special role. [E03] [E04] [E05]
-3. A **Map** tab opens, centred on that item, with five levels of connections around it. [E06] [Q28]
+3. A **Map** tab opens, centred on that item, with five levels of connections around it. [E06] [shared/Q21]
 4. Use **Apply filters** to narrow the CIs, **Open in new map** to centre on another CI, and
    **Related items** or **Attributes** to read a selected one. [E07]
 
 The map can also create and delete connections, and warns that deleting one "might result in an
 invalid CMDB state". [E07] Don't change the CMDB from a change's map: what the change will alter
-is planned in the change itself. [Q08]
+is planned in the change itself. [shared/Q05]
 
 ## Keep Affected CIs complete {label=NEW}
 
@@ -201,7 +201,7 @@ the field on the form instead. [E15]
 change model refuses to add or remove: *"Affected CIs cannot be modified for Change Requests in
 this state"*. [E10] [E11] [E13] [E14] A model can allow it in later states; ask the change manager
 if you need to. [E11] [Q19] Add and Remove also appear only if the platform team lists changes in
-`com.snc.task.associate_ci`. [E10] [Q17]
+`com.snc.task.associate_ci`. [E10] [shared/Q19]
 
 ## Impacted services are worked out for you {label=NEW}
 
@@ -218,7 +218,7 @@ services are rebuilt in the background from **every affected CI**, not only the 
 
 So an affected CI added after *New* doesn't reach the impacted services. On the classic form,
 **Refresh Impacted Services** in the form menu runs the refresh again, where the platform team
-has switched it on. [E21] [Q17]
+has switched it on. [E21] [shared/Q19]
 
 ## Record an outage {label=NEW}
 

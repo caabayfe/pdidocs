@@ -140,7 +140,7 @@ From the incident you are working on, **Reset Password** opens a guided tab: pic
 check who they are, then reset the password or unlock the account. [E01] [E03]
 
 On pdi2 it **can't be used yet**: the only service-desk process is inactive, so the tab has no
-process to offer. [E14] [E15] [Q02] The steps below are what an agent will see once it is switched
+process to offer. [E14] [E15] [shared/Q07] The steps below are what an agent will see once it is switched
 on; none of the screens were opened on 2026-10-18, so they follow the guided tour and the pages'
 labels. [E06] [Q81]
 Until then, the self-service process lets callers reset their own ServiceNow password [E16],

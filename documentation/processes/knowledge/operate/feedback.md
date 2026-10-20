@@ -144,7 +144,7 @@ The task goes to the article's **author**, or to its **reviser** when someone re
 You get *"Feedback Task … has been assigned to you"*. [E17]
 
 Gaps reported from incidents are feedback tasks too, without an article and without an assignee:
-the knowledge managers pick them up. [E04] [E15] [Q05] See
+the knowledge managers pick them up. [E04] [E15] [shared/Q06] See
 [Create and link knowledge from an incident](see:incident/share-knowledge).
 
 | Type | Comes from |

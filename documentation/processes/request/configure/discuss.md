@@ -95,7 +95,7 @@ panel's chats; the header's Sidebar isn't limited by these roles. [Q02]
 
 The classic form's *Open Sidebar discussion* button is on every task table. [E13] Whether
 Sidebar is supported for these tables on pdi2 isn't in the mirror; the Collaborate icon was seen
-on a requested item. [Q15]
+on a requested item. [shared/Q20]
 
 ## 2. Suggestions and groups {label=NEW}
 
@@ -110,7 +110,7 @@ Requesters may be added: the property is true [E11], so *Exclude requester from 
 discussion* doesn't apply to requests and items. [E10] But the only requester mapping is for
 incident [E08], and the Sidebar emails find their recipient through it [E09]. On requests, items
 and tasks nobody receives *"You have been added to a discussion"* or the daily unread digest.
-[Q03] *Sidebar Discussion Started* is for incidents only as well. [E12]
+[shared/Q03] *Sidebar Discussion Started* is for incidents only as well. [E12]
 
 To email the person an item is for, add an active `sys_cs_collab_chat_requester` record for
 `sc_req_item` with `requested_for` (and for `sc_request`, `requested_for`). [E08] [E09]

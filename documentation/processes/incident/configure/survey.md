@@ -123,7 +123,7 @@ feature: the trigger condition, the survey and its email are on tables outside t
 1. *Auto assessment business rule* runs async after an insert or update of an incident whose
    state changes to 7 (Closed). [E02] [E03]
 2. It passes the trigger condition *ITSM Demo Survey* to `AssessmentCreation.conditionTrigger`.
-   [E02] [Q03]
+   [E02] [shared/Q08]
 3. The trigger's full condition adds that the incident has no universal request. The survey goes
    to `caller_id`, always (probability 100%), at most once per caller per 30 days (repeat
    interval). [E01]

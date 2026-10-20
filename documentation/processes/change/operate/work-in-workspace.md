@@ -320,7 +320,7 @@ Sidebar discussions work for changes as for incidents (see
 
 **Nobody is emailed** about a discussion on a change. The emails that tell a caller about an
 incident discussion go only to a record's requester, and no requester is set up for changes or
-change tasks. [E31] [E32] [Q03] Colleagues get no email either [E33]; they see the discussion in their
+change tasks. [E31] [E32] [shared/Q03] Colleagues get no email either [E33]; they see the discussion in their
 **Sidebar discussions** panel, and a mention sends a push notification to the mobile app. [E34]
 
 Only people who can open the change can read its discussions. [E36] Invite a business approver

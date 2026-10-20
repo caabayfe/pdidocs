@@ -247,7 +247,7 @@ Who can do it: people with `itil` or `sn_incident_write`, on any incident that i
 | **Anyone who can read the incident** | can read the task [E17] |
 
 Nobody is emailed when the gap is reported: the "Feedback Task assigned to you" email is only for
-feedback on an existing article. [E19] [Q11] Tell the knowledge team if the gap is urgent.
+feedback on an existing article. [E19] [shared/Q06] Tell the knowledge team if the gap is urgent.
 
 ## Tips
 

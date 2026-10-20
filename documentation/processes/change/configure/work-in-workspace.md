@@ -299,7 +299,7 @@ The older Agent Workspace is switched off. [E13] Its declarative actions for cha
 the record interceptor, *Agent Assist*) are tied to it and do nothing in Service Operations
 Workspace. [E14] [E15] [E16] [E17] [E18] The same goes for the business rules *Set Normal Model in
 Workspace* and *Set Emergency Model in Workspace*, which act only on requests from
-`/now/workspace/agent/`. [E19] [E20] [Q09]
+`/now/workspace/agent/`. [E19] [E20] [shared/Q15]
 
 ## 1. Lists {label=NEW}
 
@@ -394,4 +394,4 @@ For the base set-up (properties, ACLs, notifications), see
 Without a requester mapping `getRequesterMappingField` returns nothing, so neither the
 *added to a discussion* email nor the daily unread digest is sent for changes. [E51] Add an
 inherited mapping (for example on `change_request`, field `requested_by`) if requesters should be
-told. [Q03]
+told. [shared/Q03]

@@ -112,7 +112,7 @@ Simpler items show **Waiting for Approval**, **Fulfillment** and **Delivery**. [
 | it's rejected | *REQ… was Rejected* | that it will be closed [E07] |
 | the team writes to you | *Comment added to request …* | their message; reply to answer [E09] |
 | an item is on its way | *Your requested RITM… for … is being delivered* | sent to the person it's for [E08] |
-| it's complete | *Request REQ… was completed* | who completed it, their notes and the items [E10] [Q11] |
+| it's complete | *Request REQ… was completed* | who completed it, their notes and the items [E10] [shared/Q08] |
 
 The same updates appear under the **bell** in Employee Center. [E11]
 

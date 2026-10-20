@@ -290,7 +290,7 @@ off. [E02] For the workspace, Sidebar is supported when [E03]:
 | `glide.ui.polaris.experience` | true [E04] |
 | `sn_oe_sfs.prepopulate_users_on_sidebar_modal_is_supported` | true [E06] |
 | `itsm_family_release_version_check` ≥ 24 | 26, so the per-record check below also applies [E05] |
-| Sidebar enabled in the user's session domain and for the record | a platform check (`sn_collab.CollabChatScriptObject`) the mirror can't show; seen working on INC0010023 [Q63] |
+| Sidebar enabled in the user's session domain and for the record | a platform check (`sn_collab.CollabChatScriptObject`) the mirror can't show; seen working on INC0010023 [shared/Q20] |
 | `SidebarAccessCheckUtils.canWrite` | true for everyone: the additional access check is on [E08] but no extension implements it [E07] [E09] |
 
 ## 2. Who can start a discussion {label=NEW}

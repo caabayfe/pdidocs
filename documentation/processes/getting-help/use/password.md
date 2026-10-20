@@ -163,7 +163,7 @@ phone. If you can't, call the service desk.
 2. **Identify**: type your **User name**, fill in the **Captcha**, and choose **Next**. [E01] [E23]
 3. **Verify**: you are asked for two things, and both are required [E02] [E03]:
    - your **email address**, as IT has it [E05];
-   - a **6-digit code** sent to your mobile phone. Type it within **5 minutes**. [E06] [Q01]
+   - a **6-digit code** sent to your mobile phone. Type it within **5 minutes**. [E06] [shared/Q01]
 4. **Reset**: you get an email, *"Password Reset"*, with a link. [E01] [E10] Open it within
    **1 hour** [E09] and choose your new password: at least 8 characters, with upper and lower
    case letters and a number. [E13]
@@ -219,7 +219,7 @@ Call **+1-200-120-2020**, 9am to 5pm PST [E27], when:
 
 For how the service desk resets a password, see [Reset a caller's password](see:incident/reset-password).
 On pdi2 the service desk can't reset it from its workspace yet [E12], so expect them to log an
-incident and come back to you. [Q04]
+incident and come back to you. [shared/Q07]
 
 ## Tips {label=NEW}
 

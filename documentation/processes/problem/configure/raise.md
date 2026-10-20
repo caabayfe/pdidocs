@@ -58,4 +58,4 @@ Only problem coordinators can be assigned [E04], and the assignee must be in the
 
 Problems can only be created from **Problem › Create New**: interactions can't [E06], the major
 incident flow is inactive [E07], and the workspace's *Create problem* on incidents points to a UI
-action the instance doesn't have. [E08] Whether that is intended is not decided yet. [Q02]
+action the instance doesn't have. [E08] Whether that is intended is not decided yet. [shared/Q11]

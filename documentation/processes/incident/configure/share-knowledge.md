@@ -358,7 +358,7 @@ The global UI action of the same name is the Agent Workspace version. [E27]
 | Write | the assignee, the opener, elevated users [E30] |
 | Elevated | knowledge admins; `knowledge_manager`, `knowledge_domain_expert` for tasks with a parent [E31] |
 | Turn into an article | *Create Article* on the feedback task, for its assignee or an elevated user [E36] |
-| Notify | nothing: *KM Feedback Task: Created* needs an article [E33], and the reassignment rule skips tasks with a parent [E34] [E35] [Q11] |
+| Notify | nothing: *KM Feedback Task: Created* needs an article [E33], and the reassignment rule skips tasks with a parent [E34] [E35] [shared/Q06] |
 
 ## 4. Knowledge at closure (classic form) {label=NEW}
 

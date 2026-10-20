@@ -372,7 +372,7 @@ The mirror holds the definitions, not the trained solutions, so it can't show wh
 was ever trained. [Q62] Nothing in Service Operations Workspace's Agent Assist uses them: no source in
 its context has an ML solution [E14] [E15] [E51], and the PI recommendation *Common Incident
 Resolutions* is attached to the older table configuration [E45] [E46], used only by the Agent
-Workspace action. [E52] [Q25] Even there, it needs an active trained solution. [E47]
+Workspace action. [E52] [shared/Q15] Even there, it needs an active trained solution. [E47]
 
 ## Properties {label=NEW}
 

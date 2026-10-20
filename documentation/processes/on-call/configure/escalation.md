@@ -360,7 +360,7 @@ designer pages are platform pages the mirror doesn't hold.
 | Voice | On-Call: Send Notification Voice | 1 / 2 [E43] |
 
 All three are the active defaults, with no table or condition. [E41] [E42] [E43] SMS and voice go
-through Notify; no Notify number is set for on-call calls from the browser [E45] [Q04], and
+through Notify; no Notify number is set for on-call calls from the browser [E45] [shared/Q01], and
 *Assign by Acknowledgement* uses a Notify conference call rather than a plain call. [E44]
 
 ## Properties {label=NEW}

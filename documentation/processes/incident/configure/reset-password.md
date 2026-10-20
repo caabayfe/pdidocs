@@ -211,7 +211,7 @@ unlock, a new reset waits 1440 minutes. [E29]
 | Employee Self-Service, Demo 1 and 2 | no | no: public [E20] |
 
 So **no process can be chosen on the Identify page**: the feature is installed but not usable.
-[E10] [E16] [Q02] [Q81]
+[E10] [E16] [shared/Q07] [Q81]
 
 If the service-desk process is activated as it stands, it [E16] [E17] [E18] [E21]:
 

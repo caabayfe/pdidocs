@@ -73,4 +73,4 @@ applies only to interactive sessions; integrations and scripts aren't filtered b
 | Comment while Awaiting Caller | state back to In Progress | [E05] |
 | Any comment by support | caller emailed | [E06] |
 | Caller resolves | close code *Resolved by caller* | [E08] |
-| Incident closed | smiley survey to the caller | [E07] [Q03] |
+| Incident closed | smiley survey to the caller | [E07] [shared/Q08] |

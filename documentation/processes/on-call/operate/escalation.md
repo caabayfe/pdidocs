@@ -348,7 +348,7 @@ user preference** on the shift makes the shift's own contact attempts win instea
 | **SMS** | reply with the message number and **ACC** | the message number and **REJ** [E31] |
 | **Voice** | press **1** | press **2** [E32] |
 
-SMS and voice need a telephony provider for Notify. [Q04] Rejecting moves the work to the next
+SMS and voice need a telephony provider for Notify. [shared/Q01] Rejecting moves the work to the next
 person in the escalation. [E30] What the member sees is on
 [When on-call work reaches you](see:respond).
 

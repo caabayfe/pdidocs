@@ -230,7 +230,7 @@ Both can be used on the form, in an email and in chat. [E13]
 
 **Who sees them:** the Response Templates panel and the quick action need the role
 `sn_templated_snip.template_snippet_reader`. [E14] [E18] On pdi2 only administrators have it:
-neither `itil` nor `sn_incident_write` includes it. [E15] [Q08] The walk that saw the icon was done as
+neither `itil` nor `sn_incident_write` includes it. [E15] [shared/Q02] The walk that saw the icon was done as
 admin. [E01]
 
 ## Write an email with Compose Email {label=NEW}

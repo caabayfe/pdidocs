@@ -253,7 +253,7 @@ dependency view** (`business_service`), **Service offering dependency view**
 
 Each opens the route `unifiedmap` in the current workspace, rooted at the field's value, with the
 node class and five levels. [E04] [E05] [E06] [E07] The route [E08] renders the CMDB Workspace's
-Unified Map page. [E09] What the map shows is governed by CMDB read access, not by these actions. [Q31]
+Unified Map page. [E09] What the map shows is governed by CMDB read access, not by these actions. [shared/Q05]
 `glide.bsm.max_levels` (3) affects only the classic dependency view. [E10]
 
 ## 2. Affected CIs and Impacted Services/CIs {label=NEW}
@@ -278,7 +278,7 @@ Add and Remove differ by view:
 | `sow_incident_overview` (`sn_sow_inc`) | whenever the incident is active [E17] [E18] [E19] [E20] |
 
 `com.snc.task.associate_ci` belongs to `sn_change_admin`, and its value is redacted in the mirror
-[E16]: check on the instance whether `incident` is in it. [Q59] Add opens a many-to-many picker on
+[E16]: check on the instance whether `incident` is in it. [shared/Q19] Add opens a many-to-many picker on
 `cmdb_ci` with a Configuration Class filter. [E21] [E22] Removing the primary CI from Affected CIs
 is refused in both views. [E14] [E19] Which view resolvers land on decides which buttons they
 get. [Q15]
@@ -290,7 +290,7 @@ Outages: **Create outage**, Add and Remove have no condition and no role. [E35]
 *Refresh impacted services* on `task_cmdb_ci_service`, overview view, for `itil` and
 `sn_incident_write` [E23]; the classic form has *Refresh Impacted Services* in its context menu.
 [E24] Both are shown only for the task classes in `com.snc.task.refresh_impacted_services`
-[E25], an `sn_cmdb_admin` property whose value is redacted in the mirror. [E26] [Q59]
+[E25], an `sn_cmdb_admin` property whose value is redacted in the mirror. [E26] [shared/Q19]
 
 The refresh runs in `TaskUtilsSNC`: with `com.snc.incident.refresh_impacted.include_affected_cis`
 false on pdi2 [E28], it deletes the rows not added by hand and inserts the services affected by
@@ -321,4 +321,4 @@ about the record. It is shown only when all of these hold [E37] [E38] [E39]:
 With `notify_on_task` false and no sign of a Notify number, **Send Sms** is very likely hidden for
 every resolver on pdi2, which matches the SMS channel being off for
 communications (see [Communicate](see:communicate)). Enabling it needs a Notify provider and
-number: a decision for the process owner, not a configuration tweak. [Q01]
+number: a decision for the process owner, not a configuration tweak. [shared/Q01]

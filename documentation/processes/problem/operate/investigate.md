@@ -121,7 +121,7 @@ evidence:
 ---
 All of this happens on the **classic problem form**. A problem opened in the Service Operations
 Workspace by its address shows only **Save**, **More actions › Create Outage, Delete** and its
-related records [E21]; whether problems are to be worked there is not decided yet. [Q01]
+related records [E21]; whether problems are to be worked there is not decided yet. [shared/Q04]
 
 ## Assess
 

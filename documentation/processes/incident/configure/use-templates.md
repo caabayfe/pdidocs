@@ -318,7 +318,7 @@ global twin) is the Agent Workspace side panel action, shown while
 All are old (2015-2017) classic templates (`v2` false). [E13] [E14] None is global or shared
 with a group, so an agent sees none of them. [E06] [Q09] Two set `major_incident_state` directly, which
 skips the propose and accept steps of major incident management; they are reachable only by their
-owner and by `template_editor_global`. [E16] [E17] [E08] [Q35]
+owner and by `template_editor_global`. [E16] [E17] [E08] [Q09]
 
 Workspace-only features (field conditions, email content, content placement for journal fields)
 need template v2. [E03] The rule that would sort templates into v1 and v2 is inactive. [E19]
@@ -352,7 +352,7 @@ panel copies the message as plain text; it doesn't write to the incident. [E29]
   groups (empty means everyone). [E32]
 - Configure: *Response Template Configuration*, role `template_snippet_writer`. [E34]
 - Roles: reader ⊂ writer ⊂ `template_snippet_admin` ⊂ `admin`. **No ITSM role contains the
-  reader**, so on pdi2 only administrators see response templates. [E33] [Q08]
+  reader**, so on pdi2 only administrators see response templates. [E33] [shared/Q02]
 
 **Variables.** `${field}` (dot-walking allowed, such as `${caller_id.name}`), `${Date}` and
 `${current_user}`; a field the agent can't read, or an unknown name, shows in red. [E36] A template

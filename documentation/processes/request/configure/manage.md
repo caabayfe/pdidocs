@@ -116,7 +116,7 @@ So **Cancel Request**, which sets *Closed Cancelled*, ends as state *Closed Inco
 When a request becomes *Closed Rejected*, two notifications fire on the same condition: the
 *Request Rejected* email [E03], and the Now Mobile *Request Rejected*, which is a push
 notification only (no email, no subject). [E04] Requesters get one email, plus a push message if
-they use the Now Mobile app. [Q07]
+they use the Now Mobile app. [shared/Q09]
 
 ## Catalog Tasks › New on a requested item {label=NEW}
 

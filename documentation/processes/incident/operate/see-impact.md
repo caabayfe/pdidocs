@@ -161,13 +161,13 @@ side of the same views is in [See what depends on a configuration item](see:cmdb
    **Service offering dependency view**. It appears only when the field has a value, and needs no
    special role. [E01] [E02] [E03]
 3. A **Map** tab opens in the workspace, centred on that item and showing five levels of
-   connections around it. [E04] [E05] [Q82]
+   connections around it. [E04] [E05] [shared/Q21]
 4. Use **Apply filters** to narrow the CIs by field, and **Open in new map** to centre the map
    on another CI. **Related items** and **Attributes** show more about a selected CI. [E06]
 
 The map can also create and delete connections between CIs, and warns that deleting one "might
 result in an invalid CMDB state". [E06] Leave the CMDB's relationships to its owners: if a
-connection looks wrong, tell the CI's support group instead of fixing it from the incident. [Q31]
+connection looks wrong, tell the CI's support group instead of fixing it from the incident. [shared/Q05]
 
 ## Keep the affected and impacted lists {label=NEW}
 
@@ -187,7 +187,7 @@ takes rows away, except the incident's own CI: change or clear the field on the 
 
 On the related lists of the main form, **Add** and **Remove** on these two lists appear only if
 the platform team has switched list editing on for incidents. [E20] The mirror can't show whether
-it is. [Q59]
+it is. [shared/Q19]
 
 ### Refresh the impacted services
 
@@ -206,7 +206,7 @@ from every affected CI. [E19]
 
 People can subscribe to a configuration item. When the state of an incident with affected CIs
 changes, they get *"Your Subscribed CI … is being affected by INC…"*. [E21] [E22] So keeping
-Affected CIs right also tells the CI's subscribers. [Q68]
+Affected CIs right also tells the CI's subscribers. [shared/Q16]
 
 ## Tips
 

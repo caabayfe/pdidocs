@@ -214,7 +214,7 @@ Your answer counts only while the record has no assignee, and you can accept onl
 can open. [E16] If someone assigns the record by hand, the escalation ends. [E08] [E17]
 
 Email replies work for **incidents** only: that is the one table the reply rule handles. [E15] [Q06]
-SMS and calls need a telephony provider for Notify; without one, only email reaches people. [Q04]
+SMS and calls need a telephony provider for Notify; without one, only email reaches people. [shared/Q01]
 
 ## When nobody accepts {label=NEW}
 

@@ -79,7 +79,7 @@ The caller is emailed when the incident is created. [E09]
 
 The cards of Employee Center's *Get support* window come from tables snagentic doesn't read, so
 what employees see was checked on screen. Which mailbox address receives incident email is
-instance configuration (email accounts), not mirrored. [Q57]
+instance configuration (email accounts), not mirrored. [shared/Q18]
 
 ## Email behaviours with security impact
 

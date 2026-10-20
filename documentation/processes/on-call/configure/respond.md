@@ -254,7 +254,7 @@ Notify*. [Q16]
 | SMS [E21] | `{message number}ACC` | `{message number}REJ` | *On-Call: Send Notification - SMS* |
 | Voice [E22] | 1 | 2 | *On-Call: Send Notification - Voice* |
 
-SMS, voice and conference calls go through Notify, which needs a telephony provider. [E18] [Q04]
+SMS, voice and conference calls go through Notify, which needs a telephony provider. [E18] [shared/Q01]
 
 1. Email replies are read by the inbound action *On-Call: Assign by Acknowledgement*, for
    **incident** only. [E23] [Q06]

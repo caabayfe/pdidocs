@@ -89,7 +89,7 @@ the same place to follow it, **My Requests** in Employee Center.
 |---|---|---|---|
 | **Employee Center** | almost always: something isn't working, you need something, you want to see where things stand | open Employee Center [E01], search or choose a topic | an INC or REQ number on screen, and an email [E12] [E13] |
 | **Chat** | you have a quick question | the chat button at the bottom right of every Employee Center page [E03] | answers from the Virtual Agent, Now Support [E05] |
-| **Email** | you are away from Employee Center | send an email to the IT service desk [Q09] | an incident from your email, and an email with its number [E06] [E12] |
+| **Email** | you are away from Employee Center | send an email to the IT service desk [shared/Q18] | an incident from your email, and an email with its number [E06] [E12] |
 | **Phone** | you can't work at all and it's urgent | **+1-200-120-2020**, 9am to 5pm PST [E02] | the service desk logs it with you on the call; you get the same email |
 
 There's no walk-up desk to visit: **Get support** lists only the phone. [E02] [Q10] Teams, Slack and
@@ -111,7 +111,7 @@ you need](see:request/find).
    with.
 
 The Virtual Agent answers your questions. [E05] Nobody from the service desk answers chats yet,
-so the chat can't put you through to a person. [E04] [Q02] To report a problem or ask for something,
+so the chat can't put you through to a person. [E04] [shared/Q14] To report a problem or ask for something,
 use Employee Center or the phone.
 
 ## Email
