@@ -82,12 +82,6 @@ evidence:
     how: read Knowledge MostUseful Articles, with Knowledge MostViewed Articles (sp_widget/d4f0d56cdb68320099f93691f0b8f502) and Knowledge Related Articles (sp_widget/a8874e5bdb18330076e757a0cf961939)
     result: the side of the article page lists the most useful, most viewed and related articles
     hash: bdb8d20d7e51261ad9ee58ac225232af1ee9d238b522178259a97e16ff6ba6e3
-  E15:
-    record: sys_script/ce68d00d67203200d358bb2d07415a3f
-    field: script
-    how: read Notify about article's checkout
-    result: a checkout is posted as an activity to the article's subscribers
-    hash: 06fe569f4a1f1db35106891ad4bc9272cb4647dc5565f88d3f6274abcfd6e37f
 ---
 Knowledge articles answer common questions and explain how to fix common problems. Look for one
 before you ask for help: it is often quicker.
@@ -110,7 +104,7 @@ before you ask for help: it is often quicker.
 
 ## Browse
 
-1. Open the **Knowledge** page of Employee Center. [E01]
+1. Open the **Knowledge** page of Employee Center. [E01] [Q42]
 2. It shows the **Knowledge Bases** you can read, their **Categories**, the **Top Rated
    Articles** and the **Most Viewed Articles**. [E02]
 3. Choose a knowledge base or a category to see its articles. [E03]
@@ -122,7 +116,7 @@ its average star rating. Opening it counts as a view. [E06]
 
 | Where | What you can do |
 |---|---|
-| Top | mark it as a **favourite** (the heart), **Subscribe** to it, and open **Actions** to flag it [E06] |
+| Top | mark it as a **favourite** (the heart), **Subscribe** to it, and open **Actions** to flag it [E06] [Q44] |
 | Bottom | **Copy Permalink**, answer **Helpful?**, **Rate this article** and **Post a comment** [E06] |
 | Side | the **Most Viewed**, **Most Useful** and related articles [E06] [E14] |
 
@@ -140,10 +134,10 @@ To say whether it helped, or that it is wrong, see
 
 - **Favourite**: the heart at the top keeps the article in your favourites. [E06]
 - **Subscribe**: you are told about changes to the article: *"You are now subscribed to …. You will
-  be notified of any new activity according to your notification settings."* [E07] [E09] [E10]
+  be notified of any new activity according to your notification settings."* [E07] [E09] [E10] [Q43]
 - **Send it to yourself**: where the page offers it, *Send this article to yourself to read
   later* emails you the article, with the subject *"Article: …"* and a **View the article**
-  link. [E11] [E12]
+  link. [E11] [E12] [Q06]
 
 ## The Knowledge Portal
 
@@ -164,16 +158,3 @@ Employee Center. [E13]
 | say an article helped, or is wrong | [Rate an article or say what is wrong](see:rate) |
 | ask IT for help | [Report an incident](see:incident/report) |
 | choose another way to contact IT | [Ways to get help](see:getting-help/channels) |
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The **Knowledge** page (knowledge bases, categories, top rated) and a category page were not
-   opened on screen; the steps follow the page's widgets. [E02] [E03] How do employees reach the
-   Knowledge page from Employee Center's menu?
-2. **Send to myself** was not on the article page during the walk. [E06] It shows only when
-   Employee Center has a send-to-self configuration, which the mirror doesn't hold. [E11] Should
-   employees be able to email an article to themselves?
-3. Which emails does a subscriber get when a subscribed article changes? The mirror shows that a
-   checkout is posted as an activity to subscribers, but not what reaches their inbox. [E15]
-4. The walk was done as an administrator. Does an employee see the same header, with **Actions ›
-   Flag Article** and without **Edit Article**?

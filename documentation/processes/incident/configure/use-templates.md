@@ -310,15 +310,15 @@ global twin) is the Agent Workspace side panel action, shown while
 | Template | Sets | Shared with |
 |---|---|---|
 | Incident Call Type | `contact_type=self-service` [E13] | one user |
-| Major Incident | short description, `caller_id` = the user applying it, impact 1, urgency 1; child incident tasks [E14] [E15] | one user |
+| Major Incident | short description, `caller_id` = the user applying it, impact 1, urgency 1; child incident tasks [E14] [E15] [Q86] | one user |
 | Major Incident Candidate | `major_incident_state=proposed` [E16] | one user |
 | MIM Major Incident | `major_incident_state=accepted` [E17] | one user |
 | Reset Password | short description, active, `contact_type=self-service` [E18] | nobody (no user, not global, not on the template bar) |
 
 All are old (2015-2017) classic templates (`v2` false). [E13] [E14] None is global or shared
-with a group, so an agent sees none of them. [E06] Two set `major_incident_state` directly, which
+with a group, so an agent sees none of them. [E06] [Q09] Two set `major_incident_state` directly, which
 skips the propose and accept steps of major incident management; they are reachable only by their
-owner and by `template_editor_global`. [E16] [E17] [E08]
+owner and by `template_editor_global`. [E16] [E17] [E08] [Q35]
 
 Workspace-only features (field conditions, email content, content placement for journal fields)
 need template v2. [E03] The rule that would sort templates into v1 and v2 is inactive. [E19]
@@ -352,7 +352,7 @@ panel copies the message as plain text; it doesn't write to the incident. [E29]
   groups (empty means everyone). [E32]
 - Configure: *Response Template Configuration*, role `template_snippet_writer`. [E34]
 - Roles: reader ⊂ writer ⊂ `template_snippet_admin` ⊂ `admin`. **No ITSM role contains the
-  reader**, so on pdi2 only administrators see response templates. [E33]
+  reader**, so on pdi2 only administrators see response templates. [E33] [Q08]
 
 **Variables.** `${field}` (dot-walking allowed, such as `${caller_id.name}`), `${Date}` and
 `${current_user}`; a field the agent can't read, or an unknown name, shows in red. [E36] A template
@@ -381,18 +381,6 @@ writers how many response templates exist. [E41]
 5. **Templates:** the *Email template* panel appears where the email client is enabled and searches
    `sys_email_client_template`. [E47] [E48] There are **none for incident**: the existing ones serve
    incident communication tasks, communication tasks, change requests, email replies and surveys.
-   [E48]
+   [E48] [Q36]
 6. **Quick actions in the email body:** `r` response template, `e` email template, `d` draft.
    [E49]
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Should agents use response templates? Then add `sn_templated_snip.template_snippet_reader` to
-   `itil` (or to the agents' groups), and decide which templates and channels they get. [E33]
-2. Who owns the four single-user incident templates, and should they be shared, rewritten for the
-   workspace (v2) or retired? [E13] [E14] [E16] [E17]
-3. Should *Major Incident Candidate* and *MIM Major Incident* exist at all, since they set the major
-   incident state without the propose and accept actions? [E16] [E17]
-4. Is an email client template for incident wanted (for example an update to the caller)? None
-   exists. [E48]
-5. Does the workspace Templates panel create the child incident tasks of *Major Incident*? [E15]

@@ -239,7 +239,8 @@ the **Tasks** lists, which hold every kind of task:
 | **Assigned to you** | active tasks assigned to you, changes and change tasks among them [E04] |
 | **Assigned to your group** | active tasks of your groups that are assigned to someone else or to nobody [E05] |
 
-Filter the list on the task type when you want only changes or change tasks.
+Filter the list on the task type when you want only changes or change tasks. What the lists show
+for a change task hasn't been checked yet. [Q27]
 
 ## Take a change: Assign to me {label=NEW}
 
@@ -267,7 +268,7 @@ Change tasks are listed under **Related records › Change Tasks**. [E03] The *I
 
 The workspace also has a **Create Change Task** action: under **More actions** on a saved change,
 for `itil` and `sn_change_write`, it opens a **Create Change Task** dialog and then the new task.
-[E10] It wasn't in **More actions** on the change that was walked. [E01] See the questions below.
+[E10] It wasn't in **More actions** on the change that was walked. [E01] [Q23]
 
 ## Changing the type {label=NEW}
 
@@ -279,13 +280,13 @@ would also narrow the state choices, but only for changes without a change model
 Agent Assist works for changes as for incidents (see
 [Find answers with Agent Assist](see:incident/assist)): open the **Agent Assist** icon in the side
 panel [E02], and it searches with the **Short description** of the active change or change task.
-[E13] [E14] [E15] A search needs at least three characters. [E37] What differs is where it looks:
+[E13] [E14] [E15] A search needs at least three characters. [E37] What differs is where it looks [Q25]:
 
 | Source | Searches |
 |---|---|
 | **Default Sources** (the default) | knowledge articles, pinned articles and catalog items together [E16] |
 | **Incidents** | incidents created in the last 6 months, any state [E22] |
-| **Change Related Incidents** | active incidents opened since the change's actual start (or planned start), not yet linked to a change as their cause [E17] [E18] |
+| **Change Related Incidents** | active incidents opened since the change's actual start (or planned start), not yet linked to a change as their cause [E17] [E18] [Q02] |
 | **Open Changes** | active changes created in the last 6 months [E19] |
 | **Closed Changes** | changes closed in the last 6 months [E20] |
 | **Problems** | problems created in the last 6 months [E21] |
@@ -295,7 +296,7 @@ Wildcard search is off for changes, so type whole words. [E16]
 **Link to Incident** is the change's own action. On a **Change Related Incidents** result, it asks
 "Now linking CHG… to INC…", with boxes for work notes and additional comments, and then makes your
 change the incident's **Caused by**: "CHG… has been identified as a possible cause for INC…".
-[E23] [E24] Use it when the incidents started after your change and look like its result. It
+[E23] [E24] [Q26] Use it when the incidents started after your change and look like its result. It
 shows only on change requests, and only for incidents with no *Caused by* yet. [E23]
 
 The knowledge actions are the same as for incidents: **Attach** puts a link to the article in the
@@ -312,14 +313,14 @@ Sidebar discussions work for changes as for incidents (see
 
 | | On a change request | On a change task |
 |---|---|---|
-| **Collaborate › Chat** in the side panel | yes [E02] [E29] | no: the Collaborate chat is only for incidents and changes [E29] |
+| **Collaborate › Chat** in the side panel | yes [E02] [E29] | no: the Collaborate chat is only for incidents and changes [E29] [Q10] |
 | **Open Sidebar discussion** on the Next Experience form | yes [E35] | yes [E35] |
 | **Suggested participants** | *Opened by*, *Requested by*, *Assigned to*, and the person on call for its group when on-call scheduling is in use [E30] | none [E30] |
 | A **group** with on-call shifts | adds only who is on call now [E38] | not resolved to the on-call people [E38] |
 
 **Nobody is emailed** about a discussion on a change. The emails that tell a caller about an
 incident discussion go only to a record's requester, and no requester is set up for changes or
-change tasks. [E31] [E32] Colleagues get no email either [E33]; they see the discussion in their
+change tasks. [E31] [E32] [Q03] Colleagues get no email either [E33]; they see the discussion in their
 **Sidebar discussions** panel, and a mention sends a push notification to the mobile app. [E34]
 
 Only people who can open the change can read its discussions. [E36] Invite a business approver
@@ -335,16 +336,3 @@ or a CAB member only if they can open changes.
   incident, not to the change. [E24]
 - Mention people in a discussion when it is urgent: outside the workspace, it's the only alert
   they get. [E33] [E34]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Create Change Task** and **Assign to me** were not in the header of the change that was
-   walked (a new normal change, as admin). [E01] Do they show on a saved change with no
-   assignee? And does **Related records › Change Tasks** offer **New**?
-2. The Agent Assist panel wasn't opened. Does its selector show these sources, does **Change
-   Related Incidents** appear on change tasks, where it has no filter or actions? [E18] [E23]
-3. **Link to Incident** asks for work notes and comments, but its script writes only *Caused by*
-   on the incident. [E24] Are the notes saved, and on which record?
-4. What do the Tasks lists show for a change task: its number and short description, or also the
-   change it belongs to?
-5. Is a discussion on a change task expected? The Collaborate chat isn't offered there. [E29]

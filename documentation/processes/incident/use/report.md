@@ -59,13 +59,6 @@ evidence:
       where: 'Employee Center › search'
     how: 'searched Employee Center for Create Incident'
     result: 'the search finds Create Incident; the Technology services topic page does not list it'
-  E14:
-    seen:
-      by: 'Claude (snagentic session, signed in as admin)'
-      on: 2026-10-17
-      where: 'Employee Center › Get support'
-    how: 'opened the Get support window'
-    result: 'cards Request password reset, and Contact us +1-200-120-2020 (Available 9am to 5pm PST)'
   E15:
     seen:
       by: 'Claude (snagentic session, signed in as admin)'
@@ -167,38 +160,22 @@ see [Reset or change your password](see:getting-help/password).
 ### Get support
 
 **Get support** in the menu on the left shows the service desk's phone number,
-**+1-200-120-2020**, available 9am to 5pm PST. [E12] [E16]
+**+1-200-120-2020**, available 9am to 5pm PST. [E12] [E16] [Q40]
 
 ### Chat
 
 The chat button at the bottom right opens **Now Support**, the Virtual Agent. It answers
 questions, but it doesn't report incidents for you, and nobody from the service desk answers
-chats yet. [E15] [E17] Use **Create Incident** to report a problem.
-
-### Get support shows more to administrators {label=OPEN-QUESTION}
-
-Signed in as an administrator, **Get support** also shows **Request password reset** [E14]; an
-employee sees only the phone number. [E16] Decide whether employees should see the password
-reset card.
-
-### Chat promises a person {label=OPEN-QUESTION}
-
-The chat offers one topic, *Live Agent Support* [E15], but no chat queue is set up, so people are
-told *"There are no agents available at the moment."* [E17] Set up a queue or remove the topic.
+chats yet. [E15] [E17] [Q41] Use **Create Incident** to report a problem.
 
 ## By email
 
-Write to the service desk. The **subject** becomes the incident's title and the **body** its first
+Write to the service desk. [Q57] The **subject** becomes the incident's title and the **body** its first
 message, and the incident is yours. Mark the email **high importance** only when you really can't
 work: it makes the incident as urgent as it can be. [E09]
 
 To add to an incident you already have, **reply** to one of its emails. Your reply lands on the
 same incident instead of creating a new one. [E10]
-
-### The service desk's email address {label=OPEN-QUESTION}
-
-Publish the service desk's email address on this page: the address that receives these emails
-isn't in the configuration snagentic reads.
 
 ## By phone
 

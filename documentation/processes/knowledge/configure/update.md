@@ -131,7 +131,7 @@ evidence:
 
 `glide.knowman.versioning.enabled` is true [E01], so the `KBVersioning` script include decides who
 may edit, publish, delete and retire. [E03] Minor edits are off and no fields are listed, so a
-published article can't be edited in place by anyone. [E02] [E03]
+published article can't be edited in place by anyone. [E02] [E03] [Q10]
 
 ## 1. Checkout {label=NEW}
 
@@ -148,7 +148,8 @@ client script calling `KBAjax`) [E04] and one for the classic form. [E05] Both u
 
 `_performCheckout` [E08] inserts a copy as a Draft with the user as **reviser**, keeps the
 article number, copies the feedback counts and the related data, marks older versions as not
-latest, and gives it the next minor version. *Notify about article's checkout* posts an activity
+latest, and gives it the next minor version. It resets **Valid to** when the knowledge base sets
+an article validity. [E08] [Q24] *Notify about article's checkout* posts an activity
 to subscribers [E18] [E19].
 
 ## 2. Version numbers {label=NEW}
@@ -166,7 +167,7 @@ same article becomes Outdated, and its view count is added to the new one. [E11]
 knowledge base has a publish flow (pdi2's default), this fires *Knowledge - Outdate Article*
 (`knowledge__outdate_article`), which marks the article outdated and sets its stage for the list
 views [E11] [E12]; otherwise the state is set directly. The flow is kept out of the flows a
-knowledge base can choose. [E13]
+knowledge base can choose. [E13] Its executions are not in the mirror. [Q30]
 
 ## 4. Recall, Make this Current, Compare {label=NEW}
 
@@ -190,13 +191,3 @@ version moves the *latest* flag to the newest remaining one, unless it is outdat
 | `glide.knowman.versioning.minor_edit_fields` | empty | [E02] |
 | `glide.knowman.allow_edit_global_articles` | true | no domain restriction on checkout [E07] |
 | `glide.knowman.enable_km_subscription` | true | checkout activity to subscribers [E19] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Should minor edits be switched on for a few fields (for example Valid to, category,
-   keywords), so that a typo doesn't need a new version and, under approval, a new approval?
-   [E02]
-2. Is the Outdate Article flow running for every publish? Its executions are not in the mirror.
-   [E12]
-3. Which article validity (Valid to) does each knowledge base set, given that a checkout resets
-   it? [E08]

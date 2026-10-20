@@ -60,9 +60,5 @@ without a manager sends even low-risk changes to the CAB. [E06]
 ## Approvers
 
 Approvers without `itil` can read the change only from their approval. [E09] Email replies decide
-an approval by their subject. [E07]
-
-## Is mail on? {label=OPEN-QUESTION}
-
-`glide.email.smtp.active` has no value in the mirror [E08]: check that the instance sends and
-reads email, or approval emails never arrive.
+an approval by their subject. [E07] Approval emails
+need mail sent and read, and `glide.email.smtp.active` has no value in the mirror. [E08] [Q21]

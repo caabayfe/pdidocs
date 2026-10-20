@@ -81,8 +81,8 @@ match how it closed. [E05]
 Root Cause Analysis: from Resolved or Closed it records the reopening and clears the resolution
 fields, so the problem can be resolved again. [E07]
 
-## Duplicates {label=OPEN-QUESTION}
+## Duplicates
 
 Which records move to the original when a problem is marked a duplicate comes from
 `problem.duplicate.records_to_move`, readable only by problem managers, and its value was
-withheld from the records read. [E06] Platform team: confirm which related records move.
+withheld from the records read. [E06] Which related records move is not known yet. [Q12]

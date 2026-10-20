@@ -114,8 +114,8 @@ dictionary override in the mirror makes **Assignment group** mandatory on `sc_ta
 groups, only Assigned to is set, and *Email assigned to group* doesn't fire either. [E12] [E18]
 
 Lists: the workspace list action is overridden for the SOW view by one whose condition excludes
-`sc_task` [E14]; the classic list keeps a right-click *Assign to me* for anyone who can write the
-task, with no group check. [E15]
+`sc_task` [E14] [Q08]; the classic list keeps a right-click *Assign to me* for anyone who can write the
+task, with no group check. [E15] [Q06]
 
 ## Engines
 
@@ -129,17 +129,10 @@ legacy execution plan approvals: when such a task is rejected and its approval s
 cancel on reject, the item gets the stage *Request Cancelled* and is rejected. [E07] Flow-based
 items don't use it.
 
-## Gaps {label=OPEN-QUESTION}
+## Gaps
 
 - Items still point to inactive execution plans such as *IT Service - General*. [E05]
 - Eight service items use a flow described as a demo that creates no tasks. [E06]
 - Some items name legacy workflows the mirror doesn't hold, and nine have no fulfilment at all.
 
-Check what happens when each of these is ordered.
-
-### Assign to me {label=OPEN-QUESTION}
-
-- Should Assign to me be offered in the workspace's catalog task lists, as it is for incidents?
-  It would need an override of `canAssignToMeOnList`. [E14]
-- Should the classic right-click *Assign to me*, which skips the group check, stay on `sc_task`?
-  [E15]
+What each of them does when ordered isn't verified. [Q21]

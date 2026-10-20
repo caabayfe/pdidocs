@@ -61,17 +61,6 @@ evidence:
     how: read the portal notifications
     result: opened, approved, rejected, completed and item comments also appear under the bell, for the requester and the person it is for
     hash: e37169c61955afb23b66d8a3438077895b39d605274c49991bd174f04ccb7ca1
-  E12:
-    record: sysevent_email_action/3a92de88672630105f74e8a331b7300a
-    how: read Request survey
-    result: 'subject "Feedback makes us better", "Take this quick, 1-minute survey"'
-    hash: 9465a06d0507a1c9033eaea4cc48f2fda71a05cd84a118e73aa4312f0c7f6a2d
-  E13:
-    record: asmt_condition/249e70b0875013005d90bba826cb0bbf
-    field: table
-    how: read the only survey trigger
-    result: incident; no survey is triggered for requests on pdi2
-    hash: d4191834714542dcf3e5d8a6ab386c9b72259430730157b6e5c76469cbb6a622
   E14:
     record: ticket_configuration/6752a2a387f10010e0ef0cf888cb0b76
     how: read the requested item ticket configuration
@@ -123,15 +112,9 @@ Simpler items show **Waiting for Approval**, **Fulfillment** and **Delivery**. [
 | it's rejected | *REQ… was Rejected* | that it will be closed [E07] |
 | the team writes to you | *Comment added to request …* | their message; reply to answer [E09] |
 | an item is on its way | *Your requested RITM… for … is being delivered* | sent to the person it's for [E08] |
-| it's complete | *Request REQ… was completed* | who completed it, their notes and the items [E10] |
+| it's complete | *Request REQ… was completed* | who completed it, their notes and the items [E10] [Q11] |
 
 The same updates appear under the **bell** in Employee Center. [E11]
-
-### Request survey never sent {label=OPEN-QUESTION}
-
-The notification *Request survey* (*"Feedback makes us better"*) exists [E12], but the only survey
-trigger condition is on `incident` [E13], so requesters never receive it. Add a trigger condition
-on `sc_request` if request feedback is wanted, or deactivate the notification.
 
 ## Tips
 

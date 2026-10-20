@@ -108,13 +108,13 @@ Opening a CI in the CMDB Workspace shows the **CI page**: the sections **Summary
 | **More actions › Configure attributes** | changes which fields the page shows | admins, `personalize_form` [E09] |
 | **More actions › Configure resources** | changes the related lists under **Resources** | admins, `personalize_list` [E09] |
 
-That is all, for **every** class of CI, not only services. [E06] [E10]
+That is all, for **every** class of CI, not only services. [E06] [E10] [Q16]
 
 ### Create incident and Create change don't show {label=NEW}
 
 The CMDB Workspace also has form buttons **Create incident**, **Create change**, **Open dependency
 view** and **View CMDB 360 Data**. [E11] [E12] [E13] They belong to the older CI form, and on pdi2
-CIs always open on the CI page instead [E07] [E08], so you won't see them. **View CMDB 360 Data**
+CIs always open on the CI page instead [E07] [E08], so you won't see them. [Q02] **View CMDB 360 Data**
 would stay hidden anyway: multisource data is switched off. [E14]
 
 Instead:
@@ -124,11 +124,3 @@ Instead:
 - **To see dependencies**, use **Open map** on the CI page, or the dependency view from a ticket:
   see [See what depends on a configuration item](see:cmdb/impact).
 - **To create a CI**, see [Create a configuration item](see:cmdb/create-ci).
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Only a service CI was opened. Do other classes, such as a server or an application, show the
-   same header? The records say they do. [E10]
-2. Do support staff miss **Create incident** and **Create change** on a CI? They could come back by
-   turning `sn_cmdb_ws.explore_ci.record.enabled` off, which would also remove the CI page. [E07]
-

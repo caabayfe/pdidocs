@@ -164,9 +164,9 @@ evidence:
 ---
 ## On pdi2 today {label=NEW}
 
-**Nothing runs today.** The on-call flows start only from a trigger rule, and pdi2 has none [E01];
+**Nothing runs today.** The on-call flows start only from a trigger rule, and pdi2 has none [E01] [Q02];
 they act only for groups with a shift, and pdi2 has none of those either [E03]. The Escalation Log
-is empty [E02], and would stay empty even then: escalation logging is switched off. [E26] [E27]
+is empty [E02], and would stay empty even then: escalation logging is switched off. [E26] [E27] [Q03]
 An incident assigned to a group is handled as usual: the group's members pick it up.
 
 What follows is what members and agents will see once a shift and a trigger rule exist. Setting
@@ -184,7 +184,7 @@ and trigger rules](see:escalation).
    | Flow | What happens to you |
    |---|---|
    | **On-Call: Assign** | the person on call now is made the assignee, without a message [E05] [E07] |
-   | **On-Call: Assign and Notify** | the same, and that person gets an SMS [E06] [E07] |
+   | **On-Call: Assign and Notify** | the same, and that person gets an SMS [E06] [E07] [Q16] |
    | **On-Call: Assign By Acknowledgement** | people are contacted in turn, by email, SMS or a call, until one accepts [E08] [E09] |
    | **On-Call: Escalations by Email** | the same, by email only [E10] |
    | **On-Call: Conference Call Escalation** | the people of each level are called together into a conference call [E11] |
@@ -213,7 +213,8 @@ When the flow asks you to take the work, the message tells you how to answer [E1
 Your answer counts only while the record has no assignee, and you can accept only a record you
 can open. [E16] If someone assigns the record by hand, the escalation ends. [E08] [E17]
 
-Email replies work for **incidents** only: that is the one table the reply rule handles. [E15]
+Email replies work for **incidents** only: that is the one table the reply rule handles. [E15] [Q06]
+SMS and calls need a telephony provider for Notify; without one, only email reaches people. [Q04]
 
 ## When nobody accepts {label=NEW}
 
@@ -238,7 +239,7 @@ On pdi2 escalation logging is off, so nothing below shows any escalation until i
 | **Cancelled** | stopped, for example by a new on-call flow on the same record |
 
 [E22] Each contact shows its channel and the answer: *Accepted*, *Rejected*, *Auto Assigned* or
-*Invalid Response*. [E25]
+*Invalid Response*. [E25] [Q25]
 
 ## Tips
 
@@ -246,15 +247,3 @@ On pdi2 escalation logging is off, so nothing below shows any escalation until i
 - Accept from the device that was contacted; replies from an address that isn't on your profile
   may not be matched to you. [E15] [E16]
 - If you take an incident by hand, the other people stop being contacted. [E17]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Escalation logging is off on pdi2 (it is on by default): is that intended? Without it, the
-   Escalation Log and the *Track On-Call Escalation* button stay empty. [E26] [E27]
-2. No escalation has run on pdi2, so none of the messages, the work notes or the Escalation Log
-   has been seen with data. [E02]
-3. Is a telephony provider set up for SMS and calls? Without one, only email can reach people.
-4. Which flow should each group's trigger rule use? [E01]
-5. Should email replies work for other tables than incident, such as problem or change? [E15]
-6. What does the SMS of *On-Call: Assign and Notify* say? Its text in the mirror reads like a
-   placeholder (see the configuration page). [E07]

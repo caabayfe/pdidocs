@@ -187,7 +187,7 @@ What it does:
 1. The article appears in the incident's **Attached Knowledge** list, with its knowledge base and
    publish date. [E01] [E21]
 2. **Attach** in Agent Assist also puts a link to the article in **Additional comments**, which
-   the caller can read. [E23] In Recommendations, choose **Add link in worknote** when the link is
+   the caller can read. [E23] [Q12] In Recommendations, choose **Add link in worknote** when the link is
    only for colleagues. [E28]
 3. If the article is a **known error** written from a problem, and the incident has no problem
    yet, the incident's **Problem** is set to that problem. [E29]
@@ -196,20 +196,22 @@ What it does:
 
 {{animation:inckb}}
 
+Nobody has opened these screens yet; the steps follow the records.
+
 1. Resolve the incident first. **Create Knowledge** is offered only when the incident is
    **Resolved** or **Closed**, and only once: when an article from this incident exists, it is no
    longer offered. [E05]
-2. Open the header's **Create** menu and choose **Create Knowledge**. [E02] [E03] [E04]
+2. Open the header's **Create** menu and choose **Create Knowledge**. [E02] [E03] [E04] [Q83]
 3. A **Create new article** tab opens. Choose the **knowledge base** and, if you can use them, an
    article **template**. [E06]
-4. Choose **Next**. The tab closes and a new article form opens. [E07]
+4. Choose **Next**. The tab closes and a new article form opens. [E07] [Q84]
 5. Write the article: the issue as people describe it, and the fix. Save it.
 
 The new article starts as a **draft**. [E08] It is published through its knowledge base, not
 through the incident.
 
 You see **Create Knowledge** only if you have the `itil` or `sn_incident_write` role and may
-contribute to the knowledge base used for articles from tasks. [E04] [E05]
+contribute to the knowledge base used for articles from tasks. [E04] [E05] [Q10]
 
 ## Edit the article later {label=NEW}
 
@@ -245,7 +247,7 @@ Who can do it: people with `itil` or `sn_incident_write`, on any incident that i
 | **Anyone who can read the incident** | can read the task [E17] |
 
 Nobody is emailed when the gap is reported: the "Feedback Task assigned to you" email is only for
-feedback on an existing article. [E19] Tell the knowledge team if the gap is urgent.
+feedback on an existing article. [E19] [Q11] Tell the knowledge team if the gap is urgent.
 
 ## Tips
 
@@ -256,18 +258,3 @@ feedback on an existing article. [E19] Tell the knowledge team if the gap is urg
   it, in the words a caller would search for.
 - One incident, one article: Create Knowledge disappears once an article from the incident exists.
   [E05]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The **Create** menu, **Create Knowledge**, **Edit knowledge** and **Report Knowledge Gap** were
-   not opened on screen; the steps follow the records. [E02] [E10] Do they show on a Resolved
-   incident on pdi2?
-2. Is the new article filled in from the incident (short description, description, resolution
-   notes), and does it keep the incident as its source task? Edit knowledge and the incident's
-   list of articles depend on that. [E05] [E07]
-3. Which knowledge base is used for articles from incidents, and who may contribute to it? The
-   setting `glide.knowman.task_kb` is redacted in the mirror. [E05]
-4. Who in the knowledge team picks up reported gaps, and how do they find them, since no email is
-   sent? [E19]
-5. Should **Attach** in Agent Assist post to Additional comments (seen by the caller) or to the
-   work notes? [E23]

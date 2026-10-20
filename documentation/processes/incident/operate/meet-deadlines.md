@@ -129,7 +129,8 @@ evidence:
 ---
 Every incident carries deadlines, called **SLAs**: one for the first response and one for the fix.
 The priority decides how long each one is (see [Priority and deadlines](see:priority-and-deadlines)).
-This page is about what you do with them while you work.
+This page is about what you do with them while you work. Nobody has walked the SLA screens yet;
+it is read from the mirror.
 
 ## The two clocks {label=NEW}
 
@@ -165,10 +166,10 @@ They run beside the priority SLAs and stop when the incident leaves the group or
 {{animation:incsla}}
 
 1. On a saved incident, open **Record Information** (the heartbeat icon) in the side panel.
-   [E07] [E08]
+   [E07] [E08] [Q79]
 2. Under **SLAs and timings** there are two timers: **Response SLA** (*Time to respond*) and
    **Resolution SLA** (*Time to resolve*). [E09] [E10] Each shows the priority SLA that applies,
-   including one already met. [E12] [E13]
+   including one already met. [E12] [E13] [Q80]
 3. A timer reads *"… remaining"* or *"…% time elapsed"*, *Breached*, *Out of Schedule* outside
    its working hours, or *No matching SLA* when none applies yet. [E14]
 4. **View all SLAs** lists every SLA on the incident, OLAs included, as **Task SLAs**. [E11]
@@ -182,14 +183,15 @@ The SLA engine emails as each deadline approaches:
 
 | When | Response SLA | Resolution SLA, OLA, contract |
 |---|---|---|
-| 50% of the time used | the assignee [E16] | the assignee, and the person who supports the incident's CI [E17] [E21] |
+| 50% of the time used | the assignee [E16] | the assignee, and the person who supports the incident's CI [E17] [E21] [Q07] |
 | 75% | the assignee [E16] | the assignee and their manager [E17] |
 | breached | the assignee and their manager [E16] | the assignee and their manager [E17] |
 
 The subject says *"SLA … associated with INC… has reached 75%"* or *"… has breached"*.
 [E18] [E19] Your manager's copy also says who the incident is assigned to. [E20] An SLA that is
 already breached when it starts, after a priority change, sends its breach email straight away.
-[E22]
+[E22] Who receives the warnings on an incident with no assignee isn't known: the flows'
+conditions aren't in the mirror. [Q56]
 
 ## Tips
 
@@ -198,15 +200,3 @@ already breached when it starts, after a priority change, sends its breach email
   first pauses the clock.
 - Resolve when the fix is in; don't wait for the caller's confirmation.
 - A breach email is no reason to rush the fix wrongly; tell the caller what is happening instead.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-Nobody has walked the SLA screens yet; this page is read from the mirror.
-
-1. Does **Record Information** open with *SLAs and timings* for an incident, and what does a
-   timer look like on time, paused and breached?
-2. Which SLA does a timer show when a response SLA was cancelled by a priority change?
-3. Who receives the warnings when the incident has no assignee? The flows' conditions aren't in
-   the mirror. [E16] [E17]
-4. Do agents rely on the emails, or on the timers? If the timers, the 50% warnings may only be
-   noise.

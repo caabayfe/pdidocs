@@ -299,7 +299,7 @@ The older Agent Workspace is switched off. [E13] Its declarative actions for cha
 the record interceptor, *Agent Assist*) are tied to it and do nothing in Service Operations
 Workspace. [E14] [E15] [E16] [E17] [E18] The same goes for the business rules *Set Normal Model in
 Workspace* and *Set Emergency Model in Workspace*, which act only on requests from
-`/now/workspace/agent/`. [E19] [E20]
+`/now/workspace/agent/`. [E19] [E20] [Q09]
 
 ## 1. Lists {label=NEW}
 
@@ -332,16 +332,16 @@ In the Tasks lists the more specific `sn_sow_itsm_common` action wins, so change
    session; the after-insert rule *Link change to incident in Wkspace* writes the new change into
    the record's *Change request* (`rfc`). [E21] These are workspace form-menu actions that open the
    `sn_itsm_workspace` record interceptor; on Service Operations Workspace the incident's menu
-   doesn't show them (see [Escalate and link related work](see:incident/escalate)).
+   doesn't show them (see [Escalate and link related work](see:incident/escalate)). [Q23]
 2. *Create Change Task* is a form-menu action for `itil` and `sn_change_write` on saved changes.
-   [E24] [E25] It opens the same interceptor, then the task with `g_aw.openRecord`.
+   [E24] [E25] It opens the same interceptor, then the task with `g_aw.openRecord`. [Q23]
 3. The Agent Workspace *New* actions on Change Requests and Change Tasks related lists (with the
    parent filled in) don't apply, the workspace being off. [E13] [E14] [E16]
 
 ## 4. Changing the type {label=NEW}
 
 *Set State field on WS* runs on a change of **Type**: it makes **State** read-only and rebuilds its
-choices from `g_scratchpad.stateModel`. [E26] Its UI type is *Mobile / Service Portal*. The state
+choices from `g_scratchpad.stateModel`. [E26] Its UI type is *Mobile / Service Portal*. [Q24] The state
 model is only put on the form for changes without a model (`chg_modelISEMPTY`), so for changes
 with a model only the read-only part can apply. [E27]
 
@@ -360,7 +360,7 @@ with a model only the read-only part can apply. [E27]
    |---|---|---|
    | 100 | knowledge, catalog | knowledge articles, catalog items |
    | 100 | Incidents | incidents of the last 6 months |
-   | 200 | Change Related Incidents | `caused_byISEMPTY` [E34], plus a scripted filter on `change_request` only: active, created since `work_start`, else `start_date` [E35] |
+   | 200 | Change Related Incidents | `caused_byISEMPTY` [E34], plus a scripted filter on `change_request` only: active, created since `work_start`, else `start_date` [E35] [Q02] |
    | 300 | Open Changes | active, last 6 months [E36] |
    | 400 | Closed Changes | Closed, closed in the last 6 months [E37] |
    | 500 | Problems | last 6 months [E38] |
@@ -394,19 +394,4 @@ For the base set-up (properties, ACLs, notifications), see
 Without a requester mapping `getRequesterMappingField` returns nothing, so neither the
 *added to a discussion* email nor the daily unread digest is sent for changes. [E51] Add an
 inherited mapping (for example on `change_request`, field `requested_by`) if requesters should be
-told.
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Why don't *Create Change Task* [E24] and *Create Change Request* on the problem [E23] show in
-   Service Operations Workspace's **More actions**? Neither was seen on the walks; both are
-   form-menu actions written for the older Agent Workspace (`g_aw`, the `sn_itsm_workspace`
-   interceptor).
-2. Does Service Operations Workspace honour *Set State field on WS*, whose UI type is *Mobile /
-   Service Portal*? [E26]
-3. Should requesters of a change be emailed about its discussions? Then add a requester mapping.
-   [E50]
-4. Should the Agent Workspace leftovers (declarative actions, the two model rules) be deactivated,
-   now that the workspace is off? [E13]
-5. Should *Change Related Incidents* be removed from the change task context, where it has no
-   filter or actions? [E33] [E35]
+told. [Q03]

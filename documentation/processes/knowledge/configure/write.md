@@ -155,7 +155,7 @@ evidence:
 
 The Knowledge Center pages are readable by `knowledge`, `knowledge_manager` and `knowledge_admin`.
 [E01] [E02] Contributing to a knowledge base is a separate check, made by its user criteria
-through `SNC.KnowledgeHelper.canContribute`. [E16] [E19]
+through `SNC.KnowledgeHelper.canContribute`. [E16] [E19] [Q26]
 
 ## 2. How people arrive {label=NEW}
 
@@ -175,14 +175,14 @@ any other source (an incident, for example) it keeps the classic route. [E07]
 
 The redirect does **not** cover the article form itself: the walk opened `kb_knowledge.do?sys_id=-1`
 and stayed on the classic form. [E11] Bookmarks, links in emails and list **New** buttons outside
-the launchers still reach the classic UI.
+the launchers still reach the classic UI. [Q11]
 
 ## 3. Template chooser {label=NEW}
 
 1. `New` on `kb_knowledge` opens the template selector when the user can create, versioning is
    installed, and `canContributeToTemplates` passes; otherwise the plain form. [E13]
 2. `canContributeToTemplates` needs only one active template. [E14] On pdi2 that is **Known Error
-   article**; KCS Article, What Is, How to and FAQ are inactive. [E15] So everyone who may
+   article**; KCS Article, What Is, How to and FAQ are inactive. [E15] [Q17] So everyone who may
    contribute sees the chooser, with the standard article and Known Error.
 3. In the Knowledge Center, a list's **New** opens a new record page instead of the pop-up. [E13]
 
@@ -192,7 +192,7 @@ Before insert on `kb_knowledge`, in order:
 
 | Rule | Does |
 |---|---|
-| *Populate Default KB if Empty* (100) | fills an empty knowledge base with a fixed sys_id [E17] |
+| *Populate Default KB if Empty* (100) | fills an empty knowledge base with a fixed sys_id [E17] [Q24] |
 | *Set article in draft state on insert* (100) | forces Draft [E18] |
 | *Check User CanContribute To Kb* (101) | refuses the insert if the user can't contribute [E19] |
 
@@ -219,12 +219,3 @@ articles in review, and only while the machine-learning knowledge plugin is inac
 | `sn_km_center.glide.knowman.redirect.enable` | true | launchers redirect to it [E04] |
 | `sn_km_center.glide.knowman.ece.enable` | true | enhanced editor and its Publish actions [E05] |
 | `glide.knowman.versioning.enabled` | true | drafts start at 0.01 [E24] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Which knowledge base is `dfc19531bf2021003f07e2c1ac0739ab`, the default for articles saved
-   without one? The knowledge base records are not in the mirror. [E17]
-2. Should the classic article form redirect too (for example a view rule or a UI script on
-   `kb_knowledge.do`), or is the classic form still wanted for some users? [E11]
-3. Should the inactive templates (How to, FAQ, What Is, KCS) be offered, or removed? [E15]
-4. What are the contribute user criteria of each knowledge base?

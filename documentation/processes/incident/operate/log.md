@@ -152,11 +152,14 @@ Use **Copy Incident** when a second person reports the same kind of issue and yo
 incident of their own without typing it all again. If it is the same outage affecting many
 people, link them to one incident instead (see [Escalate and link related work](see:escalate)).
 
+No walk has recorded the dialog yet; these steps are read from the mirror.
+
 1. Open the incident in the workspace, open **More actions** and choose **Copy Incident**. [E11]
-2. The **Copy Incident** dialog asks for the **Caller** of the new incident: it is required. [E13]
+2. The **Copy Incident** dialog asks for the **Caller** of the new incident: it is required. [E13] [Q74]
 3. If the incident has attachments, **Include attachments** is shown, ticked. Untick it if the
    new caller shouldn't get them. [E13] [E16]
-4. Choose **Copy**. The new incident is saved straight away and opens. [E13] [E14]
+4. Choose **Copy**. The new incident is saved straight away and opens. [E13] [E14] [Q74]
+   Whether its caller gets the usual *incident opened* email isn't known yet. [Q75]
 
 What the new incident gets, with the standard settings [E15]:
 
@@ -164,7 +167,7 @@ What the new incident gets, with the standard settings [E15]:
 |---|---|
 | short description, description, category, subcategory, impact, urgency, priority, configuration item, service and service offering, location, company, assignment group, caused by, parent incident, problem and change request | number, state and resolution details, opened by and opened at, the assignee, the watch list, work notes and comments |
 
-The platform team can change the list. Attachments are copied when **Include attachments** is
+The platform team can change the list, and pdi2's isn't in the mirror. [Q53] Attachments are copied when **Include attachments** is
 ticked. [E14] Some related lists (affected CIs, impacted services) can be copied too, if the
 platform team has set them. [E17]
 
@@ -180,11 +183,3 @@ any state, including closed ones. [E10] It is switched on on pdi2. [E12]
 - Search for open incidents with the same configuration item before you log a new one; it may
   be part of something bigger (see [Escalate and link related work](see:escalate)).
 - Write the short description for the next person, not for yourself.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Copy Incident was read from the mirror only; no walk has recorded its dialog yet. Does the
-   Caller field start empty, and does the new incident open in a new tab?
-2. Which fields does pdi2 really copy? The list can be changed, and its value isn't in the
-   mirror. [E15]
-3. Does the new caller get the usual "incident opened" email for a copy?

@@ -125,13 +125,13 @@ Employee Center has no notification settings: neither your profile nor the bell 
 Use one of these instead:
 
 - **The link at the bottom of an IT email.** Every email from IT ends with an *unsubscribe* link
-  and a *preferences* link. [E12] [E13]
+  and a *preferences* link. [E12] [E13] [Q12]
 - **My Notification Preferences**, in the **Self-Service** menu of the instance. Nobody needs a
-  special role for it. [E01] [E02]
+  special role for it. [E01] [E02] [Q07]
 
 ## Switch an email off {label=NEW}
 
-1. Open your **notification preferences**. [E02]
+1. Open your **notification preferences**. [E02] [Q11]
 2. Under **System notifications**, find the email, for example *Comment left on incident*.
    Search needs 3 characters. [E03]
 3. Turn its switch off. The page saves it for you.
@@ -148,7 +148,7 @@ turned off or unsubscribed"*. [E03] None of the emails IT sends employees on pdi
 A few notifications are **subscribable**: you receive them only if you ask. [E03] The useful one
 for employees is **Location affected**: *"Your subscribed location … is being affected by
 INC…"*. [E09] You are told when an incident affecting your office, or a building it belongs to,
-is updated. [E10]
+is updated. [E10] [Q08]
 
 1. In your notification preferences, choose **Create notification**. [E03]
 2. **Select notification**: choose *Location affected*.
@@ -171,15 +171,3 @@ the knowledge emails link to. [E16] [E17]
 - **Email Digest** groups some emails into one, if you prefer fewer messages. [E03]
 - Turning an email off doesn't stop the work: your ticket goes on, and the bell and My Requests
   still show it. [E15]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Can employees open My Notification Preferences?** It is in the instance's Self-Service
-   menu [E02], but employees work in Employee Center, which has no link to it. [E14] Walk it as
-   an employee, and consider a link in the Employee Center profile menu.
-2. **Where do the email footer links lead?** Check that *unsubscribe* and *preferences* appear
-   in a real email and open a page an employee can use. [E12]
-3. **Location affected relies on agents filling in affected locations** [E10]. Is that done for
-   outages? If not, don't promote the subscription.
-4. The preferences page and the steps above were not walked; they follow the page's labels.
-   [E03]

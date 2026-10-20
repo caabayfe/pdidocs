@@ -37,9 +37,9 @@ doesn't hold. When a change's approval becomes approved or rejected, its agenda 
 and the meeting notes are updated. [E02] Meetings open in the
 workspace's CAB meeting page. [E03] The CAB manager role doesn't contain `itil`. [E04]
 
-## Only network changes {label=OPEN-QUESTION}
+## Only network changes
 
 With one definition limited to *Network* changes [E01], a moderate-risk server change still gets
 its CAB approval from the *CAB Approval* definition [E05], but is never put on a meeting agenda:
-its approvers decide it alone. Is that intended, or should a definition cover the other
-categories?
+its approvers decide it alone. Whether a definition should cover the other categories is not
+decided yet. [Q01]

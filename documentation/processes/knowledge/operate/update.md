@@ -109,7 +109,7 @@ version, change it, and publish it. Readers keep seeing the published version un
 is published. [E07] [E09]
 
 Editing a published article in place is off: minor edits are switched off, so no field of a
-published article can be changed directly. [E02] [E03]
+published article can be changed directly. [E02] [E03] [Q10]
 
 ## Check out a new version {label=NEW}
 
@@ -122,7 +122,7 @@ published article can be changed directly. [E02] [E03]
    **draft**, you are its **reviser**, and its version goes up by 0.01 (for example 1.0 to 1.01).
    [E04] [E07] If the new version got a new **Valid to** date, the message says so. [E05]
 4. Make your changes and save.
-5. [Publish it](see:publish), as for a new article.
+5. [Publish it](see:publish), as for a new article. [Q35]
 
 If someone has already checked it out, you see *"You cannot checkout this article as it is
 already checked out."* Work on their version, or ask them. [E04]
@@ -153,7 +153,7 @@ while another version is checked out. [E12]
 ## Compare two versions {label=NEW}
 
 In the article's versions, select **two** versions and choose **Compare**. The Knowledge Center
-shows them side by side. [E13] [E14] Select only two: *"You can compare only two versions of a
+shows them side by side. [E13] [E14] [Q40] Select only two: *"You can compare only two versions of a
 knowledge article."* [E15]
 
 ## Tips
@@ -163,12 +163,3 @@ knowledge article."* [E15]
 - Retiring an article retires all its versions, not just the one you have open. [E17]
 - For an article that is wrong in a way readers have reported, start from the feedback task, so
   that the task is closed with the update. See [Work feedback and knowledge gaps](see:feedback).
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Checkout**, **Recall**, **Make this Current** and **Compare** were not used on screen; the
-   steps follow the records. [E04] [E11] [E12] [E13] Where does the Knowledge Center show the
-   article's versions?
-2. Should small corrections (a typo, a link) be possible without a new version? Minor edits are
-   off. [E03]
-3. Is a new version from Checkout approved again under Approval Publish, as a new article is?

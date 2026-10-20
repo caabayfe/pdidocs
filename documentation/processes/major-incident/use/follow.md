@@ -28,11 +28,6 @@ evidence:
     how: read the System Status page and its widgets
     result: Current Status, Planned Maintenance, Business Services Status, Service Status Legend
     hash: 53de5433a0f9e75acfda6a58ccdd8aa45224cf4adabb6f5133c34e3142275c6e
-  E06:
-    record: sys_security_acl/a7c490eb0a0a0bbb00358a9ad19d348d
-    how: read the read ACLs on cmdb_ci_outage
-    result: every one needs a role (itil, service_viewer, …)
-    hash: 6444165c305e8a87ac90330bafe3758886f3af15afb3fb053e8ee6c279463a14
   E08:
     seen:
       by: 'Claude (snagentic session, signed in as admin)'
@@ -46,12 +41,6 @@ evidence:
     how: read the Planned Maintenance widget
     result: 'planned outages "over the next 5 days"; "No service maintenance is planned over the next 5 days" when there are none'
     hash: bd6e2ad98253e2966adc0c5788cfc71ccade65eb6b65b16e4cf8300e314b586b
-  E10:
-    record: sp_widget/1e699082d7001200a9addd173e24d4e3
-    field: template
-    how: read the Current Status widget
-    result: 'shows "No system is reporting an issue" when it finds no outage it can read'
-    hash: fc87af0bc18ecf576acd9cfbf161d6710b798f1df088a19e6348ba83abef8622
 ---
 ## When many people have the same problem
 
@@ -100,7 +89,7 @@ on resolution of Parent Incident."* and you get the usual *"… was resolved"* e
 - If it still doesn't work for you after the fix, reopen your incident (see
   [Confirm the fix, or reopen](see:incident/confirm)).
 - If the System status page says nothing is wrong while you still can't work, follow your
-  incident's updates: they come from the team working on the failure.
+  incident's updates: they come from the team working on the failure. [Q12] [Q05]
 
 ## I want to…
 
@@ -110,10 +99,3 @@ on resolution of Parent Incident."* and you get the usual *"… was resolved"* e
 | follow my own incident | [Follow your incident](see:incident/follow) |
 | reopen it after the fix | [Confirm the fix, or reopen](see:incident/confirm) |
 | reach IT another way | [Ways to get help](see:getting-help/channels) |
-
-### Can employees read the System status page? {label=OPEN-QUESTION}
-
-The outage records behind **System status** are readable only with a support role
-[E06], so an employee may see *"No system is reporting an issue"* even
-during an outage. [E10] Platform team: sign in as an employee during an outage and confirm what the page
-shows, then decide whether employees should be pointed to it.

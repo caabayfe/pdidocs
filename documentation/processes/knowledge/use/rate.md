@@ -76,11 +76,6 @@ evidence:
     how: read Calculate Article Rating, with Populate Helpful Count (sys_script/f06b361dc71230108ad4010703c26044)
     result: the article's average star rating and its helpful count are recalculated from the votes
     hash: 29be806cde7b54a11e3a5ba44bd13270350e37241c0591bfb6971dad1baa7f40
-  E14:
-    record: sys_properties/33cef466db41320002533691f0b8f50b
-    how: read sn_km_portal.glide.knowman.serviceportal.portal_url (no value in the mirror)
-    result: empty; the feedback mail scripts default to kb
-    hash: af98430605f0dc622c24d3b3877e4dd20add12c48df3935b2044a334803837bc
 ---
 Tell the authors whether an article helped. A vote or a few stars take a second; a **flag** with
 a comment tells them what to fix, and they write back when it is done.
@@ -103,7 +98,7 @@ article; **Flag Article** is under **Actions** at the top. [E01]
    updated. [E02] [E13]
 
 A **No** or a low rating is counted, but nobody is asked to act on it and nobody writes back. [E03]
-[E04] To have something fixed, flag the article.
+[E04] [Q02] To have something fixed, flag the article.
 
 {{animation:kbfeedback}}
 
@@ -111,7 +106,7 @@ A **No** or a low rating is counted, but nobody is asked to act on it and nobody
 
 1. At the top of the article, open **Actions** and choose **Flag Article**. [E01]
 2. **Flag this article** opens. Write what is wrong in **Add a comment (mandatory)**: what is
-   incorrect, missing or unclear, and what you expected. [E05]
+   incorrect, missing or unclear, and what you expected. [E05] [Q45]
 3. Press **Submit**. You see *"Article has been flagged"*. [E05]
 
 Your flag goes to the article's author as a task, with your comment. [E06] [E07]
@@ -134,7 +129,7 @@ asked to act on it. [E07] To have something fixed, flag the article.
 | The author has acted on your flag | *"Your Feedback Task … has been resolved"*: "The feedback you submitted … was resolved. Please review and accept." [E11] |
 
 When it is resolved, open the link in the email and choose **Accept** if the article is now
-right, or **Reject** if it isn't: it goes back to the author. [E12]
+right, or **Reject** if it isn't: it goes back to the author. [E12] [Q01] [Q04] [Q33]
 
 ## Tips
 
@@ -150,20 +145,3 @@ right, or **Reject** if it isn't: it goes back to the author. [E12]
 | find another article | [Find and read an article](see:find) |
 | ask IT for help instead | [Report an incident](see:incident/report) |
 | see which emails knowledge sends | [Who is told what](see:who-is-told) |
-
-## No and low ratings reach nobody {label=OPEN-QUESTION}
-
-On pdi2 only a flag creates work for the author: **No** and low star ratings ask for no reason
-and create no task. [E03] [E04] Decide whether a **No**, or a rating at or below a threshold,
-should ask the reader why and create a task.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The **Flag this article** dialog was not opened on screen; the steps follow its template. [E05]
-2. The links in the *updated* and *resolved* emails open the task in a portal's form page, not
-   in Employee Center: the portal comes from
-   `sn_km_portal.glide.knowman.serviceportal.portal_url`, which is empty on pdi2, so the mail
-   scripts fall back to the Knowledge Portal (`/kb`). [E10] [E11] [E14] Can an employee open it
-   there, answer, and see **Accept** and **Reject**?
-3. Is a reader who never answers left with a Resolved task for ever? Nothing closes it but
-   **Accept**. [E12]

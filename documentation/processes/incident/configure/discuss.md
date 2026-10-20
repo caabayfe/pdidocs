@@ -290,7 +290,7 @@ off. [E02] For the workspace, Sidebar is supported when [E03]:
 | `glide.ui.polaris.experience` | true [E04] |
 | `sn_oe_sfs.prepopulate_users_on_sidebar_modal_is_supported` | true [E06] |
 | `itsm_family_release_version_check` ≥ 24 | 26, so the per-record check below also applies [E05] |
-| Sidebar enabled in the user's session domain and for the record | a platform check (`sn_collab.CollabChatScriptObject`) the mirror can't show; seen working on INC0010023 |
+| Sidebar enabled in the user's session domain and for the record | a platform check (`sn_collab.CollabChatScriptObject`) the mirror can't show; seen working on INC0010023 [Q63] |
 | `SidebarAccessCheckUtils.canWrite` | true for everyone: the additional access check is on [E08] but no extension implements it [E07] [E09] |
 
 ## 2. Who can start a discussion {label=NEW}
@@ -318,7 +318,7 @@ off. [E02] For the workspace, Sidebar is supported when [E03]:
    `hasPermission` follows the same property. [E03]
 3. Suggestions: the caller and the assignee, and the first on-call user of the assignment group
    if on-call scheduling is active; only while the Participant Suggestions plugin is inactive.
-   [E21] The prefill with assignment group members is off. [E20]
+   [E21] [Q64] [Q65] The prefill with assignment group members is off. [E20]
 4. Groups: a group with on-call shifts resolves to its on-call users for incident, problem and
    change. [E22]
 5. Limits: `sn_oe_sfs.com.glide.cs.collab.chat.candidate.limit` 8 [E23]; the search and prefill
@@ -343,7 +343,7 @@ Active (sn_oe_sfs):
 | What | Trigger | To | Record |
 |---|---|---|---|
 | *Collab Chat - Notify Unread New Member* | business rule *Requester added to Collab Chat* on `sys_cs_collab_member` [E30] → event `sn_oe_sfs.notify_unread_new_member` | the record's requester, for incident the caller [E31]; skipped if inactive, self-added or mirrored to Teams/Slack [E25] | [E32] |
-| *Collab Chat - Notify Unread Messages* | job daily 08:00 GMT [E33] → event `sn_oe_sfs.notify_unread_messages` | requesters with unread messages in open discussions active in the last day [E25] | [E34] |
+| *Collab Chat - Notify Unread Messages* | job daily 08:00 GMT [E33] [Q29] → event `sn_oe_sfs.notify_unread_messages` | requesters with unread messages in open discussions active in the last day [E25] | [E34] |
 | *Mobile Sidebar Mention Push Notification* | a mention | the mentioned user, push only | [E35] |
 
 *Collab Chat Collaborator Added* is inactive [E36], so colleagues get no email.
@@ -352,13 +352,13 @@ Superseded (sn_sow_collab): when `sn_oe_sfs` is upgraded, a script action deacti
 reminder job and the two business rules that fired the SOW notifications [E37]; all three are
 inactive on pdi2. [E38] [E39] [E40] *Sidebar Discussion Started* and *Sidebar Discussion
 Reminder* remain active, but only those inactive records (and `SOWSidebarNotificationsUtilsSNC`,
-which they call) fire their events. [E41]
+which they call) fire their events. [E41] [Q49]
 `sn_sow_collab.uptake_sfs_notifications` has no value in the mirror. [E47]
 
 ## 6. Retention {label=NEW}
 
 The table cleaner for `sys_cs_collab_chat` (one year after the last update) is inactive, so
-discussions are kept. [E42]
+discussions are kept. [E42] [Q28]
 
 ## Properties {label=NEW}
 
@@ -372,15 +372,3 @@ discussions are kept. [E42]
 | `glide.collab.check_candidate_permission` | true | candidates must be able to read the record [E17] |
 | `sn_oe_sfs.u_com.glide.cs.collab_additional_access_check_enabled` | true | extension checks, none implemented [E08] [E09] |
 | `sn_sow_collab.user_presence_refresh_duration` | 180 s | presence refresh [E46] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. For which tables is Sidebar enabled per record (`isCollabChatEnabledForRecord`)? The mirror
-   doesn't hold that configuration; incident was seen working.
-2. Is the Participant Suggestions plugin (`com.glide.sn_participant_suggestions`) active? If so,
-   the caller, assignee and on-call suggestions are replaced by its own.
-3. Is on-call scheduling (`com.snc.on_call_rotation`) active, with rotas for the incident groups?
-4. Should *Sidebar Discussion Started* and *Sidebar Discussion Reminder* (sn_sow_collab) be
-   deactivated, now that nothing fires them?
-5. Should discussions be kept forever? The one-year cleaner is off.
-6. Is the 08:00 GMT digest time right for the callers' time zones?

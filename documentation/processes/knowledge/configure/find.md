@@ -139,7 +139,8 @@ latest version. [E05] Seen as admin, matching the widgets; *Send to myself* did 
 ## 2. What each reader sees {label=NEW}
 
 - **Articles**: what the reader's user criteria allow on each knowledge base; Employee Center
-  names no knowledge base, so all readable ones. [E01] A new knowledge base starts readable by
+  names no knowledge base, so all readable ones. [E01] User criteria and knowledge bases are
+  not in the mirror; four knowledge bases were seen in the classic list. [E19] [Q25] A new knowledge base starts readable by
   every signed-in user, writable by anyone with a role, and closed to guests, until its user
   criteria are changed. [E14] The classic `kb_view` page is public only if made so. [E15]
 - **Edit Article** and **Flag Article** in *Actions*: decided by `KBViewModel` (contribute
@@ -147,12 +148,12 @@ latest version. [E05] Seen as admin, matching the widgets; *Send to myself* did 
   configuration](see:feedback) for the feedback options.
 - **Subscribe**: everyone signed in. [E08] [E09]
 - **Send to myself**: only with a send-to-self configuration for Employee Center, which the
-  mirror doesn't hold. [E10]
+  mirror doesn't hold. [E10] [Q06]
 
 ## 3. Search {label=NEW}
 
 Employee Center's search returned the catalog item first, then knowledge articles, for
-*password*. [E17] The classic knowledge search settings apply to the Knowledge Portal and the
+*password*. [E17] [Q34] The classic knowledge search settings apply to the Knowledge Portal and the
 classic UI: 20 articles a page, with views, rating and author shown, and
 `glide.knowman.search.apply_acls` false. [E16]
 
@@ -165,7 +166,7 @@ classic UI: 20 articles a page, with views, rating and author shown, and
 ## The Knowledge Portal {label=NEW}
 
 `/kb` is active but not the default portal, and classic links are not redirected to it. [E12]
-[E13] The feedback emails to readers link to it. See [Ratings, flags and feedback tasks -
+[E13] The feedback emails to readers link to it. [Q13] See [Ratings, flags and feedback tasks -
 configuration](see:feedback).
 
 ## Properties {label=NEW}
@@ -176,14 +177,3 @@ configuration](see:feedback).
 | `sn_km_portal.glide.knowman.serviceportal.enable_redirect` | false | no redirect to a portal [E13] |
 | `glide.knowman.search.apply_acls` | false | classic search setting [E16] |
 | `glide.knowman.search.articles_per_page` | 20 | classic search page size [E16] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Is there a send-to-self configuration for Employee Center (`sn_ex_sp_send_self_configuration`)?
-   It isn't mirrored, and the panel wasn't seen. [E06] [E10]
-2. Should the Knowledge Portal stay active, now that Employee Center is the default and the
-   reader emails are the only links into it? [E12]
-3. Which knowledge bases can employees read? User criteria and knowledge bases are not in the
-   mirror; four knowledge bases were seen in the classic list. [E19]
-4. Which Employee Center search sources and AI Search profile return knowledge? Only the result
-   order was seen. [E17]

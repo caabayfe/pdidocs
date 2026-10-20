@@ -124,7 +124,7 @@ when your group gets a shift.
 ## See when you are on call {label=NEW}
 
 1. Open **On-Call Scheduling › My Schedule Report**. [E02]
-2. Choose a period: today, tomorrow, this or next week, month or quarter, or your own dates. [E03]
+2. Choose a period: today, tomorrow, this or next week, month or quarter, or your own dates. [E03] [Q20]
 3. The list shows each period you are on call, in every group you belong to, by start time. If
    you are a shift's named catch-all, those periods are listed too. [E03]
 
@@ -136,7 +136,7 @@ For who else is on call, see [See who is on call](see:see-on-call).
 
 1. Open **On-Call Scheduling › My Preferences**. [E04]
 2. **Contact Attempts**: the order in which the on-call flows try to reach you, and by what:
-   email, SMS or a call. [E05] [E19] [E20] The numbers and address come from your user profile: your email,
+   email, SMS or a call. [E05] [E19] [E20] [Q22] The numbers and address come from your user profile: your email,
    mobile phone or business phone. [E07] [E08] [E09]
 3. **Contact Overrides**: a different way to reach you for a while. [E05]
 4. **Availability**: when the preferences apply, from an existing schedule or one you define.
@@ -158,7 +158,7 @@ All on-call emails are listed in [Who is told what](see:on-call/who-is-told).
 
 On pdi2 **members can't record their own time off**: time off is set to *Not allowed* [E13], and
 no group overrides it, because no group has on-call preferences. [E14] [E16] If you try, you get
-*User does not have write access for this group*. [E15] Ask your shift manager to record it.
+*User does not have write access for this group*. [E15] Ask your shift manager to record it. [Q05]
 
 Once a group allows it, you add time off on the group's on-call calendar:
 
@@ -175,11 +175,3 @@ request are in [The life of a shift and an escalation](see:on-call/lifecycle).
 - Set your contact attempts as soon as you join a group with a shift, so that the flows reach you
   the way you prefer. [E05] [E19]
 - Check **My Schedule Report** for next week before you plan time away. [E03]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **My Schedule Report** and the on-call calendar were not opened on the walk; the period picker
-   is read from the page's script. [E03]
-2. On **My Preferences**, which channels does *Contact Attempts* offer, and can a member add a
-   device that is not on their profile? [E05]
-3. Should members be allowed to ask for time off on pdi2, with or without approval? [E13]

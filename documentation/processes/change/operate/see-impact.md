@@ -178,13 +178,13 @@ The lists are on the change's **Related records**: **Affected CIs**, **Impacted 
 2. Choose the tree icon beside the field: **CI dependency view**, **Service dependency view** or
    **Service offering dependency view**. It appears only when the field has a value, and needs no
    special role. [E03] [E04] [E05]
-3. A **Map** tab opens, centred on that item, with five levels of connections around it. [E06]
+3. A **Map** tab opens, centred on that item, with five levels of connections around it. [E06] [Q28]
 4. Use **Apply filters** to narrow the CIs, **Open in new map** to centre on another CI, and
    **Related items** or **Attributes** to read a selected one. [E07]
 
 The map can also create and delete connections, and warns that deleting one "might result in an
 invalid CMDB state". [E07] Don't change the CMDB from a change's map: what the change will alter
-is planned in the change itself.
+is planned in the change itself. [Q08]
 
 ## Keep Affected CIs complete {label=NEW}
 
@@ -200,8 +200,8 @@ the field on the form instead. [E15]
 **Do it while the change is in New.** After that, Add is hidden, and a change that follows a
 change model refuses to add or remove: *"Affected CIs cannot be modified for Change Requests in
 this state"*. [E10] [E11] [E13] [E14] A model can allow it in later states; ask the change manager
-if you need to. [E11] Add and Remove also appear only if the platform team lists changes in
-`com.snc.task.associate_ci` (see the open questions). [E10]
+if you need to. [E11] [Q19] Add and Remove also appear only if the platform team lists changes in
+`com.snc.task.associate_ci`. [E10] [Q17]
 
 ## Impacted services are worked out for you {label=NEW}
 
@@ -212,13 +212,13 @@ services are rebuilt in the background from **every affected CI**, not only the 
 - removes the services it added before, and keeps those you added by hand or that came from the
   **Service** field [E19] [E20];
 - adds the services the affected CIs belong to, and the services of CIs with scheduling
-  conflicts [E19];
+  conflicts [E19] [Q20];
 - tells you when it is done: *"Refresh impacted services for change request CHG… has
-  completed"*. [E19]
+  completed"*. [E19] [Q29]
 
 So an affected CI added after *New* doesn't reach the impacted services. On the classic form,
 **Refresh Impacted Services** in the form menu runs the refresh again, where the platform team
-has switched it on. [E21]
+has switched it on. [E21] [Q17]
 
 ## Record an outage {label=NEW}
 
@@ -239,16 +239,3 @@ changes. [E26] If the service's users need to know, tell them yourself.
   approvers' and CAB's view, are built from them. [E17] [E18]
 - As an approver, if a CI from the implementation plan is missing from **Affected CIs**, reject
   with that question: the change has to go back to *New* to fix it. [E11]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Only the list names were seen on 2026-10-19. Does the **Map** tab open from a change's CI field,
-   and do **Add** and **Remove** show on its Affected CIs? [E01]
-2. Is `change_request` listed in `com.snc.task.associate_ci` and in
-   `com.snc.task.refresh_impacted_services`? Their values are redacted in the mirror. [E10] [E21]
-3. Which change models, and states, allow CI changes after *New* on pdi2? The model's state
-   attributes aren't in the mirror. [E11]
-4. The instance's plugin list shows Service Mapping inactive on pdi2: does the refresh find any
-   services for the demo CIs, or do the impacted services come only from the **Service** field?
-   [E19]
-5. Does the completion message arrive, and where (the record's chat)? [E19]

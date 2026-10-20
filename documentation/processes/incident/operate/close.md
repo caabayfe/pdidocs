@@ -92,7 +92,7 @@ reopened.
 - **Team lead** (role `itil_admin`): you can close any resolved incident, and you're the only
   ones who see *Closed* in the state list. [E11] [E12]
 - **Resolvers**: you can't close incidents, unless you're the incident's caller. Resolve it and
-  let the caller confirm, or let it close by itself. [E11]
+  let the caller confirm, or let it close by itself. [E11] [Q18]
 - **Major incidents**: once accepted, only a major incident manager, or the caller if they have a
   role, can close it. [E11]
 - **Automatically**: a resolved incident nobody touches is closed after **7 days**. [E03] [E06]
@@ -122,8 +122,6 @@ it creates a new incident. [E13])
 If an incident was logged by mistake (a duplicate, a test), resolve it with the code
 *Duplicate* and the parent incident (see [Resolve an incident](see:resolve)).
 
-### Who can set Canceled {label=OPEN-QUESTION}
-
-The state list has *Canceled*, and no form script or rule that limits who may choose it was
-found: the write rules on the state only stop changes once an incident is Closed or Canceled.
-Decide whether operators should cancel incidents, and who.
+The state list also has *Canceled*, and nothing limits who may choose it: the write rules on the
+state only stop changes once an incident is Closed or Canceled. Who may cancel isn't decided yet.
+[Q19]

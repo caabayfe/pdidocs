@@ -78,13 +78,13 @@ add a second copy of a CI that already exists. [E01] [E07]
 | create rights on the class, no CMDB role | **New**, only for classes without identification rules [E02] |
 
 With the service desk role and no CMDB role, you see neither on most classes: ask the CMDB manager.
-[E01] [E02]
+[E01] [E02] [Q01]
 
 ## Create a CI {label=NEW}
 
 {{animation:cmdbcreate}}
 
-1. Open a list of CIs in the CMDB Workspace and choose **Create CI**. [E01]
+1. Open a list of CIs in the CMDB Workspace and choose **Create CI**. [E01] [Q14]
 2. **Select the class for the new CI.** Only classes with identification rules can be chosen;
    some special classes are created another way and aren't listed. [E04] [E05]
 3. If the class depends on another CI (an application on a server, for example), pick the
@@ -113,7 +113,7 @@ form, with no duplicate check: search for the CI first. [E02] [E03]
 ## Change several CIs at once {label=NEW}
 
 CI lists in the CMDB Workspace have no bulk **Edit**: it is hidden on purpose, behind a role no
-user is given. [E08] [E09] Change CIs one at a time on their page, or ask the CMDB manager.
+user is given. [E08] [E09] [Q15] Change CIs one at a time on their page, or ask the CMDB manager.
 
 ## Change one CI {label=NEW}
 
@@ -128,14 +128,3 @@ See [Keep your configuration items right](see:cmdb/maintain) for what to keep up
 - Search for the CI before creating it, even with **Create CI**: a misspelt identifying value
   creates a second CI. [E07]
 - Fill **Owned by** and **Managed by group**: certification and routing depend on them. [E06]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Create CI** and **New** weren't opened on screen; the steps follow the page's labels. [E04]
-   Which lists of CIs show them on pdi2 (a class list from Home or Management, a saved list)?
-2. Who should create CIs here? Nobody may hold `sn_cmdb_editor` or `cmdb_manual_ci_ire_access`
-   yet, while the service desk role can still create CIs in the classic list (see
-   [Keep your configuration items right](see:cmdb/maintain)).
-3. Does the base list **Configuration Items** (all classes) show **Create CI** or **New**? That
-   depends on the identification rules of the base class.
-4. Is the bulk **Edit** hidden from admins too? It rests on the role `nobody`. [E09]

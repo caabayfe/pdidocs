@@ -153,11 +153,11 @@ The checklist on pdi2 is **Default AQI Survey**: ten questions of weight 10 each
 
 Only articles in a knowledge base **with a checklist** can be reviewed. [E04] On pdi2 that is only
 **KCS Knowledge Base (demo data)**; IT, Known Error and Knowledge have no checklist, so no
-article there shows **Perform AQI**. [E03]
+article there shows **Perform AQI**. [E03] [Q08]
 
 You need one of the roles **knowledge_coach**, **knowledge_domain_expert** or
-**knowledge_admin**, and you must be able to read the article. [E04] [E20] As delivered, drafts,
-articles in review and published articles can be reviewed. [E04] [E21]
+**knowledge_admin**, and you must be able to read the article. [E04] [E20] [Q31] As delivered, drafts,
+articles in review and published articles can be reviewed. [E04] [E21] [Q28]
 
 ## Review an article {label=NEW}
 
@@ -175,7 +175,7 @@ version, **Discard AQI** on the old version throws your review away: *"The AQI r
 previously initiated has been discarded."* [E07]
 
 Perform AQI is a button of the classic form; nothing in the mirror puts it on the Knowledge
-Center's article form. [E05]
+Center's article form. [E05] [Q32]
 
 ## What happens when you submit {label=NEW}
 
@@ -210,13 +210,3 @@ group hold [E19]:
   author what to change. [E12]
 - Finish what you start: a review in progress blocks changes to the checklist and its
   questions for everyone. See [Set up knowledge bases](see:administer).
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Perform AQI and the checklist form were not opened on screen. Are reviews meant to be done on
-   the classic form, or does the Knowledge Center offer them too? [E05]
-2. Is AQI meant to be used beyond the KCS demo knowledge base? IT, Known Error and Knowledge have
-   no checklist. [E03]
-3. Does anyone hold knowledge_coach or knowledge_domain_expert on pdi2, or do only admins
-   review? Role members are not in the mirror. [E20]
-4. Which article states may be reviewed? The property has no value in the mirror. [E21]

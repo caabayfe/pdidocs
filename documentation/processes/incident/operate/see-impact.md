@@ -161,18 +161,18 @@ side of the same views is in [See what depends on a configuration item](see:cmdb
    **Service offering dependency view**. It appears only when the field has a value, and needs no
    special role. [E01] [E02] [E03]
 3. A **Map** tab opens in the workspace, centred on that item and showing five levels of
-   connections around it. [E04] [E05]
+   connections around it. [E04] [E05] [Q82]
 4. Use **Apply filters** to narrow the CIs by field, and **Open in new map** to centre the map
    on another CI. **Related items** and **Attributes** show more about a selected CI. [E06]
 
 The map can also create and delete connections between CIs, and warns that deleting one "might
 result in an invalid CMDB state". [E06] Leave the CMDB's relationships to its owners: if a
-connection looks wrong, tell the CI's support group instead of fixing it from the incident.
+connection looks wrong, tell the CI's support group instead of fixing it from the incident. [Q31]
 
 ## Keep the affected and impacted lists {label=NEW}
 
 The incident keeps two lists, both on the record's related lists and in the **Impact** section of
-the incident overview. [E07] [E08] [E09]
+the incident overview. [E07] [E08] [E09] Which of the two resolvers work in isn't settled. [Q15]
 
 - **Affected CIs**: what the incident touches. The incident's own CI is added for you, and
   replaced when you change the CI. [E10]
@@ -187,7 +187,7 @@ takes rows away, except the incident's own CI: change or clear the field on the 
 
 On the related lists of the main form, **Add** and **Remove** on these two lists appear only if
 the platform team has switched list editing on for incidents. [E20] The mirror can't show whether
-it is (see the open questions).
+it is. [Q59]
 
 ### Refresh the impacted services
 
@@ -206,7 +206,7 @@ from every affected CI. [E19]
 
 People can subscribe to a configuration item. When the state of an incident with affected CIs
 changes, they get *"Your Subscribed CI … is being affected by INC…"*. [E21] [E22] So keeping
-Affected CIs right also tells the CI's subscribers.
+Affected CIs right also tells the CI's subscribers. [Q68]
 
 ## Tips
 
@@ -215,14 +215,3 @@ Affected CIs right also tells the CI's subscribers.
   incident (see [Escalate an incident](see:escalate)).
 - Prefer **Refresh impacted services** to adding services one by one, then add by hand only what
   the CMDB doesn't know.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. None of these screens were opened on 2026-10-18. Does the **Map** tab open from the CI field
-   on pdi2, and how much of the CMDB does it show for the demo CIs?
-2. Which view do resolvers work in: the incident overview with its **Impact** section, or the
-   main form's related lists? The Add and Remove buttons differ between them. [E12] [E20]
-3. Is incident listed in `com.snc.task.associate_ci` and `com.snc.task.refresh_impacted_services`?
-   The mirror doesn't hold their values, so it can't show whether Add, Remove and Refresh are
-   offered. [E16] [E20]
-4. Does anyone subscribe to CIs, so that the *CI affected* email reaches someone? [E21]

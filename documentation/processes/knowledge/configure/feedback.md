@@ -191,10 +191,11 @@ Readers' pages: [Rate an article or say what is wrong](see:rate). Authors' and m
 
 Every call checks the matching `glide.knowman.show_*` property and its `.roles`, and read access
 to the article. [E03] All are on, for everyone. [E27] [E28] The reasons offered, when the reason
-dialog is used, are the `kb_feedback.reason` choices. [E02] [E05]
+dialog is used, are the `kb_feedback.reason` choices. [E02] [E05] Flag Article is hidden on
+articles with **Disable suggesting**, which can be inherited from the knowledge base. [E02] [Q29]
 
 So on pdi2 **only flags reach the tasks**: helpful and rating votes, and comments, never carry a
-reason. [E09]
+reason. [E09] [Q02]
 
 ## 2. What the feedback record does {label=NEW}
 
@@ -215,10 +216,10 @@ In order:
 
 1. the article's **author**;
 2. KM Advanced Installer is active, so: the article's **ownership group** and its manager when
-   it has one, otherwise its **reviser** when it has one.
+   it has one, otherwise its **reviser** when it has one. [Q19]
 
 Gaps reported from a task (incident) have a parent, so they stay unassigned and are worked by
-knowledge admins, `knowledge_manager` and `knowledge_domain_expert`. [E10] [E11]
+knowledge admins, `knowledge_manager` and `knowledge_domain_expert`. [E10] [E11] With no assignee, they send no email. [E18] [Q05]
 
 ## 4. The task's form {label=NEW}
 
@@ -236,6 +237,7 @@ knowledge admins, `knowledge_manager` and `knowledge_domain_expert`. [E10] [E11]
 | **Accept** / **Reject** | the opener, on Resolved [E14] | Closed / Work in progress, and an email to the assignee |
 
 Classic buttons and the Knowledge Center form actions are the same UI actions. [E14] [E15]
+Nothing closes a Resolved task the reader never accepts. [E14] [Q01]
 
 ## 5. Who can read and change a task {label=NEW}
 
@@ -265,7 +267,7 @@ Elevated: knowledge admins, the knowledge base's owner and managers. [E10]
 
 [E18] The assignee's emails link to the classic forms; the reader's to a portal form page, the
 portal named by `sn_km_portal.glide.knowman.serviceportal.portal_url`, empty on pdi2, so `kb`.
-[E19] [E29]
+[E19] [E29] [Q04]
 
 ## 7. Where tasks are listed {label=NEW}
 
@@ -288,16 +290,3 @@ portal named by `sn_km_portal.glide.knowman.serviceportal.portal_url`, empty on 
 | `glide.knowman.feedback.display_threshold` | 5 | comments shown before *Show More* [E28] |
 | `glide.knowman.max_comments_per_user_daily` | empty | no daily limit [E28] |
 | `sn_km_portal.glide.knowman.serviceportal.portal_url` | empty | readers' email links use `kb` [E29] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Should a **No** or a low rating ask why and create a task? Set
-   `glide.knowman.feedback.enable_actionable_feedback_for_helpful` true, or a threshold in
-   `…for_rating`. [E24] [E25]
-2. Readers' email links open the task on the Knowledge Portal. Should
-   `sn_km_portal.glide.knowman.serviceportal.portal_url` name Employee Center (`esc`)? [E19] [E29]
-3. Nothing closes a Resolved task the reader ignores. [E14] Should a scheduled job close them
-   after some days?
-4. Gaps from incidents are unassigned and send no email. [E11] [E18] Who owns them?
-5. Which articles have **Disable suggesting** set (it can be inherited from the knowledge base)?
-   Flag Article is hidden on them; articles and knowledge bases are not in the mirror. [E02]

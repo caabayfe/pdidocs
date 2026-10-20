@@ -140,7 +140,9 @@ From the incident you are working on, **Reset Password** opens a guided tab: pic
 check who they are, then reset the password or unlock the account. [E01] [E03]
 
 On pdi2 it **can't be used yet**: the only service-desk process is inactive, so the tab has no
-process to offer. [E14] [E15] The steps below are what an agent will see once it is switched on.
+process to offer. [E14] [E15] [Q02] The steps below are what an agent will see once it is switched
+on; none of the screens were opened on 2026-10-18, so they follow the guided tour and the pages'
+labels. [E06] [Q81]
 Until then, the self-service process lets callers reset their own ServiceNow password [E16],
 and the *Password Reset* form in Employee Center logs an incident for other applications (see
 [Report an incident](see:report)).
@@ -163,7 +165,7 @@ The same button is on an **interaction** assigned to you. [E22]
    choose the process; then **Continue to verify**. [E04] [E07]
 3. **Verify**: the tab tells you what to ask, *"Ask the user to provide their"* email address,
    and shows what the answer should be. If it matches, choose **Continue**; if not, **Reject**.
-   [E05] [E08] [E09] [E17]
+   [E05] [E08] [E09] [E17] [Q38]
 4. **Reset**: the tab shows whether the account is locked. [E05] Choose:
    - **Reset password**, which also unlocks the account; or
    - **Unlock account**, when the caller only needs to get back in. [E10]
@@ -176,7 +178,7 @@ Don't close the tab half-way: *"The session won't be saved if you close the tab.
 ## What the caller receives {label=NEW}
 
 - The password, read out by you. [E11]
-- An email to their address, *"Your new password"*, that contains it. [E14] [E18]
+- An email to their address, *"Your new password"*, that contains it. [E14] [E18] [Q39]
 - At the next login, the platform asks them to choose their own password. [E14]
 
 ## If verification fails {label=NEW}
@@ -193,14 +195,3 @@ details, or escalate to the platform team.
   is not always the person locked out.
 - A locked account with a process that can't unlock it ends on an error; ask the platform team.
   [E23]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Should the service desk reset passwords on pdi2 at all? If so, the platform team must activate
-   a service-desk process (see the configuration page) and give agents the
-   `password_reset_service_desk` role.
-2. None of the screens were opened on 2026-10-18; the steps follow the guided tour and the
-   pages' labels. [E04] [E05] [E06]
-3. Is checking the caller's email address enough proof of identity, since it is a value anyone
-   who knows the caller may know?
-4. Should the new password be emailed to the caller, or only read out?

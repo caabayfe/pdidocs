@@ -310,7 +310,7 @@ No role restricts the tab beyond the workspace itself. [E03] [E05]
 ## 2. What it searches {label=NEW}
 
 The search term is the short description [E06], at least 3 characters [E53]; 10 results a page
-[E05] [E54]. The context *Incident Deflection (SOW)* [E07] has these sources:
+[E05] [E54]. The context *Incident Deflection (SOW)* [E07] [Q26] has these sources:
 
 | Order | Source (resource context) | Search resource | Records |
 |---|---|---|---|
@@ -337,7 +337,7 @@ Each source has its own `cxs_ui_action_config` records under *Agent Assist [inci
 Two REST operations are named `link_incident`: the global one [E23], and the `sn_sow_inc` one
 with a dialog for work notes and comments, which only answers action ids containing "rest". [E24]
 Its execute ACL allows `itil` and `sn_incident_write`. [E25] The Agent Assist action id is
-`link_to:link_to_incident`. [E22]
+`link_to:link_to_incident`. [E22] [Q71]
 
 ## 4. Recommendations {label=NEW}
 
@@ -358,7 +358,7 @@ Its execute ACL allows `itil` and `sn_incident_write`. [E25] The Agent Assist ac
 
 **On pdi2, nothing reaches the panel:** `glide.ais.enabled` is false. [E21] To use it, switch AI
 Search on and index the sources, or activate the CI and service recommendations, which use
-scripted generators instead. [E37] [E38] [E39]
+scripted generators instead. [E37] [E38] [E39] [Q04]
 
 ## 5. Predictive Intelligence {label=NEW}
 
@@ -369,10 +369,10 @@ scripted generators instead. [E37] [E38] [E39]
 | Incident Categorization | inactive [E50] |
 
 The mirror holds the definitions, not the trained solutions, so it can't show whether any model
-was ever trained. Nothing in Service Operations Workspace's Agent Assist uses them: no source in
+was ever trained. [Q62] Nothing in Service Operations Workspace's Agent Assist uses them: no source in
 its context has an ML solution [E14] [E15] [E51], and the PI recommendation *Common Incident
 Resolutions* is attached to the older table configuration [E45] [E46], used only by the Agent
-Workspace action. [E52] Even there, it needs an active trained solution. [E47]
+Workspace action. [E52] [Q25] Even there, it needs an active trained solution. [E47]
 
 ## Properties {label=NEW}
 
@@ -381,15 +381,3 @@ Workspace action. [E52] Even there, it needs an active trained solution. [E47]
 | `glide.ais.enabled` | false | AI Search off; Recommendations empty [E21] |
 | `com.snc.contextual_search.min_length` | 3 | shortest search [E53] |
 | `com.snc.contextual_search.result.default.limit` | 10 | results per search [E54] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Should AI Search be switched on, so that Recommendations work, or should the Recommendations
-   tab be hidden for incidents?
-2. Have the Similar Incidents solutions ever been trained on pdi2? The mirror doesn't hold
-   `ml_solution`.
-3. Which `link_incident` operation does Agent Assist call, and does the agent see the work notes
-   and comments dialog?
-4. Is the older Agent Workspace still in use? If not, its Agent Assist action and the *Common
-   Incident Resolutions* recommendation do nothing.
-5. Should Outages, catalog items or the 3-month and 6-month windows be adjusted for pdi2's data?

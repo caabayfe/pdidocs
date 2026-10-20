@@ -30,13 +30,13 @@ evidence:
     result: the only kind of Data Manager policy, for dependent CIs
     hash: 04032efce2ba32408461bbb1827f2b25e95344e3d0f84020401dc43553399e49
 ---
-## Health {label=OPEN-QUESTION}
+## Health
 
 {{animation:cmdbqual}}
 
 The CMDB Workspace shows a **CMDB Health** card, but it says *"CMDB Health Dashboard jobs haven't
 been run"*: the score jobs are switched off. [E01] [E02] A CI is stale after 60 days without an
-update. [E03] Turn the jobs on to get scores.
+update. [E03] Turn the jobs on to get scores. [Q03]
 
 ## Duplicates
 

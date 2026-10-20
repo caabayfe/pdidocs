@@ -145,7 +145,7 @@ extra work the flow doesn't know about, such as a check by another team.
 
 Only catalog administrators (and admins) can do it: **New** needs the right to create catalog
 tasks, which `itil` and `sn_request_write` don't give. [E10] [E11] Fulfillers and agents ask a
-catalog administrator.
+catalog administrator. [Q04]
 
 1. Open the requested item in the workspace and go to **Related records › Catalog Tasks**. [E09]
 2. Press **New**. It shows while the item is active. [E10]
@@ -161,7 +161,7 @@ How the item's flow treats your task:
 | | Your task |
 |---|---|
 | holds up the flow's next task | no: each flow step waits only for the task it created [E14] |
-| holds up the item's completion | no: nothing in the mirror waits for it, so the item can complete while it is still open [E14] |
+| holds up the item's completion | no: nothing in the mirror waits for it, so the item can complete while it is still open [E14] [Q18] |
 | when the item is cancelled | closed *Closed Incomplete*, with the flow's tasks [E15] |
 
 Close your task before the flow's last task, or the item may be delivered while it is still open.
@@ -169,7 +169,7 @@ Close your task before the flow's last task, or the item may be delivered while 
 ## Copy a request {label=NEW}
 
 Use it when the same order is needed again, for example for a second person. Only admins and
-catalog administrators see **Copy**; service desk agents don't. [E16] [E17]
+catalog administrators see **Copy**; service desk agents don't. [E16] [E17] [Q05]
 
 1. Open the request in the workspace or on the classic form. **Copy** is in the header. [E16]
    [E19]
@@ -181,7 +181,7 @@ catalog administrators see **Copy**; service desk agents don't. [E16] [E17]
 The workspace describes it as copying *"the request and all its related records"*, leaving out
 items whose catalog item is inactive. [E19] The copy itself is done by the platform, not by a
 script you can read [E18]: check the new request's items, quantities and who it is for before it
-goes on.
+goes on. [Q17]
 
 ## Approvals
 
@@ -197,12 +197,3 @@ IT approvers find request approvals under **Approvals › My approvals**, as for
   requester orders the extra item separately.
 - Don't copy a request to change it: copy it when the same order is wanted again, and cancel the
   old one if it is no longer needed. [E03] [E18]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **New** on the Catalog Tasks list and **Copy** weren't pressed on screen; the steps follow
-   the records. [E10] [E18] Does the copy start new approvals and new flows for its items?
-2. When the flow's last task closes and a hand-made task is still open, does the item complete
-   anyway, and does the open task stay open? [E14]
-3. Should fulfillers or service desk agents be able to add catalog tasks or copy requests? Today
-   only catalog administrators can. [E11] [E16]

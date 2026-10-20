@@ -49,8 +49,9 @@ Implement runs a subflow that creates *Implementation* and *Post Implementation*
 planned window against the maintenance schedules of the change's CI and affected CIs and sets the
 *Outside maintenance schedule* flag. It only flags; it never refuses the save. [E07]
 
-## Conflicts {label=OPEN-QUESTION}
+## Conflicts
 
 Conflicts are checked automatically on state, CI and date changes [E03]; the manual link is
-inactive. [E04] The conflict mode and its options aren't in the mirror [E05], and the blackout schedule
-*Blackout Wednesdays (GMT)* applies to every CI [E06]: check which windows are real.
+inactive. [E04] The conflict mode and its options aren't in the mirror. [E05] [Q18] The blackout schedule
+*Blackout Wednesdays (GMT)* applies to every CI [E06]; whether it is a real window is not decided
+yet. [Q06]

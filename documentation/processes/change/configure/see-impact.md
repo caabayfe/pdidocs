@@ -274,7 +274,8 @@ The three field actions are on `task`, so a change gets them with no change-spec
 **CI dependency view** (`cmdb_ci`), **Service dependency view** (`business_service`) and **Service
 offering dependency view** (`service_offering`), each shown when its field has a value, with no
 required role. [E01] [E02] [E03] Each opens the `unifiedmap` route rooted at the field's value,
-five levels deep. [E04] [E05] What the map shows is governed by CMDB read access. The same records
+five levels deep. [E04] [E05] What the map shows is governed by CMDB read access. Whether change requesters may edit CMDB
+connections from the map, or only CMDB roles, is not decided yet. [Q08] The same records
 are described for incidents in [Dependency views and impact lists](see:incident/see-impact).
 
 ## 2. The related lists {label=NEW}
@@ -290,7 +291,7 @@ Kept in step by business rules, in this order:
 | *Add CI to Affected CIs*, *… on change* (`change_request`, order 10) | the same, only when `change.conflict.mode` is `advanced` [E09] [E10] |
 | *Sync BS with Impacted Services* | adds `business_service` to Impacted Services/CIs and removes the previous one [E12] |
 
-`change.conflict.mode` is private and redacted in the mirror. [E11] In advanced mode conflict
+`change.conflict.mode` is private and redacted in the mirror. [E11] [Q18] In advanced mode conflict
 detection checks every affected CI, so Affected CIs matters for scheduling as well as impact.
 
 ## 3. Add and Remove on Affected CIs {label=NEW}
@@ -305,13 +306,13 @@ detection checks every affected CI, so Affected CIs matters for scheduling as we
 | Classic form | Add banner button, *Add Affected CIs* / *Add Impacted Services/CIs* modals | as above; the services one without `canAddCI` [E18] [E19] |
 
 `com.snc.task.associate_ci` belongs to `sn_change_admin` and its value is redacted [E20]: check
-on the instance that `change_request` is in it. These are the actions that cmdb's feature
+on the instance that `change_request` is in it. [Q17] These are the actions that cmdb's feature
 *affected-cis-tasks* refers to; problems use the same records.
 
 `canAddCI` is true for any task but a change; for a change it asks `canModifyCI()`. [E21] That
 uses the change model when `chg_model` is set: with the model attribute *Allow CI Modification*,
 the states that carry it; without it, the initial state only. [E22] [E23] [E24] The model's state
-attributes aren't in the mirror.
+attributes aren't in the mirror. [Q19]
 
 The workspace Remove doesn't check `canAddCI`, but the *Change Model: Read only CI* rules on
 `task_ci` abort inserts, deletes and updates for a model-based change that can't modify CIs (rows
@@ -332,11 +333,12 @@ changing. [E14] [E25] [E26]
 `manually_added` defaults to true, so services added by hand or by *Sync BS* survive every
 refresh. [E37] On the classic form, *Refresh Impacted Services* in the context menu runs the same
 refresh, shown only when `change_request` is in `com.snc.task.refresh_impacted_services`, an
-`sn_cmdb_admin` property whose value is redacted. [E38] [E39] [E35] The Service Operations
+`sn_cmdb_admin` property whose value is redacted. [E38] [E39] [E35] [Q17] The Service Operations
 Workspace has no refresh action for changes: the incident overview's is for incidents only.
 
 `svc_ci_assoc` links CIs to the application services they belong to; the script's own comment
-says it "has entries when Service Mapping is being used". [E35] CIs in no such service add nothing. The CMDB page states the same rule for changes in short:
+says it "has entries when Service Mapping is being used". [E35] CIs in no such service add nothing. Service Mapping is inactive on
+pdi2, so whether `svc_ci_assoc` holds anything for the demo services isn't known. [Q20] The CMDB page states the same rule for changes in short:
 [Affected and impacted](see:cmdb/impact).
 
 ## 5. Outages {label=NEW}
@@ -353,15 +355,3 @@ says it "has entries when Service Mapping is being used". [E35] CIs in no such s
 *Affected ci notifications* queues an event for any task, changes included, when its state
 changes [E45], but the only *CI affected* notification is on `incident`. [E46] Subscribers aren't
 told about changes; adding a change notification would be a process owner's decision.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Is `change_request` listed in `com.snc.task.associate_ci` and in
-   `com.snc.task.refresh_impacted_services`? Their values are redacted in the mirror. [E20] [E39]
-2. Is `change.conflict.mode` basic or advanced on pdi2? [E11]
-3. Which change models carry *Allow CI Modification*, and on which states? [E24]
-4. The instance's plugin list shows Service Mapping inactive on pdi2: is `svc_ci_assoc` filled
-   any other way for the demo services, or is the refresh empty apart from the Service field?
-   [E35]
-5. Should change requesters be able to edit CMDB connections from the Map, or should that be
-   limited to CMDB roles?

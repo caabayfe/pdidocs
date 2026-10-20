@@ -154,7 +154,7 @@ The module opens a UI page whose processing script builds the report and redirec
 | `sys_on_call_contact_source` | where devices come from: the user's email, business phone and mobile phone [E06] |
 
 The members' page is `$oc_user_preferences.do`, with the tabs **Contact Attempts** and **Contact
-Overrides** and an **Availability** picker. [E03] [E07] The page itself is not in the mirror.
+Overrides** and an **Availability** picker. [E03] [E07] The page itself is not in the mirror. [Q19]
 
 ## 3. Reminders and subscriptions {label=NEW}
 
@@ -163,7 +163,7 @@ Overrides** and an **Availability** picker. [E03] [E07] The page itself is not i
 2. It uses *On-Call Reminder* or *On-Call Reminder Table*. [E09] [E10] Time zones are not shown in
    reminders, and a roster can have at most 50 reminders. [E11] [E12]
 3. A calendar subscription is a 10-character tiny URL with a personal API key, created when a
-   calendar reader asks for it. [E13] Subscriptions cover at most 364 days. [E14]
+   calendar reader asks for it. [E13] [Q11] Subscriptions cover at most 364 days. [E14]
 
 ## 4. Time off and cover {label=NEW}
 
@@ -180,7 +180,7 @@ Overrides** and an **Availability** picker. [E03] [E07] The page itself is not i
    | Without approval | a proposed cover is mandatory; the proposal is *Approval not required*, coverage swaps automatically, and the approvers get *Time off created for …* [E17] [E18] |
 
 3. **On pdi2:** the property is `not_allowed` [E15] and there are no group preferences [E21], so
-   only shift managers and administrators record time off.
+   only shift managers and administrators record time off. [Q05]
 
 `createOverride` (cover for someone else's slot) has the same check. [E18]
 
@@ -193,11 +193,3 @@ Overrides** and an **Availability** picker. [E03] [E07] The page itself is not i
 | `com.snc.on_call_rotation.reminders.showtz` | false | no time zone in reminders [E11] |
 | `com.snc.on_call_rotation.max_rotation_reminder_count` | 50 | reminders per roster [E12] |
 | `com.snc.on_call_rotation.max_subscription_interval` | 364 | days a subscription covers [E14] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Should members request their own time off? If so, set the property or each group's preference
-   to *With approval*, and decide who approves. [E15] [E17]
-2. The subscription link carries a personal API key: is that acceptable on pdi2, and how are keys
-   revoked when someone leaves a group? [E13]
-3. `$oc_user_preferences.do` isn't in the mirror; which record defines it? [E07]

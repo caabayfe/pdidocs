@@ -164,9 +164,11 @@ The record's side panel has three template icons. [E01] Each does a different jo
 
 ## Fill in an incident with a template {label=NEW}
 
+Nobody has opened the Templates panel on screen yet; the steps follow the component's labels.
+
 1. Open the incident and choose **Templates** in the side panel. [E01]
 2. Find the template: **Search Templates**, or the tabs **Favorites**, **My Templates** and
-   **All**. [E03]
+   **All**. [E03] [Q85]
 3. Preview it: the panel says "This template will update the record as follows" and lists the
    fields it sets. [E03]
 4. Choose **Apply**. The fields are filled in on the form, and the panel reports "Template
@@ -185,7 +187,7 @@ the template editor role. [E10]
 | Template | Fills in |
 |---|---|
 | Incident Call Type | Channel = Self-service [E04] |
-| Major Incident | a short description, you as caller, impact 1, urgency 1; and three incident tasks (investigation, fast recovery, root cause analysis) [E05] |
+| Major Incident | a short description, you as caller, impact 1, urgency 1; and three incident tasks (investigation, fast recovery, root cause analysis) [E05] [Q86] |
 | Major Incident Candidate | Major incident state = Proposed [E06] |
 | MIM Major Incident | Major incident state = Accepted [E07] |
 | Reset Password | a short description, active, Channel = Self-service [E08] |
@@ -193,7 +195,7 @@ the template editor role. [E10]
 **You won't see these.** Each of the first four belongs to one user account and is not shared
 globally or with a group, and *Reset Password* has no owner and isn't global. [E04] [E05] [E06]
 [E07] [E08] The workspace shows you only global templates, your own and your groups'. [E09] On
-pdi2, an agent's **Templates** panel therefore starts empty, apart from the templates they create.
+pdi2, an agent's **Templates** panel therefore starts empty, apart from the templates they create. [Q09]
 
 Don't use the major incident templates to make an incident major: propose it instead, so that the
 major incident manager decides. See [Propose a major incident](see:major-incident/propose).
@@ -215,7 +217,7 @@ A response template is a prepared message with gaps that are filled in from the 
 
 In **Work notes** or **Additional comments**, use the **Response Template** quick action
 (command `r`) with a keyword: it lists up to nine matching templates and inserts the one you
-choose as text. [E18]
+choose as text. [E18] [Q87]
 
 ### The response templates on pdi2 for incident
 
@@ -228,7 +230,7 @@ Both can be used on the form, in an email and in chat. [E13]
 
 **Who sees them:** the Response Templates panel and the quick action need the role
 `sn_templated_snip.template_snippet_reader`. [E14] [E18] On pdi2 only administrators have it:
-neither `itil` nor `sn_incident_write` includes it. [E15] The walk that saw the icon was done as
+neither `itil` nor `sn_incident_write` includes it. [E15] [Q08] The walk that saw the icon was done as
 admin. [E01]
 
 ## Write an email with Compose Email {label=NEW}
@@ -242,7 +244,7 @@ admin. [E01]
 3. The **Email template** panel lists email templates for the record. [E24] [E23]
 
 On pdi2 there is **no email template for incident**: the existing ones are for communication tasks,
-change requests and email replies. [E23] Start from a blank email or a response template. Emails
+change requests and email replies. [E23] [Q88] Start from a blank email or a response template. Emails
 for a communication plan are written from the communication task instead; see
 [Communicate about an incident](see:incident/communicate).
 
@@ -263,17 +265,3 @@ for a communication plan are written from the communication task instead; see
   placeholder; replace it before you post. [E25]
 - A response template copied to the clipboard loses its formatting. [E17] Fix line breaks before
   posting.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The Templates panel was not opened on screen; the steps follow the component's labels. [E03]
-   What does it list for an agent, and for admin?
-2. Does applying **Major Incident** in the workspace also create its three incident tasks, as the
-   template's child templates say? [E05]
-3. Should agents have response templates? If so, `itil` (or the agents' groups) needs
-   `sn_templated_snip.template_snippet_reader`. [E15]
-4. How is the `r` quick action typed in Work notes on screen (for example `/r`)? [E18]
-5. What does the **Email template** panel show on an incident, with no incident email template?
-   [E23]
-6. Should the incident templates owned by one account be shared (made global, or given to groups),
-   or retired?

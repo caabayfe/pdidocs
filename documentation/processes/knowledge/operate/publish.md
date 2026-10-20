@@ -136,7 +136,7 @@ Each knowledge base chooses its **publish flow**. As delivered, a knowledge base
 | **Approval Publish** | the article goes to **Review**, the approvers are asked, and it is published once approved [E07] |
 
 Which flow each of pdi2's knowledge bases uses is not in the mirror; unless it was changed, it is
-Instant Publish. [E05]
+Instant Publish. [E05] [Q24]
 
 ## Publish your draft {label=NEW}
 
@@ -144,10 +144,10 @@ Instant Publish. [E05]
 
 1. Open the draft in the Knowledge Center and save your last changes.
 2. Choose **Publish**. You see it on a saved draft when you may publish it: you are its author or
-   reviser and may contribute to the knowledge base, or you own the knowledge base. [E01] [E04]
+   reviser and may contribute to the knowledge base, or you own the knowledge base. [E01] [E04] [Q38]
 3. If guests (people who haven't logged in) can read the article, you are asked: *"This article
    may be visible to unauthenticated users after it is published. Do you still want to
-   proceed?"* Choose **Publish** or **Cancel**. [E01] [E02] [E03]
+   proceed?"* Choose **Publish** or **Cancel**. [E01] [E02] [E03] [Q25]
 4. The message tells you where it went: *"This knowledge article has been published"*, *"This
    knowledge item is in review"* (waiting for approval), or *"Article is approved and will be
    published on Scheduled Date"*. [E11]
@@ -187,7 +187,7 @@ An approved article is published at once, or on its scheduled date. [E07]
 | When | Who | Email |
 |---|---|---|
 | The article goes for approval | each approver | *"… is awaiting approval."* [E16] |
-| It is approved | the person the flow names | *"… is approved."* [E17] [E18] |
+| It is approved | the person the flow names | *"… is approved."* [E17] [E18] [Q07] |
 | It is rejected | the article's reviser | *"… is rejected."* [E17] [E18] |
 
 These emails are switched on for pdi2. [E19] With Instant Publish nobody is emailed.
@@ -205,13 +205,3 @@ version of a retired article. [E21]
   Remember the 24-hour minimum. [E10]
 - The approvers are people, not a group: if the owner and managers are away, the article waits.
   [E08]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Publish**, the confirmation and **Your approvals** were not used on screen; the steps follow
-   the records. [E01] [E12] Does the Knowledge Center show them like this on pdi2?
-2. Which publish flow do the IT, KCS, Knowledge and Known Error knowledge bases use? The
-   knowledge base records are not in the mirror.
-3. With Approval Publish, the *"… is approved."* email names nobody in the flow. Is the author of a
-   first version told when it is approved, or rejected? [E18]
-4. Which knowledge bases can guests read, so that the confirmation appears?

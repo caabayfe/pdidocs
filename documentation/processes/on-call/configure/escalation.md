@@ -287,7 +287,7 @@ Two parts of the On-Call Scheduling plugin decide what happens when urgent work 
 | **Escalation policy** | the shift (`cmn_rota`: catch-all, custom escalation, override user preference), its rosters, escalation sets (`cmn_rota_escalation_set`), steps (`cmn_rota_esc_step_def`), group escalations (`on_call_group_escalation`), shift contact preferences (`cmn_rota_contact_preference`), channel configs (`on_call_communication_channel_config`) |
 | **Trigger rules** | `trigger_rule`, which extends `sysrule_assignment` [E03], and `trigger_rule_table_cfg` |
 
-On pdi2 there are no trigger rules [E01] and no escalation has run. [E02]
+On pdi2 there are no trigger rules [E01] [Q02] and no escalation has run. [E02]
 
 ## 1. Trigger rules: who can write them {label=NEW}
 
@@ -335,7 +335,7 @@ channel apply. [E21] [E22]
 **Catch-all** (`catch_all`): *individual* needs `catch_all_member` [E23], *all* needs
 `catch_all_roster` [E24], *group_manager* shows the group's manager [E25]; hidden on a custom
 escalation. [E26] The wait is the shift's `catch_all_wait_time`, else the property, which has no
-value, so 0. [E27] [E28]
+value, so 0. [E27] [E28] [Q07]
 
 ## 5. Custom and group escalation {label=NEW}
 
@@ -360,7 +360,7 @@ designer pages are platform pages the mirror doesn't hold.
 | Voice | On-Call: Send Notification Voice | 1 / 2 [E43] |
 
 All three are the active defaults, with no table or condition. [E41] [E42] [E43] SMS and voice go
-through Notify; no Notify number is set for on-call calls from the browser [E45], and
+through Notify; no Notify number is set for on-call calls from the browser [E45] [Q04], and
 *Assign by Acknowledgement* uses a Notify conference call rather than a plain call. [E44]
 
 ## Properties {label=NEW}
@@ -370,16 +370,7 @@ through Notify; no Notify number is set for on-call calls from the browser [E45]
 | `com.snc.on_call_rotation.new_trigger_engine` | true | new engine for subflow rules [E19] |
 | `glide.oncall.only_flow_enabled_release` | true | subflows only [E20] |
 | `com.snc.on_call_rotation.catch_all_wait_time` | (none) | catch-all wait 0 unless set on the shift [E28] |
-| `com.snc.on_call_rotation.log_escalations` | false | escalation details not logged [E46] |
+| `com.snc.on_call_rotation.log_escalations` | false | escalation details not logged [E46] [Q03] |
 | `com.snc.on_call_escalation_notification_delegate_user` | false | no delegation of escalation notifications [E47] |
 | `com.snc.on_call_rotation.notify_webrtc_number` | (none) | no Notify number for voice [E45] |
 | `com.snc.on_call_rotation.notification.voice.use_notify_call` | false | acknowledgement by conference call [E44] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Which tables should have a `trigger_rule_table_cfg` and a trigger rule? The mirror holds
-   neither table's records.
-2. Is a Notify telephony provider configured? Without one, SMS and voice contacts can't be sent.
-   [E45]
-3. Should escalation details be logged (`log_escalations`) while the first shifts are tried? [E46]
-4. Should a default catch-all wait time be set? [E28]

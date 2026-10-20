@@ -224,7 +224,7 @@ who only want to see their own shifts or ask for time off should read
 ## On pdi2 today {label=NEW}
 
 No group has a shift on pdi2: the list of shifts is empty [E01], and no group has on-call
-preferences [E03]. Everything below describes how to create the first one. Nothing is on call until
+preferences [E03]. [Q01] Everything below describes how to create the first one. Nothing is on call until
 a shift is **published**.
 
 ## Who can set up a shift {label=NEW}
@@ -244,7 +244,7 @@ The wizard only offers the groups you manage. [E08]
 
 Open **On-Call Scheduling › Create / Edit Schedule** (administrators) [E04], or **My Group
 Schedules** and **New** (group managers) [E05] [E07]. The wizard has four steps; **Next Step** and
-**Previous Step** move between them, and **Save** keeps your work. [E02]
+**Previous Step** move between them, and **Save** keeps your work. [E02] [Q24]
 
 1. **Define Schedule.** Select the group [E02], name the shift and say when it applies: from a
    schedule template, or with a start and end time, the days it repeats and a time zone. You can add
@@ -311,7 +311,7 @@ group. [E27] [E29]
 | **First day of the week** | for the group's calendar [E28] |
 
 *Default* means the instance-wide setting. [E30] On pdi2 that is: no overlapping shifts [E31], and
-members can't create their own time off [E32], so a shift manager records it for them. To let a
+members can't create their own time off [E32], so a shift manager records it for them. [Q05] To let a
 group's members ask for time off, set **PTO approval preferences** for that group.
 
 ## Keep it healthy {label=NEW}
@@ -320,7 +320,7 @@ group's members ask for time off, set **PTO approval preferences** for that grou
   conflicts** in the schedules of the groups with a live shift. [E34] [E35]
 - A shift made before the 2024 schedule engine shows **Migrate Now**: "This shift will be upgraded
   to new schedule engine. Do you want to continue?" New shifts already use it. [E09] [E33]
-- **Group Templates** keep a set of shifts you can reuse for several groups. [E36]
+- **Group Templates** keep a set of shifts you can reuse for several groups. [E36] [Q13]
 
 ## Tips
 
@@ -329,12 +329,3 @@ group's members ask for time off, set **PTO approval preferences** for that grou
 - Set the escalation before you publish, so that urgent work does not reach only the first person.
 - When someone leaves the team, use **Remove** with the date they stop, rather than editing the
   list, so the rotation stays even. [E19]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Only the wizard's first step was opened; the Members, Escalation Setup and Review And Publish
-   steps follow the wizard's script, not the screen. [E02] [E08] Does each step show these fields?
-2. The Add, Remove and Move forms were not opened on screen. [E15] [E16] [E17]
-3. Which groups should have a shift on pdi2, and who are their shift managers?
-4. Should any group's members be allowed to ask for time off themselves (PTO approval preferences)?
-5. Are group templates or schedule templates meant to be prepared for the support groups?

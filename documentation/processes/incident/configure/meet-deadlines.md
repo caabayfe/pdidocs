@@ -210,7 +210,7 @@ evidence:
 | `sn_slm_timer` | the SLA timer configurations and their mappings [E33] |
 | `sn_sow_inc` | the incident's two timer configurations, *Incident Response* and *Incident Resolution* [E30] [E31] |
 | `sn_sow`, `sn_sow_itsm_common` | the side panel tab *Record Information* and its *SLAs and timings* section [E26] [E27] |
-| `sn_slm_atf` | two test SLA definitions (out of scope) [E07] [E08] |
+| `sn_slm_atf` | two test SLA definitions (out of scope) [E07] [E08] [Q48] |
 
 Thirteen active SLA definitions are on incident: the eleven listed on
 [Working an incident - configuration](see:incident/configure/work) and two ATF test definitions
@@ -252,13 +252,15 @@ percentage of the business elapsed time, then fire events whose parm1 is the rec
 | SLA warning CI Supported By | `sla.warning.ci` | [E15] |
 | SLA breached CI Supported By | `sla.warning.ci.breach` | [E16] |
 
-The mail scripts add the assignee's name when the recipient is someone else. [E17] [E18]
+The flows' *If* steps (for example "only if there is an assignee") aren't in the mirror, so who
+gets the warnings on an unassigned incident isn't known. [Q56] The mail scripts add the
+assignee's name when the recipient is someone else. [E17] [E18]
 Neither flow fires `sla.warning.ci.breach`, so *SLA breached CI Supported By* never sends from
-these flows. [E10] [E11] [E16] With `com.snc.sla.workflow.run_for_breached` true, an SLA attached
+these flows. [E10] [E11] [E16] [Q07] With `com.snc.sla.workflow.run_for_breached` true, an SLA attached
 already breached (after a priority change) still runs its flow. [E22]
 
 *Incident SLA Flow - Incident Communication Task* serves communication tasks, not incidents: 75%
-and breach events for *Communication Due Warning* and *Communication Overdue*. [E12] See
+and breach events for *Communication Due Warning* and *Communication Overdue*. [E12] The SLA definition that runs it isn't in the mirror. [Q55] See
 [Communication plans - configuration](see:incident/configure/communicate).
 
 ## 3. Timers in the workspace {label=NEW}
@@ -274,7 +276,7 @@ and breach events for *Communication Due Warning* and *Communication Overdue*. [
    then a paused, then a breached task SLA. [E32]
 
 The OLAs and the underpinning contract are in no mapping, so they only show in the Task SLAs
-list. [E30] [E31] `sn_slm_timer`'s own *Incident Response and Resolution Team* maps all eight
+list. [E30] [E31] [Q24] `sn_slm_timer`'s own *Incident Response and Resolution Team* maps all eight
 priority SLAs and isn't used by the panel. [E33]
 
 ## 4. Who can see and change task SLAs {label=NEW}
@@ -295,16 +297,3 @@ priority SLAs and isn't used by the panel. [E33]
 | `com.snc.sla.engine.async` | false | task SLAs update with the incident [E21] |
 | `com.snc.sla.workflow.run_for_breached` | true | flows run for SLAs attached breached [E22] |
 | `com.snc.sla.repair.enabled` | true | Repair SLAs available [E23] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. The flows' *If* steps (for example "only if there is an assignee") aren't in the mirror;
-   who gets the warnings on an unassigned incident? [E10] [E11]
-2. Is the 50% warning to the CI's *Supported by* wanted, given that no breach email follows it?
-   [E11] [E16]
-3. Should the OLAs and the underpinning contract show in the workspace timers? They are in no
-   timer mapping. [E30] [E31]
-4. The two ATF definitions are active on incident, but start only on incidents whose short
-   description begins "ATF SLA Incident". [E07] [E08] Can they stay, or should they be inactive
-   outside test runs?
-5. The SLA definition that runs the communication task flow isn't in the mirror. [E12]

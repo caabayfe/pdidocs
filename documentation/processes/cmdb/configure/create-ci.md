@@ -132,11 +132,11 @@ class, as `cmdb_ci` actions do.
 A class qualifies when it is in the configured class list and has an identification rule that
 doesn't rest on `product_instance_id`. [E08] The list is all of `cmdb_ci`'s hierarchy [E09], less
 the classes the user can't both create and write, less `cmdb_ci_service_auto` and the classes in
-`sn_cmdb_ws.manual_create_ci.global_class_exclusion` (value redacted in the mirror). [E08] [E11]
+`sn_cmdb_ws.manual_create_ci.global_class_exclusion` (value redacted in the mirror). [E08] [E11] [Q13]
 
 So a user with `itil` but no CMDB role, who may create CIs through the `cmdb_ci` ACLs (see
 [CI data and access](see:cmdb/maintain)), gets **New** only on classes without identification
-rules, and no button elsewhere. [E03] [E04]
+rules, and no button elsewhere. [E03] [E04] Who should create CIs is not decided yet. [Q01]
 
 ## 2. Manual Create CI {label=NEW}
 
@@ -154,7 +154,7 @@ rules, and no button elsewhere. [E03] [E04]
 The CMDB Workspace overrides the base **Edit ({{count}})** [E20] on `cmdb_ci` with a copy that
 requires the role `nobody` (sys_id `b05940500a0a0aa70090a4893f6ff35d`). [E17] [E18] This is the
 platform's way of hiding the bulk edit on CI lists, so changes go one CI at a time through the
-CI page.
+CI page. [Q05]
 
 ## 4. Editing on the CI page {label=NEW}
 
@@ -170,14 +170,3 @@ the classic form lets them edit CIs.
 | `cmdb_manual_ci_ire_access` (`sn_cmdb_ws`) | Manual Create CI, in any workspace; nothing else [E15] |
 | `sn_cmdb_editor` | create, read, update and delete of CMDB records, not policies; includes `sn_cmdb_user` [E16] |
 | `sn_cmdb_admin` | includes `sn_cmdb_editor` [E16] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Who should create CIs: give `sn_cmdb_editor` to CI owners and CMDB managers, or keep the
-   service desk creating CIs in the classic list?
-2. What does `sn_cmdb_ws.manual_create_ci.global_class_exclusion` hold? Its value is redacted in
-   the mirror. [E11]
-3. Is the bulk edit to stay hidden on CI lists? The override ships with the CMDB Workspace
-   application (`sn_cmdb_ws`). [E17]
-4. Should the `itil` create and write ACLs on `cmdb_ci` be moved to the CMDB roles, so the classic
-   list and the workspace give the same answer?

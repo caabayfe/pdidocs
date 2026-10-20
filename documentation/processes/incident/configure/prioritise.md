@@ -42,11 +42,4 @@ never produced.
 
 ## On change
 
-Work notes become mandatory [E04]; a change to priority 1 queues `incident.priority.1` [E05].
-
-## Open questions {label=OPEN-QUESTION}
-
-1. *Incident Priority Raised* is a triggered notification [E06]; no flow or script calling it
-   was found. Is it used?
-2. Nothing in the mirror listens to `incident.priority.1`. Is priority 1 paging handled
-   elsewhere (on-call, a flow)?
+Work notes become mandatory [E04]; a change to priority 1 queues `incident.priority.1` [E05], which nothing in the mirror listens to. [Q21] *Incident Priority Raised* is a triggered notification [E06], but no flow or script calling it was found. [Q22]

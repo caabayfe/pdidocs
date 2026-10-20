@@ -122,19 +122,22 @@ back-and-forth that would clutter the work notes.
 | **A discussion** | working it out together, in real time |
 
 Messages in a discussion are kept with the discussion, not in the incident's work notes. [E15]
-When the discussion settles something, write the outcome in the work notes.
+When the discussion settles something, write the outcome in the work notes. [Q30]
 
 ## Start a discussion from an incident {label=NEW}
 
 {{animation:incdisc}}
 
+The New discussion dialog, the participant picker and the Mentions tab weren't opened on screen;
+the steps follow the component's labels.
+
 1. Open the incident in the workspace and choose the **Sidebar discussions** icon in the header.
    The panel opens on the discussions of this record you are part of. [E01]
 2. Choose **+ New discussion**. [E01]
-3. The **Subject** is filled with the incident's short description; you can change it. [E03]
+3. The **Subject** is filled with the incident's short description; you can change it. [E03] [Q77]
 4. **Add participants**: people, or a group. Adding a group adds its child groups too. [E03]
    The suggestions for an incident are its caller and its assignee, and the person on call for
-   its assignment group when on-call scheduling is in use. [E06] A group with on-call shifts adds
+   its assignment group when on-call scheduling is in use. [E06] [Q65] A group with on-call shifts adds
    only who is on call now. [E07]
 5. Write a short message for the participants, and choose **Start discussion**. [E03]
 
@@ -177,8 +180,8 @@ to write, they must **Join discussion**. [E03] [E15] [E16]
 |---|---|---|
 | **Colleagues** you add | the discussion in their **Sidebar discussions**, under *Unread* | at once, in the workspace [E01] |
 | Anyone you **@mention** | a push notification on the mobile app | at once [E17] |
-| The **caller**, when added | the email *You have new message(s) on Sidebar Discussion*: "You have been added to a discussion and may have unread message(s) on INC…", with a **View discussion** button | at once [E09] [E10] [E18] |
-| The **caller**, with unread messages | the same subject: "You have unread message(s) on INC…" | once a day, 08:00 GMT [E11] [E12] [E13] |
+| The **caller**, when added | the email *You have new message(s) on Sidebar Discussion*: "You have been added to a discussion and may have unread message(s) on INC…", with a **View discussion** button | at once [E09] [E10] [E18] [Q78] |
+| The **caller**, with unread messages | the same subject: "You have unread message(s) on INC…" | once a day, 08:00 GMT [E11] [E12] [E13] [Q29] |
 
 Colleagues get no email. Only the caller does, and only while the incident is active. [E09]
 [E12]
@@ -202,14 +205,3 @@ Private discussions appear in either only for their members. [E04]
   repeats the incident's short description and urgency. [E10]
 - When the discussion reaches a decision, put it in the work notes, where the next person will
   look.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The New discussion dialog, the participant picker and the Mentions tab were not opened on
-   screen; the steps follow the component's labels. [E03] Does the dialog show exactly these
-   fields on pdi2?
-2. Is a discussion's outcome expected to be copied to the work notes by hand, or is the Now
-   Assist summary to work notes in use?
-3. Can a caller open the **View discussion** link from the email? It leads to the Next
-   Experience form, not to Employee Center.
-4. Is on-call scheduling active, so that the on-call suggestion and on-call groups work?

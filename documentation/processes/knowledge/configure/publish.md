@@ -171,7 +171,8 @@ evidence:
 Each knowledge base names a **Publish flow** (`kb_publish_flow`); the legacy *Publish workflow*
 field is inactive, so flows are used. [E01] A knowledge base saved without flows gets
 *Knowledge - Instant Publish* and *Knowledge - Instant Retire*. [E02] To require approval, set its
-Publish flow to *Knowledge - Approval Publish*.
+Publish flow to *Knowledge - Approval Publish*. Which flow each knowledge base uses is not in the
+mirror. [Q24]
 
 ## 2. The Publish button {label=NEW}
 
@@ -181,7 +182,7 @@ draft the user may publish [E03] [E04] [E10]:
 | Action | When | Does |
 |---|---|---|
 | **Publish** (333db22a) | the guest user can't read the article | saves and publishes [E03] |
-| **Publish** (cbb12c58) | the guest user can read it | opens the confirm-publish modal first [E04] [E06] [E07] |
+| **Publish** (cbb12c58) | the guest user can read it | opens the confirm-publish modal first [E04] [E06] [E07] [Q25] |
 
 Both are hidden when the article has merged duplicates waiting. [E08] `sn_km_uib` has the same
 Publish for Next Experience record pages without the editor check [E05]; the classic form uses its
@@ -208,7 +209,7 @@ Then the flow:
 | *Knowledge - Instant Publish* | draft → with a scheduled date, wait for it → publish [E12] |
 | *Knowledge - Approval Publish* | ask for approval → approved: queue `knowledge.approval.approved`, then as above; rejected: queue `knowledge.approval.rejected` [E13] |
 
-The approval has no due date. [E14] On publish, *Ensure published date is set* sets **Published**
+The approval has no due date. [E14] [Q14] On publish, *Ensure published date is set* sets **Published**
 to today. [E25] **Recall** cancels the waiting flow and its requested approvals. [E09]
 
 ## 4. Approvers {label=NEW}
@@ -233,7 +234,7 @@ They act in the Knowledge Center's **My Approvals** list (the *Your approvals* c
 
 The approved and rejected emails are sent only while `glide.knowman.enable_approval_notification`
 is true; it is. [E24] Because the flow names nobody for *approved*, that email may reach nobody,
-and for a first version (no reviser) the *rejected* one too. [E14]
+and for a first version (no reviser) the *rejected* one too. [E14] [Q07]
 
 ## 6. Republish {label=NEW}
 
@@ -247,14 +248,3 @@ an admin user. [E27] [E10]
 | `glide.knowman.ownership_group.enabled` | false | approvers are owner and managers [E16] |
 | `glide.knowman.enable_approval_notification` | true | approved and rejected emails [E24] |
 | `sn_km_center.glide.knowman.ece.enable` | true | the Knowledge Center Publish actions [E10] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Which publish flow does each knowledge base use? The knowledge base records are not in the
-   mirror; the walk listed four knowledge bases but not their flows.
-2. Should *Knowledge - Approval Publish* name the author in `knowledge.approval.approved` and fall
-   back to the author for `knowledge.approval.rejected`, so that a first version's author is told?
-   [E14]
-3. Should approvals have a due date, or a reminder, since they wait on named people? [E14]
-4. Which knowledge bases can the guest user read (public knowledge bases), so that the confirmation
-   appears?

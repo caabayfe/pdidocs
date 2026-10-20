@@ -55,11 +55,6 @@ evidence:
     how: read the notification Password Reset - Reset Link
     result: active; sent to your email address, subject "Password Reset"
     hash: e344abb34f4bbd03be6b394f5b36d7f191d2e945ba7e4f3121d1d4dc1d50e74d
-  E11:
-    record: pwd_process/6993473fbf020100710071a7bf073926
-    how: read the other self-service processes (Employee Self-Service Process for Local ServiceNow; Demo Self-Service Process 1 528ccd35eb32010045e1a5115206fe74 and 2 f35d0175eb32010045e1a5115206fe36)
-    result: all inactive
-    hash: 9a3ed44e744979f8865dee22b8ef88c46dda20606c785e87d21a3d1d1f10c76e
   E12:
     record: pwd_process/4ff0c881bf220100710071a7bf0739fa
     how: read Service-Desk Password Reset for Local ServiceNow
@@ -110,12 +105,6 @@ evidence:
     how: read which roles contain cmdb_read
     result: itil contains it, and other IT roles; the employee role does not
     hash: ab9fdb1261d323545d9e8da9313e4955e3d780113f21625dfa4b9f24c2aef46a
-  E22:
-    record: sys_properties/33ca4ea05300011026b0ddeeff7b1228
-    field: value
-    how: read password_reset.sms.use_notify
-    result: true; SMS codes are sent through Notify, whose Twilio driver is not active on pdi2
-    hash: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
   E23:
     seen:
       by: Documentation agent, as admin
@@ -170,11 +159,11 @@ phone. If you can't, call the service desk.
 ## Reset a forgotten password {label=NEW}
 
 1. Open the **Forgot password** page. It has three steps:
-   **Identify**, **Verify** and **Reset**. [E23]
+   **Identify**, **Verify** and **Reset**. [E23] [Q13]
 2. **Identify**: type your **User name**, fill in the **Captcha**, and choose **Next**. [E01] [E23]
 3. **Verify**: you are asked for two things, and both are required [E02] [E03]:
    - your **email address**, as IT has it [E05];
-   - a **6-digit code** sent to your mobile phone. Type it within **5 minutes**. [E06]
+   - a **6-digit code** sent to your mobile phone. Type it within **5 minutes**. [E06] [Q01]
 4. **Reset**: you get an email, *"Password Reset"*, with a link. [E01] [E10] Open it within
    **1 hour** [E09] and choose your new password: at least 8 characters, with upper and lower
    case letters and a number. [E13]
@@ -195,7 +184,7 @@ done for you. [E03] [E04] Do it now, while you can still sign in:
    [E17]
 2. Follow the **Steps to enroll**: add your mobile number and confirm it with the code you
    receive.
-3. Choose **Submit**.
+3. Choose **Submit**. [Q14]
 
 Your email address needs no enrolment. [E05]
 
@@ -206,7 +195,7 @@ in the **Password Reset** menu or the catalog's **Can We Help You?** category. [
 your current password and the new one twice. The same rules apply: at least 8 characters, upper
 and lower case letters and a number. [E13]
 
-Your Employee Center profile has no change-password link. [E25]
+Your Employee Center profile has no change-password link. [E25] [Q05]
 
 ## A password for another application {label=NEW}
 
@@ -215,7 +204,7 @@ the **Password Reset** form: *"Request a reset of a password for a service or an
 It asks whose password, which application, and how to send you the new one (**Telephone**,
 **SMS** or **Email**), and it logs an incident for the service desk. [E18] [E19] [E24]
 
-An employee doesn't see that form: it is open only to IT roles. [E20] [E21] **Get support**
+An employee doesn't see that form: it is open only to IT roles. [E20] [E21] [Q03] **Get support**
 offers the *Request password reset* card only to administrators; you see the phone number.
 [E26] [E27]
 
@@ -230,28 +219,10 @@ Call **+1-200-120-2020**, 9am to 5pm PST [E27], when:
 
 For how the service desk resets a password, see [Reset a caller's password](see:incident/reset-password).
 On pdi2 the service desk can't reset it from its workspace yet [E12], so expect them to log an
-incident and come back to you.
+incident and come back to you. [Q04]
 
 ## Tips {label=NEW}
 
 - Enrol your phone today: you can't do it once you're locked out.
 - Never tell anyone your password, including the service desk. They never need it.
 - The reset link works once and only for an hour [E09]; if it expired, start again.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Can text-message codes be sent?** Codes go through Notify [E22], whose phone provider isn't
-   switched on in the configuration snagentic reads. Both checks are required [E02] [E03], so if
-   no text arrives, nobody can reset their own password. Test it with an enrolled user, or make
-   the text-message check optional, or replace it with a check that works.
-2. **How do employees find the Forgot password page?** The page was opened directly. [E23]
-   Confirm that the sign-in page shows a *Forgot password?* link, and publish it.
-3. **Should Change Password and Password Reset Enrollment appear in Employee Center?** A search
-   for *password* doesn't find them [E24], and the profile has no link. [E25] Add them to a topic,
-   or a quick link on the home page.
-4. **Should employees see the Password Reset form?** It is open only to IT roles [E20] [E21],
-   yet [Report an incident](see:incident/report) lists it for everyone. Decide which is right.
-5. **No reset process is active for the service desk** [E12], and the other self-service
-   processes are switched off. [E11] Decide whether the service desk should reset passwords.
-6. The enrolment, change and reset screens were not used on the walk; the steps follow their
-   labels and settings.

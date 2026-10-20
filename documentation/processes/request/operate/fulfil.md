@@ -119,7 +119,7 @@ Before you start, make the task yours, so nobody works it twice.
 
 1. Open the catalog task in the workspace. **Assign to me** shows in the header while the task is
    open, nobody is assigned to it, and its assignment group is empty or one of yours. You need
-   the `itil` or `sn_request_write` role. [E11] [E12]
+   the `itil` or `sn_request_write` role. [E11] [E12] [Q19]
 2. Press **Assign to me**. **Assigned to** becomes you and the task is saved. [E13]
 3. If the task had no assignment group and you belong to one group only, that group is set too.
    If you belong to several, the group stays empty: set it yourself. [E13] [E14]
@@ -131,7 +131,7 @@ you assign yourself. [E16]
 |---|---|
 | catalog task header, workspace | yes, as above [E11] |
 | catalog task lists, workspace | no: the list action covers incidents, problems and changes only [E15] |
-| classic list, right-click menu | yes, for anyone who can edit the task; it doesn't check the group [E17] |
+| classic list, right-click menu | yes, for anyone who can edit the task; it doesn't check the group [E17] [Q06] |
 
 The membership check on save runs only when the group changes [E18], so from the classic list
 you can end up assigned to a task of a group you're not in. Use the workspace header instead.
@@ -150,7 +150,8 @@ you can end up assigned to a task of a group you're not in. Use the workspace he
 | it isn't needed | set **State** to *Closed Skipped*, save | *Closed Skipped* [E09] |
 
 **Close Task** shows only while the task is open and not waiting for approval. [E04] Closing the
-last task lets the item complete.
+last task lets the item complete. What the item does when a task closes *Incomplete* or
+*Skipped* isn't verified yet. [Q20]
 
 ## Reassign it
 
@@ -181,15 +182,3 @@ life of a request](see:lifecycle)).
 - Read the requester's answers before you order: they say which options to add. [E03]
 - Problem with what was delivered? Ask them to report an incident (see
   [Report an incident](see:incident/report)).
-
-### Closing incomplete {label=OPEN-QUESTION}
-
-What *Service Catalog item request* does with the item when a task is closed *Incomplete* or
-*Skipped* isn't verified: check on a test item before relying on it.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Assign to me** wasn't pressed on screen; the steps follow the button's script. [E13] Does it
-   show on pdi2's catalog tasks for a fulfiller with `itil`?
-2. Should the right-click **Assign to me** of the classic list, which skips the group check, be
-   left to fulfillers? [E17]

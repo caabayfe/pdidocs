@@ -40,12 +40,6 @@ evidence:
     how: read Update Request Item
     result: a reply to an item's email is added to it
     hash: d1183bb7bde9798ac83373312bfca466a612dee3164cdf79c8a7f165255690fe
-  E08:
-    record: sys_properties/182a3eb60a04bf1501dbef0c06b79cbf
-    field: value
-    how: read glide.sc.checkout.cancel
-    result: 'false'
-    hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
   E09:
     seen:
       by: 'Claude (snagentic session, impersonating Abel Tuter)'
@@ -95,13 +89,7 @@ incident.
 ## Cancel
 
 To cancel, open the item and write in its **Activity** tab that you no longer need it, before it's
-delivered. [E05] The team then cancels it for you.
-
-### No Cancel button {label=OPEN-QUESTION}
-
-Employee Center offers no **Cancel** on a request or an item [E03] [E08], so employees can only ask
-in Activity. IT can cancel with **Cancel Request** (see [Manage a request](see:manage)). Decide
-whether employees should cancel themselves before fulfilment starts.
+delivered. [E05] The team then cancels it for you. [Q10]
 
 ## Tips
 

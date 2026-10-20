@@ -123,13 +123,13 @@ feature: the trigger condition, the survey and its email are on tables outside t
 1. *Auto assessment business rule* runs async after an insert or update of an incident whose
    state changes to 7 (Closed). [E02] [E03]
 2. It passes the trigger condition *ITSM Demo Survey* to `AssessmentCreation.conditionTrigger`.
-   [E02]
+   [E02] [Q03]
 3. The trigger's full condition adds that the incident has no universal request. The survey goes
    to `caller_id`, always (probability 100%), at most once per caller per 30 days (repeat
    interval). [E01]
 
 Steps 2 and 3 are done by `sn_assessment_core`, which isn't in the mirror: the repeat interval's
-exact effect is read from the record, not from code.
+exact effect is read from the record, not from code. [Q67]
 
 ## 2. The survey {label=NEW}
 
@@ -147,12 +147,13 @@ Neither question is scored. [E05] [E07]
 
 *Incident Survey* listens to `record.send_survey` on `asmt_assessment_instance` when the
 instance's task is an incident; it sends to parm1 with the subject *"Feedback makes us better"*.
-[E08] Its link is the survey URL passed in parm2, labelled *Take the survey*. [E09] Requests have
+[E08] Its link is the survey URL passed in parm2, labelled *Take the survey*. [E09] The
+email says *"your recent request"*, though it is about an incident. [Q14] Requests have
 their own *Request survey* on the same event. [E10]
 
 The reminder and overdue notifications filter on the evaluation methods assessment, quiz,
 attestation or test plan, so none reminds a caller about this survey.
-[E11] [E04]
+[E11] [E04] [Q33]
 
 ## 4. Where it is answered {label=NEW}
 
@@ -171,19 +172,10 @@ My Assessments & Surveys* [E16].
 
 The survey's own roles are `survey_admin` and `survey_reader`. [E04] The incident has no survey
 related list in Service Operations Workspace, so agents don't see the answers on the incident.
-[E20]
+[E20] [Q34]
 
 ## Properties {label=NEW}
 
 | Property | pdi2 | Effect |
 |---|---|---|
 | `sn_portal_surveys.sp_survey.email_redirection` | true | email links open the portal, not the platform [E12] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. The trigger is named *ITSM Demo Survey*. [E01] Is it meant to run on this instance, and who
-   reads the results?
-2. Is a reminder wanted? None is configured for surveys. [E11]
-3. The email says *"your recent request"* for an incident. Should it be reworded?
-4. Should resolvers or team leads see their incidents' answers? They have no survey role and no
-   related list. [E17] [E20]

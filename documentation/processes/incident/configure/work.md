@@ -251,12 +251,16 @@ incidents share comments and work notes. [E08]
 
 Response SLAs start once a group is assigned and stop when the incident has an assignee and has
 left New; they never pause. Resolution SLAs stop only at Closed and pause on Awaiting Caller and
-Resolved. The eight priority SLAs are retroactive;
-the two OLAs and the underpinning contract aren't. [E15] [E16] [E17] Every definition takes its
+Resolved. [Q37] The eight priority SLAs are retroactive;
+the two OLAs and the underpinning contract aren't. [E15] [E16] [E17] Their names point at
+groups and a CI the mirror can't name. [Q54] Every definition takes its
 time zone from the caller's time zone. [E13] [E14]
 
 The durations count only schedule time: *Priority 3 resolution (1 day)* is 24 hours of the 8-5
 weekdays schedule, not one working day; the names understate the deadlines.
+
+Legacy escalation rules (`sysrule_escalate`, priority 1 to 4) also exist; whether the escalation
+engine runs isn't visible. [Q60]
 
 ## Attachments {label=NEW}
 
@@ -281,8 +285,8 @@ write access to the incident. [E25]
 | Property | pdi2 | Effect |
 |---|---|---|
 | `com.glide.attachment.max_size` | 1024 MB | largest file [E27] |
-| `glide.attachment.extensions` | not in the mirror | allowed extensions; blank allows all [E28] |
-| `glide.attachment.role` | not in the mirror | roles that may create attachments [E29] |
+| `glide.attachment.extensions` | not in the mirror | allowed extensions; blank allows all [E28] [Q61] |
+| `glide.attachment.role` | not in the mirror | roles that may create attachments [E29] [Q61] |
 | `glide.security.file.mime_type.validation` | true | content must match the extension [E30] |
 | `glide.security.attachment_type.use_blacklist` | true | exclusion lists checked [E31] |
 | `glide.ui.attachment.force_download_all_mime_types` | true | files download rather than open in the browser [E32] |
@@ -291,17 +295,5 @@ write access to the incident. [E25]
 
 Portal: the *ticket* page has the *Ticket Attachments* widget, with no roles. [E35] Callers see
 the attachments of incidents they can read and add files when they can write to the incident and
-hold `glide.attachment.role`; a delete from the portal writes a comment. [E36] No incident
+hold `glide.attachment.role`; a delete from the portal writes a comment, which can send the comment emails. [E36] [Q13] No incident
 notification sends attachments. [E38]
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Resolution SLAs stop at **Closed**, so the time an incident waits as Resolved is paused but
-   still part of the SLA record until auto close. Is that the intended measure?
-2. The OLA and UC names point at groups and a CI the mirror can't name. Are they demo data?
-3. Legacy escalation rules (`sysrule_escalate`, priority 1 to 4) exist; whether the escalation
-   engine runs isn't visible.
-4. What are `glide.attachment.extensions` and `glide.attachment.role` set to? The mirror redacts
-   them. [E28] [E29]
-5. The portal widget writes a comment when a caller deletes an attachment [E36], which can send
-   the comment emails. Is that wanted?

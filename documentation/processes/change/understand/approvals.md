@@ -69,20 +69,16 @@ the CAB. See [Approve a change](see:approve).
 ### Where the CAB decides {for=operator}
 
 The technical approval is asked in **Assess**; the manager and CAB approvals in **Authorize**.
-[E01] [E02] [E03] The CAB approval is a group approval from the **CAB Approval** definition [E06]:
-its members decide it in **Approvals › My approvals** like any other approval (see [Approve as a
+[E01] [E02] [E03] The CAB approval is a group approval from the **CAB Approval** definition [E06];
+its group is set in the **Approval Definitions** module [E08] and hasn't been checked yet. [Q22]
+Its members decide it in **Approvals › My approvals** like any other approval (see [Approve as a
 technical approver](see:review-approval)). A CAB meeting is only added for changes a CAB
 definition picks up: on pdi2 only **Network CAB**, for normal and emergency *Network* changes of
 moderate risk or higher. [E07] So a moderate-risk *server* change is decided by the CAB Approval
-group's members directly, with no meeting (see [The change advisory board](see:cab)).
+group's members directly, with no meeting (see [The change advisory board](see:cab)). [Q01]
 
 ### How to get it approved quickly {for=operator}
 
 Set the **Risk** right (press *Calculate Risk*), fill the planning fields, and keep the
 assignment group's manager current: a group without a manager sends even low-risk changes to the
 CAB. [E03] See [Get it approved](see:authorize).
-
-### Which group is the CAB {label=OPEN-QUESTION}
-
-The approval definitions aren't in the mirror [E06], so the group behind **CAB Approval** and its
-members aren't verified: check them in the **Approval Definitions** module (search the navigator for it). [E08]

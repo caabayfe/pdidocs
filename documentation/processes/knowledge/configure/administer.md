@@ -237,7 +237,7 @@ evidence:
 
 | Table | What it holds |
 |---|---|
-| `kb_knowledge_base` | the knowledge base: title, owner, managers, flows, checklist, article validity, commenting; not in the mirror, four seen on screen [E01] |
+| `kb_knowledge_base` | the knowledge base: title, owner, managers, flows, checklist, article validity, commenting; not in the mirror, four seen on screen [E01] [Q24] |
 | `kb_uc_can_read_mtom`, `kb_uc_cannot_read_mtom`, `kb_uc_can_contribute_mtom` | who reads and contributes, by user criteria [E23] |
 | `user_criteria` | the criteria [E24] |
 | `kb_knowledge_base_request` | requests from the catalog [E02] |
@@ -254,7 +254,7 @@ evidence:
 
 `glide.approval_engine.kb_knowledge_base_request` has no value in the mirror. [E06] The
 knowledge_manager role's description expects knowledge administrators to approve requests; the
-flow does not. [E04] [E39]
+flow does not. [E04] [E39] [Q03]
 
 ## 2. Creating and editing {label=NEW}
 
@@ -290,14 +290,14 @@ Approvers are the owner and managers: ownership groups are off, so the Knowledge
 |---|---|---|---|
 | IT | *'Problem Analyzers' and 'Problem Solving' Group Members* (two groups) [E25]; *All ACME North America employees*, *All ACME Corporation employees* (companies) [E26] | | *The ACME North America IT Department* (company and department, match all) [E24] |
 | Known Error | *Users who can access Known Error knowledge base*: itil, problem_task_analyst, sn_problem_write [E27] | | *Users with 'itil' role* [E28] |
-| Knowledge | *Any user for KB*: no conditions [E29] | *Guest User* (script) [E30] | *Users with 'knowledge' role for KB* [E28] |
-| KCS Knowledge Base (demo data) | none in the mirror | | none in the mirror |
+| Knowledge | *Any user for KB*: no conditions [E29] [Q25] | *Guest User* (script) [E30] | *Users with 'knowledge' role for KB* [E28] |
+| KCS Knowledge Base (demo data) | none in the mirror [Q12] | | none in the mirror |
 
 [E23]
 
 `glide.knowman.block_access_with_no_user_criteria` is true [E31]: a knowledge base with no Can Read
 list is denied to readers, and with no Can Contribute list only the owner, managers and admins may
-contribute. [E32]
+contribute. [E32] [Q25]
 
 ## 4. Diagnostics {label=NEW}
 
@@ -319,13 +319,3 @@ tables' ACLs. [E37]
 | `glide.knowman.block_access_with_no_user_criteria` | true | no criteria, no access [E31] |
 | `glide.knowman.ownership_group.enabled` | false | approvers are owner and managers [E36] |
 | `glide.approval_engine.kb_knowledge_base_request` | no value in the mirror | approval engine for requests [E06] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Export or walk the four `kb_knowledge_base` records: owners, managers, publish and retire
-   flows, article validity. The mirror doesn't hold them. [E01]
-2. The KCS demo knowledge base has no user criteria rows in the mirror. Is it closed to readers,
-   as the blocking property implies, and should it be kept? [E23] [E31]
-3. Does *Any user for KB*, with no conditions, match every user? [E29]
-4. Should knowledge base requests be approved by knowledge administrators rather than one fixed
-   account, and should the email go somewhere other than admin@example.com? [E04] [E39]

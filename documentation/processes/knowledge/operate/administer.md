@@ -177,7 +177,7 @@ evidence:
 
 Each knowledge base has an **owner** and **managers**: they approve publishing and retiring where
 its flows ask for approval, can retire any of its articles, and edit the knowledge base itself.
-[E09] [E15] Who they are on pdi2 is not recorded here.
+[E09] [E15] Who they are on pdi2 is not recorded here. [Q24]
 
 ## Where you work {label=NEW}
 
@@ -200,7 +200,9 @@ Anyone can ask from the Service Catalog: **Request Knowledge Base**, under *Can 
    Base to be created?* [E06]
 2. Submit. You see *"Your request for a new knowledge base has been received - once the request
    is approved, you will be notified by email"*. [E05]
-3. One user named in the flow, the platform's default admin account, approves or rejects it. [E07]
+3. One user named in the flow, the platform's default admin account, approves or rejects it. [E07] The
+   knowledge_manager role's description expects knowledge administrators to approve them. [E27]
+   [Q03]
 4. Approved: the knowledge base is created with **you as its owner**, and you get *Knowledge Base
    request approved*. Rejected: *"Your request for a new Knowledge Base has been rejected."* [E07]
    [E08]
@@ -229,14 +231,14 @@ The approvers of an approval flow are the owner and managers: ownership groups a
 |---|---|---|---|
 | IT | 'Problem Analyzers' and 'Problem Solving' group members; All ACME North America employees; All ACME Corporation employees | | The ACME North America IT Department |
 | Known Error | holders of itil, problem_task_analyst or sn_problem_write [E18] | | holders of itil |
-| Knowledge | *Any user for KB* [E19] | the guest user | holders of knowledge |
-| KCS demo | none in the mirror | | none in the mirror |
+| Knowledge | *Any user for KB* [E19] [Q25] | the guest user | holders of knowledge |
+| KCS demo | none in the mirror [Q12] | | none in the mirror |
 
 [E17]
 
 A knowledge base with no **Can Read** list is closed to readers, and one with no **Can Contribute**
 list is open only to its owner, managers and administrators: pdi2 blocks access where no user
-criteria are set. [E20] [E21]
+criteria are set. [E20] [E21] [Q25]
 
 ## Check someone's access {label=NEW}
 
@@ -249,7 +251,9 @@ set."* [E21]
 
 Knowledge managers and knowledge administrators can use it. [E23] On the classic forms of a
 knowledge base or an article, the related link **Run User Criteria Diagnostics** does the same for
-admins, knowledge administrators and the knowledge base's owner and managers. [E24]
+admins, knowledge administrators and the knowledge base's owner and managers. [E24] The
+Request Knowledge Base page, the diagnostics page and a knowledge base form were not opened on
+screen. [Q36]
 
 ## Tips
 
@@ -259,16 +263,3 @@ admins, knowledge administrators and the knowledge base's owner and managers. [E
   retiring. [E14]
 - Use **View Knowledge Base** on the classic form to see a knowledge base as readers browse it.
   [E28]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Who owns and manages each knowledge base, and which publish and retire flows do they use? The
-   knowledge base records are not in the mirror and the walk did not record them.
-2. The KCS demo knowledge base has no user criteria in the mirror: with access blocked where none
-   are set, can anyone but its owner, managers and administrators read it? [E20]
-3. *Any user for KB* sets no condition at all: does it let every user read the Knowledge
-   knowledge base? [E19]
-4. Requests for a knowledge base are approved by one fixed account, though the knowledge_manager
-   role says requests go to knowledge administrators. Who should approve them? [E07] [E27]
-5. The Request Knowledge Base page, the User criteria diagnostics page and a knowledge base form
-   were not opened on screen.

@@ -150,7 +150,7 @@ evidence:
 |---|---|
 | `kb_quality_checklist` | a checklist; pdi2 has *Default AQI Survey* [E01] |
 | `kb_checklist_question` | its questions, each with an order and a weight; ten of weight 10 [E02] |
-| `kb_knowledge_base.checklist` | the checklist a knowledge base uses [E03]; only *KCS Knowledge Base (demo data)* has one [E04] |
+| `kb_knowledge_base.checklist` | the checklist a knowledge base uses [E03]; only *KCS Knowledge Base (demo data)* has one [E04] [Q08] |
 | `kb_article_checklist_summary` | one review: article, reviewer, version author, state, AQI score, comments [E05] |
 | `kb_article_checklist_answer` | one answer per question, with its weighted score [E05] [E07] |
 
@@ -162,13 +162,13 @@ group. [E24]
 `canPerformAqi`: the article's knowledge base has a checklist, the user can read the article,
 holds `knowledge_domain_expert`, `knowledge_coach` or `knowledge_admin`, and the article's state
 is in `glide.knowman.aqi.article_workflow_states`. [E05] That property has no value in the mirror;
-the code's default is draft, review and published. [E14] Creating a review needs the same roles.
-[E19] Both reviewer roles contain `knowledge`. [E23]
+the code's default is draft, review and published. [E14] [Q28] Creating a review needs the same roles.
+[E19] Both reviewer roles contain `knowledge`. [E23] [Q31]
 
 ## 2. A review, step by step {label=NEW}
 
 1. **Perform AQI** (classic form only) creates the summary, In Progress, and one answer per
-   question. [E05] [E06]
+   question. [E05] [E06] [Q32]
 2. Ticking an answer sets its weighted score to the question's weight. [E07]
 3. **Submit AQI** (reviewer or `knowledge_admin`) sets Submitted. [E05] [E06]
 4. *Calculate AQI Score* sums the weighted scores into `aqi_score`, sets the article's
@@ -208,12 +208,3 @@ knowledge base, edit, then attach it again. [E10] [E11]
 | `glide.knowman.aqi_pass_score` | 70 | Passed at or above [E13] |
 | `glide.knowman.aqi.article_workflow_states` | no value in the mirror | states that can be reviewed [E14] |
 | `glide.knowman.ownership_group.enabled` | false | the ownership group email is not used [E18] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Should IT, Known Error and Knowledge get a checklist? Today only the KCS demo knowledge base
-   can be reviewed. [E04]
-2. Does the Knowledge Center have its own AQI form, or is the classic form the only way? The
-   buttons are classic only. [E06]
-3. Is `glide.knowman.aqi.article_workflow_states` empty or unset? If empty, the code allows every
-   state. [E05] [E14]

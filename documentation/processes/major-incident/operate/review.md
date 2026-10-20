@@ -216,7 +216,8 @@ It becomes an ordinary incident again, and is worked as usual.
 ## The review in the workspace
 
 In the Service Operations Workspace a **draft review** is created when the major incident is
-resolved [E08], to be published within **24 hours**. [E09]
+resolved [E08], to be published within **24 hours**. [E09] Whether this review or the classic
+section is the one of record is not decided yet. [Q01]
 
 ## The Post incident report tab {label=NEW}
 
@@ -225,7 +226,7 @@ resolved [E08], to be published within **24 hours**. [E09]
 Use the **Post incident report** tab of the major incident to write the review, build its
 timeline, preview and download it, and publish it. [E12] The tab appears only when the major
 incident is **Resolved** or **Closed** and its draft review exists. [E11] On pdi2 there is no
-major incident yet, so nobody has seen this tab here.
+major incident yet, so nobody has seen this tab here. [Q13]
 
 The tab has four parts: **Incident summary**, **Incident response timings**, **Related records**
 with **Contributors**, and the **Timeline**. [E13]
@@ -258,7 +259,7 @@ if **Edit Co-contributors** is greyed out.
    it, as set on the incident. [E16]
 6. Under **Contributors**, choose **Edit Co-contributors** to add the people who help write the
    report. You choose from support agents; anyone who was a contact on the communication plans
-   is shown with their responsibility. [E13] [E22] Co-authors get the same rights as you. [E14]
+   is shown with their responsibility. [E13] [E22] [Q09] Co-authors get the same rights as you. [E14]
 
 The summary copies the incident only when the draft is created: later changes to the incident's
 resolution notes are not copied into it. [E15]
@@ -270,7 +271,7 @@ The timeline is built for you from [E19]:
 - the milestones: incident created, proposed, accepted as a major incident, resolved, closed;
 - incident tasks created and closed;
 - entries of the activity stream that someone **flagged**: flag a work note while you work the
-  major incident and it appears here as *"Work notes: … flagged by …"*. [E20]
+  major incident and it appears here as *"Work notes: … flagged by …"*. [E20] [Q14]
 
 Then, with **Edit Timeline**: [E13]
 
@@ -297,26 +298,9 @@ Then, with **Edit Timeline**: [E13]
 4. To correct it, choose **Unpublish** (*"… marked unpublished."*), edit, and publish again.
    [E23] [E24]
 
-Nobody is reminded by email: the deadline shows only in the tab's banner. [E30] [E18]
+Nobody is reminded by email: the deadline shows only in the tab's banner. [E30] [E18] [Q02]
 
 ## What happens next
 
 Share the report with the people who took part, and raise a problem if the cause still needs
 removing (see [Raise a problem](see:problem/raise)).
-
-## Not yet seen {label=OPEN-QUESTION}
-
-pdi2 has no major incident, so none of the workspace review was seen on screen. The steps follow
-the page's labels and scripts. [E13]
-
-1. Does the **Post incident report** tab appear, under that name, once a major incident is
-   resolved, and where among the record's tabs?
-2. Which buttons does each part show (**Edit Report**, **Edit Co-contributors**, **Edit
-   Timeline**, **Preview**, **Mark published**), and where?
-3. How is an activity stream entry flagged in the workspace, and who can flag?
-4. Does saving co-authors work and confirm it? The scripts suggest it may report a failure; see
-   [the configuration](see:major-incident/configure/review).
-5. Which review is the one of record: the classic **Post Incident Report** section, or this tab?
-   Both exist side by side.
-6. Is 24 hours the right deadline, and should someone be reminded by email?
-

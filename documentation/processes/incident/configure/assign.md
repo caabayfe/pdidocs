@@ -70,13 +70,10 @@ evidence:
 On the form, changing the group clears a non-member assignee. [E06] Only `itil` or
 `sn_incident_write` users can be assigned. [E07]
 
+All three assignment rules are inactive [E09], so routing relies on the CI's support group. [Q16]
+The Assignment Lookup has a single row, assigning *inquiry / email* to one named
+person. [E08] [Q17]
+
 ## Actions and notifications
 
 Assign to me, list [E04] and workspace [E05]. Group notified [E10]; assignee notified [E11].
-
-## Inactive or minimal routing {label=OPEN-QUESTION}
-
-1. The Assignment Lookup has a single row, assigning *inquiry / email* to one named person. [E08]
-   Is it a demo leftover?
-2. All three assignment rules are inactive. [E09] Is routing meant to rely only on the CI's
-   support group?

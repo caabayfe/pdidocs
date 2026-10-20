@@ -63,9 +63,4 @@ Both rules run because *com.snc.change_management.enforce_data_requirements* is 
 
 Changes with a model (all the usual ones) rely on the form policy and the model's state transitions
 for the close fields; only legacy changes without a model hit the closure rule. [E06] [E04]
-
-### A close code that isn't required {label=OPEN-QUESTION}
-
-In *Mandatory Closure Information* a missing close code sets the abort flag to false [E06]: on a
-change without a model, a save with notes but no code goes through with only an error message.
-Confirm whether that is intended before relying on it.
+Whether such a change may close without a code is not decided yet. [Q05]

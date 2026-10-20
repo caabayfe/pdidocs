@@ -135,7 +135,10 @@ Create New [E01] and the unassigned queue [E02]. Form sections [E03] and main se
 | Priority change | work notes mandatory | [E09] |
 | Closed or Canceled | most fields read-only | [E10] |
 
-Dictionary defaults: category *inquiry*, impact 3, urgency 3, priority 4.
+Dictionary defaults: category *inquiry*, impact 3, urgency 3, priority 4. Only `task.company` is
+mandatory in the dictionary, so company may be required on save even when the form doesn't show
+it. [Q73] The display rule *VIP scratchpad* reads the **assignee's** VIP flag, not the caller's.
+[E11] [Q46]
 
 ## Copy Incident {label=NEW}
 
@@ -154,9 +157,9 @@ Properties (read and written by incident_manager [E17]):
 | Property | pdi2 | Effect |
 |---|---|---|
 | `com.snc.incident.copy.enable` | true | shows the action [E17] |
-| `com.snc.incident.copy.attributes` | not in the mirror | fields to copy; script default below [E18] |
+| `com.snc.incident.copy.attributes` | not in the mirror | fields to copy; script default below [E18] [Q53] |
 | `com.snc.incident.copy.attach` | true | *Include attachments* ticked by default [E19] |
-| `com.snc.incident.copy.related_lists` | not in the mirror | related lists to copy; none by default [E20] |
+| `com.snc.incident.copy.related_lists` | not in the mirror | related lists to copy; none by default [E20] [Q53] |
 
 Script default fields: `assignment_group, business_service, category, caused_by, cmdb_ci,
 company, description, impact, location, parent_incident, problem_id, rfc, short_description,
@@ -166,18 +169,6 @@ and notes, opened by and at and domain are removed from any list. [E16]
 The classic form has its own UI action, in the form's context menu only: it opens an unsaved,
 prefilled form, and copies parent incident, problem and change only when they are active, with the
 work note *"Created from a similar incident"*. [E21] [E16] The workspace path doesn't make that
-active check, so a copy can point at a closed problem or change. [E15] [E16]
+active check, so a copy can point at a closed problem or change. [E15] [E16] [Q23]
 
-The two ATF tests for Copy Incident are inactive. [E22]
-
-## Findings {label=OPEN-QUESTION}
-
-1. *VIP scratchpad* reads the **assignee's** VIP flag, not the caller's. [E11] It looks like a
-   defect: confirm what it is used for.
-2. Only `task.company` is mandatory in the dictionary; company may be required on save even
-   when the form doesn't show it. Confirm with a test.
-3. What are `com.snc.incident.copy.attributes` and `com.snc.incident.copy.related_lists` set to
-   on pdi2? The mirror redacts them. [E18] [E20]
-4. Should the workspace copy skip a closed parent incident, problem or change, as the classic
-   action does? [E16]
-5. The Copy Incident ATF tests are inactive. [E22] Should they run?
+The two ATF tests for Copy Incident are inactive. [E22] [Q47]

@@ -116,20 +116,20 @@ So **Cancel Request**, which sets *Closed Cancelled*, ends as state *Closed Inco
 When a request becomes *Closed Rejected*, two notifications fire on the same condition: the
 *Request Rejected* email [E03], and the Now Mobile *Request Rejected*, which is a push
 notification only (no email, no subject). [E04] Requesters get one email, plus a push message if
-they use the Now Mobile app.
+they use the Now Mobile app. [Q07]
 
 ## Catalog Tasks › New on a requested item {label=NEW}
 
 | Step | Record | What it does |
 |---|---|---|
 | 1. Shown | declarative action *New* (`sn_sow_req`) on the item's Catalog Tasks list [E08] [E09] | needs the item active and the right to create `sc_task` [E08] |
-| 2. Who | `sc_task` create ACL [E10] | `catalog_admin` (and admin) only |
+| 2. Who | `sc_task` create ACL [E10] | `catalog_admin` (and admin) only [Q04] |
 | 3. Opens | client action *Create new record* [E08] | a new catalog task with the list's query, so `request_item` is set |
 | 4. Saved | business rules on insert [E12] | parent and request filled, actual start set |
 
 The flow *Service Catalog item request* creates its tasks with *wait* on, each step waiting for
 its own task. [E11] Nothing in the mirror ties a hand-made task to the flow, so it neither
-blocks the next flow task nor the item's completion. Only cancellation reaches it: *Close
+blocks the next flow task nor the item's completion. [Q18] [Q09] Only cancellation reaches it: *Close
 Tasks Due to Cancellations* closes every task of the item. [E12] [E13]
 
 ## Copy on a request {label=NEW}
@@ -141,15 +141,6 @@ Tasks Due to Cancellations* closes every task of the item. [E12] [E13]
 | shared server script [E16] | | `GlideappScriptHelper.copyRequest`, then opens the new request |
 | workspace form actions [E17] | | put both in the SOW request header |
 
-Both are limited to `admin` and `catalog_admin`. [E14] [E15] `GlideappScriptHelper` is platform
+Both are limited to `admin` and `catalog_admin`. [E14] [E15] [Q05] `GlideappScriptHelper` is platform
 code, so the mirror can't show what the copy carries over (items, variables, requested for) or
-whether the new request's flows and approvals start from the beginning. [E16]
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Should `itil` or `sn_request_write` be allowed to create catalog tasks, so fulfillers can add
-   one? Today the create ACL allows `catalog_admin` only. [E10]
-2. Should the flow wait for hand-made tasks before the item completes? It would need a step that
-   waits for all open tasks of the item. [E11]
-3. Should service desk agents copy requests? *Copy* is limited to admin and catalog_admin.
-   [E14] [E15]
+whether the new request's flows and approvals start from the beginning. [E16] [Q17]

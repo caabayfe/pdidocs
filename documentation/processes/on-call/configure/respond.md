@@ -244,7 +244,7 @@ subflow. [E14] Shifts that overlap are all escalated. [E32]
 **The SMS text.** In *On-Call: Assign and Notify SNC* the Send SMS step's message reads
 *"Hola, inc has been assigned 2 u."* [E10] It is sent as is to the assignee's SMS numbers whenever
 that flow runs. Replace it with a proper message, in a copy of the flow, before using *Assign and
-Notify*.
+Notify*. [Q16]
 
 ## 3. Channels and answers {label=NEW}
 
@@ -254,11 +254,13 @@ Notify*.
 | SMS [E21] | `{message number}ACC` | `{message number}REJ` | *On-Call: Send Notification - SMS* |
 | Voice [E22] | 1 | 2 | *On-Call: Send Notification - Voice* |
 
+SMS, voice and conference calls go through Notify, which needs a telephony provider. [E18] [Q04]
+
 1. Email replies are read by the inbound action *On-Call: Assign by Acknowledgement*, for
-   **incident** only. [E23]
+   **incident** only. [E23] [Q06]
 2. `OnCallAssignByAckSNC` checks the answer. Accept sets the assignee as system without running
    business rules, and writes *"… acknowledged"* to the work notes. Reject sends *Resume per
-   rota* to the waiting subflow so that it moves on. [E24]
+   rota* to the waiting subflow so that it moves on. [E24] [Q12]
 3. Assigning the task by hand makes *Resume On-Call workflows* wake the waiting subflows, which
    then end. [E25] Accepting doesn't run business rules, so it resumes them itself. [E24]
 
@@ -266,7 +268,7 @@ Notify*.
 
 1. The flows call the log actions at each start, level, attempt, contact and end. [E09] [E11]
 2. `OnCallEscalationUtilSNC` writes them only when `com.snc.on_call_rotation.log_escalations` is
-   true, which is the default. **On pdi2 it is false**, so nothing would be logged. [E26] [E27]
+   true, which is the default. **On pdi2 it is false**, so nothing would be logged. [E26] [E27] [Q03]
 3. The **Escalation Log** module shows `on_call_escalation` to `itil` and `rota_admin` [E28]; the
    read ACL lets in `sn_on_call_admin`, readers of the record and members of the group. [E29]
 4. On the incident form, `Assignment group` carries the *Track On-Call Escalation* decoration,
@@ -283,16 +285,3 @@ Notify*.
 | `com.snc.on_call_rotation.catch_all_wait_time` | redacted | wait at the catch-all level [E33] |
 | `com.snc.on_call_rotation.notification.voice.use_notify_call` | false | voice escalations don't use a Notify call [E34] |
 | `com.snc.on_call_escalation_notification_delegate_user` | false | no delegation of escalation messages [E35] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Escalation logging was switched off on pdi2. Was that intended? Do the flows still work as
-   expected without escalation records, and should it be on before any trigger rule is created?
-   [E26] [E27]
-2. The SMS text of *Assign and Notify* is a placeholder. [E10] Is it replaced at run time, or must
-   the flow be copied and corrected?
-3. Is a telephony provider (Notify with a driver) set up for SMS, calls and conference calls?
-   [E18] [E21] [E22]
-4. Should the reply rule cover problem, change and other tasks, not only incident? [E23]
-5. Accepting sets the assignee without running business rules [E24]: are assignment
-   notifications and SLAs expected to react to it?

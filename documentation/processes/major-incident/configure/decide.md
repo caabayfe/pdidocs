@@ -120,7 +120,7 @@ emails are never queued. [E11] Promotion still makes the promoter the assignee w
 the incident's current group. [E07] Set the property to the major incident team's sys_id if
 promotion should hand the incident over.
 
-## Rejection has no server-side role check {label=OPEN-QUESTION}
+## Rejection has no server-side role check
 
 Security observation: only the UI conditions require a major incident manager. The form action
 checks `canRejectMIC()` [E02] [E05], and so does the list action's visibility [E15], but the
@@ -128,5 +128,5 @@ client-callable function it calls, `MIMListActionsUtil.rejectMIC`, checks only `
 `sn_incident_write` [E06]. The workbench REST operation is open to anyone with workbench access
 [E09], and its REJECT branch sets the state with no role or state check, while its PROMOTE branch
 does check the role. [E16] So any service desk user who calls these endpoints directly can reject
-a candidate. Platform team: add a
-`major_incident_manager` check on the server, or accept the risk explicitly.
+a candidate. Whether to add a `major_incident_manager` check on the server, or accept the risk,
+is not decided yet. [Q08]

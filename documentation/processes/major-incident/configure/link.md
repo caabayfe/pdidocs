@@ -66,10 +66,10 @@ incident can't become a child, and a candidate stops being one when linked. [E08
    parent's code and notes; on comments or work notes, copies them through a flow action. [E05]
 3. **Sync Child Incident State** (after, 1000): later state changes reach active children. [E04]
 
-## Comment copies {label=OPEN-QUESTION}
+## Comment copies
 
 The copy runs the flow action *Update child incidents worknotes/comments*, which is published but
 marked inactive [E06]; copies reach only children not yet resolved [E07]. Whether copies happen
-needs a test (see the open questions).
+needs a test. [Q11]
 
 The Employee Center ticket page doesn't show the parent to the caller. [E09]

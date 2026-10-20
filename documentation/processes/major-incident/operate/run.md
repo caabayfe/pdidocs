@@ -86,7 +86,7 @@ section without those two fields. [E05]
    workspace the action is switched off. [E06]
 2. The workbench opens. It brings the response together: the **Summary**, **Communication**,
    **Participants**, **Child Incidents**, **Affected CIs** and **Impacted Services/CIs**,
-   **Create Outage**, the **Email Log**, **Activity** and **Notes**. [E02]
+   **Create Outage**, the **Email Log**, **Activity** and **Notes**. [E02] [Q10]
 
 Links in major incident emails open the classic workbench too. [E07]
 
@@ -100,7 +100,7 @@ the bridge in your usual meeting tool and post how to join in the **Work notes**
 
 - Keep **Business impact** current: it is what managers read first.
 - Log decisions and findings in **Work notes**; write to affected users in **Additional
-  comments**, which reach every linked incident (see [Link the other reports](see:link)).
+  comments**, which reach every linked incident (see [Link the other reports](see:link)). [Q11]
 - Record outages of services with **Create Outage**. An outage record emails the service's
   subscribers when it starts [E11] and appears on Employee Center's status page for those who can
   read it [E12] (see [Follow an outage](see:follow)).
@@ -109,8 +109,3 @@ the bridge in your usual meeting tool and post how to join in the **Work notes**
 
 Keep people informed with [Communicate](see:communicate), and when the fix is confirmed,
 [Resolve, demote and review](see:review).
-
-### The workbench on screen {label=OPEN-QUESTION}
-
-No major incident exists yet, so nobody has checked on screen which workbench opens and how it
-looks. Platform team: open one on a test major incident and confirm the tabs listed above.

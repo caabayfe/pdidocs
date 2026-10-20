@@ -268,7 +268,7 @@ Members who want to know what reaches them should read
 
 ## On pdi2 today {label=NEW}
 
-Nothing here is in use yet: no group has a shift [E01], there are no trigger rules [E02], and the
+Nothing here is in use yet: no group has a shift [E01], there are no trigger rules [E02] [Q02], and the
 escalation log is empty [E03]. So no on-call flow has ever run. The steps below are what to do once
 a group has a shift (see [Set up and maintain a shift](see:set-up-shift)).
 
@@ -305,7 +305,7 @@ When nobody accepts, the shift's **Catch-all** decides who hears about it [E10] 
 
 Set it in the wizard's **Escalation Setup** step or on the shift. **Catch-all wait time** is how long
 the catch-all has to answer. On pdi2 there is no instance-wide value, so it is zero unless you set
-it on the shift. [E12] [E13]
+it on the shift. [E12] [E13] [Q07]
 
 ## Change the escalation {label=NEW}
 
@@ -315,7 +315,7 @@ it on the shift. [E12] [E13]
    replaces *Edit Escalation Policy*, because Notify is installed. [E14] [E15]
 2. To go beyond the rosters, choose **Override Escalation Policy** on the shift and confirm "Are you
    sure you want to override default escalation policy with custom escalation ?". The escalation
-   designer opens. [E16] [E17]
+   designer opens. [E16] [E17] [Q23]
 3. In the designer, build **escalation sets**. Each has a **Table** and a **Condition** (for example
    only priority 1 incidents) and an order; one set is the **Default**, used when no condition
    matches. A shift must keep one default set. [E20] [E21] Conditions must be standard ones, not
@@ -348,7 +348,8 @@ user preference** on the shift makes the shift's own contact attempts win instea
 | **SMS** | reply with the message number and **ACC** | the message number and **REJ** [E31] |
 | **Voice** | press **1** | press **2** [E32] |
 
-Rejecting moves the work to the next person in the escalation. [E30] What the member sees is on
+SMS and voice need a telephony provider for Notify. [Q04] Rejecting moves the work to the next
+person in the escalation. [E30] What the member sees is on
 [When on-call work reaches you](see:respond).
 
 ## Add a trigger rule {label=NEW}
@@ -398,13 +399,3 @@ release, with the new trigger engine. [E43] [E44]
   [E13]
 - Prefer the members' own contact preferences; force a channel only when the team agrees. [E09]
   [E29]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The escalation page, the escalation designer and the trigger rule form were not opened on
-   screen; the fields follow the records. [E14] [E23] [E35]
-2. Which tables and conditions should start the on-call flows: all incidents assigned to a group
-   with a shift, or only urgent ones?
-3. Which subflow should be used, and should SMS and voice be offered? They need a telephony
-   provider for Notify, which this mirror does not show.
-4. Should a catch-all wait time be set for the instance (the property has no value)? [E13]

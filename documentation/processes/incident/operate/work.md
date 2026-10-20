@@ -172,7 +172,8 @@ If the impact or urgency changes, update them. You must add a work note explaini
 ## Add and find attachments {label=NEW}
 
 Screenshots, logs and error files belong on the incident, not in someone's mailbox. In the
-workspace, open the **Attachments** icon (the paperclip) in the record's side panel. [E11]
+workspace, open the **Attachments** icon (the paperclip) in the record's side panel. [E11] No walk has
+recorded the panel yet; it is read from the mirror. [Q89]
 
 - **Add**: choose **Add file**, or drag files onto the panel, then **Upload**. [E12]
 - **Find**: **Search attachments**, and sort by newest or oldest. [E12]
@@ -188,14 +189,15 @@ Each file also shows in the activity stream, with a preview. [E21]
 
 Limits on pdi2: a file can be up to 1024 MB [E16], and a file whose content doesn't match its
 type is refused [E17]. The panel shows the maximum size and the allowed formats when they are
-set. [E12]
+set. [E12] [Q61]
 
 Once the incident is **Closed**, the form switches attachments off: add files before it
-closes. [E22]
+closes. [E22] [Q89]
 
 **The caller sees them too.** The portal's ticket page has an **Attachments** panel: the caller
 sees every attachment on their incident, including the ones you add, and can add their own
-while they may update it. [E18] [E19] Don't attach anything the caller shouldn't read: unlike
+while they may update it. [E18] [E19] When the caller deletes a file there, the comment
+*"deleted an attachment"* is added to the incident. [E19] [Q13] Don't attach anything the caller shouldn't read: unlike
 work notes, an attachment can't be kept to the support teams. [E13]
 Emails about comments don't carry the attachments. [E20]
 
@@ -204,13 +206,3 @@ Emails about comments don't carry the attachments. [E20]
 - Update the incident when something changes, not only when you finish. A silent incident looks
   forgotten to the caller.
 - Before you put it On Hold - Awaiting Caller, ask a question the caller can actually answer.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The Attachments panel was read from the mirror only; no walk has recorded it yet. Does the
-   paperclip show a count, and does the workspace honour the closed-incident script [E22] as the
-   classic form does?
-2. Does the panel show allowed formats on pdi2? The list of allowed extensions isn't in the
-   mirror.
-3. When a caller deletes a file on the portal, a comment *"deleted an attachment"* is added
-   [E19]: do resolvers know to expect it?

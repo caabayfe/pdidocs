@@ -129,7 +129,7 @@ On pdi2 no shift exists [E19], so every page here is empty and the Sidebar resol
 3. The pages themselves check `OCCalendarUtils.canRead`: one of the roles in
    `com.snc.on_call_rotation.calendar_read_roles`. [E03] [E04] The property's value is redacted
    in the mirror; without it, the default is `itil`, `roster_admin`, `rota_admin`,
-   `rota_manager`. [E05]
+   `rota_manager`. [E05] [Q17]
 4. Changing a group's schedule needs shift-manager access for that group (`rotaMgrAccess`). [E04]
 
 ## 2. On-Call Schedules {label=NEW}
@@ -144,7 +144,7 @@ the UI script [E06]:
   `landing_page.show_pending_actions` is true. [E07]
 
 The page adds a WebRTC phone when Notify is active, and a direct message button when Slack or
-Microsoft Teams direct messages are configured. [E03]
+Microsoft Teams direct messages are configured. [E03] [Q09]
 
 ## 3. Calendars, reports and Overview {label=NEW}
 
@@ -164,13 +164,13 @@ Microsoft Teams direct messages are configured. [E03]
    nobody on call it adds nobody and posts *No members currently on-call for … group*. [E17]
 
 So a group with only a draft shift is likely to add nobody to a discussion: the resolver
-applies, but nobody is on call from a draft. The participant side of Sidebar is
+applies, but nobody is on call from a draft. [Q10] The participant side of Sidebar is
 documented in [Discuss an incident - configuration](see:incident/discuss).
 
 ## 5. On the incident form {label=NEW}
 
 The form link *On-Call Roster and Escalation details* would open who is on call for the assignment
-group. It is inactive on pdi2. [E18]
+group. It is inactive on pdi2. [E18] [Q08]
 
 ## Properties {label=NEW}
 
@@ -180,12 +180,3 @@ group. It is inactive on pdi2. [E18]
 | `com.snc.on_call_rotation.landing_page.show_pending_actions` | true | summary on On-Call Schedules [E07] |
 | `com.snc.on_call_rotation.show_legacy_calendar` | false | the legacy calendar is hidden [E10] |
 | `com.snc.on_call_rotation.reports.max_duration_in_days` | 40 | longest report period [E13] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. What does `calendar_read_roles` hold on pdi2, and does it include `oc_read`, which the menu
-   offers? [E01] [E05]
-2. Should a group with only a draft shift really swallow its members when added to a discussion,
-   or should shifts be created only when they are ready? [E17]
-3. Are Slack or Microsoft Teams direct messages wanted from the On-Call Schedules page? [E03]
-4. Should the *On-Call Roster and Escalation details* form link be activated for incidents? [E18]

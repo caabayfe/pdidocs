@@ -138,13 +138,13 @@ evidence:
 
 A reader who **flags** an article creates a **knowledge feedback task** for it, with their
 comment as its description. [E01] [E02] On pdi2 that is the only feedback that creates work: a
-*No* to *Helpful?* or a low star rating is counted but creates no task. [E03]
+*No* to *Helpful?* or a low star rating is counted but creates no task. [E03] [Q02]
 
-The task goes to the article's **author**, or to its **reviser** when someone revised it. [E04]
+The task goes to the article's **author**, or to its **reviser** when someone revised it. [E04] [Q19]
 You get *"Feedback Task … has been assigned to you"*. [E17]
 
 Gaps reported from incidents are feedback tasks too, without an article and without an assignee:
-the knowledge managers pick them up. [E04] [E15] See
+the knowledge managers pick them up. [E04] [E15] [Q05] See
 [Create and link knowledge from an incident](see:incident/share-knowledge).
 
 | Type | Comes from |
@@ -169,7 +169,7 @@ Management** lists are:
 | **My Closed Tasks** | your closed tasks |
 | **All Open Tasks** / **All Closed Tasks** | every task you may read |
 
-[E07]
+[E07] [Q37]
 
 In the **Service Operations Workspace**, the **Knowledge** lists have **Your feedback tasks** and,
 separately, **Your tasks - flagged**. [E08]
@@ -222,7 +222,7 @@ Only the reader who raised the task sees **Accept** and **Reject**. [E13]
 | **Reject** | back to Work in progress | *"… has been rejected"*: look at their comments and try again [E13] [E21] |
 
 If they do neither, the task stays **Resolved**: no job, rule or flow in the mirror closes it.
-[E13]
+[E13] [Q01]
 
 ## Who sees what
 
@@ -239,15 +239,3 @@ If they do neither, the task stays **Resolved**: no job, rule or flow in the mir
 - Resolve with **No action** when the article is right, and say why: the reader can still reject.
 - Check **My Flagged** in the Knowledge Center now and then: an article stays flagged while it
   has open flags. [E07]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The **Feedback Management** lists and a feedback task's form were not opened on screen; the
-   Knowledge Hub's cards were. [E06] [E07] Are the lists in the Knowledge Center's navigation as
-   described?
-2. Nothing closes a task the reader never accepts. [E13] Should resolved tasks close after some
-   days?
-3. Gaps reported from incidents have no assignee and send no email. [E04] [E17] Who watches
-   **All Open Tasks** for them?
-4. With KM Advanced's assignment, a revised article's feedback goes to its last reviser, not its
-   author. [E04] Is that what the knowledge base owners expect?

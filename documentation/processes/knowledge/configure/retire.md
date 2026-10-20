@@ -249,13 +249,13 @@ starts. [E07]
 1. `retireKnowledge` starts the knowledge base's retire workflow or flow (`kb_version` 3); a
    version 2 knowledge base is set to Retired directly. [E07] [E09]
 2. The legacy *Retire workflow* field is inactive, so `kb_retire_flow` is used. [E10] [E11] A new
-   knowledge base without one gets *Knowledge - Instant Retire*. [E12]
+   knowledge base without one gets *Knowledge - Instant Retire*. [E12] [Q24]
 3. The flows:
 
 | Flow | Behaviour |
 |---|---|
 | *Knowledge - Instant Retire* | no approval [E13] |
-| *Knowledge - Approval Retire* | Pending retirement, then approval; rejected, back to the previous state [E14] [E36] |
+| *Knowledge - Approval Retire* | Pending retirement, then approval; rejected, back to the previous state [E14] [E36] [Q15] |
 
 4. Approvers: the owner (if active) and managers; ownership groups are off. [E15] [E16] They get
    *KM: Approve article for publishing*, which fires for every approval on `kb_knowledge`,
@@ -268,26 +268,26 @@ starts. [E07]
 - Employee Center's *Knowledge Article Content* widget and the Knowledge Center's *Get
   Replacement Article* follow `replacement_article` to the latest accessible version, through any
   chain. [E20] [E21]
-- Without a replacement, a retired article opens only for `isAdminUser`. [E22]
+- Without a replacement, a retired article opens only for `isAdminUser`. [E22] [Q27]
 - Lists and search use `getKnowledgeEncodedQuery`: published, active, Valid to after yesterday.
   [E27]
 
 ## 5. Republish {label=NEW}
 
 *Republish* (classic and Knowledge Center) is offered on the latest retired version to
-`isAdminUser`; the Knowledge Center's needs the enhanced editor too. [E23] It sets the other
+`isAdminUser`; the Knowledge Center's needs the enhanced editor too. [E23] [Q27] It sets the other
 retired versions to Outdated and this one to Published. [E08] *Update Replacement Article
 References* clears the replacement. [E19]
 
 ## 6. Valid to and expiry {label=NEW}
 
-- Default: today plus the knowledge base's `article_validity` days, else 2100-01-01. [E24] It is
+- Default: today plus the knowledge base's `article_validity` days, else 2100-01-01. [E24] [Q16] It is
   recalculated when the article's knowledge base changes. [E25] A UI policy guards zero or
   negative validity on the knowledge base. [E26]
 - Lists: *Expiring Articles* (next 90 days) and *Retired* in the Knowledge Center's Articles
   group. [E28] [E29]
 - The monthly job runs on day 1 but does nothing while the property is false; the email
-  *Knowledge articles expiring next month* is active but never queued. [E30] [E31] [E32] [E33]
+  *Knowledge articles expiring next month* is active but never queued. [E30] [E31] [E32] [E33] [Q09]
 - The classic form shows the *Retired* date only once it is filled. [E35]
 
 ## Properties {label=NEW}
@@ -298,14 +298,3 @@ References* clears the replacement. [E19]
 | `glide.knowman.versioning.enabled` | true | retire rules of `KBVersioning`; all versions retired together [E34] |
 | `glide.knowman.ownership_group.enabled` | false | approvers are owner and managers [E16] |
 | `glide.knowman.enable_article_expiry_notification` | false | no expiry emails [E33] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Which `kb_retire_flow` does each knowledge base use? The knowledge base records are not in the
-   mirror; a knowledge base created without one gets *Instant Retire*. [E12]
-2. `isAdminUser` (opening retired articles, Republish) is a platform check: does it include the
-   knowledge base's owner and managers, or only `admin` and `knowledge_admin`? [E22] [E23]
-3. Should `glide.knowman.enable_article_expiry_notification` be switched on? The job and email
-   are ready. [E30] [E32]
-4. Should any knowledge base set an *Article Validity*, so that articles come up for review
-   instead of being valid until 2100? [E24]

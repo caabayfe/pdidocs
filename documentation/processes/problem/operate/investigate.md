@@ -119,7 +119,9 @@ evidence:
     how: opened a problem in the workspace by its address, read-only
     result: header Save; More actions › Create Outage, Delete; Related records › Affected CIs, Problem Tasks, Change Requests, Outages, Attached Knowledge
 ---
-All of this happens on the **classic problem form**.
+All of this happens on the **classic problem form**. A problem opened in the Service Operations
+Workspace by its address shows only **Save**, **More actions › Create Outage, Delete** and its
+related records [E21]; whether problems are to be worked there is not decided yet. [Q01]
 
 ## Assess
 
@@ -136,7 +138,7 @@ All of this happens on the **classic problem form**.
 To take a problem or a problem task without opening it, use the list.
 
 1. Open the classic **Problems** list (or the **Problem Tasks** list).
-2. Right-click the row and choose **Assign to me**. It works on one row at a time. [E16] [E17]
+2. Right-click the row and choose **Assign to me**. It works on one row at a time. [E16] [E17] [Q11]
 
 You are put in **Assigned to** and the record is saved. [E16] A **New** problem then moves to
 **Assess**. [E18]
@@ -184,12 +186,3 @@ completed or canceled"*. [E08] [E15] Then share the
 workaround ([Share a workaround and known error](see:workaround)) and plan the fix
 ([Fix and resolve](see:fix)).
 
-## Not yet seen {label=OPEN-QUESTION}
-
-1. **Assign to me** in the right-click menu of the problem and problem task lists was not opened
-   on screen; the steps follow the UI actions. [E16] [E17] Is it in the menu as described?
-2. On 2026-10-19 a problem was opened in the Service Operations Workspace by its address: it
-   showed **Save**, **More actions › Create Outage, Delete** and the related records **Affected
-   CIs**, **Problem Tasks**, **Change Requests**, **Outages** and **Attached Knowledge**. [E21]
-   This is only what was seen, not a way of working this page describes: should problems be
-   worked in the workspace, and so be documented there?

@@ -300,7 +300,7 @@ In execution order:
 
 1. **Header.** The layout *Incident* has a **Create** menu [E07] built from the group *Create*,
    which lists two *Create knowledge* form actions and *Edit knowledge*. [E06] One is the
-   declarative action [E03]; the other is the UI action [E04], which is inactive. [E05]
+   declarative action [E03]; the other is the UI action [E04], which is inactive. [E05] [Q50]
 2. **Who and when.** The declarative action requires `itil` or `sn_incident_write` [E01] and
    `canCreateKnowledgeArticle` [E08]:
 
@@ -309,7 +309,7 @@ In execution order:
    | state in `com.snc.incident.create_knowledge.multistate.enable` | the property is not in the mirror, so the default `6,7`: Resolved and Closed [E08] |
    | no article with *Source task* = the incident | one article per incident [E08] [E19] |
    | KCS active → `KBKnowledge.canCreate` | not used: KCS is inactive |
-   | submission workflow off → contributor right on `glide.knowman.task_kb` | applies: the workflow is off [E10]; the knowledge base is redacted in the mirror [E09] |
+   | submission workflow off → contributor right on `glide.knowman.task_kb` | applies: the workflow is off [E10]; the knowledge base is redacted in the mirror [E09] [Q10] |
 
 3. **Interceptor.** The action opens the route `kb_interceptor` with
    `source/incident/source-id/<sys_id>` [E01] [E02]: Knowledge Center's *Create new article*
@@ -320,7 +320,7 @@ In execution order:
 5. **Next.** The page closes and opens a new record of the chosen template table, or
    `kb_knowledge`. [E17] Its values come from the table map between incident and the target
    table, when a target is passed [E15]; the map *Incident Standard Article* is active, but its
-   field maps are not in the mirror. [E16]
+   field maps are not in the mirror. [E16] [Q84]
 6. **The article** starts in workflow state *draft*. [E18] Publishing follows the knowledge
    base's workflow, outside incident management.
 
@@ -358,20 +358,20 @@ The global UI action of the same name is the Agent Workspace version. [E27]
 | Write | the assignee, the opener, elevated users [E30] |
 | Elevated | knowledge admins; `knowledge_manager`, `knowledge_domain_expert` for tasks with a parent [E31] |
 | Turn into an article | *Create Article* on the feedback task, for its assignee or an elevated user [E36] |
-| Notify | nothing: *KM Feedback Task: Created* needs an article [E33], and the reassignment rule skips tasks with a parent [E34] [E35] |
+| Notify | nothing: *KM Feedback Task: Created* needs an article [E33], and the reassignment rule skips tasks with a parent [E34] [E35] [Q11] |
 
 ## 4. Knowledge at closure (classic form) {label=NEW}
 
 The business rule *Incident Create Knowledge* creates a draft article in `glide.knowman.task_kb`
 when an incident changes to Closed with **Knowledge** ticked, text from the additional comments.
 [E37] The field defaults to false [E38] and isn't on the workspace Resolution section [E39], so it
-works only where the classic form shows it.
+works only where the classic form shows it. [Q32]
 
 ## 5. Attaching articles {label=NEW}
 
 | Where | Records | Effect |
 |---|---|---|
-| Agent Assist, knowledge and pinned results | `cxs_ui_action_config` *Attach* on *Agent Assist [incident]* [E44] [E45] [E46] | `m2m_kb_task` row, a link in **Additional comments** (`attach_note_field` comments, `embed_link`) |
+| Agent Assist, knowledge and pinned results | `cxs_ui_action_config` *Attach* on *Agent Assist [incident]* [E44] [E45] [E46] | `m2m_kb_task` row, a link in **Additional comments** (`attach_note_field` comments, `embed_link`) [Q12] |
 | Recommendations | mapping in *Incident context* → *Attach and share article* [E47] [E48] | Attach; Attach and add link in comment; Add link in worknote |
 
 On `m2m_kb_task` (*Knowledge Applied to Tasks*) [E41]: attaching a known error article from a
@@ -398,19 +398,3 @@ The workspace form lists [E40]:
 | `com.snc.incident.create_knowledge.multistate.enable` | not in the mirror (default 6,7) | states that offer Create and Edit [E08] |
 | `sn_sow_inc.enable_kb_template` | false | only the inactive UI action [E11] |
 | `glide.knowman.versioning.enabled` | true | article versioning [E51] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Which knowledge base is `glide.knowman.task_kb`, and who may contribute to it? That decides who
-   sees Create Knowledge. [E08] [E09]
-2. Does the interceptor pass a target table, so that *Incident Standard Article* fills the
-   article and sets its *Source task*? Without the source, Edit knowledge never appears and Create
-   Knowledge stays offered. [E15] [E16] [E17]
-3. Who picks up reported gaps? Nothing assigns or notifies; should an assignment rule or a
-   notification be added for feedback tasks from incidents? [E33] [E34]
-4. Should Agent Assist's Attach post to Additional comments (caller-visible) or the work notes?
-   [E45]
-5. Is the classic-form Knowledge tick box still wanted, now that the workspace has Create
-   Knowledge? [E37] [E39]
-6. Should the inactive UI action *Create Knowledge* and its form action be removed from the
-   Create group? [E04] [E05]

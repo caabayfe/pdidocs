@@ -48,7 +48,7 @@ evidence:
 
 Query restriction for non-agents: they see only incidents they are the caller of, opened, or
 watch. [E01] Self-Service menu modules. [E02] The self-service form
-view has comments but no work notes. [E03] The portal ticket page and its actions. [E04]
+view has comments but no work notes. [E03] The portal ticket page and its actions. [E04] [Q76]
 
 ### Roles that see every incident
 
@@ -73,10 +73,4 @@ applies only to interactive sessions; integrations and scripts aren't filtered b
 | Comment while Awaiting Caller | state back to In Progress | [E05] |
 | Any comment by support | caller emailed | [E06] |
 | Caller resolves | close code *Resolved by caller* | [E08] |
-| Incident closed | smiley survey to the caller | [E07] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Exact Employee Center labels (*My Requests* or *My Tickets*) are not in the mirror.
-2. The survey condition is named *ITSM Demo Survey*: confirm it is meant to stay active in
-   production.
+| Incident closed | smiley survey to the caller | [E07] [Q03] |

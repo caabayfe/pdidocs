@@ -26,11 +26,11 @@ evidence:
 ---
 ## Health
 
-All five score jobs are inactive [E01]: no health scores are calculated.
+All five score jobs are inactive [E01]: no health scores are calculated. [Q03]
 
-## Where CIs come from {label=OPEN-QUESTION}
+## Where CIs come from
 
 Discovery and Service Graph connectors aren't installed, so nothing discovers CIs: they come from
 manual entry, demo data, assets and imports such as the *Computer* transform map. [E04]
 Identification uses the standard rules, such as the Hardware Rule [E02]; multisource is off. [E03]
-How will the CMDB be kept current?
+How the CMDB will be kept current is not decided yet. [Q04]

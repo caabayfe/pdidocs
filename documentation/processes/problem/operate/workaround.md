@@ -77,9 +77,9 @@ Keep the workaround current while the cause is worked on; when the fix is ready,
 [Fix and resolve](see:fix). Attaching the article to other incidents links them to this problem
 (see [Link incidents to a problem](see:link)).
 
-### Which knowledge base, and who reads it {label=OPEN-QUESTION}
+### Which knowledge base
 
 Known error articles go to the knowledge base named in `problem.knowledgebase.known_error_article`,
-whose value only problem managers can read. [E07] Platform team: confirm which knowledge base it
-is and whether its user criteria let employees find known errors in Employee Center. If they do,
-employees could be pointed to them while they wait.
+whose value only problem managers can read. [E07] Which knowledge base that is, and whether
+employees can find known errors in Employee Center, is not known yet. [Q13] If they can, employees
+could be pointed to them while they wait.

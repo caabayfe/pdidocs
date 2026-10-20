@@ -86,11 +86,11 @@ Until then, call or invite the group's members as you normally would.
 
 ## Where to look {label=NEW}
 
-Everything is in the classic interface, under **On-Call Scheduling** in the navigator.
+Everything is in the classic interface, under **On-Call Scheduling** in the navigator. [Q20]
 
 | Module | Shows | Who sees it |
 |---|---|---|
-| **On-Call Schedules** | a card per group: who is on call now, and the shift's escalation [E02] [E05] | anyone with a calendar-read role, such as `itil` [E03] [E04] |
+| **On-Call Schedules** | a card per group: who is on call now, and the shift's escalation [E02] [E05] | anyone with a calendar-read role, such as `itil` [E03] [E04] [Q17] |
 | **On-Call Calendars** | each group's shifts, rosters and time off on a calendar [E06] | the same [E04] |
 | **Schedule Report** | who is on call over a period, for the groups you pick [E07] [E08] | the same |
 | **Overview** | the on-call dashboard: gaps, conflicts and pending actions [E09] | `itil` and `rota_admin` [E09] |
@@ -112,7 +112,7 @@ Everything is in the classic interface, under **On-Call Scheduling** in the navi
 
 3. Search by **Group / Schedule**. [E02] [E05]
 4. Each card shows who is on call now, or *Nobody is On-Call now*. When nobody is on call yet
-   today, it says *On-Call Members will be available today from:* and the time. [E05]
+   today, it says *On-Call Members will be available today from:* and the time. [E05] [Q21]
 5. Open the person to see their **title**, **email**, **contact number** and **manager**. [E05]
 6. **Show escalation details** gives the order in which people would be contacted. [E05]
 
@@ -138,15 +138,4 @@ discussion is in [Discuss an incident with colleagues](see:incident/discuss).
   call. [E05]
 - A major incident manager can pin the groups that major incidents usually need. [E05]
 - The *On-Call Roster and Escalation details* link on the incident form is switched off on pdi2;
-  use **On-Call Schedules** instead. [E12]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. No card has been seen with someone on call: what exactly a card shows, and whether **Send a
-   direct message** (Slack or Microsoft Teams) appears on pdi2, can only be checked once a group
-   has a shift. [E05]
-2. The **On-Call Calendars**, **Schedule Report**, **Overview** and **Escalations Report** pages
-   were not opened on the walk.
-3. Which roles may read the calendars on pdi2? The property that lists them exists, but its value
-   isn't in the mirror. [E04]
-4. Should the incident form's *On-Call Roster and Escalation details* link be switched on? [E12]
+  use **On-Call Schedules** instead. [E12] [Q08]

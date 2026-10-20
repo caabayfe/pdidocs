@@ -114,11 +114,11 @@ evidence:
     result: puts in the scratchpad whether com.glide.domain.msp_extensions.installer is active; the client script Hide Domain Separation Attributes hides the form section domain_separationattributes when it isn't
     hash: 4899123186f298a6f19a0b457becb69af582f01b4c7c626c42236be642b0f3ae
 ---
-## Who can edit CIs {label=OPEN-QUESTION}
+## Who can edit CIs
 
 Anyone with `itil` can create, edit and delete CIs [E01] [E02]. The platform offers a job that
-moves those rights to the CMDB roles [E03]; it hasn't been run. Should the service desk keep
-editing CIs?
+moves those rights to the CMDB roles [E03]; it hasn't been run. Whether the service desk keeps
+editing CIs is not decided yet. [Q01]
 
 ## Data owners
 
@@ -137,7 +137,9 @@ The CMDB Workspace has two ways to show a CI:
 `sn_cmdb_ws.explore_ci.record.enabled` is true [E05], so every link to a CI resolves to the CI page
 [E06], and the record page redirects any saved CI there. [E07] The four form buttons are limited to
 the `cmdb_browse` view [E17], so on pdi2 they show nowhere for a saved CI: not on services, not on
-any other class.
+any other class. [Q02] The CI page's header has no declarative action bar [E08]; whether to add
+**Create incident** and **Create change** to it is not decided yet. [Q06] A new CI stays on the
+form [E07], where they would open a ticket for an unsaved CI. [Q07]
 
 | Button | Condition | Would do |
 |---|---|---|
@@ -149,15 +151,3 @@ any other class.
 On a business process, `sn_cmdb_pg_templts` also swaps the global **Open Dependency View** for its
 own in the `workspace` view. [E19] Its domain separation script hides the domain section of the
 form when domain separation extensions aren't installed. [E20]
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Keep the CI page? Turning `sn_cmdb_ws.explore_ci.record.enabled` off (`sn_cmdb_admin`) brings
-   back the form and its **Create incident** and **Create change**, and loses the CI page's
-   sections. [E05]
-2. If the CI page stays, should **Create incident** and **Create change** be added to its header?
-   It has no declarative action bar today. [E08]
-3. **Create incident** and **Create change** are also allowed on a **new** CI's form, the only
-   case that stays on the form [E07] [E13] [E14]; there they would open a ticket for an unsaved
-   CI. Should they be hidden on new records?
-

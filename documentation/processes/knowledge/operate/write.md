@@ -126,7 +126,7 @@ article counts, and the cards **Your articles** and **Your approvals**. [E01]
 
 You need the `knowledge`, `knowledge_manager` or `knowledge_admin` role to open it. [E02] To
 create an article you must also be allowed to contribute to at least one active knowledge base;
-each knowledge base decides who may. [E08]
+each knowledge base decides who may. [E08] [Q26]
 
 pdi2 has four knowledge bases: **IT**, **KCS Knowledge Base (demo data)**, **Knowledge** and
 **Known Error**. [E01]
@@ -137,7 +137,7 @@ pdi2 has four knowledge bases: **IT**, **KCS Knowledge Base (demo data)**, **Kno
 
 1. In the Knowledge Center, choose **Create an article**. [E01]
 2. A page asks *"What type of article do you want to create?"*. Choose the **Knowledge Base**
-   and the **Article Template**. [E03] [E04]
+   and the **Article Template**. [E03] [E04] [Q41]
 3. Choose **Create Article**. The article opens in the editor. [E04]
 4. Fill in the **short description** (the title readers search for) and the body. Choose a
    **category** of that knowledge base.
@@ -155,7 +155,7 @@ templates are off. [E05]
 
 | You are writing | Choose |
 |---|---|
-| a known problem with a workaround | **Known Error article** |
+| a known problem with a workaround | **Known Error article** [Q18] |
 | anything else | the standard article (no template) |
 
 The template chooser appears because at least one template is active; if none were, you would go
@@ -185,7 +185,7 @@ The redirect only works through the Knowledge launchers (`knowledge_create.do` a
 that uses it), and only for people with a knowledge role. [E15] [E16] Opening the article
 form by its address stays on the classic form, with **Submit** and **Search for Duplicates** in
 the header and **Knowledge base** and **Short description** mandatory. [E18] Use the Knowledge
-Center instead, so that you get the template chooser and the same actions as everyone else.
+Center instead, so that you get the template chooser and the same actions as everyone else. [Q11]
 
 ## Tips
 
@@ -196,14 +196,3 @@ Center instead, so that you get the template chooser and the same actions as eve
   [Create and link knowledge from an incident](see:incident/share-knowledge).
 - An article saved without a knowledge base goes to a default one; always choose it yourself.
   [E11]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The create page, the template chooser and the editor were not opened on screen; the steps
-   follow the route and the component's labels. [E03] [E04] Does **Create an article** open the
-   chooser with these fields on pdi2?
-2. Who may contribute to each of the four knowledge bases? Their user criteria are not in the
-   mirror.
-3. Is the Known Error template meant for problem management only, or for any author?
-4. Should the classic **Create New** module and bookmarks to `kb_knowledge.do` be removed, so
-   authors only use the Knowledge Center? [E18]

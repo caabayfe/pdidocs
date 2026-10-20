@@ -54,9 +54,9 @@ or call in the Service Operations Workspace.
 2. Press **Create request** (roles *itil* or *sn_request_write*; not on a closed incident). [E01]
    [E02] The incident or interaction is saved first. [E05] [E06]
 3. The catalog opens with the record as the request's parent. [E05] [E06] Choose the item.
-4. Check who it's for: *Create request* doesn't pass the caller [E05] [E06], and nobody can change
-   *Requested for* at checkout on pdi2. [E03] Prefer items that ask **Requested for** as a question
-   and set the caller there.
+4. Check who it's for: *Create request* doesn't pass the caller [E05] [E06] [Q16], and nobody
+   can change *Requested for* at checkout on pdi2. [E03] [Q01] Prefer items that ask **Requested
+   for** as a question and set the caller there.
 5. Order it. The request links back to the interaction it came from. [E04]
 
 ## What happens next
@@ -71,10 +71,3 @@ work](see:incident/escalate)).
 - Is it really new? If something that worked is broken, keep it an incident (see [Escalate and link
   related work](see:incident/escalate)).
 - Tell the caller the REQ number, so they can follow it in **My Requests**.
-
-## Who it's for {label=OPEN-QUESTION}
-
-*Create request* passes only the parent record, not the caller [E05] [E06], and *Requested for*
-can't be changed at checkout [E03]. Whether the workspace catalog fills *Requested for* from the
-parent's caller isn't in the mirror: order a test item from an incident and check who the request
-is for.

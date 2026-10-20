@@ -95,6 +95,9 @@ evidence:
 | *Closed* in the state list | `itil_admin` only | [E03] |
 | Reopen | Resolved, not an accepted major incident; `itil`, `sn_incident_write`, the caller or the opener | [E04] [E02] |
 
+So resolvers with `itil` can resolve and reopen another caller's incident but not close it; that's
+deliberate in the platform. [Q18]
+
 ## Effects
 
 | Event | Effect | Record |
@@ -122,8 +125,3 @@ unknown.
 | Delete | denied unless the user is authenticated | [E14] |
 
 Nobody with only `itil` can delete an incident: resolve it as *Duplicate* instead.
-
-## Finding {label=OPEN-QUESTION}
-
-Resolvers with `itil` can resolve and reopen but not close another caller's incident. That's
-deliberate in the platform. Confirm it matches how the service desk expects to work.

@@ -183,6 +183,8 @@ The incident's side panel has two icons that look for help with the incident for
 Neither uses Predictive Intelligence (machine learning) on pdi2: no trained model ranks or
 suggests anything in either panel. The configuration page explains why.
 
+The panels themselves weren't opened on screen; only their icons were seen. [E01] [Q69]
+
 ## Search with Agent Assist {label=NEW}
 
 {{animation:incassist}}
@@ -191,7 +193,7 @@ suggests anything in either panel. The configuration page explains why.
    panel. [E04] Agent Assist isn't offered on resolved or closed incidents. [E05]
 2. Agent Assist searches with the incident's **Short description**. [E06] If that finds nothing
    useful, change the words in the search box; a search needs at least three characters. [E24]
-3. Choose a source in the selector [E05] [E07]:
+3. Choose a source in the selector [E05] [E07] [Q69]:
 
    | Source | Searches |
    |---|---|
@@ -211,14 +213,14 @@ find what you’re looking for." [E13]
 
 | Result | Action | What happens |
 |---|---|---|
-| Knowledge article | **Attach** | a link to the article goes into the incident's **Additional comments**, which the caller sees; the result is marked *Attached*, and **Unattach** takes it back [E15] [E13] |
+| Knowledge article | **Attach** | a link to the article goes into the incident's **Additional comments**, which the caller sees; the result is marked *Attached*, and **Unattach** takes it back [E15] [E13] [Q12] [Q70] |
 | Knowledge article | **Flag Article** | asks "Please provide a comment:" and flags the article for its owners; only where the knowledge base accepts suggestions [E16] [E13] |
 | Any result | **Helpful** | records that the result helped; **Not Helpful** undoes it [E17] |
 | Any result | **Full View** / **View Full** | opens the record in a workspace tab [E14] |
 | Open, recent or resolved incident | **Link to Incident** | after you confirm "You are linking the current … as a child to …", the result becomes your incident's **Parent incident** [E13] [E19] |
 | Open, recent or resolved incident | **Copy Resolution** | "You are applying the resolution code and notes from … to …": fills **Resolution code** and **Resolution notes** on your form [E13] [E20] |
 | Outage | **Link to Incident** | a *Link to incident* dialog, with optional work notes and additional comments, then links the outage to your incident [E21] |
-| Catalog item | **Order** (or **Request**, **Submit**) | starts the item's request [E23] |
+| Catalog item | **Order** (or **Request**, **Submit**) | starts the item's request [E23] [Q72] |
 
 **Link to Incident** appears only while your incident has no parent, and never between major
 incidents. [E18] Linking an outage needs `itil` or `sn_incident_write`, and the action disappears
@@ -234,7 +236,7 @@ For incidents it is shown to `itil` and `sn_incident_write`. [E25] [E26]
 
 On pdi2 the list stays empty. The only active recommendation for incidents is *AI Search
 Recommendation* [E27], which needs AI Search [E28], and AI Search is switched off. [E29] Expect
-"No active recommendations" or "No recommendations to show". [E30] Use **Agent Assist** instead.
+"No active recommendations" or "No recommendations to show". [E30] Use **Agent Assist** instead. [Q04]
 
 ## Tips
 
@@ -244,17 +246,4 @@ Recommendation* [E27], which needs AI Search [E28], and AI Search is switched of
 - Check what **Copy Resolution** put in the resolution fields before you resolve: it copies
   another incident's words. [E13] Then save the incident.
 - **Attach** writes to Additional comments, which the caller reads. Use it only for articles the
-  caller can follow. [E15]
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The Agent Assist and Recommendations panels were not opened on screen; only their icons were
-   seen. [E01] Does the source selector show these five sources, does the search start on its
-   own when the panel opens, and what does the panel show on a resolved incident? [E05]
-2. Does **Attach** save the incident at once, so the caller is told, or must the agent save the
-   form? The component can do either. [E14]
-3. What does **Order** do from an incident: does it open the item for the caller, and is the new
-   request linked to the incident?
-4. Is the Recommendations panel expected to stay empty, or should AI Search be switched on?
-5. Can callers read the attached articles? Knowledge access depends on each article's user
-   criteria, which the mirror doesn't show.
+  caller can follow. [E15] [Q66]

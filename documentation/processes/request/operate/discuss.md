@@ -110,7 +110,7 @@ outcome in the **Work notes** of the task or item.
    requested item for the item, the request for the whole order. A discussion belongs to that
    one record. [E06]
 2. Open **Collaborate** in the side panel, choose **+**, then **Start Sidebar discussion**. [E01]
-   [E03] [E04] [E05] Or use the **Sidebar discussions** icon in the header and **+ New
+   [E03] [E04] [E05] [Q15] Or use the **Sidebar discussions** icon in the header and **+ New
    discussion**. [E02]
 3. Check the **Subject**: it starts as the record's short description. [E02]
 4. **Add participants** who can open the record. [E02] On a **request** the suggestions are its
@@ -125,9 +125,9 @@ outcome in the **Work notes** of the task or item.
 | Suggested participants | caller, assignee, on-call person [E07] | request: Opened by, Requested for, Assigned to and the on-call person; item and task: none [E07] |
 | Adding a group with on-call shifts | adds only who is on call [E08] | adds the whole group [E08] |
 | The person it's for | the caller can be added [E09] | can be added too [E09] |
-| Emails to that person | when added, and a daily digest of unread messages [E10] | **none**: no requester is set up for these tables [E10] [E11] |
+| Emails to that person | when added, and a daily digest of unread messages [E10] | **none**: no requester is set up for these tables [E10] [E11] [Q03] |
 | Mentions | push notification on the mobile app [E12] | the same [E12] |
-| Collaborate panel's chats | `itil` or `sn_incident_write` [E13] | `itil`; `sn_request_write` alone doesn't load them [E13] |
+| Collaborate panel's chats | `itil` or `sn_incident_write` [E13] | `itil`; `sn_request_write` alone doesn't load them [E13] [Q02] |
 
 ## Who can read it {label=NEW}
 
@@ -142,13 +142,3 @@ write in them. [E14] [E15] The person an item is for may be able to open it, so 
 - Start the discussion on the catalog task when it's about the work, so the team that owns the
   task finds it under **This record**. [E02] [E06]
 - Put the decision in the work notes, where the next team will look.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Only the **Collaborate** icon of a requested item was seen. [E01] The header's **Sidebar
-   discussions** icon, and Collaborate on requests and catalog tasks, weren't opened on screen.
-   Is Sidebar switched on for these tables on pdi2?
-2. Do fulfillers have `itil`, or only `sn_request_write`? With only the second, the Collaborate
-   panel can't load its chats. [E13]
-3. Should the person an order is for be emailed when added to a discussion, as callers are? It
-   needs a requester mapping for `sc_req_item` (Requested for). [E10]

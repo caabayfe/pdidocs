@@ -200,7 +200,8 @@ Incident** sets the state to canceled with the reason in the work notes. [E02]
 
 The classic section shows for resolved or closed accepted major incidents [E03]; the timeline is
 generated once on resolution [E04]. In the workspace, a draft review record [E06] is created on
-resolution [E05], to be published within the configured 24 hours. [E07]
+resolution [E05], to be published within the configured 24 hours. [E07] Whether both reviews
+stay is not decided yet. [Q01]
 
 ## The workspace review, in execution order {label=NEW}
 
@@ -238,7 +239,7 @@ milestones shown. [E16] [E13] Changing the defaults affects only reviews created
 date, time and time zone in that setting are not read by this code. [E13]
 
 The incident task query is limited to **one row**, so only one task of the major incident reaches
-the timeline. [E13] This looks like a defect in the base code; report it rather than change it.
+the timeline. [E13] [Q15] This looks like a defect in the base code; report it rather than change it.
 
 ## Who can do what {label=NEW}
 
@@ -247,9 +248,9 @@ before writing. [E18]
 
 | User | Rights |
 |---|---|
-| `major_incident_manager`, the incident's assignee, a co-author | all: summary, related records, custom events, timeline, preview and download, publish, deadline banner; co-authors only if they can read `sys_user_has_role` [E17] |
+| `major_incident_manager`, the incident's assignee, a co-author | all: summary, related records, custom events, timeline, preview and download, publish, deadline banner; co-authors only if they can read `sys_user_has_role` [E17] [Q16] |
 | can write the incident | timeline settings, preview and download [E17] |
-| can read the incident | timeline settings [E17] |
+| can read the incident | timeline settings [E17] [Q04] |
 
 The brokers write with `GlideRecord`, so the table's ACLs don't limit them. [E18] Those ACLs
 still govern the record in lists, forms and the API:
@@ -268,34 +269,20 @@ still govern the record in lists, forms and the API:
 
 Candidates are active users with `itil`, or `sn_incident_write` when the ITSM roles plugin is
 active, labelled with their responsibility from the major incident's communication plan
-contacts. [E26] `co_authors` references users. [E27]
+contacts. [E26] [Q17] `co_authors` references users. [E27]
 
 Read as written, the candidate list identifies users by user name and the save stores what it is
 given, and the save reports *"Failed to Save Co-authors"* unless the update returns the
 incident's sys_id, which an update of the review never does. [E26] Check on screen that co-authors
-are saved and then get their rights before relying on them.
+are saved and then get their rights before relying on them. [Q09]
 
 ## Deadline and preview {label=NEW}
 
 `sn_sow_inc.pir.publish.hours` (24 on pdi2 [E07]; read and write role `incident_manager` [E33])
 sets **publish by** = resolution time + the hours. Up to 72 hours it is shown in hours, beyond in
 days; empty or 0 removes the deadline. The banner turns to warning after 70 % and critical at
-100 %. [E28] Only the banner tells: no notification, job or flow watches the deadline. [E34]
+100 %. [E28] Only the banner tells: no notification, job or flow watches the deadline. [E34] [Q02]
 
 **Preview** opens the page named in `sn_sow_inc.pir_pdf_preview_sow_page` (value redacted in the
 mirror) in an iframe [E29] [E32]; the UI page `post_incident_report` renders the report, shows the
 timeline only when *Show timeline events in final report* is on, and exports the PDF. [E30]
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Is the ITSM roles plugin (`com.snc.itsm.roles`) active? It decides whether co-author
-   candidates and editors are `itil` or `sn_incident_write` users.
-2. Can co-authors be saved, and does the save confirm it (see Co-authors above)?
-3. Can the people who should add co-authors read `sys_user_has_role`?
-4. Should every user who can read a major incident be able to change its review's timeline
-   settings?
-5. Should a reminder (notification or flow) watch the publish deadline?
-6. Should the classic *Post Incident Report* section and the workspace review both stay, or one
-   be retired?
-7. Does only one incident task reaching the timeline match what the team sees?
-

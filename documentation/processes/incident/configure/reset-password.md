@@ -188,7 +188,7 @@ When the tab loads, `PwdResetUXFMainProcessor.canAccess` asks the
 
 From an interaction, the processor inserts an incident (category *password_reset*) and links it
 to the interaction. It sets that incident's caller to the interaction's **assigned_to**, the
-agent, not the person locked out. [E08] Check this before using it from interactions.
+agent, not the person locked out. [E08] Check this before using it from interactions. [Q51]
 
 ## 2. The steps, by processor {label=NEW}
 
@@ -211,7 +211,7 @@ unlock, a new reset waits 1440 minutes. [E29]
 | Employee Self-Service, Demo 1 and 2 | no | no: public [E20] |
 
 So **no process can be chosen on the Identify page**: the feature is installed but not usable.
-[E10] [E16]
+[E10] [E16] [Q02] [Q81]
 
 If the service-desk process is activated as it stands, it [E16] [E17] [E18] [E21]:
 
@@ -229,7 +229,8 @@ If the service-desk process is activated as it stands, it [E16] [E17] [E18] [E21
 | `password_reset_credential_manager` | contains the service desk role [E24] |
 | `password_reset_admin` | contains both, and SOW admin centre access [E24] [E25] |
 
-`itil` doesn't contain the service desk role [E24]: agents must be given it explicitly. The
+`itil` doesn't contain the service desk role [E24]: agents must be given it explicitly. Role
+grants aren't in the mirror. [Q58] The
 guided tours are shown to the same roles. [E30]
 
 ## 5. Switching it on {label=NEW}
@@ -238,17 +239,8 @@ The admin centre page *Service Desk Assisted Password Reset* lists what to revie
 credential stores, verifications, process mapping, UXF routes mapping, password policies, session
 properties and agents. [E26] For pdi2 that means at least:
 
-1. decide on the verifications: one email-address check is weak proof of identity [E17];
+1. decide on the verifications: one email-address check is weak proof of identity [E17] [Q38];
 2. decide whether the password is emailed (`send_email`) or only read out (`display_password`)
-   [E16];
+   [E16] [Q39];
 3. activate the service-desk process;
 4. give the agents `password_reset_service_desk`.
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. Does the process owner want service-desk password resets on pdi2? Today it is off. [E16]
-2. Who holds `password_reset_service_desk`? Role grants are not in the mirror.
-3. Is the caller set to the agent on incidents created from an interaction a known product issue,
-   or is a customisation expected? [E08]
-4. The Reset password tab was not opened on screen; with no active process, what does the
-   Identify page show?

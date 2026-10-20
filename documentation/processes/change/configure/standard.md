@@ -41,7 +41,7 @@ in the main configuration. [E01] Inactive templates can't be used [E03]; who see
 by user criteria. [E05] Proposals are approved by the **Change Management** group, through
 *Change - Standard - Proposal*. [E06]
 
-## An automated-test template {label=OPEN-QUESTION}
+## An automated-test template
 
-*Replace printer toner* comes from the change ATF scope and shows to requesters. [E04] Retire it or
-hide it with user criteria.
+*Replace printer toner* comes from the change ATF scope and shows to requesters. [E04] Whether to
+retire it or hide it with user criteria is not decided yet. [Q07]

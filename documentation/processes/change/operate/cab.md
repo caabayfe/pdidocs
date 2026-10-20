@@ -61,7 +61,7 @@ A **CAB definition** says which changes go to a board's meetings and who sits on
 **Network CAB**, for normal and emergency changes with category *Network* and risk *Moderate* or
 higher. [E04] Every other change that needs CAB approval (a moderate-risk server change, for
 example) gets the approval from the **CAB Approval** definition and is decided in **Approvals ›
-My approvals**, without a meeting [E10] (see [Who approves](see:approvals)). Its meetings are run by a **CAB manager** [E05];
+My approvals**, without a meeting [E10] [Q01] (see [Who approves](see:approvals)). Its meetings are run by a **CAB manager** [E05];
 members are the board's people and groups, not a role.
 
 ## Before the meeting
@@ -77,14 +77,11 @@ lists the ones you are on. [E09] For each change on the
 agenda the board can **Approve** or **Reject**, or move on with **Next**, **Pause** or **Demote**.
 [E03] When the change's approval becomes approved or rejected, its agenda item's decision and the
 meeting notes follow. [E07] On pdi2 the meeting link opens the
-workspace's CAB meeting page. [E08]
+workspace's CAB meeting page. [E08] pdi2 has no CAB meeting yet, so the meeting pages haven't
+been checked on screen. [Q30]
 
 ## Tips
 
 - Set the change's **Category** to *Network* when it is network work: only then is it put on the
   Network CAB's agenda. [E04]
 - Members who can't attend answer the invitation with *Decline*, so the CAB manager knows. [E06]
-
-### Not yet seen {label=OPEN-QUESTION}
-
-pdi2 has no CAB meeting yet, so the meeting pages haven't been checked on screen.

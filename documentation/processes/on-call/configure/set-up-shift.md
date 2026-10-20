@@ -330,7 +330,7 @@ Shifts, rosters and members are the core of the **On-Call Scheduling** plugin
 (`com.snc.on_call_rotation`, scope `global`): the shift (`cmn_rota`), its rosters
 (`cmn_rota_roster`), their members (`cmn_rota_member`), and the helper tables behind the Add, Remove
 and Move forms (`on_call_add_member`, `on_call_remove_member`, `on_call_swap_member`). On pdi2 no
-shift and no group preference exists. [E01] [E02]
+shift and no group preference exists. [E01] [E02] [Q01]
 
 ## 1. Roles and access {label=NEW}
 
@@ -350,7 +350,7 @@ in the buttons. [E13] [E14] The wizard filters its group picker with the same ru
    to the same `$oc_creation_wizard.do` for anyone who passes `canCreateSchedule`. [E09] [E06]
 2. The wizard calls `OnCallCreationWizardUtilsSNC` [E10] and `OnCallRotationSNC.createNewRota`
    [E11]: the shift is inserted as a **draft**, inactive, on the **2024 schedule engine**, in the
-   group's domain; an overlapping draft is deleted with an error. [E11]
+   group's domain; an overlapping draft is deleted with an error. [E11] [Q18]
 3. Rosters and members are created per roster; the catch-all and the group's overlap preferences
    are saved from the wizard. [E10]
 
@@ -395,13 +395,13 @@ whoever manages the group. [E32] One record per group; shift managers must be ac
 |---|---|
 | Allow Shift Schedule overlap | `allow_rota_overlap` false: no overlap [E34] [E35] |
 | Escalation rule on Shift overlap | `escalation_rule_rota_overlap` all: escalate to all shifts [E34] [E36] |
-| PTO approval preferences | `pto.configuration` not_allowed: members can't create time off [E37] |
+| PTO approval preferences | `pto.configuration` not_allowed: members can't create time off [E37] [Q05] |
 
 ## 7. Templates {label=NEW}
 
 **Group Templates** (`sys_on_call_group_template`, with its shift templates) feed the wizard's
 shifts; only `rota_admin` creates them. **Schedule Templates** (`cmn_schedule`) is for
-`rota_admin`. [E39] [E40] [E10] None is mirrored, so whether any exist is unknown.
+`rota_admin`. [E39] [E40] [E10] None is mirrored, so whether any exist is unknown. [Q13]
 
 ## 8. Reminders and subscriptions {label=NEW}
 
@@ -432,12 +432,3 @@ The scheduled job that sends reminders on schedule is a platform job the mirror 
 | `com.snc.on_call_rotation.max_subscription_interval` | 364 | coverage limit, days [E17] |
 | `com.snc.on_call_rotation.max_rotation_repeat_count` | 182000 | rotation limit [E21] |
 | `com.snc.on_call_rotation.max_rotation_reminder_count` | 50 | reminders per roster [E23] |
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Which groups need a shift, who manages each, and should shift managers be named in group
-   preferences rather than given `rota_manager`?
-2. Are any group or schedule templates set up? The mirror doesn't hold them. [E39]
-3. Is `com.snc.on_call_rotation.force_use_schedule_engine` set? It isn't in the mirror; without it,
-   new shifts use the 2024 engine. [E11]
-4. Should any group allow self-service time off, or overlapping shifts? [E34]

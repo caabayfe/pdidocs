@@ -59,11 +59,6 @@ evidence:
     how: read glide.pop3readerjob.create_caller
     result: false; email from an address IT doesn't know creates no account
     hash: fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa
-  E11:
-    record: sys_properties/a3e1097fc6112275008fc7a7eb4129c2
-    how: read glide.email.user, the instance's mailbox
-    result: the value is not in the mirror
-    hash: 636ad9e9d3cf1586f23bb71bcb13b560bb9ea6a991d94a36baf0a43dab953767
   E12:
     record: sysevent_email_action/58e3c1d45322301001b2ddeeff7b1266
     field: subject
@@ -76,21 +71,11 @@ evidence:
     how: read the notification Request was opened
     result: 'Request ${number} was created'
     hash: 4408ae146a1e8b21286997ce05f2cb00d464b2dca9d0da3366db9443acdd7a09
-  E14:
-    record: sys_db_object/b0e4363b8c5503100a22deb6dd2b4e97
-    how: read the incident channel choices
-    result: chat, walk-in, virtual agent, email, phone and self-service can be recorded on an incident
-    hash: bb73c1002bb30dd75f1fff3a219ddd7c08ebc3d39bd65efdb8f63595ed73f743
   E15:
     record: sys_cs_channel/8ca0544053d110102f40ddeeff7b12be
     how: read the Teams channel
     result: no provider set up for it; Slack and SMS (sys_cs_channel 37263ba673b210104049dec2c4f6a77d, 5ae1b3e3771700105d7b3882a91061bd) have none either
     hash: 1b79e17f5021b2402f6df8685d81baedd0e622c3f168e60cc8fb7a4a1aed3307
-  E16:
-    record: va_branding_contact_menu/817739c0531300109686ddeeff7b12cf
-    how: read the chat's Support options menu
-    result: 'Call Support (Daily 5AM - 11 PM) 1-800-555-5555, a placeholder'
-    hash: fa4fce748e825961d50b57b25cdb298f055756a0ee441e398047f6abd5f17819
 ---
 You can reach IT in four ways: **Employee Center**, **chat**, **email** and **phone**.
 Whichever you use, you get the same thing back: a numbered ticket, an email confirming it, and
@@ -104,10 +89,10 @@ the same place to follow it, **My Requests** in Employee Center.
 |---|---|---|---|
 | **Employee Center** | almost always: something isn't working, you need something, you want to see where things stand | open Employee Center [E01], search or choose a topic | an INC or REQ number on screen, and an email [E12] [E13] |
 | **Chat** | you have a quick question | the chat button at the bottom right of every Employee Center page [E03] | answers from the Virtual Agent, Now Support [E05] |
-| **Email** | you are away from Employee Center | send an email to the IT service desk | an incident from your email, and an email with its number [E06] [E12] |
+| **Email** | you are away from Employee Center | send an email to the IT service desk [Q09] | an incident from your email, and an email with its number [E06] [E12] |
 | **Phone** | you can't work at all and it's urgent | **+1-200-120-2020**, 9am to 5pm PST [E02] | the service desk logs it with you on the call; you get the same email |
 
-There's no walk-up desk to visit: **Get support** lists only the phone. [E02] Teams, Slack and
+There's no walk-up desk to visit: **Get support** lists only the phone. [E02] [Q10] Teams, Slack and
 text messages aren't set up. [E15]
 
 ## Employee Center
@@ -126,15 +111,8 @@ you need](see:request/find).
    with.
 
 The Virtual Agent answers your questions. [E05] Nobody from the service desk answers chats yet,
-so the chat can't put you through to a person. [E04] To report a problem or ask for something,
+so the chat can't put you through to a person. [E04] [Q02] To report a problem or ask for something,
 use Employee Center or the phone.
-
-### What the Virtual Agent can do {label=OPEN-QUESTION}
-
-The Virtual Agent has no topics of its own for IT tickets, such as reporting a problem or
-checking a request's status, and it offers *Live Agent Support* although no chat queue is set
-up. [E04] Decide whether to set up a queue for the service desk, or to remove that topic, and
-which ticket topics employees need.
 
 ## Email
 
@@ -149,27 +127,11 @@ which ticket topics employees need.
 - **Write from your work address.** Email from an address IT doesn't know doesn't create an
   account for you. [E10]
 
-### The service desk's address {label=OPEN-QUESTION}
-
-Publish the service desk's email address here, and on the incident's *Report an incident* page.
-The address that receives these emails isn't in the configuration snagentic reads. [E11]
-
 ## Phone
 
-Call **+1-200-120-2020**, 9am to 5pm PST. [E02] The service desk agent logs an incident while you
+Call **+1-200-120-2020**, 9am to 5pm PST. [E02] [Q06] The service desk agent logs an incident while you
 talk, and you get the same *"Incident … was created"* email as from Employee Center. [E12] Keep
 the number it gives you, and follow it in My Requests.
-
-### Two numbers {label=OPEN-QUESTION}
-
-Correct the chat's support options: they list *Call Support (Daily 5AM - 11 PM) 1-800-555-5555*,
-which looks like a placeholder [E16], while **Get support** gives +1-200-120-2020, 9am to 5pm
-PST. [E02]
-
-### A walk-up desk {label=OPEN-QUESTION}
-
-The service desk can record *Walk-in* as an incident's channel [E14], but no walk-up desk is
-published for employees. If there is one, add where it is and when it is open.
 
 ## What happens next
 

@@ -182,7 +182,7 @@ Drafts and older versions show no Retire button. [E04]
 
 {{animation:kbretire}}
 
-1. Open the article in the **Knowledge Center** and choose **Retire** in the action bar. [E01]
+1. Open the article in the **Knowledge Center** and choose **Retire** in the action bar. [E01] [Q39]
 2. The **Retire Confirmation** dialog asks: *"Do you want to replace the current article with
    another existing article?"* [E02]
 3. Choose **No** to retire it without a replacement, or **Yes** and then **Select Article**: search
@@ -196,7 +196,7 @@ see it on pdi2. [E26]
 
 ## What happens next {label=NEW}
 
-The knowledge base's **retire flow** decides. [E08]
+The knowledge base's **retire flow** decides. [E08] [Q24] [Q15]
 
 | Retire flow | What happens | What you see |
 |---|---|---|
@@ -215,7 +215,7 @@ The knowledge base's **retire flow** decides. [E08]
 | The article | A reader who opens it, or follows an old link |
 |---|---|
 | Retired **with** a replacement | is taken to the latest version of the replacement, with *"The article KB… has been retired and replaced with the current article."* [E16] |
-| Retired **without** a replacement | can't open it; only knowledge administrators can [E17] |
+| Retired **without** a replacement | can't open it; only knowledge administrators can [E17] [Q27] |
 | Retired, either way | no longer appears in search or in knowledge lists [E18] |
 
 If the replacement is itself retired later with a replacement of its own, readers are taken
@@ -224,7 +224,7 @@ along the chain to the newest one. [E16]
 ## Bring an article back {label=NEW}
 
 Knowledge administrators see **Republish** on the latest version of a retired article. It is
-published again, and its older versions become outdated. [E19] Its replacement is cleared, so
+published again, and its older versions become outdated. [E19] [Q27] Its replacement is cleared, so
 readers stop being redirected. [E20]
 
 ## Valid to and expiring articles {label=NEW}
@@ -238,7 +238,7 @@ base's *Article Validity* (a number of days); a knowledge base without one gives
 - The Knowledge Center lists articles due within 90 days under **Articles › Expiring Articles**,
   and retired ones under **Articles › Retired**. [E22] [E23]
 - **Nobody is warned by email**: the monthly expiry warning is switched off on pdi2. Check the
-  Expiring Articles list yourself. [E24]
+  Expiring Articles list yourself. [E24] [Q09]
 
 For an expiring article, either update it and move its Valid to date on, or retire it.
 
@@ -250,14 +250,3 @@ For an expiring article, either update it and move its Valid to date on, or reti
   stop redirecting anywhere useful. [E16] [E17]
 - If an article only needs a correction, check out a new version rather than retiring it. See
   [Update a published article](see:update).
-
-## Not yet seen {label=OPEN-QUESTION}
-
-1. The Retire button and the Retire Confirmation dialog were not opened on screen; the steps
-   follow the dialog's labels. [E02] Does the Knowledge Center show them as described?
-2. Which retire flow does each knowledge base (IT, Known Error, Knowledge, KCS demo) use? The
-   knowledge base records are not in the mirror. Is retiring meant to need approval anywhere?
-3. Who counts as a knowledge administrator for opening retired articles and for Republish? The
-   check is in the platform, not in a script the mirror holds. [E17] [E19]
-4. Should authors and managers be warned before Valid to, now that expiry emails are off, or is the
-   Expiring Articles list enough? [E22] [E24]

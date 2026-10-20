@@ -209,7 +209,7 @@ condition-based plan definition exists for the table. [E01] [E02] There is none 
 *Open new communication modal* is assigned to the incident table in the workspace, for **any
 active incident**: it has no major incident condition. [E04] It shows as **Create new
 communication** in the header's overflow menu [E05] [E06], for users with `itil` (or
-`sn_incident_read`) and `ia_admin`. [E04]
+`sn_incident_read`) and `ia_admin`. [E04] [Q05]
 
 | Role | Has `ia_admin` | Evidence |
 |---|---|---|
@@ -233,7 +233,7 @@ and due time. [E19] The plan's assignee defaults to its creator. [E20]
 
 On an **accepted major incident** only, plans take the incident's group and assignee [E21] and
 tasks take the plan's [E22]; on an ordinary incident, the task has no assignee unless someone sets
-one.
+one. [Q06]
 
 ## 4. Channels {label=NEW}
 
@@ -245,7 +245,7 @@ to blind copy. [E26]
 
 A recurring task's next due date is its last communication plus *Due in*. [E19] The events
 `incident_alert_task.complete.75` and `incident_alert_task.breached` are raised on `task_sla` by
-the *Incident communication task SLA* [E27], and send *Communication Due Warning* and
+the *Incident communication task SLA* [E27] [Q55], and send *Communication Due Warning* and
 *Communication Overdue* to the **task's assignee** only. [E28] [E29]
 
 ## 6. On the incident form {label=NEW}
@@ -257,17 +257,5 @@ role of its own, so the create ACLs decide who can use it. [E32] [E13]
 ## 7. Closing {label=NEW}
 
 *Cascade Closure of ICPs* would close or cancel an incident's plans when the incident is closed or
-canceled, but only when `com.snc.incident.incident_alert.closure` is true; it is false. [E33] [E34]
+canceled, but only when `com.snc.incident.incident_alert.closure` is true; it is false. [E33] [E34] [Q27]
 Closing a plan doesn't close its open tasks either. [E35]
-
-## Open questions {label=OPEN-QUESTION}
-
-- Is the *Incident communication task SLA* that raises the due and overdue events active on pdi2?
-  Its SLA definition isn't in the mirror. [E27]
-- Should a communication task on an ordinary incident get an assignee automatically, so that the
-  due and overdue reminders reach someone? Today only accepted major incidents copy it. [E22]
-- Should service desk agents or team leads (`itil`, `itil_admin`) be able to create communications
-  on ordinary incidents, or is it right that only incident, major incident and communication
-  managers can? [E04]
-- Should closing an incident close its communication plans (`com.snc.incident.incident_alert.closure`)?
-  [E33]

@@ -77,6 +77,10 @@ evidence:
 
 The caller is emailed when the incident is created. [E09]
 
+The cards of Employee Center's *Get support* window come from tables snagentic doesn't read, so
+what employees see was checked on screen. Which mailbox address receives incident email is
+instance configuration (email accounts), not mirrored. [Q57]
+
 ## Email behaviours with security impact
 
 The inbound action *Create Incident* reads keywords and headers from any sender it accepts [E06]:
@@ -90,10 +94,3 @@ For replies, *Update Incident (BP)* applies `assign:` and `priority:` only when 
 `itil` or `sn_incident_write`. [E08] Consider the same check on the new-email action, or removing
 these lines, so that a P1 can't be raised and an agent can't be targeted by anyone with mail
 access.
-
-## Open questions {label=OPEN-QUESTION}
-
-1. The cards of Employee Center's *Get support* window come from tables snagentic doesn't read;
-   what employees see was checked on screen (see the employee page).
-2. Which mailbox address receives incident email is instance configuration (email accounts),
-   not mirrored.

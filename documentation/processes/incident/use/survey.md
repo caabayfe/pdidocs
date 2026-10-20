@@ -71,7 +71,7 @@ When your incident is closed, IT asks you how it went. It takes a minute.
 ## When you get it {label=NEW}
 
 Each time one of your incidents is **closed**, you get a short survey, unless you had one in the
-last 30 days. [E01] The incident closes when you confirm the fix, or by itself after a while (see
+last 30 days. [E01] [Q67] The incident closes when you confirm the fix, or by itself after a while (see
 [Confirm the fix, or reopen](see:confirm)); you receive *"Incident … was closed"* at the same
 time. [E12]
 
@@ -81,8 +81,8 @@ You don't get one for an incident that belongs to a bigger request. [E01]
 
 {{animation:incsurv}}
 
-1. Open the email **"Feedback makes us better"**. It names your incident. [E06] [E07]
-2. Choose **Take the survey**. [E08] The survey opens in **Employee Center**. [E09] [E10]
+1. Open the email **"Feedback makes us better"**. It names your incident. [E06] [E07] [Q14]
+2. Choose **Take the survey**. [E08] The survey opens in **Employee Center**. [E09] [E10] [Q90]
 3. Pick a face for **"How satisfied are you with the service provided by IT?"**, from *Very
    Dissatisfied* to *Very Satisfied*. [E03] [E04]
 4. If you like, write what you think in **"Tell us what you think about IT and what you want or
@@ -90,7 +90,7 @@ You don't get one for an incident that belongs to a bigger request. [E01]
 5. Submit it.
 
 Both questions are optional. [E03] [E05] You have **14 days**, and you can answer only once.
-[E02] Lost the email? Your open surveys are on the page **My Assessments and Surveys**. [E11]
+[E02] Lost the email? Your open surveys are on the page **My Assessments and Surveys**. [E11] [Q91]
 
 ## Who reads it {label=NEW}
 
@@ -109,14 +109,3 @@ incident. [E02]
 | say whether the fix works | [Confirm the fix, or reopen](see:confirm) |
 | report a new problem | [Report an incident](see:report) |
 | know which emails I get | [Who is told what](see:who-is-told) |
-
-## Not yet seen {label=OPEN-QUESTION}
-
-Nobody has taken this survey on screen yet; this page is read from the mirror.
-
-1. Does the link open Employee Center's survey page, and does it show smileys?
-2. How does a caller reach **My Assessments and Surveys** in Employee Center? No menu link to it
-   was found. [E11]
-3. Does the survey engine send it only once per 30 days per caller, as the repeat interval
-   suggests? The engine isn't in the mirror. [E01]
-4. The email speaks of *"your recent request"* for an incident. [E07] Should it say *incident*?

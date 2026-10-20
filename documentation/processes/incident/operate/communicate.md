@@ -134,7 +134,7 @@ It works on **any active incident**, not only on major incidents. [E01] For a ma
 
 | Who | Can |
 |---|---|
-| Incident managers, major incident managers, communication managers | create communications [E01] [E04] [E05] [E06] |
+| Incident managers, major incident managers, communication managers | create communications [E01] [E04] [E05] [E06] [Q05] |
 | Every support agent | see the incident's plans and tasks [E07] |
 
 Use it when an incident affects people who aren't the caller and should be told on a schedule.
@@ -173,16 +173,9 @@ one. [E07]
 When a communication task is coming due, its **assignee** gets *"<task> due for Incident
 <number>"*; once it is late, *"<task> is overdue for Incident <number>"*. [E17] [E18] On an
 ordinary incident the task doesn't take an assignee from the plan (that happens only on a major
-incident) [E19], so set **Assigned to** on the task if you want the reminders.
+incident) [E19], so set **Assigned to** on the task if you want the reminders. [Q06]
 
 ## When the incident is closed {label=NEW}
 
 Closing or canceling the incident leaves its plans open on pdi2. [E21] Close the plan yourself
 when no more updates are needed.
-
-## Open questions {label=OPEN-QUESTION}
-
-- Should service desk agents or team leads (not only incident managers) be able to create
-  communications on ordinary incidents?
-- Do the due and overdue reminders reach anyone on an ordinary incident, that is, does someone set
-  the communication task's assignee?

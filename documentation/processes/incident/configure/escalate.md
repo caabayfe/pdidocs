@@ -79,7 +79,7 @@ evidence:
 Propose [E01]; promote [E02] (the creation mode is *promote* [E14], so create [E03] isn't
 offered); reject [E04];
 demote [E05]; workbench [E06]. The group is notified of a candidate [E07]; the major incident
-group is set from a property [E08]. The plugin's fields and choices were created on 2026-10-12,
+group is set from a property [E08], whose value the mirror redacts. [Q52] The plugin's fields and choices were created on 2026-10-12,
 which looks like its activation date.
 
 ## Related records
@@ -95,11 +95,5 @@ Emergency change [E09], change request [E10], request [E11], child incident [E12
 - On screen, the workspace offers neither *Propose* nor *Promote*; both are on the classic form's
   menu only. Neither screen offers *Create problem* or *Create change request*: the actions behind
   the workspace's menu items aren't on the instance (`sys_ui_action/2f43c471c0a8006400a07440e49924c2`,
-  `sys_declarative_action_assignment/20aec8ab233230101488dc1756bf6557`), so the items don't show.
+  `sys_declarative_action_assignment/20aec8ab233230101488dc1756bf6557`), so the items don't show. [Q20]
   See the operator guide's evidence.
-
-## Open questions {label=OPEN-QUESTION}
-
-1. The major incident management group (`sn_major_inc_mgmt.major_incident_management_group`)
-   is still redacted: it names a group, which the mirror doesn't hold. Which team is it?
-2. Is it intended that operators can't raise a problem or a change from an incident?

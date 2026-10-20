@@ -63,7 +63,9 @@ evidence:
 | Process owner | `incident_manager` [E07] | Incident properties, major incident trigger rules |
 | Major incident manager | `major_incident_manager` [E08] | Promote, reject, demote major incidents |
 
-The Incident menu needs `itil` or `sn_incident_read`. [E04]
+The Incident menu needs `itil` or `sn_incident_read`. [E04] User and group records are not
+mirrored, so the support teams named in assignment rules and OLAs can't be named here [Q54],
+nor the major incident management group. [Q52]
 
 ## Lifecycle
 
@@ -75,12 +77,5 @@ legacy field `incident_state` mirrors `state` both ways. [E03]
 
 Response SLAs start when a group is assigned and stop when the incident has an assignee and has
 left New; they do not pause. [E09] Resolution SLAs stop only at Closed and pause while On Hold -
-Awaiting Caller or Resolved. [E10] The full table is on the
+Awaiting Caller or Resolved. [E10] [Q37] The full table is on the
 [work configuration page](work.html).
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Property values are redacted in the mirror (auto close days, copy and child incident switches,
-   major incident creation mode and group). Confirm them with the process owner.
-2. User and group records are not mirrored; the support teams named in assignment rules and
-   OLAs can't be named here.

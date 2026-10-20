@@ -43,12 +43,13 @@ evidence:
     result: fires on problem.state_change when the resolution code is fix_applied or risk_accepted
     hash: 05ad6dee5b208584f1f5ea888e7cb64d0efa10da0a9cb80903a7db107fb633dd
 ---
-## The missing Incidents list {label=OPEN-QUESTION}
+## The missing Incidents list
 
 The Default view lists `incident.problem_id` first [E01], but the form shows no Incidents list on
 screen. [E02] Its *Add* button depends on `com.snc.incident.link_to_task.problem`, whose value
-is readable only by problem admins; its value was withheld from the records read. [E03] Check the form's related lists and that property: without the list,
-the coordinator can't see the linked incidents from the problem.
+is readable only by problem admins; its value was withheld from the records read. [E03] Without
+the list, the coordinator can't see the linked incidents from the problem; why it is missing has
+not been checked yet. [Q10]
 
 ## How links behave
 

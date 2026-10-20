@@ -134,10 +134,6 @@ managers and approvers get once shifts exist. All are active, as delivered on th
 These aren't notification records: the on-call flows contact people themselves, by each person's
 contact preferences (email, SMS or voice), or by the channel an escalation step forces. [E14]
 [E15] [E17] On pdi2 the escalation log is switched off, so contacts and answers are not
-recorded. [E18] [E19] See
+recorded. [E18] [E19] [Q03] SMS and voice need a telephony provider for Notify; until one is
+set up, only email reaches people. [Q04] See
 [When on-call work reaches you](see:respond).
-
-### OPEN-QUESTION: SMS and voice {for=operator}
-
-SMS and voice need a telephony provider. Whether one is set up on pdi2 is not visible in the
-mirror; until it is, only email reaches people.

@@ -91,9 +91,11 @@ This page covers what differs for `sc_request`, `sc_req_item` and `sc_task`.
 The data broker that loads the panel's chats runs for `itil`, `sn_incident_write`,
 `interaction_agent` and `sn_change_write` [E04], and `sn_request_write` contains neither those
 roles nor `sn_uib_collab.user` [E05]. A fulfiller with `sn_request_write` but not `itil` can't load the
-panel's chats; the header's Sidebar isn't limited by these roles.
+panel's chats; the header's Sidebar isn't limited by these roles. [Q02]
 
-The classic form's *Open Sidebar discussion* button is on every task table. [E13]
+The classic form's *Open Sidebar discussion* button is on every task table. [E13] Whether
+Sidebar is supported for these tables on pdi2 isn't in the mirror; the Collaborate icon was seen
+on a requested item. [Q15]
 
 ## 2. Suggestions and groups {label=NEW}
 
@@ -108,15 +110,7 @@ Requesters may be added: the property is true [E11], so *Exclude requester from 
 discussion* doesn't apply to requests and items. [E10] But the only requester mapping is for
 incident [E08], and the Sidebar emails find their recipient through it [E09]. On requests, items
 and tasks nobody receives *"You have been added to a discussion"* or the daily unread digest.
-*Sidebar Discussion Started* is for incidents only as well. [E12]
+[Q03] *Sidebar Discussion Started* is for incidents only as well. [E12]
 
 To email the person an item is for, add an active `sys_cs_collab_chat_requester` record for
 `sc_req_item` with `requested_for` (and for `sc_request`, `requested_for`). [E08] [E09]
-
-## Open questions {label=OPEN-QUESTION}
-
-1. Is Sidebar enabled per record for `sc_request`, `sc_req_item` and `sc_task`? The mirror can't
-   show it; the Collaborate icon was seen on a requested item.
-2. Should `sn_request_write` load the Collaborate chats? It would need the role in the data
-   broker ACLs [E04], or `itil` for every fulfiller.
-3. Should requesters be emailed about discussions on their items? [E08]
